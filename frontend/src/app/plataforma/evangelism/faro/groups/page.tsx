@@ -102,7 +102,7 @@ const MODE_CONFIG: Record<
   { title: string; description: string; icon: LucideIcon }
 > = {
   create: {
-    title: 'Crear Faro',
+    title: 'Crear Grupo',
     description: 'Alta rápida con datos mínimos',
     icon: Plus,
   },
@@ -669,7 +669,7 @@ function FaroGroupsContent() {
   useEffect(() => {
     pushSidebarPanel({
       id: 'faro-groups-list',
-      title: 'Grupos Faro',
+      title: 'Grupos',
       replaceAll: true,
       content: (
         <div className="flex flex-col h-full">
@@ -803,7 +803,7 @@ function FaroGroupsContent() {
   return (
     <EvangelismShell
       breadcrumbs={[
-        { label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home },
+        { label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home },
         { label: 'Grupos', icon: Home },
       ]}
       viewType={viewType}
@@ -817,7 +817,7 @@ function FaroGroupsContent() {
           <div className="flex-1 bg-white dark:bg-[#252528] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="px-3 py-2 border-b border-slate-100/80 dark:border-white/5 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-white/[0.02]">
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                {isCreating ? 'Nuevo Faro' : MODE_CONFIG[mode].title}
+                {isCreating ? 'Nuevo Grupo' : MODE_CONFIG[mode].title}
               </h2>
               <div className="flex items-center gap-1">
                 {!isCreating && selectedHouse && (
@@ -877,7 +877,7 @@ function FaroGroupsContent() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                      Código del Faro
+                      Código del Grupo
                     </label>
                     <input
                       value={formData.code || ''}
@@ -1068,7 +1068,7 @@ function FaroGroupsContent() {
                           <Users size={12} className="text-blue-500" /> Miembros actuales ({selectedMemberIds.size})
                         </h3>
                         <p className="text-xs text-slate-500">
-                          Estos son los miembros actualmente asignados al Faro.
+                          Estos son los miembros actualmente asignados al grupo.
                         </p>
                       </div>
                       <button
@@ -1105,7 +1105,7 @@ function FaroGroupsContent() {
                                 return next;
                               })}
                               className="text-slate-400 hover:text-rose-500 transition-colors shrink-0"
-                              title="Remover del Faro"
+                              title="Remover del Grupo"
                             >
                               <X size={16} />
                             </button>
@@ -1114,7 +1114,7 @@ function FaroGroupsContent() {
                       </div>
                     ) : (
                       <div className="py-2 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg">
-                        <p className="text-sm text-slate-400 font-medium">No hay miembros asignados a este Faro.</p>
+                        <p className="text-sm text-slate-400 font-medium">No hay miembros asignados a este grupo.</p>
                       </div>
                     )}
 
@@ -1163,7 +1163,7 @@ function FaroGroupsContent() {
                             className={inputCls + " py-2 w-full md:w-48 text-xs"}
                           >
                             <option value="all">Cualquier estado</option>
-                            <option value="unassigned">Sin faro asignado</option>
+                            <option value="unassigned">Sin grupo asignado</option>
                             <option value="other_house">En otra casa</option>
                           </select>
                         </div>
@@ -1250,7 +1250,7 @@ function FaroGroupsContent() {
                     Asignación rápida
                   </p>
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mt-1">
-                    Asigna miembros sin faro a una casa específica sin salir de
+                    Asigna miembros sin grupo a una casa específica sin salir de
                     esta vista.
                   </p>
                 </div>
@@ -1258,7 +1258,7 @@ function FaroGroupsContent() {
                 <div className="space-y-3">
                   {summary.unassigned_members.length === 0 ? (
                     <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-1.5 text-center text-slate-400">
-                      No hay miembros sin faro asignado.
+                      No hay miembros sin grupo asignado.
                     </div>
                   ) : (
                     summary.unassigned_members.map(member => (
@@ -1272,7 +1272,7 @@ function FaroGroupsContent() {
                               {member.name}
                             </p>
                             <p className="text-[10px] text-slate-400 mt-1">
-                              {member.church_role || 'Sin rol'} · Sin faro
+                              {member.church_role || 'Sin rol'} · Sin grupo
                               asignado
                             </p>
                           </div>

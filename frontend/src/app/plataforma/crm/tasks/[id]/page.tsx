@@ -35,7 +35,7 @@ export default function CrmTaskDetailPage() {
                 setTask(data || {
                     id,
                     title: 'Seguimiento de Consolidación',
-                    description: 'Contactar al nuevo miembro para invitarlo al Faro en Casa de su sector.',
+                    description: 'Contactar al nuevo miembro para invitarlo al grupo de su sector.',
                     status: 'pending',
                     priority: 'high',
                     due_date: '2026-04-20',

@@ -94,7 +94,7 @@ export default function EvangelismShell({
             title: 'Herramientas',
             items: [
                 { id: 'ev-events', label: 'Eventos', href: '/plataforma/evangelism/events', icon: Calendar },
-                { id: 'ev-faro', label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home },
+                { id: 'ev-faro', label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home },
                 { id: 'ev-scanner', label: 'Escáner ASST', href: '/plataforma/evangelism/scanner', icon: Scan },
             ],
         },

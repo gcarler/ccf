@@ -95,10 +95,10 @@ export default function FamilyNucleusPage() {
                         </div>
                         <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-md space-y-4">
                             <h3 className="text-xs font-semibold text-white uppercase tracking-wide flex items-center gap-2">
-                                <Users size={14} className="text-rose-500" /> Faro en Casa
+                                <Users size={14} className="text-rose-500" /> Grupo en Casa
                             </h3>
                             <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                Su familia está vinculada a la <span className="text-white font-bold">Faro en Casa &quot;Norte 1&quot;</span> dirigida por Juan y Paula.
+                                Su familia está vinculada a la <span className="text-white font-bold">Grupo en Casa &quot;Norte 1&quot;</span> dirigida por Juan y Paula.
                             </p>
                             <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md transition-all border border-white/5">
                                 Contactar Líder

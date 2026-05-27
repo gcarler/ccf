@@ -122,7 +122,7 @@ export default function FaroDetailPage() {
                 // Auto-select the most recent session
                 if (data.sessions.length > 0) setActiveSession(data.sessions[0]);
             })
-            .catch(() => toast.error('Error al cargar el Faro'))
+            .catch(() => toast.error('Error al cargar el grupo'))
             .finally(() => setLoading(false));
     }, [id, token]);
 
@@ -131,7 +131,7 @@ export default function FaroDetailPage() {
         if (!house) return;
         pushSidebarPanel({
             id: 'faro-sessions-list',
-            title: 'Faro en Casa',
+            title: 'Grupos en Casa',
             replaceAll: true,
             content: (
                 <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21]">
@@ -308,7 +308,7 @@ export default function FaroDetailPage() {
             const res = await apiFetch<Member>('/crm/personas', {
                 method: 'POST',
                 token,
-                body: { ...newMemberForm, church_role: 'Visitante Faro en Casa' }
+                body: { ...newMemberForm, church_role: 'Visitante' }
             });
             toast.success('Invitado creado con Ã©xito');
             setMembers(prev => [res, ...prev]);
@@ -369,14 +369,14 @@ export default function FaroDetailPage() {
     ];
 
     if (loading) return (
-        <EvangelismShell breadcrumbs={[{ label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home }, { label: '...', icon: Home }]}>
+        <EvangelismShell breadcrumbs={[{ label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home }, { label: '...', icon: Home }]}>
             <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-blue-500" size={40} /></div>
         </EvangelismShell>
     );
 
     if (!house) return (
-        <EvangelismShell breadcrumbs={[{ label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home }]}>
-            <div className="p-4 text-center text-slate-400">Faro no encontrado.</div>
+        <EvangelismShell breadcrumbs={[{ label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home }]}>
+            <div className="p-4 text-center text-slate-400">Grupo no encontrado.</div>
         </EvangelismShell>
     );
 
@@ -388,7 +388,7 @@ export default function FaroDetailPage() {
 
     return (
         <EvangelismShell breadcrumbs={[
-            { label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home },
+            { label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home },
             { label: house.name, icon: Home }
         ]}>
             <main className="flex-1 overflow-y-auto">
@@ -399,7 +399,7 @@ export default function FaroDetailPage() {
                     </button>
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Faro en Casa</p>
+<p className=\"text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1\">Grupos en Casa</p>
                             <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{house.name}</h1>
                             <div className="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 font-medium mt-1.5">
                                 {house.code && <span className="flex items-center gap-1.5"><Activity size={12} /> CÃ³digo: {house.code}</span>}

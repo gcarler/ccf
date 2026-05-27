@@ -1230,7 +1230,7 @@ export default function StrategyDetailPage() {
                         </div>
                     )}
                     {[
-                        { label: 'Nombre del grupo *', field: 'name', placeholder: 'Ej: Faro Norte' },
+                        { label: 'Nombre del grupo *', field: 'name', placeholder: 'Ej: Grupo Norte' },
                         { label: 'Zona / Sector', field: 'zone', placeholder: 'Ej: Zona Norte' },
                         { label: 'Dirección', field: 'address', placeholder: 'Dirección completa' },
                     ].map(({ label, field, placeholder }) => (

@@ -178,7 +178,7 @@ export default function SessionReportPage() {
     };
 
     if (loading) return (
-        <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos Faro', href: '/plataforma/evangelism/faro/groups' }, { label: 'Reporte' }]}>
+        <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/faro/groups' }, { label: 'Reporte' }]}>
             <div className="space-y-3 p-3">{[1, 2, 3].map(i => <div key={i} className="h-16 bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" />)}</div>
         </EvangelismShell>
     );
@@ -194,7 +194,7 @@ export default function SessionReportPage() {
     );
 
     return (
-        <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos Faro', href: '/plataforma/evangelism/faro/groups' }, { label: house.name }, { label: 'Reporte' }]}>
+        <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/faro/groups' }, { label: house.name }, { label: 'Reporte' }]}>
             <div className="p-4 lg:p-3 space-y-3 max-w-4xl mx-auto animate-fade-in">
                 {/* Header */}
                 <div className="flex items-start justify-between">

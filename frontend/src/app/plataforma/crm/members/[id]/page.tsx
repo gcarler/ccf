@@ -621,7 +621,7 @@ export default function MemberDetailPage() {
                                 <InfoGrid items={[
                                     { label: 'Fecha de Ingreso', value: formatDate(member.joinedAt), icon: Calendar },
                                     { label: 'Fecha de Nacimiento', value: formatDate(member.birthday), icon: Calendar },
-                                    { label: 'Faro en Casa', value: member.house, icon: Heart },
+                                    { label: 'Grupo', value: member.house, icon: Heart },
                                     { label: 'Rol en Ministerio', value: member.church_role, icon: ShieldCheck },
                                 ]} />
                                 {member.pastoral_notes && (
@@ -766,7 +766,7 @@ export default function MemberDetailPage() {
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Datos Espirituales</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Bautismo', value: formatDate(member.baptism_date), icon: CheckCircle2 },
-                                    { label: 'Faro en Casa', value: member.house, icon: Heart },
+                                    { label: 'Grupo', value: member.house, icon: Heart },
                                     { label: 'Estado Espiritual', value: member.status, icon: ShieldCheck },
                                     { label: 'Rol en la Iglesia', value: member.church_role, icon: Star },
                                 ]} />

@@ -74,7 +74,7 @@ export default function FaroPage() {
                 const a = await apiFetch<FaroAnalytics>(`/evangelism/faro/analytics?season_id=${active.id}`, { token }).catch(() => null);
                 setAnalytics(a);
             }
-        } catch { toast.error('Error al cargar Faro en Casa'); }
+        } catch { toast.error('Error al cargar Grupos en Casa'); }
         finally { setLoading(false); }
     }, [token]);
 
@@ -101,7 +101,7 @@ export default function FaroPage() {
     };
 
     const handleCreateSession = async () => {
-        if (!sessionForm.glory_house_id || !sessionForm.session_date || !activeSeason) return toast.error('Selecciona el Faro y la fecha');
+        if (!sessionForm.glory_house_id || !sessionForm.session_date || !activeSeason) return toast.error('Selecciona el grupo y la fecha');
         setSavingSession(true);
         try {
             const bodyPayload: any = { ...sessionForm, season_id: activeSeason.id };
@@ -155,7 +155,7 @@ export default function FaroPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Evangelismo · Estrategia</p>
-                        <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Faro en Casa</h1>
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Grupos en Casa</h1>
                         {activeSeason
                                 ? <p className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-1.5 mt-2">
                                     <span className="inline-block size-2 rounded-full bg-emerald-500" />
@@ -177,7 +177,7 @@ export default function FaroPage() {
 
                     {/* KPIs */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <DSMetric label="Faros Activos" value={String(analytics?.active_faros ?? '—')} tone="emerald" trend="Red actual" />
+                        <DSMetric label="Grupos Activos" value={String(analytics?.active_faros ?? '—')} tone="emerald" trend="Red actual" />
                         <DSMetric label="Sesiones Totales" value={String(analytics?.total_sessions ?? '—')} tone="blue" trend={activeSeason?.name} />
                         <DSMetric label="Asistentes Totales" value={String(analytics?.total_attendance ?? '—')} tone="blue" trend="Acumulado" />
                         <DSMetric label="Promedio / Sesión" value={String(analytics?.avg_per_session ?? '—')} tone="amber" trend="Por semana" />
@@ -186,12 +186,12 @@ export default function FaroPage() {
                     <div className="space-y-3 pb-12">
                         {/* Mis Faros */}
                         <section>
-                            <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-3">Mis Faros en Casa</h2>
+                            <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-3">Mis Grupos</h2>
                             {houses.length === 0 ? (
                                 <EmptyState 
                                     icon={Home} 
-                                    title="Sin Faros Asignados" 
-                                    description="No tienes ningún Faro en Casa asignado como líder." 
+                                    title="Sin Grupos Asignados" 
+                                    description="No tienes ningún grupo asignado como líder." 
                                 />
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -249,16 +249,16 @@ export default function FaroPage() {
                             </section>
                         )}
 
-                        {/* Desempeño por Faro */}
+                        {/* Desempeño por Grupo */}
                         {isPrivileged && Boolean(analytics && analytics.per_faro && analytics.per_faro.length > 0) && (
                             <section>
-                                <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-3">Desempeño por Faro · {activeSeason?.name}</h2>
+                                <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-3">Desempeño por Grupo · {activeSeason?.name}</h2>
                                 <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-lg">
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left">
                                             <thead className="bg-slate-50/50 dark:bg-white/[0.02] text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                                 <tr>
-                                                    <th className="px-4 py-1.5">Faro en Casa</th>
+                                                    <th className="px-4 py-1.5">Grupo</th>
                                                     <th className="px-4 py-1.5 text-center">Sesiones</th>
                                                     <th className="px-4 py-1.5 text-center">Asistentes</th>
                                                     <th className="px-4 py-1.5 text-center">Promedio</th>
@@ -272,7 +272,7 @@ export default function FaroPage() {
                                                             <td className="px-4 py-2">
                                                                 <div className="flex items-center gap-4">
                                                                     <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Home size={18} /></div>
-                                                                    <span className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{house?.name || `Faro #${row.glory_house_id}`}</span>
+                                                                    <span className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{house?.name || `Grupo #${row.glory_house_id}`}</span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-4 py-2 text-center text-sm font-bold text-slate-600 dark:text-slate-400">{row.total_sessions}</td>
@@ -297,7 +297,7 @@ export default function FaroPage() {
                 isOpen={showNewSeason && isPrivileged}
                 onClose={() => setShowNewSeason(false)}
                 title="Nueva Temporada"
-                subtitle="Configura una nueva temporada para Faro en Casa"
+                subtitle="Configura una nueva temporada para Grupos en Casa"
                 actions={
                     <>
                         <button disabled={savingSeason} onClick={() => setShowNewSeason(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
@@ -311,7 +311,7 @@ export default function FaroPage() {
             >
                 <div className="space-y-3 mt-4">
                     {[
-                        { label: 'Nombre de la Campaña', key: 'name', type: 'text', placeholder: 'Faro en Casa Temporada 2026' },
+                        { label: 'Nombre de la Campaña', key: 'name', type: 'text', placeholder: 'Grupos en Casa Temporada 2026' },
                         { label: 'Fecha de Inicio', key: 'start_date', type: 'date', placeholder: '' },
                         { label: 'Fecha de Cierre', key: 'end_date', type: 'date', placeholder: '' },
                     ].map(f => (
@@ -354,10 +354,10 @@ export default function FaroPage() {
                     </div>
                     
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block">Faro en Casa</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block">Grupo</label>
                         <select value={sessionForm.glory_house_id} onChange={e => setSessionForm(p => ({ ...p, glory_house_id: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
-                            <option value="">— Seleccionar Faro —</option>
-                            {isPrivileged && <option value="all" className="font-bold">✨ TODOS LOS FAROS ACTIVOS</option>}
+                            <option value="">— Seleccionar Grupo —</option>
+                            {isPrivileged && <option value="all" className="font-bold">✨ TODOS LOS GRUPOS ACTIVOS</option>}
                             {houses.map(h => <option key={h.id} value={h.id}>{h.name} {h.leader_name ? `· Líder: ${h.leader_name}` : ''}</option>)}
                         </select>
                         {sessionForm.glory_house_id === 'all' && (
