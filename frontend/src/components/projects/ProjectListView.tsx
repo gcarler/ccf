@@ -117,7 +117,7 @@ function InlineUserPicker({
             if (Array.isArray(data)) {
                 setUsers(data.map((u: any) => ({
                     id: u.id,
-                    username: `${u.first_name} ${u.last_name}`.trim() || u.username,
+                    username: u.nombre_completo || `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.username,
                     email: u.email,
                 })));
             }

@@ -1,5 +1,5 @@
-export interface CrmMember {
-    id: number;
+export interface CrmPersona {
+    id: string;
     name: string;
     email?: string | null;
     group?: string | null;
@@ -7,7 +7,7 @@ export interface CrmMember {
     phone?: string | null;
     joinedAt?: string | null;
     church_role?: string | null;
-    family_id?: number | null;
+    family_id?: string | null;
 }
 
 export interface CrmAnalyticsSummary {
@@ -21,15 +21,15 @@ export interface CrmAnalyticsSummary {
     total_families: number;
 }
 
-export function normalizeMembers(payload: any[]): CrmMember[] {
+export function normalizeMembers(payload: any[]): CrmPersona[] {
     if (!Array.isArray(payload)) return [];
     return payload.map((m) => ({
         id: m.id,
-        name: `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim(),
+        name: m.nombre_completo || '',
         email: m.email,
         group: m.group || (m.glory_house_id ? `Casa #${m.glory_house_id}` : 'Sin Grupo'),
         status: m.spiritual_status || m.status || 'Nuevo',
-        phone: m.phone,
+        phone: m.telefono || m.phone,
         joinedAt: m.created_at,
         church_role: m.church_role || 'Miembro',
         family_id: m.family_id,

@@ -72,6 +72,7 @@ export default function StrategyCreationDrawer({
                     name: name.trim(),
                     description: description || null,
                     typology: typology || null,
+                    clase_raiz: typology || null,
                     recurrence: typology === 'relacional' ? recurrence : null,
                     event_format: typology === 'evento_masivo' ? eventFormat : null,
                     phases: typology === 'evento_masivo' && phases.length > 0 ? phases : null,
@@ -79,7 +80,8 @@ export default function StrategyCreationDrawer({
                     strategy_type: strategyType,
                     start_date: startDate ? new Date(startDate).toISOString() : null,
                     end_date: endDate ? new Date(endDate).toISOString() : null,
-                    status: 'active'
+                    status: 'active',
+                    activa: true
                 }
             });
             toast.success('Estrategia de evangelismo creada');

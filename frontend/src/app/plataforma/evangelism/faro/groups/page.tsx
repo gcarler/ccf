@@ -36,12 +36,12 @@ interface GloryHouse {
   name: string;
   zone?: string;
   address?: string;
-  leader_id?: number;
-  assistant_id?: number;
-  host_id?: number;
-  base_attendee_ids?: number[];
+  leader_id?: string;
+  assistant_id?: string;
+  host_id?: string;
+  base_attendee_ids?: string[];
   base_attendees?: Array<{
-    member_id: number;
+    persona_id: string;
     name: string;
     role?: string;
     church_role?: string;
@@ -54,9 +54,8 @@ interface GloryHouse {
 }
 
 interface Member {
-  id: number;
-  first_name: string;
-  last_name: string;
+  id: string;
+  nombre_completo: string;
   church_role?: string;
 }
 
@@ -93,7 +92,7 @@ interface AssignmentSummary {
     zone?: string;
     address?: string;
   }>;
-  unassigned_members: Array<{ id: number; name: string; church_role?: string }>;
+  unassigned_members: Array<{ id: string; name: string; church_role?: string }>;
 }
 
 type Mode = 'create' | 'leader' | 'assistant' | 'host' | 'members' | 'monitor';
@@ -154,14 +153,14 @@ function FaroGroupsContent() {
     capacity: 15,
     status: 'Activo',
   });
-  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<number>>(
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(
     new Set()
   );
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [memberRoleFilter, setMemberRoleFilter] = useState('');
   const [memberAssignmentFilter, setMemberAssignmentFilter] = useState('all');
   const [quickAssignmentTargets, setQuickAssignmentTargets] = useState<
-    Record<number, number>
+    Record<string, number>
   >({});
   const [saving, setSaving] = useState(false);
 
@@ -186,7 +185,7 @@ function FaroGroupsContent() {
     setLoading(true);
     Promise.all([
       apiFetch<GloryHouse[]>('/evangelism/glory-houses', { token }),
-      apiFetch<Member[]>('/crm/members', { token }),
+      apiFetch<Member[]>('/crm/personas', { token }),
       apiFetch<AssignmentSummary>('/evangelism/faro/assignment-summary', {
         token,
       }).catch(() => null),
@@ -258,7 +257,7 @@ function FaroGroupsContent() {
         setSelectedMemberIds(
           new Set(
             detail.base_attendee_ids ||
-              detail.base_attendees?.map(m => m.member_id) ||
+              detail.base_attendees?.map(m => m.persona_id) ||
               []
           )
         );
@@ -283,7 +282,7 @@ function FaroGroupsContent() {
         setSelectedMemberIds(
           new Set(
             detail.base_attendee_ids ||
-              detail.base_attendees?.map(m => m.member_id) ||
+              detail.base_attendees?.map(m => m.persona_id) ||
               []
           )
         );
@@ -317,8 +316,8 @@ function FaroGroupsContent() {
     }
   };
 
-  const handleQuickAssignMember = async (memberId: number) => {
-    const houseId = quickAssignmentTargets[memberId];
+  const handleQuickAssignMember = async (personaId: string) => {
+    const houseId = quickAssignmentTargets[personaId];
     if (!houseId) {
       toast.error('Selecciona una casa');
       return;
@@ -331,10 +330,10 @@ function FaroGroupsContent() {
       );
       const current = new Set(
         detail.base_attendee_ids ||
-          detail.base_attendees?.map(m => m.member_id) ||
+          detail.base_attendees?.map(m => m.persona_id) ||
           []
       );
-      current.add(memberId);
+      current.add(personaId);
       const updated = await apiFetch<GloryHouse>(
         `/evangelism/glory-houses/${houseId}`,
         {
@@ -387,10 +386,10 @@ function FaroGroupsContent() {
     return items;
   }, [houses, mode, searchQuery]);
 
-  const getMemberName = useCallback((id?: number) => {
+  const getMemberName = useCallback((id?: string) => {
     if (!id) return 'No asignado';
     const m = members.find(m => m.id === id);
-    return m ? `${m.first_name} ${m.last_name}` : 'Desconocido';
+    return m ? m.nombre_completo : 'Desconocido';
   }, [members]);
 
   const uniqueRoles = useMemo(() => {
@@ -399,7 +398,7 @@ function FaroGroupsContent() {
 
   const filteredMembersList = useMemo(() => {
     return members.filter(m => {
-      if (memberSearchQuery && !`${m.first_name} ${m.last_name}`.toLowerCase().includes(memberSearchQuery.toLowerCase())) {
+      if (memberSearchQuery && !(m.nombre_completo || '').toLowerCase().includes(memberSearchQuery.toLowerCase())) {
         return false;
       }
       if (memberRoleFilter && m.church_role !== memberRoleFilter) {
@@ -443,7 +442,7 @@ function FaroGroupsContent() {
                     const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
                     setSelectedHouse(detail);
                     setFormData(detail);
-                    setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.member_id) || []));
+                    setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
                   } catch {
                     setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
                   }
@@ -494,7 +493,7 @@ function FaroGroupsContent() {
                   try {
                     const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
                     setSelectedHouse(detail); setFormData(detail);
-                    setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.member_id) || []));
+                    setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
                   } catch {
                     setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
                   }
@@ -563,7 +562,7 @@ function FaroGroupsContent() {
                         try {
                           const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
                           setSelectedHouse(detail); setFormData(detail);
-                          setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.member_id) || []));
+                          setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
                         } catch {
                           setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
                         }
@@ -628,7 +627,7 @@ function FaroGroupsContent() {
                       try {
                         const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
                         setSelectedHouse(detail); setFormData(detail);
-                        setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.member_id) || []));
+                        setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
                       } catch {
                         setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
                       }
@@ -741,7 +740,7 @@ function FaroGroupsContent() {
                           setSelectedMemberIds(
                             new Set(
                               detail.base_attendee_ids ||
-                                detail.base_attendees?.map(m => m.member_id) ||
+                                detail.base_attendees?.map(m => m.persona_id) ||
                                 []
                             )
                           );
@@ -960,9 +959,7 @@ function FaroGroupsContent() {
                           onChange={e =>
                             setFormData({
                               ...formData,
-                              [key]: e.target.value
-                                ? Number(e.target.value)
-                                : undefined,
+                              [key]: e.target.value || undefined,
                             })
                           }
                           className={inputCls}
@@ -970,7 +967,7 @@ function FaroGroupsContent() {
                           <option value="">Seleccionar...</option>
                           {members.map(m => (
                             <option key={m.id} value={m.id}>
-                              {m.first_name} {m.last_name}
+                              {m.nombre_completo}
                             </option>
                           ))}
                         </select>
@@ -1094,7 +1091,7 @@ function FaroGroupsContent() {
                           <div key={member.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10 px-4 py-1.5">
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                                {member.first_name} {member.last_name}
+                                {member.nombre_completo}
                               </p>
                               <p className="text-[10px] text-slate-400 mt-0.5 truncate">
                                 {member.church_role || 'Sin rol'}
@@ -1197,7 +1194,7 @@ function FaroGroupsContent() {
                                 />
                                 <div className="min-w-0">
                                   <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                                    {member.first_name} {member.last_name}
+                                    {member.nombre_completo}
                                   </p>
                                   <p className="text-[10px] text-slate-400 mt-0.5 truncate">
                                     {member.church_role || 'Sin rol'}

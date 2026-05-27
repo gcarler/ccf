@@ -4,7 +4,7 @@ from backend.models_academy import AcademyActivityLog  # noqa: F401
 from backend.models_academy import (  # noqa: F401
     Assessment, AssessmentAttempt, AssessmentOption, AssessmentQuestion,
     AssignmentSubmission, Certificate, Course, CourseAttendance,
-    CoursePrerequisite, Enrollment, Family, FaroSeason, FormalActa,
+    CoursePrerequisite, Enrollment, Family, CampaignSeason, FormalActa,
     ForumComment, ForumThread, GloryHouse, GloryHouseAttendance,
     GloryHouseMember, GloryHouseSession, Lesson, LessonProgress, Resource)
 
@@ -58,16 +58,13 @@ from backend.models_agents import (  # noqa: F401
     AgentActivity, AgentFamily, AgentJourney, AgentPermission, AgentTask,
     AgentInsight)
 
-# Evangelismo — Nuevos modelos (enums, roles personalizados, seguimiento)
-from backend.models_evangelism import (ClaseEstrategiaEnum,  # noqa: F401
-    EstadoAsistenciaEnum, TipoSeguimientoEnum, RolEnGrupoEnum,
-    MotivoExcusa, RolPersonalizadoEstrategia, RegistroSeguimiento,
-    FrecuenciaEnum, EstadoSesionEnum)
-
-# Evangelismo Super Pro — Multi-Tenant, Auditoría, Velocidad del Embudo
-from backend.models_evangelism_super import (  # noqa: F401
-    Sede, LogAuditoria, CategoriaEstrategia,
-    EstrategiaEvangelismo, GrupoEvangelismoSuper,
+# Evangelismo — Schema canónico definitivo
+from backend.models_evangelism import (  # noqa: F401
+    RolEnGrupoEnum, EstadoAsistenciaEnum, TipoSeguimientoEnum,
+    FrecuenciaEnum, EstadoSesionEnum,
+    Sede, LogAuditoria, CategoriaEstrategia, MotivoExcusa,
+    EstrategiaEvangelismo, RolPersonalizadoEstrategia, GrupoEvangelismo,
+    ParticipanteGrupo, SesionGrupo, Asistencia, RegistroSeguimiento,
     HistorialEmbudo,
 )
 

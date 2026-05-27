@@ -24,7 +24,7 @@ const STATUS_PROGRESS: Record<string, number> = { Pendiente: 30, Realizada: 100,
 interface CounselingSession {
     id: number;
     pastor_id: number;
-    member_id?: number;
+    persona_id?: string;
     lead_id?: number;
     scheduled_at: string;
     duration_minutes: number;
@@ -56,7 +56,7 @@ export default function CounselingPage() {
     const [members, setMembers] = useState<any[]>([]);
     const [newSession, setNewSession] = useState({
         pastor_id: user?.id || 1,
-        member_id: '',
+        persona_id: '',
         scheduled_at: '',
         topic: '',
         notes: '',
@@ -85,7 +85,7 @@ export default function CounselingPage() {
         try {
             const [sessionsData, membersData] = await Promise.all([
                 apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store' }),
-                apiFetch<any[]>('/crm/members', { token, cache: 'no-store' })
+                apiFetch<any[]>('/crm/personas', { token, cache: 'no-store' })
             ]);
             setSessions(Array.isArray(sessionsData) ? sessionsData : []);
             setMembers(Array.isArray(membersData) ? membersData : []);
@@ -112,7 +112,7 @@ export default function CounselingPage() {
             });
             addToast('Sesión agendada correctamente', 'success');
             setIsDrawerOpen(false);
-            setNewSession({ pastor_id: user?.id || 1, member_id: '', scheduled_at: '', topic: '', notes: '', status: 'Pendiente', duration_minutes: 60 });
+            setNewSession({ pastor_id: user?.id || 1, persona_id: '', scheduled_at: '', topic: '', notes: '', status: 'Pendiente', duration_minutes: 60 });
             fetchSessions();
         } catch {
             addToast('Error al agendar sesión', 'error');
@@ -328,7 +328,7 @@ export default function CounselingPage() {
                             {/* Main Info */}
                             <div className="flex-1 min-w-0 flex items-center gap-4">
                                 <div className="size-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0">
-                                    {session.member_id ? 'MB' : 'LD'}
+                                    {session.persona_id ? 'MB' : 'LD'}
                                 </div>
                                 <div className="min-w-0">
                                     <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">{session.topic || 'Sin tema definido'}</h3>
@@ -670,12 +670,12 @@ export default function CounselingPage() {
                         <select
                             required
                             className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold appearance-none"
-                            value={newSession.member_id}
-                            onChange={(e) => setNewSession({ ...newSession, member_id: e.target.value })}
+                            value={newSession.persona_id}
+                            onChange={(e) => setNewSession({ ...newSession, persona_id: e.target.value })}
                         >
                             <option value="" className="dark:bg-slate-900">Selecciona miembro...</option>
                             {members.map(m => (
-                                <option key={m.id} value={m.id} className="dark:bg-slate-900">{m.first_name} {m.last_name}</option>
+                                <option key={m.id} value={m.id} className="dark:bg-slate-900">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</option>
                             ))}
                         </select>
                         <ChevronRight size={16} className="absolute right-5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />

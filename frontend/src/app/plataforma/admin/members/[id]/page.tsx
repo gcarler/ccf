@@ -56,7 +56,7 @@ export default function MemberDetailPage() {
         if (!token || !id) return;
         try {
             setLoading(true);
-            const data = await apiFetch<any>(`/crm/members/${id}`, { token });
+            const data = await apiFetch<any>(`/crm/personas/${id}`, { token });
             setMember(data);
         } catch {
             toast.error('Error al cargar expediente de miembro');
@@ -81,7 +81,7 @@ export default function MemberDetailPage() {
 
     if (!member) return null;
 
-    const initials = `${member.first_name?.charAt(0) ?? ''}${member.last_name?.charAt(0) ?? ''}`.toUpperCase();
+    const initials = (member.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? member.first_name?.charAt(0) ?? '') + (member.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? member.last_name?.charAt(0) ?? '');
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
@@ -89,7 +89,7 @@ export default function MemberDetailPage() {
                 breadcrumbs={[
                     { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
                     { label: 'Membresía', icon: User, href: '/plataforma/admin/members' },
-                    { label: `${member.first_name} ${member.last_name}`, icon: User },
+                    { label: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(), icon: User },
                 ]}
                 rightActions={
                     <button
@@ -115,7 +115,7 @@ export default function MemberDetailPage() {
                         </motion.div>
                         <div className="relative z-10 space-y-3">
                             <h1 className="text-xl lg:text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">
-                                {member.first_name} <span className="text-blue-600">{member.last_name}</span>
+                                {member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}
                             </h1>
                             <div className="flex flex-wrap items-center gap-2">
                                 {member.church_role && <Badge label={member.church_role.toUpperCase()} color="violet" />}

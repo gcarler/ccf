@@ -36,8 +36,7 @@ export default function LeadDetailPage() {
                 const data = await apiFetch<any>(`/crm/consolidation/pipeline/${id}`, { token }).catch(() => null);
                 setLead(data || {
                     id,
-                    first_name: 'Mateo',
-                    last_name: 'González',
+                    nombre_completo: 'Mateo González',
                     phone: '+57 300 123 4567',
                     email: 'mateo@example.com',
                     stage: 'call',
@@ -78,11 +77,11 @@ export default function LeadDetailPage() {
                 breadcrumbs={[
                     { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
                     { label: 'Pipeline', icon: Users, href: '/plataforma/crm/pipeline' },
-                    { label: lead.first_name, icon: User },
+                    { label: lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim(), icon: User },
                 ]}
             />
             <CrmDetailShell
-                title={`${lead.first_name} ${lead.last_name}`}
+                title={lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                 description={`Fuente: ${lead.source}`}
             >
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 lg:p-4">

@@ -107,7 +107,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                         stage.color,
                         glowColor
                     )}>
-                        {lead.first_name?.[0] ?? ''}{lead.last_name?.[0] ?? ''}
+                        {lead.nombre_completo?.charAt(0) ?? ''}
                     </div>
 
                     {isSlaOverdue && (
@@ -118,7 +118,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                 <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex items-center justify-between gap-2">
                         <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                            {lead.first_name} {lead.last_name}
+                            {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                         </h4>
                         <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                     </div>

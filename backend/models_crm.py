@@ -186,7 +186,6 @@ class Ministry(Base):
     members = relationship(
         "Persona",
         secondary="member_ministries",
-        back_populates="ministries",
         overlaps="persona,personas,ministries,ministry",
     )
 
@@ -350,24 +349,24 @@ class Member(Base):
     )
     colombian_department = relationship("ColombianDepartment", foreign_keys=[colombian_department_id])
 
-    # --- Origen y tags (refactor evangelismo) ---
+    # --- Origen y tags (evangelismo) ---
     tags = Column(JSON, nullable=True, default=list)
     origen_estrategia_id = Column(
-        Integer,
-        ForeignKey("evangelism_strategies.id", ondelete="SET NULL"),
+        String(50),
+        ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
     origen_grupo_id = Column(
         Integer,
-        ForeignKey("glory_houses.id", ondelete="SET NULL"),
+        ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
     origen_fecha = Column(DateTime, nullable=True)
 
-    origen_estrategia = relationship("EvangelismStrategy", foreign_keys=[origen_estrategia_id])
-    origen_grupo = relationship("GloryHouse", foreign_keys=[origen_grupo_id])
+    origen_estrategia = relationship("EstrategiaEvangelismo", foreign_keys=[origen_estrategia_id])
+    origen_grupo = relationship("GrupoEvangelismo", foreign_keys=[origen_grupo_id])
 
 
 class Position(Base):
@@ -843,33 +842,25 @@ class EvangelismStrategy(Base):
     __tablename__ = "evangelism_strategies"
     id = Column(Integer, primary_key=True, index=True)
 
-    # --- Nuevos campos (refactor evangelismo) ---
-    codigo = Column(String(20), unique=True, nullable=True, index=True)  # EVG-XXX
-    clase_raiz = Column(String(50), nullable=True, index=True)  # ClaseEstrategiaEnum values
+    codigo = Column(String(20), unique=True, nullable=True, index=True)
+    clase_raiz = Column(String(50), nullable=True, index=True)
     activa = Column(Boolean, default=True, index=True)
 
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
 
-    # MULTI-TENANT: Sede a la que pertenece esta estrategia
     sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
-
-    # CATEGORIA: Tipo de estrategia (Faro en Casa, Evento Masivo, etc.)
     categoria_id = Column(Integer, ForeignKey("categorias_estrategia.id"), nullable=True, index=True)
 
-    # Typology: relacional | evento_masivo | sectorial
     typology = Column(String(50), nullable=True, index=True)
 
-    # ── Relacional (grupos pequeños / células / faro en casa) ──
-    recurrence = Column(String(20), nullable=True)  # SEMANAL | QUINCENAL | MENSUAL
+    recurrence = Column(String(20), nullable=True)
     day_of_week = Column(String(20), nullable=True)
     start_time = Column(String(10), nullable=True)
 
-    # ── Evento Masivo ──
-    event_format = Column(String(30), nullable=True)  # UNICA_LOCACION | MULTILOCACION
-    phases = Column(JSON, nullable=True)  # [{name, type, start_date, end_date}]
+    event_format = Column(String(30), nullable=True)
+    phases = Column(JSON, nullable=True)
 
-    # ── Sectorial / Misional ──
     niche_objective = Column(String(255), nullable=True)
 
     strategy_type = Column(String(100), nullable=True)
@@ -879,13 +870,10 @@ class EvangelismStrategy(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, onupdate=_utcnow)
 
-    roles_personalizados = relationship(
-        "RolPersonalizadoEstrategia",
-        back_populates="estrategia",
-        cascade="all, delete-orphan",
-        foreign_keys="RolPersonalizadoEstrategia.estrategia_id",
-        primaryjoin="EvangelismStrategy.codigo == RolPersonalizadoEstrategia.estrategia_id",
-    )
-
     sede = relationship("Sede", foreign_keys=[sede_id])
     categoria = relationship("CategoriaEstrategia", foreign_keys=[categoria_id])
+
+
+
+
+

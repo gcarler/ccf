@@ -11,7 +11,7 @@ def _serialize_member_position(member_position: models.MemberPosition) -> dict:
     position = member_position.position
     return {
         "id": member_position.id,
-        "member_id": member_position.member_id,
+        "persona_id": member_position.persona_id,
         "position_id": member_position.position_id,
         "position_name": position.name if position else None,
         "category": position.category if position else None,
@@ -36,7 +36,7 @@ def _serialize_member_position(member_position: models.MemberPosition) -> dict:
 def _serialize_case(case: models.ConsolidationCase) -> dict:
     return {
         "id": case.id,
-        "member_id": case.member_id,
+        "persona_id": case.persona_id,
         "stage": case.stage,
         "status": case.status,
         "source": case.source,
@@ -49,8 +49,7 @@ def _serialize_case(case: models.ConsolidationCase) -> dict:
         "assigned_pastor": (
             {
                 "id": case.assigned_pastor.id,
-                "first_name": case.assigned_pastor.first_name,
-                "last_name": case.assigned_pastor.last_name,
+                "nombre_completo": case.assigned_pastor.nombre_completo,
             }
             if case.assigned_pastor
             else None
@@ -58,8 +57,7 @@ def _serialize_case(case: models.ConsolidationCase) -> dict:
         "assigned_leader": (
             {
                 "id": case.assigned_leader.id,
-                "first_name": case.assigned_leader.first_name,
-                "last_name": case.assigned_leader.last_name,
+                "nombre_completo": case.assigned_leader.nombre_completo,
             }
             if case.assigned_leader
             else None
@@ -75,15 +73,15 @@ def _serialize_case(case: models.ConsolidationCase) -> dict:
     }
 
 
-def _member_full_name(member: models.Member | None) -> str:
-    if not member:
-        return "Miembro"
-    return f"{member.first_name} {member.last_name}".strip()
+def _persona_full_name(persona: models.Persona | None) -> str:
+    if not persona:
+        return "Persona"
+    return persona.nombre_completo
 
 
 def _serialize_task(task: models.CrmTask) -> dict:
     assignee = getattr(task, "assignee", None)
-    member = getattr(task, "member", None)
+    persona = getattr(task, "persona", None)
     return {
         "id": task.id,
         "title": task.title,
@@ -91,9 +89,9 @@ def _serialize_task(task: models.CrmTask) -> dict:
         "status": task.status,
         "priority": task.priority,
         "category": task.category,
-        "member_id": task.member_id,
-        "member_name": _member_full_name(member) if member else None,
-        "contact_name": _member_full_name(member) if member else None,
+        "persona_id": task.persona_id,
+        "persona_name": _persona_full_name(persona) if persona else None,
+        "contact_name": _persona_full_name(persona) if persona else None,
         "assigned_to": assignee.username if assignee else None,
         "assignee_id": task.assignee_id,
         "due_date": task.due_date.isoformat() if task.due_date else None,
@@ -109,14 +107,14 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     )
     failed_count = sum(1 for item in logs if (item.outcome or "").lower() == "failed")
     target_count = len(logs)
-    member_name = (
-        _member_full_name(first.member) if getattr(first, "member", None) else None
+    persona_name = (
+        _persona_full_name(first.persona) if getattr(first, "persona", None) else None
     )
     campaign_name = first.campaign_name
     return {
         "id": first.id,
         "name": (
-            campaign_name or f"Mensaje a {member_name}" if member_name else "Mensaje"
+            campaign_name or f"Mensaje a {persona_name}" if persona_name else "Mensaje"
         ),
         "channel": (first.channel or "").lower(),
         "status": (first.outcome or "sent").lower(),

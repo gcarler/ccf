@@ -62,7 +62,7 @@ function MentorAssignmentDrawer({
         setSaving(true);
         try {
             // Intenta actualizar via API; si falla, simula éxito (datos mock)
-            await apiFetch(`/crm/members/${memberId}`, {
+            await apiFetch(`/crm/personas/${memberId}`, {
                 method: 'PATCH',
                 token,
                 body: JSON.stringify({ mentor_id: selected }),
@@ -339,7 +339,7 @@ export default function MemberDetailPage() {
         const fetchMember = async () => {
             try {
                 await new Promise(r => setTimeout(r, 500));
-                const data = await apiFetch<any>(`/crm/members/${id}`, { token });
+                const data = await apiFetch<any>(`/crm/personas/${id}`, { token });
                 const m = {
                     ...data,
                     first_name: data.first_name ?? '',
@@ -451,7 +451,7 @@ export default function MemberDetailPage() {
             if (body.colombian_department_id === '' || body.colombian_department_id === null) {
                 body.colombian_department_id = null;
             }
-            const updated = await apiFetch<any>(`/crm/members/${id}`, {
+            const updated = await apiFetch<any>(`/crm/personas/${id}`, {
                 method: 'PATCH', token, body,
             });
             setMember((prev: any) => ({ ...prev, ...updated }));
@@ -469,7 +469,7 @@ export default function MemberDetailPage() {
     useEffect(() => {
         if (activeTab === 'history' && history.length === 0 && token) {
             setLoadingHistory(true);
-            apiFetch<any[]>(`/crm/members/${id}/timeline`, { token })
+            apiFetch<any[]>(`/crm/personas/${id}/timeline`, { token })
                 .then(d => setHistory(Array.isArray(d) ? d : []))
                 .catch(() => setHistory([]))
                 .finally(() => setLoadingHistory(false));
@@ -481,7 +481,7 @@ export default function MemberDetailPage() {
     useEffect(() => {
         if (activeTab === 'financial' && donations.length === 0 && token) {
             setLoadingDonations(true);
-            apiFetch<any[]>(`/crm/members/${id}/donations`, { token })
+            apiFetch<any[]>(`/crm/personas/${id}/donations`, { token })
                 .then(d => setDonations(Array.isArray(d) ? d : []))
                 .catch(() => setDonations([]))
                 .finally(() => setLoadingDonations(false));
@@ -511,8 +511,9 @@ export default function MemberDetailPage() {
         </div>
     );
 
-    const fullName = `${member.first_name} ${member.last_name}`.trim();
-    const initials = `${member.first_name?.[0] ?? ''}${member.last_name?.[0] ?? ''}`.toUpperCase();
+    const fullName = member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim();
+    const nameParts = (member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`).trim().split(/\s+/);
+    const initials = (nameParts[0]?.[0] ?? '') + (nameParts.length > 1 ? nameParts[nameParts.length - 1]?.[0] ?? '' : '');
 
     const TABS: { id: Tab; label: string; icon: any }[] = [
         { id: 'overview', label: 'Resumen', icon: User },

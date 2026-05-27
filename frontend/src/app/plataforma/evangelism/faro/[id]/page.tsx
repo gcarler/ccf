@@ -31,7 +31,7 @@ interface MonitoringTrendRow {
     absent_count: number;
 }
 interface RepeatAbsentee {
-    member_id: number;
+    persona_id: string;
     name: string;
     absences: number;
     details: { session_id: number; session_date?: string | null; reason?: string | null; reason_detail?: string | null }[];
@@ -62,7 +62,7 @@ interface AttendanceData {
     novelty_type?: string | null;
     novelty_detail?: string | null;
     cancellation_reason?: string | null;
-    reported_by_member_id?: number | null;
+    reported_by_persona_id?: string | null;
     total: number;
     present_count?: number;
     absent_count?: number;
@@ -70,8 +70,8 @@ interface AttendanceData {
     absentees: AttendeeRow[];
     expected_members: AttendeeRow[];
 }
-interface AttendeeRow { member_id: number; name: string; role?: string; attended?: boolean; absence_reason?: AttendanceReason | null; absence_reason_detail?: string | null; scanned_at?: string; }
-interface Member { id: number; first_name: string; last_name: string; church_role?: string; }
+interface AttendeeRow { persona_id: string; name: string; role?: string; attended?: boolean; absence_reason?: AttendanceReason | null; absence_reason_detail?: string | null; scanned_at?: string; }
+interface Member { id: string; nombre_completo: string; church_role?: string; }
 
 export default function FaroDetailPage() {
     const params = useParams();
@@ -94,7 +94,7 @@ export default function FaroDetailPage() {
     const [showAddAttendee, setShowAddAttendee] = useState(false);
     const [memberQuery, setMemberQuery] = useState('');
     const [saving, setSaving] = useState(false);
-    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [reportTopic, setReportTopic] = useState('');
     const [reportOfferingAmount, setReportOfferingAmount] = useState('');
     const [reportNotes, setReportNotes] = useState('');
@@ -215,11 +215,11 @@ export default function FaroDetailPage() {
                 setAttendance(data);
                 
                 // Merge expected members and attendees perfectly
-                const mergedMap = new Map<number, AttendeeRow>();
-                
+                const mergedMap = new Map<string, AttendeeRow>();
+
                 // First add all expected members
                 (data.expected_members || []).forEach(row => {
-                    mergedMap.set(row.member_id, {
+                    mergedMap.set(row.persona_id, {
                         ...row,
                         // By default, if there is no attendance data yet, mark them as 'attended: false' initially? 
                         // The user said: "no me dijiste quines fueron y quines no".
@@ -231,11 +231,11 @@ export default function FaroDetailPage() {
                 
                 // Then add/overwrite with any explicit attendees (extra guests added via Add Attendee)
                 (data.attendees || []).forEach(row => {
-                    if (mergedMap.has(row.member_id)) {
-                        mergedMap.get(row.member_id)!.attended = true;
-                        mergedMap.get(row.member_id)!.scanned_at = row.scanned_at;
+                    if (mergedMap.has(row.persona_id)) {
+                        mergedMap.get(row.persona_id)!.attended = true;
+                        mergedMap.get(row.persona_id)!.scanned_at = row.scanned_at;
                     } else {
-                        mergedMap.set(row.member_id, {
+                        mergedMap.set(row.persona_id, {
                             ...row,
                             attended: true,
                         });
@@ -262,15 +262,15 @@ export default function FaroDetailPage() {
     // Load members for selector
     useEffect(() => {
         if (!token || !showAddAttendee) return;
-        apiFetch<Member[]>('/crm/members', { token }).then(setMembers).catch((err) => { console.error('[FaroDetailPage] Failed to load members:', err); toast.error('Error al cargar miembros'); });
+        apiFetch<Member[]>('/crm/personas', { token }).then(setMembers).catch((err) => { console.error('[FaroDetailPage] Failed to load members:', err); toast.error('Error al cargar miembros'); });
     }, [showAddAttendee, token]);
 
     const filteredMembers = useMemo(() => {
         const q = memberQuery.toLowerCase();
-        const attendedIds = new Set(attendance?.attendees.map(a => a.member_id) || []);
+        const attendedIds = new Set(attendance?.attendees.map(a => a.persona_id) || []);
         return members
             .filter(m => !attendedIds.has(m.id))
-            .filter(m => !q || `${m.first_name} ${m.last_name}`.toLowerCase().includes(q))
+            .filter(m => !q || (m.nombre_completo || '').toLowerCase().includes(q))
             .slice(0, 30);
     }, [members, memberQuery, attendance]);
 
@@ -279,7 +279,7 @@ export default function FaroDetailPage() {
         setSaving(true);
         try {
             const res = await apiFetch<{ added: number }>(`/evangelism/faro/sessions/${activeSession.id}/attendance`, {
-                method: 'POST', body: { member_ids: Array.from(selectedIds) }, token
+                method: 'POST', body: { persona_ids: Array.from(selectedIds) }, token
             });
             toast.success(`${res.added} asistente(s) registrados`);
             setShowAddAttendee(false);
@@ -305,7 +305,7 @@ export default function FaroDetailPage() {
         }
         setCreatingMember(true);
         try {
-            const res = await apiFetch<Member>('/crm/members', {
+            const res = await apiFetch<Member>('/crm/personas', {
                 method: 'POST',
                 token,
                 body: { ...newMemberForm, church_role: 'Visitante Faro en Casa' }
@@ -327,7 +327,7 @@ export default function FaroDetailPage() {
         setSavingReport(true);
         try {
             const attendees = reportMembers.map((row) => ({
-                member_id: row.member_id,
+                persona_id: row.persona_id,
                 attended: row.attended ?? true,
                 absence_reason: row.attended ? null : row.absence_reason,
                 absence_reason_detail: row.attended ? null : row.absence_reason_detail,
@@ -538,7 +538,7 @@ export default function FaroDetailPage() {
                                                             </div>
                                                         ))}
                                                         {repeatAbsentees.slice(0, 4).map((item) => (
-                                                            <div key={item.member_id} className="rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-4 py-1.5">
+                                                            <div key={item.persona_id} className="rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-4 py-1.5">
                                                                 <p className="text-sm font-bold text-rose-800 dark:text-rose-200">{item.name}</p>
                                                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-500 mt-1">{item.absences} ausencias recurrentes</p>
                                                             </div>
@@ -655,7 +655,7 @@ export default function FaroDetailPage() {
                                             {reportMembers.map((row) => {
                                                 const attended = row.attended !== false;
                                                 return (
-                                                    <div key={row.member_id} className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 space-y-3">
+                                                    <div key={row.persona_id} className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 space-y-3">
                                                         <div className="flex items-center justify-between gap-3">
                                                             <div className="min-w-0">
                                                                 <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{row.name}</p>
@@ -667,7 +667,7 @@ export default function FaroDetailPage() {
                                                                     checked={attended}
                                                                     onChange={(e) => {
                                                                         const checked = e.target.checked;
-                                                                        setReportMembers(prev => prev.map(item => item.member_id === row.member_id ? {
+                                                                        setReportMembers(prev => prev.map(item => item.persona_id === row.persona_id ? {
                                                                             ...item,
                                                                             attended: checked,
                                                                             absence_reason: checked ? null : item.absence_reason || 'other',
@@ -686,7 +686,7 @@ export default function FaroDetailPage() {
                                                                     <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2 block">RazÃ³n</label>
                                                                     <select
                                                                         value={row.absence_reason || 'other'}
-                                                                        onChange={(e) => setReportMembers(prev => prev.map(item => item.member_id === row.member_id ? { ...item, absence_reason: e.target.value as AttendanceReason } : item))}
+                                                                        onChange={(e) => setReportMembers(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason: e.target.value as AttendanceReason } : item))}
                                                                         className="w-full bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg py-2.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
                                                                     >
                                                                         {reasonOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -696,7 +696,7 @@ export default function FaroDetailPage() {
                                                                     <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2 block">Detalle</label>
                                                                     <input
                                                                         value={row.absence_reason_detail || ''}
-                                                                        onChange={(e) => setReportMembers(prev => prev.map(item => item.member_id === row.member_id ? { ...item, absence_reason_detail: e.target.value } : item))}
+                                                                        onChange={(e) => setReportMembers(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason_detail: e.target.value } : item))}
                                                                         className="w-full bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg py-2.5 px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
                                                                         placeholder="Especifica el motivo"
                                                                     />
@@ -747,7 +747,7 @@ export default function FaroDetailPage() {
                                         </div>
                                         <div className="divide-y divide-slate-50 dark:divide-white/5">
                                             {attendance.attendees.map((a) => (
-                                                <div key={a.member_id} className="flex items-center gap-4 px-4 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                <div key={a.persona_id} className="flex items-center gap-4 px-4 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                                     <div className="size-8 rounded-md bg-gradient-to-br from-blue-400 to-sky-600 text-white flex items-center justify-center text-xs font-semibold shrink-0">
                                                         {a.name.charAt(0)}
                                                     </div>
@@ -869,10 +869,10 @@ export default function FaroDetailPage() {
                                             className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-500/30' : 'hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent'}`}
                                         >
                                             <div className={`size-9 rounded-md flex items-center justify-center text-sm font-semibold shrink-0 ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'}`}>
-                                                {isSelected ? <CheckCircle2 size={16} /> : m.first_name.charAt(0)}
+                                                {isSelected ? <CheckCircle2 size={16} /> : (m.nombre_completo?.charAt(0) || '')}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{m.first_name} {m.last_name}</p>
+                                                <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{m.nombre_completo}</p>
                                                 {m.church_role && <p className="text-[10px] text-slate-400">{m.church_role}</p>}
                                             </div>
                                         </button>

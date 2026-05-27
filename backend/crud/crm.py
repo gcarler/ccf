@@ -16,13 +16,85 @@ from backend.schemas.crm import (CrmEventUpdate, EvangelismStrategyCreate,
 from backend.schemas.legacy import CommunityBoardCardUpdate
 from backend.schemas.notifications import CommunicationLogUpdate
 
+# ── Personas ────────────────────────────────────────────
+
+
+def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Persona:
+    data = payload.model_dump(exclude_unset=True)
+    row = models.Persona(**data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def search_personas(
+    db: Session,
+    search: str | None = None,
+    role: str | None = None,
+    estado_vital: str | None = None,
+    family_id: int | None = None,
+    skip: int = 0,
+    limit: int = 1000,
+    sort_by: str | None = None,
+    sort_dir: str = "asc",
+):
+    query = db.query(models.Persona)
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            or_(
+                models.Persona.nombre_completo.ilike(like),
+                models.Persona.email.ilike(like),
+                models.Persona.church_role.ilike(like),
+            )
+        )
+    if role:
+        query = query.filter(models.Persona.church_role == role)
+    if estado_vital:
+        query = query.filter(models.Persona.estado_vital == estado_vital)
+    if family_id:
+        query = query.filter(models.Persona.family_id == family_id)
+
+    sort_col = getattr(models.Persona, sort_by or "nombre_completo", models.Persona.nombre_completo)
+    query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
+
+    return query.offset(skip).limit(limit).all()
+
+
+def get_persona(db: Session, persona_id: str) -> Optional[models.Persona]:
+    return db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+
+
+def update_persona(
+    db: Session, persona_id: str, payload: schemas.PersonaUpdate
+) -> Optional[models.Persona]:
+    row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_persona(db: Session, persona_id: str) -> bool:
+    row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
 # ── Members ────────────────────────────────────────────
 
 
-def get_member_donations(db: Session, member_id: int):
+def get_persona_donations(db: Session, persona_id: str):
     return (
         db.query(models.Donation)
-        .filter(models.Donation.member_id == member_id)
+        .filter(models.Donation.persona_id == persona_id)
         .order_by(models.Donation.created_at.desc())
         .all()
     )
@@ -286,14 +358,14 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
 def get_crm_tasks(
     db: Session,
     assignee_id: Optional[int] = None,
-    member_id: Optional[int] = None,
+    persona_id: Optional[str] = None,
     lead_id: Optional[int] = None,
 ) -> List[models.CrmTask]:
     query = db.query(models.CrmTask)
     if assignee_id:
         query = query.filter(models.CrmTask.assignee_id == assignee_id)
-    if member_id:
-        query = query.filter(models.CrmTask.member_id == member_id)
+    if persona_id:
+        query = query.filter(models.CrmTask.persona_id == persona_id)
     if lead_id:
         query = query.filter(models.CrmTask.lead_id == lead_id)
     return query.order_by(models.CrmTask.due_date.asc()).all()
@@ -333,11 +405,11 @@ def delete_crm_task(db: Session, task_id: int) -> bool:
 
 
 def get_volunteer_shifts(
-    db: Session, member_id: Optional[int] = None
+    db: Session, persona_id: Optional[str] = None
 ) -> List[models.VolunteerShift]:
     query = db.query(models.VolunteerShift)
-    if member_id:
-        query = query.filter(models.VolunteerShift.member_id == member_id)
+    if persona_id:
+        query = query.filter(models.VolunteerShift.persona_id == persona_id)
     return query.order_by(models.VolunteerShift.shift_start.asc()).all()
 
 
@@ -374,15 +446,15 @@ def create_event_attendance(
 def get_counseling_tickets(
     db: Session,
     status: str | None = None,
-    member_id: int | None = None,
+    persona_id: str | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> List[models.CounselingTicket]:
     query = db.query(models.CounselingTicket)
     if status:
         query = query.filter(models.CounselingTicket.status == status)
-    if member_id:
-        query = query.filter(models.CounselingTicket.member_id == member_id)
+    if persona_id:
+        query = query.filter(models.CounselingTicket.persona_id == persona_id)
     tickets = (
         query.order_by(models.CounselingTicket.created_at.desc())
         .offset(skip)
@@ -484,9 +556,9 @@ def create_glory_house(db: Session, payload: schemas.GloryHouseCreate):
 
     if payload.base_attendee_ids:
         db.flush()  # Get the ID without committing
-        for member_id in payload.base_attendee_ids:
+        for persona_id in payload.base_attendee_ids:
             attendee = models.GloryHouseMember(
-                glory_house_id=db_obj.id, member_id=member_id, role="asistente"
+                glory_house_id=db_obj.id, persona_id=persona_id, role="asistente"
             )
             db.add(attendee)
 
@@ -516,16 +588,16 @@ def update_glory_house(db: Session, house_id: int, payload: schemas.GloryHouseUp
         ).delete()
         for item in payload.base_attendees_with_roles:
             db.add(models.GloryHouseMember(
-                glory_house_id=house_id, member_id=item.member_id, role=item.role
+                glory_house_id=house_id, persona_id=item.persona_id, role=item.role
             ))
         members_updated = True
     elif payload.base_attendee_ids is not None:
         db.query(models.GloryHouseMember).filter(
             models.GloryHouseMember.glory_house_id == house_id
         ).delete()
-        for member_id in payload.base_attendee_ids:
+        for persona_id in payload.base_attendee_ids:
             db.add(models.GloryHouseMember(
-                glory_house_id=house_id, member_id=member_id, role="miembro"
+                glory_house_id=house_id, persona_id=persona_id, role="miembro"
             ))
         members_updated = True
 
@@ -551,7 +623,7 @@ def get_families(db: Session, skip: int = 0, limit: int = 100):
     families = db.query(models.Family).offset(skip).limit(limit).all()
     for f in families:
         f.members_count = (
-            db.query(models.Member).filter(models.Member.family_id == f.id).count()
+            db.query(models.Persona).filter(models.Persona.family_id == f.id).count()
         )
     return families
 
@@ -567,9 +639,9 @@ def create_family(db: Session, name: str):
 # ── Member Timeline ────────────────────────────────────
 
 
-def get_member_timeline(db: Session, member_id: int):
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
-    if not member:
+def get_persona_timeline(db: Session, persona_id: str):
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    if not persona:
         return []
 
     timeline = []
@@ -578,17 +650,17 @@ def get_member_timeline(db: Session, member_id: int):
         {
             "type": "membership",
             "title": "Ingreso a la Familia CCF",
-            "description": f"Registro formal como {member.church_role}.",
-            "date": member.created_at.isoformat(),
+            "description": f"Registro formal como {persona.church_role}.",
+            "date": persona.created_at.isoformat(),
             "icon": "Sparkles",
             "color": "bg-purple-500",
         }
     )
 
-    if member.user_id:
+    if persona.user_id:
         enrollments = (
             db.query(models.Enrollment)
-            .filter(models.Enrollment.user_id == member.user_id)
+            .filter(models.Enrollment.user_id == persona.user_id)
             .all()
         )
         for en in enrollments:
@@ -614,16 +686,21 @@ def get_member_timeline(db: Session, member_id: int):
                     }
                 )
 
-    for ministry in member.ministries:
+    ministries = (
+        db.query(models.MemberMinistry)
+        .filter(models.MemberMinistry.persona_id == persona_id)
+        .all()
+    )
+    for mm in ministries:
         timeline.append(
             {
                 "type": "ministry",
                 "title": "Vinculación Ministerial",
-                "description": f"Se integró al ministerio de {ministry.name}.",
+                "description": f"Se integró al ministerio de {mm.name}.",
                 "date": (
-                    ministry.created_at.isoformat()
-                    if ministry.created_at
-                    else member.created_at.isoformat()
+                    mm.created_at.isoformat()
+                    if mm.created_at
+                    else persona.created_at.isoformat()
                 ),
                 "icon": "ShieldCheck",
                 "color": "bg-indigo-600",
@@ -632,7 +709,7 @@ def get_member_timeline(db: Session, member_id: int):
 
     sessions = (
         db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.member_id == member_id)
+        .filter(models.CounselingTicket.persona_id == persona_id)
         .all()
     )
     for s in sessions:
@@ -649,7 +726,7 @@ def get_member_timeline(db: Session, member_id: int):
 
     calls = (
         db.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.member_id == member_id)
+        .filter(models.CommunicationLog.persona_id == persona_id)
         .all()
     )
     for c in calls:
@@ -788,9 +865,9 @@ def create_milestone(
 
 def get_family_members(db: Session, family_id: int):
     return (
-        db.query(models.Member)
-        .filter(models.Member.family_id == family_id)
-        .order_by(models.Member.last_name.asc(), models.Member.first_name.asc())
+        db.query(models.Persona)
+        .filter(models.Persona.family_id == family_id)
+        .order_by(models.Persona.nombre_completo.asc())
         .all()
     )
 

@@ -19,7 +19,7 @@ export interface MinistryEvent {
   target_audience?: EventAudience;
   target_role_id?: number | null;
   target_role_ids?: number[];
-  target_member_ids?: number[];
+  target_persona_ids?: string[];
   day_of_week?: number;
   month_day?: string;
   fixed_date?: string;
@@ -27,10 +27,9 @@ export interface MinistryEvent {
   cancellation_reason?: string;
 }
 
-export interface Member {
-  id: number;
-  first_name: string;
-  last_name: string;
+export interface Persona {
+  id: string;
+  nombre_completo: string;
   email: string;
   church_role?: string;
 }
@@ -44,12 +43,12 @@ export interface EventDashboardStat {
 }
 
 export interface EventSessionAttendanceData {
-  attendees: { member_id: number }[];
+  attendees: { persona_id: string }[];
 }
 
 export interface ScanValidationResult {
   valid: boolean;
-  member_id: number;
+  persona_id: string;
   member_name: string;
   role?: string;
 }

@@ -129,7 +129,7 @@ export default function CrmTasksPage() {
     });
     const [newTask, setNewTask] = useState({
         title: '', description: '', category: 'Consolidación',
-        priority: 'medium', status: 'pending', due_date: '', member_id: ''
+        priority: 'medium', status: 'pending', due_date: '', persona_id: ''
     });
 
     const fetchTasks = useCallback(async () => {
@@ -148,7 +148,7 @@ export default function CrmTasksPage() {
     const fetchMembers = useCallback(async () => {
         if (!token) return;
         try {
-            const data = await apiFetch<any[]>('/crm/members?page_size=100', { token });
+            const data = await apiFetch<any[]>('/crm/personas?page_size=100', { token });
             setMembers(Array.isArray(data) ? (data as any).items ?? data : []);
         } catch { /* silent */ }
     }, [token]);
@@ -177,7 +177,7 @@ export default function CrmTasksPage() {
             setTasks(prev => [created, ...prev]);
             addToast('Tarea creada', 'success');
             setIsCreateOpen(false);
-            setNewTask({ title: '', description: '', category: 'Consolidación', priority: 'medium', status: 'pending', due_date: '', member_id: '' });
+            setNewTask({ title: '', description: '', category: 'Consolidación', priority: 'medium', status: 'pending', due_date: '', persona_id: '' });
         } catch {
             addToast('Error al crear tarea', 'error');
         } finally {
@@ -607,12 +607,12 @@ export default function CrmTasksPage() {
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Miembro asociado</label>
                             <select
-                                value={newTask.member_id}
-                                onChange={e => setNewTask({ ...newTask, member_id: e.target.value })}
+                                value={newTask.persona_id}
+                                onChange={e => setNewTask({ ...newTask, persona_id: e.target.value })}
                                 className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 <option value="">Sin asignar</option>
-                                {members.map((m: any) => <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>)}
+                                {members.map((m: any) => <option key={m.id} value={m.id}>{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</option>)}
                             </select>
                         </div>
                     )}

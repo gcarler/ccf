@@ -17,14 +17,14 @@ interface Props {
 }
 
 function AvatarNameRenderer({ data }: any) {
-    const initials = `${data?.first_name?.[0] ?? ''}${data?.last_name?.[0] ?? ''}`;
+    const initials = data?.nombre_completo?.charAt(0) ?? '';
     return (
         <div className="flex items-center gap-2.5 h-full">
             <div className="size-7 rounded-md bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/20 text-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
                 {initials}
             </div>
             <div>
-                <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">{data?.first_name} {data?.last_name}</div>
+                <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">{data?.nombre_completo}</div>
                 <div className="text-[10px] text-slate-400">#{data?.id}</div>
             </div>
         </div>
@@ -53,7 +53,7 @@ export default function CrmTableView({ members, search, onRowClick, isList = fal
     }, []);
 
     const filtered = useMemo(
-        () => members.filter((m) => `${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase())),
+        () => members.filter((m) => (m.nombre_completo || '').toLowerCase().includes(search.toLowerCase())),
         [members, search]
     );
 

@@ -55,7 +55,7 @@ interface AudiencePreset {
     name: string;
     target_audience: 'ALL' | 'ROLE' | 'MANUAL';
     target_role_ids: number[];
-    target_member_ids: number[];
+    target_persona_ids: string[];
 }
 
 
@@ -93,7 +93,7 @@ export default function EventsPage() {
         target_audience: 'ALL',
         target_role_id: '',
         target_role_ids: [] as string[],
-        target_member_ids: [] as string[],
+        target_persona_ids: [] as string[],
         day_of_week: '0',
         month_day: '',
         fixed_date: '',
@@ -118,7 +118,7 @@ export default function EventsPage() {
 
     // Attendance State
     const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
-    const [attendedMemberIds, setAttendedMemberIds] = useState<number[]>([]);
+    const [attendedMemberIds, setAttendedMemberIds] = useState<string[]>([]);
     const [attendanceSearch, setAttendanceSearch] = useState('');
     const [attendanceLoading, setAttendanceLoading] = useState(false);
     const [attendanceRoleFilter, setAttendanceRoleFilter] = useState('ALL');
@@ -136,9 +136,9 @@ export default function EventsPage() {
                 token
             });
             if (result.valid) {
-                const mid = result.member_id;
-                if (!attendedMemberIds.includes(mid)) {
-                    setAttendedMemberIds(prev => [...prev, mid]);
+                const pid = result.persona_id;
+                if (!attendedMemberIds.includes(pid)) {
+                    setAttendedMemberIds(prev => [...prev, pid]);
                     addToast(`¡Bienvenido ${result.member_name}!`, "success");
                 } else {
                     addToast(`${result.member_name} ya está marcado`, "info");
@@ -208,7 +208,7 @@ export default function EventsPage() {
     const getTargetRoleLabel = (event: MinistryEvent | null | undefined) => {
         if (!event) return 'Toda la iglesia';
         if (event.target_audience === 'MANUAL') {
-            const count = Array.isArray(event.target_member_ids) ? event.target_member_ids.length : 0;
+            const count = Array.isArray(event.target_persona_ids) ? event.target_persona_ids.length : 0;
             return count > 0 ? `${count} personas` : 'Selección manual';
         }
         if (event.target_audience !== 'ROLE') return 'Toda la iglesia';
@@ -221,14 +221,14 @@ export default function EventsPage() {
     };
 
     const sortedMembers = [...members].sort((a, b) =>
-        `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
+        (a.nombre_completo || '').localeCompare(b.nombre_completo || '')
     );
 
     const filterMembersByQuery = (query: string) => {
         const normalized = query.trim().toLowerCase();
         if (!normalized) return sortedMembers;
         return sortedMembers.filter((member) =>
-            `${member.first_name} ${member.last_name}`.toLowerCase().includes(normalized) ||
+            (member.nombre_completo || '').toLowerCase().includes(normalized) ||
             member.email.toLowerCase().includes(normalized) ||
             (member.church_role || '').toLowerCase().includes(normalized)
         );
@@ -245,7 +245,7 @@ export default function EventsPage() {
             target_audience: preset.target_audience,
             target_role_id: preset.target_audience === 'ROLE' && preset.target_role_ids[0] ? String(preset.target_role_ids[0]) : '',
             target_role_ids: preset.target_audience === 'ROLE' ? preset.target_role_ids.map(String) : [],
-            target_member_ids: preset.target_audience === 'MANUAL' ? preset.target_member_ids.map(String) : [],
+            target_persona_ids: preset.target_audience === 'MANUAL' ? preset.target_persona_ids : [],
         }));
         setCreateManualSearch('');
         addToast(`Plantilla aplicada: ${preset.name}`, "success");
@@ -259,22 +259,22 @@ export default function EventsPage() {
             target_audience: preset.target_audience,
             target_role_id: preset.target_audience === 'ROLE' ? (preset.target_role_ids[0] || null) : null,
             target_role_ids: preset.target_audience === 'ROLE' ? preset.target_role_ids : [],
-            target_member_ids: preset.target_audience === 'MANUAL' ? preset.target_member_ids : [],
+            target_persona_ids: preset.target_audience === 'MANUAL' ? preset.target_persona_ids : [],
         });
         setEditManualSearch('');
         addToast(`Plantilla aplicada: ${preset.name}`, "success");
     };
 
-    const saveAudiencePreset = (source: { target_audience: string; target_role_ids?: Array<string | number>; target_member_ids?: Array<string | number> }) => {
+    const saveAudiencePreset = (source: { target_audience: string; target_role_ids?: Array<string | number>; target_persona_ids?: Array<string | number> }) => {
         const targetAudience = source.target_audience as AudiencePreset['target_audience'];
         const targetRoleIds = (source.target_role_ids || []).map((value) => Number(value)).filter((value) => Number.isFinite(value));
-        const targetMemberIds = (source.target_member_ids || []).map((value) => Number(value)).filter((value) => Number.isFinite(value));
+        const targetPersonaIds = (source.target_persona_ids || []).map(String);
 
         if (targetAudience === 'ROLE' && targetRoleIds.length === 0) {
             addToast("No puedes guardar una plantilla de roles sin roles seleccionados", "error");
             return;
         }
-        if (targetAudience === 'MANUAL' && targetMemberIds.length === 0) {
+        if (targetAudience === 'MANUAL' && targetPersonaIds.length === 0) {
             addToast("No puedes guardar una plantilla manual sin personas seleccionadas", "error");
             return;
         }
@@ -288,7 +288,7 @@ export default function EventsPage() {
                 name: name.trim(),
                 target_audience: targetAudience,
                 target_role_ids: targetAudience === 'ROLE' ? targetRoleIds : [],
-                target_member_ids: targetAudience === 'MANUAL' ? targetMemberIds : [],
+                target_persona_ids: targetAudience === 'MANUAL' ? targetPersonaIds : [],
             },
             ...prev,
         ]);
@@ -342,7 +342,7 @@ export default function EventsPage() {
                 name: suggestion.name,
                 target_audience: 'ROLE',
                 target_role_ids: roleIds,
-                target_member_ids: [],
+                target_persona_ids: [],
             });
         }
 
@@ -362,7 +362,7 @@ export default function EventsPage() {
             addToast("Selecciona al menos un rol esperado para este evento", "error");
             return;
         }
-        if (newEvent.target_audience === 'MANUAL' && newEvent.target_member_ids.length === 0) {
+        if (newEvent.target_audience === 'MANUAL' && newEvent.target_persona_ids.length === 0) {
             addToast("Selecciona al menos una persona esperada para este evento", "error");
             return;
         }
@@ -400,7 +400,7 @@ export default function EventsPage() {
             target_audience: string;
             target_role_id: number | null;
             target_role_ids: number[];
-            target_member_ids: number[];
+            target_persona_ids: string[];
             start_time: string;
             end_time: string;
             day_of_week?: number;
@@ -413,7 +413,7 @@ export default function EventsPage() {
             target_audience: newEvent.target_audience,
             target_role_id: newEvent.target_audience === 'ROLE' && newEvent.target_role_ids[0] ? Number(newEvent.target_role_ids[0]) : null,
             target_role_ids: newEvent.target_audience === 'ROLE' ? newEvent.target_role_ids.map((value) => Number(value)) : [],
-            target_member_ids: newEvent.target_audience === 'MANUAL' ? newEvent.target_member_ids.map((value) => Number(value)) : [],
+            target_persona_ids: newEvent.target_audience === 'MANUAL' ? newEvent.target_persona_ids : [],
             start_time: startParsed.normalized,
             end_time: endParsed.normalized,
         };
@@ -427,7 +427,7 @@ export default function EventsPage() {
             await apiFetch('/evangelism/events/', { method: 'POST', token, body: payload });
             addToast("Evento creado exitosamente", "success");
             setIsCreateDrawerOpen(false);
-            setNewEvent({ name: '', description: '', event_type: 'PERMANENT', target_audience: 'ALL', target_role_id: '', target_role_ids: [], target_member_ids: [], day_of_week: '0', month_day: '', fixed_date: '', start_time: '', end_time: '' });
+            setNewEvent({ name: '', description: '', event_type: 'PERMANENT', target_audience: 'ALL', target_role_id: '', target_role_ids: [], target_persona_ids: [], day_of_week: '0', month_day: '', fixed_date: '', start_time: '', end_time: '' });
             fetchData();
         } catch (error: any) {
             console.error("Error creating event:", error);
@@ -447,7 +447,7 @@ export default function EventsPage() {
             return members.filter((member) => roleNames.includes((member.church_role || '').trim())).length;
         }
         if (event.target_audience === 'MANUAL') {
-            return Array.isArray(event.target_member_ids) ? event.target_member_ids.length : 0;
+            return Array.isArray(event.target_persona_ids) ? event.target_persona_ids.length : 0;
         }
         return members.length;
     };
@@ -514,7 +514,7 @@ export default function EventsPage() {
             setAttendanceLoading(true);
             try {
                 const data = await apiFetch<EventSessionAttendanceData>(`/evangelism/events/${selectedEvent.id}/sessions/${attendanceDate}`, { token });
-                setAttendedMemberIds(Array.isArray(data?.attendees) ? data.attendees.map((item) => item.member_id) : []);
+                setAttendedMemberIds(Array.isArray(data?.attendees) ? data.attendees.map((item) => item.persona_id) : []);
             } catch {
                 setAttendedMemberIds([]);
                 addToast("No se pudo cargar la asistencia guardada para esa fecha", "error");
@@ -546,7 +546,7 @@ export default function EventsPage() {
                 token,
                 body: {
                     event_id: selectedEvent.id,
-                    member_ids: attendedMemberIds,
+                    persona_ids: attendedMemberIds,
                     attendance_date: attendanceDate
                 }
             });
@@ -563,7 +563,7 @@ export default function EventsPage() {
         }
     };
 
-    const toggleAttendance = (id: number) => {
+    const toggleAttendance = (id: string) => {
         setAttendedMemberIds(prev =>
             prev.includes(id) ? prev.filter(mId => mId !== id) : [...prev, id]
         );
@@ -574,7 +574,7 @@ export default function EventsPage() {
             return true;
         }
         if (selectedEvent.target_audience === 'MANUAL') {
-            return Array.isArray(selectedEvent.target_member_ids) && selectedEvent.target_member_ids.includes(member.id);
+            return Array.isArray(selectedEvent.target_persona_ids) && selectedEvent.target_persona_ids.includes(member.id);
         }
         if (selectedEvent.target_audience !== 'ROLE') {
             return true;
@@ -595,7 +595,7 @@ export default function EventsPage() {
 
     const filteredMembers = expectedUniverseMembers.filter((member) => {
         const query = attendanceSearch.trim().toLowerCase();
-        const matchesSearch = !query || `${member.first_name} ${member.last_name}`.toLowerCase().includes(query) || member.email.toLowerCase().includes(query);
+        const matchesSearch = !query || (member.nombre_completo || '').toLowerCase().includes(query) || member.email.toLowerCase().includes(query);
         const matchesRole = attendanceRoleFilter === 'ALL' || (member.church_role || 'Sin rol') === attendanceRoleFilter;
         const isPresent = attendedMemberIds.includes(member.id);
         const matchesStatus =
@@ -683,14 +683,14 @@ export default function EventsPage() {
     const handleUpdateEvent = async (evId: number, payload: Partial<MinistryEvent> & {
         target_audience?: string;
         target_role_ids?: number[];
-        target_member_ids?: number[];
+        target_persona_ids?: string[];
     }) => {
         if (!token) return;
         if (payload.target_audience === 'ROLE' && (!Array.isArray(payload.target_role_ids) || payload.target_role_ids.length === 0)) {
             toast.error('Selecciona al menos un rol esperado antes de guardar');
             return;
         }
-        if (payload.target_audience === 'MANUAL' && (!Array.isArray(payload.target_member_ids) || payload.target_member_ids.length === 0)) {
+        if (payload.target_audience === 'MANUAL' && (!Array.isArray(payload.target_persona_ids) || payload.target_persona_ids.length === 0)) {
             toast.error('Selecciona al menos una persona esperada antes de guardar');
             return;
         }
@@ -1057,7 +1057,7 @@ export default function EventsPage() {
                                 target_audience: e.target.value,
                                 target_role_id: e.target.value === 'ROLE' ? newEvent.target_role_id : '',
                                 target_role_ids: e.target.value === 'ROLE' ? newEvent.target_role_ids : [],
-                                target_member_ids: e.target.value === 'MANUAL' ? newEvent.target_member_ids : [],
+                                target_persona_ids: e.target.value === 'MANUAL' ? newEvent.target_persona_ids : [],
                             })}
                             className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
                         >
@@ -1122,7 +1122,7 @@ export default function EventsPage() {
                                             ? 'Toda la iglesia'
                                             : preset.target_audience === 'ROLE'
                                                 ? `${preset.target_role_ids.length} roles`
-                                                : `${preset.target_member_ids.length} personas`}
+                                                : `${preset.target_persona_ids.length} personas`}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1151,7 +1151,7 @@ export default function EventsPage() {
                         <div className="flex items-center justify-between gap-3">
                             <label className="font-semibold text-slate-400 uppercase tracking-wide">Personas esperadas</label>
                             <span className="rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
-                                {newEvent.target_member_ids.length} seleccionadas
+                                {newEvent.target_persona_ids.length} seleccionadas
                             </span>
                         </div>
                         <input
@@ -1162,16 +1162,16 @@ export default function EventsPage() {
                         />
                         <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-3">
                             {createManualMembers.map((member) => {
-                                const isSelected = newEvent.target_member_ids.includes(String(member.id));
+                                const isSelected = newEvent.target_persona_ids.includes(member.id);
                                 return (
                                     <button
                                         key={member.id}
                                         type="button"
                                         onClick={() => setNewEvent({
                                             ...newEvent,
-                                            target_member_ids: isSelected
-                                                ? newEvent.target_member_ids.filter((value) => value !== String(member.id))
-                                                : [...newEvent.target_member_ids, String(member.id)],
+                                            target_persona_ids: isSelected
+                                                ? newEvent.target_persona_ids.filter((value) => value !== member.id)
+                                                : [...newEvent.target_persona_ids, member.id],
                                         })}
                                         className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${
                                             isSelected
@@ -1180,7 +1180,7 @@ export default function EventsPage() {
                                         }`}
                                     >
                                         <div>
-                                            <p className="text-sm font-bold text-slate-800 dark:text-white">{member.first_name} {member.last_name}</p>
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white">{member.nombre_completo}</p>
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{member.church_role || 'Sin rol'}</p>
                                         </div>
                                         <span className={`text-[10px] font-semibold uppercase tracking-wide ${isSelected ? 'text-blue-600 dark:text-blue-300' : 'text-slate-400'}`}>
@@ -1424,7 +1424,7 @@ export default function EventsPage() {
                             </div>
                             <div>
                                 <p className={`font-bold text-sm ${attendedMemberIds.includes(member.id) ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-700 dark:text-slate-300'}`}>
-                                    {member.first_name} {member.last_name}
+                                    {member.nombre_completo}
                                 </p>
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                     {member.church_role || 'Sin rol'}
@@ -1513,7 +1513,7 @@ export default function EventsPage() {
                         <button disabled={!!editingEvent && updatingEventId === editingEvent.id} onClick={() => setEditingEvent(null)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
                             Cancelar
                         </button>
-                        <button disabled={!editingEvent || updatingEventId === editingEvent.id} onClick={() => editingEvent && handleUpdateEvent(editingEvent.id, { name: editingEvent.name, description: editingEvent.description, location: editingEvent.location, status: editingEvent.status, cancellation_reason: editingEvent.cancellation_reason, start_time: editingEvent.start_time, end_time: editingEvent.end_time, target_audience: editingEvent.target_audience || 'ALL', target_role_id: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids?.[0] || editingEvent.target_role_id) : null, target_role_ids: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [], target_member_ids: (editingEvent.target_audience || 'ALL') === 'MANUAL' ? (editingEvent.target_member_ids || []) : [] })} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
+                        <button disabled={!editingEvent || updatingEventId === editingEvent.id} onClick={() => editingEvent && handleUpdateEvent(editingEvent.id, { name: editingEvent.name, description: editingEvent.description, location: editingEvent.location, status: editingEvent.status, cancellation_reason: editingEvent.cancellation_reason, start_time: editingEvent.start_time, end_time: editingEvent.end_time, target_audience: editingEvent.target_audience || 'ALL', target_role_id: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids?.[0] || editingEvent.target_role_id) : null, target_role_ids: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [], target_persona_ids: (editingEvent.target_audience || 'ALL') === 'MANUAL' ? (editingEvent.target_persona_ids || []) : [] })} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
                             {editingEvent && updatingEventId === editingEvent.id ? 'Guardando...' : 'Guardar'} <Pencil size={14} />
                         </button>
                     </>
@@ -1547,7 +1547,7 @@ export default function EventsPage() {
                                         target_audience: e.target.value as EventAudience,
                                         target_role_id: e.target.value === 'ROLE' ? editingEvent.target_role_id : null,
                                         target_role_ids: e.target.value === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [],
-                                        target_member_ids: e.target.value === 'MANUAL' ? (editingEvent.target_member_ids || []) : [],
+                                        target_persona_ids: e.target.value === 'MANUAL' ? (editingEvent.target_persona_ids || []) : [],
                                     })}
                                     className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
                                 >
@@ -1582,7 +1582,7 @@ export default function EventsPage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button type="button" onClick={addSuggestedAudiencePresets} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-white/10">Sugerencias</button>
-                                    <button type="button" onClick={() => saveAudiencePreset({ target_audience: editingEvent.target_audience || 'ALL', target_role_ids: editingEvent.target_role_ids || [], target_member_ids: editingEvent.target_member_ids || [] })} className="rounded-lg bg-blue-600 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-blue-700">Guardar actual</button>
+                                    <button type="button" onClick={() => saveAudiencePreset({ target_audience: editingEvent.target_audience || 'ALL', target_role_ids: editingEvent.target_role_ids || [], target_persona_ids: editingEvent.target_persona_ids || [] })} className="rounded-lg bg-blue-600 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-blue-700">Guardar actual</button>
                                 </div>
                             </div>
                             <div className="space-y-2">
@@ -1592,7 +1592,7 @@ export default function EventsPage() {
                                     <div key={preset.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-1.5">
                                         <div className="min-w-0">
                                             <p className="truncate text-sm font-bold text-slate-800 dark:text-white">{preset.name}</p>
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{preset.target_audience === 'ALL' ? 'Toda la iglesia' : preset.target_audience === 'ROLE' ? `${preset.target_role_ids.length} roles` : `${preset.target_member_ids.length} personas`}</p>
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{preset.target_audience === 'ALL' ? 'Toda la iglesia' : preset.target_audience === 'ROLE' ? `${preset.target_role_ids.length} roles` : `${preset.target_persona_ids.length} personas`}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button type="button" onClick={() => applyPresetToEditingEvent(preset.id)} className="rounded-lg bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:opacity-85 dark:bg-white/10">Aplicar</button>
@@ -1606,16 +1606,16 @@ export default function EventsPage() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between gap-3">
                                     <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Personas esperadas</label>
-                                    <span className="rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">{(editingEvent.target_member_ids || []).length} seleccionadas</span>
+                                    <span className="rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">{(editingEvent.target_persona_ids || []).length} seleccionadas</span>
                                 </div>
                                 <input value={editManualSearch} onChange={e => setEditManualSearch(e.target.value)} placeholder="Buscar por nombre, correo o rol..." className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                                 <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-3">
                                     {editManualMembers.map((member) => {
-                                        const isSelected = (editingEvent.target_member_ids || []).includes(member.id);
+                                        const isSelected = (editingEvent.target_persona_ids || []).includes(member.id);
                                         return (
-                                            <button key={member.id} type="button" onClick={() => setEditingEvent({ ...editingEvent, target_member_ids: isSelected ? (editingEvent.target_member_ids || []).filter((value) => value !== member.id) : [...(editingEvent.target_member_ids || []), member.id], })} className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${isSelected ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20' : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/5'}`}>
+                                            <button key={member.id} type="button" onClick={() => setEditingEvent({ ...editingEvent, target_persona_ids: isSelected ? (editingEvent.target_persona_ids || []).filter((value) => value !== member.id) : [...(editingEvent.target_persona_ids || []), member.id], })} className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${isSelected ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20' : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/5'}`}>
                                                 <div>
-                                                    <p className="text-sm font-bold text-slate-800 dark:text-white">{member.first_name} {member.last_name}</p>
+                                                    <p className="text-sm font-bold text-slate-800 dark:text-white">{member.nombre_completo}</p>
                                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{member.church_role || 'Sin rol'}</p>
                                                 </div>
                                                 <span className={`text-[10px] font-semibold uppercase tracking-wide ${isSelected ? 'text-blue-600 dark:text-blue-300' : 'text-slate-400'}`}>{isSelected ? 'Incluida' : 'Agregar'}</span>

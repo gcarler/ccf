@@ -22,17 +22,17 @@ def _is_crm_admin_or_pastor(user: models.User) -> bool:
     return normalize_role(str(getattr(user, "role", ""))) in {"admin", "pastor"}
 
 
-def _get_member_for_user(db: Session, user_id: int) -> Optional[models.Member]:
-    return db.query(models.Member).filter(models.Member.user_id == user_id).first()
+def _get_persona_for_user(db: Session, user_id: int) -> Optional[models.Persona]:
+    return db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
 
 
 def _can_manage_house(db: Session, user: models.User, house: models.GloryHouse) -> bool:
     if _is_crm_admin_or_pastor(user):
         return True
-    member = _get_member_for_user(db, user.id)
-    if not member:
+    persona = _get_persona_for_user(db, user.id)
+    if not persona:
         return False
-    return member.id in {house.leader_id, house.assistant_id}
+    return persona.id in {house.leader_persona_id, house.assistant_persona_id}
 
 
 @router.get("/glory-houses", response_model=List[schemas.GloryHouse])
@@ -50,14 +50,14 @@ def list_my_glory_houses(
 ):
     if _is_crm_admin_or_pastor(current_user):
         return crud.get_glory_houses(db)
-    member = _get_member_for_user(db, current_user.id)
-    if not member:
+    persona = _get_persona_for_user(db, current_user.id)
+    if not persona:
         return []
     return (
         db.query(models.GloryHouse)
         .filter(
-            (models.GloryHouse.leader_id == member.id)
-            | (models.GloryHouse.assistant_id == member.id)
+            (models.GloryHouse.leader_persona_id == persona.id)
+            | (models.GloryHouse.assistant_persona_id == persona.id)
         )
         .order_by(models.GloryHouse.name.asc())
         .all()
@@ -70,36 +70,36 @@ def get_faro_assignment_summary(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     houses = db.query(models.GloryHouse).order_by(models.GloryHouse.name.asc()).all()
-    members = db.query(models.Member).all()
-    assigned_member_ids = {
+    personas = db.query(models.Persona).all()
+    assigned_persona_ids = {
         row[0]
-        for row in db.query(models.GloryHouseMember.member_id).distinct().all()
+        for row in db.query(models.GloryHouseMember.persona_id).distinct().all()
         if row and row[0] is not None
     }
     for house in houses:
-        for member_id in [house.leader_id, house.assistant_id, house.host_id]:
-            if member_id:
-                assigned_member_ids.add(member_id)
+        for pid in [house.leader_persona_id, house.assistant_persona_id, house.host_persona_id]:
+            if pid:
+                assigned_persona_ids.add(pid)
 
-    houses_with_leader = [house for house in houses if house.leader_id]
-    houses_without_leader = [house for house in houses if not house.leader_id]
-    houses_with_assistant = [house for house in houses if house.assistant_id]
-    houses_without_assistant = [house for house in houses if not house.assistant_id]
-    houses_with_host = [house for house in houses if house.host_id]
-    houses_without_host = [house for house in houses if not house.host_id]
+    houses_with_leader = [house for house in houses if house.leader_persona_id]
+    houses_without_leader = [house for house in houses if not house.leader_persona_id]
+    houses_with_assistant = [house for house in houses if house.assistant_persona_id]
+    houses_without_assistant = [house for house in houses if not house.assistant_persona_id]
+    houses_with_host = [house for house in houses if house.host_persona_id]
+    houses_without_host = [house for house in houses if not house.host_persona_id]
     houses_with_members = [house for house in houses if (house.members_count or 0) > 0]
     houses_without_members = [
         house for house in houses if (house.members_count or 0) == 0
     ]
 
-    unassigned_members = [
+    unassigned_personas = [
         {
-            "id": member.id,
-            "name": f"{member.first_name} {member.last_name}",
-            "church_role": member.church_role,
+            "id": p.id,
+            "name": p.nombre_completo,
+            "church_role": p.church_role,
         }
-        for member in members
-        if member.id not in assigned_member_ids
+        for p in personas
+        if p.id not in assigned_persona_ids
     ]
 
     return {
@@ -112,8 +112,8 @@ def get_faro_assignment_summary(
         "houses_without_host": len(houses_without_host),
         "houses_with_members": len(houses_with_members),
         "houses_without_members": len(houses_without_members),
-        "members_total": len(members),
-        "members_unassigned": len(unassigned_members),
+        "personas_total": len(personas),
+        "personas_unassigned": len(unassigned_personas),
         "houses_needing_leader": [
             {
                 "id": house.id,
@@ -144,7 +144,7 @@ def get_faro_assignment_summary(
             }
             for house in houses_without_host
         ],
-        "unassigned_members": unassigned_members[:100],
+        "unassigned_personas": unassigned_personas[:100],
     }
 
 
@@ -164,28 +164,23 @@ def get_glory_house(
         )
 
     base_rows = (
-        db.query(models.GloryHouseMember, models.Member)
-        .join(models.Member, models.Member.id == models.GloryHouseMember.member_id)
+        db.query(models.GloryHouseMember, models.Persona)
+        .join(models.Persona, models.Persona.id == models.GloryHouseMember.persona_id)
         .filter(models.GloryHouseMember.glory_house_id == house_id)
-        .order_by(models.Member.last_name.asc(), models.Member.first_name.asc())
+        .order_by(models.Persona.nombre_completo.asc())
         .all()
     )
     base_attendees = [
         {
-            "member_id": member.id,
-            "name": f"{member.first_name} {member.last_name}",
+            "persona_id": persona.id,
+            "name": persona.nombre_completo,
             "role": row.role,
-            "church_role": member.church_role,
-            "phone": member.phone,
-            "member": {
-                "first_name": member.first_name,
-                "last_name": member.last_name,
-                "phone": member.phone,
-            },
+            "church_role": persona.church_role,
+            "phone": persona.telefono,
         }
-        for row, member in base_rows
+        for row, persona in base_rows
     ]
-    base_attendee_ids = [item["member_id"] for item in base_attendees]
+    base_attendee_ids = [item["persona_id"] for item in base_attendees]
 
     sessions = (
         db.query(models.GloryHouseSession)
@@ -208,15 +203,15 @@ def get_glory_house(
         season_ids = list({session.season_id for session in sessions})
         attendance_rows = (
             db.query(models.GloryHouseAttendance)
-            .options(joinedload(models.GloryHouseAttendance.member))
+            .options(joinedload(models.GloryHouseAttendance.persona))
             .filter(models.GloryHouseAttendance.session_id.in_(session_ids))
             .all()
         )
         for row in attendance_rows:
             attendance_by_session[row.session_id].append(row)
-            if not row.attended and row.member:
-                absence_counter[row.member_id] += 1
-                absence_details[row.member_id].append(
+            if not row.attended and row.persona:
+                absence_counter[row.persona_id] += 1
+                absence_details[row.persona_id].append(
                     {
                         "session_id": row.session_id,
                         "session_date": (
@@ -239,8 +234,8 @@ def get_glory_house(
         )
         attendance_map = {row.session_id: row.cnt for row in attendance_counts}
         seasons_batch = (
-            db.query(models.FaroSeason)
-            .filter(models.FaroSeason.id.in_(season_ids))
+            db.query(models.CampaignSeason)
+            .filter(models.CampaignSeason.id.in_(season_ids))
             .all()
         )
         season_map = {season.id: season.name for season in seasons_batch}
@@ -328,22 +323,18 @@ def get_glory_house(
 
     member_lookup = {member.id: member for _, member in expected_rows}
     repeat_absentees = []
-    for member_id, count in absence_counter.items():
+    for persona_id, count in absence_counter.items():
         if count >= 2:
-            member = (
-                member_lookup.get(member_id)
-                or db.query(models.Member).filter(models.Member.id == member_id).first()
+            p = (
+                member_lookup.get(persona_id)
+                or db.query(models.Persona).filter(models.Persona.id == persona_id).first()
             )
             repeat_absentees.append(
                 {
-                    "member_id": member_id,
-                    "name": (
-                        f"{member.first_name} {member.last_name}"
-                        if member
-                        else "Miembro"
-                    ),
+                    "persona_id": persona_id,
+                    "name": p.nombre_completo if p else "Persona",
                     "absences": count,
-                    "details": absence_details.get(member_id, []),
+                    "details": absence_details.get(persona_id, []),
                 }
             )
 
@@ -375,9 +366,9 @@ def get_glory_house(
         "latitude": float(house.latitude) if house.latitude else None,
         "longitude": float(house.longitude) if house.longitude else None,
         "leader_name": house.leader_name,
-        "leader_id": house.leader_id,
-        "assistant_id": house.assistant_id,
-        "host_id": house.host_id,
+        "leader_id": house.leader_persona_id,
+        "assistant_id": house.assistant_persona_id,
+        "host_id": house.host_persona_id,
         "base_attendee_ids": base_attendee_ids,
         "base_attendees": base_attendees,
         "members_count": house.members_count,
@@ -474,12 +465,12 @@ def delete_glory_house(
 
 
 @router.get("/faro/seasons")
-def list_faro_seasons(
+def list_campaign_seasons(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     seasons = (
-        db.query(models.FaroSeason).order_by(models.FaroSeason.start_date.desc()).all()
+        db.query(models.CampaignSeason).order_by(models.CampaignSeason.start_date.desc()).all()
     )
     return [
         {
@@ -496,7 +487,7 @@ def list_faro_seasons(
 
 
 @router.post("/faro/seasons", response_model=dict)
-def create_faro_season(
+def create_campaign_season(
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -517,7 +508,7 @@ def create_faro_season(
     if end <= start:
         raise HTTPException(status_code=400, detail="end_date must be after start_date")
 
-    season = models.FaroSeason(
+    season = models.CampaignSeason(
         name=name,
         start_date=start,
         end_date=end,
@@ -531,14 +522,14 @@ def create_faro_season(
 
 
 @router.patch("/faro/seasons/{season_id}", response_model=dict)
-def update_faro_season(
+def update_campaign_season(
     season_id: int,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     season = (
-        db.query(models.FaroSeason).filter(models.FaroSeason.id == season_id).first()
+        db.query(models.CampaignSeason).filter(models.CampaignSeason.id == season_id).first()
     )
     if not season:
         raise HTTPException(status_code=404, detail="Season not found")
@@ -615,8 +606,8 @@ def list_my_pending_faro_sessions(
             row[0]
             for row in db.query(models.GloryHouse.id)
             .filter(
-                (models.GloryHouse.leader_id == member.id)
-                | (models.GloryHouse.assistant_id == member.id)
+                (models.GloryHouse.leader_persona_id == member.id)
+                | (models.GloryHouse.assistant_persona_id == member.id)
             )
             .all()
         ]
@@ -713,7 +704,7 @@ def create_faro_session(
         )
 
     season = (
-        db.query(models.FaroSeason).filter(models.FaroSeason.id == season_id).first()
+        db.query(models.CampaignSeason).filter(models.CampaignSeason.id == season_id).first()
     )
     if not season:
         raise HTTPException(status_code=404, detail="Season not found")
@@ -819,12 +810,12 @@ def get_faro_session_attendance(
     attendances = (
         db.query(models.GloryHouseAttendance)
         .filter(models.GloryHouseAttendance.session_id == session_id)
-        .options(joinedload(models.GloryHouseAttendance.member))
+        .options(joinedload(models.GloryHouseAttendance.persona))
         .all()
     )
 
     expected_rows = faro_expected_member_rows(db, session.glory_house_id)
-    attendance_map = {attendance.member_id: attendance for attendance in attendances}
+    attendance_map = {attendance.persona_id: attendance for attendance in attendances}
     present = []
     absent = []
     expected_members = []
@@ -838,6 +829,8 @@ def get_faro_session_attendance(
             absence_reason_detail=(
                 attendance.absence_reason_detail if attendance else None
             ),
+            estado=attendance.estado if attendance else None,
+            es_primera_vez=attendance.es_primera_vez if attendance else False,
         )
         expected_members.append(payload)
         if attendance and attendance.attended:
@@ -860,7 +853,7 @@ def get_faro_session_attendance(
         "novelty_type": session.novelty_type,
         "novelty_detail": session.novelty_detail,
         "cancellation_reason": session.cancellation_reason,
-        "reported_by_member_id": session.reported_by_member_id,
+        "reported_by_persona_id": session.reported_by_persona_id,
         "total": len(present),
         "present_count": len(present),
         "absent_count": len(absent),
@@ -935,7 +928,7 @@ def add_faro_attendance(
                 db.query(models.GloryHouseAttendance)
                 .filter(
                     models.GloryHouseAttendance.session_id == session_id,
-                    models.GloryHouseAttendance.member_id == member_id,
+                    models.GloryHouseAttendance.persona_id == member_id,
                 )
                 .first()
             )
@@ -948,7 +941,7 @@ def add_faro_attendance(
                 db.add(
                     models.GloryHouseAttendance(
                         session_id=session_id,
-                        member_id=member_id,
+                        persona_id=member_id,
                         attended=attended,
                         absence_reason=absence_reason,
                         absence_reason_detail=absence_reason_detail,
@@ -966,14 +959,14 @@ def add_faro_attendance(
                 db.query(models.GloryHouseAttendance)
                 .filter(
                     models.GloryHouseAttendance.session_id == session_id,
-                    models.GloryHouseAttendance.member_id == member_id,
+                    models.GloryHouseAttendance.persona_id == member_id,
                 )
                 .first()
             )
             if not exists:
                 db.add(
                     models.GloryHouseAttendance(
-                        session_id=session_id, member_id=member_id, attended=True
+                        session_id=session_id, persona_id=member_id, attended=True
                     )
                 )
                 processed += 1
@@ -1002,8 +995,8 @@ def add_faro_attendance(
     session.novelty_detail = payload.get("novelty_detail", session.novelty_detail)
     session.cancellation_reason = new_cancellation_reason
     session.status = new_status
-    session.reported_by_member_id = payload.get(
-        "reported_by_member_id", session.reported_by_member_id
+    session.reported_by_persona_id = payload.get(
+        "reported_by_persona_id", session.reported_by_persona_id
     )
     session.reported_at = utc_now()
 
@@ -1077,9 +1070,9 @@ def get_macro_despliegue(
     # 1. Determine active season if not provided
     if not season_id:
         active_season = (
-            db.query(models.FaroSeason)
-            .filter(models.FaroSeason.status == "Activa")
-            .order_by(models.FaroSeason.id.desc())
+            db.query(models.CampaignSeason)
+            .filter(models.CampaignSeason.status == "Activa")
+            .order_by(models.CampaignSeason.id.desc())
             .first()
         )
         if active_season:
@@ -1093,8 +1086,8 @@ def get_macro_despliegue(
             }
     else:
         season = (
-            db.query(models.FaroSeason)
-            .filter(models.FaroSeason.id == season_id)
+            db.query(models.CampaignSeason)
+            .filter(models.CampaignSeason.id == season_id)
             .first()
         )
         season_name = season.name if season else f"Temporada {season_id}"
@@ -1187,7 +1180,7 @@ def register_faro_visitor(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    """Register a new guest from a Faro session report as a Member + CRM lead."""
+    """Register a new guest from a Faro session report as a Persona + CRM lead."""
     # Check user is leader/assistant of the glory house
     house = db.query(models.GloryHouse).filter(
         models.GloryHouse.id == visitor.glory_house_id
@@ -1195,52 +1188,40 @@ def register_faro_visitor(
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
 
-    member = _get_member_for_user(db, current_user.id)
-    if member and member.id not in {house.leader_id, house.assistant_id, house.host_id}:
+    persona = _get_persona_for_user(db, current_user.id)
+    if persona and persona.id not in {house.leader_persona_id, house.assistant_persona_id, house.host_persona_id}:
         raise HTTPException(status_code=403, detail="Solo el líder o asistente puede registrar visitantes")
 
-    # Find existing member by phone
+    # Find existing persona by phone
     existing = None
     if visitor.phone:
-        existing = db.query(models.Member).filter(
-            models.Member.phone == visitor.phone
+        existing = db.query(models.Persona).filter(
+            models.Persona.telefono == visitor.phone
         ).first()
 
     if existing:
-        return {"status": "duplicate", "member_id": existing.id}
+        return {"status": "duplicate", "persona_id": existing.id}
 
-    # Create new member
-    role_name = "Visitante Faro"
-    role = db.query(models.RoleDefinition).filter(
-        models.RoleDefinition.name == role_name
-    ).first()
-    if not role:
-        role = models.RoleDefinition(name=role_name, is_system_locked=True)
-        db.add(role)
-        db.commit()
-        db.refresh(role)
-
-    new_member = models.Member(
-        first_name=visitor.first_name,
-        last_name=visitor.last_name,
-        phone=visitor.phone,
-        church_role=role_name,
-        spiritual_status="Nuevo",
+    # Create new persona
+    new_persona = models.Persona(
+        nombre_completo=f"{visitor.first_name} {visitor.last_name}".strip(),
+        telefono=visitor.phone,
+        church_role="Visitante Faro",
     )
-    db.add(new_member)
+    db.add(new_persona)
     db.commit()
-    db.refresh(new_member)
+    db.refresh(new_persona)
 
     # Link to glory house
     db.add(models.GloryHouseMember(
         glory_house_id=visitor.glory_house_id,
-        member_id=new_member.id,
+        persona_id=new_persona.id,
         role="visitante",
     ))
 
     # CRM follow-up
     case = models.ConsolidationCase(
-        member_id=new_member.id,
+        persona_id=new_persona.id,
         stage="new",
         status="active",
         source="faro_session",
@@ -1248,9 +1229,9 @@ def register_faro_visitor(
     db.add(case)
 
     lead = models.ConsolidationPipeline(
-        first_name=new_member.first_name,
-        last_name=new_member.last_name,
-        phone=new_member.phone or "",
+        first_name=visitor.first_name,
+        last_name=visitor.last_name,
+        phone=visitor.phone or "",
         source="faro_session",
         stage="new",
         notes=f"Registrado como invitado en sesión de Faro en Casa (grupo {house.name or visitor.glory_house_id})",
@@ -1303,7 +1284,7 @@ def create_session(
         novelty_type=session_data.novelty_type,
         novelty_detail=session_data.novelty_detail,
         cancellation_reason=session_data.cancellation_reason,
-        reported_by_member_id=session_data.reported_by_member_id,
+        reported_by_persona_id=session_data.reported_by_persona_id,
         reported_at=_datetime.utcnow(),
         status=session_data.status,
     )
@@ -1321,7 +1302,7 @@ def get_session_detail(
 ):
     """Get session with attendance records including member names."""
     from backend.models_academy import GloryHouseSession, GloryHouseAttendance, GloryHouseMember
-    from backend.models_crm import Member
+    from backend.models_personas import Persona
 
     session = (
         db.query(GloryHouseSession)
@@ -1336,15 +1317,15 @@ def get_session_detail(
         GloryHouseAttendance.session_id == session_id
     ).all()
 
-    # Build member name lookup for this session's glory_house
-    member_map: dict[int, str] = {}
+    # Build persona name lookup for this session's glory_house
+    persona_map: dict[str, str] = {}
     house_members = db.query(GloryHouseMember).filter(
         GloryHouseMember.glory_house_id == session.glory_house_id
     ).all()
     for hm in house_members:
-        m = db.query(Member).filter(Member.id == hm.member_id).first()
-        if m:
-            member_map[hm.member_id] = f"{m.first_name} {m.last_name}".strip()
+        p = db.query(Persona).filter(Persona.id == hm.persona_id).first()
+        if p:
+            persona_map[hm.persona_id] = p.nombre_completo
 
     attendance_list = []
     for a in attendance_rows:
@@ -1352,8 +1333,8 @@ def get_session_detail(
         attendance_list.append({
             "id": a.id,
             "session_id": a.session_id,
-            "member_id": a.member_id,
-            "member_name": member_map.get(a.member_id, f"Miembro {a.member_id}"),
+            "persona_id": a.persona_id,
+            "persona_name": persona_map.get(a.persona_id, f"Persona {a.persona_id}"),
             "status": status,
             "notes": a.notes,
             "attended": a.attended,
@@ -1447,7 +1428,7 @@ def submit_attendance(
     
     submitted = []
     for att in attendance_data:
-        # Map schema fields (status/notes) to model fields (attended/absence_reason)
+        # Map schema fields (status/notes) to model fields
         is_attended = att.status in ("present", "first_time")
         absence_reason = None
         absence_reason_detail = None
@@ -1455,14 +1436,23 @@ def submit_attendance(
             absence_reason = att.notes if att.notes else "sin_especificar"
             absence_reason_detail = att.notes
 
+        # Mapear estado nuevo (EstadoAsistenciaEnum)
+        nuevo_estado = "presente"
+        if att.status == "absent":
+            nuevo_estado = "ausente"
+        elif att.status == "first_time":
+            nuevo_estado = "primera_vez"
+
         db_att = GloryHouseAttendance(
             session_id=session_id,
-            member_id=att.member_id,
+            persona_id=att.persona_id,
             attended=is_attended,
             absence_reason=absence_reason,
             absence_reason_detail=absence_reason_detail,
             status=att.status,
             notes=att.notes,
+            estado=nuevo_estado,
+            es_primera_vez=(att.status == "first_time"),
         )
         db.add(db_att)
         submitted.append(db_att)
@@ -1489,7 +1479,7 @@ def _check_absence_trigger(db: Session, session_id: int):
         GloryHouseSession,
         GloryHouse,
     )
-    from backend.models_crm import Member
+    from backend.models_personas import Persona
     
     session = db.query(GloryHouseSession).filter(
         GloryHouseSession.id == session_id
@@ -1517,32 +1507,32 @@ def _check_absence_trigger(db: Session, session_id: int):
     
     # Check attendance for each member in base attendees
     for base_member in (house.base_attendees or []):
-        member_id = base_member.member_id
+        member_id = base_member.persona_id
         absent_count = 0
         for s in recent_sessions:
             att = (
                 db.query(GloryHouseAttendance)
                 .filter(
                     GloryHouseAttendance.session_id == s.id,
-                    GloryHouseAttendance.member_id == member_id,
+                    GloryHouseAttendance.persona_id == member_id,
                     GloryHouseAttendance.status == "absent",
                 )
                 .first()
             )
             if att:
                 absent_count += 1
-        
+
         if absent_count >= 3:
             # Create N2 task in Consolidation
-            member = db.query(Member).filter(Member.id == member_id).first()
-            if not member:
+            p = db.query(Persona).filter(Persona.id == member_id).first()
+            if not p:
                 continue
             from backend.models_crm import SupportTicket
             ticket = SupportTicket(
-                member_id=member_id,
+                persona_id=member_id,
                 ticket_type="consolidation",
-                title=f"Inasistencia recurrente: {member.first_name} {member.last_name}",
-                description=f"{member.first_name} {member.last_name} ha faltado 3 sesiones consecutivas en {house.name}. Requiere contacto pastoral.",
+                title=f"Inasistencia recurrente: {p.nombre_completo}",
+                description=f"{p.nombre_completo} ha faltado 3 sesiones consecutivas en {house.name}. Requiere contacto pastoral.",
                 status="open",
                 priority="high",
                 severity="N2",
@@ -1554,7 +1544,7 @@ def _check_absence_trigger(db: Session, session_id: int):
 def _check_first_time_lead_trigger(db: Session, session_id: int):
     """If a first_time attendee is recorded, mark as LEAD_NUEVO in CRM."""
     from backend.models_academy import GloryHouseAttendance
-    from backend.models_crm import Member
+    from backend.models_personas import Persona
     
     first_timers = (
         db.query(GloryHouseAttendance)
@@ -1566,10 +1556,10 @@ def _check_first_time_lead_trigger(db: Session, session_id: int):
     )
     
     for att in first_timers:
-        member = db.query(Member).filter(Member.id == att.member_id).first()
-        if member and str(getattr(member, "status", "")).lower() not in ("lead", "lead_nuevo"):
+        p = db.query(Persona).filter(Persona.id == att.persona_id).first()
+        if p and str(getattr(p, "church_role", "")).lower() not in ("lead", "lead_nuevo"):
             try:
-                member.status = "lead_nuevo"
+                p.church_role = "lead_nuevo"
                 db.commit()
             except Exception:
                 pass
@@ -1697,3 +1687,66 @@ def get_strategy_metrics(
             "total_absences": total_absent,
         },
     }
+
+
+# ──────────────────────────────────────────────
+# SEGUIMIENTO (FOLLOW-UP)
+# ──────────────────────────────────────────────
+
+@router.get("/follow-up/pending", response_model=List[schemas.RegistroSeguimientoResponse])
+def list_pending_follow_ups(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Lista todos los seguimientos pendientes (no completados)."""
+    from backend.crud.evangelism import get_pendientes_seguimiento
+    return get_pendientes_seguimiento(db, limit=limit)
+
+
+@router.get("/follow-up/{asistencia_id}", response_model=List[schemas.RegistroSeguimientoResponse])
+def list_seguimientos_for_attendance(
+    asistencia_id: int,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Lista los seguimientos de una asistencia."""
+    from backend.crud.evangelism import get_seguimientos
+    return get_seguimientos(db, asistencia_id)
+
+
+@router.post("/follow-up/{asistencia_id}", response_model=schemas.RegistroSeguimientoResponse)
+def create_seguimiento(
+    asistencia_id: int,
+    payload: schemas.RegistroSeguimientoCreate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Crea un registro de seguimiento para una asistencia."""
+    from backend.crud.evangelism import create_seguimiento
+    from backend.models_academy import GloryHouseAttendance
+
+    asistencia = db.query(GloryHouseAttendance).filter(
+        GloryHouseAttendance.id == asistencia_id
+    ).first()
+    if not asistencia:
+        raise HTTPException(status_code=404, detail="Asistencia no encontrada")
+
+    payload.asistencia_id = asistencia_id
+    return create_seguimiento(db, payload)
+
+
+@router.patch("/follow-up/{seguimiento_id}", response_model=schemas.RegistroSeguimientoResponse)
+def update_seguimiento(
+    seguimiento_id: int,
+    payload: schemas.RegistroSeguimientoUpdate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Actualiza un seguimiento (marcar completado, agregar resultado, etc.)."""
+    from backend.crud.evangelism import update_seguimiento
+
+    result = update_seguimiento(db, seguimiento_id, payload)
+    if not result:
+        raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
+    return result

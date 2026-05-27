@@ -46,7 +46,7 @@ function getTeamColor(team: string) {
 
 interface Volunteer {
     id: number;
-    member_id?: number;
+    member_id?: string;
     name?: string;
     role?: string;
     team?: string;
@@ -130,7 +130,7 @@ export default function VolunteersPage() {
             await apiFetch('/crm/volunteers', {
                 method: 'POST',
                 token,
-                body: { ...form, member_id: null },
+                body: { ...form, persona_id: null },
             });
             toast.success('Servidor registrado exitosamente');
             setShowAddForm(false);

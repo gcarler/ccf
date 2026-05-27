@@ -229,15 +229,13 @@ class GloryHouse(Base):
     leader_name = Column(String(100), nullable=True)
     members_count = Column(Integer, default=0)
     capacity = Column(Integer, default=15)
-    day_of_week = Column(String(20), nullable=True)  # e.g. "Lunes", "Jueves"
+    day_of_week = Column(String(20), nullable=True)
     start_time = Column(String(50), nullable=True)
-    end_time = Column(String(50), nullable=True)  # e.g. "19:00"
+    end_time = Column(String(50), nullable=True)
     status = Column(String(20), default="Activo", index=True)
 
-    # MULTI-TENANT: Sede a la que pertenece este grupo
     sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
 
-    # Link to evangelism strategy (required — faro groups must belong to a strategy)
     evangelism_strategy_id = Column(
         Integer,
         ForeignKey("evangelism_strategies.id", ondelete="CASCADE"),
@@ -255,7 +253,7 @@ class GloryHouse(Base):
         UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
 
-    schedule = Column(String(100), nullable=True)  # legacy: "Lunes 19:00-21:00"
+    schedule = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -285,7 +283,6 @@ class GloryHouseMember(Base):
     )
     role = Column(String(50), default="asistente")
 
-    # --- Nuevos campos (refactor evangelismo) ---
     rol_personalizado_id = Column(
         Integer,
         ForeignKey("roles_personalizados_estrategia.id", ondelete="SET NULL"),
@@ -297,21 +294,6 @@ class GloryHouseMember(Base):
 
     glory_house = relationship("GloryHouse", back_populates="base_attendees")
     persona = relationship("Persona")
-
-
-class FaroSeason(Base):
-    """Represents an evangelistic campaign season (e.g. 'Faro en Casa 2026')."""
-
-    __tablename__ = "faro_seasons"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-    periodicity = Column(
-        String(20), default="SEMANAL", nullable=False
-    )  # SEMANAL | MENSUAL
-    status = Column(String(20), default="Activa", index=True)  # Activa | Finalizada
-    created_at = Column(DateTime, default=_utcnow)
 
 
 class GloryHouseSession(Base):
@@ -332,7 +314,7 @@ class GloryHouseSession(Base):
     )
     season_id = Column(
         Integer,
-        ForeignKey("faro_seasons.id", ondelete="CASCADE"),
+        ForeignKey("campaign_seasons.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -355,7 +337,7 @@ class GloryHouseSession(Base):
     created_at = Column(DateTime, default=_utcnow)
 
     glory_house = relationship("GloryHouse")
-    season = relationship("FaroSeason")
+    season = relationship("CampaignSeason")
     reported_by_persona = relationship("Persona")
 
 
@@ -400,12 +382,23 @@ class GloryHouseAttendance(Base):
 
     session = relationship("GloryHouseSession")
     persona = relationship("Persona")
-    seguimientos = relationship(
-        "RegistroSeguimiento",
-        back_populates="asistencia",
-        cascade="all, delete-orphan",
-    )
-    motivo_excusa = relationship("MotivoExcusa")
+
+
+class CampaignSeason(Base):
+    """Represents an evangelistic campaign season (e.g. 'Faro en Casa 2026')."""
+
+    __tablename__ = "campaign_seasons"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    periodicity = Column(
+        String(20), default="SEMANAL", nullable=False
+    )  # SEMANAL | MENSUAL
+    status = Column(String(20), default="Activa", index=True)  # Activa | Finalizada
+    created_at = Column(DateTime, default=_utcnow)
+
+
 
 
 class Enrollment(Base):

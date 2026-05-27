@@ -50,7 +50,7 @@ def list_counseling_tickets(
     _warn_deprecated_crm_alias("/api/evangelism/counseling/", "/api/crm/counseling/")
     tickets = crud.get_counseling_tickets(db, status=status)
     if member_id:
-        tickets = [t for t in tickets if t.member_id == member_id]
+        tickets = [t for t in tickets if t.persona_id == member_id]
     return tickets
 
 
@@ -72,11 +72,11 @@ def get_counseling_ticket(
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     member = (
-        db.query(models.Member).filter(models.Member.id == ticket.member_id).first()
+        db.query(models.Member).filter(models.Member.id == ticket.persona_id).first()
     )
     related_history = (
         db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.member_id == ticket.member_id)
+        .filter(models.CounselingTicket.persona_id == ticket.persona_id)
         .order_by(models.CounselingTicket.created_at.desc())
         .limit(10)
         .all()
@@ -84,7 +84,7 @@ def get_counseling_ticket(
 
     return {
         "id": ticket.id,
-        "member_id": ticket.member_id,
+        "member_id": ticket.persona_id,
         "member_name": (
             f"{member.first_name} {member.last_name}" if member else "Miembro CCF"
         ),
@@ -124,7 +124,7 @@ def get_counseling_by_lead(
         # Buscar tickets donde el member_id coincida (lead puede haberse convertido en miembro)
         tickets = (
             db.query(models.CounselingTicket)
-            .filter(models.CounselingTicket.member_id == lead_id)
+            .filter(models.CounselingTicket.persona_id == lead_id)
             .all()
         )
         return [
@@ -329,8 +329,8 @@ def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.M
 
     donation_member_ids = {
         member_id
-        for (member_id,) in db.query(models.Donation.member_id)
-        .filter(models.Donation.member_id.isnot(None))
+        for (member_id,) in db.query(models.Donation.persona_id)
+        .filter(models.Donation.persona_id.isnot(None))
         .distinct()
         .all()
     }
@@ -409,7 +409,7 @@ def get_messaging_history(
         )
 
         if member_id:
-            q = q.filter(models.CommunicationLog.member_id == member_id)
+            q = q.filter(models.CommunicationLog.persona_id == member_id)
 
         logs = q.order_by(models.CommunicationLog.created_at.desc()).limit(limit).all()
         grouped: dict[str, list[models.CommunicationLog]] = {}
@@ -623,7 +623,7 @@ def _serialize_crm_task(
         "priority": task.priority,
         "category": task.category,
         "due_date": task.due_date.isoformat() if task.due_date else None,
-        "member_id": task.member_id,
+        "member_id": task.persona_id,
         "member_name": member_name,
         "contact_name": member_name,
         "assigned_to": assigned_to,
@@ -650,7 +650,7 @@ def list_crm_tasks(
         if assignee_id:
             q = q.filter(models.CrmTask.assignee_id == assignee_id)
         if member_id:
-            q = q.filter(models.CrmTask.member_id == member_id)
+            q = q.filter(models.CrmTask.persona_id == member_id)
 
         tasks = q.all()
         result = [_serialize_crm_task(t) for t in tasks]
@@ -877,7 +877,7 @@ def get_volunteer_detail(
 
     shifts = (
         db.query(models.VolunteerShift)
-        .filter(models.VolunteerShift.member_id == member_id)
+        .filter(models.VolunteerShift.persona_id == member_id)
         .order_by(models.VolunteerShift.created_at.desc())
         .all()
     )
@@ -895,7 +895,7 @@ def get_volunteer_detail(
                 models.member_volunteer_skills,
                 models.VolunteerSkill.id == models.member_volunteer_skills.c.skill_id,
             )
-            .filter(models.member_volunteer_skills.c.member_id == member_id)
+            .filter(models.member_volunteer_skills.c.persona_id == member_id)
             .order_by(models.VolunteerSkill.name.asc())
             .all()
         )
@@ -1142,12 +1142,16 @@ def crm_analytics(
 
 @router.get("/strategies", response_model=List[EvangelismStrategy])
 def read_evangelism_strategies(
-    skip: int = 0, limit: int = 100,
+    skip: int = 0,
+    limit: int = 100,
+    activa: Optional[bool] = None,
+    clase_raiz: Optional[str] = None,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     from backend.models_academy import GloryHouse
-    strategies = get_evangelism_strategies(db, skip=skip, limit=limit)
+    from backend.crud.evangelism import get_estrategias
+    strategies = get_estrategias(db, skip=skip, limit=limit, activa=activa, clase_raiz=clase_raiz)
     result = []
     for s in strategies:
         obj = EvangelismStrategy.model_validate(s)
@@ -1213,6 +1217,120 @@ def update_strategy(
     if strategy.typology == "evento_masivo" and strategy.phases:
         _project_phases_as_tasks(db, strategy_id, db_obj.name, strategy.phases, strategy.start_date)
     return db_obj
+
+
+@router.get("/strategies/{strategy_id}/roles", response_model=List[schemas.RolPersonalizadoEstrategiaResponse])
+def list_strategy_roles(
+    strategy_id: int,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Lista los roles personalizados de una estrategia."""
+    from backend.crud.evangelism import get_roles_personalizados
+    strategy = db.query(models.EvangelismStrategy).filter(
+        models.EvangelismStrategy.id == strategy_id
+    ).first()
+    if not strategy or not strategy.codigo:
+        raise HTTPException(status_code=404, detail="Estrategia no encontrada o sin código")
+    return get_roles_personalizados(db, strategy.codigo)
+
+
+@router.post("/strategies/{strategy_id}/roles", response_model=schemas.RolPersonalizadoEstrategiaResponse)
+def create_strategy_role(
+    strategy_id: int,
+    payload: schemas.RolPersonalizadoEstrategiaCreate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Crea un rol personalizado para una estrategia."""
+    from backend.crud.evangelism import create_rol_personalizado
+    strategy = db.query(models.EvangelismStrategy).filter(
+        models.EvangelismStrategy.id == strategy_id
+    ).first()
+    if not strategy or not strategy.codigo:
+        raise HTTPException(status_code=404, detail="Estrategia no encontrada o sin código")
+    payload.estrategia_id = strategy.codigo
+    return create_rol_personalizado(db, payload)
+
+
+@router.delete("/strategies/{strategy_id}/roles/{role_id}")
+def delete_strategy_role(
+    strategy_id: int,
+    role_id: int,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Elimina un rol personalizado de una estrategia."""
+    from backend.crud.evangelism import delete_rol_personalizado
+    if not delete_rol_personalizado(db, role_id):
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────
+# MOTIVOS DE EXCUSA
+# ──────────────────────────────────────────────
+
+
+@router.get("/excuses", response_model=List[schemas.MotivoExcusaResponse])
+def list_motivos_excusa(
+    solo_activos: bool = True,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Lista el catálogo de motivos de excusa."""
+    from backend.crud.evangelism import get_motivos_excusa
+    return get_motivos_excusa(db, solo_activos=solo_activos)
+
+
+@router.post("/excuses", response_model=schemas.MotivoExcusaResponse)
+def create_motivo_excusa(
+    payload: schemas.MotivoExcusaCreate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Crea un nuevo motivo de excusa."""
+    from backend.crud.evangelism import create_motivo_excusa
+    return create_motivo_excusa(db, payload.descripcion)
+
+
+@router.patch("/excuses/{excusa_id}", response_model=schemas.MotivoExcusaResponse)
+def update_motivo_excusa(
+    excusa_id: int,
+    payload: schemas.MotivoExcusaUpdate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Actualiza un motivo de excusa (no permite modificar los del sistema)."""
+    from backend.crud.evangelism import update_motivo_excusa
+    result = update_motivo_excusa(db, excusa_id, descripcion=payload.descripcion, activo=payload.activo)
+    if not result:
+        raise HTTPException(status_code=404, detail="Excusa no encontrada o es del sistema")
+    return result
+
+
+@router.delete("/excuses/{excusa_id}")
+def delete_motivo_excusa(
+    excusa_id: int,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Elimina un motivo de excusa (no permite eliminar los del sistema)."""
+    from backend.crud.evangelism import delete_motivo_excusa
+    if not delete_motivo_excusa(db, excusa_id):
+        raise HTTPException(status_code=404, detail="Excusa no encontrada o es del sistema")
+    return {"ok": True}
+
+
+@router.post("/excuses/seed")
+def seed_motivos_excusa(
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Inserta las excusas base del sistema (SALUD, TRABAJO, FAMILIA, OTRA)."""
+    from backend.crud.evangelism import seed_motivos_excusa
+    created = seed_motivos_excusa(db)
+    return {"created": len(created), "excusas": [e.descripcion for e in created]}
 
 
 def _project_phases_as_tasks(db, strategy_id: int, strategy_name: str, phases: list[dict], start_date=None):

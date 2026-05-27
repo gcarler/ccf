@@ -15,10 +15,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 
-type Member = { id: number; first_name: string; last_name: string };
+type Member = { id: string; nombre_completo?: string; first_name?: string; last_name?: string };
 type CommunicationLog = {
   id: number;
-  member_id: number;
+  persona_id: string;
   channel: string;
   content: string;
   outcome: string;
@@ -50,7 +50,7 @@ export default function InboxMessagesPage() {
         token,
         cache: 'no-store',
       }).catch(() => []),
-      apiFetch<Member[]>('/crm/members/', { token, cache: 'no-store' }).catch(
+      apiFetch<Member[]>('/crm/personas/', { token, cache: 'no-store' }).catch(
         () => []
       ),
     ]).then(([history, people]) => {
@@ -64,24 +64,24 @@ export default function InboxMessagesPage() {
       new Map(
         members.map(member => [
           member.id,
-          `${member.first_name} ${member.last_name}`,
+          member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(),
         ])
       ),
     [members]
   );
   
   const chats = useMemo<Chat[]>(() => {
-    const latest = new Map<number, CommunicationLog>();
+    const latest = new Map<string, CommunicationLog>();
     for (const log of logs) {
-      const current = latest.get(log.member_id);
+      const current = latest.get(log.persona_id);
       if (!current || current.created_at < log.created_at)
-        latest.set(log.member_id, log);
+        latest.set(log.persona_id, log);
     }
     return Array.from(latest.values())
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
       .map(log => ({
-        id: log.member_id,
-        name: memberNames.get(log.member_id) || `Miembro ${log.member_id}`,
+        id: log.persona_id,
+        name: memberNames.get(log.persona_id) || `Persona ${log.persona_id}`,
         lastMessage: log.content,
         time: new Date(log.created_at).toLocaleString('es-CO'),
         channel: log.channel,
@@ -96,11 +96,11 @@ export default function InboxMessagesPage() {
   
   const visibleMembers = members.filter(
     member =>
-        `${member.first_name} ${member.last_name}`.toLowerCase().includes(search.toLowerCase())
+        (member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()).toLowerCase().includes(search.toLowerCase())
   );
 
   const messages = logs
-    .filter(log => log.member_id === activeChat?.id)
+    .filter(log => log.persona_id === activeChat?.id)
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export default function InboxMessagesPage() {
     } else {
       setActiveChat({
         id: member.id,
-        name: `${member.first_name} ${member.last_name}`,
+        name: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(),
         lastMessage: '',
         time: new Date().toLocaleString('es-CO'),
         channel: 'internal'
@@ -131,7 +131,7 @@ export default function InboxMessagesPage() {
       method: 'POST',
       token,
       body: {
-        member_id: activeChat.id,
+        persona_id: activeChat.id,
         channel: activeChat.channel || 'internal',
         content: inputText.trim(),
       },
@@ -201,11 +201,11 @@ export default function InboxMessagesPage() {
                             className="flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors group"
                         >
                             <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-[10px] font-semibold uppercase text-slate-600 dark:bg-white/10 dark:text-white group-hover:bg-blue-200 group-hover:text-blue-700 transition-colors">
-                            {member.first_name.charAt(0)}{member.last_name.charAt(0)}
+                            {member.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? member.first_name?.charAt(0) ?? ''}{member.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? member.last_name?.charAt(0) ?? ''}
                             </div>
                             <div className="min-w-0 flex-1">
                             <h4 className="truncate font-semibold text-slate-800 dark:text-slate-100">
-                                {member.first_name} {member.last_name}
+                                {member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}
                             </h4>
                             </div>
                             <UserPlus size={14} className="text-slate-300 group-hover:text-blue-500 transition-colors" />

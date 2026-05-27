@@ -30,9 +30,10 @@ import clsx from 'clsx';
 
 interface NewsletterLead {
     case_id: number;
-    member_id: number | null;
-    first_name: string;
-    last_name: string;
+    persona_id: string | null;
+    nombre_completo?: string;
+    first_name?: string;
+    last_name?: string;
     email: string | null;
     phone: string | null;
     source: string;
@@ -107,7 +108,7 @@ export default function NewsletterLeadsPage() {
         if (!searchQuery.trim()) return data.leads;
         const q = searchQuery.toLowerCase();
         return data.leads.filter(l =>
-            `${l.first_name} ${l.last_name}`.toLowerCase().includes(q) ||
+            `${l.nombre_completo || `${l.first_name ?? ''} ${l.last_name ?? ''}`.trim()}`.toLowerCase().includes(q) ||
             (l.email || '').toLowerCase().includes(q) ||
             (l.notes || '').toLowerCase().includes(q)
         );
@@ -267,11 +268,11 @@ export default function NewsletterLeadsPage() {
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-3">
                                         <div className="size-9 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-                                            {lead.first_name?.charAt(0) || '?'}{lead.last_name?.charAt(0) || ''}
+                                            {lead.nombre_completo?.charAt(0) || (lead.first_name?.charAt(0) ?? '?')}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || (lead.last_name?.charAt(0) ?? '')}
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 transition-colors">
-                                                {lead.first_name} {lead.last_name}
+                                                {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                                             </h3>
                                             <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
                                                 <Mail size={11} /> {lead.email || 'Sin email'}
@@ -320,7 +321,7 @@ export default function NewsletterLeadsPage() {
                                             className="cursor-pointer border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]"
                                         >
                                             <td className="px-4 py-2 text-sm font-bold text-slate-800 dark:text-slate-100">
-                                                {lead.first_name} {lead.last_name}
+                                                {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                                             </td>
                                             <td className="px-4 py-2 text-xs text-slate-500">{lead.email || '—'}</td>
                                             <td className="px-4 py-2 text-xs text-slate-500">{lead.phone || '—'}</td>
@@ -368,7 +369,7 @@ export default function NewsletterLeadsPage() {
                                                     className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all"
                                                 >
                                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                                                        {lead.first_name} {lead.last_name}
+                                                        {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                                                     </p>
                                                     <p className="text-[10px] text-slate-400">{lead.email || 'Sin email'}</p>
                                                 </button>

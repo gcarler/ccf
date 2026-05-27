@@ -52,13 +52,14 @@ interface GloryHouse {
     start_time?: string;
     end_time?: string;
     base_attendee_ids?: number[];
-    base_attendees?: Array<{ member_id: number }>;
+    base_attendees?: Array<{ persona_id: string }>;
 }
 
 interface Member {
-    id: number;
-    first_name: string;
-    last_name: string;
+    id: string;
+    nombre_completo?: string;
+    first_name?: string;
+    last_name?: string;
     church_role?: string;
 }
 
@@ -72,7 +73,7 @@ export default function CrmGroupsPage() {
     const [members, setMembers] = useState<Member[]>([]);
     const [inviteGroup, setInviteGroup] = useState<GloryHouse | null>(null);
     const [memberQuery, setMemberQuery] = useState('');
-    const [assigningMemberId, setAssigningMemberId] = useState<number | null>(null);
+    const [assigningMemberId, setAssigningMemberId] = useState<string | null>(null);
 
     const loadGroups = useCallback(async () => {
         if (!token) return;
@@ -92,7 +93,7 @@ export default function CrmGroupsPage() {
 
     useEffect(() => {
         if (!token || !inviteGroup) return;
-        apiFetch<Member[]>('/crm/members/', { token })
+        apiFetch<Member[]>('/crm/personas/', { token })
             .then(data => setMembers(Array.isArray(data) ? data : []))
             .catch(() => toast.error('No se pudo cargar la lista de miembros'));
     }, [inviteGroup, token]);
@@ -119,17 +120,17 @@ export default function CrmGroupsPage() {
         const term = memberQuery.trim().toLowerCase();
         if (!term) return members;
         return members.filter(member =>
-            `${member.first_name} ${member.last_name}`.toLowerCase().includes(term) ||
+            (member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()).toLowerCase().includes(term) ||
             member.church_role?.toLowerCase().includes(term)
         );
     }, [memberQuery, members]);
 
-    const handleInviteMember = async (memberId: number) => {
+    const handleInviteMember = async (memberId: string) => {
         if (!token || !inviteGroup) return;
         setAssigningMemberId(memberId);
         try {
             const detail = await apiFetch<GloryHouse>(`/crm/glory-houses/${inviteGroup.id}`, { token });
-            const current = new Set(detail.base_attendee_ids || detail.base_attendees?.map(member => member.member_id) || []);
+            const current = new Set(detail.base_attendee_ids || detail.base_attendees?.map(member => member.persona_id) || []);
             current.add(memberId);
             const updated = await apiFetch<GloryHouse>(`/crm/glory-houses/${inviteGroup.id}`, {
                 method: 'PUT',
@@ -360,7 +361,7 @@ export default function CrmGroupsPage() {
                         {filteredMembers.map(member => (
                             <div key={member.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-4 dark:border-white/10">
                                 <div>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{member.first_name} {member.last_name}</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}</p>
                                     <p className="text-[11px] text-slate-400">{member.church_role || 'Miembro'}</p>
                                 </div>
                                 <button

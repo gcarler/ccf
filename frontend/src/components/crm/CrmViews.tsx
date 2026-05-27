@@ -16,9 +16,8 @@ const _lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12
 const _darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 44, headerHeight: 36, backgroundColor: 'rgb(15 23 42)', foregroundColor: '#e2e8f0', borderColor: 'rgba(255,255,255,0.08)', oddRowBackgroundColor: 'rgba(255,255,255,0.02)', headerBackgroundColor: 'rgba(255,255,255,0.04)', headerTextColor: '#94a3b8', selectedRowBackgroundColor: 'rgba(99,102,241,0.15)', accentColor: '#6366f1', cellHorizontalPaddingScale: 1 });
 
 interface Member {
-    id: number;
-    first_name: string;
-    last_name: string;
+    id: string;
+    nombre_completo: string;
     email: string;
     phone: string;
     church_role: string;
@@ -65,11 +64,11 @@ function MemberCard({ member, index, onClick }: { member: Member, index: number,
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-4">
                     <div className="size-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/10 dark:to-white/5 flex items-center justify-center text-slate-400 group-hover:from-blue-600 group-hover:to-blue-700 group-hover:text-white transition-all shadow-sm">
-                        <span className="text-base font-bold">{(member.first_name?.[0] || '')}{(member.last_name?.[0] || '')}</span>
+                        <span className="text-base font-bold">{member.nombre_completo?.charAt(0) ?? ''}</span>
                     </div>
                     <div>
                         <h4 className="text-base font-bold text-slate-900 dark:text-white leading-none mb-1 truncate max-w-[150px]">
-                            {member.first_name} {member.last_name}
+                            {member.nombre_completo}
                         </h4>
                         <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 text-[9px] font-bold uppercase tracking-wide text-slate-500">
                             {member.church_role || 'Miembro'}
@@ -129,14 +128,14 @@ export function CrmTableView({ members, onSelect, isList = false }: TableProps) 
             {
                 headerName: 'Miembro', flex: 2, minWidth: 180,
                 cellRenderer: ({ data }: any) => {
-                    const initials = `${data?.first_name?.[0] ?? ''}${data?.last_name?.[0] ?? ''}`;
+                    const initials = data?.nombre_completo?.charAt(0) ?? '';
                     return (
                         <div className="flex items-center gap-3 h-full">
                             <div className="size-8 rounded-md bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/20 text-blue-600 flex items-center justify-center font-bold text-sm flex-shrink-0">
                                 {initials}
                             </div>
                             <div>
-                                <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">{data?.first_name} {data?.last_name}</div>
+                                <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">{data?.nombre_completo}</div>
                                 <div className="text-[10px] font-bold text-slate-400">ID: #{data?.id}</div>
                             </div>
                         </div>
@@ -243,11 +242,11 @@ export function CrmKanbanView({ members, onSelect }: CrmViewProps) {
                             >
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                        {(m.first_name?.[0] || '')}{(m.last_name?.[0] || '')}
+                                        {m.nombre_completo?.charAt(0) ?? ''}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                                            {m.first_name} {m.last_name}
+                                            {m.nombre_completo}
                                         </div>
                                     </div>
                                 </div>
@@ -309,7 +308,7 @@ export function CrmCalendarView({ members, onSelect }: CrmViewProps) {
                                         onClick={() => onSelect?.(m)}
                                         className="text-[10px] font-bold px-2 py-1 bg-blue-50 text-blue-600 dark:bg-blue-900/30 rounded truncate cursor-pointer hover:bg-blue-100"
                                     >
-                                        {m.first_name} {m.last_name}
+                                        {m.nombre_completo}
                                     </div>
                                 ))}
                             </div>
@@ -337,7 +336,7 @@ export function CrmGanttView({ members }: CrmViewProps) {
                         <div className="flex items-center justify-center w-6 h-6 rounded-full border-4 border-white dark:border-[#1e1f21] bg-blue-500 text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
                         <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-lg border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shadow-sm">
                             <div className="flex items-center justify-between mb-1">
-                                <div className="font-bold text-sm text-slate-900 dark:text-white">{m.first_name} {m.last_name}</div>
+                                <div className="font-bold text-sm text-slate-900 dark:text-white">{m.nombre_completo}</div>
                                 <time className="text-[10px] font-bold text-slate-400 uppercase">{new Date(m.created_at).toLocaleDateString()}</time>
                             </div>
                             <div className="text-xs text-slate-500 font-bold">{m.church_role || 'Miembro'} ({m.spiritual_status || 'Nuevo'})</div>

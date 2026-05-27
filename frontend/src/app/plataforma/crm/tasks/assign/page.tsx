@@ -29,9 +29,10 @@ interface Leader {
 }
 
 interface Member {
-    id: number;
-    first_name: string;
-    last_name: string;
+    id: string;
+    nombre_completo?: string;
+    first_name?: string;
+    last_name?: string;
     church_role: string;
     spiritual_status: string;
 }
@@ -46,7 +47,7 @@ export default function TaskAssignment() {
     const [loading, setLoading] = useState(true);
     
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
+    const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
     const [selectedLeaderId, setSelectedLeaderId] = useState<string>('');
     const [taskTitle, setTaskTitle] = useState('Llamada de seguimiento');
     const [taskDescription, setTaskDescription] = useState('');
@@ -58,7 +59,7 @@ export default function TaskAssignment() {
         try {
             const [usersData, membersData] = await Promise.all([
                 apiFetch<any[]>('/auth/user-list', { token }),
-                apiFetch<any[]>('/crm/members', { token })
+                apiFetch<any[]>('/crm/personas', { token })
             ]);
             
             // Filtrar solo líderes/admin/staff para asignar
@@ -77,8 +78,8 @@ export default function TaskAssignment() {
     }, [isAuthenticated, fetchData]);
 
     const filteredMembers = useMemo(() => {
-        return members.filter(m => 
-            `${m.first_name} ${m.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())
+        return members.filter(m =>
+            (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()).toLowerCase().includes(searchQuery.toLowerCase())
         ).slice(0, 10); // Limit to 10 for assignment UI
     }, [members, searchQuery]);
 
@@ -96,7 +97,7 @@ export default function TaskAssignment() {
                 body: {
                     title: taskTitle,
                     description: taskDescription,
-                    member_id: selectedMemberId,
+                    persona_id: selectedMemberId,
                     assignee_id: parseInt(selectedLeaderId),
                     priority: 'normal',
                     due_date: new Date(Date.now() + 86400000 * 2).toISOString() // Default 2 days
@@ -202,10 +203,10 @@ export default function TaskAssignment() {
                                         "size-9 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm",
                                         selectedMemberId === m.id ? "bg-white/20" : "bg-white dark:bg-white/10 text-blue-600"
                                     )}>
-                                        {m.first_name.charAt(0)}
+                                        {m.nombre_completo?.charAt(0) ?? ''}
                                     </div>
                                     <div>
-                                        <p className="font-bold uppercase tracking-tight text-sm leading-none mb-1">{m.first_name} {m.last_name}</p>
+                                        <p className="font-bold uppercase tracking-tight text-sm leading-none mb-1">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</p>
                                         <p className={clsx("text-[10px] font-bold uppercase tracking-wide", selectedMemberId === m.id ? "text-blue-100" : "text-slate-400")}>{m.church_role} · {m.spiritual_status}</p>
                                     </div>
                                 </div>
@@ -238,7 +239,7 @@ export default function TaskAssignment() {
                                 </div>
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
                                     Seguimiento para <br/>
-                                    <span className="shimmer-text">{selectedMember.first_name}</span>
+                                    <span className="shimmer-text">{selectedMember.nombre_completo || `${selectedMember.first_name ?? ''} ${selectedMember.last_name ?? ''}`.trim()}</span>
                                 </h3>
                             </div>
 

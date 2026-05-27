@@ -19,17 +19,17 @@ interface GloryHouse {
     zone: string | null;
     address: string | null;
     leader_name: string | null;
-    leader_id: number | null;
-    assistant_id: number | null;
-    host_id: number | null;
+    leader_id: string | null;
+    assistant_id: string | null;
+    host_id: string | null;
     members_count: number;
     status: string;
     evangelism_strategy_id: number | null;
-    base_attendees?: { member_id: number; role: string; member?: { first_name: string; last_name: string; phone?: string } }[];
+    base_attendees?: { persona_id: string; role: string; member?: { nombre_completo: string; telefono?: string } }[];
 }
 
 interface SessionPerson {
-    member_id: number;
+    persona_id: string;
     name: string;
     role: string;
     phone?: string;
@@ -67,26 +67,26 @@ export default function SessionReportPage() {
 
             const ppl: SessionPerson[] = [];
             const baseMembers = data.base_attendees || [];
-            const roleIds = new Set<number>();
+            const roleIds = new Set<string>();
 
             if (data.leader_id) {
-                const m = baseMembers.find(x => x.member_id === data.leader_id);
-                ppl.push({ member_id: data.leader_id, name: m?.member ? `${m.member.first_name} ${m.member.last_name}` : (data.leader_name || 'Líder'), role: 'Líder', phone: m?.member?.phone, status: 'present' });
+                const m = baseMembers.find(x => x.persona_id === data.leader_id);
+                ppl.push({ persona_id: data.leader_id, name: m?.member?.nombre_completo || data.leader_name || 'Líder', role: 'Líder', phone: m?.member?.telefono, status: 'present' });
                 roleIds.add(data.leader_id);
             }
             if (data.assistant_id) {
-                const m = baseMembers.find(x => x.member_id === data.assistant_id);
-                ppl.push({ member_id: data.assistant_id, name: m?.member ? `${m.member.first_name} ${m.member.last_name}` : 'Asistente del Líder', role: 'Asistente del Líder', phone: m?.member?.phone, status: 'present' });
+                const m = baseMembers.find(x => x.persona_id === data.assistant_id);
+                ppl.push({ persona_id: data.assistant_id, name: m?.member?.nombre_completo || 'Asistente del Líder', role: 'Asistente del Líder', phone: m?.member?.telefono, status: 'present' });
                 roleIds.add(data.assistant_id);
             }
             if (data.host_id) {
-                const m = baseMembers.find(x => x.member_id === data.host_id);
-                ppl.push({ member_id: data.host_id, name: m?.member ? `${m.member.first_name} ${m.member.last_name}` : 'Anfitrión', role: 'Anfitrión', phone: m?.member?.phone, status: 'present' });
+                const m = baseMembers.find(x => x.persona_id === data.host_id);
+                ppl.push({ persona_id: data.host_id, name: m?.member?.nombre_completo || 'Anfitrión', role: 'Anfitrión', phone: m?.member?.telefono, status: 'present' });
                 roleIds.add(data.host_id);
             }
             for (const m of baseMembers) {
-                if (!roleIds.has(m.member_id)) {
-                    ppl.push({ member_id: m.member_id, name: m.member ? `${m.member.first_name} ${m.member.last_name}` : `Miembro #${m.member_id}`, role: 'Asistente', phone: m.member?.phone, status: 'absent' });
+                if (!roleIds.has(m.persona_id)) {
+                    ppl.push({ persona_id: m.persona_id, name: m.member?.nombre_completo || `Miembro #${m.persona_id}`, role: 'Asistente', phone: m.member?.telefono, status: 'absent' });
                 }
             }
             setPeople(ppl);
@@ -99,8 +99,8 @@ export default function SessionReportPage() {
 
     useEffect(() => { fetchHouse(); }, [fetchHouse]);
 
-    const updateStatus = (memberId: number, status: 'present' | 'absent' | 'first_time') => {
-        setPeople(prev => prev.map(p => p.member_id === memberId ? { ...p, status } : p));
+    const updateStatus = (personaId: string, status: 'present' | 'absent' | 'first_time') => {
+        setPeople(prev => prev.map(p => p.persona_id === personaId ? { ...p, status } : p));
     };
 
     const addGuest = () => setNewGuests(prev => [...prev, { firstName: '', lastName: '', phone: '' }]);
@@ -138,7 +138,7 @@ export default function SessionReportPage() {
 
             const sessionId = sessionData.id;
             const attPayload = people.map(p => ({
-                session_id: sessionId, member_id: p.member_id, status: p.status, notes: null,
+                session_id: sessionId, persona_id: p.persona_id, status: p.status, notes: null,
             }));
 
             await apiFetch(`/evangelism/sessions/${sessionId}/attendance`, {
@@ -235,7 +235,7 @@ export default function SessionReportPage() {
                             const rs = ROLE_STYLES[person.role] || ROLE_STYLES['Asistente'];
                             const Icon = rs.icon;
                             return (
-                                <div key={person.member_id} className={`px-4 py-3 flex items-center gap-3 ${rs.bg}`}>
+                                <div key={person.persona_id} className={`px-4 py-3 flex items-center gap-3 ${rs.bg}`}>
                                     <div className={`size-8 rounded-lg flex items-center justify-center shrink-0 border ${rs.bg} ${rs.border}`}><Icon size={14} className={rs.text} /></div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">{person.name}</p>
@@ -245,9 +245,9 @@ export default function SessionReportPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
-                                        <button onClick={() => updateStatus(person.member_id, 'present')} className={`p-1.5 rounded-lg transition-all ${person.status === 'present' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Presente"><CheckCircle2 size={16} /></button>
-                                        <button onClick={() => updateStatus(person.member_id, 'absent')} className={`p-1.5 rounded-lg transition-all ${person.status === 'absent' ? 'bg-red-100 dark:bg-red-900/30 text-red-500' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Ausente"><XCircle size={16} /></button>
-                                        <button onClick={() => updateStatus(person.member_id, 'first_time')} className={`p-1.5 rounded-lg transition-all ${person.status === 'first_time' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Primera vez"><UserPlus size={16} /></button>
+                                        <button onClick={() => updateStatus(person.persona_id, 'present')} className={`p-1.5 rounded-lg transition-all ${person.status === 'present' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Presente"><CheckCircle2 size={16} /></button>
+                                        <button onClick={() => updateStatus(person.persona_id, 'absent')} className={`p-1.5 rounded-lg transition-all ${person.status === 'absent' ? 'bg-red-100 dark:bg-red-900/30 text-red-500' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Ausente"><XCircle size={16} /></button>
+                                        <button onClick={() => updateStatus(person.persona_id, 'first_time')} className={`p-1.5 rounded-lg transition-all ${person.status === 'first_time' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Primera vez"><UserPlus size={16} /></button>
                                     </div>
                                 </div>
                             );

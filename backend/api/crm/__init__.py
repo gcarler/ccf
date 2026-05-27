@@ -9,7 +9,7 @@ for use by other modules.
 from fastapi import APIRouter
 
 # ── shared utilities (re-exported for backward compatibility) ──────────
-from backend.api.crm._shared import (_member_full_name, _serialize_case,
+from backend.api.crm._shared import (_persona_full_name, _serialize_case,
                                      _serialize_member_position,
                                      _serialize_message_group, _serialize_task,
                                      utc_now)
@@ -18,17 +18,18 @@ from backend.api.crm._shared import (_member_full_name, _serialize_case,
 router = APIRouter(tags=["CRM"])
 
 # ── include sub-routers ────────────────────────────────────────────────
-from backend.api.crm import members, pastoral
+from backend.api.crm import members, pastoral, personas
 
 router.include_router(members.router)
 router.include_router(pastoral.router)
+router.include_router(personas.router)
 
 __all__ = [
     "router",
     "utc_now",
     "_serialize_member_position",
     "_serialize_case",
-    "_member_full_name",
+    "_persona_full_name",
     "_serialize_task",
     "_serialize_message_group",
 ]

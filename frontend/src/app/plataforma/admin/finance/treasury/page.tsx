@@ -62,7 +62,7 @@ export default function AdminTreasuryPage() {
                                     <tr key={i} className="group hover:bg-white/[0.02] transition-colors">
                                         <td className="px-3 py-2">
                                             <div className="text-sm font-bold text-white uppercase tracking-tight">
-                                                {tx.person?.first_name ? `Ofrenda: ${tx.person.first_name}` : 'Entrada General'}
+                                                {tx.person?.nombre_completo || tx.person?.first_name ? `Ofrenda: ${tx.person.nombre_completo || tx.person.first_name}` : 'Entrada General'}
                                             </div>
                                             <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide">ID: {tx.donation_id}</div>
                                         </td>

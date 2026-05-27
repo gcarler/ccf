@@ -1,0 +1,101 @@
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+
+from backend import crud, models, schemas
+from backend.auth import get_current_user, require_pastor_or_admin
+from backend.core.database import get_db
+
+router = APIRouter(tags=["CRM"])
+
+
+@router.get("/personas", response_model=List[schemas.PersonaResponse])
+def list_personas(
+    search: Optional[str] = None,
+    role: Optional[str] = None,
+    estado_vital: Optional[str] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    sort_by: Optional[str] = Query(None, description="Campo de ordenamiento"),
+    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Lista personas con búsqueda, paginación y ordenamiento."""
+    return crud.search_personas(
+        db, search=search, role=role, estado_vital=estado_vital,
+        skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir,
+    )
+
+
+@router.get("/personas/{persona_id}", response_model=schemas.PersonaResponse)
+def get_persona(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Obtiene una persona por UUID."""
+    persona = crud.get_persona(db, persona_id)
+    if not persona:
+        raise HTTPException(404, detail="Persona no encontrada")
+    return persona
+
+
+@router.post("/personas", response_model=schemas.PersonaResponse)
+def create_persona(
+    payload: schemas.PersonaCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Crea una nueva persona."""
+    return crud.create_persona(db, payload)
+
+
+@router.put("/personas/{persona_id}", response_model=schemas.PersonaResponse)
+def update_persona(
+    persona_id: str,
+    payload: schemas.PersonaUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Actualiza una persona existente."""
+    persona = crud.update_persona(db, persona_id, payload)
+    if not persona:
+        raise HTTPException(404, detail="Persona no encontrada")
+    return persona
+
+
+@router.delete("/personas/{persona_id}")
+def delete_persona(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Elimina una persona."""
+    if not crud.delete_persona(db, persona_id):
+        raise HTTPException(404, detail="Persona no encontrada")
+    return {"ok": True}
+
+
+@router.get("/personas/{persona_id}/timeline")
+def persona_timeline(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Obtiene la línea de tiempo de una persona."""
+    timeline = crud.get_persona_timeline(db, persona_id)
+    if not timeline:
+        raise HTTPException(404, detail="Persona no encontrada o sin actividad")
+    return timeline
+
+
+@router.get("/personas/{persona_id}/donations")
+def persona_donations(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Obtiene las donaciones de una persona."""
+    return crud.get_persona_donations(db, persona_id)

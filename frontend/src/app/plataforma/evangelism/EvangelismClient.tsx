@@ -24,6 +24,9 @@ export interface EvangelismStrategy {
     id: string;
     name: string;
     description: string;
+    codigo?: string;
+    clase_raiz?: string;
+    activa: boolean;
     status: 'active' | 'pending' | 'done';
     strategy_type: string;
     start_date?: string | null;
@@ -166,7 +169,7 @@ export default function EvangelismClient() {
                                                 className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] cursor-pointer group transition-colors"
                                             >
                                                 <td className="px-3 py-1.5 text-[12px] font-semibold text-slate-400 dark:text-slate-600">
-                                                    #{strategy.id}
+                                                    {strategy.codigo ? strategy.codigo : `#${strategy.id}`}
                                                 </td>
                                                 <td className="px-3 py-1.5">
                                                     <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
@@ -250,7 +253,7 @@ export default function EvangelismClient() {
                                                                 {strategy.name}
                                                             </h4>
                                                             <span className="font-semibold text-slate-400 shrink-0">
-                                                                #{strategy.id}
+                                                                {strategy.codigo ? strategy.codigo : `#${strategy.id}`}
                                                             </span>
                                                         </div>
 

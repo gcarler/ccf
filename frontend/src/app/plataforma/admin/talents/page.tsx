@@ -63,10 +63,10 @@ export default function TalentSearchPage() {
                         <div key={i} className="bg-[#1e1f21] border border-white/5 p-3 rounded-lg group hover:border-amber-500/30 transition-all flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-14 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500 font-black text-xl">
-                                    {talent.first_name.charAt(0)}
+                                    {(talent.nombre_completo?.charAt(0) ?? talent.first_name?.charAt(0) ?? '')}
                                 </div>
                                 <div className="space-y-1">
-                                    <h4 className="font-bold text-white uppercase">{talent.first_name} {talent.last_name}</h4>
+                                    <h4 className="font-bold text-white uppercase">{talent.nombre_completo || `${talent.first_name ?? ''} ${talent.last_name ?? ''}`.trim()}</h4>
                                     <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide">{talent.email}</div>
                                     <div className="flex flex-wrap gap-1 mt-2">
                                         {talent.skills?.map((s: any, idx: number) => (

@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 type CounselingDetail = {
     id: number;
-    member_id: number;
+    persona_id: string;
     member_name: string;
     pastor_id: number | null;
     topic: string;

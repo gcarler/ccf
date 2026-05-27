@@ -9,14 +9,14 @@ import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
 
 interface User {
-    id: number;
+    id: string;
     username: string;
     email: string;
 }
 
 interface UserPickerProps {
-    currentUserId?: number | null;
-    onSelect: (userId: number) => void;
+    currentUserId?: string | null;
+    onSelect: (userId: string) => void;
     placeholder?: string;
     className?: string;
 }
@@ -37,11 +37,11 @@ export default function UserPicker({
         setLoading(true);
         try {
             // Simplified: in a real app, we might have a specific /users/assignable endpoint
-            const data = await apiFetch('/admin/members/', { token }); 
+            const data = await apiFetch('/admin/personas/', { token });
             if (Array.isArray(data)) {
                 setUsers(data.map((u: any) => ({
                     id: u.id,
-                    username: `${u.first_name} ${u.last_name}`,
+                    username: u.nombre_completo || `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(),
                     email: u.email
                 })));
             }

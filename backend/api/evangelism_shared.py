@@ -41,9 +41,9 @@ def parse_session_date(value: object) -> datetime.date:
 def normalize_role_scope_payload(payload: dict) -> dict:
     normalized = dict(payload)
     raw_role_ids = normalized.get("target_role_ids")
-    raw_member_ids = normalized.get("target_member_ids")
+    raw_persona_ids = normalized.get("target_persona_ids")
     normalized_role_ids: list[int] = []
-    normalized_member_ids: list[int] = []
+    normalized_persona_ids: list[str] = []
     if isinstance(raw_role_ids, list):
         for raw_role_id in raw_role_ids:
             try:
@@ -51,13 +51,11 @@ def normalize_role_scope_payload(payload: dict) -> dict:
             except (TypeError, ValueError):
                 continue
     normalized_role_ids = list(dict.fromkeys(normalized_role_ids))
-    if isinstance(raw_member_ids, list):
-        for raw_member_id in raw_member_ids:
-            try:
-                normalized_member_ids.append(int(raw_member_id))
-            except (TypeError, ValueError):
-                continue
-    normalized_member_ids = list(dict.fromkeys(normalized_member_ids))
+    if isinstance(raw_persona_ids, list):
+        for raw_persona_id in raw_persona_ids:
+            if isinstance(raw_persona_id, str) and raw_persona_id.strip():
+                normalized_persona_ids.append(raw_persona_id.strip())
+    normalized_persona_ids = list(dict.fromkeys(normalized_persona_ids))
 
     if normalized.get("target_audience") == "ROLE":
         if normalized_role_ids:
@@ -75,15 +73,15 @@ def normalize_role_scope_payload(payload: dict) -> dict:
         else:
             normalized["target_role_ids"] = None
             normalized["target_role_id"] = None
-        normalized["target_member_ids"] = None
+        normalized["target_persona_ids"] = None
     elif normalized.get("target_audience") == "MANUAL":
         normalized["target_role_ids"] = None
         normalized["target_role_id"] = None
-        normalized["target_member_ids"] = normalized_member_ids or None
+        normalized["target_persona_ids"] = normalized_persona_ids or None
     else:
         normalized["target_role_ids"] = None
         normalized["target_role_id"] = None
-        normalized["target_member_ids"] = None
+        normalized["target_persona_ids"] = None
 
     return normalized
 
@@ -103,7 +101,7 @@ def resolve_target_role_ids(event: models.CrmEvent) -> list[int]:
 
 def get_expected_members_for_event(
     db: Session, event: models.CrmEvent
-) -> list[models.Member]:
+) -> list[models.Persona]:
     if event.target_audience == "ROLE":
         role_ids = resolve_target_role_ids(event)
         if not role_ids:
@@ -117,37 +115,35 @@ def get_expected_members_for_event(
         if not role_names:
             return []
         return (
-            db.query(models.Member)
-            .filter(models.Member.church_role.in_(role_names))
-            .order_by(models.Member.last_name.asc(), models.Member.first_name.asc())
+            db.query(models.Persona)
+            .filter(models.Persona.church_role.in_(role_names))
+            .order_by(models.Persona.nombre_completo.asc())
             .all()
         )
     if event.target_audience == "MANUAL":
-        member_ids = []
-        if isinstance(event.target_member_ids, list):
-            for raw_member_id in event.target_member_ids:
-                try:
-                    member_ids.append(int(raw_member_id))
-                except (TypeError, ValueError):
-                    continue
-        member_ids = list(dict.fromkeys(member_ids))
-        if not member_ids:
+        persona_ids = []
+        if isinstance(event.target_persona_ids, list):
+            for raw_persona_id in event.target_persona_ids:
+                if isinstance(raw_persona_id, str) and raw_persona_id.strip():
+                    persona_ids.append(raw_persona_id.strip())
+        persona_ids = list(dict.fromkeys(persona_ids))
+        if not persona_ids:
             return []
         return (
-            db.query(models.Member)
-            .filter(models.Member.id.in_(member_ids))
-            .order_by(models.Member.last_name.asc(), models.Member.first_name.asc())
+            db.query(models.Persona)
+            .filter(models.Persona.id.in_(persona_ids))
+            .order_by(models.Persona.nombre_completo.asc())
             .all()
         )
-    return db.query(models.Member).all()
+    return db.query(models.Persona).all()
 
 
 def faro_expected_member_rows(db: Session, glory_house_id: int):
     rows = (
-        db.query(models.GloryHouseMember, models.Member)
-        .join(models.Member, models.Member.id == models.GloryHouseMember.member_id)
+        db.query(models.GloryHouseMember, models.Persona)
+        .join(models.Persona, models.Persona.id == models.GloryHouseMember.persona_id)
         .filter(models.GloryHouseMember.glory_house_id == glory_house_id)
-        .order_by(models.Member.last_name.asc(), models.Member.first_name.asc())
+        .order_by(models.Persona.nombre_completo.asc())
         .all()
     )
     house = (
@@ -155,20 +151,20 @@ def faro_expected_member_rows(db: Session, glory_house_id: int):
         .filter(models.GloryHouse.id == glory_house_id)
         .first()
     )
-    seen_ids = {member.id for _, member in rows}
-    extra_members = []
+    seen_ids = {persona.id for _, persona in rows}
+    extra_personas = []
     if house:
-        for member_id in [house.leader_id, house.assistant_id, house.host_id]:
-            if member_id and member_id not in seen_ids:
-                member = (
-                    db.query(models.Member)
-                    .filter(models.Member.id == member_id)
+        for pid in [house.leader_persona_id, house.assistant_persona_id, house.host_persona_id]:
+            if pid and pid not in seen_ids:
+                p = (
+                    db.query(models.Persona)
+                    .filter(models.Persona.id == pid)
                     .first()
                 )
-                if member:
-                    extra_members.append((None, member))
-                    seen_ids.add(member.id)
-    return rows + extra_members
+                if p:
+                    extra_personas.append((None, p))
+                    seen_ids.add(p.id)
+    return rows + extra_personas
 
 
 def _channel_label(channel: str) -> str:
@@ -182,11 +178,11 @@ def _channel_label(channel: str) -> str:
 
 
 def _member_matches_segment(
-    member: models.Member, segment: str, donation_member_ids: set[int]
+    persona: models.Persona, segment: str, donation_persona_ids: set[str]
 ) -> bool:
     value = str(segment or "").strip().lower()
     if value == "active":
-        return str(member.church_role or "").strip().lower() in {
+        return str(persona.church_role or "").strip().lower() in {
             "miembro",
             "servidor",
             "lider",
@@ -195,9 +191,9 @@ def _member_matches_segment(
             "coordinador",
         }
     if value == "new":
-        return str(member.spiritual_status or "").strip().lower() == "nuevo"
+        return str(persona.estado_vital or "").strip().lower() == "nuevo"
     if value == "staff":
-        return str(member.church_role or "").strip().lower() in {
+        return str(persona.church_role or "").strip().lower() in {
             "pastor",
             "coordinador",
             "staff",
@@ -205,43 +201,43 @@ def _member_matches_segment(
             "admin",
         }
     if value == "groups":
-        return member.family_id is not None
+        return persona.family_id is not None
     if value == "low":
-        return str(member.spiritual_status or "").strip().lower() in {
+        return str(persona.church_role or "").strip().lower() in {
             "nuevo",
             "creyente",
         }
     if value == "vip":
-        return member.id in donation_member_ids
+        return persona.id in donation_persona_ids
     return False
 
 
-def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.Member]:
+def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.Persona]:
     normalized_segments = [
         segment for segment in (s.strip().lower() for s in segments) if segment
     ]
     if not normalized_segments:
         return []
 
-    donation_member_ids = {
-        member_id
-        for (member_id,) in db.query(models.Donation.member_id)
-        .filter(models.Donation.member_id.isnot(None))
+    donation_persona_ids = {
+        str(pid)
+        for (pid,) in db.query(models.Donation.persona_id)
+        .filter(models.Donation.persona_id.isnot(None))
         .distinct()
         .all()
     }
-    members = db.query(models.Member).all()
+    personas = db.query(models.Persona).all()
     selected = []
-    seen_ids: set[int] = set()
-    for member in members:
-        if member.id in seen_ids:
+    seen_ids: set[str] = set()
+    for persona in personas:
+        if persona.id in seen_ids:
             continue
         if any(
-            _member_matches_segment(member, segment, donation_member_ids)
+            _member_matches_segment(persona, segment, donation_persona_ids)
             for segment in normalized_segments
         ):
-            selected.append(member)
-            seen_ids.add(member.id)
+            selected.append(persona)
+            seen_ids.add(persona.id)
     return selected
 
 
@@ -252,8 +248,8 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
         logs, key=lambda log: log.created_at or _dt.datetime.min, reverse=True
     )
     representative = ordered[0]
-    member = getattr(representative, "member", None)
-    member_name = f"{member.first_name} {member.last_name}" if member else "Desconocido"
+    persona = getattr(representative, "persona", None)
+    persona_name = persona.nombre_completo if persona else "Desconocido"
     campaign_name = next(
         (log.campaign_name for log in ordered if log.campaign_name), None
     )
@@ -269,7 +265,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     else:
         status = str(representative.outcome or "sent").lower()
     display_name = campaign_name or (
-        f"Mensaje a {member_name}"
+        f"Mensaje a {persona_name}"
         if len(ordered) == 1
         else f"Campaña a {len(ordered)} contactos"
     )
@@ -277,7 +273,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
         "id": representative.id,
         "name": display_name,
         "campaign_name": campaign_name,
-        "member_name": member_name,
+        "persona_name": persona_name,
         "channel": str(representative.channel).lower(),
         "status": status,
         "sent_at": sent_at_dt.isoformat() if sent_at_dt else None,
@@ -295,9 +291,9 @@ def _serialize_crm_task(
     contact_name: Optional[str] = None,
     assignee_name: Optional[str] = None,
 ) -> dict:
-    member = getattr(task, "member", None)
-    member_name = contact_name or (
-        f"{member.first_name} {member.last_name}" if member else None
+    persona = getattr(task, "persona", None)
+    persona_name = contact_name or (
+        persona.nombre_completo if persona else None
     )
     assignee = getattr(task, "assignee", None)
     assigned_to = assignee_name or (assignee.username if assignee else None)
@@ -309,27 +305,31 @@ def _serialize_crm_task(
         "priority": task.priority,
         "category": task.category,
         "due_date": task.due_date.isoformat() if task.due_date else None,
-        "member_id": task.member_id,
-        "member_name": member_name,
-        "contact_name": member_name,
+        "persona_id": task.persona_id,
+        "persona_name": persona_name,
+        "contact_name": persona_name,
         "assigned_to": assigned_to,
         "created_at": task.created_at.isoformat() if task.created_at else None,
     }
 
 
 def faro_member_payload(
-    member: models.Member,
+    persona: models.Persona,
     attended: bool,
     scanned_at=None,
     absence_reason=None,
     absence_reason_detail=None,
+    estado=None,
+    es_primera_vez=False,
 ):
     return {
-        "member_id": member.id,
-        "name": f"{member.first_name} {member.last_name}",
-        "role": member.church_role or "Miembro",
+        "persona_id": persona.id,
+        "name": persona.nombre_completo,
+        "role": persona.church_role or "Miembro",
         "attended": attended,
         "absence_reason": absence_reason,
         "absence_reason_detail": absence_reason_detail,
         "scanned_at": scanned_at.isoformat() if scanned_at else None,
+        "estado": estado,
+        "es_primera_vez": es_primera_vez,
     }

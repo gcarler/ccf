@@ -34,14 +34,13 @@ import { ViewType } from '@/components/ViewSwitcher';
 import { CrmGridView, CrmTableView, CrmKanbanView, CrmCalendarView, CrmGanttView } from '@/components/crm/CrmViews';
 import RightPanel from '@/components/ui/RightPanel';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
-import { CrmMember } from './types';
+import { CrmPersona } from './types';
 
 interface Member {
-    id: number;
-    first_name: string;
-    last_name: string;
+    id: string;
+    nombre_completo: string;
     email: string;
-    phone: string;
+    telefono: string;
     church_role: string;
     spiritual_status: string;
     spiritual_health: number;
@@ -50,7 +49,7 @@ interface Member {
 }
 
 interface CrmClientProps {
-    initialMembers?: CrmMember[];
+    initialMembers?: CrmPersona[];
 }
 
 export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
@@ -89,7 +88,7 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
         const fetchMembers = async () => {
             if (!token) return;
             try {
-                const data = await apiFetch<Member[]>(`/crm/members?search=${encodeURIComponent(search)}`, { token });
+                const data = await apiFetch<Member[]>(`/crm/personas?search=${encodeURIComponent(search)}`, { token });
                 setMembers(data);
             } catch (err) {
                 console.error(err);
@@ -212,9 +211,8 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [consolidationProfile, setConsolidationProfile] = useState<{
         member: {
-            id: number;
-            first_name: string;
-            last_name: string;
+            id: string;
+            nombre_completo: string;
             church_role: string | null;
             spiritual_status: string | null;
         };
@@ -260,7 +258,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
         const loadProfile = async () => {
             setLoadingProfile(true);
             try {
-                const data = await apiFetch<any>(`/crm/members/${member.id}/consolidation`, { token, cache: 'no-store' });
+                const data = await apiFetch<any>(`/crm/personas/${member.id}/consolidation`, { token, cache: 'no-store' });
                 if (alive) setConsolidationProfile(data);
             } catch {
                 if (alive) setConsolidationProfile(null);
@@ -272,7 +270,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
         const loadAttendance = async () => {
             setLoadingAttendance(true);
             try {
-                const data = await apiFetch<any>(`/evangelism/members/${member.id}/attendance-history`, { token, cache: 'no-store' });
+                const data = await apiFetch<any>(`/evangelism/personas/${member.id}/attendance-history`, { token, cache: 'no-store' });
                 if (alive) setAttendanceHistory(data);
             } catch {
                 if (alive) setAttendanceHistory(null);
@@ -292,7 +290,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
     const handleAiAnalysis = async () => {
         setIsAnalyzing(true);
         try {
-            const context = `Miembro: ${member.first_name} ${member.last_name}. Rol: ${member.church_role || 'Miembro'}. Salud Espiritual: ${Math.round((member.spiritual_health || 0.8) * 100)}%. Progreso Academia: ${Math.round((member.academy_progress || 0) * 100)}%.`;
+            const context = `Miembro: ${member.nombre_completo}. Rol: ${member.church_role || 'Miembro'}. Salud Espiritual: ${Math.round((member.spiritual_health || 0.8) * 100)}%. Progreso Academia: ${Math.round((member.academy_progress || 0) * 100)}%.`;
             const prompt = `Actúa como un pastor mentor. Basado en estos datos, escribe un breve y alentador diagnóstico pastoral (máximo 3 líneas) y sugiere un paso de acción concreto para su crecimiento.`;
             
             const data = await apiFetch<{response: string}>('/system/ai/generate', {
@@ -326,10 +324,10 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                 {/* Perfil Header */}
                 <div className="text-center space-y-4">
                     <div className="size-10 rounded-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center mx-auto text-xl font-bold shadow-xl shadow-blue-500/20">
-                        {member.first_name[0]}{member.last_name[0]}
+                        {(member.nombre_completo?.charAt(0) || '')}
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold tracking-tight leading-none mb-2">{member.first_name} {member.last_name}</h2>
+                        <h2 className="text-xl font-bold tracking-tight leading-none mb-2">{member.nombre_completo}</h2>
                         <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-blue-600 text-[10px] font-semibold uppercase tracking-wide">{member.church_role || 'Miembro Activo'}</span>
                     </div>
                 </div>
@@ -383,7 +381,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                     <h4 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Directorio de Contacto</h4>
                     <div className="space-y-2">
                         <ContactItem icon={Mail} value={member.email || 'Sin correo'} />
-                        <ContactItem icon={Phone} value={member.phone || 'Sin teléfono'} />
+                        <ContactItem icon={Phone} value={member.telefono || 'Sin teléfono'} />
                         <ContactItem icon={MapPin} value="Dirección no registrada" />
                         <ContactItem icon={Calendar} value={`Alta: ${new Date(member.created_at).toLocaleDateString()}`} />
                     </div>

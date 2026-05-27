@@ -60,7 +60,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialMember]);
 
-    const loadMemberData = async (memberId: number) => {
+    const loadMemberData = async (memberId: string) => {
         if (!token) return;
         
         fetchTimeline(memberId);
@@ -68,10 +68,10 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
         fetchTasks(memberId);
     };
 
-    const fetchTimeline = async (id: number) => {
+    const fetchTimeline = async (id: string) => {
         setLoadingHistory(true);
         try {
-            const data = await apiFetch(`/crm/members/${id}/timeline`, { token, cache: 'no-store' });
+            const data = await apiFetch(`/crm/personas/${id}/timeline`, { token, cache: 'no-store' });
             setHistory(Array.isArray(data) ? data : []);
         } catch (err) {
             setHistory([]);
@@ -80,10 +80,10 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
         }
     };
 
-    const fetchFinance = async (id: number) => {
+    const fetchFinance = async (id: string) => {
         setLoadingFinance(true);
         try {
-            const data = await apiFetch<any[]>(`/crm/members/${id}/donations`, { token });
+            const data = await apiFetch<any[]>(`/crm/personas/${id}/donations`, { token });
             setDonations(Array.isArray(data) ? data : []);
         } catch (e) {
             setDonations([]);
@@ -92,7 +92,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
         }
     };
 
-    const fetchTasks = async (id: number) => {
+    const fetchTasks = async (id: string) => {
         setLoadingTasks(true);
         try {
             const data = await apiFetch<any[]>(`/crm/tasks?assignee_id=${id}`, { token });
@@ -107,7 +107,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
     const handleUpdateMember = async () => {
         if (!token) return;
         try {
-            await apiFetch(`/crm/members/${selectedMember.id}`, {
+            await apiFetch(`/crm/personas/${selectedMember.id}`, {
                 method: 'PATCH',
                 token,
                 body: editedMember
@@ -144,7 +144,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                 method: 'POST',
                 token,
                 body: {
-                    member_id: selectedMember.id,
+                    persona_id: selectedMember.id,
                     channel: messageChannel,
                     content: newMessageContent
                 }
@@ -201,7 +201,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                             whileHover={{ scale: 1.05 }}
                             className="size-10 rounded-md bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg shadow-2xl shadow-blue-500/30 border-4 border-white dark:border-[#1e1f21]"
                         >
-                            {selectedMember.first_name.charAt(0)}
+                            {selectedMember.nombre_completo?.charAt(0) ?? ''}
                         </motion.div>
                         <div className="absolute -bottom-1 -right-1 size-9 rounded-lg bg-white dark:bg-[#0f1113] border-[3px] border-slate-50 dark:border-[#0f1113] flex items-center justify-center text-blue-600 shadow-xl overflow-hidden">
                             <Zap size={15} fill="currentColor" className="animate-pulse" />
@@ -209,8 +209,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                     </div>
                     <div className="flex-1 min-w-0">
                         <h2 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-[-0.04em] leading-[0.9] mb-2">
-                            {selectedMember.first_name} <br/>
-                            <span className="text-blue-600 dark:text-blue-400">{selectedMember.last_name}</span>
+                            {selectedMember.nombre_completo}
                         </h2>
                         <div className="flex items-center gap-2.5">
                             <span className="px-3 py-1 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 text-[9px] font-bold uppercase tracking-wider border border-blue-500/20">
@@ -431,7 +430,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                     value={newMessageContent} 
                                     onChange={e => setNewMessageContent(e.target.value)} 
                                     className="w-full p-3 rounded-md border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all min-h-12 dark:text-white" 
-                                    placeholder={`Escribe mensaje para ${selectedMember.first_name}...`}
+                                    placeholder={`Escribe mensaje para ${selectedMember.nombre_completo}...`}
                                 />
                                 <button type="submit" disabled={!newMessageContent} className="w-full py-2 bg-blue-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 group">
                                     Enviar Ahora <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />

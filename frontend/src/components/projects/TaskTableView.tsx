@@ -186,10 +186,10 @@ function InlineUserCell({ value, token, onChange }: { value?: number | null; tok
     useEffect(() => {
         if (!open) return;
         setLoading(true);
-        apiFetch('/crm/members/', { method: 'GET', token: token ?? undefined })
+        apiFetch('/crm/personas/', { method: 'GET', token: token ?? undefined })
             .then((data: any) => {
                 const list: UserRecord[] = Array.isArray(data)
-                    ? data.map((m: any) => ({ id: m.user?.id ?? m.id, username: m.user?.username ?? m.username ?? `#${m.id}`, email: m.user?.email ?? m.email }))
+                    ? data.map((m: any) => ({ id: m.user?.id ?? m.id, username: m.nombre_completo || m.user?.username ?? m.username ?? `#${m.id}`, email: m.user?.email ?? m.email }))
                     : [];
                 setUsers(list);
                 if (value) { const found = list.find(u => u.id === value); if (found) setDisplayName(found.username); }

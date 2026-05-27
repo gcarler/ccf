@@ -24,6 +24,9 @@ interface Strategy {
     id: number;
     name: string;
     description: string;
+    codigo?: string;
+    clase_raiz?: string;
+    activa: boolean;
     typology: string;
     recurrence: string | null;
     day_of_week: string | null;
@@ -37,6 +40,24 @@ interface Strategy {
     created_at: string;
     updated_at: string;
     group_count?: number;
+}
+
+interface CustomRole {
+    id: number;
+    estrategia_id: string;
+    nombre: string;
+    descripcion?: string;
+}
+
+interface FollowUpRecord {
+    id: number;
+    asistencia_id: number;
+    tipo: string;
+    fecha_programada?: string;
+    fecha_realizada?: string;
+    notas?: string;
+    completado: boolean;
+    resultado?: string;
 }
 
 interface StrategyGroup {
@@ -58,7 +79,7 @@ interface SessionRow {
 }
 
 interface AttendanceMember {
-    member_id: number;
+    persona_id: string;
     name: string;
     role: string;
     status: 'present' | 'absent' | 'first_time';
@@ -129,8 +150,22 @@ export default function StrategyDetailPage() {
     const [editDesc, setEditDesc] = useState('');
     const [editType, setEditType] = useState('');
     const [editStatus, setEditStatus] = useState<'active' | 'pending' | 'done'>('pending');
+    const [editActiva, setEditActiva] = useState(true);
+    const [editClaseRaiz, setEditClaseRaiz] = useState('');
     const [editStartDate, setEditStartDate] = useState('');
     const [editEndDate, setEditEndDate] = useState('');
+
+    // Roles personalizados
+    const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
+    const [loadingRoles, setLoadingRoles] = useState(false);
+    const [showRoleForm, setShowRoleForm] = useState(false);
+    const [newRoleName, setNewRoleName] = useState('');
+    const [newRoleDesc, setNewRoleDesc] = useState('');
+
+    // Seguimiento
+    const [followUps, setFollowUps] = useState<FollowUpRecord[]>([]);
+    const [loadingFollowUps, setLoadingFollowUps] = useState(false);
+    const [showFollowUpPanel, setShowFollowUpPanel] = useState(false);
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const { viewType, setViewType } = useViewType(`strategy_${id}`, 'dashboard');
     const [groups, setGroups] = useState<StrategyGroup[]>([]);
@@ -142,16 +177,16 @@ export default function StrategyDetailPage() {
     const [groupForm, setGroupForm] = useState({
         name: '', zone: '', address: '', capacity: 15,
         day_of_week: '', start_time: '', end_time: '',
-        leader_id: null as number | null,
-        assistant_id: null as number | null,
-        host_id: null as number | null,
+        leader_id: null as string | null,
+        assistant_id: null as string | null,
+        host_id: null as string | null,
     });
     const [groupSaving, setGroupSaving] = useState(false);
 
     // Member management drawer
     const [isMemberDrawerOpen, setIsMemberDrawerOpen] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<StrategyGroup | null>(null);
-    const [groupMembers, setGroupMembers] = useState<{ id: number; name: string; email: string; role: string }[]>([]);
+    const [groupMembers, setGroupMembers] = useState<{ id: string; name: string; email: string; role: string }[]>([]);
     const [allMembers, setAllMembers] = useState<any[]>([]);
     const [memberSearch, setMemberSearch] = useState('');
     const [memberSaving, setMemberSaving] = useState(false);
@@ -198,6 +233,8 @@ export default function StrategyDetailPage() {
             setEditDesc(result.description || '');
             setEditType(result.strategy_type || '');
             setEditStatus(result.status || 'pending');
+            setEditActiva(result.activa !== undefined ? result.activa : true);
+            setEditClaseRaiz(result.clase_raiz || result.typology || '');
             setEditStartDate(result.start_date ? result.start_date.substring(0, 10) : '');
             setEditEndDate(result.end_date ? result.end_date.substring(0, 10) : '');
         } catch (e: any) {
@@ -208,7 +245,40 @@ export default function StrategyDetailPage() {
         }
     }, [id]);
 
-    useEffect(() => { fetchStrategy(); }, [fetchStrategy]);
+    const fetchCustomRoles = useCallback(async () => {
+        setLoadingRoles(true);
+        try {
+            const result = await apiFetch<CustomRole[]>(`/evangelism/strategies/${id}/roles`, { token });
+            setCustomRoles(result || []);
+        } catch {
+            // Roles endpoint may not exist for old strategies without codigo
+            setCustomRoles([]);
+        } finally {
+            setLoadingRoles(false);
+        }
+    }, [id]);
+
+    const fetchFollowUps = useCallback(async () => {
+        setLoadingFollowUps(true);
+        try {
+            const result = await apiFetch<FollowUpRecord[]>('/evangelism/follow-up/pending', { token });
+            // Filter follow-ups that belong to this strategy's groups
+            setFollowUps(result?.filter(f => {
+                // We'll show all pending follow-ups for now, filtered will show in detail
+                return true;
+            }) || []);
+        } catch {
+            setFollowUps([]);
+        } finally {
+            setLoadingFollowUps(false);
+        }
+    }, [id]);
+
+    useEffect(() => {
+        fetchStrategy();
+        fetchCustomRoles();
+        fetchFollowUps();
+    }, [fetchStrategy, fetchCustomRoles, fetchFollowUps]);
 
     const fetchGroups = useCallback(async () => {
         try {
@@ -311,8 +381,8 @@ export default function StrategyDetailPage() {
         try {
             const house = await apiFetch<any>(`/evangelism/glory-houses/${group.id}`, { token });
             setGroupMembers(house?.base_attendees?.map((a: any) => ({
-                id: a.member_id,
-                name: a.name || `${a.member?.first_name || ''} ${a.member?.last_name || ''}`.trim(),
+                id: a.persona_id,
+                name: a.name || a.member?.nombre_completo || '',
                 email: a.member?.email || '',
                 role: a.role || 'miembro',
             })) || []);
@@ -327,7 +397,7 @@ export default function StrategyDetailPage() {
                 method: 'PUT', token,
                 body: {
                     base_attendees_with_roles: groupMembers.map(m => ({
-                        member_id: m.id,
+                        persona_id: m.id,
                         role: m.role,
                     })),
                 },
@@ -344,17 +414,17 @@ export default function StrategyDetailPage() {
         if (groupMembers.find(m => m.id === member.id)) return;
         setGroupMembers(prev => [...prev, {
             id: member.id,
-            name: `${member.first_name} ${member.last_name}`,
+            name: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(),
             email: member.email || '',
             role: 'miembro',
         }]);
     };
 
-    const updateMemberRole = (memberId: number, role: string) => {
+    const updateMemberRole = (memberId: string, role: string) => {
         setGroupMembers(prev => prev.map(m => m.id === memberId ? { ...m, role } : m));
     };
 
-    const removeMemberFromGroup = (memberId: number) => {
+    const removeMemberFromGroup = (memberId: string) => {
         setGroupMembers(prev => prev.filter(m => m.id !== memberId));
     };
 
@@ -399,18 +469,18 @@ export default function StrategyDetailPage() {
             // Get house members to build attendance list
             const house = await apiFetch<any>(`/evangelism/glory-houses/${session.glory_house_id}`, { token });
             const existing = await apiFetch<any>(`/evangelism/sessions/${session.id}`, { token }).catch(() => null);
-            const existingMap: Record<number, { status: string; notes: string }> = {};
+            const existingMap: Record<string, { status: string; notes: string }> = {};
             if (existing?.attendance) {
                 for (const a of existing.attendance) {
-                    existingMap[a.member_id] = { status: a.status, notes: a.notes || '' };
+                    existingMap[a.persona_id] = { status: a.status, notes: a.notes || '' };
                 }
             }
             const memberList = house?.base_attendees?.map((a: any) => ({
-                member_id: a.member_id,
-                name: a.name || `${a.member?.first_name || ''} ${a.member?.last_name || ''}`.trim(),
+                persona_id: a.persona_id,
+                name: a.name || a.member?.nombre_completo || '',
                 role: a.role || 'miembro',
-                status: (existingMap[a.member_id]?.status as any) || 'present',
-                notes: existingMap[a.member_id]?.notes || '',
+                status: (existingMap[a.persona_id]?.status as any) || 'present',
+                notes: existingMap[a.persona_id]?.notes || '',
             })) || [];
             setAttendanceMembers(memberList);
         } catch { setAttendanceMembers([]); }
@@ -424,7 +494,7 @@ export default function StrategyDetailPage() {
                 method: 'POST', token,
                 body: attendanceMembers.map(m => ({
                     session_id: attendanceSession.id,
-                    member_id: m.member_id,
+                    persona_id: m.persona_id,
                     status: m.status,
                     notes: m.notes || null,
                 })),
@@ -458,6 +528,8 @@ export default function StrategyDetailPage() {
                 body: {
                     name: editName, description: editDesc, strategy_type: editType,
                     status: editStatus,
+                    activa: editActiva,
+                    clase_raiz: editClaseRaiz || null,
                     start_date: editStartDate ? new Date(editStartDate).toISOString() : null,
                     end_date: editEndDate ? new Date(editEndDate).toISOString() : null,
                 },
@@ -465,6 +537,7 @@ export default function StrategyDetailPage() {
             toast.success('Estrategia actualizada');
             window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
             fetchStrategy();
+            fetchCustomRoles();
         } catch (e: any) {
             console.error('[StrategyDetail] Save error:', e);
             toast.error('Error al guardar: ' + (e?.message || 'Error desconocido'));
@@ -781,6 +854,34 @@ export default function StrategyDetailPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
+                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Clase Raíz</label>
+                                <div className="flex gap-2">
+                                    {['relacional', 'evento_masivo', 'sectorial'].map(c => (
+                                        <button key={c} onClick={() => setEditClaseRaiz(c)}
+                                            className={`flex-1 px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all capitalize ${
+                                                editClaseRaiz === c
+                                                    ? 'bg-blue-600 text-white shadow-sm'
+                                                    : 'bg-slate-50 dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10'
+                                            }`}>
+                                            {c === 'evento_masivo' ? 'Evento Masivo' : c}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Activa</label>
+                                <button onClick={() => setEditActiva(!editActiva)}
+                                    className={`w-full px-3 py-2 rounded-lg text-[12px] font-bold transition-all text-left ${
+                                        editActiva
+                                            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                                            : 'bg-slate-50 dark:bg-white/5 text-slate-400 border border-slate-200 dark:border-white/10'
+                                    }`}>
+                                    {editActiva ? 'Activa' : 'Inactiva'}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
                                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Fecha de inicio</label>
                                 <input type="date" value={editStartDate} onChange={e => setEditStartDate(e.target.value)}
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors" />
@@ -990,15 +1091,123 @@ export default function StrategyDetailPage() {
 
                 {/* Metadata */}
                 {activeTab === 'overview' && (
+                    <>
                     <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-lg p-4">
                         <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Información</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                            <div><p className="text-slate-400 font-medium">ID</p><p className="text-slate-700 dark:text-white font-bold">#{strategy.id}</p></div>
+                            <div><p className="text-slate-400 font-medium">ID</p><p className="text-slate-700 dark:text-white font-bold">{strategy.codigo ? strategy.codigo : `#${strategy.id}`}</p></div>
                             <div><p className="text-slate-400 font-medium">Inicio</p><p className="text-slate-700 dark:text-white font-bold">{formatDate(strategy.start_date)}</p></div>
                             <div><p className="text-slate-400 font-medium">Fin</p><p className="text-slate-700 dark:text-white font-bold">{formatDate(strategy.end_date)}</p></div>
                             <div><p className="text-slate-400 font-medium">Actualización</p><p className="text-slate-700 dark:text-white font-bold">{formatDate(strategy.updated_at)}</p></div>
+                            <div><p className="text-slate-400 font-medium">Clase</p><p className="text-slate-700 dark:text-white font-bold capitalize">{strategy.clase_raiz || strategy.typology || '—'}</p></div>
+                            <div><p className="text-slate-400 font-medium">Activa</p><p className={`font-bold ${strategy.activa ? 'text-emerald-600' : 'text-slate-400'}`}>{strategy.activa ? 'Sí' : 'No'}</p></div>
                         </div>
                     </div>
+
+                    {/* ── Roles Personalizados ── */}
+                    <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Roles Personalizados</h3>
+                            <button onClick={() => setShowRoleForm(!showRoleForm)}
+                                className="text-[11px] font-bold text-blue-500 hover:text-blue-600 flex items-center gap-1">
+                                <Plus size={12} />{showRoleForm ? 'Cancelar' : 'Agregar'}
+                            </button>
+                        </div>
+
+                        {showRoleForm && (
+                            <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg space-y-2">
+                                <input value={newRoleName} onChange={e => setNewRoleName(e.target.value)}
+                                    placeholder="Nombre del rol (ej: Coordinador de zona)"
+                                    className="w-full px-2.5 py-1.5 text-[12px] bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none" />
+                                <input value={newRoleDesc} onChange={e => setNewRoleDesc(e.target.value)}
+                                    placeholder="Descripción (opcional)"
+                                    className="w-full px-2.5 py-1.5 text-[12px] bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none" />
+                                <button onClick={async () => {
+                                    if (!newRoleName.trim()) return;
+                                    try {
+                                        await apiFetch(`/evangelism/strategies/${id}/roles`, {
+                                            method: 'POST', token,
+                                            body: { estrategia_id: strategy.codigo, nombre: newRoleName.trim(), descripcion: newRoleDesc || null },
+                                        });
+                                        toast.success('Rol creado');
+                                        setNewRoleName(''); setNewRoleDesc(''); setShowRoleForm(false);
+                                        fetchCustomRoles();
+                                    } catch { toast.error('Error al crear rol'); }
+                                }} disabled={!newRoleName.trim()}
+                                    className="px-3 py-1.5 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors">
+                                    Crear Rol
+                                </button>
+                            </div>
+                        )}
+
+                        {loadingRoles ? (
+                            <p className="text-[11px] text-slate-400 italic">Cargando...</p>
+                        ) : customRoles.length === 0 ? (
+                            <p className="text-[11px] text-slate-400 italic">Sin roles personalizados</p>
+                        ) : (
+                            <div className="space-y-1.5">
+                                {customRoles.map(r => (
+                                    <div key={r.id} className="flex items-center justify-between px-2.5 py-1.5 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
+                                        <div>
+                                            <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{r.nombre}</span>
+                                            {r.descripcion && <p className="text-[10px] text-slate-400">{r.descripcion}</p>}
+                                        </div>
+                                        <button onClick={async () => {
+                                            if (!confirm(`¿Eliminar rol "${r.nombre}"?`)) return;
+                                            try {
+                                                await apiFetch(`/evangelism/strategies/${id}/roles/${r.id}`, { method: 'DELETE', token });
+                                                toast.success('Rol eliminado');
+                                                fetchCustomRoles();
+                                            } catch { toast.error('Error al eliminar rol'); }
+                                        }} className="p-1 text-slate-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                            <X size={12} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Seguimiento Pendiente ── */}
+                    <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Seguimiento Pendiente</h3>
+                            <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full">
+                                {followUps.filter(f => !f.completado).length}
+                            </span>
+                        </div>
+                        {loadingFollowUps ? (
+                            <p className="text-[11px] text-slate-400 italic">Cargando...</p>
+                        ) : followUps.filter(f => !f.completado).length === 0 ? (
+                            <p className="text-[11px] text-slate-400 italic">Sin seguimientos pendientes</p>
+                        ) : (
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                                {followUps.filter(f => !f.completado).slice(0, 10).map(f => (
+                                    <div key={f.id} className="flex items-center justify-between px-2.5 py-1.5 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.tipo === 'llamada' ? 'bg-blue-100 text-blue-700' : f.tipo === 'visita' ? 'bg-purple-100 text-purple-700' : f.tipo === 'oracion' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                {f.tipo}
+                                            </span>
+                                            <span className="text-[11px] text-slate-500">{f.notas || '—'}</span>
+                                        </div>
+                                        <button onClick={async () => {
+                                            try {
+                                                await apiFetch(`/evangelism/follow-up/${f.id}`, {
+                                                    method: 'PATCH', token,
+                                                    body: { completado: true, fecha_realizada: new Date().toISOString() },
+                                                });
+                                                toast.success('Seguimiento completado');
+                                                fetchFollowUps();
+                                            } catch { toast.error('Error al actualizar'); }
+                                        }} className="px-2 py-0.5 text-[10px] font-bold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded transition-colors">
+                                            Completar
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    </>
                 )}
             </div>
 
@@ -1064,10 +1273,10 @@ export default function StrategyDetailPage() {
                     ].map(({ label, field }) => (
                         <div key={field}>
                             <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">{label}</label>
-                            <select value={(groupForm as any)[field] || ''} onChange={e => setGroupForm(f => ({ ...f, [field]: e.target.value ? parseInt(e.target.value) : null }))}
+                            <select value={(groupForm as any)[field] || ''} onChange={e => setGroupForm(f => ({ ...f, [field]: e.target.value || null }))}
                                 className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                                 <option value="">Sin asignar</option>
-                                {members.map(m => <option key={m.id} value={m.id}>{m.first_name} {m.last_name}{m.church_role ? ` (${m.church_role})` : ''}</option>)}
+                                {members.map(m => <option key={m.id} value={m.id}>{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}{m.church_role ? ` (${m.church_role})` : ''}</option>)}
                             </select>
                         </div>
                     ))}
@@ -1127,14 +1336,14 @@ export default function StrategyDetailPage() {
                                 .filter(m => {
                                     if (!memberSearch) return true;
                                     const term = memberSearch.toLowerCase();
-                                    return `${m.first_name} ${m.last_name}`.toLowerCase().includes(term) || (m.email || '').toLowerCase().includes(term);
+                                    return (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase().includes(term) || (m.email || '').toLowerCase().includes(term);
                                 })
                                 .filter(m => !groupMembers.find(gm => gm.id === m.id))
                                 .slice(0, 20)
                                 .map(m => (
                                     <button key={m.id} onClick={() => addMemberToGroup(m)}
                                         className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md text-xs text-left transition-colors group/add">
-                                        <span className="font-medium text-slate-700 dark:text-slate-200">{m.first_name} {m.last_name}
+                                        <span className="font-medium text-slate-700 dark:text-slate-200">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}
                                             {m.email && <span className="text-slate-400 ml-2">{m.email}</span>}
                                         </span>
                                         <Plus size={14} className="text-slate-300 group-hover/add:text-blue-500 transition-colors" />
@@ -1223,7 +1432,7 @@ export default function StrategyDetailPage() {
                             )}
                             <div className="space-y-2">
                                 {attendanceMembers.map((m, i) => (
-                                    <div key={m.member_id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${m.status === 'first_time' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' : 'bg-slate-50 dark:bg-white/5'}`}>
+                                    <div key={m.persona_id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${m.status === 'first_time' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' : 'bg-slate-50 dark:bg-white/5'}`}>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-1.5">
                                                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{m.name}</p>
@@ -1287,17 +1496,17 @@ export default function StrategyDetailPage() {
                                     <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1e1f21] p-1">
                                         {allMembers
                                             .filter(m => {
-                                                const name = `${m.first_name} ${m.last_name}`.toLowerCase();
+                                                const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
                                                 return name.includes(visitorSearch.toLowerCase()) &&
-                                                    !attendanceMembers.find(a => a.member_id === m.id);
+                                                    !attendanceMembers.find(a => a.persona_id === m.id);
                                             })
                                             .slice(0, 8)
                                             .map(m => (
                                                 <button key={m.id}
                                                     onClick={() => {
                                                         setAttendanceMembers(prev => [...prev, {
-                                                            member_id: m.id,
-                                                            name: `${m.first_name} ${m.last_name}`.trim(),
+                                                            persona_id: m.id,
+                                                            name: m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim(),
                                                             role: 'visitante',
                                                             status: 'first_time',
                                                             notes: '',
@@ -1307,13 +1516,13 @@ export default function StrategyDetailPage() {
                                                     }}
                                                     className="w-full text-left px-3 py-2 rounded-md text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2 transition-colors">
                                                     <UserPlus size={12} className="text-blue-500 shrink-0" />
-                                                    <span className="font-medium">{m.first_name} {m.last_name}</span>
+                                                    <span className="font-medium">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</span>
                                                     {m.church_role && <span className="text-slate-400 text-[10px]">({m.church_role})</span>}
                                                 </button>
                                             ))}
                                         {allMembers.filter(m => {
-                                            const name = `${m.first_name} ${m.last_name}`.toLowerCase();
-                                            return name.includes(visitorSearch.toLowerCase()) && !attendanceMembers.find(a => a.member_id === m.id);
+                                            const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
+                                            return name.includes(visitorSearch.toLowerCase()) && !attendanceMembers.find(a => a.persona_id === m.id);
                                         }).length === 0 && (
                                             <p className="text-center py-3 text-xs text-slate-400">No se encontraron miembros</p>
                                         )}

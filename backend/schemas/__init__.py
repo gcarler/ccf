@@ -45,9 +45,25 @@ from backend.schemas.cms import (AnnouncementCreate, AnnouncementRead,
                                  TestimonialAuthorRead, TestimonialCreate,
                                  TestimonialRead, TestimonialUpdate)
 # ── CRM / Pastoral ───────────────────────────────────────────────────────────
+# ── Evangelism (refactor) ────────────────────────────────────────────────────
+from backend.schemas.evangelism import (AsistenciaBulkCreate, AsistenciaBulkItem,
+    AsistenciaSesionBase, AsistenciaSesionCreate, AsistenciaSesionResponse,
+    AsistenciaSesionUpdate, ClaseEstrategiaEnum, EstadoAsistenciaEnum,
+    EstadoSesionEnum, EstrategiaEvangelismoBase, EstrategiaEvangelismoCreate,
+    EstrategiaEvangelismoResponse, EstrategiaEvangelismoUpdate,
+    FrecuenciaEnum, ParticipanteGrupoBase, ParticipanteGrupoCreate,
+    ParticipanteGrupoResponse, ParticipanteGrupoUpdate,
+    RegistroSeguimientoBase, RegistroSeguimientoCreate,
+    RegistroSeguimientoResponse, RegistroSeguimientoUpdate,
+    RolEnGrupoEnum, RolPersonalizadoEstrategiaBase,
+    RolPersonalizadoEstrategiaCreate, RolPersonalizadoEstrategiaResponse,
+    TipoSeguimientoEnum, MotivoExcusaBase, MotivoExcusaCreate,
+    MotivoExcusaUpdate, MotivoExcusaResponse)
+
 from backend.schemas.crm import (EVENT_TYPES, MINISTRY_ROLES,
                                  PIPELINE_STAGE_ALIASES, AgendaEvent,
                                  AgendaEventBase, AgendaEventCreate,
+                                 PersonaCreate, PersonaResponse, PersonaUpdate,
                                  ConsolidationAssignment,
                                  ConsolidationAssignmentBase,
                                  ConsolidationAssignmentCreate,

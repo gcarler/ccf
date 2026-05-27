@@ -19,7 +19,7 @@ import { PIPELINE_STAGES } from '@/app/plataforma/crm/pipeline/constants';
 interface PipelineKanbanBoardProps {
     leads: any[];
     onLeadClick: (lead: any) => void;
-    onDropLead: (leadId: number, stage: string) => void;
+    onDropLead: (leadId: string, stage: string) => void;
     onNewLead: (stage?: string) => void;
 }
 
@@ -50,7 +50,7 @@ export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead 
 
         if (!over) return;
 
-        const leadId = parseInt(active.id as string, 10);
+        const leadId = active.id as string;
         const overId = over.id as string;
 
         // Optimistic UI Update

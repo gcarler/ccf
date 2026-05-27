@@ -12,7 +12,7 @@ import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 
 type House = { id: number; name: string; zone?: string; leader_name?: string; members_count?: number; status?: string };
 type Season = { id: number; name: string; status: string };
-type Attendee = { member_id: number; name: string };
+type Attendee = { persona_id: string; name: string };
 
 export default function GloryHouseAdmin() {
     const { token, isAuthenticated } = useAuth();
@@ -24,7 +24,7 @@ export default function GloryHouseAdmin() {
     const [seasons, setSeasons] = useState<Season[]>([]);
     const [seasonId, setSeasonId] = useState<number | "">("");
     const [attendees, setAttendees] = useState<Attendee[]>([]);
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
     const fetchHouses = useCallback(async () => {
@@ -60,7 +60,7 @@ export default function GloryHouseAdmin() {
             setSeasons(nextSeasons);
             setSeasonId((nextSeasons.find((season) => season.status === "Activa") || nextSeasons[0])?.id || "");
             setAttendees(baseAttendees);
-            setSelectedIds(baseAttendees.map((member: Attendee) => member.member_id));
+            setSelectedIds(baseAttendees.map((member: Attendee) => member.persona_id));
         } catch {
             addToast("No se pudo preparar el reporte", "error");
         }
@@ -81,7 +81,7 @@ export default function GloryHouseAdmin() {
             await apiFetch(`/evangelism/faro/sessions/${session.id}/attendance`, {
                 method: "POST",
                 token,
-                body: { member_ids: selectedIds },
+                body: { persona_ids: selectedIds },
             });
             addToast(`Reporte enviado para ${selectedHouse.name}`, "success");
             setSelectedHouse(null);
@@ -161,16 +161,16 @@ export default function GloryHouseAdmin() {
                     <section className="space-y-4">
                         <div className="flex items-center justify-between px-2">
                             <h5 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Asistencia</h5>
-                            <button onClick={() => setSelectedIds(attendees.map((attendee) => attendee.member_id))} className="text-[9px] font-bold uppercase text-blue-600">Seleccionar Todos</button>
+                            <button onClick={() => setSelectedIds(attendees.map((attendee) => attendee.persona_id))} className="text-[9px] font-bold uppercase text-blue-600">Seleccionar Todos</button>
                         </div>
                         <div className="space-y-2">
                             {attendees.map((attendee) => (
-                                <label key={attendee.member_id} className="flex items-center justify-between rounded-lg border border-slate-100 bg-white p-4 dark:border-white/5 dark:bg-white/5">
+                                <label key={attendee.persona_id} className="flex items-center justify-between rounded-lg border border-slate-100 bg-white p-4 dark:border-white/5 dark:bg-white/5">
                                     <span className="text-xs font-bold">{attendee.name}</span>
                                     <input
                                         type="checkbox"
-                                        checked={selectedIds.includes(attendee.member_id)}
-                                        onChange={(event) => setSelectedIds((prev) => event.target.checked ? [...prev, attendee.member_id] : prev.filter((id) => id !== attendee.member_id))}
+                                        checked={selectedIds.includes(attendee.persona_id)}
+                                        onChange={(event) => setSelectedIds((prev) => event.target.checked ? [...prev, attendee.persona_id] : prev.filter((id) => id !== attendee.persona_id))}
                                     />
                                 </label>
                             ))}

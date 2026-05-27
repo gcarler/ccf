@@ -24,14 +24,14 @@ type MinistryEventDetail = {
     created_at: string | null;
 };
 
-type Assignment = { member_id: number; role: string; member_name?: string };
+type Assignment = { persona_id: string; role: string; member_name?: string };
 type SessionData = {
     event_id: number;
     session_date: string;
     assignments: Assignment[];
     metrics: Record<string, number>;
-    attendees: { member_id: number; name: string; role: string; scanned_at: string | null }[];
-    absentees: { member_id: number; name: string; role: string; phone: string }[];
+    attendees: { persona_id: string; name: string; role: string; scanned_at: string | null }[];
+    absentees: { persona_id: string; name: string; role: string; phone: string }[];
     total_absentees: number;
     absentees_truncated: boolean;
     total_attendance: number;
@@ -40,8 +40,8 @@ type SessionData = {
 };
 interface MemberSelectProps {
     members: Member[];
-    value: number | number[] | null;
-    onChange: (next: number | number[] | null) => void;
+    value: string | string[] | null;
+    onChange: (next: string | string[] | null) => void;
     label: string;
     multi?: boolean;
 }
@@ -65,9 +65,8 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
     const filtered = useMemo(() => {
         if (!search) return members.slice(0, 50);
         const q = search.toLowerCase();
-        return members.filter((m) => 
-            m.first_name.toLowerCase().includes(q) || 
-            m.last_name.toLowerCase().includes(q)
+        return members.filter((m) =>
+            m.nombre_completo.toLowerCase().includes(q)
         ).slice(0, 50);
     }, [members, search]);
 
@@ -81,7 +80,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
         }
     };
 
-    const handleRemove = (id: number) => {
+    const handleRemove = (id: string) => {
         if (multi) {
             const selected = Array.isArray(value) ? value : [];
             onChange(selected.filter((v) => v !== id));
@@ -100,8 +99,8 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                         if (!m) return null;
                         return (
                             <div key={id} className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-bold">
-                                {m.first_name} {m.last_name}
-                                <button type="button" aria-label={`Quitar ${m.first_name} ${m.last_name}`} onClick={() => handleRemove(id)} className="hover:text-red-500"><X size={14}/></button>
+                                {m.nombre_completo}
+                                <button type="button" aria-label={`Quitar ${m.nombre_completo}`} onClick={() => handleRemove(id)} className="hover:text-red-500"><X size={14}/></button>
                             </div>
                         );
                     })}
@@ -111,10 +110,10 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                     <span className="text-sm font-bold text-blue-800 dark:text-blue-300">
                         {(() => {
                             const m = members.find((x) => x.id === value);
-                            return m ? `${m.first_name} ${m.last_name}` : 'Cargando...';
+                            return m ? m.nombre_completo : 'Cargando...';
                         })()}
                     </span>
-                    <button type="button" aria-label="Quitar selección" onClick={() => typeof value === 'number' && handleRemove(value)} className="text-blue-400 hover:text-red-500"><X size={16}/></button>
+                    <button type="button" aria-label="Quitar selección" onClick={() => typeof value === 'string' && handleRemove(value)} className="text-blue-400 hover:text-red-500"><X size={16}/></button>
                 </div>
             ) : null}
 
@@ -139,7 +138,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                                     onClick={() => handleSelect(m)}
                                     className="w-full text-left px-4 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 border-b border-slate-100 dark:border-white/5 flex flex-col"
                                 >
-                                    <span className="text-sm font-bold text-slate-800 dark:text-white">{m.first_name} {m.last_name}</span>
+                                    <span className="text-sm font-bold text-slate-800 dark:text-white">{m.nombre_completo}</span>
                                     <span className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{m.church_role || 'Miembro'}</span>
                                 </button>
                             ))}
@@ -178,12 +177,12 @@ export default function EventDetailPage() {
     
     // Agenda Form State
     const [members, setMembers] = useState<Member[]>([]);
-    const [mcId, setMcId] = useState<number | null>(null);
-    const [preacherIds, setPreacherIds] = useState<number[]>([]);
-    const [offeringId, setOfferingId] = useState<number | null>(null);
+    const [mcId, setMcId] = useState<string | null>(null);
+    const [preacherIds, setPreacherIds] = useState<string[]>([]);
+    const [offeringId, setOfferingId] = useState<string | null>(null);
 
     const buildSessionFingerprint = useMemo(() => {
-        return (mc: number | null, preachers: number[], offering: number | null) => JSON.stringify({
+        return (mc: string | null, preachers: string[], offering: string | null) => JSON.stringify({
             mc,
             preachers: [...preachers].sort((a, b) => a - b),
             offering,
@@ -234,13 +233,13 @@ export default function EventDetailPage() {
                     const pre = data.assignments.filter(a => a.role === 'PREACHER');
                     const off = data.assignments.find(a => a.role === 'OFFERING');
                     
-                    setMcId(mc?.member_id || null);
-                    setPreacherIds(pre.map(a => a.member_id));
-                    setOfferingId(off?.member_id || null);
+                    setMcId(mc?.persona_id || null);
+                    setPreacherIds(pre.map(a => a.persona_id));
+                    setOfferingId(off?.persona_id || null);
                     setInitialSessionFingerprint(JSON.stringify({
-                        mc: mc?.member_id || null,
-                        preachers: pre.map((a) => a.member_id).sort((a, b) => a - b),
-                        offering: off?.member_id || null,
+                        mc: mc?.persona_id || null,
+                        preachers: pre.map((a) => a.persona_id).sort((a, b) => a - b),
+                        offering: off?.persona_id || null,
                     }));
                 } catch (err) {
                     console.error(err);
@@ -305,9 +304,9 @@ export default function EventDetailPage() {
         setSavingSession(true);
         try {
             const assignments: Assignment[] = [];
-            if (mcId) assignments.push({ member_id: mcId, role: 'MC' });
-            if (offeringId) assignments.push({ member_id: offeringId, role: 'OFFERING' });
-            preacherIds.forEach(pid => assignments.push({ member_id: pid, role: 'PREACHER' }));
+            if (mcId) assignments.push({ persona_id: mcId, role: 'MC' });
+            if (offeringId) assignments.push({ persona_id: offeringId, role: 'OFFERING' });
+            preacherIds.forEach(pid => assignments.push({ persona_id: pid, role: 'PREACHER' }));
 
             await apiFetch(`/evangelism/events/${id}/assignments`, {
                 method: 'POST',
@@ -518,7 +517,7 @@ export default function EventDetailPage() {
                                                 label="Maestro de Ceremonia"
                                                 members={members}
                                                 value={mcId}
-                                                onChange={(next) => setMcId(typeof next === 'number' ? next : null)}
+                                                onChange={(next) => setMcId(typeof next === 'string' ? next : null)}
                                             />
                                             <div className="h-px bg-slate-100 dark:bg-white/5 w-full my-4" />
                                             <MemberSelect 
@@ -533,7 +532,7 @@ export default function EventDetailPage() {
                                                 label="Palabra de Ofrenda"
                                                 members={members}
                                                 value={offeringId}
-                                                onChange={(next) => setOfferingId(typeof next === 'number' ? next : null)}
+                                                onChange={(next) => setOfferingId(typeof next === 'string' ? next : null)}
                                             />
                                         </div>
                                     </div>
@@ -595,7 +594,7 @@ export default function EventDetailPage() {
                                                             <p className="text-sm text-slate-400">Sin registros de asistentes.</p>
                                                         ) : (
                                                             sessionData!.attendees.map((att) => (
-                                                                <div key={`${att.member_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
+                                                                <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
                                                                     <div className="min-w-0">
                                                                         <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{att.name}</p>
                                                                         <p className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{att.role}</p>
@@ -619,7 +618,7 @@ export default function EventDetailPage() {
                                                             <p className="text-sm text-slate-400">No hay ausentes en esta sesión.</p>
                                                         ) : (
                                                             sessionData!.absentees.map((att) => (
-                                                                <div key={`${att.member_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
+                                                                <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
                                                                     <div className="min-w-0">
                                                                         <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{att.name}</p>
                                                                         <p className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{att.role}</p>

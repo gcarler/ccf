@@ -182,7 +182,7 @@ export default function MembersPage() {
             try {
                 setLoading(true);
                 const [membersData, rolesData, deptData] = await Promise.all([
-                    apiFetch<any[]>('/crm/members', { token }).catch(() => []),
+                    apiFetch<any[]>('/crm/personas', { token }).catch(() => []),
                     apiFetch<any[]>('/crm/roles', { token }).catch(() => []),
                     apiFetch<Department[]>('/crm/colombian-departments', { token }).catch(() => []),
                 ]);
@@ -236,7 +236,7 @@ export default function MembersPage() {
         if (query) {
             const q = query.toLowerCase();
             list = list.filter(m =>
-                `${m.first_name} ${m.last_name}`.toLowerCase().includes(q) ||
+                (m.nombre_completo || '').toLowerCase().includes(q) ||
                 m.email?.toLowerCase().includes(q) ||
                 m.church_role?.toLowerCase().includes(q)
             );
@@ -262,7 +262,7 @@ export default function MembersPage() {
                 if (!body[k]) body[k] = null;
             });
 
-            const created = await apiFetch<any>('/crm/members/', {
+            const created = await apiFetch<any>('/crm/personas/', {
                 method: 'POST',
                 token,
                 body,
@@ -354,10 +354,10 @@ export default function MembersPage() {
                             {filteredMembers.map(m => (
                                 <div key={m.id} onClick={() => router.push(`/plataforma/crm/members/${m.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all">
                                     <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400 font-bold text-xs">
-                                        {m.first_name[0]}{m.last_name[0]}
+                                        {(m.nombre_completo?.charAt(0) || '')}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{m.first_name} {m.last_name}</p>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</p>
                                         <p className="text-xs text-slate-400">{m.church_role || 'Miembro'}{m.email ? ` · ${m.email}` : ''}</p>
                                     </div>
                                 </div>
@@ -369,8 +369,7 @@ export default function MembersPage() {
                             idAccessor="id"
                             storageKey="crm_members"
                             columns={[
-                                { id: 'first_name', name: 'Nombre', type: 'text' },
-                                { id: 'last_name', name: 'Apellido', type: 'text' },
+                                { id: 'nombre_completo', name: 'Nombre Completo', type: 'text' },
                                 { id: 'church_role', name: 'Rol', type: 'select', options: roles.map(r => ({ label: r.name, value: r.name, color: r.color })) },
                                 { id: 'email', name: 'Email', type: 'email' },
                                 { id: 'phone', name: 'Teléfono', type: 'phone' },
@@ -387,7 +386,7 @@ export default function MembersPage() {
                                     if (sortDir) params.set('sort_dir', sortDir);
                                     if (search) params.set('search', search);
                                     return apiFetch<{ items: any[]; total: number }>(
-                                        `/crm/members/paginated?${params.toString()}`,
+                                        `/crm/personas/paginated?${params.toString()}`,
                                         { token: token ?? undefined }
                                     ).then(res => ({ items: res.items ?? [], total: res.total ?? 0 }));
                                 },
@@ -402,12 +401,12 @@ export default function MembersPage() {
                                             <div className="flex items-center gap-4">
                                                 <div className="relative">
                                                     <div className="size-9 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-sm">
-                                                        {member.first_name[0]}{member.last_name[0]}
+                                                        {(member.nombre_completo?.charAt(0) || '')}
                                                     </div>
                                                     <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[#1e1f21]", member.spiritual_health > 0.7 ? "bg-emerald-500" : member.spiritual_health > 0.4 ? "bg-amber-500" : "bg-red-500")} />
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase truncate max-w-[150px]">{member.first_name} {member.last_name}</h3>
+                                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase truncate max-w-[150px]">{member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}</h3>
                                                     <div className="mt-1 flex items-center gap-2">
                                                         <span className={clsx("px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide", getRoleColor(member.church_role || ''))}>{member.church_role || 'Miembro'}</span>
                                                     </div>

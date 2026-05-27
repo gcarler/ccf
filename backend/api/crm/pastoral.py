@@ -9,7 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.api.crm._shared import (_member_full_name, _serialize_case,
+from backend.api.crm._shared import (_persona_full_name, _serialize_case,
                                      _serialize_message_group, _serialize_task,
                                      utc_now)
 from backend.auth import (get_current_user, normalize_role, require_active_user,
@@ -47,7 +47,7 @@ def create_consolidation_case(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     member = (
-        db.query(models.Member).filter(models.Member.id == payload.member_id).first()
+        db.query(models.Member).filter(models.Member.id == payload.persona_id).first()
     )
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
@@ -199,7 +199,7 @@ def list_consolidation_cases(
     if status:
         q = q.filter(models.ConsolidationCase.status == status)
     if member_id:
-        q = q.filter(models.ConsolidationCase.member_id == member_id)
+        q = q.filter(models.ConsolidationCase.persona_id == member_id)
 
     total = q.count()
     cases = (
@@ -929,7 +929,7 @@ def get_counseling_detail(
         raise HTTPException(status_code=404, detail="Counseling ticket not found")
     history_rows = (
         db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.member_id == ticket.member_id)
+        .filter(models.CounselingTicket.persona_id == ticket.persona_id)
         .order_by(
             models.CounselingTicket.created_at.desc(), models.CounselingTicket.id.desc()
         )
@@ -937,8 +937,8 @@ def get_counseling_detail(
     )
     return {
         "id": ticket.id,
-        "member_id": ticket.member_id,
-        "member_name": _member_full_name(ticket.member),
+        "member_id": ticket.persona_id,
+        "member_name": _persona_full_name(ticket.persona),
         "topic": ticket.subject,
         "summary": ticket.subject,
         "notes": ticket.notes,
@@ -983,10 +983,10 @@ def get_glory_house_detail(
         "members_count": house.members_count,
         "capacity": house.capacity,
         "status": str(house.status).lower(),
-        "base_attendee_ids": [row.member_id for row in (house.base_attendees or [])],
+        "base_attendee_ids": [row.persona_id for row in (house.base_attendees or [])],
         "base_attendees": [
             {
-                "member_id": row.member_id,
+                "member_id": row.persona_id,
                 "role": row.role,
             }
             for row in (house.base_attendees or [])
@@ -1060,11 +1060,11 @@ def update_glory_house(
             .filter(models.GloryHouseMember.glory_house_id == house.id)
             .all()
         )
-        current_by_member = {row.member_id: row for row in current_rows}
+        current_by_member = {row.persona_id: row for row in current_rows}
         incoming_ids = set(normalized_ids)
 
         for row in current_rows:
-            if row.member_id not in incoming_ids:
+            if row.persona_id not in incoming_ids:
                 db.delete(row)
         for member_id in normalized_ids:
             if member_id in current_by_member:
@@ -1095,9 +1095,9 @@ def update_glory_house(
         "end_time": house.end_time,
         "status": str(house.status).lower() if house.status else "active",
         "members_count": house.members_count,
-        "base_attendee_ids": [row.member_id for row in (house.base_attendees or [])],
+        "base_attendee_ids": [row.persona_id for row in (house.base_attendees or [])],
         "base_attendees": [
-            {"member_id": row.member_id, "role": row.role}
+            {"member_id": row.persona_id, "role": row.role}
             for row in (house.base_attendees or [])
         ],
     }
@@ -1138,8 +1138,8 @@ def list_counseling_tickets(
     return [
         {
             "id": t.id,
-            "member_id": t.member_id,
-            "member_name": _member_full_name(t.member) if t.member else "",
+            "member_id": t.persona_id,
+            "member_name": _persona_full_name(t.persona) if t.persona else "",
             "topic": t.subject,
             "summary": t.subject,
             "notes": t.notes,
@@ -1160,8 +1160,8 @@ def create_counseling_ticket(
     ticket = crud.create_counseling_ticket(db, payload)
     return {
         "id": ticket.id,
-        "member_id": ticket.member_id,
-        "member_name": _member_full_name(ticket.member) if ticket.member else "",
+        "member_id": ticket.persona_id,
+        "member_name": _persona_full_name(ticket.persona) if ticket.persona else "",
         "topic": ticket.subject,
         "summary": ticket.subject,
         "notes": ticket.notes,
@@ -1179,15 +1179,15 @@ def get_counseling_by_lead(
 ):
     tickets = (
         db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.member_id == lead_id)
+        .filter(models.CounselingTicket.persona_id == lead_id)
         .order_by(models.CounselingTicket.created_at.desc())
         .all()
     )
     return [
         {
             "id": t.id,
-            "member_id": t.member_id,
-            "member_name": _member_full_name(t.member) if t.member else "",
+            "member_id": t.persona_id,
+            "member_name": _persona_full_name(t.persona) if t.persona else "",
             "topic": t.subject,
             "summary": t.subject,
             "notes": t.notes,
@@ -1225,8 +1225,8 @@ def update_counseling_ticket(
     db.refresh(ticket)
     return {
         "id": ticket.id,
-        "member_id": ticket.member_id,
-        "member_name": _member_full_name(ticket.member) if ticket.member else "",
+        "member_id": ticket.persona_id,
+        "member_name": _persona_full_name(ticket.persona) if ticket.persona else "",
         "topic": ticket.subject,
         "status": ticket.status,
         "notes": ticket.notes,
@@ -1519,7 +1519,7 @@ def create_public_prayer_request(
         "category": prayer.category,
         "status": prayer.status,
         "source": prayer.source,
-        "member_id": result.member.id if result.member else None,
+        "member_id": result.persona.id if result.persona else None,
         "case_id": result.case.id if result.case else None,
     }
 
@@ -1685,7 +1685,7 @@ def list_volunteers(
     for member in members:
         shifts = (
             db.query(models.VolunteerShift)
-            .filter(models.VolunteerShift.member_id == member.id)
+            .filter(models.VolunteerShift.persona_id == member.id)
             .all()
         )
         total_hours = 0
@@ -1716,7 +1716,7 @@ def get_volunteer_detail(
         raise HTTPException(status_code=404, detail="Volunteer not found")
     shifts = (
         db.query(models.VolunteerShift)
-        .filter(models.VolunteerShift.member_id == member_id)
+        .filter(models.VolunteerShift.persona_id == member_id)
         .order_by(models.VolunteerShift.shift_start.desc())
         .all()
     )
@@ -1732,17 +1732,17 @@ def get_volunteer_detail(
         for row in (
             db.query(models.VolunteerSkill)
             .join(
-                models.member_volunteer_skills,
-                models.member_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
+                models.persona_volunteer_skills,
+                models.persona_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
             )
-            .filter(models.member_volunteer_skills.c.member_id == member_id)
+            .filter(models.persona_volunteer_skills.c.persona_id == member_id)
             .all()
         )
         if row.name
     )
     return {
         "id": member.id,
-        "name": _member_full_name(member),
+        "name": _persona_full_name(member),
         "role": member.church_role,
         "team": latest_shift.team_name if latest_shift else None,
         "status": latest_shift.status if latest_shift else "inactive",
@@ -1774,7 +1774,7 @@ def update_volunteer(
     db.refresh(member)
     return {
         "id": member.id,
-        "name": _member_full_name(member),
+        "name": _persona_full_name(member),
         "role": member.church_role,
     }
 
@@ -1789,7 +1789,7 @@ def delete_volunteer(
     if not member:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     db.query(models.VolunteerShift).filter(
-        models.VolunteerShift.member_id == member_id
+        models.VolunteerShift.persona_id == member_id
     ).delete()
     db.delete(member)
     db.commit()
@@ -1861,7 +1861,7 @@ def get_newsletter_leads(
     """
     query = (
         db.query(models.ConsolidationCase)
-        .join(models.Member, models.ConsolidationCase.member_id == models.Member.id)
+        .join(models.Member, models.ConsolidationCase.persona_id == models.Member.id)
         .filter(
             models.ConsolidationCase.source.like("%newsletter%"),
             models.ConsolidationCase.status == "active",
@@ -1891,7 +1891,7 @@ def get_newsletter_leads(
 
     leads = []
     for case in cases:
-        member = case.member
+        member = case.persona
         leads.append({
             "case_id": case.id,
             "member_id": member.id if member else None,
@@ -1927,7 +1927,7 @@ def export_newsletter_leads_csv(
     """
     query = (
         db.query(models.ConsolidationCase)
-        .join(models.Member, models.ConsolidationCase.member_id == models.Member.id)
+        .join(models.Member, models.ConsolidationCase.persona_id == models.Member.id)
         .filter(
             models.ConsolidationCase.source.like("%newsletter%"),
             models.ConsolidationCase.status == "active",
@@ -1945,7 +1945,7 @@ def export_newsletter_leads_csv(
 
     rows = []
     for case in cases:
-        member = case.member
+        member = case.persona
         rows.append({
             "first_name": member.first_name if member else "",
             "last_name": member.last_name if member else "",

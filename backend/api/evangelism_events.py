@@ -36,12 +36,12 @@ def _is_event_admin_or_pastor(user: models.User) -> bool:
 
 def _is_event_assignee(db: Session, user: models.User, event_id: int) -> bool:
     """Check if user is assigned to this event (MC, preacher, offering, etc.)."""
-    member = db.query(models.Member).filter(models.Member.user_id == user.id).first()
-    if not member:
+    persona = db.query(models.Persona).filter(models.Persona.user_id == user.id).first()
+    if not persona:
         return False
     assignment = db.query(models.EventAssignment).filter(
         models.EventAssignment.event_id == event_id,
-        models.EventAssignment.member_id == member.id,
+        models.EventAssignment.persona_id == persona.id,
     ).first()
     return assignment is not None
 
@@ -211,8 +211,8 @@ def get_event_attendance_report(
     rows = (
         db.query(models.EventAttendance)
         .filter(models.EventAttendance.event_id == event_id)
-        .join(models.Member)
-        .order_by(models.Member.last_name.asc(), models.Member.first_name.asc())
+        .join(models.Persona)
+        .order_by(models.Persona.nombre_completo.asc())
         .all()
     )
     counts: dict[str, int] = {"present": 0, "absent": 0}
@@ -223,10 +223,10 @@ def get_event_attendance_report(
         status_label = "present" if row.attended else "absent"
         counts[status_label] = counts.get(status_label, 0) + 1
         payload = {
-            "member_id": row.member_id,
-            "member_name": (
-                f"{row.member.first_name} {row.member.last_name}"
-                if row.member
+            "persona_id": row.persona_id,
+            "persona_name": (
+                row.persona.nombre_completo
+                if row.persona
                 else "Miembro"
             ),
             "status": status_label,
@@ -251,17 +251,17 @@ def get_event_attendance_report(
     }
 
 
-@router.get("/members/{member_id}/attendance-history", response_model=dict)
-def get_member_attendance_history(
-    member_id: int,
+@router.get("/personas/{persona_id}/attendance-history", response_model=dict)
+def get_persona_attendance_history(
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("evangelism", "read")),
 ):
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
 
-    is_self = member.user_id == current_user.id
+    is_self = persona.user_id == current_user.id
     is_staff = normalize_role(str(current_user.role)) in [
         "admin",
         "pastor",
@@ -274,7 +274,7 @@ def get_member_attendance_history(
 
     rows = (
         db.query(models.EventAttendance)
-        .filter(models.EventAttendance.member_id == member_id)
+        .filter(models.EventAttendance.persona_id == persona_id)
         .join(models.CrmEvent)
         .order_by(
             models.CrmEvent.event_date.desc().nullslast(),
@@ -303,8 +303,8 @@ def get_member_attendance_history(
         )
 
     return {
-        "member_id": member.id,
-        "member_name": f"{member.first_name} {member.last_name}",
+        "persona_id": persona.id,
+        "persona_name": persona.nombre_completo,
         "total_records": len(history),
         "history": history,
     }
@@ -329,7 +329,7 @@ def register_bulk_attendance(
     event_id = payload.get("event_id")
     if event_id:
         _require_event_access(db, current_user, event_id)
-    member_ids = payload.get("member_ids", [])
+    persona_ids = payload.get("persona_ids", [])
     try:
         session_date = parse_session_date(
             payload.get("attendance_date") or payload.get("session_date")
@@ -338,8 +338,8 @@ def register_bulk_attendance(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if not event_id:
         raise HTTPException(status_code=400, detail="event_id is required")
-    if not isinstance(member_ids, list):
-        raise HTTPException(status_code=400, detail="member_ids must be a list")
+    if not isinstance(persona_ids, list):
+        raise HTTPException(status_code=400, detail="persona_ids must be a list")
 
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
@@ -350,27 +350,27 @@ def register_bulk_attendance(
             detail="No se puede registrar asistencia en eventos cancelados",
         )
 
-    normalized_member_ids: list[int] = []
-    invalid_member_ids: list[object] = []
-    for raw_member_id in member_ids:
-        try:
-            normalized_member_ids.append(int(raw_member_id))
-        except (TypeError, ValueError):
-            invalid_member_ids.append(raw_member_id)
+    normalized_persona_ids: list[str] = []
+    invalid_persona_ids: list[object] = []
+    for raw_persona_id in persona_ids:
+        if isinstance(raw_persona_id, str):
+            normalized_persona_ids.append(raw_persona_id)
+        else:
+            invalid_persona_ids.append(raw_persona_id)
 
-    normalized_member_ids = list(dict.fromkeys(normalized_member_ids))
-    valid_member_ids = (
+    normalized_persona_ids = list(dict.fromkeys(normalized_persona_ids))
+    valid_persona_ids = (
         {
             row[0]
-            for row in db.query(models.Member.id)
-            .filter(models.Member.id.in_(normalized_member_ids))
+            for row in db.query(models.Persona.id)
+            .filter(models.Persona.id.in_(normalized_persona_ids))
             .all()
         }
-        if normalized_member_ids
+        if normalized_persona_ids
         else set()
     )
-    missing_member_ids = sorted(set(normalized_member_ids) - valid_member_ids)
-    selected_member_ids = sorted(valid_member_ids)
+    missing_persona_ids = sorted(set(normalized_persona_ids) - valid_persona_ids)
+    selected_persona_ids = sorted(valid_persona_ids)
 
     existing_rows = (
         db.query(models.EventAttendance)
@@ -380,15 +380,15 @@ def register_bulk_attendance(
         )
         .all()
     )
-    existing_by_member_id = {row.member_id: row for row in existing_rows}
+    existing_by_persona_id = {row.persona_id: row for row in existing_rows}
 
     created_count = 0
     marked_present_count = 0
     marked_absent_count = 0
     now = utc_now()
 
-    for member_id in selected_member_ids:
-        row = existing_by_member_id.get(member_id)
+    for persona_id in selected_persona_ids:
+        row = existing_by_persona_id.get(persona_id)
         if row:
             was_attended = bool(row.attended)
             row.attended = True
@@ -403,7 +403,7 @@ def register_bulk_attendance(
             row = models.EventAttendance(
                 event_id=event_id,
                 session_date=session_date,
-                member_id=member_id,
+                persona_id=persona_id,
                 attended=True,
                 status="present",
                 source=payload.get("source") or "manual",
@@ -414,7 +414,7 @@ def register_bulk_attendance(
             created_count += 1
 
     for row in existing_rows:
-        if row.member_id in selected_member_ids:
+        if row.persona_id in selected_persona_ids:
             continue
         if row.attended or row.status != "absent":
             row.attended = False
@@ -425,17 +425,17 @@ def register_bulk_attendance(
     db.commit()
     return {
         "status": "success",
-        "recorded": len(selected_member_ids),
+        "recorded": len(selected_persona_ids),
         "created": created_count,
         "marked_present": marked_present_count,
         "marked_absent": marked_absent_count,
-        "invalid_member_ids": invalid_member_ids + missing_member_ids,
+        "invalid_persona_ids": invalid_persona_ids + missing_persona_ids,
         "session_date": session_date.isoformat(),
     }
 
 
 class EventAssignmentSchema(BaseModel):
-    member_id: int
+    persona_id: str
     role: str
 
 
@@ -493,10 +493,10 @@ def get_event_session_detail(
     assignments = [
         {
             "id": a.id,
-            "member_id": a.member_id,
+            "persona_id": a.persona_id,
             "role": a.role,
-            "member_name": (
-                f"{a.member.first_name} {a.member.last_name}" if a.member else "Unknown"
+            "persona_name": (
+                a.persona.nombre_completo if a.persona else "Unknown"
             ),
         }
         for a in assignments_db
@@ -521,10 +521,10 @@ def get_event_session_detail(
 
     attendee_list = []
     for att in attendances_db:
-        member = att.member
-        if not member:
+        persona = att.persona
+        if not persona:
             continue
-        role_name = member.church_role or "Miembro"
+        role_name = persona.church_role or "Miembro"
         role_def = roles_map.get(role_name)
         if role_def and role_def.is_leadership:
             metrics["Liderazgo"] += 1
@@ -534,24 +534,24 @@ def get_event_session_detail(
             metrics["Otros"] += 1
         attendee_list.append(
             {
-                "member_id": member.id,
-                "name": f"{member.first_name} {member.last_name}",
+                "persona_id": persona.id,
+                "name": persona.nombre_completo,
                 "role": role_name,
                 "scanned_at": att.scanned_at.isoformat() if att.scanned_at else None,
             }
         )
 
     expected_members = get_expected_members_for_event(db, event)
-    attended_ids = {attendee["member_id"] for attendee in attendee_list}
+    attended_ids = {attendee["persona_id"] for attendee in attendee_list}
     absentees_full = []
-    for member in expected_members:
-        if member.id not in attended_ids:
+    for persona in expected_members:
+        if persona.id not in attended_ids:
             absentees_full.append(
                 {
-                    "member_id": member.id,
-                    "name": f"{member.first_name} {member.last_name}",
-                    "role": member.church_role,
-                    "phone": member.phone,
+                    "persona_id": persona.id,
+                    "name": persona.nombre_completo,
+                    "role": persona.church_role,
+                    "phone": persona.phone,
                 }
             )
 
@@ -598,7 +598,7 @@ def sync_event_assignments(
             models.EventAssignment(
                 event_id=event_id,
                 session_date=payload.session_date,
-                member_id=assignment.member_id,
+                persona_id=assignment.persona_id,
                 role=assignment.role,
             )
         )
@@ -668,7 +668,7 @@ def update_role(
             raise HTTPException(
                 status_code=400, detail="Ya existe otro rol con ese nombre"
             )
-        db.query(models.Member).filter(models.Member.church_role == role.name).update(
+        db.query(models.Persona).filter(models.Persona.church_role == role.name).update(
             {"church_role": payload.name}
         )
         role.name = payload.name
@@ -711,7 +711,7 @@ def delete_role(
     if not fallback:
         raise HTTPException(status_code=400, detail="Rol de reemplazo no valido")
 
-    db.query(models.Member).filter(models.Member.church_role == role.name).update(
+    db.query(models.Persona).filter(models.Persona.church_role == role.name).update(
         {"church_role": fallback.name}
     )
     db.delete(role)
@@ -1005,24 +1005,24 @@ def fast_checkin_visitor(
         db.commit()
         db.refresh(role)
 
-    existing_member = None
+    existing_persona = None
     if visitor.email:
-        existing_member = (
-            db.query(models.Member).filter(models.Member.email == visitor.email).first()
+        existing_persona = (
+            db.query(models.Persona).filter(models.Persona.email == visitor.email).first()
         )
-    if not existing_member and visitor.phone:
-        existing_member = (
-            db.query(models.Member).filter(models.Member.phone == visitor.phone).first()
+    if not existing_persona and visitor.phone:
+        existing_persona = (
+            db.query(models.Persona).filter(models.Persona.phone == visitor.phone).first()
         )
 
-    if existing_member:
-        new_visitor = existing_member
+    if existing_persona:
+        new_visitor = existing_persona
         already_exists = True
     else:
         already_exists = False
-        new_visitor = models.Member(
-            first_name=visitor.first_name,
-            last_name=visitor.last_name,
+        nombre_completo = f"{visitor.first_name} {visitor.last_name}".strip()
+        new_visitor = models.Persona(
+            nombre_completo=nombre_completo,
             phone=visitor.phone,
             email=visitor.email,
             church_role=role_name,
@@ -1032,13 +1032,13 @@ def fast_checkin_visitor(
         db.refresh(new_visitor)
 
     if role:
-        db.add(models.MemberRole(member_id=new_visitor.id, role_id=role.id))
+        db.add(models.MemberRole(persona_id=new_visitor.id, role_id=role.id))
 
     db.add(
         models.EventAttendance(
             event_id=event_id,
             session_date=session_day,
-            member_id=new_visitor.id,
+            persona_id=new_visitor.id,
             attended=True,
         )
     )
@@ -1047,7 +1047,7 @@ def fast_checkin_visitor(
     if not already_exists:
         # ConsolidationCase for follow-up tracking
         case = models.ConsolidationCase(
-            member_id=new_visitor.id,
+            persona_id=new_visitor.id,
             stage="new",
             status="active",
             source="evangelism_event",
@@ -1056,8 +1056,8 @@ def fast_checkin_visitor(
 
         # Pipeline lead for pastoral follow-up
         lead = models.ConsolidationPipeline(
-            first_name=new_visitor.first_name,
-            last_name=new_visitor.last_name,
+            first_name=visitor.first_name,
+            last_name=visitor.last_name,
             phone=new_visitor.phone or "",
             source="evangelism_event",
             stage="new",
@@ -1098,39 +1098,37 @@ def export_event_session_report(
         )
         .all()
     )
-    attended_ids = {row.member_id for row in attendances_db}
+    attended_ids = {row.persona_id for row in attendances_db}
     expected_members = get_expected_members_for_event(db, event)
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=",", quoting=csv.QUOTE_MINIMAL)
     writer.writerow(
-        ["Nombre", "Apellido", "Telefono", "Email", "Rol", "Estado Asistencia"]
+        ["Nombre Completo", "Telefono", "Email", "Rol", "Estado Asistencia"]
     )
 
-    for member in expected_members:
-        status = "Presente" if member.id in attended_ids else "Ausente"
+    for persona in expected_members:
+        status = "Presente" if persona.id in attended_ids else "Ausente"
         writer.writerow(
             [
-                member.first_name,
-                member.last_name,
-                member.phone or "",
-                member.email or "",
-                member.church_role or "Miembro",
+                persona.nombre_completo,
+                persona.phone or "",
+                persona.email or "",
+                persona.church_role or "Miembro",
                 status,
             ]
         )
 
-    expected_ids = {member.id for member in expected_members}
+    expected_ids = {persona.id for persona in expected_members}
     for attendance in attendances_db:
-        if attendance.member_id not in expected_ids and attendance.member:
-            member = attendance.member
+        if attendance.persona_id not in expected_ids and attendance.persona:
+            persona = attendance.persona
             writer.writerow(
                 [
-                    member.first_name,
-                    member.last_name,
-                    member.phone or "",
-                    member.email or "",
-                    member.church_role or "Visitante Servicios",
+                    persona.nombre_completo,
+                    persona.phone or "",
+                    persona.email or "",
+                    persona.church_role or "Visitante Servicios",
                     "Presente (Invitado/No Esperado)",
                 ]
             )

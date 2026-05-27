@@ -23,8 +23,8 @@ import { STAGE_LABEL } from '@/app/plataforma/crm/pipeline/constants';
 interface PipelineLeadSidebarProps {
     lead: any;
     stages: any[];
-    onUpdateStage: (leadId: number, stage: string) => void;
-    onViewFullProfile: (leadId: number) => void;
+    onUpdateStage: (leadId: string, stage: string) => void;
+    onViewFullProfile: (leadId: string) => void;
 }
 
 export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onViewFullProfile }: PipelineLeadSidebarProps) {
@@ -68,7 +68,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                             whileHover={{ scale: 1.05 }}
                             className="size-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-xl shadow-2xl shadow-blue-500/30 border-4 border-white dark:border-[#1e1f21]"
                         >
-                            {lead.first_name?.[0]}{lead.last_name?.[0]}
+                            {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? ''}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? ''}
                         </motion.div>
                         <div className="absolute -bottom-1 -right-1 size-8 rounded-lg bg-white dark:bg-[#0f1113] border-[3px] border-slate-50 dark:border-[#0f1113] flex items-center justify-center text-blue-600 shadow-xl overflow-hidden">
                             <Zap size={12} fill="currentColor" className="animate-pulse" />
@@ -76,8 +76,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                     </div>
                     <div className="flex-1 min-w-0">
                         <h2 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-[-0.04em] leading-[0.9] mb-2">
-                            {lead.first_name} <br/>
-                            <span className="text-blue-600 dark:text-blue-400">{lead.last_name}</span>
+                            {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                         </h2>
                         <div className="flex items-center gap-2.5">
                             {currentStage && (

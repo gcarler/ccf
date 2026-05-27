@@ -38,9 +38,10 @@ interface Badge {
 }
 
 interface MemberInfo {
-    id: number | null;
-    first_name: string;
-    last_name: string;
+    id: string | null;
+    nombre_completo?: string;
+    first_name?: string;
+    last_name?: string;
     church_role: string | null;
     spiritual_status: string | null;
     registration_date: string | null;
@@ -127,8 +128,8 @@ export default function MinistryProfilePage() {
     }
 
     const { member, positions, skills, badges, xp, level } = profile;
-    const initials = (member.first_name?.[0] || '').toUpperCase();
-    const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Miembro';
+    const initials = (member.nombre_completo?.charAt(0) ?? member.first_name?.charAt(0) ?? '').toUpperCase();
+    const fullName = member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim() || 'Miembro';
     const statusLabel = member.spiritual_status || member.church_role || 'Miembro';
     const sinceYear = member.registration_date
         ? new Date(member.registration_date).getFullYear()

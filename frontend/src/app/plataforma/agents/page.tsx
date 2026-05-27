@@ -25,10 +25,11 @@ import { apiFetch } from '@/lib/http';
 
 // Types
 interface Agent {
-    id: number;
+    id: string;
     code: string;
-    first_name: string;
-    last_name: string;
+    nombre_completo?: string;
+    first_name?: string;
+    last_name?: string;
     email: string | null;
     phone: string | null;
     spiritual_stage: string;
@@ -163,7 +164,7 @@ export default function AgentsPage() {
     };
 
     const filteredAgents = agents.filter(a =>
-        `${a.first_name} ${a.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (a.nombre_completo || `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim()).toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -246,7 +247,7 @@ export default function AgentsPage() {
                                             </div>
                                             <div>
                                                 <h3 className="font-medium text-gray-900 dark:text-white">
-                                                    {agent.first_name} {agent.last_name}
+                                                    {agent.nombre_completo || `${agent.first_name ?? ''} ${agent.last_name ?? ''}`.trim()}
                                                 </h3>
                                                 <p className="text-sm text-gray-500">{agent.code}</p>
                                             </div>

@@ -10,9 +10,10 @@ import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 
 interface Member {
-    id: number;
-    first_name: string;
-    last_name: string;
+    id: string;
+    nombre_completo?: string;
+    first_name?: string;
+    last_name?: string;
     church_role: string;
     qr_token: string;
     join_date: string;
@@ -30,7 +31,7 @@ export default function MyCardPage() {
             return;
         }
         try {
-            const data = await apiFetch<Member>('/crm/members/me', { token, cache: 'no-store' });
+            const data = await apiFetch<Member>('/crm/personas/me', { token, cache: 'no-store' });
             setMember(data);
         } catch (err) {
             console.error(err);
@@ -165,7 +166,7 @@ export default function MyCardPage() {
                     </div>
                     <div>
                         <h1 className="text-lg font-bold text-white tracking-tight leading-tight">
-                            {member.first_name}<br />{member.last_name}
+                            {member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}
                         </h1>
                         <p className={`text-[10px] font-bold uppercase tracking-wide mt-2 ${theme.accent}`}>
                             {member.church_role} • ID: CCF-{member.id.toString().padStart(4, '0')}
