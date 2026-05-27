@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import pathlib
 import uuid
 from typing import List, Optional, cast
 
@@ -14,8 +13,7 @@ from sqlalchemy.orm import Session
 from backend import crud, models, schemas
 from backend.auth import (normalize_role, require_admin,
                           require_coordinator_or_admin, require_module_access,
-                          require_staff_or_admin,
-                          require_teacher_or_admin, role_in)
+                          require_teacher_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db
@@ -333,7 +331,7 @@ def create_enrollment(
         return crud.create_enrollment(db, enrollment)
     except MemoryError:
         raise
-    except Exception as exc:  # pragma: no cover
+    except Exception:  # pragma: no cover
         logger.exception(
             "Failed to create academy enrollment", extra={"user_id": user_id}
         )

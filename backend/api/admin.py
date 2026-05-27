@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -324,7 +324,7 @@ def list_admin_members(
             "phone": m.phone,
             "church_role": m.church_role,
         }
-        for m in members
+        for m in personas
     ]
 
 
