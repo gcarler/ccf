@@ -158,7 +158,7 @@ def get_roles_personalizados(
     return (
         db.query(RolPersonalizadoEstrategia)
         .filter(RolPersonalizadoEstrategia.estrategia_id == estrategia_id)
-        .order_by(RolPersonalizadoEstrategia.created_at)
+        .order_by(RolPersonalizadoEstrategia.id)
         .all()
     )
 
@@ -363,8 +363,8 @@ def get_pendientes_seguimiento(
     """Retorna todos los seguimientos pendientes (no completados)."""
     return (
         db.query(RegistroSeguimiento)
-        .filter(RegistroSeguimiento.completado == False)  # noqa: E712
-        .order_by(RegistroSeguimiento.fecha_programada.asc().nullsfirst())
+        .filter(RegistroSeguimiento.estado_completado == False)  # noqa: E712
+        .order_by(RegistroSeguimiento.fecha_seguimiento.asc().nullsfirst())
         .limit(limit)
         .all()
     )
