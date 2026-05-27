@@ -84,7 +84,7 @@ class LogAuditoria(Base):
     registro_id = Column(String(100), nullable=False)
     accion = Column(String(20), nullable=False)
     detalles_cambio = Column(JSON, nullable=True)
-    usuario_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    usuario_id = Column(Integer, ForeignKey("personas.id"), nullable=True)
     fecha_accion = Column(DateTime, default=_utcnow)
 
 
@@ -162,13 +162,13 @@ class GrupoEvangelismo(Base):
     hora_reunion = Column(String(10), nullable=True)
     activo = Column(Boolean, default=True)
     lider_persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
     asistente_persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
     anfitrion_persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

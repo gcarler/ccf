@@ -283,7 +283,7 @@ class CellGroupMember(Base):
         index=True,
     )
     persona_id = Column(
-        UUID(as_uuid=True),
+        Integer,
         ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
