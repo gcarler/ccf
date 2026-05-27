@@ -6,17 +6,15 @@ Este archivo contiene el CRUD refactorizado con los nuevos esquemas.
 
 from __future__ import annotations
 
-import datetime as dt
 from typing import List, Optional
 
-from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud._utils import _utcnow
 from backend.models_crm import EvangelismStrategy
 from backend.models_evangelism import (
-    ParticipanteGrupo, Asistencia, SesionGrupo,
+    ParticipanteGrupo, Asistencia,
 )
 from backend.models_evangelism import (
     RolPersonalizadoEstrategia,

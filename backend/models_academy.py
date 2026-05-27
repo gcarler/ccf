@@ -1,6 +1,4 @@
 from backend.models_shared import *
-from sqlalchemy.dialects.postgresql import UUID
-
 from backend.models_shared import _utcnow
 
 # 2. ACADEMY & FORUM
@@ -260,7 +258,7 @@ class CellGroupMember(Base):
         index=True,
     )
     persona_id = Column(
-        UUID(as_uuid=True),
+        Integer,
         ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -311,7 +309,7 @@ class CellGroupSession(Base):
     novelty_detail = Column(Text, nullable=True)
     cancellation_reason = Column(Text, nullable=True)
     reported_by_persona_id = Column(
-        UUID(as_uuid=True),
+        Integer,
         ForeignKey("personas.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
@@ -338,7 +336,7 @@ class CellGroupAttendance(Base):
         index=True,
     )
     persona_id = Column(
-        UUID(as_uuid=True),
+        Integer,
         ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

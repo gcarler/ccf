@@ -162,13 +162,13 @@ class GrupoEvangelismo(Base):
     hora_reunion = Column(String(10), nullable=True)
     activo = Column(Boolean, default=True)
     lider_persona_id = Column(
-        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
     asistente_persona_id = Column(
-        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
     anfitrion_persona_id = Column(
-        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -191,7 +191,7 @@ class ParticipanteGrupo(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     grupo_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)
-    persona_id = Column(Integer, ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
     rol_base = Column(String(20), nullable=False)
     rol_personalizado_id = Column(Integer, ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True)
     fecha_ingreso = Column(DateTime, default=_utcnow)
@@ -303,7 +303,7 @@ class Asistencia(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     sesion_id = Column(Integer, ForeignKey("sesiones_grupo.id", ondelete="CASCADE"), nullable=False)
-    persona_id = Column(Integer, ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
     estado = Column(String(20), nullable=False)
     motivo_excusa_id = Column(Integer, ForeignKey("motivos_excusa.id", ondelete="SET NULL"), nullable=True)
     detalle_excusa = Column(String(255), nullable=True)
@@ -321,7 +321,7 @@ class RegistroSeguimiento(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     asistencia_id = Column(Integer, ForeignKey("asistencias.id", ondelete="CASCADE"), nullable=False)
-    responsable_id = Column(Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    responsable_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     fecha_seguimiento = Column(DateTime, default=_utcnow, nullable=False)
     tipo = Column(String(30), nullable=False)
     observaciones = Column(Text, nullable=True)
@@ -339,7 +339,7 @@ class HistorialEmbudo(Base):
     __tablename__ = "historial_embudo"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    persona_id = Column(Integer, ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
     rol_anterior = Column(String(100), nullable=True)
     rol_nuevo = Column(String(100), nullable=False)
     fecha_cambio = Column(DateTime, default=_utcnow)
