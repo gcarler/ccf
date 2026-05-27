@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ViewType } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
-import { ShieldAlert, Flame, Calendar, Scan, Zap, Home, Wrench } from 'lucide-react';
+import { ShieldAlert, Flame, Calendar, Scan, Zap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
@@ -94,7 +94,6 @@ export default function EvangelismShell({
             title: 'Herramientas',
             items: [
                 { id: 'ev-events', label: 'Eventos', href: '/plataforma/evangelism/events', icon: Calendar },
-                { id: 'ev-faro', label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home },
                 { id: 'ev-scanner', label: 'Escáner ASST', href: '/plataforma/evangelism/scanner', icon: Scan },
             ],
         },
