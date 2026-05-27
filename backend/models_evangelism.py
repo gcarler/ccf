@@ -219,6 +219,86 @@ class SesionGrupo(Base):
     grupo = relationship("GrupoEvangelismo", back_populates="sesiones")
     asistencias = relationship("Asistencia", back_populates="sesion", cascade="all, delete-orphan")
 
+    @property
+    def cell_group_id(self):
+        return self.grupo_id
+
+    @cell_group_id.setter
+    def cell_group_id(self, value):
+        self.grupo_id = value
+
+    @property
+    def cell_group(self):
+        return self.grupo
+
+    @property
+    def session_date(self):
+        return self.fecha_sesion
+
+    @session_date.setter
+    def session_date(self, value):
+        self.fecha_sesion = value
+
+    @property
+    def status(self):
+        return self.estado
+
+    @status.setter
+    def status(self, value):
+        self.estado = value
+
+    @property
+    def season_id(self):
+        return None
+
+    @property
+    def season(self):
+        return None
+
+    @property
+    def topic(self):
+        return self.tema_estudio
+
+    @topic.setter
+    def topic(self, value):
+        self.tema_estudio = value
+
+    @property
+    def cancellation_reason(self):
+        return self.motivo_cancelacion
+
+    @cancellation_reason.setter
+    def cancellation_reason(self, value):
+        self.motivo_cancelacion = value
+
+    @property
+    def offering_amount(self):
+        return None
+
+    @property
+    def report_notes(self):
+        return self.notas_lider
+
+    @report_notes.setter
+    def report_notes(self, value):
+        self.notas_lider = value
+
+    @property
+    def novelty_type(self):
+        return None
+
+    @property
+    def novelty_detail(self):
+        return None
+
+    @property
+    def reported_by_persona_id(self):
+        return None
+
+    @property
+    def reported_at(self):
+        return None
+
 
 class Asistencia(Base):
     __tablename__ = "asistencias"

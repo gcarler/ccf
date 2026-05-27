@@ -1,6 +1,10 @@
-"""Modelos Evangelismo Super Pro — Multi-Tenant, Auditoría y Velocidad del Embudo.
+"""⚠️ DEPRECADO — Este archivo está obsoleto y NO se importa en ningún módulo.
 
-Implementa el modelo propuesto por el usuario:
+Los modelos canónicos están en models_evangelism.py y models_crm.py.
+Este archivo se conserva solo como referencia histórica.
+No agregar nuevos modelos aquí — usar models_evangelism.py.
+
+Modelos originales (todos reemplazados):
 - Sedes (multi-tenant)
 - Categorías de estrategia
 - Log de auditoría con JSONB
