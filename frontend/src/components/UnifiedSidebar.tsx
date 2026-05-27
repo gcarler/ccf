@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-    Home, Inbox, Users, GraduationCap, Target, Settings, Bell, 
-    ChevronDown, ChevronRight, Layout, Folder, ChevronLeft
+import {
+    Home, Inbox, Users, GraduationCap, Target, Settings, Bell,
+    ChevronDown, ChevronRight, Layout, Folder, ChevronLeft,
+    BrainCircuit
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -50,6 +51,7 @@ export default function UnifiedSidebar({
         { id: 'crm', label: 'CRM / Equipos', href: '/plataforma/crm', icon: Users },
         { id: 'academy', label: 'Academia', href: '/plataforma/academy', icon: GraduationCap },
         { id: 'projects', label: 'Proyectos', href: '/plataforma/projects', icon: Layout },
+        { id: 'agents', label: 'Agentes IA', href: '/plataforma/agents', icon: BrainCircuit },
     ];
 
     const GLOBAL_SETTINGS = [
