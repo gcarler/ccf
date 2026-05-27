@@ -554,7 +554,6 @@ def list_faro_sessions(
 ):
     query = db.query(models.SesionGrupo).options(
         joinedload(models.SesionGrupo.grupo),
-        joinedload(models.SesionGrupo.season),
     )
     if season_id:
         query = query.filter(models.SesionGrupo.season_id == season_id)
@@ -826,19 +825,24 @@ def get_faro_session_attendance(
     expected_members = []
     for _, member in expected_rows:
         attendance = attendance_map.get(member.id)
+        attended = bool(
+            attendance.attended if hasattr(attendance, "attended")
+            else (attendance.estado == "ASISTIO" if attendance else False)
+        ) if attendance else False
         payload = member_payload(
             member,
-            attended=bool(attendance.attended) if attendance else False,
-            scanned_at=attendance.scanned_at if attendance else None,
-            absence_reason=attendance.absence_reason if attendance else None,
+            attended=attended,
+            scanned_at=getattr(attendance, "scanned_at", None) if attendance else None,
+            absence_reason=getattr(attendance, "absence_reason", None) if attendance else None,
             absence_reason_detail=(
-                attendance.absence_reason_detail if attendance else None
-            ),
+                getattr(attendance, "absence_reason_detail", None)
+                or getattr(attendance, "detalle_excusa", None)
+            ) if attendance else None,
             estado=attendance.estado if attendance else None,
             es_primera_vez=attendance.es_primera_vez if attendance else False,
         )
         expected_members.append(payload)
-        if attendance and attendance.attended:
+        if attended:
             present.append(payload)
         else:
             absent.append(payload)
@@ -1039,7 +1043,7 @@ def get_faro_analytics(
     ).all()
     total_attendance = sum(row.total_attendance or 0 for row in rows)
     total_sessions = sum(row.total_sessions or 0 for row in rows)
-    active_faros = len({row.cell_group_id for row in rows})
+    active_faros = len({row.grupo_id for row in rows})
 
     return {
         "total_attendance": total_attendance,
@@ -1050,7 +1054,7 @@ def get_faro_analytics(
         ),
         "per_faro": [
             {
-                "cell_group_id": row.cell_group_id,
+                "cell_group_id": row.grupo_id,
                 "total_attendance": row.total_attendance or 0,
                 "total_sessions": row.total_sessions or 0,
                 "avg": (
@@ -1601,8 +1605,9 @@ def get_strategy_metrics(
     from datetime import timedelta
     
     # Get all houses for this strategy
+    strategy_ref = str(strategy_id)
     houses = db.query(CellGroup).filter(
-        CellGroup.evangelism_strategy_id == strategy_id
+        CellGroup.evangelism_strategy_id == strategy_ref
     ).all()
     house_ids = [h.id for h in houses]
     
@@ -1768,3 +1773,62 @@ def update_seguimiento(
     if not result:
         raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
     return result
+
+
+# ── Aliases legacy: /glory-houses → /grupos ────────────────────────────
+# El frontend legacy usa /evangelism/glory-houses.
+# Estos aliases redirigen a los endpoints canónicos /grupos.
+
+
+@router.get("/glory-houses", response_model=List[dict])
+def list_glory_houses_alias(
+    estrategia_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    return list_cell_groups(estrategia_id=estrategia_id, db=db, current_user=current_user)
+
+
+@router.get("/glory-houses/mine", response_model=List[dict])
+def list_my_glory_houses_alias(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    return list_my_cell_groups(db=db, current_user=current_user)
+
+
+@router.post("/glory-houses", response_model=dict)
+def create_glory_house_alias(
+    payload: schemas.GrupoEvangelismoCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    return create_cell_group(payload=payload, db=db, current_user=current_user)
+
+
+@router.get("/glory-houses/{grupo_id}", response_model=dict)
+def get_glory_house_alias(
+    grupo_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    return get_cell_group(grupo_id=grupo_id, db=db, current_user=current_user)
+
+
+@router.put("/glory-houses/{grupo_id}", response_model=dict)
+def update_glory_house_alias(
+    grupo_id: int,
+    payload: schemas.GrupoEvangelismoUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    return update_cell_group(grupo_id=grupo_id, payload=payload, db=db, current_user=current_user)
+
+
+@router.delete("/glory-houses/{grupo_id}", status_code=204)
+def delete_glory_house_alias(
+    grupo_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    return delete_cell_group(grupo_id=grupo_id, db=db, current_user=current_user)
