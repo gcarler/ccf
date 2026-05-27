@@ -262,14 +262,14 @@ class CellGroup(Base):
     host = relationship("Persona", foreign_keys=[host_persona_id])
 
     base_attendees = relationship(
-        "GloryHouseMember", back_populates="cell_group", cascade="all, delete-orphan"
+        "CellGroupMember", back_populates="cell_group", cascade="all, delete-orphan"
     )
 
 
 class CellGroupMember(Base):
     __tablename__ = "cell_group_members"
     id = Column(Integer, primary_key=True, index=True)
-    glory_house_id = Column(
+    cell_group_id = Column(
         Integer,
         ForeignKey("cell_groups.id", ondelete="CASCADE"),
         nullable=False,
@@ -302,11 +302,11 @@ class CellGroupSession(Base):
     __tablename__ = "cell_group_sessions"
     __table_args__ = (
         UniqueConstraint(
-            "glory_house_id", "season_id", "session_date", name="uq_faro_session"
+            "cell_group_id", "season_id", "session_date", name="uq_cell_session"
         ),
     )
     id = Column(Integer, primary_key=True, index=True)
-    glory_house_id = Column(
+    cell_group_id = Column(
         Integer,
         ForeignKey("cell_groups.id", ondelete="CASCADE"),
         nullable=False,
