@@ -7,7 +7,6 @@ Endpoints:
   Interacciones: listar, crear (por caso)
   Tareas:        listar, crear, completar (por caso)
 """
-from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
