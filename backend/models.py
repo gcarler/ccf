@@ -61,6 +61,11 @@ from backend.models_agents import (Agent, AgentAuth, AgentContact, AgentRole,
     AgentActivity, AgentFamily, AgentJourney, AgentPermission, AgentTask,
     AgentInsight)
 
+# Evangelismo — Nuevos modelos (enums, roles personalizados, seguimiento)
+from backend.models_evangelism import (ClaseEstrategiaEnum,  # noqa: F401
+    EstadoAsistenciaEnum, TipoSeguimientoEnum, RolEnGrupoEnum,
+    RolPersonalizadoEstrategia, RegistroSeguimiento)
+
 # Kernel — Protocolo de Identidad y Roles
 from backend.models_kernel import (ActivityStatus, MinistryOffice, ChurchRole,
     PlatformRole)  # noqa: F401

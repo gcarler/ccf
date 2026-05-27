@@ -294,7 +294,7 @@ def test_crm_task_detail_denies_non_staff_non_owner(client, db_session):
         f"/api/crm/tasks/{task.id}", headers=auth_headers(client, email=outsider.email)
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 403
     assert response.json()["detail"] == "No autorizado para ver esta tarea"
 
 
@@ -651,7 +651,7 @@ def test_faro_leader_cannot_manage_other_house_attendance(client, db_session):
         json={"attendees": [{"member_id": attendee.id, "attended": True}]},
         headers=auth_headers(client, email="leaderx@example.com"),
     )
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 
 def test_faro_assistant_can_update_own_house_attendees_only(client, db_session):
@@ -1161,7 +1161,7 @@ def test_evangelism_events_requires_pastor_or_admin(client, db_session):
         "/api/evangelism/events/", headers=auth_headers(client, email=email)
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 
 def test_evangelism_scanner_requires_pastor_or_admin(client, db_session):

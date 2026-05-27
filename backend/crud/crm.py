@@ -39,6 +39,16 @@ def create_member(db: Session, payload: schemas.MemberCreate):
     return row
 
 
+_MEMBER_SORT_FIELDS = {
+    "first_name":       models.Member.first_name,
+    "last_name":        models.Member.last_name,
+    "email":            models.Member.email,
+    "church_role":      models.Member.church_role,
+    "spiritual_status": models.Member.spiritual_status,
+    "created_at":       models.Member.created_at,
+}
+
+
 def search_members(
     db: Session,
     search: str | None = None,
@@ -47,6 +57,8 @@ def search_members(
     family_id: int | None = None,
     skip: int = 0,
     limit: int = 1000,
+    sort_by: str | None = None,
+    sort_dir: str = "asc",
 ):
     query = db.query(models.Member)
     if search:
@@ -65,6 +77,10 @@ def search_members(
         query = query.filter(models.Member.spiritual_status == spiritual_status)
     if family_id:
         query = query.filter(models.Member.family_id == family_id)
+
+    # Sorting
+    sort_col = _MEMBER_SORT_FIELDS.get(sort_by or "last_name", models.Member.last_name)
+    query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
 
     members = query.offset(skip).limit(limit).all()
 
@@ -86,6 +102,58 @@ def search_members(
         m.academy_progress = float(progress_map.get(m.user_id, 0.0))
 
     return members
+
+
+def search_members_paginated(
+    db: Session,
+    search: str | None = None,
+    role: str | None = None,
+    spiritual_status: str | None = None,
+    offset: int = 0,
+    limit: int = 100,
+    sort_by: str | None = None,
+    sort_dir: str = "asc",
+) -> dict:
+    """Returns { items: [...], total: N } for server-side AG Grid pagination."""
+    query = db.query(models.Member)
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            or_(
+                models.Member.first_name.ilike(like),
+                models.Member.last_name.ilike(like),
+                models.Member.email.ilike(like),
+                models.Member.church_role.ilike(like),
+            )
+        )
+    if role:
+        query = query.filter(models.Member.church_role == role)
+    if spiritual_status:
+        query = query.filter(models.Member.spiritual_status == spiritual_status)
+
+    total = query.count()
+
+    sort_col = _MEMBER_SORT_FIELDS.get(sort_by or "last_name", models.Member.last_name)
+    query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
+
+    members = query.offset(offset).limit(limit).all()
+
+    user_ids = [m.user_id for m in members if m.user_id]
+    progress_map = {}
+    if user_ids:
+        progress_data = (
+            db.query(models.Enrollment.user_id, func.avg(models.Enrollment.progress_percent))
+            .filter(models.Enrollment.user_id.in_(user_ids))
+            .group_by(models.Enrollment.user_id)
+            .all()
+        )
+        progress_map = {uid: avg for uid, avg in progress_data}
+
+    for m in members:
+        m.spiritual_health = 0.5 + (abs(hash(m.first_name)) % 50) / 100.0
+        m.academy_progress = float(progress_map.get(m.user_id, 0.0))
+
+    return {"items": members, "total": total}
 
 
 def get_members(db: Session, search: str | None = None, role: str | None = None):

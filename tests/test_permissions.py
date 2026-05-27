@@ -175,14 +175,10 @@ def test_inactive_user_blocked(client: TestClient, db_session):
     user.is_active = False
     db_session.commit()
 
+    # Inactive users are now blocked at login (more secure)
     resp = client.post(
         "/api/auth/login",
         data={"username": "user@test.com", "password": "secret123", "grant_type": "password"},
     )
-    assert resp.status_code == 200
-    data = resp.json()
-    headers = {"Authorization": f"Bearer {data['access_token']}"}
-
-    resp2 = client.get("/api/crm/members/me", headers=headers)
-    assert resp2.status_code == 400
-    assert "inactive" in resp2.json()["detail"].lower()
+    assert resp.status_code == 401
+    assert "desactivada" in resp.json()["detail"].lower()

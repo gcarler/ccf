@@ -56,6 +56,21 @@ class ActivityStatusUpdate(BaseModel):
 
 
 # ──────────────────────────────────────────────
+# AUTH HELPER
+# ──────────────────────────────────────────────
+
+def _can_view_user(current_user, target_user_id: int) -> bool:
+    """Verifica si el usuario puede ver datos de otro usuario.
+
+    Solo el propio usuario, admin, o pastor pueden ver datos kernel de otros.
+    """
+    if current_user.id == target_user_id:
+        return True
+    role = str(getattr(current_user, "role", "")).lower()
+    return role in ("admin", "pastor")
+
+
+# ──────────────────────────────────────────────
 # PERFIL COMPLETO KERNEL
 # ──────────────────────────────────────────────
 
@@ -68,17 +83,14 @@ def get_kernel_profile(
     """Retorna el perfil completo del Kernel para un usuario."""
     from backend.crud import kernel as kernel_crud
 
-    # Solo admin o el propio usuario pueden ver el perfil kernel
-    if current_user.id != user_id:
-        role = str(getattr(current_user, "role", "")).lower()
-        if role not in ("admin", "pastor"):
-            raise HTTPException(
-                status_code=403,
-                detail=(
-                    "Solo el propio usuario o un admin/pastor puede "
-                    "ver el perfil kernel"
-                ),
-            )
+    if not _can_view_user(current_user, user_id):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+            "Solo el propio usuario o un admin/pastor "
+            "puede ver el perfil kernel"
+        ),
+        )
 
     profile = kernel_crud.get_kernel_profile(db, user_id)
     if not profile:
@@ -142,6 +154,9 @@ def get_ministries(
 ):
     """Retorna los ministerios reconocidos de un usuario."""
     from backend.crud import kernel as kernel_crud
+
+    if not _can_view_user(current_user, user_id):
+        raise HTTPException(status_code=403, detail="Acceso denegado")
 
     return kernel_crud.get_user_ministries(db, user_id)
 
@@ -221,6 +236,9 @@ def get_church_role(
     """Retorna el rol actual en la iglesia de un usuario."""
     from backend.crud import kernel as kernel_crud
 
+    if not _can_view_user(current_user, user_id):
+        raise HTTPException(status_code=403, detail="Acceso denegado")
+
     return kernel_crud.get_user_church_role(db, user_id)
 
 
@@ -256,6 +274,9 @@ def get_church_role_history(
 ):
     """Retorna el historial de cambios de rol de iglesia."""
     from backend.crud import kernel as kernel_crud
+
+    if not _can_view_user(current_user, user_id):
+        raise HTTPException(status_code=403, detail="Acceso denegado")
 
     return kernel_crud.get_church_role_history(db, user_id, limit=limit)
 
@@ -297,6 +318,9 @@ def get_user_platform_roles(
     """Retorna los roles de plataforma de un usuario."""
     from backend.crud import kernel as kernel_crud
 
+    if not _can_view_user(current_user, user_id):
+        raise HTTPException(status_code=403, detail="Acceso denegado")
+
     return kernel_crud.get_user_platform_roles(db, user_id)
 
 
@@ -309,10 +333,8 @@ def get_user_effective_permissions(
     """Calcula y retorna los permisos efectivos de un usuario."""
     from backend.crud import kernel as kernel_crud
 
-    if current_user.id != user_id:
-        role = str(getattr(current_user, "role", "")).lower()
-        if role not in ("admin", "pastor"):
-            raise HTTPException(status_code=403, detail="Acceso denegado")
+    if not _can_view_user(current_user, user_id):
+        raise HTTPException(status_code=403, detail="Acceso denegado")
 
     return kernel_crud.get_user_effective_permissions(db, user_id)
 

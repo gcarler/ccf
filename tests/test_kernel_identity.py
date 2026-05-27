@@ -155,7 +155,7 @@ class TestDimensionAMinisterios:
 
 class TestDimensionBRolesIglesia:
     def test_set_church_role(self, db_session, test_user):
-        from backend.crud.kernel import set_user_church_role, get_user_church_role
+        from backend.crud.kernel import set_user_church_role, get_user_church_role, get_church_role_history
         result = set_user_church_role(
             db_session, test_user.id, ChurchRole.VISITANTE_ONLINE,
             changed_by_id=1, reason="Primera visita por web"
@@ -178,7 +178,7 @@ class TestDimensionBRolesIglesia:
         assert history[1]["to_role"] == "VISITANTE_ONLINE"
 
     def test_update_existing_church_role(self, db_session, test_user):
-        from backend.crud.kernel import set_user_church_role, get_user_church_role
+        from backend.crud.kernel import set_user_church_role, get_user_church_role, get_church_role_history
         set_user_church_role(db_session, test_user.id, ChurchRole.VISITANTE_ONLINE, changed_by_id=1)
         set_user_church_role(db_session, test_user.id, ChurchRole.MIEMBRO_BAUTIZADO, changed_by_id=1)
 

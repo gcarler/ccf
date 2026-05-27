@@ -12,6 +12,8 @@ import {
   GetRowIdParams,
   IRowNode,
   GridApi,
+  IDatasource,
+  IGetRowsParams,
 } from "ag-grid-community";
 import {
   Plus, Trash2, Download, Filter, Search, X,
@@ -63,6 +65,18 @@ export interface TableViewProps<T = any> {
   enableBulkEdit?: boolean;
   enableGrouping?: boolean;
   enableFilters?: boolean;
+  /** Server-side mode: AG Grid InfiniteRowModel + API pagination */
+  serverSide?: {
+    /** Called on every page/sort/filter change. Return { items, total }. */
+    getRows: (params: {
+      offset: number;
+      limit: number;
+      sortBy?: string;
+      sortDir?: "asc" | "desc";
+      search?: string;
+    }) => Promise<{ items: T[]; total: number }>;
+    pageSize?: number;
+  };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -252,11 +266,14 @@ export default function TableView<T extends Record<string, any>>({
   emptyMessage = "Sin registros",
   rowHeight = 36,
   enableFilters = true,
+  serverSide,
 }: TableViewProps<T>) {
   const gridRef = useRef<AgGridReact>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [quickFilter, setQuickFilter] = useState("");
   const [isDark, setIsDark] = useState(false);
+  // Server-side search debounce
+  const serverSearchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Detect dark mode
   React.useEffect(() => {
@@ -335,6 +352,30 @@ export default function TableView<T extends Record<string, any>>({
     gridRef.current?.api?.exportDataAsCsv();
   }, []);
 
+  // Server-side datasource
+  const serverSideRef = useRef(serverSide);
+  React.useEffect(() => { serverSideRef.current = serverSide; }, [serverSide]);
+  const searchRef = useRef(quickFilter);
+  React.useEffect(() => { searchRef.current = quickFilter; }, [quickFilter]);
+
+  const datasource = useMemo<IDatasource | undefined>(() => {
+    if (!serverSide) return undefined;
+    return {
+      getRows: (params: IGetRowsParams) => {
+        const offset = params.startRow;
+        const limit  = params.endRow - params.startRow;
+        const sortBy   = params.sortModel[0]?.colId;
+        const sortDir  = (params.sortModel[0]?.sort ?? "asc") as "asc" | "desc";
+        const search   = searchRef.current || undefined;
+        serverSideRef.current!.getRows({ offset, limit, sortBy, sortDir, search })
+          .then(({ items, total }) => params.successCallback(items, total))
+          .catch(() => params.failCallback());
+      },
+      rowCount: undefined,
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!serverSide]);
+
   const theme = isDark ? darkTheme : lightTheme;
 
   return (
@@ -348,13 +389,26 @@ export default function TableView<T extends Record<string, any>>({
               value={quickFilter}
               onChange={(e) => {
                 setQuickFilter(e.target.value);
-                gridRef.current?.api?.setGridOption("quickFilterText", e.target.value);
+                if (serverSide) {
+                  // Debounce server-side search: reset datasource after 300ms
+                  if (serverSearchRef.current) clearTimeout(serverSearchRef.current);
+                  serverSearchRef.current = setTimeout(() => {
+                    searchRef.current = e.target.value;
+                    gridRef.current?.api?.setGridOption("datasource", datasource!);
+                  }, 300);
+                } else {
+                  gridRef.current?.api?.setGridOption("quickFilterText", e.target.value);
+                }
               }}
               placeholder="Buscar…"
               className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-1 focus:ring-indigo-400"
             />
             {quickFilter && (
-              <button onClick={() => { setQuickFilter(""); gridRef.current?.api?.setGridOption("quickFilterText", ""); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <button onClick={() => {
+                setQuickFilter("");
+                if (serverSide) { searchRef.current = ""; gridRef.current?.api?.setGridOption("datasource", datasource!); }
+                else { gridRef.current?.api?.setGridOption("quickFilterText", ""); }
+              }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                 <X size={11} />
               </button>
             )}
@@ -390,11 +444,33 @@ export default function TableView<T extends Record<string, any>>({
 
       {/* Grid */}
       <div className="flex-1 min-h-[300px] rounded-xl overflow-hidden border border-slate-200 dark:border-white/10">
-        {data.length === 0 ? (
+        {!serverSide && data.length === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900">
             {emptyMessage}
           </div>
+        ) : serverSide ? (
+          /* ── Server-side InfiniteRowModel ── */
+          <AgGridReact<any>
+            ref={gridRef as any}
+            theme={theme}
+            rowModelType="infinite"
+            datasource={datasource}
+            cacheBlockSize={serverSide.pageSize ?? 100}
+            maxBlocksInCache={5}
+            columnDefs={colDefs}
+            defaultColDef={{ ...(defaultColDef as ColDef<any>), filter: false }}
+            rowHeight={rowHeight}
+            onSortChanged={() => {
+              // On sort change reset the datasource so AG Grid re-requests from row 0
+              const api = gridRef.current?.api;
+              if (api && datasource) api.setGridOption("datasource", datasource);
+            }}
+            animateRows={false}
+            suppressMovableColumns={false}
+            enableCellTextSelection
+          />
         ) : (
+          /* ── Client-side ── */
           <AgGridReact<T>
             ref={gridRef}
             theme={theme}

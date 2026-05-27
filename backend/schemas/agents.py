@@ -137,8 +137,10 @@ class AgentTaskUpdate(BaseModel):
     assigned_to: Optional[str] = None
     metadata: Optional[dict] = None
 
+    model_config = {"from_attributes": True}
 
-class AgentTask(AgentTaskCreate):
+
+class AgentTask(BaseModel):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

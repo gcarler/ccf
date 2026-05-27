@@ -365,7 +365,7 @@ export default function MembersPage() {
                         </div>
                     ) : viewType === 'table' ? (
                         <TableView
-                            data={filteredMembers}
+                            data={[]}
                             idAccessor="id"
                             storageKey="crm_members"
                             columns={[
@@ -377,6 +377,21 @@ export default function MembersPage() {
                                 { id: 'membership_type', name: 'Membresía', type: 'select', options: [{ label: 'Activo', value: 'Activo' }, { label: 'Inactivo', value: 'Inactivo' }] },
                                 { id: 'spiritual_health', name: 'Salud Espiritual', type: 'progress' },
                             ]}
+                            serverSide={{
+                                pageSize: 100,
+                                getRows: ({ offset, limit, sortBy, sortDir, search }) => {
+                                    const params = new URLSearchParams();
+                                    params.set('offset', String(offset));
+                                    params.set('limit', String(limit));
+                                    if (sortBy) params.set('sort_by', sortBy);
+                                    if (sortDir) params.set('sort_dir', sortDir);
+                                    if (search) params.set('search', search);
+                                    return apiFetch<{ items: any[]; total: number }>(
+                                        `/crm/members/paginated?${params.toString()}`,
+                                        { token: token ?? undefined }
+                                    ).then(res => ({ items: res.items ?? [], total: res.total ?? 0 }));
+                                },
+                            }}
                         />
                     ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

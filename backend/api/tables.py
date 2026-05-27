@@ -1,4 +1,4 @@
-"""Table Schema and View persistence API for AirTable."""
+"""Table Schema and View persistence API."""
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -34,8 +34,8 @@ def list_table_schemas(
 ):
     """List all saved table schemas for the current user."""
     views = (
-        db.query(models.AirTableView)
-        .filter(models.AirTableView.user_id == current_user.id)
+        db.query(models.SavedView)
+        .filter(models.SavedView.user_id == current_user.id)
         .all()
     )
     return [
@@ -58,7 +58,7 @@ def create_table_schema(
     current_user: models.User = Depends(require_active_user),
 ):
     """Save a new table schema/view."""
-    view = models.AirTableView(
+    view = models.SavedView(
         user_id=current_user.id,
         name=payload.get("name", "Untitled View"),
         schema_json=payload.get("schema", {}),
@@ -80,9 +80,9 @@ def update_table_schema(
     current_user: models.User = Depends(require_active_user),
 ):
     """Update a saved table schema/view."""
-    view = db.query(models.AirTableView).filter(
-        models.AirTableView.id == view_id,
-        models.AirTableView.user_id == current_user.id,
+    view = db.query(models.SavedView).filter(
+        models.SavedView.id == view_id,
+        models.SavedView.user_id == current_user.id,
     ).first()
     if not view:
         raise HTTPException(status_code=404, detail="View not found")
@@ -108,9 +108,9 @@ def delete_table_schema(
     current_user: models.User = Depends(require_active_user),
 ):
     """Delete a saved table schema/view."""
-    view = db.query(models.AirTableView).filter(
-        models.AirTableView.id == view_id,
-        models.AirTableView.user_id == current_user.id,
+    view = db.query(models.SavedView).filter(
+        models.SavedView.id == view_id,
+        models.SavedView.user_id == current_user.id,
     ).first()
     if not view:
         raise HTTPException(status_code=404, detail="View not found")

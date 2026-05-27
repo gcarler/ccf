@@ -12,7 +12,7 @@ from backend import crud, models, schemas
 from backend.api.crm._shared import (_member_full_name, _serialize_case,
                                      _serialize_message_group, _serialize_task,
                                      utc_now)
-from backend.auth import (get_current_user, normalize_role,
+from backend.auth import (get_current_user, normalize_role, require_active_user,
                           require_module_access, require_pastor_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
@@ -781,7 +781,7 @@ def get_messaging_history_item(
 def list_crm_tasks(
     assignee_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "read")),
+    current_user: models.User = Depends(require_active_user),
 ):
     """Lista todas las tareas CRM con filtro opcional por asignado."""
     q = db.query(models.CrmTask)
@@ -830,7 +830,7 @@ def create_crm_task(
 @router.get("/tasks/mine", response_model=List[dict])
 def list_my_crm_tasks(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "read")),
+    current_user: models.User = Depends(require_active_user),
 ):
     tasks = (
         db.query(models.CrmTask)
@@ -845,7 +845,7 @@ def list_my_crm_tasks(
 def get_crm_task_detail(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "read")),
+    current_user: models.User = Depends(require_active_user),
 ):
     task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not task:
@@ -1528,7 +1528,7 @@ def create_public_prayer_request(
 def list_prayer_requests(
     source: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "read")),
+    current_user: models.User = Depends(require_active_user),
 ):
     """Lista pedidos de oracion. Opcionalmente filtra por source (web, crm)."""
     q = db.query(models.PrayerRequest).order_by(models.PrayerRequest.created_at.desc())
@@ -1798,7 +1798,7 @@ def delete_volunteer(
 @router.get("/groups", response_model=List[dict])
 def list_crm_groups(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "read")),
+    current_user: models.User = Depends(require_active_user),
 ):
     """Lista grupos/ministerios para vistas comunitarias."""
     ministries = db.query(models.Ministry).all()
@@ -1817,7 +1817,7 @@ def list_crm_groups(
 @router.get("/radar", response_model=dict)
 def get_crm_radar(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "read")),
+    current_user: models.User = Depends(require_active_user),
 ):
     """Datos del radar ministerial para dashboard."""
     total_members = db.query(models.Member).count()

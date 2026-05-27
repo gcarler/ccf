@@ -22,11 +22,38 @@ def list_members(
     role: Optional[str] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    sort_by: Optional[str] = Query(None, description="Campo de ordenamiento: first_name, last_name, email, church_role, spiritual_status, created_at"),
+    sort_dir: str = Query("asc", regex="^(asc|desc)$"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Lista miembros con tipado estricto, busqueda optimizada y paginacion."""
-    return crud.search_members(db, search=search, role=role, skip=skip, limit=limit)
+    """Lista miembros con búsqueda, paginación y ordenamiento."""
+    return crud.search_members(db, search=search, role=role, skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir)
+
+
+@router.get("/members/paginated")
+def list_members_paginated(
+    search: Optional[str] = None,
+    role: Optional[str] = None,
+    spiritual_status: Optional[str] = None,
+    offset: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    sort_by: Optional[str] = Query(None),
+    sort_dir: str = Query("asc", regex="^(asc|desc)$"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Endpoint paginado para AG Grid server-side. Retorna { items: [...], total: N }."""
+    return crud.search_members_paginated(
+        db,
+        search=search,
+        role=role,
+        spiritual_status=spiritual_status,
+        offset=offset,
+        limit=limit,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+    )
 
 
 @router.post("/members/", response_model=schemas.Member)

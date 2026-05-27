@@ -2,6 +2,11 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { AgGridReact } from 'ag-grid-react';
+import {
+    AllCommunityModule, ModuleRegistry, themeQuartz,
+    ColDef, ICellRendererParams, GetRowIdParams,
+} from 'ag-grid-community';
 import {
     Plus, Flag, Calendar, User, X, CheckCircle2, Circle,
     ChevronDown, AlertCircle,
@@ -17,11 +22,11 @@ import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 
-// ─── Date helpers ─────────────────────────────────────────────────────────────
-const DAYS_ES   = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'];
-const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+ModuleRegistry.registerModules([AllCommunityModule]);
 
+// ─── Date helpers ──────────────────────────────────────────────────────────────
+const DAYS_ES   = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'];
+const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDay(y: number, m: number)    { return new Date(y, m, 1).getDay(); }
 function formatRelative(date: Date): string {
@@ -36,17 +41,15 @@ function formatRelative(date: Date): string {
     return d.toLocaleDateString('es-PE', { day:'2-digit', month:'short' });
 }
 
-// ─── Status Config ────────────────────────────────────────────────────────────
+// ─── Status / Priority configs ─────────────────────────────────────────────────
 const STATUS_OPTIONS = [
-    { value:'todo',        label:'Pendiente',   dot:'bg-slate-400',   bg:'bg-slate-100 dark:bg-white/5',          text:'text-slate-600 dark:text-slate-300',    border:'border-slate-200 dark:border-white/10' },
-    { value:'pending',     label:'Pendiente',   dot:'bg-slate-400',   bg:'bg-slate-100 dark:bg-white/5',          text:'text-slate-600 dark:text-slate-300',    border:'border-slate-200 dark:border-white/10' },
-    { value:'in_progress', label:'En Progreso', dot:'bg-blue-500',  bg:'bg-blue-100 dark:bg-blue-500/20',   text:'text-blue-700 dark:text-blue-300',  border:'border-blue-200 dark:border-blue-500/30' },
-    { value:'blocked',     label:'Bloqueado',   dot:'bg-rose-500',    bg:'bg-rose-100 dark:bg-rose-500/20',       text:'text-rose-700 dark:text-rose-300',      border:'border-rose-200 dark:border-rose-500/30' },
-    { value:'completed',        label:'Completado',  dot:'bg-emerald-500', bg:'bg-emerald-100 dark:bg-emerald-500/20', text:'text-emerald-700 dark:text-emerald-300', border:'border-emerald-200 dark:border-emerald-500/30' },
+    { value:'todo',        label:'Pendiente',   dot:'bg-slate-400',   bg:'bg-slate-100 dark:bg-white/5',            text:'text-slate-600 dark:text-slate-300',      border:'border-slate-200 dark:border-white/10' },
+    { value:'in_progress', label:'En Progreso', dot:'bg-blue-500',    bg:'bg-blue-100 dark:bg-blue-500/20',         text:'text-blue-700 dark:text-blue-300',        border:'border-blue-200 dark:border-blue-500/30' },
+    { value:'blocked',     label:'Bloqueado',   dot:'bg-rose-500',    bg:'bg-rose-100 dark:bg-rose-500/20',         text:'text-rose-700 dark:text-rose-300',        border:'border-rose-200 dark:border-rose-500/30' },
+    { value:'completed',   label:'Completado',  dot:'bg-emerald-500', bg:'bg-emerald-100 dark:bg-emerald-500/20',   text:'text-emerald-700 dark:text-emerald-300',  border:'border-emerald-200 dark:border-emerald-500/30' },
 ] as const;
 function getStatus(val: string) { return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0]; }
 
-// ─── Priority Config ──────────────────────────────────────────────────────────
 const PRIORITY_OPTIONS = [
     { value:'low',    label:'Baja',    color:'text-slate-400',  fill:'#94a3b8' },
     { value:'normal', label:'Media',   color:'text-blue-500',   fill:'#3b82f6' },
@@ -55,7 +58,9 @@ const PRIORITY_OPTIONS = [
 ] as const;
 function getPriority(val: string) { return PRIORITY_OPTIONS.find(p => p.value === val) ?? PRIORITY_OPTIONS[1]; }
 
-// ─── FlagIcon ─────────────────────────────────────────────────────────────────
+const STATUS_ORDER: Record<string, number> = { urgent:0, in_progress:1, todo:2, pending:2, blocked:3, done:4, completed:5 };
+const PRIORITY_ORDER: Record<string, number> = { urgent:0, high:1, normal:2, low:3 };
+
 const FlagIcon = ({ fill, size = 14 }: { fill: string; size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} xmlns="http://www.w3.org/2000/svg">
         <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
@@ -63,33 +68,21 @@ const FlagIcon = ({ fill, size = 14 }: { fill: string; size?: number }) => (
     </svg>
 );
 
-// ─── Inline Status Picker ────────────────────────────────────────────────────
+// ─── Inline Status Cell ────────────────────────────────────────────────────────
 function InlineStatusCell({ value, onChange }: { value: string; onChange: (v: string) => void }) {
     const [open, setOpen] = useState(false);
     const st = getStatus(value);
     return (
         <Popover.Root open={open} onOpenChange={setOpen}>
             <Popover.Trigger asChild>
-                <button
-                    onClick={e => e.stopPropagation()}
-                    className={clsx(
-                        'flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all whitespace-nowrap',
-                        st.bg, st.text, st.border,
-                        'hover:opacity-80 hover:shadow-sm',
-                        open && 'ring-2 ring-blue-500/30'
-                    )}>
-                    <div className={clsx('size-1.5 rounded-full shrink-0', st.dot)} />
-                    {st.label}
-                    <ChevronDown size={10} className="ml-0.5 opacity-60" />
+                <button onClick={e => e.stopPropagation()} className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all whitespace-nowrap', st.bg, st.text, st.border, 'hover:opacity-80', open && 'ring-2 ring-blue-500/30')}>
+                    <div className={clsx('size-1.5 rounded-full shrink-0', st.dot)} />{st.label}<ChevronDown size={10} className="ml-0.5 opacity-60" />
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content
-                    className="z-[500] min-w-[180px] bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5"
-                    sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                <Popover.Content className="z-[500] min-w-[180px] bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 pt-1 pb-2">Estado</p>
-                    {STATUS_OPTIONS.filter((s, i, a) => a.findIndex(x => x.value === s.value) === i || s.value === 'todo').map(s => (
-                        s.value === 'pending' ? null :
+                    {STATUS_OPTIONS.map(s => (
                         <button key={s.value} onClick={() => { onChange(s.value); setOpen(false); }}
                             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                             <div className={clsx('size-2 rounded-full shrink-0', s.dot)} />
@@ -103,34 +96,23 @@ function InlineStatusCell({ value, onChange }: { value: string; onChange: (v: st
     );
 }
 
-// ─── Inline Priority Cell ─────────────────────────────────────────────────────
+// ─── Inline Priority Cell ──────────────────────────────────────────────────────
 function InlinePriorityCell({ value, onChange }: { value: string; onChange: (v: string) => void }) {
     const [open, setOpen] = useState(false);
     const pr = getPriority(value);
     return (
         <Popover.Root open={open} onOpenChange={setOpen}>
             <Popover.Trigger asChild>
-                <button onClick={e => e.stopPropagation()}
-                    className={clsx(
-                        'flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold transition-all',
-                        'hover:bg-slate-100 dark:hover:bg-white/5',
-                        open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10'
-                    )}>
-                    <FlagIcon fill={pr.fill} size={13} />
-                    <span className={pr.color}>{pr.label}</span>
-                    <ChevronDown size={10} className="text-slate-400" />
+                <button onClick={e => e.stopPropagation()} className={clsx('flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold transition-all', 'hover:bg-slate-100 dark:hover:bg-white/5', open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10')}>
+                    <FlagIcon fill={pr.fill} size={13} /><span className={pr.color}>{pr.label}</span><ChevronDown size={10} className="text-slate-400" />
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content
-                    className="z-[500] min-w-[160px] bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5"
-                    sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                <Popover.Content className="z-[500] min-w-[160px] bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 pt-1 pb-2">Prioridad</p>
                     {PRIORITY_OPTIONS.map(p => (
-                        <button key={p.value} onClick={() => { onChange(p.value); setOpen(false); }}
-                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                            <FlagIcon fill={p.fill} size={12} />
-                            <span className={clsx('text-[12px] font-semibold flex-1 text-left', p.color)}>{p.label}</span>
+                        <button key={p.value} onClick={() => { onChange(p.value); setOpen(false); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                            <FlagIcon fill={p.fill} size={12} /><span className={clsx('text-[12px] font-semibold flex-1 text-left', p.color)}>{p.label}</span>
                             {p.value === value && <Check size={12} className="text-blue-500" />}
                         </button>
                     ))}
@@ -140,7 +122,7 @@ function InlinePriorityCell({ value, onChange }: { value: string; onChange: (v: 
     );
 }
 
-// ─── Inline Date Cell ─────────────────────────────────────────────────────────
+// ─── Inline Date Cell ──────────────────────────────────────────────────────────
 function InlineDateCell({ value, onChange }: { value?: string | null; onChange: (v: string | null) => void }) {
     const [open, setOpen] = useState(false);
     const today    = new Date(); today.setHours(0,0,0,0);
@@ -152,55 +134,27 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
     const isOverdue = parsed && !isNaN(parsed.getTime()) && parsed < today;
     const isToday2  = parsed && !isNaN(parsed.getTime()) && parsed.toDateString() === today.toDateString();
     const label     = parsed && !isNaN(parsed.getTime()) ? formatRelative(parsed) : null;
-
     const rawFD = getFirstDay(viewYear, viewMonth);
     const firstDay = isNaN(rawFD) ? 0 : Math.max(0, Math.min(6, rawFD));
     const daysCount = Math.max(0, getDaysInMonth(viewYear, viewMonth));
     const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({length:daysCount},(_,i)=>i+1)];
-
-    const selectDay = (day: number) => {
-        const d = new Date(viewYear, viewMonth, day);
-        onChange(d.toISOString().split('T')[0]);
-        setOpen(false);
-    };
-
+    const selectDay = (day: number) => { onChange(new Date(viewYear, viewMonth, day).toISOString().split('T')[0]); setOpen(false); };
     return (
         <Popover.Root open={open} onOpenChange={(v) => { setOpen(v); if(!v) return; if(parsed && !isNaN(parsed.getTime())) { setViewYear(parsed.getFullYear()); setViewMonth(parsed.getMonth()); } }}>
             <Popover.Trigger asChild>
-                <button onClick={e => e.stopPropagation()}
-                    className={clsx(
-                        'group flex items-center gap-1.5 px-2 py-1 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all',
-                        'hover:bg-slate-100 dark:hover:bg-white/5',
-                        open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10',
-                        isOverdue ? 'text-rose-500 dark:text-rose-400'
-                            : isToday2 ? 'text-amber-500 dark:text-amber-400'
-                            : label ? 'text-slate-700 dark:text-slate-300'
-                            : 'text-slate-300 dark:text-white/20'
-                    )}>
-                    {isOverdue
-                        ? <AlertCircle size={13} className="shrink-0" />
-                        : <Calendar size={13} className="shrink-0" />}
+                <button onClick={e => e.stopPropagation()} className={clsx('group flex items-center gap-1.5 px-2 py-1 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all', 'hover:bg-slate-100 dark:hover:bg-white/5', open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10', isOverdue ? 'text-rose-500 dark:text-rose-400' : isToday2 ? 'text-amber-500 dark:text-amber-400' : label ? 'text-slate-700 dark:text-slate-300' : 'text-slate-300 dark:text-white/20')}>
+                    {isOverdue ? <AlertCircle size={13} className="shrink-0" /> : <Calendar size={13} className="shrink-0" />}
                     {label ?? <span className="group-hover:text-slate-400 transition-colors">—</span>}
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] w-[248px] bg-white dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 p-3 select-none"
-                    sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
-                    {/* Navigator */}
+                <Popover.Content className="z-[500] w-[248px] bg-white dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 p-3 select-none" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     <div className="flex items-center justify-between mb-3">
-                        <button onClick={() => { let m=viewMonth-1,y=viewYear; if(m<0){m=11;y--;} setViewMonth(m);setViewYear(y); }}
-                            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-700 transition-colors">
-                            <ChevronLeft size={14}/>
-                        </button>
+                        <button onClick={() => { let m=viewMonth-1,y=viewYear; if(m<0){m=11;y--;} setViewMonth(m);setViewYear(y); }} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400"><ChevronLeft size={14}/></button>
                         <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200">{MONTHS_ES[viewMonth]} {viewYear}</span>
-                        <button onClick={() => { let m=viewMonth+1,y=viewYear; if(m>11){m=0;y++;} setViewMonth(m);setViewYear(y); }}
-                            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-700 transition-colors">
-                            <ChevronDown size={14}/>
-                        </button>
+                        <button onClick={() => { let m=viewMonth+1,y=viewYear; if(m>11){m=0;y++;} setViewMonth(m);setViewYear(y); }} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400"><ChevronDown size={14}/></button>
                     </div>
-                    <div className="grid grid-cols-7 mb-1">
-                        {DAYS_ES.map(d => <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-center py-0.5">{d}</div>)}
-                    </div>
+                    <div className="grid grid-cols-7 mb-1">{DAYS_ES.map(d => <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-center py-0.5">{d}</div>)}</div>
                     <div className="grid grid-cols-7 gap-y-0.5">
                         {cells.map((day, i) => {
                             if (!day) return <div key={`e-${i}`} />;
@@ -208,31 +162,12 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
                             const isSel = parsed && !isNaN(parsed.getTime()) && cd.toDateString()===parsed.toDateString();
                             const isTd  = cd.toDateString()===today.toDateString();
                             const isPast = cd < today && !isTd;
-                            return (
-                                <button key={day} onClick={() => selectDay(day)}
-                                    className={clsx(
-                                        'size-8 rounded-lg text-[12px] font-medium transition-all mx-auto flex items-center justify-center',
-                                        isSel  ? 'bg-blue-600 text-white font-bold shadow-sm'
-                                        : isTd ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 font-bold ring-1 ring-blue-200'
-                                        : isPast? 'text-slate-300 dark:text-white/20 hover:bg-slate-50'
-                                               : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-                                    )}>
-                                    {day}
-                                </button>
-                            );
+                            return <button key={day} onClick={() => selectDay(day)} className={clsx('size-8 rounded-lg text-[12px] font-medium transition-all mx-auto flex items-center justify-center', isSel ? 'bg-blue-600 text-white font-bold shadow-sm' : isTd ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 font-bold ring-1 ring-blue-200' : isPast ? 'text-slate-300 dark:text-white/20 hover:bg-slate-50' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')}>{day}</button>;
                         })}
                     </div>
                     <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-white/5">
-                        <button onClick={() => selectDay(today.getDate())}
-                            className="flex-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors">
-                            Hoy
-                        </button>
-                        {value && (
-                            <button onClick={() => { onChange(null); setOpen(false); }}
-                                className="flex-1 text-[11px] font-bold text-rose-500 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-                                Quitar
-                            </button>
-                        )}
+                        <button onClick={() => selectDay(today.getDate())} className="flex-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors">Hoy</button>
+                        {value && <button onClick={() => { onChange(null); setOpen(false); }} className="flex-1 text-[11px] font-bold text-rose-500 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">Quitar</button>}
                     </div>
                 </Popover.Content>
             </Popover.Portal>
@@ -240,20 +175,14 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
     );
 }
 
-// ─── Inline User Cell ─────────────────────────────────────────────────────────
+// ─── Inline User Cell ──────────────────────────────────────────────────────────
 type UserRecord = { id: number; username: string; email?: string };
-
-function InlineUserCell({ value, token, onChange }: {
-    value?: number | null;
-    token: string | null;
-    onChange: (userId: number | null, name: string | null) => void;
-}) {
-    const [open, setOpen]     = useState(false);
+function InlineUserCell({ value, token, onChange }: { value?: number | null; token: string | null; onChange: (userId: number | null, name: string | null) => void }) {
+    const [open, setOpen] = useState(false);
     const [query, setQuery]   = useState('');
     const [users, setUsers]   = useState<UserRecord[]>([]);
     const [loading, setLoading] = useState(false);
     const [displayName, setDisplayName] = useState<string | null>(null);
-
     useEffect(() => {
         if (!open) return;
         setLoading(true);
@@ -263,81 +192,42 @@ function InlineUserCell({ value, token, onChange }: {
                     ? data.map((m: any) => ({ id: m.user?.id ?? m.id, username: m.user?.username ?? m.username ?? `#${m.id}`, email: m.user?.email ?? m.email }))
                     : [];
                 setUsers(list);
-                if (value) {
-                    const found = list.find(u => u.id === value);
-                    if (found) setDisplayName(found.username);
-                }
+                if (value) { const found = list.find(u => u.id === value); if (found) setDisplayName(found.username); }
             })
             .catch(() => setUsers([]))
             .finally(() => setLoading(false));
     }, [open, token, value]);
-
-    const filtered = query
-        ? users.filter(u => u.username.toLowerCase().includes(query.toLowerCase()))
-        : users;
-
+    const filtered = query ? users.filter(u => u.username.toLowerCase().includes(query.toLowerCase())) : users;
     return (
         <Popover.Root open={open} onOpenChange={setOpen}>
             <Popover.Trigger asChild>
-                <button onClick={e => e.stopPropagation()}
-                    className={clsx(
-                        'flex items-center gap-2 px-2 py-1 rounded-lg transition-all',
-                        'hover:bg-slate-100 dark:hover:bg-white/5',
-                        open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10'
-                    )}>
-                    <div className={clsx(
-                        'size-6 rounded-full flex items-center justify-center font-semibold shrink-0',
-                        value ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300'
-                               : 'bg-slate-100 dark:bg-white/5 text-slate-400'
-                    )}>
+                <button onClick={e => e.stopPropagation()} className={clsx('flex items-center gap-2 px-2 py-1 rounded-lg transition-all', 'hover:bg-slate-100 dark:hover:bg-white/5', open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10')}>
+                    <div className={clsx('size-6 rounded-full flex items-center justify-center font-semibold shrink-0', value ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300' : 'bg-slate-100 dark:bg-white/5 text-slate-400')}>
                         {value && displayName ? displayName.charAt(0).toUpperCase() : <User size={11} />}
                     </div>
-                    <span className="text-[12px] font-medium text-slate-600 dark:text-slate-400 truncate max-w-[80px]">
-                        {displayName ?? (value ? `#${value}` : '—')}
-                    </span>
+                    <span className="text-[12px] font-medium text-slate-600 dark:text-slate-400 truncate max-w-[80px]">{displayName ?? (value ? `#${value}` : '—')}</span>
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] w-[240px] bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 overflow-hidden"
-                    sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                <Popover.Content className="z-[500] w-[240px] bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 overflow-hidden" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-white/5">
                         <Search size={13} className="text-slate-400 shrink-0" />
-                        <input autoFocus value={query} onChange={e => setQuery(e.target.value)}
-                            placeholder="Buscar usuario..."
-                            className="flex-1 text-[12px] text-slate-700 dark:text-slate-200 bg-transparent outline-none placeholder:text-slate-400" />
+                        <input autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar usuario..." className="flex-1 text-[12px] text-slate-700 dark:text-slate-200 bg-transparent outline-none placeholder:text-slate-400" />
                         {query && <button onClick={() => setQuery('')}><X size={12} className="text-slate-400" /></button>}
                     </div>
                     <div className="max-h-[200px] overflow-y-auto py-1">
-                        {loading ? (
-                            <div className="flex items-center justify-center py-1.5">
-                                <Loader2 size={16} className="text-blue-500 animate-spin" />
-                            </div>
-                        ) : filtered.length === 0 ? (
-                            <p className="text-[11px] text-slate-400 text-center py-1.5">Sin resultados</p>
-                        ) : (
-                            <>
-                                {value && (
-                                    <button onClick={() => { onChange(null, null); setDisplayName(null); setOpen(false); }}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 transition-colors">
-                                        <X size={12} />
-                                        <span className="text-[11px] font-bold">Quitar asignación</span>
-                                    </button>
-                                )}
-                                {filtered.map(u => (
-                                    <button key={u.id} onClick={() => { onChange(u.id, u.username); setDisplayName(u.username); setOpen(false); }}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                        <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center font-semibold text-blue-600 shrink-0">
-                                            {u.username.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div className="flex-1 text-left">
-                                            <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{u.username}</p>
-                                            {u.email && <p className="text-[10px] text-slate-400 truncate">{u.email}</p>}
-                                        </div>
-                                        {u.id === value && <Check size={12} className="text-blue-500" />}
-                                    </button>
-                                ))}
-                            </>
-                        )}
+                        {loading ? <div className="flex items-center justify-center py-1.5"><Loader2 size={16} className="text-blue-500 animate-spin" /></div>
+                        : filtered.length === 0 ? <p className="text-[11px] text-slate-400 text-center py-1.5">Sin resultados</p>
+                        : <>
+                            {value && <button onClick={() => { onChange(null, null); setDisplayName(null); setOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 transition-colors"><X size={12} /><span className="text-[11px] font-bold">Quitar asignación</span></button>}
+                            {filtered.map(u => (
+                                <button key={u.id} onClick={() => { onChange(u.id, u.username); setDisplayName(u.username); setOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                    <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center font-semibold text-blue-600 shrink-0">{u.username.charAt(0).toUpperCase()}</div>
+                                    <div className="flex-1 text-left"><p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{u.username}</p>{u.email && <p className="text-[10px] text-slate-400 truncate">{u.email}</p>}</div>
+                                    {u.id === value && <Check size={12} className="text-blue-500" />}
+                                </button>
+                            ))}
+                        </>}
                     </div>
                 </Popover.Content>
             </Popover.Portal>
@@ -345,67 +235,72 @@ function InlineUserCell({ value, token, onChange }: {
     );
 }
 
-// ─── Quick Add Row ────────────────────────────────────────────────────────────
-function QuickAddRow({ onConfirm, onCancel }: { onConfirm: (title: string) => void; onCancel: () => void }) {
-    const [title, setTitle] = useState('');
-    const ref = useRef<HTMLInputElement>(null);
-    useEffect(() => { setTimeout(() => ref.current?.focus(), 50); }, []);
+// ─── AG Grid Themes ────────────────────────────────────────────────────────────
+const lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: '#ffffff', foregroundColor: '#1e293b', borderColor: '#e2e8f0', oddRowBackgroundColor: '#f8fafc', headerBackgroundColor: '#f1f5f9', headerTextColor: '#475569', selectedRowBackgroundColor: '#eef2ff', accentColor: '#6366f1', cellHorizontalPaddingScale: 0.8 });
+const darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'rgb(15 23 42)', foregroundColor: '#e2e8f0', borderColor: 'rgba(255,255,255,0.08)', oddRowBackgroundColor: 'rgba(255,255,255,0.02)', headerBackgroundColor: 'rgba(255,255,255,0.04)', headerTextColor: '#94a3b8', selectedRowBackgroundColor: 'rgba(99,102,241,0.15)', accentColor: '#6366f1', cellHorizontalPaddingScale: 0.8 });
+
+// ─── AG Grid Cell Renderers (use context for callbacks) ────────────────────────
+function TitleRenderer(params: ICellRendererParams) {
+    if (params.data?.__isGroup) return null;
+    const { onOpenTask } = params.context ?? {};
+    const task = params.data as ProjectTaskRecord;
     return (
-        <tr className="bg-blue-50/50 dark:bg-blue-500/5">
-            <td className="w-10 px-3 py-2 border-r border-slate-100 dark:border-white/5" />
-            <td className="px-4 py-2" colSpan={5}>
-                <div className="flex items-center gap-3">
-                    <Circle size={15} className="text-slate-300 shrink-0" />
-                    <input
-                        ref={ref}
-                        value={title}
-                        onChange={e => setTitle(e.target.value)}
-                        onKeyDown={e => {
-                            if (e.key === 'Enter' && title.trim()) onConfirm(title.trim());
-                            if (e.key === 'Escape') onCancel();
-                        }}
-                        placeholder="Nombre de la tarea... (Enter para crear)"
-                        className="flex-1 text-[13px] font-medium text-slate-800 dark:text-slate-200 bg-transparent outline-none placeholder:text-slate-400"
-                    />
-                    <button onClick={() => title.trim() && onConfirm(title.trim())}
-                        className="px-3 py-1 bg-blue-600 text-white text-[11px] font-bold rounded-lg hover:bg-blue-700 transition-colors shrink-0">
-                        Crear
-                    </button>
-                    <button onClick={onCancel}
-                        className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-                        <X size={13} />
-                    </button>
-                </div>
-            </td>
-            <td className="w-10 border-l border-slate-100 dark:border-white/5" />
-        </tr>
+        <button onClick={(e) => { e.stopPropagation(); onOpenTask?.(task); }}
+            className="flex items-center gap-2 h-full w-full text-left group">
+            <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                task.status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-white/20')}>
+                {task.status === 'completed' && <span className="text-[7px] font-bold">✓</span>}
+            </div>
+            <span className={clsx('text-[13px] font-semibold truncate group-hover:text-indigo-600 transition-colors', task.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200')}>
+                {task.title}
+            </span>
+            {(task.comments_count ?? 0) > 0 && (
+                <span className="ml-auto flex items-center gap-0.5 text-slate-400 shrink-0">
+                    <MessageSquare size={11} /><span className="text-[10px]">{task.comments_count}</span>
+                </span>
+            )}
+        </button>
     );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+function StatusRenderer(params: ICellRendererParams) {
+    if (params.data?.__isGroup) return null;
+    const { applyChangeRef } = params.context ?? {};
+    const task = params.data as ProjectTaskRecord;
+    return <InlineStatusCell value={task.status ?? 'todo'} onChange={(v) => applyChangeRef?.current?.(task.id, 'status', v)} />;
+}
+
+function PriorityRenderer(params: ICellRendererParams) {
+    if (params.data?.__isGroup) return null;
+    const { applyChangeRef } = params.context ?? {};
+    const task = params.data as ProjectTaskRecord;
+    return <InlinePriorityCell value={task.priority ?? 'normal'} onChange={(v) => applyChangeRef?.current?.(task.id, 'priority', v)} />;
+}
+
+function DateRenderer(params: ICellRendererParams) {
+    if (params.data?.__isGroup) return null;
+    const { applyChangeRef } = params.context ?? {};
+    const task = params.data as ProjectTaskRecord;
+    return <InlineDateCell value={task.due_date} onChange={(v) => applyChangeRef?.current?.(task.id, 'due_date', v)} />;
+}
+
+function AssigneeRenderer(params: ICellRendererParams) {
+    if (params.data?.__isGroup) return null;
+    const { applyChangeRef, token } = params.context ?? {};
+    const task = params.data as ProjectTaskRecord;
+    return <InlineUserCell value={task.assignee_id} token={token} onChange={(id, name) => applyChangeRef?.current?.(task.id, 'assignee_id', id)} />;
+}
+
+// ─── Props / Types ─────────────────────────────────────────────────────────────
 interface Props {
     projectId?: string | number;
     tasks: ProjectTaskRecord[];
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string, dueDate?: string, title?: string) => Promise<void> | void;
     onTaskUpdated?: (taskId: number, field: string, value: any) => void;
-    quickAddStatus?: string | null;
-    quickAddTitle?: string;
-    onQuickAddTitleChange?: (title: string) => void;
-    onQuickAddConfirm?: () => void;
-    onQuickAddCancel?: () => void;
 }
 
-type SortKey = 'title' | 'status' | 'priority' | 'due_date';
-type SortDir = 'asc' | 'desc';
-type SortConfig = { key: SortKey; dir: SortDir };
 type GroupKey = 'status' | 'priority' | 'none';
-
-const STATUS_ORDER: Record<string, number> = {
-    urgent:0, in_progress:1, todo:2, pending:2, blocked:3, done:4
-};
-const PRIORITY_ORDER: Record<string, number> = { urgent:0, high:1, normal:2, low:3 };
-
 type ColumnId = 'title' | 'status' | 'priority' | 'assignee' | 'due_date' | 'comments';
 const ALL_COLUMNS: { id: ColumnId; label: string }[] = [
     { id: 'title',    label: 'Nombre' },
@@ -415,239 +310,168 @@ const ALL_COLUMNS: { id: ColumnId; label: string }[] = [
     { id: 'due_date', label: 'Fecha límite' },
     { id: 'comments', label: 'Comentarios' },
 ];
-
 type ActiveFilter = { field: 'status' | 'priority'; value: string; label: string };
 
+// ─── Main Component ────────────────────────────────────────────────────────────
 export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask, onTaskUpdated }: Props) {
     const { token } = useAuth();
     const { openLayer } = useSidebarLayers();
-
-    // ─ Optimistic overrides
+    const gridRef = useRef<AgGridReact>(null);
+    const [isDark, setIsDark] = useState(false);
     const [overrides, setOverrides] = useState<Record<number, Partial<ProjectTaskRecord>>>({});
-    const [selected, setSelected]   = useState<Set<number>>(new Set());
-    const [sortConfig, setSortConfig] = useState<SortConfig[]>([]);
-    const [groupBy, setGroupBy]      = useState<GroupKey>('status');
-    const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-    const [quickAddGroup, setQuickAddGroup] = useState<string | null>(null);
-    const [, setQuickAddLoading] = useState(false);
+    const [groupBy, setGroupBy]     = useState<GroupKey>('status');
     const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
-    const [visibleCols, setVisibleCols]     = useState<Set<ColumnId>>(new Set<ColumnId>(['title','status','priority','assignee','due_date','comments']));
-    // Toolbar popover states
-    const [cfgOpen,    setCfgOpen]    = useState(false);
+    const [visibleCols, setVisibleCols] = useState<Set<ColumnId>>(new Set<ColumnId>(['title','status','priority','assignee','due_date']));
+    const [cfgOpen, setCfgOpen]     = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
-    const [sortOpen,   setSortOpen]   = useState(false);
-    const [groupOpen,  setGroupOpen]  = useState(false);
-    
-    // Persistence load
-    const [isLoaded, setIsLoaded] = useState(false);
+    const [groupOpen, setGroupOpen]   = useState(false);
+    const [quickAddGroup, setQuickAddGroup] = useState<string | null>(null);
+    const [quickAddTitle, setQuickAddTitle] = useState('');
+    const [isLoaded, setIsLoaded]   = useState(false);
+
+    // Dark mode detection
     useEffect(() => {
-        const storageKey = projectId ? `ccf_task_table_prefs_${projectId}` : 'ccf_task_table_prefs';
+        const check = () => setIsDark(document.documentElement.classList.contains('dark'));
+        check();
+        const obs = new MutationObserver(check);
+        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => obs.disconnect();
+    }, []);
+
+    // Preferences persistence
+    useEffect(() => {
+        const key = projectId ? `ccf_task_table_prefs_${projectId}` : 'ccf_task_table_prefs';
         try {
-            const stored = localStorage.getItem(storageKey);
+            const stored = localStorage.getItem(key);
             if (stored) {
-                const parsed = JSON.parse(stored);
-                if (parsed.sortConfig) setSortConfig(parsed.sortConfig);
-                if (parsed.groupBy) setGroupBy(parsed.groupBy);
-                if (parsed.collapsedGroups) setCollapsedGroups(parsed.collapsedGroups);
-                if (parsed.activeFilters) setActiveFilters(parsed.activeFilters);
-                if (parsed.visibleCols) setVisibleCols(new Set(parsed.visibleCols));
+                const p = JSON.parse(stored);
+                if (p.groupBy) setGroupBy(p.groupBy);
+                if (p.activeFilters) setActiveFilters(p.activeFilters);
+                if (p.visibleCols) setVisibleCols(new Set(p.visibleCols));
             }
-        } catch (e) {
-            console.error('Error loading table prefs', e);
-        }
+        } catch { /* ignore */ }
         setIsLoaded(true);
     }, [projectId]);
 
-    // Persistence save
     useEffect(() => {
         if (!isLoaded) return;
-        const storageKey = projectId ? `ccf_task_table_prefs_${projectId}` : 'ccf_task_table_prefs';
-        try {
-            const prefs = {
-                sortConfig,
-                groupBy,
-                collapsedGroups,
-                activeFilters,
-                visibleCols: Array.from(visibleCols),
-            };
-            localStorage.setItem(storageKey, JSON.stringify(prefs));
-        } catch (e) {
-            console.error('Error saving table prefs', e);
-        }
-    }, [isLoaded, projectId, sortConfig, groupBy, collapsedGroups, activeFilters, visibleCols]);
+        const key = projectId ? `ccf_task_table_prefs_${projectId}` : 'ccf_task_table_prefs';
+        try { localStorage.setItem(key, JSON.stringify({ groupBy, activeFilters, visibleCols: Array.from(visibleCols) })); } catch { /* ignore */ }
+    }, [isLoaded, projectId, groupBy, activeFilters, visibleCols]);
 
-    const resolveTask = useCallback((t: ProjectTaskRecord): ProjectTaskRecord => ({
-        ...t,
-        ...(overrides[Number(t.id)] ?? {}),
-    }), [overrides]);
-
-    // ─ Sort toggle
-    const handleSortToggle = (key: SortKey, e?: React.MouseEvent) => {
-        setSortConfig(prev => {
-            const existingIdx = prev.findIndex(s => s.key === key);
-            let next = [...prev];
-
-            if (e?.shiftKey) {
-                if (existingIdx >= 0) {
-                    if (next[existingIdx].dir === 'asc') next[existingIdx].dir = 'desc';
-                    else next.splice(existingIdx, 1);
-                } else {
-                    next.push({ key, dir: 'asc' });
-                }
-            } else {
-                if (existingIdx >= 0 && prev.length === 1) {
-                    if (next[existingIdx].dir === 'asc') next[existingIdx].dir = 'desc';
-                    else next = [];
-                } else {
-                    next = [{ key, dir: 'asc' }];
-                }
-            }
-            return next;
-        });
-    };
-
-    const SortIcon = ({ k }: { k: SortKey }) => {
-        const confIdx = sortConfig.findIndex(s => s.key === k);
-        if (confIdx < 0) return <ChevronsUpDown size={12} className="text-slate-300 transition-colors group-hover/th:text-slate-400" />;
-        const conf = sortConfig[confIdx];
-        return (
-            <div className="flex items-center gap-0.5">
-                {conf.dir === 'asc' ? <ArrowUp size={12} className="text-blue-500" /> : <ArrowDown size={12} className="text-blue-500" />}
-                {sortConfig.length > 1 && <span className="text-[9px] font-bold text-blue-500">{confIdx + 1}</span>}
-            </div>
-        );
-    };
-
-    // ─ Process: filter + sort
-    const processed = useMemo(() => {
-        let list = tasks.map(resolveTask);
-        // Apply active filters
-        for (const f of activeFilters) {
-            list = list.filter(t => {
-                if (f.field === 'status')   return t.status   === f.value;
-                if (f.field === 'priority') return t.priority === f.value;
-                return true;
-            });
-        }
-        if (sortConfig.length > 0) {
-            list = [...list].sort((a, b) => {
-                for (const { key, dir } of sortConfig) {
-                    let cmp = 0;
-                    if (key === 'title')   cmp = (a.title ?? '').localeCompare(b.title ?? '');
-                    if (key === 'status')  cmp = (STATUS_ORDER[a.status ?? 'todo'] ?? 99) - (STATUS_ORDER[b.status ?? 'todo'] ?? 99);
-                    if (key === 'priority') cmp = (PRIORITY_ORDER[a.priority ?? 'normal'] ?? 99) - (PRIORITY_ORDER[b.priority ?? 'normal'] ?? 99);
-                    if (key === 'due_date') {
-                        const da = a.due_date ? new Date(a.due_date).getTime() : Infinity;
-                        const db = b.due_date ? new Date(b.due_date).getTime() : Infinity;
-                        cmp = da - db;
-                    }
-                    if (cmp !== 0) return dir === 'asc' ? cmp : -cmp;
-                }
-                return 0;
-            });
-        }
-        return list;
-    }, [tasks, sortConfig, activeFilters, resolveTask])
-
-    const groups = useMemo(() => {
-        const grouped: Record<string, ProjectTaskRecord[]> = {};
-        processed.forEach(t => {
-            let key: string;
-            if (groupBy === 'none')     key = 'all';
-            else if (groupBy === 'priority') key = t.priority ?? 'normal';
-            else key = t.status ?? 'todo';
-            if (!grouped[key]) grouped[key] = [];
-            grouped[key].push(t);
-        });
-        return grouped;
-    }, [processed, groupBy]);
-
-    // ─ Optimistic update helper
+    // Optimistic update
     const applyChange = useCallback(async (taskId: number, field: string, value: any) => {
         setOverrides(prev => ({ ...prev, [taskId]: { ...prev[taskId], [field]: value } }));
         try {
             await apiFetch(`/projects/tasks/${taskId}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }), token: token ?? undefined });
             onTaskUpdated?.(taskId, field, value);
         } catch {
-            setOverrides(prev => {
-                const next = { ...prev };
-                delete next[taskId];
-                return next;
-            });
+            setOverrides(prev => { const n = { ...prev }; delete n[taskId]; return n; });
         }
     }, [token, onTaskUpdated]);
 
-    // ─ Quick add
+    // Stable ref for applyChange so cell renderers always have latest version
+    const applyChangeRef = useRef(applyChange);
+    useEffect(() => { applyChangeRef.current = applyChange; }, [applyChange]);
+
+    // Resolve optimistic overrides
+    const resolveTask = useCallback((t: ProjectTaskRecord): ProjectTaskRecord => ({ ...t, ...(overrides[Number(t.id)] ?? {}) }), [overrides]);
+
+    // Process: filter
+    const processed = useMemo(() => {
+        let list = tasks.map(resolveTask);
+        for (const f of activeFilters) {
+            list = list.filter(t => f.field === 'status' ? t.status === f.value : t.priority === f.value);
+        }
+        return list;
+    }, [tasks, activeFilters, resolveTask]);
+
+    // Flatten with group headers
+    const rowData = useMemo(() => {
+        if (groupBy === 'none') return processed;
+        const groups: Record<string, ProjectTaskRecord[]> = {};
+        processed.forEach(t => {
+            const k = groupBy === 'priority' ? (t.priority ?? 'normal') : (t.status ?? 'todo');
+            if (!groups[k]) groups[k] = [];
+            groups[k].push(t);
+        });
+        const order: string[] = groupBy === 'priority' ? PRIORITY_OPTIONS.map(p => p.value) : STATUS_OPTIONS.map(s => s.value);
+        const flat: any[] = [];
+        const sorted = Object.entries(groups).sort(([a],[b]) => (order.indexOf(a as any) ?? 99) - (order.indexOf(b as any) ?? 99));
+        sorted.forEach(([key, rows]) => {
+            flat.push({ __isGroup: true, __groupKey: key, __groupCount: rows.length, id: `__group__${key}` });
+            flat.push(...rows);
+        });
+        return flat;
+    }, [processed, groupBy]);
+
+    // Column definitions
+    const colDefs = useMemo<ColDef[]>(() => {
+        const cols: ColDef[] = [];
+        if (visibleCols.has('title'))    cols.push({ field: 'title',      headerName: 'Nombre',       flex: 3, minWidth: 220, cellRenderer: TitleRenderer, sortable: true });
+        if (visibleCols.has('status'))   cols.push({ field: 'status',     headerName: 'Estado',       width: 160, cellRenderer: StatusRenderer, sortable: true });
+        if (visibleCols.has('priority')) cols.push({ field: 'priority',   headerName: 'Prioridad',    width: 140, cellRenderer: PriorityRenderer, sortable: true });
+        if (visibleCols.has('assignee')) cols.push({ field: 'assignee_id',headerName: 'Asignado',     width: 160, cellRenderer: AssigneeRenderer, sortable: false });
+        if (visibleCols.has('due_date')) cols.push({ field: 'due_date',   headerName: 'Fecha límite', width: 140, cellRenderer: DateRenderer, sortable: true });
+        return cols.map(c => ({ ...c, resizable: true, editable: false, suppressHeaderMenuButton: false }));
+    }, [visibleCols]);
+
+    // Full-width group row renderer
+    const isFullWidthRow = useCallback((p: any) => !!p.rowNode.data?.__isGroup, []);
+    const fullWidthCellRenderer = useCallback(({ data: row }: any) => {
+        const label = groupBy === 'priority'
+            ? (getPriority(row.__groupKey)?.label ?? row.__groupKey)
+            : (getStatus(row.__groupKey)?.label ?? row.__groupKey);
+        const dot = groupBy === 'status' ? getStatus(row.__groupKey)?.dot : undefined;
+        return (
+            <div className="flex items-center gap-2.5 px-4 h-full bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
+                {dot && <span className={clsx('size-2 rounded-full flex-shrink-0', dot)} />}
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{label}</span>
+                <span className="text-[10px] font-semibold text-slate-400 bg-slate-200 dark:bg-white/10 rounded-full px-2 py-0.5">{row.__groupCount}</span>
+                <button onClick={() => setQuickAddGroup(row.__groupKey)}
+                    className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-indigo-500 hover:text-indigo-700 transition-colors">
+                    <Plus size={11} /> Agregar
+                </button>
+            </div>
+        );
+    }, [groupBy]);
+
+    // AG Grid context
+    const gridContext = useMemo(() => ({ applyChangeRef, onOpenTask, token }), [onOpenTask, token]);
+
+    const getRowId = useCallback((p: GetRowIdParams) => String((p.data as any).id), []);
+    const getRowHeight = useCallback((p: any) => p.data?.__isGroup ? 32 : 40, []);
+
+    // Quick add task
     const handleQuickAdd = async (status: string, title: string) => {
-        setQuickAddLoading(true);
         try {
-            await apiFetch(`/projects/${projectId}/tasks`, {
-                method: 'POST',
-                body: JSON.stringify({ title, status, priority: 'normal' }),
-                token: token ?? undefined
-            });
+            await apiFetch(`/projects/${projectId}/tasks`, { method: 'POST', body: JSON.stringify({ title, status, priority: 'normal' }), token: token ?? undefined });
             onAddTask(status);
         } catch { /* silently fail */ }
-        finally { setQuickAddLoading(false); setQuickAddGroup(null); }
+        setQuickAddGroup(null);
+        setQuickAddTitle('');
     };
-
-    // ─ Select all in group
-    const toggleGroupSelect = (ids: number[]) => {
-        setSelected(prev => {
-            const allSelected = ids.every(id => prev.has(id));
-            const next = new Set(prev);
-            if (allSelected) ids.forEach(id => next.delete(id));
-            else ids.forEach(id => next.add(id));
-            return next;
-        });
-    };
-
-    const ColHeader = ({ label, k, width }: { label: string; k: SortKey; width: string }) => (
-        <th style={{ width }} className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5 last:border-r-0 select-none">
-            <button onClick={(e) => handleSortToggle(k, e)}
-                className="flex items-center gap-1.5 group/th w-full">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 group-hover/th:text-slate-700 dark:group-hover/th:text-slate-200 transition-colors">
-                    {label}
-                </span>
-                <SortIcon k={k} />
-            </button>
-        </th>
-    );
-
-    const totalSelected = selected.size;
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] font-sans overflow-hidden">
 
-            {/* ── TOOLBAR ──────────────────────────────────────────────────── */}
-            <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/60 dark:bg-black/10">
+            {/* ── TOOLBAR ── */}
+            <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/60 dark:bg-black/10 flex-wrap">
 
-                {/* ── Config: column visibility ── */}
+                {/* Column visibility */}
                 <Popover.Root open={cfgOpen} onOpenChange={setCfgOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx(
-                            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
-                            cfgOpen ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
-                        )}>
-                            <Settings2 size={12} /> Config
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', cfgOpen ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5')}>
+                            <Settings2 size={12} /> Columnas
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
-                        <Popover.Content sideOffset={6} align="start"
-                            className="z-[500] w-56 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
+                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
                             <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Columnas visibles</p>
                             {ALL_COLUMNS.map(col => (
-                                <button key={col.id}
-                                    onClick={() => setVisibleCols(prev => {
-                                        const next = new Set(prev);
-                                        if (next.has(col.id)) { if (col.id !== 'title') next.delete(col.id); }
-                                        else next.add(col.id);
-                                        return next;
-                                    })}
+                                <button key={col.id} onClick={() => setVisibleCols(prev => { const n = new Set(prev); if (n.has(col.id)) { if (col.id !== 'title') n.delete(col.id); } else n.add(col.id); return n; })}
                                     className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                    {visibleCols.has(col.id)
-                                        ? <Eye size={13} className="text-blue-500 shrink-0" />
-                                        : <EyeOff size={13} className="text-slate-300 shrink-0" />}
+                                    {visibleCols.has(col.id) ? <Eye size={13} className="text-blue-500 shrink-0" /> : <EyeOff size={13} className="text-slate-300 shrink-0" />}
                                     <span className={clsx('text-[12px] font-medium flex-1 text-left', visibleCols.has(col.id) ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400')}>{col.label}</span>
                                     {col.id === 'title' && <span className="text-[9px] text-slate-300">fijo</span>}
                                 </button>
@@ -658,20 +482,15 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
 
                 <div className="w-px h-4 bg-slate-200 dark:bg-white/10" />
 
-                {/* ── Group by ── */}
+                {/* Group by */}
                 <Popover.Root open={groupOpen} onOpenChange={setGroupOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx(
-                            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
-                            groupBy !== 'status' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
-                        )}>
-                            <Layers size={12} />
-                            Agrupar{groupBy !== 'none' ? `: ${groupBy === 'status' ? 'Estado' : 'Prioridad'}` : ''}
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', groupBy !== 'status' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5')}>
+                            <Layers size={12} /> Agrupar{groupBy !== 'none' ? `: ${groupBy === 'status' ? 'Estado' : 'Prioridad'}` : ''}
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
-                        <Popover.Content sideOffset={6} align="start"
-                            className="z-[500] w-52 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5">
+                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5">
                             <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 pt-1 pb-2">Agrupar por</p>
                             {([['status','Estado'],['priority','Prioridad'],['none','Sin agrupación']] as const).map(([k, lbl]) => (
                                 <button key={k} onClick={() => { setGroupBy(k); setGroupOpen(false); }}
@@ -684,429 +503,105 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     </Popover.Portal>
                 </Popover.Root>
 
-                {/* ── Filter ── */}
+                {/* Filter */}
                 <Popover.Root open={filterOpen} onOpenChange={setFilterOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx(
-                            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
-                            activeFilters.length > 0 ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
-                        )}>
-                            <Filter size={12} />
-                            Filtrar{activeFilters.length > 0 ? ` (${activeFilters.length})` : ''}
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', activeFilters.length > 0 ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5')}>
+                            <Filter size={12} /> Filtrar{activeFilters.length > 0 ? ` (${activeFilters.length})` : ''}
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
-                        <Popover.Content sideOffset={6} align="start"
-                            className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Filtrar por Estado</p>
+                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Por Estado</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
-                                {STATUS_OPTIONS.filter((s,i,a) => a.findIndex(x => x.value === s.value) === i && s.value !== 'pending').map(s => {
+                                {STATUS_OPTIONS.map(s => {
                                     const active = activeFilters.some(f => f.field === 'status' && f.value === s.value);
-                                    return (
-                                        <button key={s.value}
-                                            onClick={() => setActiveFilters(prev => active
-                                                ? prev.filter(f => !(f.field==='status' && f.value===s.value))
-                                                : [...prev, { field: 'status', value: s.value, label: s.label }]
-                                            )}
-                                            className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all',
-                                                active ? `${s.bg} ${s.text} ${s.border} ring-2 ring-blue-500/30` : `${s.bg} ${s.text} ${s.border} opacity-60 hover:opacity-100`)}>
-                                            <div className={clsx('size-1.5 rounded-full', s.dot)} />{s.label}
-                                        </button>
-                                    );
+                                    return <button key={s.value} onClick={() => setActiveFilters(prev => active ? prev.filter(f => !(f.field==='status' && f.value===s.value)) : [...prev, { field: 'status', value: s.value, label: s.label }])}
+                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all', active ? `${s.bg} ${s.text} ${s.border} ring-2 ring-blue-500/30` : `${s.bg} ${s.text} ${s.border} opacity-60 hover:opacity-100`)}>
+                                        <div className={clsx('size-1.5 rounded-full', s.dot)} />{s.label}
+                                    </button>;
                                 })}
                             </div>
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5 border-t border-slate-100 dark:border-white/5">Filtrar por Prioridad</p>
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5 border-t border-slate-100 dark:border-white/5">Por Prioridad</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                                 {PRIORITY_OPTIONS.map(p => {
                                     const active = activeFilters.some(f => f.field === 'priority' && f.value === p.value);
-                                    return (
-                                        <button key={p.value}
-                                            onClick={() => setActiveFilters(prev => active
-                                                ? prev.filter(f => !(f.field==='priority' && f.value===p.value))
-                                                : [...prev, { field: 'priority', value: p.value, label: p.label }]
-                                            )}
-                                            className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all',
-                                                active ? 'bg-slate-100 dark:bg-white/10 border-slate-300 ring-2 ring-blue-500/30' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 opacity-60 hover:opacity-100',
-                                                p.color)}>
-                                            <FlagIcon fill={p.fill} size={11} />{p.label}
-                                        </button>
-                                    );
+                                    return <button key={p.value} onClick={() => setActiveFilters(prev => active ? prev.filter(f => !(f.field==='priority' && f.value===p.value)) : [...prev, { field: 'priority', value: p.value, label: p.label }])}
+                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10', active ? 'ring-2 ring-blue-500/30 opacity-100' : 'opacity-60 hover:opacity-100', p.color)}>
+                                        <FlagIcon fill={p.fill} size={11} />{p.label}
+                                    </button>;
                                 })}
                             </div>
-                            {activeFilters.length > 0 && (
-                                <button onClick={() => setActiveFilters([])}
-                                    className="w-full text-[11px] font-bold text-rose-500 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors border-t border-slate-100 dark:border-white/5 mt-1">
-                                    Limpiar filtros
-                                </button>
-                            )}
+                            {activeFilters.length > 0 && <button onClick={() => setActiveFilters([])} className="w-full text-[11px] font-bold text-rose-500 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors border-t border-slate-100 dark:border-white/5 mt-1">Limpiar filtros</button>}
                         </Popover.Content>
                     </Popover.Portal>
                 </Popover.Root>
-
-                {/* ── Sort ── */}
-                <Popover.Root open={sortOpen} onOpenChange={setSortOpen}>
-                    <Popover.Trigger asChild>
-                        <button className={clsx(
-                            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
-                            sortConfig.length > 0 ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
-                        )}>
-                            <SlidersHorizontal size={12} />
-                            Ordenar{sortConfig.length > 0 ? ` (${sortConfig.length})` : ''}
-                        </button>
-                    </Popover.Trigger>
-                    <Popover.Portal>
-                        <Popover.Content sideOffset={6} align="start"
-                            className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Columnas activas</p>
-                            {sortConfig.length === 0 && <p className="text-[11px] text-slate-500 px-2 pb-2">Ninguna</p>}
-                            {sortConfig.map((conf, idx) => {
-                                const lbl = conf.key === 'due_date' ? 'Fecha límite' : conf.key === 'title' ? 'Nombre' : conf.key === 'status' ? 'Estado' : 'Prioridad';
-                                return (
-                                    <div key={conf.key} className="flex justify-between items-center w-full px-2 py-1.5 mb-1 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group/sort">
-                                        <div className="flex items-center gap-2">
-                                            <div className="size-4 rounded-full bg-blue-100 dark:bg-blue-500/20 text-[9px] font-bold text-blue-600 flex items-center justify-center">{idx + 1}</div>
-                                            <span className="text-[12px] font-medium text-slate-700 dark:text-slate-200">{lbl}</span>
-                                        </div>
-                                        <div className="flex gap-1 items-center">
-                                            <button onClick={() => setSortConfig(prev => prev.map((c, i) => i === idx ? { ...c, dir: c.dir === 'asc' ? 'desc' : 'asc' } : c))} className="p-1 text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors" title="Cambiar dirección">
-                                                {conf.dir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-                                            </button>
-                                            <button onClick={() => setSortConfig(prev => prev.filter((_, i) => i !== idx))} className="p-1 text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors opacity-0 group-hover/sort:opacity-100" title="Quitar">
-                                                <X size={12} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                            <div className="border-t border-slate-100 dark:border-white/5 my-1.5" />
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Añadir ordenación</p>
-                            {([['title','Nombre'],['status','Estado'],['priority','Prioridad'],['due_date','Fecha límite']] as [SortKey, string][])
-                                .filter(([k]) => !sortConfig.some(s => s.key === k))
-                                .map(([k, lbl]) => (
-                                <button key={k} onClick={() => setSortConfig(prev => [...prev, { key: k, dir: 'asc' }])}
-                                    className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                    <Plus size={12} className="text-slate-400" />
-                                    <span className="text-[12px] font-medium text-slate-700 dark:text-slate-200 flex-1 text-left">{lbl}</span>
-                                </button>
-                            ))}
-                            {sortConfig.length > 0 && (
-                                <button onClick={() => setSortConfig([])}
-                                    className="w-full text-[11px] font-bold text-rose-500 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors mt-2 border-t border-slate-100 dark:border-white/5">
-                                    Limpiar todo
-                                </button>
-                            )}
-                        </Popover.Content>
-                    </Popover.Portal>
-                </Popover.Root>
-
-                {/* Active filter chips */}
-                {activeFilters.length > 0 && (
-                    <div className="flex items-center gap-1 ml-1 flex-wrap">
-                        {activeFilters.map((f, i) => (
-                            <span key={i} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-full text-[11px] font-semibold text-blue-600 dark:text-blue-400">
-                                {f.label}
-                                <button onClick={() => setActiveFilters(prev => prev.filter((_, j) => j !== i))}
-                                    className="size-4 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-full transition-colors">
-                                    <X size={9} />
-                                </button>
-                            </span>
-                        ))}
-                        <button onClick={() => setActiveFilters([])}
-                            className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors ml-0.5">
-                            Limpiar
-                        </button>
-                    </div>
-                )}
 
                 <div className="ml-auto flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold text-slate-400">
-                        {processed.length} fila{processed.length !== 1 ? 's' : ''}
-                    </span>
+                    {activeFilters.length > 0 && (
+                        <div className="flex gap-1">
+                            {activeFilters.map((f, i) => <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 text-[10px] font-semibold">{f.label}<button onClick={() => setActiveFilters(p => p.filter((_,j) => j !== i))}><X size={9} /></button></span>)}
+                        </div>
+                    )}
+                    <button onClick={() => onAddTask('todo')} className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
+                        <Plus size={13} /> Nueva tarea
+                    </button>
                 </div>
             </div>
 
-            {/* ── Bulk action bar ── */}
+            {/* Quick add row */}
             <AnimatePresence>
-                {totalSelected > 0 && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="flex items-center gap-3 px-4 py-2 bg-blue-600 text-white overflow-hidden">
-                        <span className="text-[12px] font-bold">{totalSelected} seleccionada{totalSelected > 1 ? 's' : ''}</span>
-                        <div className="flex items-center gap-1 ml-2">
-                            <button className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-bold transition-colors">
-                                <Trash2 size={12} /> Eliminar
-                            </button>
-                            <button className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-bold transition-colors">
-                                <Flag size={12} /> Prioridad
-                            </button>
-                        </div>
-                        <button onClick={() => setSelected(new Set())} className="ml-auto p-1 hover:bg-white/10 rounded transition-colors">
-                            <X size={14} />
-                        </button>
+                {quickAddGroup && (
+                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                        className="shrink-0 flex items-center gap-3 px-4 py-2.5 bg-blue-50/50 dark:bg-blue-500/5 border-b border-slate-100 dark:border-white/5">
+                        <Circle size={15} className="text-slate-300 shrink-0" />
+                        <input
+                            autoFocus
+                            value={quickAddTitle}
+                            onChange={e => setQuickAddTitle(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter' && quickAddTitle.trim()) handleQuickAdd(quickAddGroup, quickAddTitle.trim());
+                                if (e.key === 'Escape') { setQuickAddGroup(null); setQuickAddTitle(''); }
+                            }}
+                            placeholder="Nombre de la tarea... (Enter para crear)"
+                            className="flex-1 text-[13px] font-medium text-slate-800 dark:text-slate-200 bg-transparent outline-none placeholder:text-slate-400"
+                        />
+                        <button onClick={() => quickAddTitle.trim() && handleQuickAdd(quickAddGroup, quickAddTitle.trim())} className="px-3 py-1 bg-blue-600 text-white text-[11px] font-bold rounded-lg hover:bg-blue-700 transition-colors shrink-0">Crear</button>
+                        <button onClick={() => { setQuickAddGroup(null); setQuickAddTitle(''); }} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X size={13} /></button>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* ── TABLE ── */}
-            <div className="flex-1 overflow-auto">
-                <table className="w-full border-collapse table-fixed min-w-[780px]">
-                    {/* HEADER */}
-                    <thead className="sticky top-0 z-20 bg-slate-50 dark:bg-[#18191b] border-b border-slate-200 dark:border-white/[0.06]">
-                        <tr>
-                            <th className="w-10 px-3 py-2.5 border-r border-slate-100 dark:border-white/5">
-                                <div className="size-4 rounded border-2 border-slate-300 dark:border-white/20 cursor-pointer
-                                    flex items-center justify-center hover:border-blue-500 transition-colors"
-                                    onClick={() => {
-                                        const allIds = processed.map(t => Number(t.id));
-                                        const allSelected = allIds.every(id => selected.has(id));
-                                        setSelected(allSelected ? new Set() : new Set(allIds));
-                                    }}>
-                                    {selected.size > 0 && selected.size === processed.length &&
-                                        <Check size={10} className="text-blue-600" />}
-                                </div>
-                            </th>
-                            <th className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5 select-none" style={{ width: '380px' }}>
-                                <button onClick={(e) => handleSortToggle('title', e)}
-                                    className="flex items-center gap-1.5 group/th w-full">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 group-hover/th:text-slate-700 dark:group-hover/th:text-slate-200 transition-colors">
-                                        Nombre de la tarea
-                                    </span>
-                                    <SortIcon k="title" />
-                                </button>
-                            </th>
-                            {visibleCols.has('status')   && <ColHeader label="Estado"       k="status"   width="160px" />}
-                            {visibleCols.has('priority') && <ColHeader label="Prioridad"    k="priority" width="140px" />}
-                            {visibleCols.has('assignee') && (
-                                <th className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5" style={{ width: '160px' }}>
-                                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Asignado</span>
-                                </th>
-                            )}
-                            {visibleCols.has('due_date') && <ColHeader label="Fecha límite" k="due_date" width="150px" />}
-                            {visibleCols.has('comments') && (
-                                <th className="w-10 px-3 py-2.5 text-left">
-                                    <MessageSquare size={13} className="text-slate-300" />
-                                </th>
-                            )}
-                        </tr>
-                    </thead>
-
-                    <tbody className="divide-y divide-slate-100 dark:divide-white/[0.03]">
-                        {Object.entries(groups).map(([groupName, groupTasks]) => {
-                            // ── Dynamic group header depending on groupBy ──
-                            const st = groupBy === 'priority'
-                                ? (() => {
-                                    const p = PRIORITY_OPTIONS.find(p => p.value === groupName);
-                                    return p
-                                        ? { label: p.label, bg: 'bg-slate-100 dark:bg-white/5', text: p.color, border: 'border-slate-200 dark:border-white/10', dot: 'bg-slate-400' }
-                                        : getStatus(groupName);
-                                })()
-                                : getStatus(groupName);
-                            const isCollapsed = collapsedGroups[groupName];
-                            const groupIds = groupTasks.map(t => Number(t.id));
-                            const allGroupSelected = groupIds.length > 0 && groupIds.every(id => selected.has(id));
-
-
-                            return (
-                                <React.Fragment key={groupName}>
-                                    {/* Group header */}
-                                    <tr className="bg-slate-50/80 dark:bg-white/[0.01] sticky top-[41px] z-10">
-                                        <td colSpan={7} className="px-3 py-1.5">
-                                            <div className="flex items-center gap-2">
-                                                {/* Group checkbox */}
-                                                <div className={clsx(
-                                                    'size-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors',
-                                                    allGroupSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-300 dark:border-white/20 hover:border-blue-500'
-                                                )} onClick={() => toggleGroupSelect(groupIds)}>
-                                                    {allGroupSelected && <Check size={10} className="text-white" />}
-                                                </div>
-                                                {/* Collapse toggle */}
-                                                <button onClick={() => setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }))}
-                                                    className="flex items-center gap-2 px-2 py-1 hover:bg-slate-100/70 dark:hover:bg-white/5 rounded-lg transition-all">
-                                                    <motion.div animate={{ rotate: isCollapsed ? -90 : 0 }} transition={{ duration: 0.15 }}>
-                                                        <ChevronDown size={13} className="text-slate-400" />
-                                                    </motion.div>
-                                                    <span className={clsx(
-                                                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-bold',
-                                                        st.bg, st.text, st.border
-                                                    )}>
-                                                        <div className={clsx('size-1.5 rounded-full', st.dot)} />
-                                                        {st.label}
-                                                    </span>
-                                                    <span className="text-[10px] font-bold text-slate-400 bg-slate-200/70 dark:bg-white/10 px-1.5 rounded-md">
-                                                        {groupTasks.length}
-                                                    </span>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-
-                                    {/* Rows */}
-                                    <AnimatePresence initial={false}>
-                                        {!isCollapsed && groupTasks.map((task, idx) => {
-                                            const t    = resolveTask(task);
-                                            const isChecked = selected.has(Number(t.id));
-                                            return (
-                                                <motion.tr key={t.id}
-                                                    initial={{ opacity: 0 }}
-                                                    animate={{ opacity: 1 }}
-                                                    exit={{ opacity: 0, height: 0 }}
-                                                    transition={{ duration: 0.1, delay: idx * 0.01 }}
-                                                    className={clsx(
-                                                        'group hover:bg-blue-50/40 dark:hover:bg-white/[0.02] transition-colors cursor-pointer',
-                                                        isChecked && 'bg-blue-50/40 dark:bg-blue-500/5'
-                                                    )}
-                                                    onClick={() => onOpenTask(t)}>
-
-                                                    {/* Checkbox */}
-                                                    <td className="w-10 px-3 py-2.5 border-r border-slate-100 dark:border-white/5" onClick={e => e.stopPropagation()}>
-                                                        <div className={clsx(
-                                                            'size-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all',
-                                                            isChecked ? 'bg-blue-500 border-blue-500' : 'border-slate-200 dark:border-white/10 hover:border-blue-400 opacity-0 group-hover:opacity-100'
-                                                        )} onClick={() => setSelected(prev => {
-                                                            const next = new Set(prev);
-                                                            if (next.has(Number(t.id))) next.delete(Number(t.id)); else next.add(Number(t.id));
-                                                            return next;
-                                                        })}>
-                                                            {isChecked && <Check size={10} className="text-white" />}
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Title */}
-                                                    <td className="px-4 py-2.5 border-r border-slate-100 dark:border-white/5 overflow-hidden" style={{ width: '380px' }}>
-                                                        <div className="flex items-center gap-2.5">
-                                                            <div onClick={e => { e.stopPropagation(); applyChange(Number(t.id), 'status', t.status === 'completed' ? 'todo' : 'completed'); }}>
-                                                                {t.status === 'completed'
-                                                                    ? <CheckCircle2 size={15} className="text-emerald-500 shrink-0 hover:text-emerald-400 transition-colors" />
-                                                                    : <Circle size={15} className="text-slate-300 dark:text-white/20 shrink-0 group-hover:text-blue-400 transition-colors" />}
-                                                            </div>
-                                                            <span className={clsx(
-                                                                'text-[13px] font-medium truncate',
-                                                                t.status === 'completed'
-                                                                    ? 'text-slate-400 line-through'
-                                                                    : 'text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
-                                                            )}>
-                                                                {t.title}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Status */}
-                                                    {visibleCols.has('status') && (
-                                                        <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '160px' }} onClick={e => e.stopPropagation()}>
-                                                            <InlineStatusCell value={t.status ?? 'todo'} onChange={v => applyChange(Number(t.id), 'status', v)} />
-                                                        </td>
-                                                    )}
-
-                                                    {/* Priority */}
-                                                    {visibleCols.has('priority') && (
-                                                        <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '140px' }} onClick={e => e.stopPropagation()}>
-                                                            <InlinePriorityCell value={t.priority ?? 'normal'} onChange={v => applyChange(Number(t.id), 'priority', v)} />
-                                                        </td>
-                                                    )}
-
-                                                    {/* Assignee */}
-                                                    {visibleCols.has('assignee') && (
-                                                        <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '160px' }} onClick={e => e.stopPropagation()}>
-                                                            <InlineUserCell
-                                                                value={t.assignee_id}
-                                                                token={token}
-                                                                onChange={(userId) => applyChange(Number(t.id), 'assignee_id', userId)}
-                                                            />
-                                                        </td>
-                                                    )}
-
-                                                    {/* Due date */}
-                                                    {visibleCols.has('due_date') && (
-                                                        <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '150px' }} onClick={e => e.stopPropagation()}>
-                                                            <InlineDateCell
-                                                                value={t.due_date}
-                                                                onChange={v => applyChange(Number(t.id), 'due_date', v)}
-                                                            />
-                                                        </td>
-                                                    )}
-
-                                                    {/* Comments */}
-                                                    {visibleCols.has('comments') && (
-                                                        <td className="w-10 px-3 py-2.5" onClick={e => e.stopPropagation()}>
-                                                            <button onClick={() => openLayer('RIGHT')}
-                                                                className="p-1.5 rounded-lg text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all opacity-0 group-hover:opacity-100">
-                                                                <MessageSquare size={13} />
-                                                            </button>
-                                                        </td>
-                                                    )}
-                                                </motion.tr>
-                                            );
-                                        })}
-                                    </AnimatePresence>
-
-                                    {/* Quick-add row */}
-                                    <AnimatePresence>
-                                        {quickAddGroup === groupName && (
-                                            <QuickAddRow
-                                                onConfirm={(title) => handleQuickAdd(groupName, title)}
-                                                onCancel={() => setQuickAddGroup(null)}
-                                            />
-                                        )}
-                                    </AnimatePresence>
-
-                                    {/* Add row per group */}
-                                    {!isCollapsed && (
-                                        <tr className="group/add">
-                                            <td colSpan={7} className="px-3 py-0.5">
-                                                <button onClick={() => setQuickAddGroup(groupName)}
-                                                    className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 hover:text-blue-600 dark:text-white/10 dark:hover:text-blue-400 py-1.5 transition-all opacity-0 group-hover/add:opacity-100">
-                                                    <Plus size={12} />
-                                                    Agregar tarea
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </React.Fragment>
-                            );
-                        })}
-
-                        {/* Empty state */}
-                        {processed.length === 0 && (
-                            <tr>
-                                <td colSpan={7} className="py-1.5 text-center">
-                                    <div className="flex flex-col items-center gap-3">
-                                        <div className="size-7 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center">
-                                            <CheckCircle2 size={24} className="text-slate-200" />
-                                        </div>
-                                        <p className="text-slate-400 text-sm font-medium">Sin tareas en este proyecto</p>
-                                        <button onClick={() => onAddTask('todo')}
-                                            className="text-[12px] font-bold text-blue-500 hover:underline">
-                                            Crear la primera tarea
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+            {/* Grid */}
+            <div className="flex-1 min-h-0">
+                {tasks.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
+                        <Circle size={28} className="text-slate-200 dark:text-white/10" />
+                        <p className="text-sm font-medium">Sin tareas en este proyecto</p>
+                        <button onClick={() => onAddTask('todo')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
+                            <Plus size={13} /> Crear primera tarea
+                        </button>
+                    </div>
+                ) : (
+                    <AgGridReact
+                        ref={gridRef}
+                        theme={isDark ? darkTheme : lightTheme}
+                        rowData={rowData as any[]}
+                        columnDefs={colDefs}
+                        defaultColDef={{ resizable: true, sortable: false, filter: false, editable: false, suppressMovable: false }}
+                        context={gridContext}
+                        getRowId={getRowId}
+                        getRowHeight={getRowHeight}
+                        isFullWidthRow={groupBy !== 'none' ? isFullWidthRow : undefined}
+                        fullWidthCellRenderer={groupBy !== 'none' ? fullWidthCellRenderer : undefined}
+                        onRowClicked={(e) => { if (!e.data?.__isGroup) onOpenTask(e.data); }}
+                        rowStyle={{ cursor: 'pointer' }}
+                        suppressCellFocus
+                        animateRows
+                        enableCellTextSelection
+                    />
+                )}
             </div>
-
-            {/* ── Footer ── */}
-            <footer className="px-4 py-2 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between bg-slate-50/50 dark:bg-black/10">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => setQuickAddGroup('todo')}
-                        className="flex items-center gap-1.5 text-[12px] font-bold text-slate-400 hover:text-blue-600 transition-colors">
-                        <Plus size={13} /> Agregar tarea
-                        <span className="ml-1 text-slate-300 font-normal text-[10px]">Shift+Enter</span>
-                    </button>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                    {processed.length} tarea{processed.length !== 1 ? 's' : ''}
-                    {sortConfig.length > 0 && ` · ord. por ${sortConfig.map(s => {
-                        if (s.key === 'due_date') return 'Fecha';
-                        if (s.key === 'title') return 'Nombre';
-                        if (s.key === 'status') return 'Estado';
-                        return 'Prioridad';
-                    }).join(', ')}`}
-                </span>
-            </footer>
         </div>
     );
 }

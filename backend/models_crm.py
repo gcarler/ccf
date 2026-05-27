@@ -341,6 +341,25 @@ class Member(Base):
     )
     colombian_department = relationship("ColombianDepartment", foreign_keys=[colombian_department_id])
 
+    # --- Origen y tags (refactor evangelismo) ---
+    tags = Column(JSON, nullable=True, default=list)
+    origen_estrategia_id = Column(
+        Integer,
+        ForeignKey("evangelism_strategies.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    origen_grupo_id = Column(
+        Integer,
+        ForeignKey("glory_houses.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    origen_fecha = Column(DateTime, nullable=True)
+
+    origen_estrategia = relationship("EvangelismStrategy", foreign_keys=[origen_estrategia_id])
+    origen_grupo = relationship("GloryHouse", foreign_keys=[origen_grupo_id])
+
 
 class Position(Base):
     __tablename__ = "positions"
@@ -799,6 +818,12 @@ class CommunityBoardCard(Base):
 class EvangelismStrategy(Base):
     __tablename__ = "evangelism_strategies"
     id = Column(Integer, primary_key=True, index=True)
+
+    # --- Nuevos campos (refactor evangelismo) ---
+    codigo = Column(String(20), unique=True, nullable=True, index=True)  # EVG-XXX
+    clase_raiz = Column(String(50), nullable=True, index=True)  # ClaseEstrategiaEnum values
+    activa = Column(Boolean, default=True, index=True)
+
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
 
@@ -823,3 +848,11 @@ class EvangelismStrategy(Base):
     status = Column(String(50), default="active")
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, onupdate=_utcnow)
+
+    roles_personalizados = relationship(
+        "RolPersonalizadoEstrategia",
+        backref="estrategia",
+        cascade="all, delete-orphan",
+        foreign_keys="RolPersonalizadoEstrategia.estrategia_id",
+        primaryjoin="EvangelismStrategy.codigo == RolPersonalizadoEstrategia.estrategia_id",
+    )

@@ -271,9 +271,9 @@ class CmsPageView(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
 
 
-class AirTableView(Base):
-    """Saved AirTable views with schema, filters, grouping, and conditional format."""
-    __tablename__ = "airtable_views"
+class SavedView(Base):
+    """Saved table views with schema, filters, grouping, and conditional format."""
+    __tablename__ = "saved_views"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(200), nullable=False)

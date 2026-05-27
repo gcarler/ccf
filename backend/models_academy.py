@@ -280,6 +280,16 @@ class GloryHouseMember(Base):
     )
     role = Column(String(50), default="asistente")
 
+    # --- Nuevos campos (refactor evangelismo) ---
+    rol_personalizado_id = Column(
+        Integer,
+        ForeignKey("roles_personalizados_estrategia.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    fecha_ingreso = Column(DateTime, default=_utcnow)
+    activo = Column(Boolean, default=True, index=True)
+
     glory_house = relationship("GloryHouse", back_populates="base_attendees")
     member = relationship("Member")
 
@@ -371,8 +381,18 @@ class GloryHouseAttendance(Base):
     status = Column(String(20), default="present")  # present | absent | first_time
     notes = Column(Text, nullable=True)
 
+    # --- Nuevos campos (refactor evangelismo) ---
+    estado = Column(String(20), default="presente", index=True)  # EstadoAsistenciaEnum values
+    es_primera_vez = Column(Boolean, default=False, index=True)
+    requiere_seguimiento = Column(Boolean, default=False, index=True)
+
     session = relationship("GloryHouseSession")
     member = relationship("Member")
+    seguimientos = relationship(
+        "RegistroSeguimiento",
+        back_populates="asistencia",
+        cascade="all, delete-orphan",
+    )
 
 
 class Enrollment(Base):
