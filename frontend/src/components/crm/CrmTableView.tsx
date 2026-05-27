@@ -84,6 +84,7 @@ export default function CrmTableView({ members, search, onRowClick, isList = fal
                 onRowClicked={(e) => onRowClick(e.data)}
                 rowStyle={{ cursor: 'pointer' }}
                 suppressCellFocus
+                domLayout="autoHeight"
             />
         </div>
     );

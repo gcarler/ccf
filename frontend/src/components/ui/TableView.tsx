@@ -461,9 +461,8 @@ export default function TableView<T extends Record<string, any>>({
             defaultColDef={{ ...(defaultColDef as ColDef<any>), filter: false }}
             rowHeight={rowHeight}
             onSortChanged={() => {
-              // On sort change reset the datasource so AG Grid re-requests from row 0
-              const api = gridRef.current?.api;
-              if (api && datasource) api.setGridOption("datasource", datasource);
+              // Refresh cache to re-request from row 0 with new sort
+              gridRef.current?.api?.refreshInfiniteCache();
             }}
             animateRows={false}
             suppressMovableColumns={false}

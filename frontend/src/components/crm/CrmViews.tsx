@@ -184,7 +184,7 @@ export function CrmTableView({ members, onSelect, isList = false }: TableProps) 
     }, [isList]);
 
     return (
-        <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm animate-fade-in" style={{ height: Math.min(Math.max(members.length * 44 + 40, 200), 700) }}>
+        <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm animate-fade-in">
             <AgGridReact
                 ref={gridRef}
                 theme={isDark ? _darkTheme : _lightTheme}
@@ -195,6 +195,7 @@ export function CrmTableView({ members, onSelect, isList = false }: TableProps) 
                 onRowClicked={(e) => onSelect?.(e.data)}
                 rowStyle={{ cursor: 'pointer' }}
                 suppressCellFocus
+                domLayout="autoHeight"
             />
         </div>
     );
