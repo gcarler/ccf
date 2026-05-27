@@ -74,6 +74,7 @@ async def lifespan(_: FastAPI):
     for attempt in range(1, 6):
         try:
             from backend import models, models_cms, models_crm, models_projects
+            import backend.models_agents  # ensure agent_task/insight tables registered
             from backend.core.database import Base, engine
 
             Base.metadata.create_all(bind=engine)

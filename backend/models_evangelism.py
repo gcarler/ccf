@@ -11,9 +11,9 @@ import enum
 
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Integer,
-    String, Text,
+    String, Text, JSON,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from backend.core.database import Base
@@ -83,7 +83,7 @@ class LogAuditoria(Base):
     tabla_afectada = Column(String(100), nullable=False)
     registro_id = Column(String(100), nullable=False)
     accion = Column(String(20), nullable=False)
-    detalles_cambio = Column(JSONB, nullable=True)
+    detalles_cambio = Column(JSON, nullable=True)
     usuario_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     fecha_accion = Column(DateTime, default=_utcnow)
 

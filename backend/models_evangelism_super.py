@@ -17,8 +17,8 @@ from __future__ import annotations
 import enum
 
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Integer,
-                        String)
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+                        String, JSON)
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from backend.core.database import Base
@@ -107,7 +107,7 @@ class LogAuditoria(Base):
     accion = Column(String(20), nullable=False)  # CREATE, UPDATE, DELETE
 
     # JSONB permite guardar el "antes" y "después" para deshacer cambios
-    detalles_cambio = Column(JSONB, nullable=True)
+    detalles_cambio = Column(JSON, nullable=True)
 
     usuario_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Quien ejecutó
     fecha_accion = Column(DateTime, default=_utcnow, index=True)
