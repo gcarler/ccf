@@ -19,6 +19,7 @@ from backend.crud.crm import (create_evangelism_strategy,
                               update_evangelism_strategy)
 from backend.schemas.crm import (EvangelismStrategy, EvangelismStrategyCreate,
                                  EvangelismStrategyUpdate)
+from backend.mesh_websockets import manager
 
 router = APIRouter()
 router.include_router(events_router)
