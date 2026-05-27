@@ -1,3 +1,4 @@
+# ruff: noqa: F405
 from __future__ import annotations
 
 import uuid
@@ -5,7 +6,7 @@ import uuid
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import func as _func
 
-from backend.models_shared import *
+from backend.models_shared import *  # noqa: F403
 from backend.models_shared import _utcnow
 
 

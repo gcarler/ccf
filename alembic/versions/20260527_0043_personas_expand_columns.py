@@ -348,11 +348,9 @@ def _create_persona_engagement_view() -> None:
     if types_match:
         join_clause = "LEFT JOIN asistencias a ON a.persona_id = p.id"
         count_asist = "COUNT(DISTINCT a.id)"
-        extra_group = ""
     else:
         join_clause = ""
         count_asist = "0"
-        extra_group = ""
 
     op.execute(sa.text(f"""
         CREATE MATERIALIZED VIEW mv_persona_engagement AS
