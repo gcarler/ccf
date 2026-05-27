@@ -45,9 +45,9 @@ def delete_community_card(
 
 
 @router.get("/glory-houses", response_model=List[dict])
-def list_community_glory_houses(db: Session = Depends(get_db)):
+def list_community_cell_groups(db: Session = Depends(get_db)):
     """Lista casas de gloria para la vista comunitaria."""
-    houses = db.query(models.GloryHouse).all()
+    houses = db.query(models.CellGroup).all()
     return [
         {
             "id": h.id,
@@ -61,13 +61,13 @@ def list_community_glory_houses(db: Session = Depends(get_db)):
 
 
 @router.post("/glory-houses", response_model=dict)
-def create_community_glory_house(
+def create_community_cell_group(
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("community", "edit")),
 ):
     """Crea una nueva casa de gloria desde la vista comunitaria."""
-    house = models.GloryHouse(
+    house = models.CellGroup(
         name=payload.get("name", "Nueva Casa"),
         leader_name=payload.get("leader_name") or current_user.username,
         address=payload.get("address"),

@@ -269,7 +269,7 @@ def public_course_enroll(
 
     # Task 3.4: Auto-create follow-up task for CRM team
     if member:
-        followup_task = models.ConsolidationFollowUpTask(
+        followup_task = models.ConsolidationTask(
             case_id=case.id,
             title=f"Seguimiento: nuevo estudiante en {course.title}",
             description=f"Contactar a {member.first_name} {member.last_name} para dar la bienvenida al curso '{course.title}' y ofrecer apoyo pastoral.",

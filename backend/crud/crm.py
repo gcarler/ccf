@@ -533,11 +533,11 @@ def create_prayer_request(
 # ── Glory Houses ───────────────────────────────────────
 
 
-def get_glory_houses(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.GloryHouse).offset(skip).limit(limit).all()
+def get_cell_groups(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.CellGroup).offset(skip).limit(limit).all()
 
 
-def create_glory_house(db: Session, payload: schemas.GloryHouseCreate):
+def create_cell_group(db: Session, payload: schemas.CellGroupCreate):
     data = payload.model_dump(exclude={"base_attendee_ids"})
     if not str(data.get("code") or "").strip():
         base = (
@@ -551,14 +551,14 @@ def create_glory_house(db: Session, payload: schemas.GloryHouseCreate):
     if not str(data.get("name") or "").strip():
         fallback_name = str(data.get("address") or data["code"]).strip()
         data["name"] = f"Faro pendiente - {fallback_name}"
-    db_obj = models.GloryHouse(**data)
+    db_obj = models.CellGroup(**data)
     db.add(db_obj)
 
     if payload.base_attendee_ids:
         db.flush()  # Get the ID without committing
         for persona_id in payload.base_attendee_ids:
-            attendee = models.GloryHouseMember(
-                glory_house_id=db_obj.id, persona_id=persona_id, role="asistente"
+            attendee = models.CellGroupMember(
+                cell_group_id=db_obj.id, persona_id=persona_id, role="asistente"
             )
             db.add(attendee)
 
@@ -567,8 +567,8 @@ def create_glory_house(db: Session, payload: schemas.GloryHouseCreate):
     return db_obj
 
 
-def update_glory_house(db: Session, house_id: int, payload: schemas.GloryHouseUpdate):
-    house = db.query(models.GloryHouse).filter(models.GloryHouse.id == house_id).first()
+def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpdate):
+    house = db.query(models.CellGroup).filter(models.CellGroup.id == house_id).first()
     if not house:
         return None
 
@@ -583,28 +583,28 @@ def update_glory_house(db: Session, house_id: int, payload: schemas.GloryHouseUp
 
     members_updated = False
     if payload.base_attendees_with_roles is not None:
-        db.query(models.GloryHouseMember).filter(
-            models.GloryHouseMember.glory_house_id == house_id
+        db.query(models.CellGroupMember).filter(
+            models.CellGroupMember.cell_group_id == house_id
         ).delete()
         for item in payload.base_attendees_with_roles:
-            db.add(models.GloryHouseMember(
-                glory_house_id=house_id, persona_id=item.persona_id, role=item.role
+            db.add(models.CellGroupMember(
+                cell_group_id=house_id, persona_id=item.persona_id, role=item.role
             ))
         members_updated = True
     elif payload.base_attendee_ids is not None:
-        db.query(models.GloryHouseMember).filter(
-            models.GloryHouseMember.glory_house_id == house_id
+        db.query(models.CellGroupMember).filter(
+            models.CellGroupMember.cell_group_id == house_id
         ).delete()
         for persona_id in payload.base_attendee_ids:
-            db.add(models.GloryHouseMember(
-                glory_house_id=house_id, persona_id=persona_id, role="miembro"
+            db.add(models.CellGroupMember(
+                cell_group_id=house_id, persona_id=persona_id, role="miembro"
             ))
         members_updated = True
 
     db.flush()
     if members_updated:
-        house.members_count = db.query(models.GloryHouseMember).filter(
-            models.GloryHouseMember.glory_house_id == house_id
+        house.members_count = db.query(models.CellGroupMember).filter(
+            models.CellGroupMember.cell_group_id == house_id
         ).count()
 
     db.commit()
@@ -1233,12 +1233,12 @@ def delete_prayer_request(db: Session, request_id: int) -> bool:
 # ── Glory Houses ───────────────────────────────────────
 
 
-def get_glory_house(db: Session, house_id: int) -> Optional[models.GloryHouse]:
-    return db.query(models.GloryHouse).filter(models.GloryHouse.id == house_id).first()
+def get_cell_group(db: Session, house_id: int) -> Optional[models.CellGroup]:
+    return db.query(models.CellGroup).filter(models.CellGroup.id == house_id).first()
 
 
-def delete_glory_house(db: Session, house_id: int) -> bool:
-    row = db.query(models.GloryHouse).filter(models.GloryHouse.id == house_id).first()
+def delete_cell_group(db: Session, house_id: int) -> bool:
+    row = db.query(models.CellGroup).filter(models.CellGroup.id == house_id).first()
     if not row:
         return False
     db.delete(row)

@@ -81,7 +81,7 @@ def update_consolidation_case(
 
 @router.post("/consolidation/cases/{case_id}/assignments", response_model=dict)
 def create_consolidation_assignment(
-    case_id: int,
+    case_id: str,
     payload: schemas.ConsolidationAssignmentCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -96,16 +96,16 @@ def create_consolidation_assignment(
     assignment_data = payload.model_dump(exclude={"case_id"})
     row = models.ConsolidationAssignment(**assignment_data, case_id=case_id)
     db.add(row)
-    case.assigned_pastor_id = payload.assigned_by_member_id
-    case.assigned_leader_id = payload.assigned_to_member_id
+    case.assigned_pastor_id = payload.assigned_by_id
+    case.assigned_leader_id = payload.assigned_to_id
     case.updated_at = utc_now()
     db.commit()
     db.refresh(row)
     return {
         "id": row.id,
-        "case_id": row.case_id,
-        "assigned_by_member_id": row.assigned_by_member_id,
-        "assigned_to_member_id": row.assigned_to_member_id,
+        "case_id": str(row.case_id),
+        "assigned_by_id": str(row.assigned_by_id),
+        "assigned_to_id": str(row.assigned_to_id),
         "status": row.status,
         "priority": row.priority,
         "created_at": row.created_at.isoformat() if row.created_at else None,
@@ -114,7 +114,7 @@ def create_consolidation_assignment(
 
 @router.post("/consolidation/cases/{case_id}/interactions", response_model=dict)
 def create_consolidation_interaction(
-    case_id: int,
+    case_id: str,
     payload: schemas.ConsolidationInteractionCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -134,8 +134,8 @@ def create_consolidation_interaction(
     db.refresh(row)
     return {
         "id": row.id,
-        "case_id": row.case_id,
-        "performed_by_member_id": row.performed_by_member_id,
+        "case_id": str(row.case_id),
+        "performed_by_id": str(row.performed_by_id),
         "interaction_type": row.interaction_type,
         "interaction_date": (
             row.interaction_date.isoformat() if row.interaction_date else None
@@ -147,8 +147,8 @@ def create_consolidation_interaction(
 
 @router.post("/consolidation/cases/{case_id}/tasks", response_model=dict)
 def create_consolidation_task(
-    case_id: int,
-    payload: schemas.ConsolidationFollowUpTaskCreate,
+    case_id: str,
+    payload: schemas.ConsolidationTaskCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -160,13 +160,13 @@ def create_consolidation_task(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     task_data = payload.model_dump(exclude={"case_id"})
-    row = models.ConsolidationFollowUpTask(**task_data, case_id=case_id)
+    row = models.ConsolidationTask(**task_data, case_id=case_id)
     db.add(row)
     db.commit()
     db.refresh(row)
     return {
         "id": row.id,
-        "case_id": row.case_id,
+        "case_id": str(row.case_id),
         "assignment_id": row.assignment_id,
         "title": row.title,
         "status": row.status,
@@ -199,7 +199,7 @@ def list_consolidation_cases(
     if status:
         q = q.filter(models.ConsolidationCase.status == status)
     if member_id:
-        q = q.filter(models.ConsolidationCase.persona_id == member_id)
+        q = q.filter(models.ConsolidationCase.persona_id == str(member_id))
 
     total = q.count()
     cases = (
@@ -254,13 +254,13 @@ def list_consolidation_tasks(
         raise HTTPException(status_code=404, detail="Case not found")
 
     q = (
-        db.query(models.ConsolidationFollowUpTask)
-        .filter(models.ConsolidationFollowUpTask.case_id == case_id)
+        db.query(models.ConsolidationTask)
+        .filter(models.ConsolidationTask.case_id == case_id)
     )
     if status_filter:
-        q = q.filter(models.ConsolidationFollowUpTask.status == status_filter)
+        q = q.filter(models.ConsolidationTask.status == status_filter)
 
-    tasks = q.order_by(models.ConsolidationFollowUpTask.created_at.desc()).all()
+    tasks = q.order_by(models.ConsolidationTask.created_at.desc()).all()
     return [
         {
             "id": t.id,
@@ -287,10 +287,10 @@ def update_consolidation_task(
 ):
     """Actualiza una tarea de seguimiento (ej. marcar como completada)."""
     task = (
-        db.query(models.ConsolidationFollowUpTask)
+        db.query(models.ConsolidationTask)
         .filter(
-            models.ConsolidationFollowUpTask.id == task_id,
-            models.ConsolidationFollowUpTask.case_id == case_id,
+            models.ConsolidationTask.id == task_id,
+            models.ConsolidationTask.case_id == case_id,
         )
         .first()
     )
@@ -958,147 +958,146 @@ def get_counseling_detail(
     }
 
 
-@router.get("/glory-houses/{house_id}", response_model=dict)
-def get_glory_house_detail(
-    house_id: int,
+@router.get("/grupos/{grupo_id}", response_model=dict)
+def get_grupo_detail(
+    grupo_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    house = db.query(models.GloryHouse).filter(models.GloryHouse.id == house_id).first()
-    if not house:
-        raise HTTPException(status_code=404, detail="Glory house not found")
+    grupo = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
+    if not grupo:
+        raise HTTPException(status_code=404, detail="Grupo no encontrado")
     return {
-        "id": house.id,
-        "code": house.code,
-        "name": house.name,
-        "zone": house.zone,
-        "address": house.address,
-        "leader_id": house.leader_id,
-        "assistant_id": house.assistant_id,
-        "host_id": house.host_id,
-        "day_of_week": house.day_of_week,
-        "start_time": house.start_time,
-        "end_time": house.end_time,
-        "leader_name": house.leader_name,
-        "members_count": house.members_count,
-        "capacity": house.capacity,
-        "status": str(house.status).lower(),
-        "base_attendee_ids": [row.persona_id for row in (house.base_attendees or [])],
-        "base_attendees": [
+        "id": grupo.id,
+        "code": grupo.codigo,
+        "name": grupo.nombre,
+        "zone": grupo.ubicacion,
+        "address": grupo.direccion,
+        "lider_id": grupo.lider_persona_id,
+        "asistente_id": grupo.asistente_persona_id,
+        "anfitrion_id": grupo.anfitrion_persona_id,
+        "day_of_week": grupo.dia_reunion,
+        "start_time": grupo.hora_reunion,
+        "end_time": None,
+        "leader_name": None,
+        "capacity": grupo.capacidad,
+        "status": "active" if grupo.activo else "inactive",
+        "participante_ids": [row.persona_id for row in (grupo.participantes or [])],
+        "participantes": [
             {
-                "member_id": row.persona_id,
-                "role": row.role,
+                "persona_id": row.persona_id,
+                "role": row.rol_base,
             }
-            for row in (house.base_attendees or [])
+            for row in (grupo.participantes or [])
         ],
     }
 
 
-@router.get("/glory-houses", response_model=List[dict])
-def list_glory_houses(
+@router.get("/grupos", response_model=List[dict])
+def list_grupos(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    houses = db.query(models.GloryHouse).order_by(models.GloryHouse.name.asc()).all()
+    grupos = db.query(models.GrupoEvangelismo).order_by(models.GrupoEvangelismo.nombre.asc()).all()
     return [
         {
-            "id": house.id,
-            "code": house.code,
-            "name": house.name,
-            "zone": house.zone,
-            "address": house.address,
-            "leader_name": house.leader_name,
-            "members_count": house.members_count,
-            "capacity": house.capacity,
-            "status": str(house.status).lower() if house.status else "active",
+            "id": g.id,
+            "code": g.codigo,
+            "name": g.nombre,
+            "zone": g.ubicacion,
+            "address": g.direccion,
+            "leader_name": None,
+            "capacity": g.capacidad,
+            "status": "active" if g.activo else "inactive",
         }
-        for house in houses
+        for g in grupos
     ]
 
 
-@router.put("/glory-houses/{house_id}", response_model=dict)
-def update_glory_house(
-    house_id: int,
+@router.put("/grupos/{grupo_id}", response_model=dict)
+def update_grupo(
+    grupo_id: int,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    house = db.query(models.GloryHouse).filter(models.GloryHouse.id == house_id).first()
-    if not house:
-        raise HTTPException(status_code=404, detail="Glory house not found")
+    grupo = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
+    if not grupo:
+        raise HTTPException(status_code=404, detail="Grupo no encontrado")
 
-    editable = [
-        "code",
-        "name",
-        "zone",
-        "address",
-        "leader_id",
-        "assistant_id",
-        "host_id",
-        "capacity",
-        "day_of_week",
-        "start_time",
-        "end_time",
-        "status",
-    ]
-    for field in editable:
-        if field in payload:
-            setattr(house, field, payload[field])
+    field_map = {
+        "code": "codigo",
+        "name": "nombre",
+        "zone": "ubicacion",
+        "address": "direccion",
+        "leader_id": "lider_persona_id",
+        "assistant_id": "asistente_persona_id",
+        "host_id": "anfitrion_persona_id",
+        "capacity": "capacidad",
+        "day_of_week": "dia_reunion",
+        "start_time": "hora_reunion",
+    }
+    for payload_key, model_attr in field_map.items():
+        if payload_key in payload:
+            setattr(grupo, model_attr, payload[payload_key])
 
-    if "base_attendee_ids" in payload and isinstance(
-        payload["base_attendee_ids"], list
+    if "status" in payload:
+        raw = str(payload["status"]).strip().lower()
+        grupo.activo = raw in ("active", "activo", "true", "1")
+
+    if "participante_ids" in payload and isinstance(
+        payload["participante_ids"], list
     ):
         normalized_ids = []
-        for raw_id in payload["base_attendee_ids"]:
+        for raw_id in payload["participante_ids"]:
             try:
-                normalized_ids.append(int(raw_id))
+                normalized_ids.append(uuid.UUID(raw_id))
             except (TypeError, ValueError):
                 continue
         normalized_ids = list(dict.fromkeys(normalized_ids))
         current_rows = (
-            db.query(models.GloryHouseMember)
-            .filter(models.GloryHouseMember.glory_house_id == house.id)
+            db.query(models.ParticipanteGrupo)
+            .filter(models.ParticipanteGrupo.grupo_id == grupo.id)
             .all()
         )
-        current_by_member = {row.persona_id: row for row in current_rows}
+        current_by_persona = {row.persona_id: row for row in current_rows}
         incoming_ids = set(normalized_ids)
 
         for row in current_rows:
             if row.persona_id not in incoming_ids:
                 db.delete(row)
-        for member_id in normalized_ids:
-            if member_id in current_by_member:
+        for persona_id in normalized_ids:
+            if persona_id in current_by_persona:
                 continue
             db.add(
-                models.GloryHouseMember(
-                    glory_house_id=house.id,
-                    member_id=member_id,
-                    role="asistente",
+                models.ParticipanteGrupo(
+                    grupo_id=grupo.id,
+                    persona_id=persona_id,
+                    rol_base="asistente",
                 )
             )
 
     db.commit()
-    db.refresh(house)
+    db.refresh(grupo)
 
     return {
-        "id": house.id,
-        "code": house.code,
-        "name": house.name,
-        "zone": house.zone,
-        "address": house.address,
-        "leader_id": house.leader_id,
-        "assistant_id": house.assistant_id,
-        "host_id": house.host_id,
-        "capacity": house.capacity,
-        "day_of_week": house.day_of_week,
-        "start_time": house.start_time,
-        "end_time": house.end_time,
-        "status": str(house.status).lower() if house.status else "active",
-        "members_count": house.members_count,
-        "base_attendee_ids": [row.persona_id for row in (house.base_attendees or [])],
-        "base_attendees": [
-            {"member_id": row.persona_id, "role": row.role}
-            for row in (house.base_attendees or [])
+        "id": grupo.id,
+        "code": grupo.codigo,
+        "name": grupo.nombre,
+        "zone": grupo.ubicacion,
+        "address": grupo.direccion,
+        "lider_id": grupo.lider_persona_id,
+        "asistente_id": grupo.asistente_persona_id,
+        "anfitrion_id": grupo.anfitrion_persona_id,
+        "capacity": grupo.capacidad,
+        "day_of_week": grupo.dia_reunion,
+        "start_time": grupo.hora_reunion,
+        "end_time": None,
+        "status": "active" if grupo.activo else "inactive",
+        "participante_ids": [row.persona_id for row in (grupo.participantes or [])],
+        "participantes": [
+            {"persona_id": row.persona_id, "role": row.rol_base}
+            for row in (grupo.participantes or [])
         ],
     }
 
@@ -1457,7 +1456,7 @@ def get_crm_analytics_summary(
         .filter(models.CrmEvent.event_date >= month_start)
         .count()
     )
-    total_groups = db.query(models.GloryHouse).count()
+    total_groups = db.query(models.GrupoEvangelismo).count()
     total_families = db.query(models.Family).count()
     return {
         "total_members": total_members,

@@ -3,9 +3,11 @@
 from backend.models_academy import AcademyActivityLog  # noqa: F401
 from backend.models_academy import (  # noqa: F401
     Assessment, AssessmentAttempt, AssessmentOption, AssessmentQuestion,
-    AssignmentSubmission, Certificate, Course, CourseAttendance,
+    AssignmentSubmission, Certificate, CellGroup, CellGroupAttendance,
+    CellGroupMember, CellGroupSession, Course, CourseAttendance,
     CoursePrerequisite, Enrollment, Family, CampaignSeason, FormalActa,
     ForumComment, ForumThread, Lesson, LessonProgress, Resource)
+
 
 # Assets / Agents / Governance / Ops
 from backend.models_assets import (AssetItem, InventoryItem,  # noqa: F401
@@ -28,8 +30,8 @@ from backend.models_crm import (  # noqa: F401
     AgendaEvent, ColombianCity, ColombianDepartment,
     CommunicationLog, CommunityBoardCard,
     ConsolidationAssignment, ConsolidationCase,
-    ConsolidationFollowUpTask, ConsolidationInteraction,
-    ConsolidationPipeline, CounselingTicket, CrmAutomation,
+    ConsolidationInteraction, ConsolidationPipeline, ConsolidationTask,
+    CounselingTicket, CrmAutomation,
     CrmEvent, CrmTask, Donation, DonationCategory, EventAssignment,
     EventAttendance, EvangelismStrategy, Fund, Member, MemberMinistry,
     MemberPosition, MemberRole, Ministry, PastoralCallLog, Position,

@@ -15,8 +15,8 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.crud._utils import _utcnow
 from backend.models_crm import EvangelismStrategy
-from backend.models_academy import (
-    GloryHouse, GloryHouseMember, GloryHouseAttendance, GloryHouseSession,
+from backend.models_evangelism import (
+    ParticipanteGrupo, Asistencia, SesionGrupo,
 )
 from backend.models_evangelism import (
     RolPersonalizadoEstrategia,
@@ -196,22 +196,22 @@ def get_participantes(
     db: Session,
     grupo_id: int,
     solo_activos: bool = True,
-) -> List[GloryHouseMember]:
-    q = db.query(GloryHouseMember).filter(
-        GloryHouseMember.glory_house_id == grupo_id
+) -> List[ParticipanteGrupo]:
+    q = db.query(ParticipanteGrupo).filter(
+        ParticipanteGrupo.grupo_id == grupo_id
     )
     if solo_activos:
-        q = q.filter(GloryHouseMember.activo == True)  # noqa: E712
+        q = q.filter(ParticipanteGrupo.activo == True)  # noqa: E712
     return q.all()
 
 
 def agregar_participante(
     db: Session, data: ParticipanteGrupoCreate
-) -> GloryHouseMember:
-    db_obj = GloryHouseMember(
-        glory_house_id=data.glory_house_id,
+) -> ParticipanteGrupo:
+    db_obj = ParticipanteGrupo(
+        grupo_id=data.grupo_id,
         persona_id=data.persona_id,
-        role=data.role or "miembro",
+        rol_base=data.role or "miembro",
         rol_personalizado_id=data.rol_personalizado_id,
         activo=data.activo,
         fecha_ingreso=_utcnow(),
@@ -224,10 +224,10 @@ def agregar_participante(
 
 def actualizar_participante(
     db: Session, participante_id: int, data: ParticipanteGrupoUpdate
-) -> Optional[GloryHouseMember]:
+) -> Optional[ParticipanteGrupo]:
     db_obj = (
-        db.query(GloryHouseMember)
-        .filter(GloryHouseMember.id == participante_id)
+        db.query(ParticipanteGrupo)
+        .filter(ParticipanteGrupo.id == participante_id)
         .first()
     )
     if not db_obj:
@@ -243,8 +243,8 @@ def actualizar_participante(
 def remover_participante(db: Session, participante_id: int) -> bool:
     """Soft-delete: marca como inactivo en lugar de borrar."""
     db_obj = (
-        db.query(GloryHouseMember)
-        .filter(GloryHouseMember.id == participante_id)
+        db.query(ParticipanteGrupo)
+        .filter(ParticipanteGrupo.id == participante_id)
         .first()
     )
     if not db_obj:
@@ -260,7 +260,7 @@ def remover_participante(db: Session, participante_id: int) -> bool:
 
 def submit_asistencia(
     db: Session, data: AsistenciaSesionCreate
-) -> GloryHouseAttendance:
+) -> Asistencia:
     """Crea o actualiza un registro de asistencia.
 
     Auto-detecta es_primera_vez: si la persona no tiene asistencias previas
@@ -268,16 +268,16 @@ def submit_asistencia(
     """
     # Verificar si ya existe
     existing = (
-        db.query(GloryHouseAttendance)
+        db.query(Asistencia)
         .filter(
-            GloryHouseAttendance.session_id == data.session_id,
-            GloryHouseAttendance.persona_id == data.persona_id,
+            Asistencia.sesion_id == data.sesion_id,
+            Asistencia.persona_id == data.persona_id,
         )
         .first()
     )
     if existing:
         # Actualizar registro existente
-        update_data = data.model_dump(exclude={"session_id", "persona_id"}, exclude_unset=True)
+        update_data = data.model_dump(exclude={"sesion_id", "persona_id"}, exclude_unset=True)
         # Mapear estado a string si viene como enum
         if "estado" in update_data and update_data["estado"] is not None:
             raw = update_data["estado"]
@@ -292,8 +292,9 @@ def submit_asistencia(
     if dump.get("estado") is not None:
         raw = dump["estado"]
         dump["estado"] = raw.value if hasattr(raw, "value") else raw
-
-    db_obj = GloryHouseAttendance(**dump)
+    valid_cols = {c.key for c in Asistencia.__table__.columns}
+    row_data = {k: v for k, v in dump.items() if k in valid_cols}
+    db_obj = Asistencia(**row_data)
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
@@ -328,8 +329,8 @@ def create_seguimiento(
 
     # Marcar la asistencia como requiere_seguimiento = True
     asistencia = (
-        db.query(GloryHouseAttendance)
-        .filter(GloryHouseAttendance.id == data.asistencia_id)
+        db.query(Asistencia)
+        .filter(Asistencia.id == data.asistencia_id)
         .first()
     )
     if asistencia:

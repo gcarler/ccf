@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.schemas.crm import (ConsolidationAssignmentCreate,
                                  ConsolidationAssignmentUpdate,
-                                 ConsolidationFollowUpTaskCreate,
-                                 ConsolidationFollowUpTaskUpdate,
+                                 ConsolidationTaskCreate,
+                                 ConsolidationTaskUpdate,
                                  ConsolidationInteractionCreate,
                                  ConsolidationInteractionUpdate)
 
@@ -169,33 +169,33 @@ def get_consolidation_follow_up_tasks(
     case_id: Optional[int] = None,
     assignment_id: Optional[int] = None,
     status: Optional[str] = None,
-) -> List[models.ConsolidationFollowUpTask]:
-    query = db.query(models.ConsolidationFollowUpTask)
+) -> List[models.ConsolidationTask]:
+    query = db.query(models.ConsolidationTask)
     if case_id is not None:
-        query = query.filter(models.ConsolidationFollowUpTask.case_id == case_id)
+        query = query.filter(models.ConsolidationTask.case_id == case_id)
     if assignment_id is not None:
         query = query.filter(
-            models.ConsolidationFollowUpTask.assignment_id == assignment_id
+            models.ConsolidationTask.assignment_id == assignment_id
         )
     if status is not None:
-        query = query.filter(models.ConsolidationFollowUpTask.status == status)
-    return query.order_by(models.ConsolidationFollowUpTask.due_date.asc()).all()
+        query = query.filter(models.ConsolidationTask.status == status)
+    return query.order_by(models.ConsolidationTask.due_date.asc()).all()
 
 
 def get_consolidation_follow_up_task(
     db: Session, task_id: int
-) -> Optional[models.ConsolidationFollowUpTask]:
+) -> Optional[models.ConsolidationTask]:
     return (
-        db.query(models.ConsolidationFollowUpTask)
-        .filter(models.ConsolidationFollowUpTask.id == task_id)
+        db.query(models.ConsolidationTask)
+        .filter(models.ConsolidationTask.id == task_id)
         .first()
     )
 
 
 def create_consolidation_follow_up_task(
-    db: Session, payload: ConsolidationFollowUpTaskCreate
-) -> models.ConsolidationFollowUpTask:
-    row = models.ConsolidationFollowUpTask(**payload.model_dump())
+    db: Session, payload: ConsolidationTaskCreate
+) -> models.ConsolidationTask:
+    row = models.ConsolidationTask(**payload.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -203,11 +203,11 @@ def create_consolidation_follow_up_task(
 
 
 def update_consolidation_follow_up_task(
-    db: Session, task_id: int, payload: ConsolidationFollowUpTaskUpdate
-) -> Optional[models.ConsolidationFollowUpTask]:
+    db: Session, task_id: int, payload: ConsolidationTaskUpdate
+) -> Optional[models.ConsolidationTask]:
     row = (
-        db.query(models.ConsolidationFollowUpTask)
-        .filter(models.ConsolidationFollowUpTask.id == task_id)
+        db.query(models.ConsolidationTask)
+        .filter(models.ConsolidationTask.id == task_id)
         .first()
     )
     if not row:
@@ -221,8 +221,8 @@ def update_consolidation_follow_up_task(
 
 def delete_consolidation_follow_up_task(db: Session, task_id: int) -> bool:
     row = (
-        db.query(models.ConsolidationFollowUpTask)
-        .filter(models.ConsolidationFollowUpTask.id == task_id)
+        db.query(models.ConsolidationTask)
+        .filter(models.ConsolidationTask.id == task_id)
         .first()
     )
     if not row:

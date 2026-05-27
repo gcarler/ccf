@@ -795,10 +795,11 @@ class ConsolidationCaseBase(BaseModel):
     stage: str = "new"
     status: str = "active"
     source: Optional[str] = None
+    source_campaign: Optional[str] = None
     last_contact_at: Optional[datetime] = None
     next_contact_at: Optional[datetime] = None
-    assigned_pastor_id: Optional[int] = None
-    assigned_leader_id: Optional[int] = None
+    assigned_pastor_id: Optional[str] = None
+    assigned_leader_id: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -810,24 +811,25 @@ class ConsolidationCaseUpdate(BaseModel):
     stage: Optional[str] = None
     status: Optional[str] = None
     source: Optional[str] = None
+    source_campaign: Optional[str] = None
     last_contact_at: Optional[datetime] = None
     next_contact_at: Optional[datetime] = None
-    assigned_pastor_id: Optional[int] = None
-    assigned_leader_id: Optional[int] = None
+    assigned_pastor_id: Optional[str] = None
+    assigned_leader_id: Optional[str] = None
     notes: Optional[str] = None
 
 
 class ConsolidationCase(ConsolidationCaseBase):
-    id: int
+    id: str
     created_at: datetime
     updated_at: datetime
     model_config = orm_config
 
 
 class ConsolidationAssignmentBase(BaseModel):
-    case_id: int
-    assigned_by_persona_id: str
-    assigned_to_persona_id: str
+    case_id: str
+    assigned_by_id: str
+    assigned_to_id: str
     reason: Optional[str] = None
     priority: str = "normal"
     start_date: Optional[datetime] = None
@@ -840,8 +842,8 @@ class ConsolidationAssignmentCreate(ConsolidationAssignmentBase):
 
 
 class ConsolidationAssignmentUpdate(BaseModel):
-    assigned_by_persona_id: Optional[str] = None
-    assigned_to_persona_id: Optional[str] = None
+    assigned_by_id: Optional[str] = None
+    assigned_to_id: Optional[str] = None
     reason: Optional[str] = None
     priority: Optional[str] = None
     start_date: Optional[datetime] = None
@@ -856,8 +858,8 @@ class ConsolidationAssignment(ConsolidationAssignmentBase):
 
 
 class ConsolidationInteractionBase(BaseModel):
-    case_id: int
-    performed_by_persona_id: str
+    case_id: str
+    performed_by_id: str
     interaction_type: str
     interaction_date: Optional[datetime] = None
     result: Optional[str] = None
@@ -883,8 +885,8 @@ class ConsolidationInteraction(ConsolidationInteractionBase):
     model_config = orm_config
 
 
-class ConsolidationFollowUpTaskBase(BaseModel):
-    case_id: int
+class ConsolidationTaskBase(BaseModel):
+    case_id: str
     assignment_id: Optional[int] = None
     title: str
     description: Optional[str] = None
@@ -893,11 +895,11 @@ class ConsolidationFollowUpTaskBase(BaseModel):
     completed_at: Optional[datetime] = None
 
 
-class ConsolidationFollowUpTaskCreate(ConsolidationFollowUpTaskBase):
+class ConsolidationTaskCreate(ConsolidationTaskBase):
     pass
 
 
-class ConsolidationFollowUpTaskUpdate(BaseModel):
+class ConsolidationTaskUpdate(BaseModel):
     assignment_id: Optional[int] = None
     title: Optional[str] = None
     description: Optional[str] = None
@@ -906,7 +908,7 @@ class ConsolidationFollowUpTaskUpdate(BaseModel):
     completed_at: Optional[datetime] = None
 
 
-class ConsolidationFollowUpTask(ConsolidationFollowUpTaskBase):
+class ConsolidationTask(ConsolidationTaskBase):
     id: int
     created_at: datetime
     model_config = orm_config
@@ -921,15 +923,15 @@ class Family(BaseModel):
     model_config = orm_config
 
 
-class GloryHouseMember(BaseModel):
+class CellGroupMember(BaseModel):
     id: int
-    glory_house_id: int
+    cell_group_id: int
     persona_id: str
     role: str
     model_config = orm_config
 
 
-class GloryHouse(BaseModel):
+class CellGroup(BaseModel):
     id: int
     code: Optional[str] = None
     name: str
@@ -952,7 +954,7 @@ class GloryHouse(BaseModel):
     model_config = orm_config
 
 
-class GloryHouseCreate(BaseModel):
+class CellGroupCreate(BaseModel):
     code: Optional[str] = None
     name: Optional[str] = None
     zone: Optional[str] = None
@@ -972,12 +974,12 @@ class GloryHouseCreate(BaseModel):
     base_attendee_ids: Optional[List[int]] = None
 
 
-class GloryHouseMemberWithRole(BaseModel):
+class CellGroupMemberWithRole(BaseModel):
     persona_id: str
     role: str = "miembro"  # lider | colider | miembro | visitante
 
 
-class GloryHouseUpdate(BaseModel):
+class CellGroupUpdate(BaseModel):
     code: Optional[str] = None
     name: Optional[str] = None
     zone: Optional[str] = None
@@ -991,7 +993,7 @@ class GloryHouseUpdate(BaseModel):
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     base_attendee_ids: Optional[List[int]] = None
-    base_attendees_with_roles: Optional[List[GloryHouseMemberWithRole]] = None
+    base_attendees_with_roles: Optional[List[CellGroupMemberWithRole]] = None
 
 
 class FaroAttendanceReportItem(BaseModel):
@@ -1031,7 +1033,7 @@ class FaroSessionAttendanceItem(BaseModel):
 class FaroSessionAttendance(BaseModel):
     session_id: int
     session_date: date
-    glory_house_id: int
+    cell_group_id: int
     status: str
     topic: Optional[str] = None
     offering_amount: Optional[float] = None
@@ -1073,33 +1075,9 @@ def normalize_pipeline_stage(value: str, strict: bool = False) -> str:
     return normalized
 
 
-class ConsolidationPipelineCreate(BaseModel):
-    first_name: str
-    last_name: str
-    phone: str
-    source: Optional[str] = None
-    stage: str = "new"
-    assigned_pastor_id: Optional[int] = None
-
-    @model_validator(mode="after")
-    def normalize_stage(self) -> "ConsolidationPipelineCreate":
-        self.stage = normalize_pipeline_stage(self.stage, strict=True)
-        return self
-
-
-class ConsolidationPipelineUpdate(BaseModel):
-    stage: Optional[str] = None
-    assigned_pastor_id: Optional[int] = None
-
-    @model_validator(mode="after")
-    def normalize_stage(self) -> "ConsolidationPipelineUpdate":
-        if self.stage is not None:
-            self.stage = normalize_pipeline_stage(self.stage, strict=True)
-        return self
-
-
 class PastoralCallLogCreate(BaseModel):
-    lead_id: int
+    case_id: str
+    persona_id: Optional[str] = None
     pastor_id: int
     outcome: str
     duration_seconds: int = 0
@@ -1107,7 +1085,8 @@ class PastoralCallLogCreate(BaseModel):
 
 class PastoralCallLog(BaseModel):
     id: int
-    lead_id: int
+    case_id: Optional[str] = None
+    persona_id: Optional[str] = None
     pastor_id: int
     outcome: str
     notes: Optional[str] = None
@@ -1118,8 +1097,8 @@ class PastoralCallLog(BaseModel):
 
 # ── Faro Sessions & Attendance ──
 
-class GloryHouseSessionBase(BaseModel):
-    glory_house_id: int
+class CellGroupSessionBase(BaseModel):
+    cell_group_id: int
     season_id: Optional[int] = None
     session_date: datetime
     topic: Optional[str] = None
@@ -1132,18 +1111,18 @@ class GloryHouseSessionBase(BaseModel):
     status: str = "Realizada"
 
 
-class GloryHouseSessionCreate(GloryHouseSessionBase):
+class CellGroupSessionCreate(CellGroupSessionBase):
     pass
 
 
-class GloryHouseSession(GloryHouseSessionBase):
+class CellGroupSession(CellGroupSessionBase):
     id: int
     reported_at: Optional[datetime] = None
     created_at: datetime
     model_config = orm_config
 
 
-class GloryHouseSessionUpdate(BaseModel):
+class CellGroupSessionUpdate(BaseModel):
     session_date: Optional[datetime] = None
     topic: Optional[str] = None
     offering_amount: Optional[float] = None
@@ -1155,17 +1134,17 @@ class GloryHouseSessionUpdate(BaseModel):
     status: Optional[str] = None
 
 
-class GloryHouseAttendanceBase(BaseModel):
+class CellGroupAttendanceBase(BaseModel):
     session_id: int
     persona_id: str
     status: str = "present"  # present | absent | first_time
     notes: Optional[str] = None
 
 
-class GloryHouseAttendanceCreate(GloryHouseAttendanceBase):
+class CellGroupAttendanceCreate(CellGroupAttendanceBase):
     pass
 
 
-class GloryHouseAttendance(GloryHouseAttendanceBase):
+class CellGroupAttendance(CellGroupAttendanceBase):
     id: int
     model_config = orm_config

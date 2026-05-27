@@ -226,9 +226,9 @@ SELECT
     COUNT(gha.id) FILTER (WHERE gha.attended = TRUE) as total_asistencias,
     COUNT(gha.id) FILTER (WHERE gha.attended = FALSE) as total_faltas,
     COUNT(gha.id) FILTER (WHERE gha.status = 'first_time' OR gha.es_primera_vez = TRUE) as total_nuevos
-FROM glory_house_sessions ghss
-JOIN glory_house_attendance gha ON ghss.id = gha.session_id
-JOIN glory_houses g ON ghss.glory_house_id = g.id
+FROM cell_group_sessions ghss
+JOIN cell_group_attendance gha ON ghss.id = gha.session_id
+JOIN cell_groups g ON ghss.cell_group_id = g.id
 GROUP BY g.evangelism_strategy_id, DATE_TRUNC('month', ghss.session_date);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_resumen_asistencia 

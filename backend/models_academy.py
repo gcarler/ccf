@@ -217,8 +217,8 @@ class Family(Base):
     members = relationship("Persona", back_populates="family")
 
 
-class GloryHouse(Base):
-    __tablename__ = "glory_houses"
+class CellGroup(Base):
+    __tablename__ = "cell_groups"
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(30), unique=True, nullable=True, index=True)
     name = Column(String(100), nullable=False)
@@ -262,16 +262,16 @@ class GloryHouse(Base):
     host = relationship("Persona", foreign_keys=[host_persona_id])
 
     base_attendees = relationship(
-        "GloryHouseMember", back_populates="glory_house", cascade="all, delete-orphan"
+        "GloryHouseMember", back_populates="cell_group", cascade="all, delete-orphan"
     )
 
 
-class GloryHouseMember(Base):
-    __tablename__ = "glory_house_members"
+class CellGroupMember(Base):
+    __tablename__ = "cell_group_members"
     id = Column(Integer, primary_key=True, index=True)
     glory_house_id = Column(
         Integer,
-        ForeignKey("glory_houses.id", ondelete="CASCADE"),
+        ForeignKey("cell_groups.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -292,14 +292,14 @@ class GloryHouseMember(Base):
     fecha_ingreso = Column(DateTime, default=_utcnow)
     activo = Column(Boolean, default=True, index=True)
 
-    glory_house = relationship("GloryHouse", back_populates="base_attendees")
+    cell_group = relationship("CellGroup", back_populates="cell_members")
     persona = relationship("Persona")
 
 
-class GloryHouseSession(Base):
+class CellGroupSession(Base):
     """A single weekly/monthly reporting session for a Faro en Casa house."""
 
-    __tablename__ = "glory_house_sessions"
+    __tablename__ = "cell_group_sessions"
     __table_args__ = (
         UniqueConstraint(
             "glory_house_id", "season_id", "session_date", name="uq_faro_session"
@@ -308,7 +308,7 @@ class GloryHouseSession(Base):
     id = Column(Integer, primary_key=True, index=True)
     glory_house_id = Column(
         Integer,
-        ForeignKey("glory_houses.id", ondelete="CASCADE"),
+        ForeignKey("cell_groups.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -336,22 +336,22 @@ class GloryHouseSession(Base):
     reported_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
-    glory_house = relationship("GloryHouse")
+    cell_group = relationship("CellGroup")
     season = relationship("CampaignSeason")
     reported_by_persona = relationship("Persona")
 
 
-class GloryHouseAttendance(Base):
+class CellGroupAttendance(Base):
     """Attendance record of a member at a Faro en Casa session."""
 
-    __tablename__ = "glory_house_attendance"
+    __tablename__ = "cell_group_attendance"
     __table_args__ = (
         UniqueConstraint("session_id", "persona_id", name="uq_faro_attendance"),
     )
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(
         Integer,
-        ForeignKey("glory_house_sessions.id", ondelete="CASCADE"),
+        ForeignKey("cell_group_sessions.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -380,7 +380,7 @@ class GloryHouseAttendance(Base):
     )
     detalle_excusa = Column(String, nullable=True)
 
-    session = relationship("GloryHouseSession")
+    session = relationship("CellGroupSession")
     persona = relationship("Persona")
 
 

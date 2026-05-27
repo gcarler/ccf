@@ -147,7 +147,7 @@ class ParticipanteGrupoBase(BaseModel):
 
 
 class ParticipanteGrupoCreate(ParticipanteGrupoBase):
-    glory_house_id: int
+    grupo_id: int
     persona_id: str
 
 
@@ -159,7 +159,7 @@ class ParticipanteGrupoUpdate(BaseModel):
 
 class ParticipanteGrupoResponse(ParticipanteGrupoBase):
     id: int
-    glory_house_id: int
+    grupo_id: int
     persona_id: str
     fecha_ingreso: Optional[datetime] = None
     model_config = orm_config
@@ -179,7 +179,7 @@ class AsistenciaSesionBase(BaseModel):
 
 
 class AsistenciaSesionCreate(AsistenciaSesionBase):
-    session_id: int
+    sesion_id: int
     persona_id: str
 
 
@@ -194,7 +194,7 @@ class AsistenciaSesionUpdate(BaseModel):
 
 class AsistenciaSesionResponse(AsistenciaSesionBase):
     id: int
-    session_id: int
+    sesion_id: int
     persona_id: str
     attended: Optional[bool] = None
     status: Optional[str] = None
@@ -271,5 +271,83 @@ class AsistenciaBulkItem(BaseModel):
 
 
 class AsistenciaBulkCreate(BaseModel):
-    session_id: int
+    sesion_id: int
     registros: List[AsistenciaBulkItem]
+
+
+# ──────────────────────────────────────────────
+# GRUPO EVANGELISMO (back-compat con CellGroup)
+# ──────────────────────────────────────────────
+
+class GrupoEvangelismoCreate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    zone: Optional[str] = None
+    address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    leader_name: Optional[str] = None
+    evangelism_strategy_id: int
+    leader_id: Optional[str] = None
+    assistant_id: Optional[str] = None
+    host_id: Optional[str] = None
+    capacity: int = 15
+    status: Optional[str] = "Activo"
+    day_of_week: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    base_attendee_ids: Optional[List[str]] = None
+
+
+class CellGroupMemberWithRole(BaseModel):
+    persona_id: str
+    role: str = "miembro"
+
+
+class GrupoEvangelismoUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    zone: Optional[str] = None
+    address: Optional[str] = None
+    leader_id: Optional[str] = None
+    assistant_id: Optional[str] = None
+    host_id: Optional[str] = None
+    capacity: Optional[int] = None
+    status: Optional[str] = None
+    day_of_week: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    base_attendee_ids: Optional[List[str]] = None
+    base_attendees_with_roles: Optional[List[CellGroupMemberWithRole]] = None
+
+
+class SesionGrupoCreate(BaseModel):
+    grupo_id: int
+    season_id: Optional[int] = None
+    session_date: datetime
+    topic: Optional[str] = None
+    offering_amount: Optional[float] = None
+    report_notes: Optional[str] = None
+    novelty_type: Optional[str] = None
+    novelty_detail: Optional[str] = None
+    cancellation_reason: Optional[str] = None
+    reported_by_persona_id: Optional[str] = None
+    status: str = "Realizada"
+
+
+class SesionGrupoUpdate(BaseModel):
+    session_date: Optional[datetime] = None
+    topic: Optional[str] = None
+    offering_amount: Optional[float] = None
+    report_notes: Optional[str] = None
+    novelty_type: Optional[str] = None
+    novelty_detail: Optional[str] = None
+    cancellation_reason: Optional[str] = None
+    reported_by_persona_id: Optional[str] = None
+    status: Optional[str] = None
+
+
+class AsistenciaGrupoCreate(BaseModel):
+    persona_id: str
+    status: str = "present"
+    notes: Optional[str] = None

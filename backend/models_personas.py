@@ -89,28 +89,28 @@ class Persona(Base):
     )
     consolidated_cases_as_pastor = relationship(
         "ConsolidationCase",
-        foreign_keys="ConsolidationCase.assigned_pastor_persona_id",
+        foreign_keys="ConsolidationCase.assigned_pastor_id",
         back_populates="assigned_pastor",
     )
     consolidated_cases_as_leader = relationship(
         "ConsolidationCase",
-        foreign_keys="ConsolidationCase.assigned_leader_persona_id",
+        foreign_keys="ConsolidationCase.assigned_leader_id",
         back_populates="assigned_leader",
     )
     consolidation_assignments_sent = relationship(
         "ConsolidationAssignment",
-        foreign_keys="ConsolidationAssignment.assigned_by_persona_id",
-        back_populates="assigned_by_persona",
+        foreign_keys="ConsolidationAssignment.assigned_by_id",
+        back_populates="assigned_by",
     )
     consolidation_assignments_received = relationship(
         "ConsolidationAssignment",
-        foreign_keys="ConsolidationAssignment.assigned_to_persona_id",
-        back_populates="assigned_to_persona",
+        foreign_keys="ConsolidationAssignment.assigned_to_id",
+        back_populates="assigned_to",
     )
     consolidation_interactions = relationship(
         "ConsolidationInteraction",
-        foreign_keys="ConsolidationInteraction.performed_by_persona_id",
-        back_populates="performed_by_persona",
+        foreign_keys="ConsolidationInteraction.performed_by_id",
+        back_populates="performed_by",
     )
 
     # Evangelismo

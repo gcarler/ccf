@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.evangelism_events import router as events_router
-from backend.api.evangelism_faro import router as faro_router
+from backend.api.evangelism_grupos import router as grupos_router
 from backend.api.evangelism_shared import utc_now
 from backend.auth import (normalize_role, require_active_user, require_admin,
                           require_module_access, require_pastor_or_admin)
@@ -23,7 +23,7 @@ from backend.mesh_websockets import manager
 
 router = APIRouter()
 router.include_router(events_router)
-router.include_router(faro_router)
+router.include_router(grupos_router)
 logger = logging.getLogger(__name__)
 _DEPRECATED_ALIAS_HITS: set[str] = set()
 
@@ -1121,7 +1121,7 @@ def crm_analytics(
     )
 
     # Glory houses / grupos
-    total_groups = db.query(models.GloryHouse).count()
+    total_groups = db.query(models.CellGroup).count()
 
     # Familia
     total_families = db.query(models.Family).count()
@@ -1149,14 +1149,14 @@ def read_evangelism_strategies(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    from backend.models_academy import GloryHouse
+    from backend.models_academy import CellGroup
     from backend.crud.evangelism import get_estrategias
     strategies = get_estrategias(db, skip=skip, limit=limit, activa=activa, clase_raiz=clase_raiz)
     result = []
     for s in strategies:
         obj = EvangelismStrategy.model_validate(s)
-        obj.group_count = db.query(GloryHouse).filter(
-            GloryHouse.evangelism_strategy_id == s.id
+        obj.group_count = db.query(CellGroup).filter(
+            CellGroup.evangelism_strategy_id == s.id
         ).count()
         result.append(obj)
     return result
@@ -1169,13 +1169,13 @@ def read_strategy(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     from backend.models_crm import EvangelismStrategy as StrategyModel
-    from backend.models_academy import GloryHouse
+    from backend.models_academy import CellGroup
     db_obj = db.query(StrategyModel).filter(StrategyModel.id == strategy_id).first()
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
-    result.group_count = db.query(GloryHouse).filter(
-        GloryHouse.evangelism_strategy_id == strategy_id
+    result.group_count = db.query(CellGroup).filter(
+        CellGroup.evangelism_strategy_id == strategy_id
     ).count()
     return result
 

@@ -119,7 +119,7 @@ def migrate_fk_column(
 
 def run():
     db = SessionLocal()
-    total_steps = 20
+    total_steps = 30
     step = 0
 
     # ── Step 1: Create mapping table (old member_id -> new persona UUID) ──
@@ -253,12 +253,11 @@ def run():
         ("event_attendances", "member_id", "persona_id", False, "CASCADE"),
         ("counseling_tickets", "member_id", "persona_id", False, "NO ACTION"),
         ("member_positions", "member_id", "persona_id", False, "CASCADE"),
+        # Consolidation tables — new column names per kernel schema:
         ("consolidation_cases", "member_id", "persona_id", False, "CASCADE"),
-        ("consolidation_cases", "assigned_pastor_id", "assigned_pastor_persona_id", True, "SET NULL"),
-        ("consolidation_cases", "assigned_leader_id", "assigned_leader_persona_id", True, "SET NULL"),
-        ("consolidation_assignments", "assigned_by_member_id", "assigned_by_persona_id", False, "CASCADE"),
-        ("consolidation_assignments", "assigned_to_member_id", "assigned_to_persona_id", False, "CASCADE"),
-        ("consolidation_interactions", "performed_by_member_id", "performed_by_persona_id", False, "CASCADE"),
+        ("consolidation_assignments", "assigned_by_member_id", "assigned_by_id", False, "CASCADE"),
+        ("consolidation_assignments", "assigned_to_member_id", "assigned_to_id", False, "CASCADE"),
+        ("consolidation_interactions", "performed_by_member_id", "performed_by_id", False, "CASCADE"),
         ("donations", "member_id", "persona_id", True, "NO ACTION"),
         ("crm_tasks", "member_id", "persona_id", True, "NO ACTION"),
         ("volunteer_shifts", "member_id", "persona_id", False, "NO ACTION"),
@@ -284,7 +283,71 @@ def run():
         print(f"[{step}/{total_steps}] Migrating {table}.{old_col} → {new_col}...")
         migrate_fk_column(db, table, old_col, new_col, nullable=nullable, on_delete=on_delete)
 
-    # ── Step 20: Drop old members table ──
+    # ── Special case: consolidation_cases.assigned_pastor_id (same name, new type) ──
+    step += 1
+    if table_exists("consolidation_cases") and column_exists("consolidation_cases", "assigned_pastor_id"):
+        col_type = db.execute(text(
+            "SELECT data_type FROM information_schema.columns "
+            "WHERE table_name = 'consolidation_cases' AND column_name = 'assigned_pastor_id'"
+        )).scalar()
+        if col_type == "integer":
+            print(f"[{step}/{total_steps}] Replacing consolidation_cases.assigned_pastor_id (int→UUID)...")
+            db.execute(text("ALTER TABLE consolidation_cases DROP COLUMN IF EXISTS assigned_pastor_id"))
+            db.execute(text("ALTER TABLE consolidation_cases ADD COLUMN assigned_pastor_id UUID REFERENCES personas(id) ON DELETE SET NULL"))
+            db.execute(text("CREATE INDEX IF NOT EXISTS idx_consolidation_cases_assigned_pastor_id ON consolidation_cases(assigned_pastor_id)"))
+        else:
+            print(f"[{step}/{total_steps}] consolidation_cases.assigned_pastor_id already UUID, skipping...")
+    else:
+        print(f"[{step}/{total_steps}] consolidation_cases.assigned_pastor_id doesn't exist, skipping...")
+
+    # ── Special case: consolidation_cases.assigned_leader_id (same name, new type) ──
+    step += 1
+    if table_exists("consolidation_cases") and column_exists("consolidation_cases", "assigned_leader_id"):
+        col_type = db.execute(text(
+            "SELECT data_type FROM information_schema.columns "
+            "WHERE table_name = 'consolidation_cases' AND column_name = 'assigned_leader_id'"
+        )).scalar()
+        if col_type == "integer":
+            print(f"[{step}/{total_steps}] Replacing consolidation_cases.assigned_leader_id (int→UUID)...")
+            db.execute(text("ALTER TABLE consolidation_cases DROP COLUMN IF EXISTS assigned_leader_id"))
+            db.execute(text("ALTER TABLE consolidation_cases ADD COLUMN assigned_leader_id UUID REFERENCES personas(id) ON DELETE SET NULL"))
+            db.execute(text("CREATE INDEX IF NOT EXISTS idx_consolidation_cases_assigned_leader_id ON consolidation_cases(assigned_leader_id)"))
+        else:
+            print(f"[{step}/{total_steps}] consolidation_cases.assigned_leader_id already UUID, skipping...")
+    else:
+        print(f"[{step}/{total_steps}] consolidation_cases.assigned_leader_id doesn't exist, skipping...")
+
+    # ── Special case: consolidation_cases.id int→UUID, source_campaign ──
+    step += 1
+    if table_exists("consolidation_cases") and column_exists("consolidation_cases", "id"):
+        col_type = db.execute(text(
+            "SELECT data_type FROM information_schema.columns "
+            "WHERE table_name = 'consolidation_cases' AND column_name = 'id'"
+        )).scalar()
+        if col_type == "integer":
+            print(f"[{step}/{total_steps}] Migrating consolidation_cases.id (int→UUID) + adding source_campaign...")
+            # Drop PK constraint so we can change column type
+            db.execute(text("ALTER TABLE consolidation_cases DROP CONSTRAINT IF EXISTS consolidation_cases_pkey CASCADE"))
+            # Drop all FK constraints referencing this table
+            fk_names = db.execute(text("""
+                SELECT conname FROM pg_constraint WHERE confrelid = 'consolidation_cases'::regclass
+                AND contype = 'f'
+            """)).scalars().all()
+            for fk in fk_names:
+                db.execute(text(f"ALTER TABLE consolidation_cases DROP CONSTRAINT IF EXISTS {fk} CASCADE"))
+            # Change id to UUID (table is empty, so no data conversion needed)
+            db.execute(text("ALTER TABLE consolidation_cases ALTER COLUMN id TYPE UUID USING gen_random_uuid()"))
+            db.execute(text("ALTER TABLE consolidation_cases ALTER COLUMN id SET DEFAULT gen_random_uuid()"))
+            db.execute(text("ALTER TABLE consolidation_cases ADD PRIMARY KEY (id)"))
+            # Add source_campaign
+            if not column_exists("consolidation_cases", "source_campaign"):
+                db.execute(text("ALTER TABLE consolidation_cases ADD COLUMN source_campaign VARCHAR(200)"))
+        else:
+            print(f"[{step}/{total_steps}] consolidation_cases.id already UUID, skipping...")
+    else:
+        print(f"[{step}/{total_steps}] consolidation_cases doesn't exist, skipping...")
+
+    # ── Final step: Verify ──
     step += 1
     print(f"[{step}/{total_steps}] Verifying migration...")
     persona_count = db.execute(text("SELECT COUNT(*) FROM personas")).scalar()
