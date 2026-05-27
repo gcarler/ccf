@@ -279,14 +279,14 @@ def get_persona_platform_roles(persona_id: str, db: Session = Depends(get_db),
 
 @router.get("/permissions/me")
 def get_my_permissions(db: Session = Depends(get_db),
-                        current_user=Depends(require_active_user)):
+                       current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
     return kernel_crud.get_persona_effective_permissions(db, _my_persona_id(db, current_user))
 
 
 @router.get("/permissions/{persona_id}")
 def get_persona_permissions(persona_id: str, db: Session = Depends(get_db),
-                             current_user=Depends(require_active_user)):
+                            current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
     _resolve_persona_id(db, current_user, persona_id)
     return kernel_crud.get_persona_effective_permissions(db, persona_id)
@@ -294,8 +294,8 @@ def get_persona_permissions(persona_id: str, db: Session = Depends(get_db),
 
 @router.post("/platform-roles/{persona_id}")
 def assign_platform_role(persona_id: str, payload: PlatformRoleAssign,
-                          db: Session = Depends(get_db),
-                          current_user=Depends(require_kernel_permission("system:config"))):
+                         db: Session = Depends(get_db),
+                         current_user=Depends(require_kernel_permission("system:config"))):
     from backend.crud import kernel as kernel_crud
     result = kernel_crud.assign_platform_role(
         db, persona_id=persona_id, platform_role=payload.platform_role,
@@ -309,8 +309,8 @@ def assign_platform_role(persona_id: str, payload: PlatformRoleAssign,
 
 @router.delete("/platform-roles/{persona_id}/{platform_role}")
 def revoke_platform_role(persona_id: str, platform_role: str,
-                          db: Session = Depends(get_db),
-                          current_user=Depends(require_kernel_permission("system:config"))):
+                         db: Session = Depends(get_db),
+                         current_user=Depends(require_kernel_permission("system:config"))):
     from backend.crud import kernel as kernel_crud
     if not kernel_crud.revoke_platform_role(db, persona_id, platform_role):
         raise HTTPException(status_code=404, detail="Rol no encontrado para esta persona")

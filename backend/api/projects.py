@@ -1337,7 +1337,6 @@ def send_project_message(
         pass
 
 
-
     return schemas.ProjectMessageItem(
         id=msg.id,
         sender_id=msg.sender_id,
