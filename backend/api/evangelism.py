@@ -1133,10 +1133,8 @@ def read_evangelism_strategies(
     result = []
     for s in strategies:
         obj = EvangelismStrategy.model_validate(s)
-        # Use codigo (varchar) to match cell_groups.evangelism_strategy_id (varchar)
-        strategy_ref = s.codigo or str(s.id)
         obj.group_count = db.query(CellGroup).filter(
-            CellGroup.evangelism_strategy_id == strategy_ref
+            CellGroup.evangelism_strategy_id == s.id
         ).count()
         result.append(obj)
     return result
@@ -1154,9 +1152,8 @@ def read_strategy(
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
-    strategy_ref = db_obj.codigo or str(strategy_id)
     result.group_count = db.query(CellGroup).filter(
-        CellGroup.evangelism_strategy_id == strategy_ref
+        CellGroup.evangelism_strategy_id == strategy_id
     ).count()
     return result
 
