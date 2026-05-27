@@ -227,13 +227,13 @@ class CellGroup(Base):
     )
 
     leader_persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
     assistant_persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
     host_persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
 
     schedule = Column(String(100), nullable=True)
