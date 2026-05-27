@@ -106,13 +106,13 @@ from backend.crud.cms import (archive_cms_section, archive_cms_site,
                               update_page_content, update_testimonial)
 # Consolidation Extended — assignments, interactions, follow-up tasks
 from backend.crud.consolidation import (  # noqa: F401
-    create_consolidation_assignment, create_consolidation_follow_up_task,
+    create_consolidation_assignment, create_consolidation_task,
     create_consolidation_interaction, delete_consolidation_assignment,
-    delete_consolidation_follow_up_task, delete_consolidation_interaction,
+    delete_consolidation_task, delete_consolidation_interaction,
     get_consolidation_assignment, get_consolidation_assignments,
-    get_consolidation_follow_up_task, get_consolidation_follow_up_tasks,
+    get_consolidation_task, get_consolidation_tasks,
     get_consolidation_interaction, get_consolidation_interactions,
-    update_consolidation_assignment, update_consolidation_follow_up_task,
+    update_consolidation_assignment, update_consolidation_task,
     update_consolidation_interaction)
 # CRM
 from backend.crud.crm import create_communication_log  # noqa: F401

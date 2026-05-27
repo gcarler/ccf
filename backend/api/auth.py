@@ -648,7 +648,7 @@ def google_callback(
                 church_role="Miembro",
                 spiritual_status="Nuevo",
             )
-            db.add(member)
+            db.add(persona)
             db.commit()
         except Exception:
             db.rollback()

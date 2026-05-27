@@ -33,7 +33,7 @@ export default function LeadDetailPage() {
         const loadLead = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/consolidation/pipeline/${id}`, { token }).catch(() => null);
+                const data = await apiFetch<any>(`/crm/consolidation/cases/${id}`, { token }).catch(() => null);
                 setLead(data || {
                     id,
                     nombre_completo: 'Mateo González',
@@ -77,11 +77,11 @@ export default function LeadDetailPage() {
                 breadcrumbs={[
                     { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
                     { label: 'Pipeline', icon: Users, href: '/plataforma/crm/pipeline' },
-                    { label: lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim(), icon: User },
+                    { label: lead.nombre_completo || '', icon: User },
                 ]}
             />
             <CrmDetailShell
-                title={lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
+                title={lead.nombre_completo || ''}
                 description={`Fuente: ${lead.source}`}
             >
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 lg:p-4">
@@ -91,7 +91,7 @@ export default function LeadDetailPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex items-center gap-3 text-sm">
                                     <Phone size={16} className="text-slate-400" />
-                                    <span>{lead.phone || 'Sin teléfono'}</span>
+                                    <span>{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-sm">
                                     <Mail size={16} className="text-slate-400" />

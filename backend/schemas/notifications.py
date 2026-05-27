@@ -19,7 +19,7 @@ class Notification(BaseModel):
 
 
 class CommunicationLogCreate(BaseModel):
-    member_id: int
+    persona_id: str
     channel: str
     content: str
     leader_id: Optional[int] = None
@@ -34,7 +34,7 @@ class CommunicationLogUpdate(BaseModel):
 
 class CommunicationLog(BaseModel):
     id: int
-    member_id: int
+    persona_id: str
     channel: str
     content: str
     leader_id: Optional[int] = None

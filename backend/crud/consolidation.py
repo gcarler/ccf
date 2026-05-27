@@ -21,16 +21,16 @@ from backend.schemas.crm import (ConsolidationAssignmentCreate,
 def get_consolidation_assignments(
     db: Session,
     case_id: Optional[int] = None,
-    assigned_to_member_id: Optional[int] = None,
+    assigned_to_id: Optional[int] = None,
     status: Optional[str] = None,
 ) -> List[models.ConsolidationAssignment]:
     query = db.query(models.ConsolidationAssignment)
     if case_id is not None:
         query = query.filter(models.ConsolidationAssignment.case_id == case_id)
-    if assigned_to_member_id is not None:
+    if assigned_to_id is not None:
         query = query.filter(
-            models.ConsolidationAssignment.assigned_to_member_id
-            == assigned_to_member_id
+            models.ConsolidationAssignment.assigned_to_id
+            == assigned_to_id
         )
     if status is not None:
         query = query.filter(models.ConsolidationAssignment.status == status)
@@ -93,16 +93,16 @@ def delete_consolidation_assignment(db: Session, assignment_id: int) -> bool:
 def get_consolidation_interactions(
     db: Session,
     case_id: Optional[int] = None,
-    performed_by_member_id: Optional[int] = None,
+    performed_by_id: Optional[int] = None,
     interaction_type: Optional[str] = None,
 ) -> List[models.ConsolidationInteraction]:
     query = db.query(models.ConsolidationInteraction)
     if case_id is not None:
         query = query.filter(models.ConsolidationInteraction.case_id == case_id)
-    if performed_by_member_id is not None:
+    if performed_by_id is not None:
         query = query.filter(
-            models.ConsolidationInteraction.performed_by_member_id
-            == performed_by_member_id
+            models.ConsolidationInteraction.performed_by_id
+            == performed_by_id
         )
     if interaction_type is not None:
         query = query.filter(
@@ -164,7 +164,7 @@ def delete_consolidation_interaction(db: Session, interaction_id: int) -> bool:
 # ── Consolidation Follow-Up Tasks ────────────────────────────────────────
 
 
-def get_consolidation_follow_up_tasks(
+def get_consolidation_tasks(
     db: Session,
     case_id: Optional[int] = None,
     assignment_id: Optional[int] = None,
@@ -182,7 +182,7 @@ def get_consolidation_follow_up_tasks(
     return query.order_by(models.ConsolidationTask.due_date.asc()).all()
 
 
-def get_consolidation_follow_up_task(
+def get_consolidation_task(
     db: Session, task_id: int
 ) -> Optional[models.ConsolidationTask]:
     return (
@@ -192,7 +192,7 @@ def get_consolidation_follow_up_task(
     )
 
 
-def create_consolidation_follow_up_task(
+def create_consolidation_task(
     db: Session, payload: ConsolidationTaskCreate
 ) -> models.ConsolidationTask:
     row = models.ConsolidationTask(**payload.model_dump())
@@ -202,7 +202,7 @@ def create_consolidation_follow_up_task(
     return row
 
 
-def update_consolidation_follow_up_task(
+def update_consolidation_task(
     db: Session, task_id: int, payload: ConsolidationTaskUpdate
 ) -> Optional[models.ConsolidationTask]:
     row = (
@@ -219,7 +219,7 @@ def update_consolidation_follow_up_task(
     return row
 
 
-def delete_consolidation_follow_up_task(db: Session, task_id: int) -> bool:
+def delete_consolidation_task(db: Session, task_id: int) -> bool:
     row = (
         db.query(models.ConsolidationTask)
         .filter(models.ConsolidationTask.id == task_id)

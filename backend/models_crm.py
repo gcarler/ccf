@@ -203,40 +203,30 @@ class ColombianCity(Base):
 
 class Persona(Base):
     __tablename__ = "personas"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
-        unique=True,
-        index=True,
-    )
-    family_id = Column(
-        Integer,
-        ForeignKey("families.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, unique=True, index=True)
+    family_id = Column(Integer, ForeignKey("families.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(Integer, ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     first_name = Column(String(100), nullable=False, index=True)
     last_name = Column(String(100), nullable=False, index=True)
-    email = Column(String(100), nullable=True, index=True)
-    phone = Column(String(20), nullable=True, index=True)
-    church_role = Column(String(50), default="Miembro", index=True)
-    is_baptized = Column(Boolean, default=False, index=True)
-    spiritual_status = Column(
-        String(50), default="Nuevo", index=True
-    )  # Nuevo, Creyente, Discípulo, Servidor
-
-    # --- Campos desde hoja de cálculo de miembros ---
-    id_type = Column(String(50), nullable=True)
-    id_number = Column(String(50), nullable=True)
     second_name = Column(String(100), nullable=True)
     second_last_name = Column(String(100), nullable=True)
-    marital_status = Column(String(50), nullable=True)
-    birth_country = Column(String(100), nullable=True)
+    email = Column(String(100), nullable=True, index=True)
+    phone = Column(String(20), nullable=True, index=True)
+    mobile_phone = Column(String(20), nullable=True)
     landline_phone = Column(String(20), nullable=True)
     other_phone = Column(String(20), nullable=True)
-    mobile_phone = Column(String(20), nullable=True)
+    church_role = Column(String(50), default="Miembro", index=True)
+    is_baptized = Column(Boolean, default=False, index=True)
+    fecha_bautismo = Column(Date, nullable=True)
+    spiritual_status = Column(String(50), default="Nuevo", index=True)
+    estado_vital = Column(String(50), nullable=True)
+    ministerio = Column(String(100), nullable=True)
+    permiso_plataforma = Column(String(50), nullable=True)
+    id_type = Column(String(50), nullable=True)
+    id_number = Column(String(50), nullable=True)
+    marital_status = Column(String(50), nullable=True)
+    birth_country = Column(String(100), nullable=True)
     address = Column(Text, nullable=True)
     housing_type = Column(String(50), nullable=True)
     education_level = Column(String(100), nullable=True)
@@ -262,49 +252,42 @@ class Persona(Base):
     group_name = Column(String(100), nullable=True)
     campus = Column(String(100), nullable=True)
     church_join_date = Column(Date, nullable=True)
-    colombian_department_id = Column(
-        Integer,
-        ForeignKey("colombian_departments.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
+    colombian_department_id = Column(Integer, ForeignKey("colombian_departments.id", ondelete="SET NULL"), nullable=True, index=True)
     city = Column(String(100), nullable=True)
-
-    # --- Extra DB columns (not yet in model) ---
+    latitud = Column(Float, nullable=True)
+    longitud = Column(Float, nullable=True)
     qr_token = Column(String(100), nullable=True, index=True)
     birthday = Column(DateTime, nullable=True)
     role_in_family = Column(String(50), nullable=True)
-
-    # --- Management Fields ---
     talents = Column(Text, nullable=True)
     spiritual_gifts = Column(Text, nullable=True)
     pastoral_notes = Column(Text, nullable=True)
-
+    tags = Column(JSON, nullable=True, default=list)
+    origen_estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    origen_grupo_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    origen_fecha = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     user = relationship("User", backref=backref("member_profile", uselist=False))
     family = relationship("Family", overlaps="family,members,personas")
     colombian_department = relationship("ColombianDepartment", foreign_keys=[colombian_department_id])
-
-    # --- Origen y tags (evangelismo) ---
-    tags = Column(JSON, nullable=True, default=list)
-    origen_estrategia_id = Column(
-        String(50),
-        ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    origen_grupo_id = Column(
-        Integer,
-        ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    origen_fecha = Column(DateTime, nullable=True)
-
     origen_estrategia = relationship("EstrategiaEvangelismo", foreign_keys=[origen_estrategia_id])
     origen_grupo = relationship("GrupoEvangelismo", foreign_keys=[origen_grupo_id])
+
+    positions = relationship("MemberPosition", back_populates="persona")
+    consolidation_cases = relationship("ConsolidationCase", back_populates="persona")
+    donations = relationship("Donation", back_populates="persona")
+    tasks = relationship("CrmTask", back_populates="persona")
+    volunteer_shifts = relationship("VolunteerShift", back_populates="persona")
+    communication_logs = relationship("CommunicationLog", back_populates="persona")
+    participaciones_grupo = relationship("ParticipanteGrupo", back_populates="persona")
+    asistencias = relationship("Asistencia", back_populates="persona")
+    seguimientos_realizados = relationship("RegistroSeguimiento", foreign_keys="RegistroSeguimiento.responsable_id", back_populates="responsable")
+    historial_embudo = relationship("HistorialEmbudo", back_populates="persona")
+    ministerios_kernel = relationship("PersonaMinistry", back_populates="persona")
+    rol_iglesia = relationship("PersonaRoleAssignment", back_populates="persona", uselist=False)
+    roles_plataforma = relationship("PersonaPlatformRole", back_populates="persona")
 
 
 class Position(Base):

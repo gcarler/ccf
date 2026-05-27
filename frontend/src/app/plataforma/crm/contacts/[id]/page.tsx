@@ -72,7 +72,7 @@ export default function LeadDetail() {
         setLoading(true);
         try {
             const [leadData, logsData, counselingData] = await Promise.allSettled([
-                apiFetch(`/crm/consolidation/pipeline/${leadId}`, { token, cache: 'no-store' }),
+                apiFetch(`/crm/consolidation/cases/${leadId}`, { token, cache: 'no-store' }),
                 apiFetch<CallLog[]>(`/crm/pipeline/leads/${leadId}/calls`, { token, cache: 'no-store' }),
                 apiFetch(`/crm/counseling/lead/${leadId}`, { token, cache: 'no-store' })
             ]);
@@ -90,7 +90,7 @@ export default function LeadDetail() {
         setIsStageOpen(false);
         setIsSavingStage(true);
         try {
-            await apiFetch(`/crm/consolidation/pipeline/${leadId}`, {
+            await apiFetch(`/crm/consolidation/cases/${leadId}`, {
                 method: 'PATCH', token,
                 body: { stage: newStage }
             });
@@ -171,7 +171,7 @@ export default function LeadDetail() {
             breadcrumbs={[
                 { label: 'CCF', icon: Users },
                 { label: 'Consolidación', icon: Users },
-                { label: lead ? (lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()) : 'Contacto', icon: Users }
+                { label: lead ? (lead.nombre_completo || '') : 'Contacto', icon: Users }
             ]}
             rightActions={
                 <button className="flex size-8 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white transition-all">
@@ -181,7 +181,7 @@ export default function LeadDetail() {
         >
             <AdminHero
                 eyebrow="Contacto"
-                title={lead ? (lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()) : 'Detalle de seguimiento'}
+                title={lead ? (lead.nombre_completo || '') : 'Detalle de seguimiento'}
                 description="Historia, notas y próximos pasos para este contacto."
                 tags={[`Etapa: ${STAGE_LABELS[lead?.stage] ?? '...'}`, `Origen: ${lead?.source ?? '...'}`]}
                 watchers={heroWatchers}
@@ -194,7 +194,7 @@ export default function LeadDetail() {
                     <div className="relative group">
                         <div className="size-10 rounded-md overflow-hidden border-4 border-white/10 group-hover:border-primary/50 transition-all shadow-2xl relative">
                             <div className="size-full rounded-lg bg-slate-800 flex items-center justify-center text-white text-xl font-bold">
-                                {lead?.nombre_completo?.charAt(0)?.toUpperCase() || lead?.first_name?.charAt(0)?.toUpperCase() || '?'}
+                                {lead?.nombre_completo?.charAt(0)?.toUpperCase() || '?'}
                             </div>
                         </div>
                         <div className="absolute -bottom-2 -right-2 size-8 rounded-full bg-emerald-500 border-4 border-slate-950 flex items-center justify-center">
@@ -202,7 +202,7 @@ export default function LeadDetail() {
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <h1 className="text-xl font-bold tracking-tight text-white">{lead?.nombre_completo || `${lead?.first_name ?? ''} ${lead?.last_name ?? ''}`.trim()}</h1>
+                        <h1 className="text-xl font-bold tracking-tight text-white">{lead?.nombre_completo || ''}</h1>
                         <p className="text-primary font-bold uppercase tracking-wide text-[10px]">
                             Etapa: {STAGE_LABELS[lead?.stage] ?? lead?.stage} • Origen: {lead?.source ?? '...'}
                         </p>

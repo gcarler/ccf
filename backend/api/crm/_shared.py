@@ -65,7 +65,7 @@ def _serialize_case(case: models.ConsolidationCase) -> dict:
         "assignments_count": len(case.assignments or []),
         "interactions_count": len(case.interactions or []),
         "open_tasks_count": sum(
-            1 for task in (case.follow_up_tasks or []) if task.status != "completed"
+            1 for task in (case.tasks or []) if task.status != "completed"
         ),
         "notes": case.notes,
         "created_at": case.created_at.isoformat() if case.created_at else None,

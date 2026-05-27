@@ -13,8 +13,8 @@ export interface CrmPersona {
 export interface CrmAnalyticsSummary {
     total_members: number;
     active_members: number;
-    total_leads: number;
-    pipeline_by_stage: Record<string, number>;
+    total_cases: number;
+    cases_by_stage: Record<string, number>;
     open_counseling: number;
     events_this_month: number;
     total_groups: number;

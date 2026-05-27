@@ -3,7 +3,6 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from backend.models_shared import _utcnow
 
-
 # 2. ACADEMY & FORUM
 class Course(Base):
     __tablename__ = "courses"
@@ -29,7 +28,6 @@ class Course(Base):
         back_populates="course",
     )
 
-
 class CoursePrerequisite(Base):
     __tablename__ = "course_prerequisites"
     id = Column(Integer, primary_key=True, index=True)
@@ -49,7 +47,6 @@ class CoursePrerequisite(Base):
     )
     prerequisite_course = relationship("Course", foreign_keys=[prerequisite_course_id])
 
-
 class Lesson(Base):
     __tablename__ = "lessons"
     id = Column(Integer, primary_key=True, index=True)
@@ -64,7 +61,6 @@ class Lesson(Base):
     resources = relationship("Resource", back_populates="lesson")
     assessments = relationship("Assessment", back_populates="lesson")
 
-
 class LessonProgress(Base):
     __tablename__ = "lesson_progress"
     id = Column(Integer, primary_key=True, index=True)
@@ -78,7 +74,6 @@ class LessonProgress(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_progress"),
     )
-
 
 class Assessment(Base):
     __tablename__ = "assessments"
@@ -96,7 +91,6 @@ class Assessment(Base):
     course = relationship("Course")  # New relationship
     questions = relationship("AssessmentQuestion", back_populates="assessment")
 
-
 class AssessmentQuestion(Base):
     __tablename__ = "assessment_questions"
     id = Column(Integer, primary_key=True, index=True)
@@ -110,7 +104,6 @@ class AssessmentQuestion(Base):
     assessment = relationship("Assessment", back_populates="questions")
     options = relationship("AssessmentOption", back_populates="question")
 
-
 class AssessmentOption(Base):
     __tablename__ = "assessment_options"
     id = Column(Integer, primary_key=True, index=True)
@@ -121,7 +114,6 @@ class AssessmentOption(Base):
     is_correct = Column(Boolean, default=False)
 
     question = relationship("AssessmentQuestion", back_populates="options")
-
 
 class AssessmentAttempt(Base):
     __tablename__ = "assessment_attempts"
@@ -139,7 +131,6 @@ class AssessmentAttempt(Base):
     answers = relationship(
         "AssessmentAnswer", back_populates="attempt", cascade="all, delete-orphan"
     )
-
 
 class AssessmentAnswer(Base):
     __tablename__ = "assessment_answers"
@@ -162,7 +153,6 @@ class AssessmentAnswer(Base):
     question = relationship("AssessmentQuestion")
     selected_option = relationship("AssessmentOption")
 
-
 class Resource(Base):
     __tablename__ = "resources"
     id = Column(Integer, primary_key=True, index=True)
@@ -172,7 +162,6 @@ class Resource(Base):
     resource_type = Column(String(50), nullable=True)
 
     lesson = relationship("Lesson", back_populates="resources")
-
 
 class AssignmentSubmission(Base):
     __tablename__ = "assignment_submissions"
@@ -187,7 +176,6 @@ class AssignmentSubmission(Base):
     teacher_feedback = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
-
 class FormalActa(Base):
     __tablename__ = "formal_actas"
     id = Column(Integer, primary_key=True, index=True)
@@ -198,7 +186,6 @@ class FormalActa(Base):
     min_attendance_required = Column(Numeric(5, 2), default=75)
     created_at = Column(DateTime, default=_utcnow)
 
-
 class ForumComment(Base):
     __tablename__ = "forum_comments"
     id = Column(Integer, primary_key=True, index=True)
@@ -207,7 +194,6 @@ class ForumComment(Base):
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
 
-
 class Family(Base):
     __tablename__ = "families"
     id = Column(Integer, primary_key=True, index=True)
@@ -215,7 +201,6 @@ class Family(Base):
     address = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     personas = relationship("Persona", back_populates="family")
-
 
 class CellGroup(Base):
     __tablename__ = "cell_groups"
@@ -265,7 +250,6 @@ class CellGroup(Base):
         "CellGroupMember", back_populates="cell_group", cascade="all, delete-orphan"
     )
 
-
 class CellGroupMember(Base):
     __tablename__ = "cell_group_members"
     id = Column(Integer, primary_key=True, index=True)
@@ -294,7 +278,6 @@ class CellGroupMember(Base):
 
     cell_group = relationship("CellGroup", back_populates="base_attendees")
     persona = relationship("Persona")
-
 
 class CellGroupSession(Base):
     """A single weekly/monthly reporting session for a Faro en Casa house."""
@@ -340,7 +323,6 @@ class CellGroupSession(Base):
     season = relationship("CampaignSeason", foreign_keys=[season_id])
     reported_by_persona = relationship("Persona")
 
-
 class CellGroupAttendance(Base):
     """Attendance record of a member at a Faro en Casa session."""
 
@@ -383,7 +365,6 @@ class CellGroupAttendance(Base):
     session = relationship("CellGroupSession")
     persona = relationship("Persona")
 
-
 class CampaignSeason(Base):
     """Represents an evangelistic campaign season (e.g. 'Faro en Casa 2026')."""
 
@@ -397,25 +378,6 @@ class CampaignSeason(Base):
     )  # SEMANAL | MENSUAL
     status = Column(String(20), default="Activa", index=True)  # Activa | Finalizada
     created_at = Column(DateTime, default=_utcnow)
-
-
-class ConsolidationPipeline(Base):
-    """Pipeline leads table (legacy). Referenced by multiple modules."""
-
-    __tablename__ = "consolidation_pipeline"
-    id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(100), nullable=False, index=True)
-    last_name = Column(String(100), nullable=False, index=True)
-    phone = Column(String(20), nullable=False)
-    source = Column(String(100), nullable=True)
-    landing_page = Column(String(500), nullable=True)
-    campaign = Column(String(200), nullable=True, index=True)
-    stage = Column(String(20), default="new", index=True)
-    notes = Column(Text, nullable=True)
-    assigned_pastor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-
 
 class Enrollment(Base):
     __tablename__ = "enrollments"
@@ -439,7 +401,6 @@ class Enrollment(Base):
     student = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
 
-
 class AcademyActivityLog(Base):
     __tablename__ = "academy_activity_logs"
     id = Column(Integer, primary_key=True, index=True)
@@ -452,7 +413,6 @@ class AcademyActivityLog(Base):
     value = Column(Numeric(10, 2), default=1.0)
     created_at = Column(DateTime, default=_utcnow, index=True)
 
-
 class ForumThread(Base):
     __tablename__ = "forum_threads"
     id = Column(Integer, primary_key=True, index=True)
@@ -462,7 +422,6 @@ class ForumThread(Base):
     is_resolved = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-
 
 class CourseAttendance(Base):
     __tablename__ = "course_attendance"
@@ -478,7 +437,6 @@ class CourseAttendance(Base):
     recorded_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     enrollment = relationship("Enrollment")
-
 
 class Certificate(Base):
     __tablename__ = "certificates"

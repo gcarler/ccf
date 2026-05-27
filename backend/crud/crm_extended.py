@@ -31,7 +31,7 @@ class PositionUpdate(BaseModel):
 
 
 class MemberPositionCreate(BaseModel):
-    member_id: int
+    persona_id: str
     position_id: int
     start_date: datetime | None = None
     end_date: datetime | None = None
@@ -47,7 +47,7 @@ class MemberPositionUpdate(BaseModel):
 
 class EventAssignmentCreate(BaseModel):
     event_id: int
-    member_id: int
+    persona_id: str
     session_date: datetime
     role: str
 
@@ -69,7 +69,7 @@ class MinistryUpdate(BaseModel):
 
 
 class MemberMinistryCreate(BaseModel):
-    member_id: int
+    persona_id: str
     ministry_id: int
     role: str | None = None
     start_date: datetime | None = None
@@ -116,7 +116,7 @@ class RoleDefinitionUpdate(BaseModel):
 
 
 class MemberRoleCreate(BaseModel):
-    member_id: int
+    persona_id: str
     role_id: int
 
 
@@ -207,12 +207,12 @@ def delete_position(db: Session, position_id: int) -> bool:
 
 def get_member_positions(
     db: Session,
-    member_id: int | None = None,
+    persona_id: str | None = None,
     only_active: bool = False,
 ) -> List[models.MemberPosition]:
     q = db.query(models.MemberPosition)
-    if member_id is not None:
-        q = q.filter(models.MemberPosition.persona_id == member_id)
+    if persona_id is not None:
+        q = q.filter(models.MemberPosition.persona_id == persona_id)
     if only_active:
         q = q.filter(models.MemberPosition.is_active)
     return q.order_by(models.MemberPosition.created_at.desc()).all()
@@ -272,14 +272,14 @@ def delete_member_position(db: Session, mp_id: int) -> bool:
 def get_event_assignments(
     db: Session,
     event_id: int | None = None,
-    member_id: int | None = None,
+    persona_id: str | None = None,
     role: str | None = None,
 ) -> List[models.EventAssignment]:
     q = db.query(models.EventAssignment)
     if event_id is not None:
         q = q.filter(models.EventAssignment.event_id == event_id)
-    if member_id is not None:
-        q = q.filter(models.EventAssignment.persona_id == member_id)
+    if persona_id is not None:
+        q = q.filter(models.EventAssignment.persona_id == persona_id)
     if role:
         q = q.filter(models.EventAssignment.role == role)
     return q.order_by(models.EventAssignment.session_date.desc()).all()
@@ -379,13 +379,13 @@ def delete_ministry(db: Session, ministry_id: int) -> bool:
 
 def get_member_ministries(
     db: Session,
-    member_id: int | None = None,
+    persona_id: str | None = None,
     ministry_id: int | None = None,
     only_active: bool = False,
 ) -> List[models.MemberMinistry]:
     q = db.query(models.MemberMinistry)
-    if member_id is not None:
-        q = q.filter(models.MemberMinistry.persona_id == member_id)
+    if persona_id is not None:
+        q = q.filter(models.MemberMinistry.persona_id == persona_id)
     if ministry_id is not None:
         q = q.filter(models.MemberMinistry.ministry_id == ministry_id)
     if only_active:
@@ -574,12 +574,12 @@ def delete_role_definition(db: Session, role_id: int) -> bool:
 
 def get_member_roles(
     db: Session,
-    member_id: int | None = None,
+    persona_id: str | None = None,
     role_id: int | None = None,
 ) -> List[models.MemberRole]:
     q = db.query(models.MemberRole)
-    if member_id is not None:
-        q = q.filter(models.MemberRole.persona_id == member_id)
+    if persona_id is not None:
+        q = q.filter(models.MemberRole.persona_id == persona_id)
     if role_id is not None:
         q = q.filter(models.MemberRole.role_id == role_id)
     return q.order_by(models.MemberRole.created_at.desc()).all()

@@ -232,8 +232,8 @@ def get_personas(db: Session, search: str | None = None, role: str | None = None
     return search_members(db, search=search, role=role)
 
 
-def update_persona(db: Session, member_id: int, payload: schemas.PersonaUpdate):
-    row = db.query(models.Persona).filter(models.Persona.id == member_id).first()
+def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate):
+    row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -912,12 +912,12 @@ def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
 # ── Members ─────────────────────────────────────────────
 
 
-def get_persona(db: Session, member_id: int) -> Optional[models.Persona]:
-    return db.query(models.Persona).filter(models.Persona.id == member_id).first()
+def get_persona(db: Session, persona_id: str) -> Optional[models.Persona]:
+    return db.query(models.Persona).filter(models.Persona.id == persona_id).first()
 
 
-def delete_persona(db: Session, member_id: int) -> bool:
-    row = db.query(models.Persona).filter(models.Persona.id == member_id).first()
+def delete_persona(db: Session, persona_id: str) -> bool:
+    row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not row:
         return False
     db.delete(row)

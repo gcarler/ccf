@@ -4,7 +4,7 @@ from backend.models_academy import AcademyActivityLog  # noqa: F401
 from backend.models_academy import (  # noqa: F401
     Assessment, AssessmentAttempt, AssessmentOption, AssessmentQuestion,
     AssignmentSubmission, Certificate, CellGroup, CellGroupAttendance,
-    CellGroupMember, CellGroupSession, ConsolidationPipeline, Course,
+    CellGroupMember, CellGroupSession, Course,
     CourseAttendance, CoursePrerequisite, Enrollment, Family, CampaignSeason,
     FormalActa, ForumComment, ForumThread, Lesson, LessonProgress, Resource)
 
@@ -33,7 +33,7 @@ from backend.models_crm import (  # noqa: F401
     ConsolidationInteraction, ConsolidationTask,
     CounselingTicket, CrmAutomation,
     CrmEvent, CrmTask, Donation, DonationCategory, EventAssignment,
-    EventAttendance, EvangelismStrategy, Fund, Persona, MemberMinistry,
+    EventAttendance, EvangelismStrategy, Fund, MemberMinistry,
     MemberPosition, MemberRole, Ministry, PastoralCallLog, Position,
     PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
     VolunteerShift, VolunteerSkill, member_volunteer_skills)
@@ -71,11 +71,10 @@ from backend.models_evangelism import (  # noqa: F401
 
 # Kernel — Protocolo de Identidad y Roles
 from backend.models_kernel import (  # noqa: F401
-    ActivityStatus, MinistryOffice, ChurchRole,
-    PlatformRole)
-from backend.models_kernel import (  # noqa: F401
-    UserMinistry, UserRoleAssignment,
-    UserRoleHistory, PlatformRoleDefinition, UserPlatformRole)
+    ActivityStatus, MinistryOffice, ChurchRole, PlatformRole,
+    PersonaMinistry, PersonaRoleAssignment, PersonaRoleHistory,
+    PlatformRoleDefinition, PersonaPlatformRole,
+    UserMinistry, UserRoleAssignment, UserRoleHistory, UserPlatformRole)
 
 # Knowledge Base
 from backend.services.knowledge_base import AgentKnowledgeBase  # noqa: F401

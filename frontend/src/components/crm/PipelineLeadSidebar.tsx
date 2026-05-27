@@ -38,7 +38,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
         const fetchAudit = async () => {
             try {
                 setLoadingAudit(true);
-                const logs = await apiFetch<any[]>(`/crm/consolidation/pipeline/${lead.id}/audit`, { token });
+                const logs = await apiFetch<any[]>(`/crm/consolidation/cases/${lead.id}/audit`, { token });
                 setAuditLogs(logs || []);
             } catch (err) {
                 console.error("Error fetching audit:", err);
@@ -76,7 +76,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                     </div>
                     <div className="flex-1 min-w-0">
                         <h2 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-[-0.04em] leading-[0.9] mb-2">
-                            {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
+                            {lead.nombre_completo || ''}
                         </h2>
                         <div className="flex items-center gap-2.5">
                             {currentStage && (
@@ -93,7 +93,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-blue-500/10 rounded-md text-blue-600"><Smartphone size={16} /></div>
                         <div>
-                            <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100">{lead.phone || 'Sin teléfono'}</p>
+                            <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">WhatsApp Disponible</p>
                         </div>
                     </div>

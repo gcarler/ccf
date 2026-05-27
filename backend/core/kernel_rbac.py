@@ -152,9 +152,12 @@ def has_permission(
 
     También verifica el estado vital — usuarios INACTIVOS no tienen permisos.
     """
-    # Regla de Inactividad: usuarios INACTIVOS no tienen permisos
-    if not getattr(user, "is_active", True):
-        return False
+    # Regla de Inactividad: verificar estado_vital en Persona (fuente canónica)
+    # Fallback a User.is_active para usuarios sin Persona aún migrada
+    from backend.crud.kernel import is_user_active
+    if not is_user_active(db, user.id):
+        if not getattr(user, "is_active", True):
+            return False
 
     effective = resolve_effective_permissions(db, user)
 
@@ -232,7 +235,8 @@ def require_active_for_assignment():
         current_user=Depends(get_current_active_user),
         db: Session = Depends(get_db),
     ):
-        if can_receive_assignment(db, current_user.id):
+        from backend.crud.kernel import is_user_active
+        if is_user_active(db, current_user.id):
             return current_user
 
         raise HTTPException(

@@ -75,7 +75,7 @@ export default function ConsolidationPipelinePage() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/crm/consolidation/pipeline', { token });
+            const data = await apiFetch<any[]>('/crm/consolidation/cases', { token });
             if (Array.isArray(data)) setLeads(data);
         } catch (err) {
             console.error(err);
@@ -91,7 +91,7 @@ export default function ConsolidationPipelinePage() {
         e.preventDefault();
         setIsSavingLead(true);
         try {
-            await apiFetch('/crm/consolidation/pipeline', {
+            await apiFetch('/crm/consolidation/cases', {
                 method: 'POST', token,
                 body: { ...newLeadForm, spiritual_status: 'Prospecto' }
             });
@@ -110,7 +110,7 @@ export default function ConsolidationPipelinePage() {
         // Optimistic update
         setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
         try {
-            await apiFetch(`/crm/consolidation/pipeline/${leadId}`, {
+            await apiFetch(`/crm/consolidation/cases/${leadId}`, {
                 method: 'PATCH', token, body: { stage: newStage }
             });
             addToast(`Movido a ${STAGE_LABEL[newStage] ?? newStage}`, 'success');
@@ -128,8 +128,8 @@ export default function ConsolidationPipelinePage() {
             size: 280,
             cell: ({ row }) => {
                 const l = row.original;
-                const initial1 = l.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? l.first_name?.[0] ?? '';
-                const initial2 = l.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? l.last_name?.[0] ?? '';
+                const initial1 = l.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? '' /* LEGACY: removed first_name fallback */;
+                const initial2 = l.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? '' /* LEGACY: removed last_name fallback */;
                 const initials = `${initial1}${initial2}`.toUpperCase();
                 return (
                     <div className="flex items-center gap-3">
@@ -137,8 +137,8 @@ export default function ConsolidationPipelinePage() {
                             {initials}
                         </div>
                         <div>
-                            <p className="font-bold text-slate-800 dark:text-white text-xs leading-tight">{l.nombre_completo || `${l.first_name ?? ''} ${l.last_name ?? ''}`.trim()}</p>
-                            <p className="text-[10px] font-medium text-slate-400">{l.phone}</p>
+                            <p className="font-bold text-slate-800 dark:text-white text-xs leading-tight">{l.nombre_completo || ''}</p>
+                            <p className="text-[10px] font-medium text-slate-400">{l.telefono ?? l.phone}</p>
                         </div>
                     </div>
                 );
@@ -200,8 +200,8 @@ export default function ConsolidationPipelinePage() {
         if (!search.trim()) return leads;
         const q = search.toLowerCase();
         return leads.filter(l =>
-            (l.nombre_completo || `${l.first_name ?? ''} ${l.last_name ?? ''}`.trim()).toLowerCase().includes(q) ||
-            l.phone?.includes(q) ||
+            (l.nombre_completo || '').toLowerCase().includes(q) ||
+            (l.telefono ?? l.phone ?? '').includes(q) ||
             l.source?.toLowerCase().includes(q)
         );
     }, [leads, search]);
@@ -233,7 +233,7 @@ export default function ConsolidationPipelinePage() {
         if (!selectedLead) return;
         pushSidebarPanel({
             id: `pipeline-lead-${selectedLead.id}`,
-            title: selectedLead.nombre_completo || `${selectedLead.first_name ?? ''} ${selectedLead.last_name ?? ''}`.trim(),
+            title: selectedLead.nombre_completo || '',
             onBack: () => setSelectedLead(null),
             content: (
                 <PipelineLeadSidebar 
@@ -289,7 +289,7 @@ export default function ConsolidationPipelinePage() {
             breadcrumbs={[
                 { label: 'Consolidación', icon: Users },
                 { label: 'Pipeline de Consolidación', icon: Target },
-                ...(selectedLead ? [{ label: selectedLead.nombre_completo || `${selectedLead.first_name ?? ''} ${selectedLead.last_name ?? ''}`.trim(), icon: User }] : [])
+                ...(selectedLead ? [{ label: selectedLead.nombre_completo || '', icon: User }] : [])
             ]}
             viewOptions={ALL_VIEWS}
             viewType={viewType}
@@ -337,11 +337,11 @@ export default function ConsolidationPipelinePage() {
                                                 >
                                                     <div className="flex items-center gap-3 mb-3">
                                                         <div className="size-8 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20">
-                                                            {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? lead.first_name?.[0] ?? ''}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? lead.last_name?.[0] ?? ''}
+                                                            {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? '' /* LEGACY: removed first_name fallback */}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? '' /* LEGACY: removed last_name fallback */}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-slate-800 dark:text-white text-sm truncate">{lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}</p>
-                                                            <p className="text-[10px] text-slate-400">{lead.phone}</p>
+                                                            <p className="font-bold text-slate-800 dark:text-white text-sm truncate">{lead.nombre_completo || ''}</p>
+                                                            <p className="text-[10px] text-slate-400">{lead.telefono ?? lead.phone}</p>
                                                         </div>
                                                         <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 transition-all" />
                                                     </div>
@@ -370,7 +370,7 @@ export default function ConsolidationPipelinePage() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 {payload.items.map((lead: any) => (
                                                     <button key={lead.id} onClick={() => setSelectedLead(lead)} className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
-                                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}</p>
+                                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || ''}</p>
                                                         <p className="text-[10px] text-slate-400">{STAGE_LABEL[lead.stage] ?? lead.stage}</p>
                                                     </button>
                                                 ))}
@@ -385,7 +385,7 @@ export default function ConsolidationPipelinePage() {
                                         {filteredLeads.map((lead: any) => (
                                             <div key={lead.id} className="space-y-1">
                                                 <div className="flex items-center justify-between text-[11px]">
-                                                    <span className="font-bold text-slate-700 dark:text-slate-300">{lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}</span>
+                                                    <span className="font-bold text-slate-700 dark:text-slate-300">{lead.nombre_completo || ''}</span>
                                                     <span className="font-bold text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
                                                 </div>
                                                 <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">

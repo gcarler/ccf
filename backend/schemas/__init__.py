@@ -64,7 +64,7 @@ from backend.schemas.evangelism import (AsistenciaBulkCreate, AsistenciaBulkItem
 )
 
 from backend.schemas.crm import (EVENT_TYPES, MINISTRY_ROLES,
-                                 PIPELINE_STAGE_ALIASES, AgendaEvent,
+                                 AgendaEvent,
                                  AgendaEventBase, AgendaEventCreate,
                                  PersonaCreate, PersonaResponse, PersonaUpdate,
                                  ConsolidationAssignment,
@@ -82,8 +82,6 @@ from backend.schemas.crm import (EVENT_TYPES, MINISTRY_ROLES,
                                  ConsolidationTaskBase,
                                  ConsolidationTaskCreate,
                                  ConsolidationTaskUpdate,
-                                 ConsolidationPipelineCreate,
-                                 ConsolidationPipelineUpdate,
                                  CounselingTicket,
                                  CounselingTicketBase, CounselingTicketCreate,
                                  CounselingTicketUpdate, CrmEvent,

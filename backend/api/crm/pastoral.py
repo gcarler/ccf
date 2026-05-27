@@ -1,6 +1,7 @@
 import collections
 import logging
 import uuid
+from uuid import UUID
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -183,7 +184,7 @@ def list_consolidation_cases(
     source: Optional[str] = None,
     stage: Optional[str] = None,
     status: Optional[str] = None,
-    member_id: Optional[int] = None,
+    persona_id: Optional[str] = None,
     page: int = 1,
     page_size: int = 50,
     db: Session = Depends(get_db),
@@ -198,8 +199,8 @@ def list_consolidation_cases(
         q = q.filter(models.ConsolidationCase.stage == stage)
     if status:
         q = q.filter(models.ConsolidationCase.status == status)
-    if member_id:
-        q = q.filter(models.ConsolidationCase.persona_id == str(member_id))
+    if persona_id:
+        q = q.filter(models.ConsolidationCase.persona_id == persona_id)
 
     total = q.count()
     cases = (
@@ -395,13 +396,13 @@ async def send_crm_message(
         raise HTTPException(status_code=400, detail="channel and content are required")
 
     campaign_name = payload.get("campaign_name") or payload.get("name")
-    member_id = payload.get("persona_id")
+    persona_id = payload.get("persona_id")
     target_segments = payload.get("target_segments") or []
 
-    if member_id:
-        target_members = [{"id": int(member_id)}]
+    if persona_id:
+        target_members = [{"id": persona_id}]
     else:
-        member_map: dict[int, models.Persona] = {}
+        persona_map: dict[str, models.Persona] = {}
         for segment in target_segments:
             normalized = str(segment).strip().lower()
             if normalized == "active":
@@ -419,8 +420,8 @@ async def send_crm_message(
             else:
                 rows = []
             for persona in rows:
-                member_map[member.id] = member
-        target_members = list(member_map.values())
+                persona_map[str(persona.id)] = persona
+        target_members = list(persona_map.values())
 
     if not target_members:
         raise HTTPException(status_code=404, detail="No target members found")
@@ -431,12 +432,12 @@ async def send_crm_message(
     log_ids: list[int] = []
 
     for persona in target_members:
-        member_id_value = member["id"] if isinstance(member, dict) else member.id
+        persona_id_value = persona["id"] if isinstance(persona, dict) else persona.id
         try:
             if channel == "whatsapp":
                 log = await MessagingGateway.send_whatsapp(
                     db,
-                    member_id_value,
+                    persona_id_value,
                     content,
                     current_user.id,
                     campaign_name=campaign_name,
@@ -445,7 +446,7 @@ async def send_crm_message(
             elif channel == "sms":
                 log = await MessagingGateway.send_sms(
                     db,
-                    member_id_value,
+                    persona_id_value,
                     content,
                     current_user.id,
                     campaign_name=campaign_name,
@@ -454,7 +455,7 @@ async def send_crm_message(
             elif channel == "email":
                 log = await MessagingGateway.send_email(
                     db,
-                    member_id_value,
+                    persona_id_value,
                     content,
                     current_user.id,
                     campaign_name=campaign_name,
@@ -567,7 +568,7 @@ def create_crm_task(
         title=title,
         description=payload.get("description"),
         category=payload.get("category") or "Pastoral",
-        member_id=payload.get("persona_id"),
+        persona_id=payload.get("persona_id"),
         assignee_id=payload.get("assignee_id") or current_user.id,
         due_date=due_date,
         status=payload.get("status") or "pending",
@@ -1354,9 +1355,9 @@ def create_volunteer(
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
 
-    member_id = payload.get("persona_id")
-    if not member_id:
-        # Create a minimal member record for standalone volunteers
+    persona_id = payload.get("persona_id")
+    if not persona_id:
+        # Create a minimal persona record for standalone volunteers
         parts = name.split(" ", 1)
         first_name = parts[0]
         last_name = parts[1] if len(parts) > 1 else ""
@@ -1366,9 +1367,9 @@ def create_volunteer(
             church_role=payload.get("role") or "volunteer",
             status="active",
         )
-        db.add(member)
+        db.add(persona)
         db.flush()
-        member_id = member.id
+        persona_id = persona.id
 
     shift_start = None
     shift_end = None
@@ -1388,7 +1389,7 @@ def create_volunteer(
             pass
 
     shift = models.VolunteerShift(
-        member_id=member_id,
+        persona_id=persona_id,
         team_name=payload.get("team"),
         ministry=payload.get("role"),
         shift_start=shift_start,
@@ -1401,7 +1402,7 @@ def create_volunteer(
     db.refresh(shift)
     return {
         "id": shift.id,
-        "persona_id": member_id,
+        "persona_id": persona_id,
         "name": name,
         "team": shift.team_name,
         "status": shift.status,
@@ -1439,18 +1440,18 @@ def list_volunteers(
     return result
 
 
-@router.get("/volunteers/{member_id}", response_model=dict)
+@router.get("/volunteers/{persona_id}", response_model=dict)
 def get_volunteer_detail(
-    member_id: int,
+    persona_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
-    if not member:
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     shifts = (
         db.query(models.VolunteerShift)
-        .filter(models.VolunteerShift.persona_id == member_id)
+        .filter(models.VolunteerShift.persona_id == persona_id)
         .order_by(models.VolunteerShift.shift_start.desc())
         .all()
     )
@@ -1466,18 +1467,18 @@ def get_volunteer_detail(
         for row in (
             db.query(models.VolunteerSkill)
             .join(
-                models.persona_volunteer_skills,
-                models.persona_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
+                models.member_volunteer_skills,
+                models.member_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
             )
-            .filter(models.persona_volunteer_skills.c.persona_id == member_id)
+            .filter(models.member_volunteer_skills.c.persona_id == persona_id)
             .all()
         )
         if row.name
     )
     return {
-        "id": member.id,
-        "name": _persona_full_name(member),
-        "role": member.church_role,
+        "id": persona.id,
+        "name": _persona_full_name(persona),
+        "role": persona.church_role,
         "team": latest_shift.team_name if latest_shift else None,
         "status": latest_shift.status if latest_shift else "inactive",
         "joined_date": (
@@ -1490,42 +1491,42 @@ def get_volunteer_detail(
     }
 
 
-@router.patch("/volunteers/{member_id}", response_model=dict)
+@router.patch("/volunteers/{persona_id}", response_model=dict)
 def update_volunteer(
-    member_id: int,
+    persona_id: UUID,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
-    if not member:
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     allowed = {"church_role", "first_name", "last_name", "phone", "email"}
     for k, v in payload.items():
         if k in allowed:
-            setattr(member, k, v)
+            setattr(persona, k, v)
     db.commit()
-    db.refresh(member)
+    db.refresh(persona)
     return {
-        "id": member.id,
-        "name": _persona_full_name(member),
-        "role": member.church_role,
+        "id": persona.id,
+        "name": _persona_full_name(persona),
+        "role": persona.church_role,
     }
 
 
-@router.delete("/volunteers/{member_id}", status_code=204)
+@router.delete("/volunteers/{persona_id}", status_code=204)
 def delete_volunteer(
-    member_id: int,
+    persona_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
-    if not member:
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     db.query(models.VolunteerShift).filter(
-        models.VolunteerShift.persona_id == member_id
+        models.VolunteerShift.persona_id == persona_id
     ).delete()
-    db.delete(member)
+    db.delete(persona)
     db.commit()
 
 

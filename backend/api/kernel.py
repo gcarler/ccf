@@ -1,13 +1,12 @@
-"""CCF MESH - ROUTER DE IDENTIDAD KERNEL
+"""Kernel — Router de Identidad
 
-Endpoints para el Protocolo de Identidad y Roles (Kernel CCF).
+Endpoints del Protocolo de Identidad y Roles, centrados en Persona (UUID).
 
 - Estado Vital (ACTIVO/INACTIVO)
 - Dimensión A: Ministerios (Efesios 4:11)
 - Dimensión B: Roles en la Iglesia (embudo)
 - Dimensión C: Roles de Plataforma (RBAC)
 """
-
 import logging
 from datetime import datetime
 from typing import Optional
@@ -16,22 +15,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.kernel_rbac import (require_kernel_permission,
                                        require_active_for_assignment)
 from backend.core.permissions import require_active_user
 
 log = logging.getLogger(__name__)
-
-settings = get_settings()
 router = APIRouter(prefix="/kernel", tags=["Kernel Identidad"])
 
 
 # ──────────────────────────────────────────────
-# PYDANTIC SCHEMAS (inline para evitar dependencia circular)
+# SCHEMAS
 # ──────────────────────────────────────────────
-
 
 class MinistryCreate(BaseModel):
     ministry: str
@@ -52,246 +47,203 @@ class PlatformRoleAssign(BaseModel):
 
 
 class ActivityStatusUpdate(BaseModel):
-    status: str  # "ACTIVO" or "INACTIVO"
+    status: str
 
 
 # ──────────────────────────────────────────────
-# AUTH HELPER
+# HELPERS
 # ──────────────────────────────────────────────
 
-def _can_view_user(current_user, target_user_id: int) -> bool:
-    """Verifica si el usuario puede ver datos de otro usuario.
+def _resolve_persona_id(db: Session, current_user, persona_id: str) -> str:
+    """Permite que un admin/pastor actúe sobre cualquier persona_id.
+    Un usuario normal solo puede actuar sobre su propia persona."""
+    from backend import models
+    import uuid as _uuid
 
-    Solo el propio usuario, admin, o pastor pueden ver datos kernel de otros.
-    """
-    if current_user.id == target_user_id:
-        return True
+    target = db.query(models.Persona).filter(
+        models.Persona.id == _uuid.UUID(persona_id)
+    ).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
+
+    # Acceso propio: solo si la persona está vinculada al usuario actual
+    if target.user_id is not None and target.user_id == current_user.id:
+        return persona_id
+
     role = str(getattr(current_user, "role", "")).lower()
-    return role in ("admin", "pastor")
+    if role not in ("admin", "pastor"):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo el propio usuario o un admin/pastor puede acceder a este perfil",
+        )
+    return persona_id
+
+
+def _my_persona_id(db: Session, current_user) -> str:
+    from backend import models
+    persona = db.query(models.Persona).filter(
+        models.Persona.user_id == current_user.id
+    ).first()
+    if not persona:
+        raise HTTPException(status_code=404, detail="No tiene un perfil de persona asociado")
+    return str(persona.id)
 
 
 # ──────────────────────────────────────────────
 # PERFIL COMPLETO KERNEL
 # ──────────────────────────────────────────────
 
-@router.get("/profile/{user_id}")
-def get_kernel_profile(
-    user_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_active_user),
-):
-    """Retorna el perfil completo del Kernel para un usuario."""
-    from backend.crud import kernel as kernel_crud
-
-    if not _can_view_user(current_user, user_id):
-        raise HTTPException(
-            status_code=403,
-            detail=(
-            "Solo el propio usuario o un admin/pastor "
-            "puede ver el perfil kernel"
-        ),
-        )
-
-    profile = kernel_crud.get_kernel_profile(db, user_id)
-    if not profile:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return profile
-
-
 @router.get("/profile/me")
 def get_my_kernel_profile(
     db: Session = Depends(get_db),
     current_user=Depends(require_active_user),
 ):
-    """Retorna el perfil kernel del usuario autenticado."""
     from backend.crud import kernel as kernel_crud
+    persona_id = _my_persona_id(db, current_user)
+    profile = kernel_crud.get_kernel_profile(db, persona_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Perfil no encontrado")
+    return profile
 
-    return kernel_crud.get_kernel_profile(db, current_user.id)
+
+@router.get("/profile/{persona_id}")
+def get_kernel_profile(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_active_user),
+):
+    from backend.crud import kernel as kernel_crud
+    _resolve_persona_id(db, current_user, persona_id)
+    profile = kernel_crud.get_kernel_profile(db, persona_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
+    return profile
 
 
 # ──────────────────────────────────────────────
 # ESTADO VITAL
 # ──────────────────────────────────────────────
 
-@router.put("/status/{user_id}")
+@router.put("/status/{persona_id}")
 def update_activity_status(
-    user_id: int,
+    persona_id: str,
     payload: ActivityStatusUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(require_kernel_permission("system:config")),
 ):
-    """Cambia el estado vital de un usuario (ACTIVO/INACTIVO)."""
     from backend.crud import kernel as kernel_crud
-
     if payload.status not in ("ACTIVO", "INACTIVO"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Estado inválido: {payload.status}. Debe ser ACTIVO o INACTIVO",
-        )
-
-    user = kernel_crud.set_user_activity_status(
-        db, user_id, payload.status, changed_by_id=current_user.id
+        raise HTTPException(status_code=400,
+                            detail=f"Estado inválido: {payload.status}. Debe ser ACTIVO o INACTIVO")
+    persona = kernel_crud.set_persona_activity_status(
+        db, persona_id, payload.status, changed_by_id=current_user.id
     )
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-    return {
-        "user_id": user.id,
-        "estado_vital": payload.status,
-        "message": f"Estado vital cambiado a {payload.status}",
-    }
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
+    return {"persona_id": persona_id, "estado_vital": payload.status,
+            "message": f"Estado vital cambiado a {payload.status}"}
 
 
 # ──────────────────────────────────────────────
-# DIMENSIÓN A: MINISTERIOS (EFESIOS 4:11)
+# DIMENSIÓN A: MINISTERIOS
 # ──────────────────────────────────────────────
 
-@router.get("/ministries/{user_id}")
-def get_ministries(
-    user_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_active_user),
-):
-    """Retorna los ministerios reconocidos de un usuario."""
+@router.get("/ministries/me")
+def get_my_ministries(db: Session = Depends(get_db),
+                      current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
-
-    if not _can_view_user(current_user, user_id):
-        raise HTTPException(status_code=403, detail="Acceso denegado")
-
-    return kernel_crud.get_user_ministries(db, user_id)
+    return kernel_crud.get_persona_ministries(db, _my_persona_id(db, current_user))
 
 
-@router.post("/ministries/{user_id}")
-def add_ministry(
-    user_id: int,
-    payload: MinistryCreate,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_kernel_permission("system:config")),
-):
-    """Agrega un ministerio reconocido a un usuario."""
+@router.get("/ministries/{persona_id}")
+def get_ministries(persona_id: str, db: Session = Depends(get_db),
+                   current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
+    _resolve_persona_id(db, current_user, persona_id)
+    return kernel_crud.get_persona_ministries(db, persona_id)
 
-    result = kernel_crud.add_user_ministry(
-        db,
-        user_id=user_id,
-        ministry=payload.ministry,
-        is_primary=payload.is_primary,
-        recognized_by_id=current_user.id,
-        notes=payload.notes,
+
+@router.post("/ministries/{persona_id}")
+def add_ministry(persona_id: str, payload: MinistryCreate,
+                 db: Session = Depends(get_db),
+                 current_user=Depends(require_kernel_permission("system:config"))):
+    from backend.crud import kernel as kernel_crud
+    result = kernel_crud.add_persona_ministry(
+        db, persona_id=persona_id, ministry=payload.ministry,
+        is_primary=payload.is_primary, recognized_by_id=current_user.id, notes=payload.notes,
     )
     if not result:
-        raise HTTPException(
-            status_code=400,
-            detail="El usuario ya tiene este ministerio o el ministerio es inválido",
-        )
+        raise HTTPException(status_code=400,
+                            detail="La persona ya tiene este ministerio o el ministerio es inválido")
     return result
 
 
-@router.delete("/ministries/{user_id}/{ministry}")
-def remove_ministry(
-    user_id: int,
-    ministry: str,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_kernel_permission("system:config")),
-):
-    """Elimina un ministerio reconocido de un usuario."""
+@router.delete("/ministries/{persona_id}/{ministry}")
+def remove_ministry(persona_id: str, ministry: str, db: Session = Depends(get_db),
+                    current_user=Depends(require_kernel_permission("system:config"))):
     from backend.crud import kernel as kernel_crud
-
-    if not kernel_crud.remove_user_ministry(db, user_id, ministry):
-        raise HTTPException(
-            status_code=404,
-            detail="Ministerio no encontrado para este usuario",
-        )
+    if not kernel_crud.remove_persona_ministry(db, persona_id, ministry):
+        raise HTTPException(status_code=404, detail="Ministerio no encontrado para esta persona")
     return {"message": f"Ministerio {ministry} eliminado"}
 
 
-@router.put("/ministries/{user_id}/{ministry}/primary")
-def set_primary_ministry(
-    user_id: int,
-    ministry: str,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_kernel_permission("system:config")),
-):
-    """Establece un ministerio como principal."""
+@router.put("/ministries/{persona_id}/{ministry}/primary")
+def set_primary_ministry(persona_id: str, ministry: str, db: Session = Depends(get_db),
+                         current_user=Depends(require_kernel_permission("system:config"))):
     from backend.crud import kernel as kernel_crud
-
-    if not kernel_crud.set_primary_ministry(db, user_id, ministry):
-        raise HTTPException(
-            status_code=404,
-            detail="Ministerio no encontrado para este usuario",
-        )
+    if not kernel_crud.set_primary_ministry(db, persona_id, ministry):
+        raise HTTPException(status_code=404, detail="Ministerio no encontrado para esta persona")
     return {"message": f"Ministerio {ministry} establecido como principal"}
 
 
 # ──────────────────────────────────────────────
-# DIMENSIÓN B: ROLES EN LA IGLESIA
+# DIMENSIÓN B: ROL EN LA IGLESIA
 # ──────────────────────────────────────────────
 
-@router.get("/church-role/{user_id}")
-def get_church_role(
-    user_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_active_user),
-):
-    """Retorna el rol actual en la iglesia de un usuario."""
+@router.get("/church-role/me")
+def get_my_church_role(db: Session = Depends(get_db),
+                       current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
-
-    if not _can_view_user(current_user, user_id):
-        raise HTTPException(status_code=403, detail="Acceso denegado")
-
-    return kernel_crud.get_user_church_role(db, user_id)
+    return kernel_crud.get_persona_church_role(db, _my_persona_id(db, current_user))
 
 
-@router.put("/church-role/{user_id}")
-def update_church_role(
-    user_id: int,
-    payload: ChurchRoleUpdate,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_kernel_permission("system:config")),
-):
-    """Cambia el rol en la iglesia de un usuario."""
+@router.get("/church-role/{persona_id}")
+def get_church_role(persona_id: str, db: Session = Depends(get_db),
+                    current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
+    _resolve_persona_id(db, current_user, persona_id)
+    return kernel_crud.get_persona_church_role(db, persona_id)
 
-    result = kernel_crud.set_user_church_role(
-        db,
-        user_id=user_id,
-        church_role=payload.church_role,
-        changed_by_id=current_user.id,
-        reason=payload.reason,
-        notes=payload.notes,
+
+@router.put("/church-role/{persona_id}")
+def update_church_role(persona_id: str, payload: ChurchRoleUpdate,
+                       db: Session = Depends(get_db),
+                       current_user=Depends(require_kernel_permission("system:config"))):
+    from backend.crud import kernel as kernel_crud
+    result = kernel_crud.set_persona_church_role(
+        db, persona_id=persona_id, church_role=payload.church_role,
+        changed_by_id=current_user.id, reason=payload.reason, notes=payload.notes,
     )
     if not result:
         raise HTTPException(status_code=400, detail="No se pudo actualizar el rol")
     return result
 
 
-@router.get("/church-role/{user_id}/history")
-def get_church_role_history(
-    user_id: int,
-    limit: int = 50,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_active_user),
-):
-    """Retorna el historial de cambios de rol de iglesia."""
+@router.get("/church-role/{persona_id}/history")
+def get_church_role_history(persona_id: str, limit: int = 50,
+                             db: Session = Depends(get_db),
+                             current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
-
-    if not _can_view_user(current_user, user_id):
-        raise HTTPException(status_code=403, detail="Acceso denegado")
-
-    return kernel_crud.get_church_role_history(db, user_id, limit=limit)
+    _resolve_persona_id(db, current_user, persona_id)
+    return kernel_crud.get_church_role_history(db, persona_id, limit=limit)
 
 
-@router.get("/church-role/{role}/users")
-def get_users_by_role(
-    role: str,
-    active_only: bool = True,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_kernel_permission("crm:read")),
-):
-    """Retorna todos los usuarios con un rol de iglesia específico."""
+@router.get("/church-role-by/{role}/personas")
+def get_personas_by_role(role: str, active_only: bool = True,
+                          db: Session = Depends(get_db),
+                          current_user=Depends(require_kernel_permission("crm:read"))):
     from backend.crud import kernel as kernel_crud
-
-    return kernel_crud.get_users_by_church_role(db, role, active_only=active_only)
+    return kernel_crud.get_personas_by_church_role(db, role, active_only=active_only)
 
 
 # ──────────────────────────────────────────────
@@ -299,108 +251,77 @@ def get_users_by_role(
 # ──────────────────────────────────────────────
 
 @router.get("/platform-roles")
-def get_platform_role_definitions(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_active_user),
-):
-    """Retorna todas las definiciones de roles de plataforma."""
+def get_platform_role_definitions(db: Session = Depends(get_db),
+                                   current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
-
     return kernel_crud.get_platform_role_definitions(db)
 
 
-@router.get("/platform-roles/{user_id}")
-def get_user_platform_roles(
-    user_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_active_user),
-):
-    """Retorna los roles de plataforma de un usuario."""
+@router.get("/platform-roles/me")
+def get_my_platform_roles(db: Session = Depends(get_db),
+                           current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
-
-    if not _can_view_user(current_user, user_id):
-        raise HTTPException(status_code=403, detail="Acceso denegado")
-
-    return kernel_crud.get_user_platform_roles(db, user_id)
+    return kernel_crud.get_persona_platform_roles(db, _my_persona_id(db, current_user))
 
 
-@router.get("/permissions/{user_id}")
-def get_user_effective_permissions(
-    user_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_active_user),
-):
-    """Calcula y retorna los permisos efectivos de un usuario."""
+@router.get("/platform-roles/{persona_id}")
+def get_persona_platform_roles(persona_id: str, db: Session = Depends(get_db),
+                                current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
-
-    if not _can_view_user(current_user, user_id):
-        raise HTTPException(status_code=403, detail="Acceso denegado")
-
-    return kernel_crud.get_user_effective_permissions(db, user_id)
+    _resolve_persona_id(db, current_user, persona_id)
+    return kernel_crud.get_persona_platform_roles(db, persona_id)
 
 
-@router.post("/platform-roles/{user_id}")
-def assign_platform_role(
-    user_id: int,
-    payload: PlatformRoleAssign,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_kernel_permission("system:config")),
-):
-    """Asigna un rol de plataforma a un usuario."""
+@router.get("/permissions/me")
+def get_my_permissions(db: Session = Depends(get_db),
+                        current_user=Depends(require_active_user)):
     from backend.crud import kernel as kernel_crud
+    return kernel_crud.get_persona_effective_permissions(db, _my_persona_id(db, current_user))
 
+
+@router.get("/permissions/{persona_id}")
+def get_persona_permissions(persona_id: str, db: Session = Depends(get_db),
+                             current_user=Depends(require_active_user)):
+    from backend.crud import kernel as kernel_crud
+    _resolve_persona_id(db, current_user, persona_id)
+    return kernel_crud.get_persona_effective_permissions(db, persona_id)
+
+
+@router.post("/platform-roles/{persona_id}")
+def assign_platform_role(persona_id: str, payload: PlatformRoleAssign,
+                          db: Session = Depends(get_db),
+                          current_user=Depends(require_kernel_permission("system:config"))):
+    from backend.crud import kernel as kernel_crud
     result = kernel_crud.assign_platform_role(
-        db,
-        user_id=user_id,
-        platform_role=payload.platform_role,
-        assigned_by_id=current_user.id,
-        expires_at=payload.expires_at,
-        notes=payload.notes,
+        db, persona_id=persona_id, platform_role=payload.platform_role,
+        assigned_by_id=current_user.id, expires_at=payload.expires_at, notes=payload.notes,
     )
     if not result:
-        raise HTTPException(
-            status_code=400,
-            detail="Rol inválido o el usuario ya tiene este rol activo",
-        )
+        raise HTTPException(status_code=400,
+                            detail="Rol inválido o la persona ya tiene este rol activo")
     return result
 
 
-@router.delete("/platform-roles/{user_id}/{platform_role}")
-def revoke_platform_role(
-    user_id: int,
-    platform_role: str,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_kernel_permission("system:config")),
-):
-    """Revoca un rol de plataforma de un usuario."""
+@router.delete("/platform-roles/{persona_id}/{platform_role}")
+def revoke_platform_role(persona_id: str, platform_role: str,
+                          db: Session = Depends(get_db),
+                          current_user=Depends(require_kernel_permission("system:config"))):
     from backend.crud import kernel as kernel_crud
-
-    if not kernel_crud.revoke_platform_role(db, user_id, platform_role):
-        raise HTTPException(
-            status_code=404,
-            detail="Rol no encontrado para este usuario",
-        )
+    if not kernel_crud.revoke_platform_role(db, persona_id, platform_role):
+        raise HTTPException(status_code=404, detail="Rol no encontrado para esta persona")
     return {"message": f"Rol {platform_role} revocado"}
 
 
 # ──────────────────────────────────────────────
-# VERIFICACIÓN DE ASIGNACIÓN (REGLA DE INACTIVIDAD)
+# VERIFICACIÓN DE ASIGNACIÓN
 # ──────────────────────────────────────────────
 
-@router.get("/can-assign/{user_id}")
+@router.get("/can-assign/{persona_id}")
 def check_can_receive_assignment(
-    user_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user=Depends(require_active_for_assignment()),
 ):
-    """Verifica si un usuario puede recibir nuevas asignaciones.
-
-    Regla de Inactividad: Usuarios INACTIVOS no pueden ser delegados.
-    """
     from backend.crud import kernel as kernel_crud
-
-    can_assign = kernel_crud.can_receive_assignment(db, user_id)
-    return {
-        "user_id": user_id,
-        "can_receive_assignment": can_assign,
-    }
+    can_assign = kernel_crud.can_receive_assignment(db, persona_id)
+    return {"persona_id": persona_id, "can_receive_assignment": can_assign}

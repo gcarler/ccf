@@ -70,7 +70,7 @@ export default function ContactsPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/crm/consolidation/pipeline', { token, cache: 'no-store' });
+            const data = await apiFetch<any[]>('/crm/consolidation/cases', { token, cache: 'no-store' });
             setLeads(Array.isArray(data) ? data : []);
         } catch {
             addToast('Error al cargar contactos', 'error');
@@ -109,7 +109,7 @@ export default function ContactsPage() {
     };
 
     const filtered = leads.filter(lead => {
-        const name = (lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()).toLowerCase();
+        const name = (lead.nombre_completo || '').toLowerCase();
         const matchesSearch = name.includes(searchQuery.toLowerCase()) ||
             (lead.source || '').toLowerCase().includes(searchQuery.toLowerCase());
         const matchesFilter = activeFilter === 'all' || lead.stage === activeFilter;
@@ -215,16 +215,16 @@ export default function ContactsPage() {
                                 <div className="flex gap-4">
                                     <div className="relative">
                                         <div className="size-8 rounded-lg bg-blue-500/10 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-white font-bold text-sm uppercase group-hover:border-blue-400 transition-colors">
-                                            {lead.nombre_completo?.charAt(0) || (lead.first_name?.charAt(0) ?? '')}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || (lead.last_name?.charAt(0) ?? '')}
+                                            {lead.nombre_completo?.charAt(0) || ''}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || ''}
                                         </div>
                                         <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[#1e1f21] ${getStatusDot(lead.stage)}`} />
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-slate-800 dark:text-white text-base tracking-tight group-hover:text-blue-600 transition-colors">
-                                            {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
+                                            {lead.nombre_completo || ''}
                                         </h3>
                                         <p className="text-[11px] text-slate-400 font-medium">
-                                            {lead.source || 'Sin fuente'} · {lead.phone || 'Sin teléfono'}
+                                            {lead.source || 'Sin fuente'} · {(lead.telefono ?? lead.phone) || 'Sin teléfono'}
                                         </p>
                                     </div>
                                 </div>
@@ -243,9 +243,9 @@ export default function ContactsPage() {
                                     Ver en Pipeline
                                 </button>
                                 <div className="flex gap-2">
-                                    {lead.phone && (
+                                    {(lead.telefono ?? lead.phone) && (
                                         <a
-                                            href={`tel:${lead.phone}`}
+                                            href={`tel:${lead.telefono ?? lead.phone}`}
                                             onClick={e => e.stopPropagation()}
                                             className="size-9 rounded-md bg-emerald-500/10 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20"
                                         >
@@ -272,8 +272,8 @@ export default function ContactsPage() {
                                     <div className="space-y-2">
                                         {(groupedByStage[stage] ?? []).map(lead => (
                                             <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
-                                                <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}</p>
-                                                <p className="text-[10px] text-slate-400">{lead.phone || 'Sin teléfono'}</p>
+                                                <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || ''}</p>
+                                                <p className="text-[10px] text-slate-400">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
                                             </button>
                                         ))}
                                         {(groupedByStage[stage] ?? []).length === 0 && (
@@ -296,7 +296,7 @@ export default function ContactsPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {payload.items.map(lead => (
                                             <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
-                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}</p>
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || ''}</p>
                                                 <p className="text-[10px] text-slate-400">{STAGE_LABELS[lead.stage] || lead.stage}</p>
                                             </button>
                                         ))}
@@ -310,7 +310,7 @@ export default function ContactsPage() {
                             {filtered.map(lead => (
                                 <div key={lead.id} className="space-y-1">
                                     <div className="flex items-center justify-between text-[11px]">
-                                        <span className="font-bold text-slate-700 dark:text-slate-300">{lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}</span>
+                                        <span className="font-bold text-slate-700 dark:text-slate-300">{lead.nombre_completo || ''}</span>
                                         <span className="font-bold text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
                                     </div>
                                     <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
@@ -334,9 +334,9 @@ export default function ContactsPage() {
                                 <tbody>
                                     {filtered.map(lead => (
                                         <tr key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="cursor-pointer border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
-                                            <td className="px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}</td>
+                                            <td className="px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || ''}</td>
                                             <td className="px-4 py-1.5 text-xs text-slate-500">{lead.source || 'Sin fuente'}</td>
-                                            <td className="px-4 py-1.5 text-xs text-slate-500">{lead.phone || 'Sin telefono'}</td>
+                                            <td className="px-4 py-1.5 text-xs text-slate-500">{(lead.telefono ?? lead.phone) || 'Sin telefono'}</td>
                                             <td className="px-4 py-1.5 text-xs text-slate-500">{STAGE_LABELS[lead.stage] || lead.stage}</td>
                                         </tr>
                                     ))}
