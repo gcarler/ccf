@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ViewType } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
-import { ShieldAlert, Flame, Calendar, Scan, Zap, Home } from 'lucide-react';
+import { ShieldAlert, Flame, Calendar, Scan, Zap, Home, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
@@ -79,7 +79,7 @@ export default function EvangelismShell({
 
     const sidebarSections = [
         {
-            title: 'Estrategia',
+            title: 'Estrategias',
             items: [
                 { id: 'ev-strategies', label: 'Todas las Estrategias', href: '/plataforma/evangelism', icon: Flame, count: strategies.length },
                 ...strategies.map((s: StrategyItem) => ({
@@ -88,6 +88,11 @@ export default function EvangelismShell({
                     href: `/plataforma/evangelism/strategies/${s.id}`,
                     icon: Zap,
                 })),
+            ],
+        },
+        {
+            title: 'Herramientas',
+            items: [
                 { id: 'ev-events', label: 'Eventos', href: '/plataforma/evangelism/events', icon: Calendar },
                 { id: 'ev-faro', label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home },
                 { id: 'ev-scanner', label: 'Escáner ASST', href: '/plataforma/evangelism/scanner', icon: Scan },
