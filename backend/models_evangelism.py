@@ -13,7 +13,6 @@ from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Integer,
     String, Text, JSON,
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from backend.core.database import Base
