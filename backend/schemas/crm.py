@@ -276,7 +276,7 @@ class ColombianDepartment(BaseModel):
     model_config = orm_config
 
 class PersonaResponse(BaseModel):
-    id: int
+    id: str
     first_name: str
     last_name: str
     email: Optional[str] = None
@@ -287,7 +287,7 @@ class PersonaResponse(BaseModel):
     model_config = orm_config
 
 class Persona(BaseModel):
-    id: int
+    id: str
     user_id: Optional[int] = None
     first_name: str
     last_name: str
@@ -818,9 +818,9 @@ class CellGroup(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
-    leader_id: Optional[int] = None
-    assistant_id: Optional[int] = None
-    host_id: Optional[int] = None
+    leader_id: Optional[str] = None
+    assistant_id: Optional[str] = None
+    host_id: Optional[str] = None
     evangelism_strategy_id: int
     members_count: int
     capacity: int
