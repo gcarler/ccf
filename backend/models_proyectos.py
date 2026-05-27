@@ -19,9 +19,11 @@ class Proyecto(Base):
     sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
     nombre = Column(String(150), nullable=False)
     descripcion = Column(Text)
-    estado = Column(Enum("PLANIFICACION", "EN_PROGRESO", "PAUSADO", "COMPLETADO", "CANCELADO",
-                         name="estado_proyecto", create_type=False),
-                    default="PLANIFICACION")
+    estado = Column(
+        Enum("PLANIFICACION", "EN_PROGRESO", "PAUSADO", "COMPLETADO", "CANCELADO",
+             name="estado_proyecto", create_type=False),
+        default="PLANIFICACION",
+    )
     fecha_inicio = Column(Date, nullable=False)
     fecha_fin_est = Column(Date, nullable=False)
     fecha_fin_real = Column(Date)
@@ -57,12 +59,16 @@ class TareaProyecto(Base):
     codigo_wbs = Column(String(50), nullable=False)
     titulo = Column(String(200), nullable=False)
     descripcion = Column(Text)
-    estado = Column(Enum("POR_HACER", "EN_PROGRESO", "EN_REVISION", "COMPLETADO", "BLOQUEADO",
-                         name="estado_tarea", create_type=False),
-                    default="POR_HACER")
-    prioridad = Column(Enum("BAJA", "MEDIA", "ALTA", "URGENTE",
-                            name="prioridad_tarea", create_type=False),
-                       default="MEDIA")
+    estado = Column(
+        Enum("POR_HACER", "EN_PROGRESO", "EN_REVISION", "COMPLETADO", "BLOQUEADO",
+             name="estado_tarea", create_type=False),
+        default="POR_HACER",
+    )
+    prioridad = Column(
+        Enum("BAJA", "MEDIA", "ALTA", "URGENTE",
+             name="prioridad_tarea", create_type=False),
+        default="MEDIA",
+    )
     asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"))
     creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     fecha_vencimiento = Column(DateTime, nullable=False)
@@ -83,9 +89,11 @@ class DependenciaTarea(Base):
 
     tarea_bloqueante_id = Column(UUID(as_uuid=True), ForeignKey("tareas_proyecto.id", ondelete="CASCADE"), primary_key=True)
     tarea_bloqueada_id = Column(UUID(as_uuid=True), ForeignKey("tareas_proyecto.id", ondelete="CASCADE"), primary_key=True)
-    tipo_dependencia = Column(Enum("FIN_A_INICIO", "INICIO_A_INICIO", "FIN_A_FIN",
-                                   name="tipo_dependencia", create_type=False),
-                              default="FIN_A_INICIO")
+    tipo_dependencia = Column(
+        Enum("FIN_A_INICIO", "INICIO_A_INICIO", "FIN_A_FIN",
+             name="tipo_dependencia", create_type=False),
+        default="FIN_A_INICIO",
+    )
 
     tarea_bloqueante = relationship("TareaProyecto", foreign_keys=[tarea_bloqueante_id])
     tarea_bloqueada = relationship("TareaProyecto", foreign_keys=[tarea_bloqueada_id], back_populates="dependencias_bloqueantes")

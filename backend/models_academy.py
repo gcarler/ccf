@@ -227,13 +227,13 @@ class CellGroup(Base):
     )
 
     leader_persona_id = Column(
-        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
     assistant_persona_id = Column(
-        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
     host_persona_id = Column(
-        Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
 
     schedule = Column(String(100), nullable=True)
@@ -283,7 +283,7 @@ class CellGroupMember(Base):
         index=True,
     )
     persona_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -334,7 +334,7 @@ class CellGroupSession(Base):
     novelty_detail = Column(Text, nullable=True)
     cancellation_reason = Column(Text, nullable=True)
     reported_by_persona_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
@@ -361,7 +361,7 @@ class CellGroupAttendance(Base):
         index=True,
     )
     persona_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

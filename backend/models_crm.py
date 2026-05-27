@@ -157,7 +157,7 @@ class CounselingTicket(Base):
     __tablename__ = "counseling_tickets"
     id = Column(Integer, primary_key=True, index=True)
     member_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("personas.id"),
         nullable=False,
         index=True,
