@@ -220,8 +220,8 @@ class CellGroup(Base):
     sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
 
     evangelism_strategy_id = Column(
-        String(50),
-        ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"),
+        Integer,
+        ForeignKey("evangelism_strategies.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
