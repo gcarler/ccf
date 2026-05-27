@@ -7,10 +7,13 @@ import logging
 from datetime import timedelta
 from typing import List
 
+logger = logging.getLogger(__name__)
+
 from fastapi import (APIRouter, Depends, HTTPException, Request, Response,
                      status)
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -601,8 +604,8 @@ def google_callback(
 
     google_email = google_user.get("email", "")
     google_name = google_user.get("name", "")
-    google_id = google_user.get("id", "")
-    google_picture = google_user.get("picture", "")
+    _google_id = google_user.get("id", "")
+    _google_picture = google_user.get("picture", "")
 
     if not google_email:
         raise HTTPException(status_code=400, detail="Google no proporcionó un email")
@@ -684,9 +687,9 @@ def auth_stats_summary(
 ):
     """Resumen estadistico de autenticacion para el dashboard."""
     total = db.query(models.User).count()
-    active = db.query(models.User).filter(models.User.is_active == True).count()
+    active = db.query(models.User).filter(models.User.is_active.is_(True)).count()
     verified = (
-        db.query(models.User).filter(models.User.is_email_verified == True).count()
+        db.query(models.User).filter(models.User.is_email_verified.is_(True)).count()
     )
     roles = (
         db.query(models.User.role, func.count(models.User.id))

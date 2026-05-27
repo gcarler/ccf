@@ -34,7 +34,7 @@ with engine.connect() as conn:
     if not estrategia_vieja:
         log("ERROR: Estrategia 'casas-de-gloria' no existe. Ejecuta crear_escenario_prueba.py primero.")
         exit(1)
-    log(f"  Estrategia OK: casas-de-gloria")
+    log("  Estrategia OK: casas-de-gloria")
 
     grupos_viejos = conn.execute(
         text("SELECT id, codigo FROM grupos_evangelismo WHERE estrategia_id = 'casas-de-gloria' ORDER BY id")

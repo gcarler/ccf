@@ -188,7 +188,7 @@ with engine.connect() as conn:
                     INSERT INTO communication_logs (member_id, channel, content, outcome, leader_id, created_at, updated_at)
                     VALUES (:pid, 'WhatsApp', :msg, 'sent', 1, :ts, :ts)
                 """),
-                {'pid': pid, 'msg': f'Bienvenido al grupo Casa de Gloria!', 'ts': now}
+                {'pid': pid, 'msg': 'Bienvenido al grupo Casa de Gloria!', 'ts': now}
             )
             created += 1
     conn.commit()
