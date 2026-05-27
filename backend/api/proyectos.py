@@ -107,7 +107,7 @@ def actualizar_proyecto(
 def eliminar_proyecto(
     proyecto_id: str,
     db: Session = Depends(get_db),
-    _=Depends(require_module_access("projects", "admin")),
+    _=Depends(require_module_access("projects", "manage")),
 ):
     proy = _get_proyecto_o_404(proyecto_id, db)
     db.delete(proy)
@@ -149,7 +149,7 @@ def remover_miembro(
     proyecto_id: str,
     persona_id: int,
     db: Session = Depends(get_db),
-    _=Depends(require_module_access("projects", "admin")),
+    _=Depends(require_module_access("projects", "manage")),
 ):
     _get_proyecto_o_404(proyecto_id, db)
     miembro = db.query(EquipoProyecto).filter(
@@ -216,7 +216,7 @@ def eliminar_tarea(
     proyecto_id: str,
     tarea_id: str,
     db: Session = Depends(get_db),
-    _=Depends(require_module_access("projects", "admin")),
+    _=Depends(require_module_access("projects", "manage")),
 ):
     _get_proyecto_o_404(proyecto_id, db)
     tarea = _get_tarea_o_404(tarea_id, db)
