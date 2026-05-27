@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -47,15 +48,23 @@ def list_roles(
     return result
 
 
+class CreateRoleBody(BaseModel):
+    name: str
+    permissions: Dict[str, Any] = {}
+
+
+class UpdateRoleBody(BaseModel):
+    permissions: Dict[str, Any]
+
+
 @router.post("/roles", response_model=Dict[str, Any])
 def create_role(
-    name: str,
-    permissions: Dict[str, Any],
+    payload: CreateRoleBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
     """Crea un nuevo rol ministerial."""
-    role = models.Role(name=name, permissions=permissions)
+    role = models.Role(name=payload.name, permissions=payload.permissions)
     db.add(role)
     db.commit()
     db.refresh(role)
@@ -65,7 +74,7 @@ def create_role(
 @router.patch("/roles/{role_id}")
 def update_role(
     role_id: int,
-    permissions: Dict[str, Any],
+    payload: UpdateRoleBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -73,7 +82,7 @@ def update_role(
     role = db.query(models.Role).filter(models.Role.role_id == role_id).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
-    role.permissions = permissions
+    role.permissions = payload.permissions
     db.commit()
     return {"status": "success"}
 
@@ -339,6 +348,17 @@ def list_admin_users(
     users = db.query(models.User).all()
     result = []
     for u in users:
+        # Resolver permisos efectivos para que el frontend pueda mostrarlos
+        role_perms = {}
+        if u.user_role_obj:
+            rp = u.user_role_obj.permissions or {}
+            role_perms = dict(rp) if isinstance(rp, dict) else {}
+        override_perms = {}
+        if u.permissions_override:
+            op = u.permissions_override.permissions or {}
+            override_perms = dict(op) if isinstance(op, dict) else {}
+        effective = dict(role_perms)
+        effective.update(override_perms)
         result.append(
             {
                 "id": u.id,
@@ -347,6 +367,9 @@ def list_admin_users(
                 "role": u.role,
                 "role_id": u.role_id,
                 "is_active": u.is_active,
+                "permissions": effective,
+                "role_permissions": role_perms,
+                "override_permissions": override_perms,
             }
         )
     return result

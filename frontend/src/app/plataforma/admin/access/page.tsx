@@ -310,7 +310,25 @@ export default function AccessManagementPage() {
             }).catch(() => addToast('Error al crear rol', 'error'))
             .finally(() => setIsAssigning(false));
         } else {
-            addToast('Usa el panel de administración de usuarios', 'info');
+            const username = prompt('Nombre de usuario:');
+            if (!username?.trim()) return;
+            const email = prompt('Correo electrónico:');
+            if (!email?.trim()) return;
+            const password = prompt('Contraseña (mínimo 6 caracteres):');
+            if (!password || password.length < 6) {
+                addToast('La contraseña debe tener al menos 6 caracteres', 'warning');
+                return;
+            }
+            setIsAssigning(true);
+            apiFetch('/admin/users', {
+                method: 'POST',
+                token,
+                body: { username: username.trim(), email: email.trim(), password, role: 'estudiante' },
+            }).then(() => {
+                addToast(`Usuario "${username.trim()}" creado`, 'success');
+                fetchData();
+            }).catch(() => addToast('Error al crear usuario', 'error'))
+            .finally(() => setIsAssigning(false));
         }
     }, [activeTab, token, addToast, fetchData]);
 
