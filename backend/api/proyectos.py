@@ -69,7 +69,7 @@ def listar_proyectos(
 def crear_proyecto(
     payload: ProyectoCreate,
     db: Session = Depends(get_db),
-    _=Depends(require_module_access("projects", "write")),
+    _=Depends(require_module_access("projects", "edit")),
 ):
     proy = Proyecto(**payload.model_dump())
     db.add(proy)
@@ -93,7 +93,7 @@ def actualizar_proyecto(
     proyecto_id: str,
     payload: ProyectoUpdate,
     db: Session = Depends(get_db),
-    _=Depends(require_module_access("projects", "write")),
+    _=Depends(require_module_access("projects", "edit")),
 ):
     proy = _get_proyecto_o_404(proyecto_id, db)
     for key, val in payload.model_dump(exclude_unset=True).items():
@@ -134,7 +134,7 @@ def agregar_miembro(
     proyecto_id: str,
     payload: EquipoProyectoCreate,
     db: Session = Depends(get_db),
-    _=Depends(require_module_access("projects", "write")),
+    _=Depends(require_module_access("projects", "edit")),
 ):
     _get_proyecto_o_404(proyecto_id, db)
     miembro = EquipoProyecto(proyecto_id=uuid.UUID(proyecto_id), **payload.model_dump())
@@ -182,7 +182,7 @@ def crear_tarea(
     proyecto_id: str,
     payload: TareaProyectoCreate,
     db: Session = Depends(get_db),
-    _=Depends(require_module_access("projects", "write")),
+    _=Depends(require_module_access("projects", "edit")),
 ):
     _get_proyecto_o_404(proyecto_id, db)
     tarea = TareaProyecto(proyecto_id=uuid.UUID(proyecto_id), **payload.model_dump())
@@ -198,7 +198,7 @@ def actualizar_tarea(
     tarea_id: str,
     payload: TareaProyectoUpdate,
     db: Session = Depends(get_db),
-    _=Depends(require_module_access("projects", "write")),
+    _=Depends(require_module_access("projects", "edit")),
 ):
     _get_proyecto_o_404(proyecto_id, db)
     tarea = _get_tarea_o_404(tarea_id, db)
@@ -259,7 +259,7 @@ def crear_dependencia(
     tarea_id: str,
     payload: DependenciaTareaCreate,
     db: Session = Depends(get_db),
-    _=Depends(require_module_access("projects", "write")),
+    _=Depends(require_module_access("projects", "edit")),
 ):
     _get_proyecto_o_404(proyecto_id, db)
     tarea = _get_tarea_o_404(tarea_id, db)
