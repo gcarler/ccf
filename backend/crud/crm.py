@@ -261,7 +261,6 @@ def create_persona(db: Session, payload: schemas.PersonaCreate):
     existing = _find_existing_persona(db, payload)
     if existing:
         return existing
-    import uuid
     data = payload.model_dump()
     data.setdefault("qr_token", uuid.uuid4().hex[:16].upper())
     row = models.Persona(**data)
