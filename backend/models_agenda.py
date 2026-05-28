@@ -111,3 +111,8 @@ class ReservaRecurso(Base):
     bloqueo_fin = Column(DateTime(timezone=True), nullable=False)
 
     evento = relationship("EventoAgenda", back_populates="reservas")
+
+    # NOTE: Para evitar colisiones en PostgreSQL, ejecutar como DBA:
+    # ALTER TABLE agenda_reserva_recursos ADD CONSTRAINT sin_colisiones_fisicas
+    # EXCLUDE USING gist (recurso_id WITH =, tsrange(bloqueo_inicio, bloqueo_fin) WITH &&);
+    # Requiere: CREATE EXTENSION IF NOT EXISTS btree_gist;

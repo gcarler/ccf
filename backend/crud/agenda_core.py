@@ -74,11 +74,14 @@ def create_evento(db: Session, payload: EventoAgendaCreate) -> EventoAgenda:
 
 
 def get_evento(db: Session, evento_id: str) -> Optional[EventoAgenda]:
-    return db.query(EventoAgenda).filter(EventoAgenda.id == evento_id).first()
+    return db.query(EventoAgenda).filter(
+        EventoAgenda.id == evento_id,
+        EventoAgenda.deleted_at.is_(None),
+    ).first()
 
 
 def list_eventos(db: Session, sede_id: Optional[int] = None) -> List[EventoAgenda]:
-    q = db.query(EventoAgenda)
+    q = db.query(EventoAgenda).filter(EventoAgenda.deleted_at.is_(None))
     if sede_id is not None:
         q = q.filter(EventoAgenda.sede_id == sede_id)
     return q.order_by(EventoAgenda.fecha_inicio.desc()).all()

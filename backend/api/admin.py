@@ -236,7 +236,7 @@ def set_user_permissions(
 
 
 @router.get("/locations", response_model=List[Dict[str, Any]])
-def list_locations(db: Session = Depends(get_db)):
+def list_locations(db: Session = Depends(get_db), _user=Depends(require_active_user)):
     """Lista todas las sedes de la iglesia."""
     locs = db.query(models.ChurchLocation).all()
     return [
@@ -274,7 +274,7 @@ def create_location(
 
 
 @router.get("/socials", response_model=List[Dict[str, Any]])
-def list_socials(db: Session = Depends(get_db)):
+def list_socials(db: Session = Depends(get_db), _user=Depends(require_active_user)):
     """Lista canales sociales oficiales."""
     channels = db.query(models.SocialChannel).all()
     return [
@@ -526,7 +526,7 @@ def delete_comment(
 
 
 @router.get("/milestones", response_model=List[Dict[str, Any]])
-def list_milestones(db: Session = Depends(get_db)):
+def list_milestones(db: Session = Depends(get_db), _user=Depends(require_active_user)):
     """Lista hitos espirituales (insignias) y estadísticas de obtención."""
     badges = db.query(models.Badge).all()
     result = []
@@ -588,7 +588,7 @@ def award_milestone_bulk(
 
 
 @router.get("/donation-categories", response_model=List[Dict[str, Any]])
-def list_donation_categories(db: Session = Depends(get_db)):
+def list_donation_categories(db: Session = Depends(get_db), _user=Depends(require_active_user)):
     """Lista categorías de recaudación (Diezmos, Misiones, etc)."""
     cats = db.query(models.DonationCategory).all()
     return [
@@ -624,7 +624,7 @@ def create_donation_category(
 
 
 @router.get("/automations", response_model=List[schemas.AutomationRuleRead])
-def list_automations(db: Session = Depends(get_db)):
+def list_automations(db: Session = Depends(get_db), _user=Depends(require_active_user)):
     """Lista reglas de automatización configuradas."""
     rules = db.query(models.AutomationRule).all()
     return [_serialize_automation(rule) for rule in rules]
