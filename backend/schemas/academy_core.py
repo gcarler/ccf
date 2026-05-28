@@ -1,0 +1,347 @@
+"""Academy 2.0 — Pydantic schemas (Create + Response) for all academy_core models."""
+
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, Field
+
+from backend.schemas._common import orm_config
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CATÁLOGO ACADÉMICO
+# ═══════════════════════════════════════════════════════════════════════
+
+class CursoCreate(BaseModel):
+    sede_id: Optional[int] = None
+    code: str
+    title: str
+    description: Optional[str] = None
+    modality: str
+    otorga_rol_iglesia: Optional[str] = None
+    is_published: bool = False
+    is_self_paced: bool = False
+    duration_hours: int
+    xp_per_lesson: int = 10
+    image_url: Optional[str] = None
+
+
+class CursoUpdate(BaseModel):
+    sede_id: Optional[int] = None
+    code: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    modality: Optional[str] = None
+    otorga_rol_iglesia: Optional[str] = None
+    is_published: Optional[bool] = None
+    is_self_paced: Optional[bool] = None
+    duration_hours: Optional[int] = None
+    xp_per_lesson: Optional[int] = None
+    image_url: Optional[str] = None
+
+
+class CursoResponse(BaseModel):
+    id: int
+    sede_id: Optional[int] = None
+    code: str
+    title: str
+    description: Optional[str] = None
+    modality: str
+    otorga_rol_iglesia: Optional[str] = None
+    is_published: bool = False
+    is_self_paced: bool = False
+    duration_hours: int
+    xp_per_lesson: int = 10
+    image_url: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    lecciones: list[LeccionResponse] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class LeccionCreate(BaseModel):
+    course_id: int
+    title: str
+    content: str
+    content_type: str = "video"
+    media_url: Optional[str] = None
+    order_index: int
+    duration_minutes: int
+
+
+class LeccionUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    content_type: Optional[str] = None
+    media_url: Optional[str] = None
+    order_index: Optional[int] = None
+    duration_minutes: Optional[int] = None
+
+
+class LeccionResponse(BaseModel):
+    id: int
+    course_id: int
+    title: str
+    content: str
+    content_type: str = "video"
+    media_url: Optional[str] = None
+    order_index: int
+    duration_minutes: int
+    model_config = orm_config
+
+
+class PrerrequisitoCursoCreate(BaseModel):
+    course_id: int
+    prerequisite_course_id: int
+
+
+class PrerrequisitoCursoResponse(BaseModel):
+    id: int
+    course_id: int
+    prerequisite_course_id: int
+    model_config = orm_config
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# EVALUACIONES
+# ═══════════════════════════════════════════════════════════════════════
+
+class EvaluacionCreate(BaseModel):
+    course_id: int
+    lesson_id: Optional[int] = None
+    title: str
+    description: Optional[str] = None
+    max_score: float
+    passing_score: float
+    weight: float = 1.0
+    is_published: bool = False
+
+
+class EvaluacionResponse(BaseModel):
+    id: int
+    course_id: int
+    lesson_id: Optional[int] = None
+    title: str
+    description: Optional[str] = None
+    max_score: float
+    passing_score: float
+    weight: float = 1.0
+    is_published: bool = False
+    model_config = orm_config
+
+
+class PreguntaCreate(BaseModel):
+    assessment_id: int
+    question_text: str
+    question_type: Optional[str] = None
+    points: int = 1
+
+
+class PreguntaResponse(BaseModel):
+    id: int
+    assessment_id: int
+    question_text: str
+    question_type: Optional[str] = None
+    points: int = 1
+    opciones: list[OpcionResponse] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class OpcionCreate(BaseModel):
+    question_id: int
+    option_text: str
+    is_correct: bool = False
+
+
+class OpcionResponse(BaseModel):
+    id: int
+    question_id: int
+    option_text: str
+    is_correct: bool = False
+    model_config = orm_config
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# MATRÍCULA Y PROGRESO
+# ═══════════════════════════════════════════════════════════════════════
+
+class MatriculaCreate(BaseModel):
+    persona_id: str
+    course_id: int
+    cohort_name: Optional[str] = None
+    status: str = "ACTIVO"
+    progress_percent: float = 0.0
+    final_grade: Optional[float] = None
+    attendance_percent: float = 0.0
+    approved: bool = False
+    acta_closed: bool = False
+    completed_at: Optional[datetime] = None
+    lessons_completed: list = Field(default_factory=list)
+
+
+class MatriculaResponse(BaseModel):
+    id: str
+    persona_id: str
+    course_id: int
+    cohort_name: Optional[str] = None
+    status: str = "ACTIVO"
+    progress_percent: float = 0.0
+    final_grade: Optional[float] = None
+    attendance_percent: float = 0.0
+    approved: bool = False
+    acta_closed: bool = False
+    completed_at: Optional[datetime] = None
+    lessons_completed: list = Field(default_factory=list)
+    model_config = orm_config
+
+
+class ProgresoUpdate(BaseModel):
+    progress_percent: Optional[float] = None
+    lessons_completed: Optional[list] = None
+
+
+class ProgresoLeccionCreate(BaseModel):
+    persona_id: str
+    lesson_id: int
+    progress_percent: float = 0.0
+    is_completed: bool = False
+    last_position_seconds: int = 0
+
+
+class ProgresoLeccionResponse(BaseModel):
+    id: int
+    persona_id: str
+    lesson_id: int
+    progress_percent: float = 0.0
+    is_completed: bool = False
+    last_position_seconds: int = 0
+    model_config = orm_config
+
+
+class AsistenciaClaseCreate(BaseModel):
+    enrollment_id: str
+    session_date: datetime
+    status: str
+    recorded_by_persona_id: str
+
+
+class AsistenciaClaseResponse(BaseModel):
+    id: int
+    enrollment_id: str
+    session_date: datetime
+    status: str
+    recorded_by_persona_id: str
+    model_config = orm_config
+
+
+class IntentoEvaluacionCreate(BaseModel):
+    assessment_id: int
+    enrollment_id: str
+    score: Optional[float] = None
+    passed: bool = False
+
+
+class IntentoEvaluacionResponse(BaseModel):
+    id: str
+    assessment_id: int
+    enrollment_id: str
+    score: Optional[float] = None
+    passed: bool = False
+    submitted_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class EntregaTareaCreate(BaseModel):
+    enrollment_id: str
+    lesson_id: int
+    seaweed_fid: str
+    teacher_feedback: Optional[str] = None
+    grade: Optional[float] = None
+
+
+class EntregaTareaResponse(BaseModel):
+    id: str
+    enrollment_id: str
+    lesson_id: int
+    seaweed_fid: str
+    teacher_feedback: Optional[str] = None
+    grade: Optional[float] = None
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CERTIFICACIONES
+# ═══════════════════════════════════════════════════════════════════════
+
+class CertificadoCreate(BaseModel):
+    enrollment_id: str
+    certificate_code: str
+    certificate_type: Optional[str] = None
+
+
+class CertificadoResponse(BaseModel):
+    id: str
+    enrollment_id: str
+    certificate_code: str
+    certificate_type: Optional[str] = None
+    issued_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class ActaFormalCreate(BaseModel):
+    course_id: int
+    cohort_name: str
+    closed_by_persona_id: str
+    min_grade: float
+    min_attendance: float
+    status: str = "BORRADOR"
+
+
+class ActaFormalResponse(BaseModel):
+    id: int
+    course_id: int
+    cohort_name: str
+    closed_by_persona_id: str
+    min_grade: float
+    min_attendance: float
+    status: str = "BORRADOR"
+    model_config = orm_config
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# FOROS
+# ═══════════════════════════════════════════════════════════════════════
+
+class HiloForoCreate(BaseModel):
+    course_id: int
+    author_persona_id: str
+    title: str
+    content: str
+
+
+class HiloForoResponse(BaseModel):
+    id: int
+    course_id: int
+    author_persona_id: str
+    title: str
+    content: str
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class ComentarioForoCreate(BaseModel):
+    thread_id: int
+    author_persona_id: str
+    content: str
+
+
+class ComentarioForoResponse(BaseModel):
+    id: int
+    thread_id: int
+    author_persona_id: str
+    content: str
+    created_at: Optional[datetime] = None
+    model_config = orm_config

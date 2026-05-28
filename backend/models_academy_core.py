@@ -1,0 +1,241 @@
+"""Academy 2.0 — Catálogo, Evaluaciones, Matrícula, Progreso, Certificaciones.
+
+Modelos para la Academia con Kernel UUID, motor de evaluaciones (quizzes),
+seguimiento de progreso por lección, foros, y certificaciones.
+"""
+from datetime import datetime
+
+import uuid as _uuid
+
+from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey,
+                        Integer, JSON, Numeric, String, Text)
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+
+from backend.core.database import Base
+
+
+def _utcnow():
+    return datetime.utcnow()
+
+
+# ═══════════════════════════════════════════════════════════════════
+# CATÁLOGO ACADÉMICO
+# ═══════════════════════════════════════════════════════════════════
+
+class Curso(Base):
+    __tablename__ = "academy_courses"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True)
+    code = Column(String(50), nullable=False, unique=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text)
+    modality = Column(String(50), nullable=False)
+    otorga_rol_iglesia = Column(String(50), nullable=True)
+    is_published = Column(Boolean, default=False)
+    is_self_paced = Column(Boolean, default=False)
+    duration_hours = Column(Integer, nullable=False)
+    xp_per_lesson = Column(Integer, default=10)
+    image_url = Column(String(255))
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+    lecciones = relationship("Leccion", back_populates="curso",
+                             cascade="all, delete-orphan")
+    prerrequisitos = relationship("PrerrequisitoCurso",
+                                  foreign_keys="PrerrequisitoCurso.course_id")
+
+
+class PrerrequisitoCurso(Base):
+    __tablename__ = "academy_course_prerequisites"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
+    prerequisite_course_id = Column(Integer, ForeignKey("academy_courses.id"),
+                                    nullable=False)
+
+
+class Leccion(Base):
+    __tablename__ = "academy_lessons"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
+    title = Column(String(200), nullable=False)
+    content = Column(Text, nullable=False)
+    content_type = Column(String(50), default="video")
+    media_url = Column(String(255))
+    order_index = Column(Integer, nullable=False)
+    duration_minutes = Column(Integer, nullable=False)
+
+    curso = relationship("Curso", back_populates="lecciones")
+
+
+# ═══════════════════════════════════════════════════════════════════
+# EVALUACIONES
+# ═══════════════════════════════════════════════════════════════════
+
+class Evaluacion(Base):
+    __tablename__ = "academy_assessments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
+    lesson_id = Column(Integer, ForeignKey("academy_lessons.id"), nullable=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text)
+    max_score = Column(Float, nullable=False)
+    passing_score = Column(Float, nullable=False)
+    weight = Column(Numeric, default=1.0)
+    is_published = Column(Boolean, default=False)
+
+
+class Pregunta(Base):
+    __tablename__ = "academy_assessment_questions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    assessment_id = Column(Integer, ForeignKey("academy_assessments.id"),
+                           nullable=False)
+    question_text = Column(Text, nullable=False)
+    question_type = Column(String(50))
+    points = Column(Integer, default=1)
+
+
+class Opcion(Base):
+    __tablename__ = "academy_assessment_options"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    question_id = Column(Integer, ForeignKey("academy_assessment_questions.id"),
+                         nullable=False)
+    option_text = Column(Text, nullable=False)
+    is_correct = Column(Boolean, default=False)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# MATRÍCULA Y PROGRESO
+# ═══════════════════════════════════════════════════════════════════
+
+class Matricula(Base):
+    __tablename__ = "academy_enrollments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
+                        nullable=False)
+    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
+    cohort_name = Column(String(100))
+    status = Column(String(50), nullable=False, default="ACTIVO")
+    progress_percent = Column(Float, default=0.0)
+    final_grade = Column(Float, nullable=True)
+    attendance_percent = Column(Float, default=0.0)
+    approved = Column(Boolean, default=False)
+    acta_closed = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+    lessons_completed = Column(JSON, default=list)
+
+    persona = relationship("Persona")
+    curso = relationship("Curso")
+
+
+class ProgresoLeccion(Base):
+    __tablename__ = "academy_lesson_progress"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
+                        nullable=False)
+    lesson_id = Column(Integer, ForeignKey("academy_lessons.id"), nullable=False)
+    progress_percent = Column(Numeric, default=0.0)
+    is_completed = Column(Boolean, default=False)
+    last_position_seconds = Column(Integer, default=0)
+
+
+class AsistenciaClase(Base):
+    __tablename__ = "academy_course_attendance"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    enrollment_id = Column(UUID(as_uuid=True),
+                           ForeignKey("academy_enrollments.id"), nullable=False)
+    session_date = Column(DateTime, nullable=False)
+    status = Column(String(50), nullable=False)
+    recorded_by_persona_id = Column(UUID(as_uuid=True),
+                                    ForeignKey("personas.id"), nullable=False)
+
+
+class IntentoEvaluacion(Base):
+    __tablename__ = "academy_assessment_attempts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    assessment_id = Column(Integer, ForeignKey("academy_assessments.id"),
+                           nullable=False)
+    enrollment_id = Column(UUID(as_uuid=True),
+                           ForeignKey("academy_enrollments.id"), nullable=False)
+    score = Column(Float, nullable=True)
+    passed = Column(Boolean, default=False)
+    submitted_at = Column(DateTime, default=_utcnow)
+
+
+class EntregaTarea(Base):
+    __tablename__ = "academy_assignment_submissions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    enrollment_id = Column(UUID(as_uuid=True),
+                           ForeignKey("academy_enrollments.id"), nullable=False)
+    lesson_id = Column(Integer, ForeignKey("academy_lessons.id"), nullable=False)
+    seaweed_fid = Column(String(100), nullable=False)
+    teacher_feedback = Column(Text, nullable=True)
+    grade = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# CERTIFICACIONES
+# ═══════════════════════════════════════════════════════════════════
+
+class Certificado(Base):
+    __tablename__ = "academy_certificates"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    enrollment_id = Column(UUID(as_uuid=True),
+                           ForeignKey("academy_enrollments.id"), nullable=False)
+    certificate_code = Column(String(100), nullable=False, unique=True)
+    certificate_type = Column(String(50))
+    issued_at = Column(DateTime, default=_utcnow)
+
+
+class ActaFormal(Base):
+    __tablename__ = "academy_formal_actas"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
+    cohort_name = Column(String(100), nullable=False)
+    closed_by_persona_id = Column(UUID(as_uuid=True),
+                                  ForeignKey("personas.id"), nullable=False)
+    min_grade = Column(Float, nullable=False)
+    min_attendance = Column(Float, nullable=False)
+    status = Column(String(50), default="BORRADOR")
+
+
+# ═══════════════════════════════════════════════════════════════════
+# FOROS
+# ═══════════════════════════════════════════════════════════════════
+
+class HiloForo(Base):
+    __tablename__ = "academy_forum_threads"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
+    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
+                               nullable=False)
+    title = Column(String(200), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+
+
+class ComentarioForo(Base):
+    __tablename__ = "academy_forum_comments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    thread_id = Column(Integer, ForeignKey("academy_forum_threads.id"),
+                       nullable=False)
+    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
+                               nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
