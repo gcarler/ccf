@@ -96,6 +96,11 @@ from backend.models_crm_core import (  # noqa: F401
     PlantillaMensaje, TareaCRM,
 )
 
+# Agenda — Calendario Unificado, Recursos, Participantes
+from backend.models_agenda import (  # noqa: F401
+    EventoAgenda, ParticipanteEvento, RecursoFisico, ReservaRecurso,
+)
+
 # Academy 2.0 — Catálogo, Evaluaciones, Matrícula, Certificaciones
 from backend.models_academy_core import (  # noqa: F401
     ActaEntrada, ActaFormal, AsistenciaClase, Certificado,
