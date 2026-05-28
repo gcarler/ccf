@@ -66,7 +66,7 @@ export default function DonationsManagementPage() {
     const loadDonations = async () => {
         if (!token) return;
         try {
-            const data = await apiFetch<any[]>("/crm/members/donations", { token });
+            const data = await apiFetch<any[]>("/crm/personas/donations", { token });
             const list = Array.isArray(data) ? data : [];
             setDonations(list);
             const now = new Date();

@@ -137,7 +137,7 @@ export const MODULE_CONFIGS: Record<string, any> = {
           {
             id: 'crm-members',
             label: 'Miembros',
-            href: '/plataforma/crm/members',
+            href: '/plataforma/crm/personas',
             icon: Users,
           },
           {

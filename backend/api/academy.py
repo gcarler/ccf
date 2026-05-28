@@ -770,7 +770,7 @@ def get_academy_candidates(
 # -----------------
 # Forum API
 # -----------------
-@router.get("/members/{persona_id}/profile")
+@router.get("/personas/{persona_id}/profile")
 def get_member_academy_profile(
     persona_id: str,
     db: Session = Depends(get_db),
@@ -815,7 +815,7 @@ class CreateAcademyAccountRequest(BaseModel):
     password: str
 
 
-@router.post("/members/{persona_id}/create-account")
+@router.post("/personas/{persona_id}/create-account")
 def create_academy_account(
     persona_id: str,
     payload: CreateAcademyAccountRequest,

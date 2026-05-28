@@ -16,7 +16,7 @@ router = APIRouter(tags=["CRM"])
 # --- MEMBERS ENDPOINTS ---
 
 
-@router.get("/members", response_model=List[schemas.Persona])
+@router.get("/personas", response_model=List[schemas.Persona])
 def list_personas(
     search: Optional[str] = None,
     role: Optional[str] = None,
@@ -32,7 +32,7 @@ def list_personas(
     return crud.search_members(db, search=search, role=role, sede_id=sede_id, skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir)
 
 
-@router.get("/members/paginated")
+@router.get("/personas/paginated")
 def list_members_paginated(
     search: Optional[str] = None,
     role: Optional[str] = None,
@@ -59,7 +59,7 @@ def list_members_paginated(
     )
 
 
-@router.post("/members/", response_model=schemas.Persona)
+@router.post("/personas/", response_model=schemas.Persona)
 def create_persona(
     payload: schemas.PersonaCreate,
     db: Session = Depends(get_db),
@@ -69,7 +69,7 @@ def create_persona(
     return crud.create_persona(db, payload)
 
 
-@router.get("/members/me", response_model=dict)
+@router.get("/personas/me", response_model=dict)
 def get_my_crm_card(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
@@ -95,7 +95,7 @@ def get_my_crm_card(
     }
 
 
-@router.get("/members/me/profile", response_model=dict)
+@router.get("/personas/me/profile", response_model=dict)
 def get_my_ministry_profile(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
@@ -203,7 +203,7 @@ def get_my_ministry_profile(
     }
 
 
-@router.get("/members/donations", response_model=List[dict])
+@router.get("/personas/donations", response_model=List[dict])
 def list_all_member_donations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -233,7 +233,7 @@ def list_all_member_donations(
     return result
 
 
-@router.get("/members/{persona_id}", response_model=schemas.Persona)
+@router.get("/personas/{persona_id}", response_model=schemas.Persona)
 def get_persona(
     persona_id: int,
     db: Session = Depends(get_db),
@@ -260,7 +260,7 @@ def get_persona(
     return persona
 
 
-@router.patch("/members/{persona_id}", response_model=schemas.Persona)
+@router.patch("/personas/{persona_id}", response_model=schemas.Persona)
 def update_persona(
     persona_id: int,
     payload: schemas.PersonaUpdate,
@@ -283,7 +283,7 @@ def update_persona(
     return persona
 
 
-@router.delete("/members/{persona_id}", status_code=204)
+@router.delete("/personas/{persona_id}", status_code=204)
 def delete_persona(
     persona_id: int,
     db: Session = Depends(get_db),
@@ -302,7 +302,7 @@ def delete_persona(
 
 
 @router.get(
-    "/members/{persona_id}/communications", response_model=List[schemas.CommunicationLog]
+    "/personas/{persona_id}/communications", response_model=List[schemas.CommunicationLog]
 )
 def get_persona_communications(
     persona_id: int,
@@ -316,7 +316,7 @@ def get_persona_communications(
     )
 
 
-@router.get("/members/{persona_id}/donations", response_model=List[schemas.Donation])
+@router.get("/personas/{persona_id}/donations", response_model=List[schemas.Donation])
 def list_persona_donations(
     persona_id: int,
     db: Session = Depends(get_db),
@@ -325,7 +325,7 @@ def list_persona_donations(
     return crud.get_member_donations(db, persona_id=persona_id)
 
 
-@router.get("/members/{persona_id}/timeline", response_model=List[dict])
+@router.get("/personas/{persona_id}/timeline", response_model=List[dict])
 def get_persona_growth_timeline(
     persona_id: int,
     db: Session = Depends(get_db),
@@ -335,7 +335,7 @@ def get_persona_growth_timeline(
     return crud.get_member_timeline(db, persona_id=persona_id)
 
 
-@router.get("/members/{persona_id}/ministries", response_model=List[dict])
+@router.get("/personas/{persona_id}/ministries", response_model=List[dict])
 def get_persona_ministries(
     persona_id: int,
     db: Session = Depends(get_db),
@@ -377,7 +377,7 @@ def get_persona_ministries(
     return result
 
 
-@router.get("/members/{persona_id}/consolidation", response_model=dict)
+@router.get("/personas/{persona_id}/consolidation", response_model=dict)
 def get_persona_consolidation_profile(
     persona_id: int,
     db: Session = Depends(get_db),
@@ -536,7 +536,7 @@ def update_position(
     return row
 
 
-@router.post("/members/{persona_id}/positions", response_model=dict)
+@router.post("/personas/{persona_id}/positions", response_model=dict)
 def assign_persona_position(
     persona_id: int,
     payload: schemas.MemberPositionCreate,
@@ -586,7 +586,7 @@ def assign_persona_position(
 
 
 @router.patch(
-    "/members/{persona_id}/positions/{member_position_id}", response_model=dict
+    "/personas/{persona_id}/positions/{member_position_id}", response_model=dict
 )
 def update_persona_position(
     persona_id: int,
@@ -612,7 +612,7 @@ def update_persona_position(
     return {"id": row.id, "updated": True}
 
 
-@router.post("/members/{persona_id}/ministries", response_model=dict)
+@router.post("/personas/{persona_id}/ministries", response_model=dict)
 def assign_persona_ministry(
     persona_id: int,
     payload: schemas.MemberMinistryCreate,
@@ -648,7 +648,7 @@ def assign_persona_ministry(
     return {"id": mm.id, "created": True}
 
 
-@router.patch("/members/{persona_id}/ministries/{mm_id}", response_model=dict)
+@router.patch("/personas/{persona_id}/ministries/{mm_id}", response_model=dict)
 def update_persona_ministry(
     persona_id: int,
     mm_id: int,

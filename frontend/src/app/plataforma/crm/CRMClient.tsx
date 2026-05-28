@@ -112,10 +112,10 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
                 <SplitDropdownButton
                     mainLabel="Nuevo"
                     icon={UserPlus}
-                    onMainClick={() => router.push('/plataforma/crm/members')}
+                    onMainClick={() => router.push('/plataforma/crm/personas')}
                     options={[
-                        { id: 'member', label: 'Miembro', icon: User, onClick: () => router.push('/plataforma/crm/members') },
-                        { id: 'family', label: 'Familia', icon: FamilyIcon, onClick: () => router.push('/plataforma/crm/members') },
+                        { id: 'member', label: 'Miembro', icon: User, onClick: () => router.push('/plataforma/crm/personas') },
+                        { id: 'family', label: 'Familia', icon: FamilyIcon, onClick: () => router.push('/plataforma/crm/personas') },
                         { id: 'appointment', label: 'Cita', icon: Calendar, onClick: () => router.push('/plataforma/crm/counseling') },
                         { id: 'call', label: 'Llamada', icon: Phone, onClick: () => router.push('/plataforma/crm/pipeline') },
                         { id: 'mail', label: 'Email', icon: Mail, onClick: () => router.push('/plataforma/crm/pipeline') },

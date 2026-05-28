@@ -158,7 +158,7 @@ export default function EventsPage() {
         try {
             const [eventsRes, membersRes, statsRes] = await Promise.all([
                 apiFetch<MinistryEvent[]>('/evangelism/events/', { token, cache: 'no-store' }),
-                apiFetch<Member[]>('/crm/members', { token, cache: 'no-store' }),
+                apiFetch<Member[]>('/crm/personas', { token, cache: 'no-store' }),
                 apiFetch<EventDashboardStat[]>('/evangelism/events/dashboard-stats', { token, cache: 'no-store' })
             ]);
             setEvents(Array.isArray(eventsRes) ? eventsRes : []);

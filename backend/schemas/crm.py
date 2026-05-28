@@ -293,8 +293,8 @@ class Persona(BaseModel):
     last_name: str
     email: Optional[str] = None
     phone: Optional[str] = None
-    church_role: str
-    spiritual_status: str
+    church_role: str = "Miembro"
+    spiritual_status: str = "Nuevo"
     family_id: Optional[int] = None
     birthday: Optional[datetime] = None
     gender: Optional[str] = None

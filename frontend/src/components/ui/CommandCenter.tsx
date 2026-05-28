@@ -55,7 +55,7 @@ export function CommandCenter() {
         { id: "academy", label: "Academia Faro", icon: GraduationCap, shortcut: "G A", group: "Acceso Rápido", action: () => router.push('/plataforma/academy') },
         { id: "cms", label: "Panel CMS", icon: Globe, group: "Acceso Rápido", action: () => router.push('/plataforma/cms') },
         { id: "new-task", label: "Nueva Tarea...", icon: Plus, shortcut: "N T", group: "Acciones", action: () => openModal('task') },
-        { id: "new-member", label: "Registrar Miembro...", icon: Plus, shortcut: "N M", group: "Acciones", action: () => router.push('/plataforma/crm/members') },
+        { id: "new-member", label: "Registrar Miembro...", icon: Plus, shortcut: "N M", group: "Acciones", action: () => router.push('/plataforma/crm/personas') },
         { id: "send-message", label: "Enviar Mensaje...", icon: MessageSquare, group: "Acciones", action: () => router.push('/plataforma/crm/messaging') },
         { id: "account-settings", label: "Configuración de Cuenta", icon: Settings, group: "Soporte y Ajustes", action: () => router.push('/plataforma/account') },
         { id: "help-center", label: "Centro de Ayuda", icon: LifeBuoy, group: "Soporte y Ajustes", action: () => router.push('/plataforma/support') },

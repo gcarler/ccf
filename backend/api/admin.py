@@ -318,7 +318,7 @@ def set_variable(
 # --- MEMBER MANAGEMENT ---
 
 
-@router.get("/members", response_model=List[Dict[str, Any]])
+@router.get("/personas", response_model=List[Dict[str, Any]])
 def list_admin_members(
     db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
 ):

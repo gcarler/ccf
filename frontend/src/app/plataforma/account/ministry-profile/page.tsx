@@ -86,7 +86,7 @@ export default function MinistryProfilePage() {
 
     useEffect(() => {
         if (!token) return;
-        apiFetch<ProfileData>('/crm/members/me/profile', { token })
+        apiFetch<ProfileData>('/crm/personas/me/profile', { token })
             .then(data => setProfile(data))
             .catch(err => {
                 const msg = (err as any)?.detail?.detail || 'No se pudo cargar el perfil ministerial';

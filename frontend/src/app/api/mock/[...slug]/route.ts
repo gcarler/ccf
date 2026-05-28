@@ -179,7 +179,7 @@ const mockLessons = {
 }
 
 const responseMap = new Map<string, unknown>([
-  ['/crm/members/', mockMembers],
+  ['/crm/personas/', mockMembers],
   ['/projects', mockProjects],
   ['/courses/', mockCourses],
   ['/auth/me', mockUser],

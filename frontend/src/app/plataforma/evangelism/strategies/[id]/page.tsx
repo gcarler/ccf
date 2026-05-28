@@ -312,7 +312,7 @@ export default function StrategyDetailPage() {
 
     useEffect(() => {
         if (isGroupDrawerOpen && members.length === 0) {
-            apiFetch<any[]>('/crm/members', { token }).then(m => setMembers(m || [])).catch(() => toast.error('Error al cargar miembros'));
+            apiFetch<any[]>('/crm/personas', { token }).then(m => setMembers(m || [])).catch(() => toast.error('Error al cargar miembros'));
         }
     }, [isGroupDrawerOpen, members.length]);
 
@@ -374,7 +374,7 @@ export default function StrategyDetailPage() {
         setIsMemberDrawerOpen(true);
         if (allMembers.length === 0) {
             try {
-                const m = await apiFetch<any[]>('/crm/members', { token });
+                const m = await apiFetch<any[]>('/crm/personas', { token });
                 setAllMembers(m || []);
             } catch { toast.error('Error al cargar miembros'); }
         }
@@ -461,7 +461,7 @@ export default function StrategyDetailPage() {
         setVisitorSearch('');
         // Pre-load all members for visitor search if not already loaded
         if (allMembers.length === 0) {
-            apiFetch<any[]>('/crm/members?limit=1000', { token }).then(res => {
+            apiFetch<any[]>('/crm/personas?limit=1000', { token }).then(res => {
                 if (Array.isArray(res)) setAllMembers(res);
             }).catch((err) => { console.error('[StrategyDetailPage] Failed to load members for attendance:', err); toast.error('Error al cargar miembros'); });
         }
