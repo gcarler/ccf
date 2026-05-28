@@ -98,8 +98,8 @@ from backend.models_crm_core import (  # noqa: F401
 
 # Academy 2.0 — Catálogo, Evaluaciones, Matrícula, Certificaciones
 from backend.models_academy_core import (  # noqa: F401
-    ActaFormal, AsistenciaClase, Certificado, ComentarioForo,
-    Curso as AcademyCurso, EntregaTarea, Evaluacion, HiloForo,
-    IntentoEvaluacion, Leccion as AcademyLeccion, Matricula,
+    ActaEntrada, ActaFormal, AsistenciaClase, Certificado,
+    ComentarioForo, Curso as AcademyCurso, EntregaTarea, Evaluacion,
+    HiloForo, IntentoEvaluacion, Leccion as AcademyLeccion, Matricula,
     Opcion, Pregunta, PrerrequisitoCurso, ProgresoLeccion,
 )

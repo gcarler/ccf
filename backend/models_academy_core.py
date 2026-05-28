@@ -8,7 +8,8 @@ from datetime import datetime
 import uuid as _uuid
 
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey,
-                        Integer, JSON, Numeric, String, Text)
+                        Integer, Numeric, String, Text,
+                        UniqueConstraint)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -55,6 +56,11 @@ class PrerrequisitoCurso(Base):
     prerequisite_course_id = Column(Integer, ForeignKey("academy_courses.id"),
                                     nullable=False)
 
+    __table_args__ = (
+        UniqueConstraint("course_id", "prerequisite_course_id",
+                         name="uq_course_prerequisite"),
+    )
+
 
 class Leccion(Base):
     __tablename__ = "academy_lessons"
@@ -67,6 +73,7 @@ class Leccion(Base):
     media_url = Column(String(255))
     order_index = Column(Integer, nullable=False)
     duration_minutes = Column(Integer, nullable=False)
+    is_published = Column(Boolean, default=False)
 
     curso = relationship("Curso", back_populates="lecciones")
 
@@ -88,6 +95,9 @@ class Evaluacion(Base):
     weight = Column(Numeric, default=1.0)
     is_published = Column(Boolean, default=False)
 
+    preguntas = relationship("Pregunta", back_populates="evaluacion",
+                             cascade="all, delete-orphan")
+
 
 class Pregunta(Base):
     __tablename__ = "academy_assessment_questions"
@@ -99,6 +109,10 @@ class Pregunta(Base):
     question_type = Column(String(50))
     points = Column(Integer, default=1)
 
+    evaluacion = relationship("Evaluacion", back_populates="preguntas")
+    opciones = relationship("Opcion", back_populates="pregunta",
+                            cascade="all, delete-orphan")
+
 
 class Opcion(Base):
     __tablename__ = "academy_assessment_options"
@@ -108,6 +122,8 @@ class Opcion(Base):
                          nullable=False)
     option_text = Column(Text, nullable=False)
     is_correct = Column(Boolean, default=False)
+
+    pregunta = relationship("Pregunta", back_populates="opciones")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -129,10 +145,14 @@ class Matricula(Base):
     approved = Column(Boolean, default=False)
     acta_closed = Column(Boolean, default=False)
     completed_at = Column(DateTime, nullable=True)
-    lessons_completed = Column(JSON, default=list)
 
     persona = relationship("Persona")
     curso = relationship("Curso")
+
+    __table_args__ = (
+        UniqueConstraint("persona_id", "course_id",
+                         name="uq_enrollment_persona_course"),
+    )
 
 
 class ProgresoLeccion(Base):
@@ -145,6 +165,11 @@ class ProgresoLeccion(Base):
     progress_percent = Column(Numeric, default=0.0)
     is_completed = Column(Boolean, default=False)
     last_position_seconds = Column(Integer, default=0)
+
+    __table_args__ = (
+        UniqueConstraint("persona_id", "lesson_id",
+                         name="uq_lesson_progress_persona_lesson"),
+    )
 
 
 class AsistenciaClase(Base):
@@ -170,6 +195,9 @@ class IntentoEvaluacion(Base):
     score = Column(Float, nullable=True)
     passed = Column(Boolean, default=False)
     submitted_at = Column(DateTime, default=_utcnow)
+
+    evaluacion = relationship("Evaluacion")
+    matricula = relationship("Matricula")
 
 
 class EntregaTarea(Base):
@@ -212,6 +240,25 @@ class ActaFormal(Base):
     min_attendance = Column(Float, nullable=False)
     status = Column(String(50), default="BORRADOR")
 
+    entradas = relationship("ActaEntrada", back_populates="acta",
+                            cascade="all, delete-orphan")
+
+
+class ActaEntrada(Base):
+    """Notas individuales de cada alumno en un acta."""
+    __tablename__ = "academy_formal_acta_entries"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    acta_id = Column(Integer, ForeignKey("academy_formal_actas.id"), nullable=False)
+    enrollment_id = Column(UUID(as_uuid=True),
+                           ForeignKey("academy_enrollments.id"), nullable=False)
+    final_grade = Column(Float, nullable=True)
+    attendance_percent = Column(Float, default=0.0)
+    approved = Column(Boolean, default=False)
+    notes = Column(Text, nullable=True)
+
+    acta = relationship("ActaFormal", back_populates="entradas")
+
 
 # ═══════════════════════════════════════════════════════════════════
 # FOROS
@@ -235,7 +282,12 @@ class ComentarioForo(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     thread_id = Column(Integer, ForeignKey("academy_forum_threads.id"),
                        nullable=False)
+    parent_id = Column(Integer, ForeignKey("academy_forum_comments.id"),
+                       nullable=True)
     author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
                                nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
+
+    respuestas = relationship("ComentarioForo", backref="parent",
+                              remote_side="ComentarioForo.id")
