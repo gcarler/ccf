@@ -21,6 +21,10 @@ router = APIRouter(tags=["CRM"])
 logger = logging.getLogger(__name__)
 
 
+# ═══════════════════════════════════════════════════════════════════
+# REDIRECTS: Old consolidation endpoints → new CRM Core
+# ═══════════════════════════════════════════════════════════════════
+
 @router.get("/consolidation/cases/{case_id}", response_model=dict)
 def get_consolidation_case(
     case_id: str,
@@ -1693,3 +1697,25 @@ def export_newsletter_leads_csv(
         })
 
     return {"rows": rows, "count": len(rows)}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# REDIRECTS — legacy consolidation → CRM Core 2.0
+# ═══════════════════════════════════════════════════════════════════
+from fastapi.responses import RedirectResponse  # noqa: E402
+
+
+@router.get("/consolidation/cases/legacy")
+def _redirect_consolidation_cases():
+    return RedirectResponse(url="/api/v2/crm/casos", status_code=307)
+
+
+@router.get("/consolidation/cases/legacy/{case_id}")
+def _redirect_consolidation_case(case_id: str):
+    return RedirectResponse(url=f"/api/v2/crm/casos/{case_id}", status_code=307)
+
+
+@router.post("/consolidation/cases/legacy")
+def _redirect_create_consolidation_case():
+    return RedirectResponse(url="/api/v2/crm/casos", status_code=307)
+

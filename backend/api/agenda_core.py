@@ -22,7 +22,7 @@ from backend.schemas.agenda_core import (
     ReservaRecursoCreate, ReservaRecursoResponse,
 )
 
-router = APIRouter(prefix="/agenda-core", tags=["Agenda"])
+router = APIRouter(prefix="/v2/agenda", tags=["Agenda v2"])
 
 
 # ──────────────────────────────────────────────

@@ -25,7 +25,7 @@ from backend.schemas.academy_core import (
     ProgresoUpdate,
 )
 
-router = APIRouter(prefix="/academy-core", tags=["Academy 2.0"])
+router = APIRouter(prefix="/v2/academy", tags=["Academy v2"])
 
 
 # ═══════════════════════════════════════════════════════

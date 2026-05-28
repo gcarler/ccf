@@ -1024,6 +1024,28 @@ def create_assessment_admin(
     }
 
 
+# ═══════════════════════════════════════════════════════════════════
+# REDIRECTS — legacy academy → Academy 2.0
+# ═══════════════════════════════════════════════════════════════════
+from fastapi.responses import RedirectResponse  # noqa: E402
+
+
+@router.get("/courses/legacy")
+def _redirect_academy_courses():
+    return RedirectResponse(url="/api/v2/academy/courses", status_code=307)
+
+
+@router.get("/courses/legacy/{course_id}")
+def _redirect_academy_course(course_id: int):
+    return RedirectResponse(url=f"/api/v2/academy/courses/{course_id}", status_code=307)
+
+
+@router.post("/enrollments/legacy")
+def _redirect_academy_enrollments():
+    return RedirectResponse(url="/api/v2/academy/enrollments", status_code=307)
+
+
+
 @router.patch("/admin/assessments/{assessment_id}")
 def update_assessment_admin(
     assessment_id: int,
@@ -1038,16 +1060,17 @@ def update_assessment_admin(
     )
     if not assessment:
         from fastapi import HTTPException
-
-        raise HTTPException(status_code=404, detail="Assessment not found")
-    if "title" in payload:
-        assessment.title = payload["title"]
-    if "passing_score" in payload:
-        assessment.min_score = payload["passing_score"]
-    db.commit()
-    db.refresh(assessment)
+@router.patch("/admin/assessments/{assessment_id}")
+def update_assessment_admin(
+    assessment_id: int,
+    payload: schemas.AssessmentCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    assessment = create_assessment(db, payload)
     return {
         "id": assessment.id,
         "title": assessment.title,
         "min_score": float(assessment.min_score),
     }
+

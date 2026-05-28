@@ -1,6 +1,6 @@
 """API routers grouped by domain."""
 
-from backend.api import (academy_core, admin, agenda, agenda_core, agents,
+from backend.api import (academy, academy_core, admin, agenda, agenda_core, agents,
                          analytics,
                          assets, auth, chat, cms, cms_v2, community, content, crm,
                          crm_core, dashboard, donations, evangelism, finance, governance,

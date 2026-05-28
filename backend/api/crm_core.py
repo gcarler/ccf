@@ -24,7 +24,7 @@ from backend.schemas.crm_core import (
     TareaCRMCreate, TareaCRMResponse,
 )
 
-router = APIRouter(prefix="/crm-core", tags=["CRM Core"])
+router = APIRouter(prefix="/v2/crm", tags=["CRM v2"])
 
 
 # ──────────────────────────────────────────────
