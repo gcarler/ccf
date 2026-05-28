@@ -1,26 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { apiFetch } from '@/lib/http';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-
-interface WorkspaceConfig {
-    features_enabled: Record<string, boolean>;
-    features_raw?: Record<string, boolean>;
-    feature_rules?: Record<string, {
-        roles_allow?: string[];
-        roles_deny?: string[];
-        users_allow?: string[];
-        users_deny?: string[];
-        rollout_percent?: number;
-    }>;
-    ui_theme_config: Record<string, any>;
-    navigation_schema: any[];
-    requested_by?: string;
-}
+import { useConfigStore } from '@/stores/configStore';
 
 interface ConfigContextType {
-    config: WorkspaceConfig | null;
+    config: any | null;
     isFeatureEnabled: (featureId: string) => boolean;
     refreshConfig: () => Promise<void>;
     loading: boolean;
@@ -30,35 +15,22 @@ const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 export function ConfigProvider({ children }: { children: React.ReactNode }) {
     const { token } = useAuth();
-    const [config, setConfig] = useState<WorkspaceConfig | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    const refreshConfig = useCallback(async () => {
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-        try {
-            const data = await apiFetch<WorkspaceConfig>('/workspace/config', { token });
-            setConfig(data);
-        } catch (err) {
-            console.error("Failed to load workspace config", err);
-        } finally {
-            setLoading(false);
-        }
-    }, [token]);
+    const config = useConfigStore((s) => s.config);
+    const loading = useConfigStore((s) => s.loading);
+    const isFeatureEnabled = useConfigStore((s) => s.isFeatureEnabled);
+    const refreshConfig = useConfigStore((s) => s.refreshConfig);
 
     useEffect(() => {
-        refreshConfig();
-    }, [refreshConfig]);
-
-    const isFeatureEnabled = (featureId: string) => {
-        if (!config) return true; // Default to true if not loaded
-        return !!config.features_enabled[featureId];
-    };
+        refreshConfig(token);
+    }, [token, refreshConfig]);
 
     return (
-        <ConfigContext.Provider value={{ config, isFeatureEnabled, refreshConfig, loading }}>
+        <ConfigContext.Provider value={{
+            config,
+            isFeatureEnabled,
+            refreshConfig: () => refreshConfig(token),
+            loading,
+        }}>
             {children}
         </ConfigContext.Provider>
     );

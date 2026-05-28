@@ -1,15 +1,10 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext } from 'react';
 import { X, CheckCircle, AlertCircle, Bell } from 'lucide-react';
+import { useToastStore } from '@/stores/toastStore';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
-
-interface Toast {
-    id: string;
-    message: string;
-    type: ToastType;
-}
 
 interface ToastContextType {
     addToast: (message: string, type?: ToastType) => void;
@@ -19,21 +14,9 @@ interface ToastContextType {
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-    const [toasts, setToasts] = useState<Toast[]>([]);
-
-    const removeToast = useCallback((id: string) => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, []);
-
-    const addToast = useCallback((message: string, type: ToastType = 'info') => {
-        const id = Math.random().toString(36).substring(2, 9);
-        setToasts((prev) => [...prev, { id, message, type }]);
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            removeToast(id);
-        }, 5000);
-    }, [removeToast]);
+    const toasts = useToastStore((s) => s.toasts);
+    const addToast = useToastStore((s) => s.addToast);
+    const removeToast = useToastStore((s) => s.removeToast);
 
     return (
         <ToastContext.Provider value={{ addToast, removeToast }}>
