@@ -1,7 +1,11 @@
 # Identity & auth
-# Academy / LMS (CellGroup models still used by evangelism)
+# Academy / LMS (legacy + CellGroup models still used by evangelism)
 from backend.models_academy import (  # noqa: F401
-    CellGroup, CellGroupAttendance, CellGroupMember, CellGroupSession, Family)
+    AcademyActivityLog, Assessment, AssessmentAttempt, AssessmentOption,
+    AssessmentQuestion, AssignmentSubmission, CampaignSeason, CellGroup,
+    CellGroupAttendance, CellGroupMember, CellGroupSession, Certificate,
+    Course, CourseAttendance, CoursePrerequisite, Enrollment, Family,
+    FormalActa, ForumComment, ForumThread, Lesson, LessonProgress, Resource)
 
 
 # Assets / Agents / Governance / Ops
@@ -20,8 +24,10 @@ from backend.models_cms import (  # noqa: F401
 from backend.models_personas import Persona  # noqa: F401
 
 # CRM / Pastoral
-from backend.models_crm import ChatMessage  # noqa: F401
 from backend.models_crm import (  # noqa: F401
+    AgendaEvent, ChatMessage, ConsolidationAssignment,
+    ConsolidationCase, ConsolidationInteraction, ConsolidationTask,
+    CrmAutomation, CrmEvent,
     ColombianCity, ColombianDepartment,
     CommunicationLog, CommunityBoardCard,
     Conversation, ConversationParticipant,

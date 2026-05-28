@@ -9,11 +9,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.api import (academy, academy_core, admin, agenda, agenda_core, agents,
+from backend.api import (academy_core, admin, agenda, agenda_core, agents,
                          analytics,
                          assets, auth, chat, cms, cms_v2, community, content, crm,
                          crm_core, dashboard, donations, evangelism, finance,
-                         governance, graph, kernel, messaging, prayer, projects,
+                         governance, graph, kernel, messaging, prayer,
                          proyectos, public, spiritual_life, support, system,
                          tables, workspace)
 from backend.core.config import get_settings
@@ -33,9 +33,7 @@ ROUTER_REGISTRY = [
     (kernel.router, "/api", ["kernel"]),
     (agenda.router, "/api", ["agenda"]),
     (agenda_core.router, "/api", ["Agenda"]),
-    (projects.router, "/api/projects", ["projects"]),
     (proyectos.router, "/api/proyectos", ["proyectos"]),
-    (academy.router, "/api/academy", ["academy"]),
     (academy_core.router, "/api", ["Academy 2.0"]),
     (crm.router, "/api/crm", ["crm"]),
     (crm_core.router, "/api", ["CRM Core"]),
