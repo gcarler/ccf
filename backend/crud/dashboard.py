@@ -1,6 +1,7 @@
 """Multi-module dashboard CRUD logic."""
 
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from sqlalchemy import desc, func, text
 from sqlalchemy.orm import Session
@@ -319,9 +320,12 @@ def get_dashboard_metrics(db: Session):
     return get_academy_dashboard(db)
 
 
-def get_pastor_radar(db: Session):
+def get_pastor_radar(db: Session, sede_id: Optional[int] = None):
+    q = db.query(models.Persona)
+    if sede_id is not None:
+        q = q.filter(models.Persona.sede_id == sede_id)
     return {
-        "membresia_viva": db.query(models.Persona).count(),
+        "membresia_viva": q.count(),
         "bautismos_este_anio": 0,
         "estudiantes_activos": db.query(models.Enrollment)
         .filter(models.Enrollment.status == "active")

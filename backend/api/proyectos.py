@@ -25,7 +25,7 @@ from backend.schemas.proyectos import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/v2/proyectos", tags=["Proyectos v2"])
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────

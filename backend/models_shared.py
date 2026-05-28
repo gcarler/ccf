@@ -14,4 +14,5 @@ from backend.core.database import Base
 
 
 def _utcnow() -> dt.datetime:
-    return dt.datetime.now(dt.UTC).replace(tzinfo=None)
+    """Return timezone-aware UTC now. Use this for all DateTime columns."""
+    return dt.datetime.now(dt.timezone.utc)

@@ -72,6 +72,7 @@ class AgendaEvent(Base):
 class CrmEvent(Base):
     __tablename__ = "crm_events"
     id = Column(Integer, primary_key=True, index=True)
+    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
     name = Column(String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
     event_date = Column(DateTime, nullable=True, index=True)
@@ -170,6 +171,7 @@ class CounselingTicket(Base):
     sentiment_score = Column(Float, nullable=True)  # -1.0 a 1.0
     sentiment_label = Column(String(20), nullable=True)  # POSITIVE, NEUTRAL, NEGATIVE
     created_at = Column(DateTime, default=_utcnow, index=True)
+    deleted_at = Column(DateTime, nullable=True)
 
     persona = relationship("Persona", foreign_keys=[persona_id])
     pastor = relationship("User")
@@ -589,6 +591,7 @@ class Donation(Base):
     donor_email = Column(String(200), nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True)
 
     persona = relationship("Persona", back_populates="donations")
     fund = relationship("Fund")
@@ -707,6 +710,7 @@ class SpiritualMilestone(Base):
     minister_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
+    deleted_at = Column(DateTime, nullable=True)
 
     persona = relationship("Persona")
     minister = relationship("User")

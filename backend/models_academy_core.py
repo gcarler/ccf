@@ -145,6 +145,7 @@ class Matricula(Base):
     approved = Column(Boolean, default=False)
     acta_closed = Column(Boolean, default=False)
     completed_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime, nullable=True)
 
     persona = relationship("Persona")
     curso = relationship("Curso")

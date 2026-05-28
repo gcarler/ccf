@@ -1,8 +1,9 @@
 """API routers grouped by domain."""
+# flake8: noqa: F401, F822
 
 from backend.api import (academy, academy_core, admin, agenda, agenda_core, agents,
                          analytics,
-                         assets, auth, chat, cms, cms_v2, community, content, crm,
+                         assets, auth, auth_v2, chat, cms, cms_v2, community, content, crm,
                          crm_core, dashboard, donations, evangelism, finance, governance,
                          graph, kernel, messaging, prayer, proyectos,
                          public, spiritual_life, support, system, workspace)
@@ -15,6 +16,7 @@ __all__ = [
     "analytics",
     "assets",
     "auth",
+    "auth_v2",
     "chat",
     "cms",
     "cms_v2",

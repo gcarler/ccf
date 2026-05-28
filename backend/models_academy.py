@@ -36,7 +36,7 @@ class CoursePrerequisite(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "course_id", "prerequisite_course_id", name="uq_course_prerequisite"
+            "course_id", "prerequisite_course_id", name="uq_course_prerequisite_legacy"
         ),
     )
 

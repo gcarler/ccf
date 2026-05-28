@@ -432,22 +432,41 @@ def get_user_enrollments(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
-    """Obtiene las inscripciones de un usuario especifico."""
-    enrollments = (
-        db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
-    )
-    result = []
-    for e in enrollments:
-        result.append(
-            {
-                "id": e.id,
-                "user_id": e.user_id,
-                "course_id": e.course_id,
-                "progress_percent": e.progress_percent,
-                "enrolled_at": str(e.enrolled_at) if e.enrolled_at else None,
-            }
+    """Obtiene las inscripciones de un usuario. Usa Matricula (UUID) si existe persona vinculada."""
+    persona = db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
+    if persona:
+        matriculas = (
+            db.query(models.Matricula)
+            .filter(
+                models.Matricula.persona_id == persona.id,
+                models.Matricula.deleted_at.is_(None),
+            )
+            .all()
         )
-    return result
+        return [
+            {
+                "id": str(m.id),
+                "persona_id": str(m.persona_id),
+                "course_id": m.course_id,
+                "status": m.status,
+                "progress_percent": m.progress_percent,
+                "approved": m.approved,
+                "completed_at": str(m.completed_at) if m.completed_at else None,
+            }
+            for m in matriculas
+        ]
+    # Fallback: legacy Integer enrollment model
+    enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    return [
+        {
+            "id": e.id,
+            "user_id": e.user_id,
+            "course_id": e.course_id,
+            "progress_percent": e.progress_percent,
+            "enrolled_at": str(e.enrolled_at) if e.enrolled_at else None,
+        }
+        for e in enrollments
+    ]
 
 
 @router.get("/users", response_model=List[dict])
@@ -1059,15 +1078,13 @@ def update_assessment_admin(
         .first()
     )
     if not assessment:
-        from fastapi import HTTPException
-@router.patch("/admin/assessments/{assessment_id}")
-def update_assessment_admin(
-    assessment_id: int,
-    payload: schemas.AssessmentCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
-):
-    assessment = create_assessment(db, payload)
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    if "title" in payload:
+        assessment.title = payload["title"]
+    if "passing_score" in payload:
+        assessment.min_score = payload["passing_score"]
+    db.commit()
+    db.refresh(assessment)
     return {
         "id": assessment.id,
         "title": assessment.title,

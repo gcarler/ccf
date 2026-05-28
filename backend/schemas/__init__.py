@@ -136,11 +136,26 @@ from backend.schemas.dashboard import (AcademyDashboard, AdminGlobalDashboard,
 from backend.schemas.governance import (AdminAuditLog, AutomationRuleCreate,
                                         AutomationRuleRead,
                                         AutomationRuleUpdate)
-# ── Identity & Auth ──────────────────────────────────────────────────────────
+# ── Identity & Auth (legacy) ─────────────────────────────────────────────────
 from backend.schemas.identity import (RefreshTokenRequest, Role, RoleBase,
                                       RoleCreate, Token, TokenUser, User,
                                       UserBase, UserCreate, UserSelfUpdate,
                                       UserUpdate)
+
+# ── Auth 2.0 ─────────────────────────────────────────────────────────────────
+from backend.schemas.auth_v2 import (
+    AuthStatsSummary, CambioPasswordRequest, ForgotPasswordRequest,
+    LogSeguridadRead, MedallaCreate, MedallaRead, MedallaUsuarioRead,
+    MfaRecoveryResponse, MfaSetupResponse, MfaVerifyRequest,
+    NivelGamificadoBase, NivelGamificadoCreate, NivelGamificadoRead,
+    NotificacionRead, PreferenciaUIRead, PreferenciaUIUpdate,
+    RecordatorioCreate, RecordatorioRead, RefreshTokenRequest as AuthRefreshTokenRequest,
+    ResetPasswordRequest, RolPlataformaBase, RolPlataformaCreate,
+    RolPlataformaRead, RolPlataformaUpdate, TokenResponse, TokenSesionRead,
+    UsuarioBase, UsuarioCreate, UsuarioLogin, UsuarioRead, UsuarioSelfUpdate,
+    UsuarioUpdate, UsuarioRolModuloBase, UsuarioRolModuloCreate,
+    UsuarioRolModuloRead,
+)
 # ── Legacy / Misc ────────────────────────────────────────────────────────────
 from backend.schemas.legacy import (CommunityBoardCard,
                                     CommunityBoardCardCreate,

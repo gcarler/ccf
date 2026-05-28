@@ -141,6 +141,7 @@ class CasoCRM(Base):
     fecha_creacion = Column(DateTime, default=_utcnow, index=True)
     fecha_cierre = Column(DateTime, nullable=True)
     sla_vencimiento_contacto = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime, nullable=True)
 
     @hybrid_property
     def is_overdue(self) -> bool:

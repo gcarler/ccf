@@ -554,7 +554,9 @@ def get_counseling_tickets(
     skip: int = 0,
     limit: int = 100,
 ) -> List[models.CounselingTicket]:
-    query = db.query(models.CounselingTicket)
+    query = db.query(models.CounselingTicket).filter(
+        models.CounselingTicket.deleted_at.is_(None)
+    )
     if status:
         query = query.filter(models.CounselingTicket.status == status)
     if persona_id:
@@ -922,6 +924,7 @@ def get_donations(
 ) -> List[models.Donation]:
     return (
         db.query(models.Donation)
+        .filter(models.Donation.deleted_at.is_(None))
         .order_by(models.Donation.created_at.desc())
         .offset(skip)
         .limit(limit)
@@ -1208,7 +1211,10 @@ def get_counseling_ticket(
 ) -> Optional[models.CounselingTicket]:
     row = (
         db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.id == ticket_id)
+        .filter(
+            models.CounselingTicket.id == ticket_id,
+            models.CounselingTicket.deleted_at.is_(None),
+        )
         .first()
     )
     if row and row.notes:
@@ -1241,12 +1247,16 @@ def update_counseling_ticket(
 def delete_counseling_ticket(db: Session, ticket_id: int) -> bool:
     row = (
         db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.id == ticket_id)
+        .filter(
+            models.CounselingTicket.id == ticket_id,
+            models.CounselingTicket.deleted_at.is_(None),
+        )
         .first()
     )
     if not row:
         return False
-    db.delete(row)
+    from datetime import datetime
+    row.deleted_at = datetime.utcnow()
     db.commit()
     return True
 
@@ -1414,7 +1424,10 @@ def delete_communication_log(db: Session, log_id: int) -> bool:
 
 
 def get_donation(db: Session, donation_id: int) -> Optional[models.Donation]:
-    return db.query(models.Donation).filter(models.Donation.id == donation_id).first()
+    return db.query(models.Donation).filter(
+        models.Donation.id == donation_id,
+        models.Donation.deleted_at.is_(None),
+    ).first()
 
 
 def update_donation(
@@ -1431,10 +1444,14 @@ def update_donation(
 
 
 def delete_donation(db: Session, donation_id: int) -> bool:
-    row = db.query(models.Donation).filter(models.Donation.id == donation_id).first()
+    row = db.query(models.Donation).filter(
+        models.Donation.id == donation_id,
+        models.Donation.deleted_at.is_(None),
+    ).first()
     if not row:
         return False
-    db.delete(row)
+    from datetime import datetime
+    row.deleted_at = datetime.utcnow()
     db.commit()
     return True
 
@@ -1462,12 +1479,16 @@ def update_milestone(
 def delete_milestone(db: Session, milestone_id: int) -> bool:
     row = (
         db.query(models.SpiritualMilestone)
-        .filter(models.SpiritualMilestone.id == milestone_id)
+        .filter(
+            models.SpiritualMilestone.id == milestone_id,
+            models.SpiritualMilestone.deleted_at.is_(None),
+        )
         .first()
     )
     if not row:
         return False
-    db.delete(row)
+    from datetime import datetime
+    row.deleted_at = datetime.utcnow()
     db.commit()
     return True
 

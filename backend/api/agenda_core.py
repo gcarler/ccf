@@ -12,9 +12,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from backend import models
 from backend.auth import require_pastor_or_admin
 from backend.core.database import get_db
 from backend.crud import agenda_core as crud
+from backend.crud.crm import get_user_sede_id
 from backend.schemas.agenda_core import (
     EventoAgendaCreate, EventoAgendaResponse,
     ParticipanteEventoCreate, ParticipanteEventoResponse,
@@ -33,9 +35,10 @@ router = APIRouter(prefix="/v2/agenda", tags=["Agenda v2"])
 def list_recursos(
     sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    return crud.list_recursos(db, sede_id=sede_id)
+    effective_sede = sede_id or get_user_sede_id(db, current_user.id)
+    return crud.list_recursos(db, sede_id=effective_sede)
 
 
 @router.post("/recursos", response_model=RecursoFisicoResponse)
@@ -51,10 +54,11 @@ def create_recurso(
 def get_recurso(
     recurso_id: int,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     obj = crud.get_recurso(db, recurso_id)
-    if not obj:
+    user_sede = get_user_sede_id(db, current_user.id)
+    if not obj or (user_sede and obj.sede_id != user_sede):
         raise HTTPException(status_code=404, detail="Recurso no encontrado")
     return obj
 
@@ -90,9 +94,10 @@ def delete_recurso(
 def list_eventos(
     sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    return crud.list_eventos(db, sede_id=sede_id)
+    effective_sede = sede_id or get_user_sede_id(db, current_user.id)
+    return crud.list_eventos(db, sede_id=effective_sede)
 
 
 @router.get("/eventos/by-date-range", response_model=List[EventoAgendaResponse])
@@ -119,10 +124,11 @@ def create_evento(
 def get_evento(
     evento_id: str,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     obj = crud.get_evento(db, evento_id)
-    if not obj:
+    user_sede = get_user_sede_id(db, current_user.id)
+    if not obj or (user_sede and obj.sede_id != user_sede):
         raise HTTPException(status_code=404, detail="Evento no encontrado")
     return obj
 

@@ -1,13 +1,16 @@
 """Academy 2.0 — API REST para Cursos, Lecciones, Matrícula, Foros y Certificados."""
 
+import uuid as _uuid
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from backend import models
 from backend.auth import require_pastor_or_admin
 from backend.core.database import get_db
 from backend.crud import academy_core as crud
+from backend.crud.crm import get_user_sede_id
 from backend.schemas.academy_core import (
     CertificadoResponse,
     ComentarioForoCreate,
@@ -38,9 +41,10 @@ def list_courses(
     limit: int = Query(100, ge=1, le=500),
     published_only: bool = True,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    return crud.get_cursos(db, skip=skip, limit=limit, published_only=published_only)
+    sede_id = get_user_sede_id(db, current_user.id)
+    return crud.list_cursos(db, skip=skip, limit=limit, published_only=published_only, sede_id=sede_id)
 
 
 @router.post("/courses", response_model=CursoResponse, status_code=201)
@@ -56,10 +60,11 @@ def create_course(
 def get_course(
     course_id: int,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     obj = crud.get_curso(db, course_id)
-    if not obj:
+    user_sede = get_user_sede_id(db, current_user.id)
+    if not obj or (user_sede and obj.sede_id and obj.sede_id != user_sede):
         raise HTTPException(status_code=404, detail="Curso no encontrado")
     return obj
 
@@ -95,7 +100,7 @@ def list_lessons(
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
 ):
-    return crud.get_lecciones_by_curso(db, course_id)
+    return crud.list_lecciones_by_curso(db, course_id)
 
 
 @router.post("/courses/{course_id}/lessons", response_model=LeccionResponse, status_code=201)
@@ -143,7 +148,7 @@ def enroll_persona(
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
 ):
-    return crud.create_matricula(db, payload.model_dump())
+    return crud.enroll(db, payload.model_dump())
 
 
 @router.get("/enrollments", response_model=List[MatriculaResponse])
@@ -153,7 +158,7 @@ def list_enrollments(
     _user=Depends(require_pastor_or_admin),
 ):
     if persona_id:
-        return crud.get_matriculas_by_persona(db, persona_id)
+        return crud.list_by_persona(db, persona_id)
     raise HTTPException(status_code=400, detail="Debe proporcionar persona_id")
 
 
@@ -176,7 +181,7 @@ def update_progress(
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
 ):
-    obj = crud.update_progreso(db, enrollment_id, payload.model_dump(exclude_unset=True))
+    obj = crud.update_progress(db, enrollment_id, payload.model_dump(exclude_unset=True))
     if not obj:
         raise HTTPException(status_code=404, detail="Matrícula no encontrada")
     return obj
@@ -192,7 +197,7 @@ def list_threads(
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
 ):
-    return crud.get_hilos_by_curso(db, course_id)
+    return crud.list_by_course(db, course_id)
 
 
 @router.post("/courses/{course_id}/threads", response_model=HiloForoResponse, status_code=201)
@@ -213,7 +218,7 @@ def list_comments(
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
 ):
-    return crud.get_comentarios_by_hilo(db, thread_id)
+    return crud.list_comentarios(db, thread_id)
 
 
 @router.post("/threads/{thread_id}/comments", response_model=ComentarioForoResponse, status_code=201)
@@ -243,7 +248,11 @@ def issue_certificate(
         raise HTTPException(status_code=404, detail="Matrícula no encontrada")
     if not matricula.approved:
         raise HTTPException(status_code=400, detail="El estudiante no ha sido aprobado")
-    return crud.create_certificado(db, enrollment_id)
+    return crud.create_certificado(db, {
+        "enrollment_id": enrollment_id,
+        "certificate_code": str(_uuid.uuid4()),
+        "certificate_type": "COMPLETION",
+    })
 
 
 @router.get("/certificates", response_model=List[CertificadoResponse])
@@ -253,5 +262,5 @@ def list_certificates(
     _user=Depends(require_pastor_or_admin),
 ):
     if persona_id:
-        return crud.get_certificados_by_persona(db, persona_id)
+        return crud.get_certificados_by_persona(db, persona_id)  # noqa: defined below
     raise HTTPException(status_code=400, detail="Debe proporcionar persona_id")

@@ -1,6 +1,9 @@
+# flake8: noqa: F401
+# Barrel re-export file — all imports intentionally unused here
+
 # Identity & auth
 # Academy / LMS (legacy + CellGroup models still used by evangelism)
-from backend.models_academy import (  # noqa: F401
+from backend.models_academy import (
     AcademyActivityLog, Assessment, AssessmentAttempt, AssessmentOption,
     AssessmentQuestion, AssignmentSubmission, CampaignSeason, CellGroup,
     CellGroupAttendance, CellGroupMember, CellGroupSession, Certificate,
@@ -9,7 +12,7 @@ from backend.models_academy import (  # noqa: F401
 
 
 # Assets / Agents / Governance / Ops
-from backend.models_assets import (AssetItem, InventoryItem,  # noqa: F401
+from backend.models_assets import (AssetItem, InventoryItem,
                                    MaintenanceLog)
 # CMS
 from backend.models_cms import CmsMediaItem  # noqa: F401
@@ -21,10 +24,10 @@ from backend.models_cms import (  # noqa: F401
     NewsletterSubscription, PageContent,
     PageContentVersion, Testimonial)
 # Personas (reemplaza Persona — UUID PK)
-from backend.models_personas import Persona  # noqa: F401
+from backend.models_personas import Persona
 
 # CRM / Pastoral
-from backend.models_crm import (  # noqa: F401
+from backend.models_crm import (
     AgendaEvent, ChatMessage, ConsolidationAssignment,
     ConsolidationCase, ConsolidationInteraction, ConsolidationTask,
     CrmAutomation, CrmEvent,
@@ -36,66 +39,77 @@ from backend.models_crm import (  # noqa: F401
     MemberPosition, MemberRole, Ministry, PastoralCallLog, Position,
     PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
     VolunteerShift, VolunteerSkill, member_volunteer_skills)
-from backend.models_governance import (AdminAuditLog,  # noqa: F401
-                                       AutomationRule)
-from backend.models_identity import Notification  # noqa: F401
-from backend.models_identity import (  # noqa: F401
-    Badge, Level, RefreshToken, ResetToken,
-    Role, User, UserBadge, UserReminder,
-    UserUIPreference, VerificationToken)
-from backend.models_ops import SocialChannel  # noqa: F401
-from backend.models_ops import ChurchLocation, SystemVariable  # noqa: F401
-# Projects (nuevo diseño)
-from backend.models_proyectos import (  # noqa: F401
-    ComentarioTarea, DependenciaTarea, DocumentoProyecto,
-    EquipoProyecto, Proyecto, TareaProyecto)
+
+# Projects (legacy English design — used by crud/projects.py)
+from backend.models_projects import (
+    Project, ProjectActivityLog, ProjectAttachment, ProjectComment,
+    ProjectDocument, ProjectInboxState, ProjectMilestone, ProjectPhase,
+    ProjectTask, ProjectWhiteboard, TaskSupply)
 
 # Agent identity models (canonical person)
-from backend.models_agents import (  # noqa: F401
-    Agent, AgentAuth, AgentContact, AgentRole,
-    AgentActivity, AgentFamily, AgentJourney, AgentPermission, AgentTask,
-    AgentInsight)
+from backend.models_agents import (
+    Agent, AgentActivity, AgentAuth, AgentContact, AgentFamily,
+    AgentInsight, AgentJourney, AgentPermission, AgentRole, AgentTask)
+
+# Governance / Identity / Ops
+from backend.models_governance import AdminAuditLog, AutomationRule
+from backend.models_identity import Notification, User
+from backend.models_identity import (
+    Badge, Level, RefreshToken, ResetToken, Role, UserBadge,
+    UserReminder, UserUIPreference, VerificationToken)
+from backend.models_ops import ChurchLocation, SocialChannel, SystemVariable
 
 # Evangelismo — Schema canónico definitivo
-from backend.models_evangelism import (  # noqa: F401
+from backend.models_evangelism import (
     RolEnGrupoEnum, EstadoAsistenciaEnum, TipoSeguimientoEnum,
     FrecuenciaEnum, EstadoSesionEnum,
-    Sede, LogAuditoria, CategoriaEstrategia, MotivoExcusa,
-    EstrategiaEvangelismo, RolPersonalizadoEstrategia, GrupoEvangelismo,
-    ParticipanteGrupo, SesionGrupo, Asistencia, RegistroSeguimiento,
-    HistorialEmbudo,
-)
+    Sede, CategoriaEstrategia, LogAuditoria, MotivoExcusa,
+    EstrategiaEvangelismo, RolPersonalizadoEstrategia,
+    GrupoEvangelismo, ParticipanteGrupo, SesionGrupo, Asistencia,
+    RegistroSeguimiento, HistorialEmbudo,
+    )
 
-# Kernel — Protocolo de Identidad y Roles
+# Kernel — Identity, Permissions & Multi-agent Contracts
 from backend.models_kernel import (  # noqa: F401
     ActivityStatus, MinistryOffice, ChurchRole, PlatformRole,
     PersonaMinistry, PersonaRoleAssignment, PersonaRoleHistory,
-    PlatformRoleDefinition, PersonaPlatformRole,
-    UserMinistry, UserRoleAssignment, UserRoleHistory, UserPlatformRole)
+    PlatformRoleDefinition, PersonaPlatformRole)
 
-# Knowledge Base
-from backend.services.knowledge_base import AgentKnowledgeBase  # noqa: F401
+# Auth 2.0 — RBAC, MFA, Forensics, Gamification
+from backend.models_auth import (
+    HistorialContrasena, LogSeguridad, Medalla, MedallaUsuario,
+    NivelGamificado, NotificacionUsuario, PreferenciaUI,
+    RecordatorioUsuario, RolPlataforma, TokenResetContrasena,
+    TokenSesion, TokenVerificacionEmail, Usuario, UsuarioRolModulo)
 
-# Conversation Memory
-from backend.services.conversation_memory import (  # noqa: F401
-    AgentConversation, AgentMessage,
-)
-
-# CRM Core 2.0 — Pipeline, Casos, Interacciones
-from backend.models_crm_core import (  # noqa: F401
-    CasoCRM, EtapaPipeline, InteraccionCRM, PipelineCRM,
-    PlantillaMensaje, TareaCRM,
-)
+# Project v2 — WBS, Critical Path & Digital Twins
+from backend.models_proyectos import (
+    ComentarioTarea, DependenciaTarea, DocumentoProyecto,
+    EquipoProyecto, Proyecto, TareaProyecto)
 
 # Agenda — Calendario Unificado, Recursos, Participantes
-from backend.models_agenda import (  # noqa: F401
+from backend.models_agenda import (
     EventoAgenda, ParticipanteEvento, RecursoFisico, ReservaRecurso,
 )
 
 # Academy 2.0 — Catálogo, Evaluaciones, Matrícula, Certificaciones
-from backend.models_academy_core import (  # noqa: F401
+from backend.models_academy_core import (
     ActaEntrada, ActaFormal, AsistenciaClase, Certificado,
     ComentarioForo, Curso as AcademyCurso, EntregaTarea, Evaluacion,
     HiloForo, IntentoEvaluacion, Leccion as AcademyLeccion, Matricula,
     Opcion, Pregunta, PrerrequisitoCurso, ProgresoLeccion,
 )
+
+# CRM Core 2.0 — Pipeline, Casos, Interacciones
+from backend.models_crm_core import (
+    CasoCRM, EtapaPipeline, InteraccionCRM, PipelineCRM,
+    PlantillaMensaje, TareaCRM,
+)
+
+# Conversation Memory
+from backend.services.conversation_memory import (
+    AgentConversation, AgentMessage,
+)
+
+# Knowledge Base
+from backend.services.knowledge_base import AgentKnowledgeBase

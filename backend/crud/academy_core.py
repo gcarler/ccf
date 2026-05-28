@@ -497,6 +497,15 @@ def list_certificados(db: Session, enrollment_id: Optional[str] = None) -> List[
     return q.all()
 
 
+def get_certificados_by_persona(db: Session, persona_id: str) -> List[Certificado]:
+    return (
+        db.query(Certificado)
+        .join(Matricula, Certificado.enrollment_id == Matricula.id)
+        .filter(Matricula.persona_id == persona_id)
+        .all()
+    )
+
+
 # ═══════════════════════════════════════════════════════════════════
 # ActaFormal
 # ═══════════════════════════════════════════════════════════════════
