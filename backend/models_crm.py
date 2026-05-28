@@ -156,35 +156,23 @@ class EventAttendance(Base):
 class CounselingTicket(Base):
     __tablename__ = "counseling_tickets"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(
+    persona_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("personas.id"),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
     pastor_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     subject = Column(String(200), nullable=False)
     notes = Column(Text, nullable=True)
-    status = Column(
-        String(50), default="open", index=True
-    )  # open, in_progress, resolved
-    priority_level = Column(
-        String(20), default="NORMAL", index=True
-    )  # URGENT, HIGH, NORMAL
-    sentiment_score = Column(Float, nullable=True)  # -1.0 to 1.0
+    status = Column(String(50), default="open", index=True)  # open, in_progress, resolved
+    priority_level = Column(String(20), default="NORMAL", index=True)  # URGENT, HIGH, NORMAL
+    sentiment_score = Column(Float, nullable=True)  # -1.0 a 1.0
     sentiment_label = Column(String(20), nullable=True)  # POSITIVE, NEUTRAL, NEGATIVE
     created_at = Column(DateTime, default=_utcnow, index=True)
 
-    persona = relationship("Persona", foreign_keys=[member_id])
+    persona = relationship("Persona", foreign_keys=[persona_id])
     pastor = relationship("User")
-
-    @property
-    def persona_id(self):
-        return self.member_id
-
-    @persona_id.setter
-    def persona_id(self, value):
-        self.member_id = value
 
 
 class PrayerRequest(Base):
@@ -261,7 +249,8 @@ class Persona(Base):
     mobile_phone = Column(String(20), nullable=True)
     landline_phone = Column(String(20), nullable=True)
     other_phone = Column(String(20), nullable=True)
-    church_role = Column(String(50), default="Miembro", index=True, doc="DEPRECADO: usar church_role_effective (Kernel PersonaRoleAssignment)")
+    # DEPRECADO: usar church_role_effective (resuelto desde Kernel PersonaRoleAssignment)
+    church_role = Column(String(50), default="Miembro", index=True)
     is_baptized = Column(Boolean, default=False, index=True)
     fecha_bautismo = Column(Date, nullable=True)
     spiritual_status = Column(String(50), default="Nuevo", index=True)
@@ -299,10 +288,10 @@ class Persona(Base):
     church_join_date = Column(Date, nullable=True)
     colombian_department_id = Column(Integer, ForeignKey("colombian_departments.id", ondelete="SET NULL"), nullable=True, index=True)
     city = Column(String(100), nullable=True)
-    latitud = Column(Float, nullable=True)
-    longitud = Column(Float, nullable=True)
+    latitud = Column(Numeric(10, 8), nullable=True)
+    longitud = Column(Numeric(11, 8), nullable=True)
     qr_token = Column(String(100), nullable=True, index=True)
-    birthday = Column(DateTime, nullable=True)
+    birthday = Column(Date, nullable=True)
     role_in_family = Column(String(50), nullable=True)
     talents = Column(Text, nullable=True)
     spiritual_gifts = Column(Text, nullable=True)
@@ -584,24 +573,25 @@ class Donation(Base):
     id = Column(Integer, primary_key=True, index=True)
     persona_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("personas.id"),
+        ForeignKey("personas.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    amount = Column(Float, nullable=False)
+    amount = Column(Numeric(14, 2), nullable=False)
     currency = Column(String(10), default="COP")
-    donation_type = Column(String(50), default="Diezmo")  # Diezmo, Ofrenda, Especial
-    status = Column(String(20), default="completed")
+    donation_type = Column(String(50), default="Diezmo", index=True)
+    status = Column(String(20), default="completed", index=True)
     reference_code = Column(String(100), nullable=True)
     payment_method = Column(String(50), default="Transferencia")
-    fund_id = Column(Integer, nullable=True)
-    person_id = Column(Integer, nullable=True)
+    fund_id = Column(Integer, ForeignKey("funds.fund_id", ondelete="SET NULL"), nullable=True, index=True)
+    # donor_name/email solo para donaciones anónimas (persona_id IS NULL)
     donor_name = Column(String(100), nullable=True)
     donor_email = Column(String(200), nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     persona = relationship("Persona", back_populates="donations")
+    fund = relationship("Fund")
 
 
 class DonationCategory(Base):
@@ -706,15 +696,19 @@ class CommunicationLog(Base):
 class SpiritualMilestone(Base):
     __tablename__ = "spiritual_milestones"
     id = Column(Integer, primary_key=True, index=True)
-    person_id = Column(Integer, nullable=False, index=True)
-    type = Column(
-        String(100), nullable=False, index=True
-    )  # bautismo, membresia, ministerio, etc.
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    type = Column(String(100), nullable=False, index=True)
     event_date = Column(Date, nullable=False)
     minister_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
 
+    persona = relationship("Persona")
     minister = relationship("User")
 
 
@@ -741,6 +735,9 @@ class RoleDefinition(Base):
 
 class MemberRole(Base):
     __tablename__ = "member_roles"
+    __table_args__ = (
+        UniqueConstraint("persona_id", "role_id", name="uq_member_role"),
+    )
     id = Column(Integer, primary_key=True, index=True)
     persona_id = Column(
         UUID(as_uuid=True),
@@ -775,13 +772,17 @@ class PastoralCallLog(Base):
         nullable=True,
         index=True,
     )
-    pastor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    pastor_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     outcome = Column(String(120), nullable=False)
     notes = Column(Text, nullable=True)
     duration_seconds = Column(Integer, default=0)
     prayer_requests = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+    persona = relationship("Persona", foreign_keys=[persona_id])
+    case = relationship("ConsolidationCase")
+    pastor = relationship("User")
 
 
 class MemberMinistry(Base):
@@ -818,11 +819,11 @@ class MemberMinistry(Base):
 class Fund(Base):
     __tablename__ = "funds"
     fund_id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(120), nullable=False)
+    name = Column(String(120), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     is_public = Column(Boolean, default=False)
-    current_balance = Column(Float, default=0.0)
-    target_amount = Column(Float, nullable=True)
+    current_balance = Column(Numeric(14, 2), default=0)
+    target_amount = Column(Numeric(14, 2), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
 

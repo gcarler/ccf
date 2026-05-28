@@ -9,8 +9,9 @@ import enum
 import uuid as _uuid
 
 from sqlalchemy import (Boolean, Column, DateTime, Enum as SAEnum, ForeignKey,
-                        Integer, String, Text)
+                        Integer, String, Text, UniqueConstraint, func)
 from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 from backend.core.database import Base
@@ -75,20 +76,27 @@ class PipelineCRM(Base):
     tipo = Column(SAEnum(TipoPipelineEnum), nullable=False)
     descripcion = Column(Text)
     activo = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     etapas = relationship("EtapaPipeline", back_populates="pipeline",
-                          order_by="EtapaPipeline.orden")
+                          order_by="EtapaPipeline.orden",
+                          cascade="all, delete-orphan")
     casos = relationship("CasoCRM", back_populates="pipeline")
 
 
 class EtapaPipeline(Base):
     __tablename__ = "crm_etapas_pipeline"
+    __table_args__ = (
+        UniqueConstraint("pipeline_id", "orden", name="uq_etapa_pipeline_orden"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    pipeline_id = Column(Integer, ForeignKey("crm_pipelines.id"), nullable=False)
+    pipeline_id = Column(Integer, ForeignKey("crm_pipelines.id", ondelete="CASCADE"), nullable=False, index=True)
     nombre = Column(String(100), nullable=False)
     orden = Column(Integer, nullable=False)
     requiere_accion = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=_utcnow)
 
     pipeline = relationship("PipelineCRM", back_populates="etapas")
     casos = relationship("CasoCRM", back_populates="etapa_actual")
@@ -103,9 +111,12 @@ class PlantillaMensaje(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     titulo = Column(String(150), nullable=False)
-    canal = Column(String(50), nullable=False)
+    canal = Column(SAEnum(TipoInteraccionEnum), nullable=False, index=True)
     contenido_texto = Column(Text, nullable=False)
-    creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"))
+    creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
+    created_at = Column(DateTime, default=_utcnow)
+
+    creado_por = relationship("Persona", foreign_keys=[creado_por_id])
 
 
 # ──────────────────────────────────────────────
@@ -116,22 +127,33 @@ class CasoCRM(Base):
     __tablename__ = "crm_casos"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
-    pipeline_id = Column(Integer, ForeignKey("crm_pipelines.id"), nullable=False)
-    etapa_actual_id = Column(Integer, ForeignKey("crm_etapas_pipeline.id"), nullable=False)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
+    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False, index=True)
+    pipeline_id = Column(Integer, ForeignKey("crm_pipelines.id"), nullable=False, index=True)
+    etapa_actual_id = Column(Integer, ForeignKey("crm_etapas_pipeline.id"), nullable=False, index=True)
     titulo_caso = Column(String(200), nullable=False)
-    prioridad = Column(SAEnum(PrioridadCasoEnum), default=PrioridadCasoEnum.MEDIA)
-    estado = Column(SAEnum(EstadoCasoEnum), default=EstadoCasoEnum.ABIERTO)
-    origen_canal = Column(SAEnum(CanalOrigenEnum), nullable=False)
-    origen_detalle_id = Column(String)
+    prioridad = Column(SAEnum(PrioridadCasoEnum), default=PrioridadCasoEnum.MEDIA, index=True)
+    estado = Column(SAEnum(EstadoCasoEnum), default=EstadoCasoEnum.ABIERTO, index=True)
+    origen_canal = Column(SAEnum(CanalOrigenEnum), nullable=False, index=True)
+    origen_detalle_id = Column(String(200), nullable=True, index=True)
     payload_web = Column(JSONB, nullable=True)
-    asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    fecha_creacion = Column(DateTime, default=_utcnow)
+    asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    fecha_creacion = Column(DateTime, default=_utcnow, index=True)
     fecha_cierre = Column(DateTime, nullable=True)
-    sla_vencimiento_contacto = Column(DateTime, nullable=False)
-    is_overdue = Column(Boolean, default=False)
+    sla_vencimiento_contacto = Column(DateTime, nullable=True)
 
+    @hybrid_property
+    def is_overdue(self) -> bool:
+        if self.sla_vencimiento_contacto is None:
+            return False
+        return _utcnow() > self.sla_vencimiento_contacto
+
+    @is_overdue.expression
+    def is_overdue(cls):
+        return (cls.sla_vencimiento_contacto != None) & (cls.sla_vencimiento_contacto < func.now())  # noqa: E711
+
+    persona = relationship("Persona", foreign_keys=[persona_id])
+    asignado_a = relationship("Persona", foreign_keys=[asignado_a_id])
     pipeline = relationship("PipelineCRM", back_populates="casos")
     etapa_actual = relationship("EtapaPipeline", back_populates="casos")
     interacciones = relationship("InteraccionCRM", back_populates="caso",
@@ -148,14 +170,16 @@ class InteraccionCRM(Base):
     __tablename__ = "crm_interacciones"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id"), nullable=False)
-    realizado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
-    tipo = Column(SAEnum(TipoInteraccionEnum), nullable=False)
-    fecha_interaccion = Column(DateTime, default=_utcnow)
+    caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="CASCADE"), nullable=False, index=True)
+    realizado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    tipo = Column(SAEnum(TipoInteraccionEnum), nullable=False, index=True)
+    fecha_interaccion = Column(DateTime, default=_utcnow, index=True)
     resumen = Column(Text, nullable=False)
+    duration_seconds = Column(Integer, default=0)
     plantilla_usada_id = Column(Integer, ForeignKey("crm_plantillas_mensaje.id"), nullable=True)
 
     caso = relationship("CasoCRM", back_populates="interacciones")
+    realizado_por = relationship("Persona", foreign_keys=[realizado_por_id])
 
 
 # ──────────────────────────────────────────────
@@ -166,12 +190,14 @@ class TareaCRM(Base):
     __tablename__ = "crm_tareas"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id"), nullable=False)
-    asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
+    caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="CASCADE"), nullable=False, index=True)
+    asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     titulo = Column(String(200), nullable=False)
     descripcion = Column(Text)
-    fecha_vencimiento = Column(DateTime, nullable=False)
-    completada = Column(Boolean, default=False)
+    fecha_vencimiento = Column(DateTime, nullable=False, index=True)
+    completada = Column(Boolean, default=False, index=True)
     fecha_completada = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
 
     caso = relationship("CasoCRM", back_populates="tareas")
+    asignado_a = relationship("Persona", foreign_keys=[asignado_a_id])
