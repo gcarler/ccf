@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_admin
+from backend.auth import require_active_user, require_admin
 from backend.core.database import get_db
 from backend.core.permissions import (MODULE_PERMISSION_MAP, PERMISSION_LEVELS,
                                       expand_module_permissions,
