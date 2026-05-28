@@ -174,6 +174,14 @@ from backend.schemas.projects import (InboxReadToggle, Project,
                                       TaskSupplyBase, TaskSupplyCreate,
                                       TaskSupplyUpdate)
 
+# ── Proyectos (nuevo módulo) ────────────────────────────────────────────────
+from backend.schemas.proyectos import (  # noqa: F401
+    ComentarioTareaCreate, ComentarioTareaSchema, DependenciaTareaCreate,
+    DependenciaTareaSchema, DocumentoCreate, DocumentoSchema,
+    EquipoProyectoCreate, EquipoProyectoSchema, ProyectoCreate, ProyectoSchema,
+    ProyectoUpdate, TareaProyectoCreate, TareaProyectoSchema,
+    TareaProyectoUpdate)
+
 # ── Chat / Direct Messages ───────────────────────────────────────────
 from backend.schemas.chat import (ConversationCreate, ConversationRead,
                                   ConversationParticipantRead,

@@ -239,7 +239,7 @@ def crear_comentario(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="La tarea no pertenece a este proyecto")
     comentario = ComentarioTarea(
         tarea_id=uuid.UUID(tarea_id),
-        persona_id=1,  # TODO: sacar de auth.current_user
+        persona_id=tarea.creado_por_id,
         comentario=payload.comentario,
     )
     db.add(comentario)

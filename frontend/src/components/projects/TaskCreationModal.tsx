@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { CheckSquare, Type, AlignLeft, Flag, Loader2, User } from 'lucide-react';
 import UserSelect from '@/components/ui/UserSelect';
 import clsx from 'clsx';
@@ -13,6 +14,13 @@ interface Props {
     onSubmit: (data: { title: string; description: string; priority: string; status: string; assignee_id?: number | null }) => Promise<void>;
 }
 
+interface FormValues {
+    title: string;
+    description: string;
+    priority: string;
+    assignee_id: number | null;
+}
+
 const PRIORITIES = [
     { value: 'urgent', label: 'Urgente', color: 'bg-rose-500', iconColor: 'text-rose-500' },
     { value: 'high', label: 'Alta', color: 'bg-amber-500', iconColor: 'text-amber-500' },
@@ -21,35 +29,27 @@ const PRIORITIES = [
 ];
 
 export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onClose, onSubmit }: Props) {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [priority, setPriority] = useState('medium');
-    const [assigneeId, setAssigneeId] = useState<number | null>(null);
-    const [loading, setLoading] = useState(false);
+    const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<FormValues>({
+        defaultValues: {
+            title: '',
+            description: '',
+            priority: 'medium',
+            assignee_id: null,
+        }
+    });
 
-    // Reset fields when opened
+    const priority = watch('priority');
+    const assigneeId = watch('assignee_id');
+
     useEffect(() => {
         if (isOpen) {
-            setTitle('');
-            setDescription('');
-            setPriority('normal');
-            setAssigneeId(null);
-            setLoading(false);
+            reset({ title: '', description: '', priority: 'medium', assignee_id: null });
         }
-    }, [isOpen]);
+    }, [isOpen, reset]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!title.trim()) return;
-        setLoading(true);
-        try {
-            await onSubmit({ title, description, priority, status: defaultStatus, assignee_id: assigneeId });
-            onClose();
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
+    const onFormSubmit = async (data: FormValues) => {
+        await onSubmit({ ...data, status: defaultStatus });
+        onClose();
     };
 
     return (
@@ -63,22 +63,26 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
                     <button type="button" onClick={onClose} className="px-3 py-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-700 transition-colors">
                         Cancelar
                     </button>
-                    <button type="button" onClick={handleSubmit} disabled={loading || !title.trim()} className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
-                        {loading ? <Loader2 className="animate-spin" size={12} /> : <CheckSquare size={12} />}
-                        {loading ? 'Creando...' : 'Crear Tarea'}
+                    <button
+                        type="button"
+                        onClick={handleSubmit(onFormSubmit)}
+                        disabled={isSubmitting}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                        {isSubmitting ? <Loader2 className="animate-spin" size={12} /> : <CheckSquare size={12} />}
+                        {isSubmitting ? 'Creando...' : 'Crear Tarea'}
                     </button>
                 </>
             }
         >
-            <form onSubmit={handleSubmit} className="mt-3 space-y-4">
+            <form onSubmit={handleSubmit(onFormSubmit)} className="mt-3 space-y-4">
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
                         <Type size={12} /> Título de la tarea
                     </label>
                     <input
                         autoFocus
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
+                        {...register('title', { required: true })}
                         placeholder="Ej: Revisión de Mezcla de Audio"
                         className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 dark:text-white"
                     />
@@ -89,8 +93,7 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
                         <AlignLeft size={12} /> Descripción (Opcional)
                     </label>
                     <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        {...register('description')}
                         placeholder="Detalles adicionales, links, etc..."
                         rows={5}
                         className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-slate-700 dark:text-slate-300"
@@ -106,7 +109,7 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
                             <button
                                 key={p.value}
                                 type="button"
-                                onClick={() => setPriority(p.value)}
+                                onClick={() => setValue('priority', p.value)}
                                 className={clsx(
                                     "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-[11px] font-bold uppercase tracking-wide transition-all",
                                     priority === p.value
@@ -127,7 +130,7 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
                     </label>
                     <UserSelect
                         value={assigneeId}
-                        onChange={setAssigneeId}
+                        onChange={(v) => setValue('assignee_id', v)}
                         placeholder="Seleccionar responsable"
                     />
                 </div>
