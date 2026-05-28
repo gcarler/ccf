@@ -1,12 +1,7 @@
 # Identity & auth
-# Academy / LMS
-from backend.models_academy import AcademyActivityLog  # noqa: F401
+# Academy / LMS (CellGroup models still used by evangelism)
 from backend.models_academy import (  # noqa: F401
-    Assessment, AssessmentAttempt, AssessmentOption, AssessmentQuestion,
-    AssignmentSubmission, Certificate, CellGroup, CellGroupAttendance,
-    CellGroupMember, CellGroupSession, Course,
-    CourseAttendance, CoursePrerequisite, Enrollment, Family, CampaignSeason,
-    FormalActa, ForumComment, ForumThread, Lesson, LessonProgress, Resource)
+    CellGroup, CellGroupAttendance, CellGroupMember, CellGroupSession, Family)
 
 
 # Assets / Agents / Governance / Ops
@@ -27,13 +22,10 @@ from backend.models_personas import Persona  # noqa: F401
 # CRM / Pastoral
 from backend.models_crm import ChatMessage  # noqa: F401
 from backend.models_crm import (  # noqa: F401
-    AgendaEvent, ColombianCity, ColombianDepartment,
+    ColombianCity, ColombianDepartment,
     CommunicationLog, CommunityBoardCard,
-    ConsolidationAssignment, ConsolidationCase,
-    ConsolidationInteraction, ConsolidationTask,
     Conversation, ConversationParticipant,
-    CounselingTicket, CrmAutomation,
-    CrmEvent, CrmTask, Donation, DonationCategory, EventAssignment,
+    CounselingTicket, CrmTask, Donation, DonationCategory, EventAssignment,
     EventAttendance, EvangelismStrategy, Fund, MemberMinistry,
     MemberPosition, MemberRole, Ministry, PastoralCallLog, Position,
     PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
@@ -47,13 +39,6 @@ from backend.models_identity import (  # noqa: F401
     UserUIPreference, VerificationToken)
 from backend.models_ops import SocialChannel  # noqa: F401
 from backend.models_ops import ChurchLocation, SystemVariable  # noqa: F401
-# Projects (legacy — convive con el nuevo módulo)
-from backend.models_projects import ProjectActivityLog  # noqa: F401
-from backend.models_projects import (  # noqa: F401
-    Project, ProjectAttachment, ProjectComment, ProjectDocument,
-    ProjectInboxState, ProjectMilestone, ProjectPhase, ProjectTask,
-    ProjectWhiteboard, TaskSupply)
-
 # Projects (nuevo diseño)
 from backend.models_proyectos import (  # noqa: F401
     ComentarioTarea, DependenciaTarea, DocumentoProyecto,

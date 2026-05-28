@@ -79,7 +79,7 @@ async def lifespan(_: FastAPI):
     # Ensure all ORM-managed tables exist (safe idempotent operation, retries for DB readiness)
     for attempt in range(1, 6):
         try:
-            from backend import models, models_cms, models_crm, models_projects
+            from backend import models, models_cms, models_crm
             import backend.models_agents  # ensure agent_task/insight tables registered
             from backend.core.database import Base, engine
 
