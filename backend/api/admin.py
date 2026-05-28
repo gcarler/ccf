@@ -241,16 +241,16 @@ def list_locations(db: Session = Depends(get_db), _user=Depends(require_active_u
     locs = db.query(models.ChurchLocation).all()
     return [
         {
-            "id": l.id,
-            "name": l.name,
-            "address": l.address,
-            "pastor": l.pastor_name,
-            "active": l.is_active,
-            "type": l.location_type,
+            "id": loc.id,
+            "name": loc.name,
+            "address": loc.address,
+            "pastor": loc.pastor_name,
+            "active": loc.is_active,
+            "type": loc.location_type,
         }
-        for l in locs
+        for loc in locs
     ]
-
+    
 
 @router.post("/locations")
 def create_location(
@@ -454,16 +454,16 @@ def list_admin_audit(
     """Obtiene el historial de auditoría del sistema."""
     logs = crud.get_admin_audit_logs(db, limit=limit)
     result = []
-    for l in logs:
+    for log in logs:
         result.append(
             {
-                "id": l.id,
-                "actor_user_id": l.actor_user_id,
-                "action": l.action,
-                "resource_type": l.resource_type,
-                "resource_id": l.resource_id,
-                "created_at": l.created_at.isoformat(),
-                "metadata": l.metadata_json or {},
+                "id": log.id,
+                "actor_user_id": log.actor_user_id,
+                "action": log.action,
+                "resource_type": log.resource_type,
+                "resource_id": log.resource_id,
+                "created_at": log.created_at.isoformat(),
+                "metadata": log.metadata_json or {},
             }
         )
     return result
