@@ -29,27 +29,60 @@ export default function LoginPage() {
         }
     }, [isAuthenticated, user, router]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const [step, setStep] = useState<'email' | 'password'>('email');
+    const [emailInfo, setEmailInfo] = useState<any>(null);
+    const [needsInit, setNeedsInit] = useState(false);
+
+    const checkEmail = async () => {
+        if (!email.includes('@')) { setError('Ingresa un email válido'); return; }
         setLoading(true);
         setError('');
         try {
-            const formData = new URLSearchParams();
-            formData.append('grant_type', 'password');
-            formData.append('username', email);
-            formData.append('password', password);
-            const response = await apiFetch<any>('/auth/login', {
+            const res = await apiFetch<any>(`/v3/auth/check-email?email=${encodeURIComponent(email)}`);
+            setEmailInfo(res);
+            if (res.is_gmail) {
+                // Google SSO — go direct
+                window.location.href = '/v3/auth/google';
+                return;
+            }
+            if (res.needs_password_init) {
+                setNeedsInit(true);
+                setError('Tu cuenta no tiene contraseña configurada. Revisa tu correo para el enlace de activación.');
+                setLoading(false);
+                return;
+            }
+            setStep('password');
+        } catch {
+            setError('Error al verificar el email');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (step === 'email') { await checkEmail(); return; }
+        setLoading(true);
+        setError('');
+        try {
+            const response = await apiFetch<any>('/v3/auth/login', {
                 method: 'POST',
-                body: formData,
+                body: { email, password },
             });
             if (response.access_token) {
                 await login(response.access_token, response.refresh_token);
+                router.push('/plataforma/dashboard');
             } else {
                 setError('No se recibió el token de acceso.');
             }
         } catch (err: any) {
             console.error('[LOGIN ERROR]', err);
-            setError('Credenciales incorrectas o problema de conexión.');
+            if (err?.detail === 'CONTRASENA_NO_INICIALIZADA') {
+                setNeedsInit(true);
+                setError('Revisa tu correo electrónico para configurar tu contraseña por primera vez.');
+            } else {
+                setError('Credenciales incorrectas o problema de conexión.');
+            }
         } finally {
             setLoading(false);
         }

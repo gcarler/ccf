@@ -150,7 +150,7 @@ export default function CrmSidebar() {
                                     {navItem('/crm/newsletter-leads', <Mail />, 'Newsletter CRM', 'text-indigo-400')}
                                     {navItem('/crm/counseling', <Heart />, 'Consejería')}
                                     {navItem('/crm/prayers', <MessageCircle />, 'Muro de Oración')}
-                                    {navItem('/crm/groups', <HouseIcon />, 'Faros en Casa')}
+                                    {navItem('/crm/groups', <HouseIcon />, 'Grupos')}
                                 </div>
                             )}
                         </div>

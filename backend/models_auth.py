@@ -48,7 +48,8 @@ class Usuario(Base):
     username = Column(CITEXT, nullable=False, unique=True)
     email = Column(CITEXT, nullable=False, unique=True)
     password_hash = Column(String(255), nullable=False)
-    rol_plataforma_id = Column(UUID(as_uuid=True), ForeignKey("auth_roles.id"), nullable=False)
+    rol_plataforma_id = Column(UUID(as_uuid=True), ForeignKey("auth_roles.id"), nullable=True)
+    platform_role_id = Column(Integer, ForeignKey("platform_role_definitions.id"), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     is_email_verified = Column(Boolean, default=False, nullable=False)
     failed_login_attempts = Column(Integer, default=0, nullable=False)
@@ -61,8 +62,9 @@ class Usuario(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    persona = relationship("Persona", foreign_keys=[id], primaryjoin="Usuario.id == Persona.id")
+    persona = relationship("backend.models_crm.Persona", foreign_keys=[id], primaryjoin="Usuario.id == backend.models_crm.Persona.id")
     rol_plataforma = relationship("RolPlataforma", foreign_keys=[rol_plataforma_id])
+    platform_role = relationship("backend.models_kernel.PlatformRoleDefinition", foreign_keys=[platform_role_id])
     roles_modulares = relationship("UsuarioRolModulo", back_populates="usuario", cascade="all, delete-orphan")
 
 

@@ -68,7 +68,7 @@ const mockProjects = [
   },
   {
     id: 102,
-    title: 'App Grupos Faro',
+    title: 'App Grupos',
     description: 'Aplicación móvil para reportes semanales y recursos de grupos vida.',
     status: 'Planificación',
     owner_id: 11,

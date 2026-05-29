@@ -10,7 +10,7 @@ const GROUP_SECTIONS = [
         id: 'overview',
         label: 'General',
         items: [
-            { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/plataforma/groups' },
+            { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/plataforma/community/grupos' },
             { id: 'map', label: 'Mapa de Casas', icon: MapPin, href: '/plataforma/groups/map' },
         ]
     },

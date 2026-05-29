@@ -176,7 +176,7 @@ export default function CrmGroupsPage() {
                     <div className="absolute -top-4 -left-12 size-56 rounded-full bg-white/5 blur-3xl" />
                     <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-200 mb-2">Evangelismo · Faros en Casa</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-200 mb-2">Evangelismo · Grupos</p>
                             <h1 className="text-lg font-bold text-white tracking-tight mb-1">Casas de Bendición</h1>
                             <p className="text-emerald-200 text-sm font-medium">Red de células y grupos de discipulado CCF</p>
                         </div>

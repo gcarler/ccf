@@ -139,8 +139,7 @@ class RolPersonalizadoEstrategia(Base):
     __tablename__ = "estrategia_roles_personalizados"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True)
-    evangelism_strategy_id = Column(Integer, ForeignKey("evangelism_strategies.id", ondelete="SET NULL"), nullable=True, index=True)
+    estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True, index=True)
     nombre_rol = Column(String(100), nullable=False)
     descripcion = Column(String(255), nullable=True)
 
@@ -151,7 +150,7 @@ class GrupoEvangelismo(Base):
     __tablename__ = "grupos_evangelismo"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True)
+    estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True, index=True)
     evangelism_strategy_id = Column(Integer, ForeignKey("evangelism_strategies.id", ondelete="SET NULL"), nullable=True, index=True)
     sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
     codigo = Column(String(30), unique=True, nullable=True, index=True)
@@ -197,7 +196,7 @@ class GrupoEvangelismo(Base):
     leader_persona_id = synonym("lider_persona_id")
     assistant_persona_id = synonym("asistente_persona_id")
     host_persona_id = synonym("anfitrion_persona_id")
-    evangelism_strategy_id = synonym("estrategia_id")
+    # evangelism_strategy_id es columna directa (antes era synonym de estrategia_id legacy)
 
     @hybrid_property
     def status(self):
@@ -289,33 +288,13 @@ class SesionGrupo(Base):
     grupo = relationship("GrupoEvangelismo", back_populates="sesiones")
     asistencias = relationship("Asistencia", back_populates="sesion", cascade="all, delete-orphan")
 
-    @property
-    def cell_group_id(self):
-        return self.grupo_id
-
-    @cell_group_id.setter
-    def cell_group_id(self, value):
-        self.grupo_id = value
-
-    @property
-    def cell_group(self):
-        return self.grupo
-
-    @property
-    def session_date(self):
-        return self.fecha_sesion
-
-    @session_date.setter
-    def session_date(self, value):
-        self.fecha_sesion = value
-
-    @property
-    def status(self):
-        return self.estado
-
-    @status.setter
-    def status(self, value):
-        self.estado = value
+    cell_group_id = synonym("grupo_id")
+    cell_group = synonym("grupo")
+    session_date = synonym("fecha_sesion")
+    status = synonym("estado")
+    topic = synonym("tema_estudio")
+    cancellation_reason = synonym("motivo_cancelacion")
+    report_notes = synonym("notas_lider")
 
     @property
     def season_id(self):
@@ -328,30 +307,6 @@ class SesionGrupo(Base):
     @property
     def season(self):
         return None
-
-    @property
-    def topic(self):
-        return self.tema_estudio
-
-    @topic.setter
-    def topic(self, value):
-        self.tema_estudio = value
-
-    @property
-    def cancellation_reason(self):
-        return self.motivo_cancelacion
-
-    @cancellation_reason.setter
-    def cancellation_reason(self, value):
-        self.motivo_cancelacion = value
-
-    @property
-    def report_notes(self):
-        return self.notas_lider
-
-    @report_notes.setter
-    def report_notes(self, value):
-        self.notas_lider = value
 
     @property
     def novelty_type(self):
@@ -423,6 +378,8 @@ class Asistencia(Base):
     requiere_seguimiento = Column(Boolean, default=False)
 
     # English aliases for legacy support
+    session_id = synonym("sesion_id")
+    member_id = synonym("persona_id")
     absence_reason = synonym("motivo_excusa_id")
     absence_reason_detail = synonym("detalle_excusa")
 

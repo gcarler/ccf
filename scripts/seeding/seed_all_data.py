@@ -470,7 +470,7 @@ def seed_database():
 
         # 7. Seed Glory Houses
         print("Creating Glory Houses...")
-        glory_houses = []
+        grupos = []
 
         # Pick potential leaders (Servidores with Líder role, or just Servidores)
         leaders_pool = [m for m in members if m.spiritual_status == "Servidor"]
@@ -568,14 +568,14 @@ def seed_database():
                 members_count=0,
             )
             db.add(house)
-            glory_houses.append(house)
+            grupos.append(house)
         db.commit()
 
         # 8. Assign members to Glory Houses
         print("Assigning members to houses...")
         # Get all members who are not leaders/assistants/hosts of any house
         core_roles_ids = set()
-        for h in glory_houses:
+        for h in grupos:
             if h.leader_id:
                 core_roles_ids.add(h.leader_id)
             if h.assistant_id:
@@ -587,7 +587,7 @@ def seed_database():
         random.shuffle(assignable_members)
 
         member_idx = 0
-        for h in glory_houses:
+        for h in grupos:
             # Assign between 8 and 18 members per house
             num_to_assign = min(
                 random.randint(8, 18), len(assignable_members) - member_idx
@@ -598,7 +598,7 @@ def seed_database():
             for _ in range(num_to_assign):
                 m = assignable_members[member_idx]
                 gh_member = models.GloryHouseMember(
-                    glory_house_id=h.id, member_id=m.id, role="asistente"
+                    cell_group_id=h.id, member_id=m.id, role="asistente"
                 )
                 db.add(gh_member)
                 member_idx += 1
@@ -755,7 +755,7 @@ def seed_database():
         # 12. Seed Faro Seasons, Sessions & Attendance
         print("Creating Faro seasons, sessions, and attendance...")
         season = models.FaroSeason(
-            name="Campaña Faro en Casa 2026",
+            name="Campaña Grupos 2026",
             start_date=date(2026, 1, 1),
             end_date=date(2026, 12, 31),
             periodicity="SEMANAL",
@@ -776,7 +776,7 @@ def seed_database():
         ]
 
         attendance_records_count = 0
-        for h in glory_houses:
+        for h in grupos:
             # Skip inactive/suspended houses for sessions
             if h.status != "Activo":
                 continue
@@ -784,7 +784,7 @@ def seed_database():
             # Get members assigned to this house
             gh_members = (
                 db.query(models.GloryHouseMember)
-                .filter(models.GloryHouseMember.glory_house_id == h.id)
+                .filter(models.cell_group_members.cell_group_id == h.id)
                 .all()
             )
             if not gh_members:
@@ -793,7 +793,7 @@ def seed_database():
             for s_idx, s_date in enumerate(session_dates):
                 # Create session
                 session = models.GloryHouseSession(
-                    glory_house_id=h.id,
+                    cell_group_id=h.id,
                     season_id=season.id,
                     session_date=s_date,
                     status="Realizada",

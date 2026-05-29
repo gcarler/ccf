@@ -378,7 +378,7 @@ export default function MessagingCampaignCenter() {
                                 <SegmentTag label="Miembros Activos" active={segments.includes('active')} onClick={() => toggleSegment('active')} />
                                 <SegmentTag label="Nuevos Visitantes" active={segments.includes('new')} onClick={() => toggleSegment('new')} />
                                 <SegmentTag label="Pastores & Staff" active={segments.includes('staff')} onClick={() => toggleSegment('staff')} />
-                                <SegmentTag label="Faros en Casa" active={segments.includes('groups')} onClick={() => toggleSegment('groups')} />
+                                <SegmentTag label="Grupos" active={segments.includes('groups')} onClick={() => toggleSegment('groups')} />
                                 <SegmentTag label="Baja Asistencia" active={segments.includes('low')} onClick={() => toggleSegment('low')} />
                                 <SegmentTag label="Donantes Pro" active={segments.includes('vip')} onClick={() => toggleSegment('vip')} />
                             </div>

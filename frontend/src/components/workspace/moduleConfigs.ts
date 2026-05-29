@@ -142,7 +142,7 @@ export const MODULE_CONFIGS: Record<string, any> = {
           },
           {
             id: 'crm-groups',
-            label: 'Faros en Casa',
+            label: 'Grupos',
             href: '/plataforma/crm/groups',
             icon: Home,
           },
@@ -228,13 +228,13 @@ export const MODULE_CONFIGS: Record<string, any> = {
           },
           {
             id: 'ev-faro',
-            label: 'Faro: Panel',
+            label: 'Panel de Grupo',
             href: '/plataforma/evangelism/faro',
             icon: Activity,
           },
           {
             id: 'ev-faro-groups',
-            label: 'Grupos Faro',
+            label: 'Grupos',
             href: '/plataforma/evangelism/faro/groups',
             icon: Home,
           },
@@ -247,7 +247,7 @@ export const MODULE_CONFIGS: Record<string, any> = {
         ],
       },
       {
-        title: 'Gestión Faro',
+        title: 'Gestión de Grupos',
         items: [
           {
             id: 'faro-create',
@@ -446,7 +446,7 @@ export const MODULE_CONFIGS: Record<string, any> = {
           {
             id: 'groups-all',
             label: 'Casas de Bendición',
-            href: '/plataforma/groups',
+            href: '/plataforma/community/grupos',
             icon: Home,
           },
           {

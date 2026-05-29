@@ -145,19 +145,21 @@ def delete_event(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
+    """Cancela un evento (soft-delete: marca como CANCELLED)."""
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
-    db.delete(event)
+    event.status = "CANCELLED"
+    event.cancellation_reason = "Eliminado por usuario"
     db.commit()
     record_admin_action(
         db,
         current_user,
-        action="delete_event",
+        action="cancel_event",
         resource_type="event",
         resource_id=str(event_id),
     )
-    return {"status": "deleted", "id": event_id}
+    return {"status": "cancelled", "id": event_id}
 
 
 @router.get("/events/{event_id}", response_model=dict)
@@ -722,15 +724,23 @@ def delete_role(
         raise HTTPException(status_code=404, detail="Rol a eliminar no encontrado")
     if not fallback:
         raise HTTPException(status_code=400, detail="Rol de reemplazo no valido")
+    if role.is_system_locked:
+        raise HTTPException(status_code=400, detail="No se puede eliminar un rol del sistema")
 
+    # Reasignar miembros al rol de reemplazo
     db.query(models.Persona).filter(models.Persona.church_role == role.name).update(
         {"church_role": fallback.name}
     )
-    db.delete(role)
+
+    # Soft-delete: marcar como inactivo y renombrar para liberar el unique constraint
+    from datetime import datetime
+    suffix = datetime.utcnow().strftime("_deleted_%Y%m%d_%H%M%S")
+    role.name = f"{role.name}{suffix}"
+    role.is_leadership = False
     db.commit()
     return {
         "success": True,
-        "message": "Rol eliminado y miembros reasignados correctamente",
+        "message": f"Rol '{role.name}' desactivado y miembros reasignados a '{fallback.name}'",
     }
 
 

@@ -55,6 +55,18 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def _log_project_activity(db: Session, project_id: Any, user_id: Any, action_type: str, description: str):
+    persona_id = get_user_persona_id(db, user_id)
+    activity = models.ProjectActivityLog(
+        project_id=project_id,
+        persona_id=persona_id,
+        action_type=action_type,
+        description=description,
+    )
+    db.add(activity)
+    return activity
+
+
 def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Project:
     project = (
         db.query(models.Project)
@@ -374,13 +386,13 @@ def create_project_task(
     db.add(db_task)
 
     # Bitacora Ministerial
-    activity = models.ProjectActivityLog(
-        project_id=project_id,
-        user_id=current_user.id,
-        action_type="task_created",
-        description=f"Tarea '{db_task.title}' lanzada por {getattr(current_user, 'username', getattr(current_user, 'email', 'usuario'))}",
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "task_created",
+        f"Tarea '{db_task.title}' lanzada por {getattr(current_user, 'username', getattr(current_user, 'email', 'usuario'))}",
     )
-    db.add(activity)
     db.commit()
     db.refresh(db_task)
     return db_task
@@ -672,29 +684,30 @@ def update_project_wiki(
     )
     title = payload.title or "Wiki Ministerial"
     content = payload.content or ""
+    author_persona_id = get_user_persona_id(db, current_user.id)
 
     if not doc:
         doc = models.ProjectDocument(
             project_id=project_id,
             title=title,
             content=content,
-            author_id=current_user.id,
+            author_id=author_persona_id,
         )
         db.add(doc)
     else:
         doc.title = title
         doc.content = content
-        doc.author_id = current_user.id
+        doc.author_id = author_persona_id
         doc.last_edited_at = datetime.now()
 
     # Registrar cambio en la bitacora
-    activity = models.ProjectActivityLog(
-        project_id=project_id,
-        user_id=current_user.id,
-        action_type="wiki_updated",
-        description="Documentacion Wiki actualizada.",
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "wiki_updated",
+        "Documentacion Wiki actualizada.",
     )
-    db.add(activity)
     db.commit()
     db.refresh(doc)
     return _normalize_dates(doc)
@@ -771,22 +784,22 @@ async def upload_task_attachment(
 
     save_upload(contents, unique_name, settings.uploads_dir)
 
+    uploader_persona_id = get_user_persona_id(db, current_user.id)
     attachment = models.ProjectAttachment(
         task_id=task_id,
         filename=filename,
         file_url=f"/api/static/{unique_name}",
         file_type=file.content_type,
         file_size=len(contents),
-        uploader_id=current_user.id,
+        uploader_id=uploader_persona_id,
     )
     db.add(attachment)
-    db.add(
-        models.ProjectActivityLog(
-            project_id=project_id,
-            user_id=current_user.id,
-            action_type="attachment_added",
-            description=f"Archivo '{filename}' adjuntado a '{task.title}'",
-        )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "attachment_added",
+        f"Archivo '{filename}' adjuntado a '{task.title}'",
     )
     db.commit()
     db.refresh(task)
@@ -848,13 +861,12 @@ def create_task_supply(
     task = _ensure_task_in_project(db, project_id, task_id)
     supply = models.TaskSupply(task_id=task_id, **payload.model_dump())
     db.add(supply)
-    db.add(
-        models.ProjectActivityLog(
-            project_id=project_id,
-            user_id=current_user.id,
-            action_type="supply_added",
-            description=f"Insumo '{supply.item_name}' agregado a '{task.title}'",
-        )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "supply_added",
+        f"Insumo '{supply.item_name}' agregado a '{task.title}'",
     )
     db.commit()
     db.refresh(supply)
@@ -879,13 +891,12 @@ def update_task_supply(
     update_data = payload.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(supply, key, value)
-    db.add(
-        models.ProjectActivityLog(
-            project_id=project_id,
-            user_id=current_user.id,
-            action_type="supply_updated",
-            description=f"Insumo '{supply.item_name}' actualizado en '{task.title}'",
-        )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "supply_updated",
+        f"Insumo '{supply.item_name}' actualizado en '{task.title}'",
     )
     db.commit()
     db.refresh(supply)
@@ -903,13 +914,12 @@ def delete_task_supply(
     """Elimina un insumo de una tarea."""
     task = _ensure_task_in_project(db, project_id, task_id)
     supply = _ensure_supply_in_task(db, project_id, task_id, supply_id)
-    db.add(
-        models.ProjectActivityLog(
-            project_id=project_id,
-            user_id=current_user.id,
-            action_type="supply_deleted",
-            description=f"Insumo '{supply.item_name}' eliminado de '{task.title}'",
-        )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "supply_deleted",
+        f"Insumo '{supply.item_name}' eliminado de '{task.title}'",
     )
     db.delete(supply)
     db.commit()
@@ -946,13 +956,13 @@ def create_subtask(
     payload["order_index"] = max_order + 1
     db_subtask = models.ProjectTask(**payload)
     db.add(db_subtask)
-    activity = models.ProjectActivityLog(
-        project_id=project_id,
-        user_id=current_user.id,
-        action_type="subtask_created",
-        description=f"Sub-actividad '{db_subtask.title}' creada bajo '{parent_task.title}'",
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "subtask_created",
+        f"Sub-actividad '{db_subtask.title}' creada bajo '{parent_task.title}'",
     )
-    db.add(activity)
     db.commit()
     db.refresh(db_subtask)
     return db_subtask
@@ -1021,20 +1031,20 @@ def create_comment(
         )
     task_id = payload.get("task_id")
     _ensure_project(db, int(project_id))
+    author_persona_id = get_user_persona_id(db, current_user.id)
     comment = models.ProjectComment(
         project_id=int(project_id),
         task_id=int(task_id) if task_id else None,
-        author_id=current_user.id,
+        author_id=author_persona_id,
         content=content,
     )
     db.add(comment)
-    db.add(
-        models.ProjectActivityLog(
-            project_id=int(project_id),
-            user_id=current_user.id,
-            action_type="comment_added",
-            description=content,
-        )
+    _log_project_activity(
+        db,
+        int(project_id),
+        current_user.id,
+        "comment_added",
+        content,
     )
     db.commit()
     db.refresh(comment)
@@ -1060,20 +1070,20 @@ def create_project_comment(
 ):
     """Crea un comentario en un proyecto."""
     _ensure_project(db, project_id)
+    author_persona_id = get_user_persona_id(db, current_user.id)
     comment = models.ProjectComment(
         project_id=project_id,
         task_id=payload.task_id,
-        author_id=current_user.id,
+        author_id=author_persona_id,
         content=payload.content,
     )
     db.add(comment)
-    db.add(
-        models.ProjectActivityLog(
-            project_id=project_id,
-            user_id=current_user.id,
-            action_type="comment_added",
-            description=payload.content,
-        )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "comment_added",
+        payload.content,
     )
     db.commit()
     db.refresh(comment)
@@ -1396,13 +1406,12 @@ def create_project_milestone(
     _ensure_project(db, project_id)
     milestone = models.ProjectMilestone(project_id=project_id, **payload.model_dump())
     db.add(milestone)
-    db.add(
-        models.ProjectActivityLog(
-            project_id=project_id,
-            user_id=current_user.id,
-            action_type="milestone_created",
-            description=f"Hito '{milestone.title}' creado",
-        )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "milestone_created",
+        f"Hito '{milestone.title}' creado",
     )
     db.commit()
     db.refresh(milestone)
@@ -1441,13 +1450,12 @@ def update_project_milestone(
         action_type = "milestone_updated"
         description = f"Hito '{milestone.title}' actualizado"
 
-    db.add(
-        models.ProjectActivityLog(
-            project_id=project_id,
-            user_id=current_user.id,
-            action_type=action_type,
-            description=description,
-        )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        action_type,
+        description,
     )
     db.commit()
     db.refresh(milestone)

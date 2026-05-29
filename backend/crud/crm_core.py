@@ -1,236 +1,211 @@
-"""CRM Core 2.0 — Pipeline, Casos, Interacciones, Tareas CRUD."""
-from datetime import datetime
-from typing import List, Optional
+"""CRM Core 2.0 — CRUD functions."""
+from datetime import datetime, timezone
+from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
 from backend.models_crm_core import (
-    CasoCRM, EstadoCasoEnum, EtapaPipeline, InteraccionCRM,
-    PipelineCRM, PlantillaMensaje, TareaCRM,
+    PipelineCRM, EtapaPipeline, PlantillaMensaje,
+    CasoCRM, InteraccionCRM, TareaCRM,
 )
 from backend.schemas.crm_core import (
-    CasoCRMCreate, EtapaPipelineCreate, InteraccionCRMCreate,
-    PipelineCRMCreate, PlantillaMensajeCreate, TareaCRMCreate,
+    PipelineCRMCreate, EtapaPipelineCreate, PlantillaMensajeCreate,
+    CasoCRMCreate, InteraccionCRMCreate, TareaCRMCreate,
 )
 
 
-# ═══════════════════════════════════════════════════════════════════
-# PipelineCRM
-# ═══════════════════════════════════════════════════════════════════
+# ── Pipeline ────────────────────────────────────────────
 
 def create_pipeline(db: Session, payload: PipelineCRMCreate) -> PipelineCRM:
-    row = PipelineCRM(**payload.model_dump())
-    db.add(row)
+    obj = PipelineCRM(**payload.model_dump())
+    db.add(obj)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
-def get_pipeline(db: Session, pid: int) -> Optional[PipelineCRM]:
-    return db.query(PipelineCRM).filter(PipelineCRM.id == pid).first()
+def get_pipeline(db: Session, pipeline_id: int) -> Optional[PipelineCRM]:
+    return db.query(PipelineCRM).filter(PipelineCRM.id == pipeline_id).first()
 
 
 def list_pipelines(db: Session, sede_id: Optional[int] = None) -> List[PipelineCRM]:
     q = db.query(PipelineCRM)
-    if sede_id is not None:
+    if sede_id:
         q = q.filter(PipelineCRM.sede_id == sede_id)
-    return q.order_by(PipelineCRM.id).all()
+    return q.all()
 
 
-def update_pipeline(db: Session, pid: int, payload: PipelineCRMCreate) -> Optional[PipelineCRM]:
-    row = db.query(PipelineCRM).filter(PipelineCRM.id == pid).first()
-    if not row:
+def update_pipeline(db: Session, pipeline_id: int, payload: PipelineCRMCreate) -> Optional[PipelineCRM]:
+    obj = get_pipeline(db, pipeline_id)
+    if not obj:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
-        setattr(row, k, v)
+        setattr(obj, k, v)
+    obj.updated_at = datetime.now(timezone.utc)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
-def delete_pipeline(db: Session, pid: int) -> bool:
-    row = db.query(PipelineCRM).filter(PipelineCRM.id == pid).first()
-    if not row:
+def delete_pipeline(db: Session, pipeline_id: int) -> bool:
+    obj = get_pipeline(db, pipeline_id)
+    if not obj:
         return False
-    db.delete(row)
+    db.delete(obj)
     db.commit()
     return True
 
 
-# ═══════════════════════════════════════════════════════════════════
-# EtapaPipeline
-# ═══════════════════════════════════════════════════════════════════
+# ── Etapas ──────────────────────────────────────────────
 
 def create_etapa(db: Session, payload: EtapaPipelineCreate) -> EtapaPipeline:
-    row = EtapaPipeline(**payload.model_dump())
-    db.add(row)
+    obj = EtapaPipeline(**payload.model_dump())
+    db.add(obj)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
 def get_etapas_by_pipeline(db: Session, pipeline_id: int) -> List[EtapaPipeline]:
-    return (
-        db.query(EtapaPipeline)
-        .filter(EtapaPipeline.pipeline_id == pipeline_id)
-        .order_by(EtapaPipeline.orden)
-        .all()
-    )
+    return db.query(EtapaPipeline).filter(EtapaPipeline.pipeline_id == pipeline_id).order_by(EtapaPipeline.orden).all()
 
 
-def update_etapa(db: Session, eid: int, payload: EtapaPipelineCreate) -> Optional[EtapaPipeline]:
-    row = db.query(EtapaPipeline).filter(EtapaPipeline.id == eid).first()
-    if not row:
+def update_etapa(db: Session, etapa_id: int, payload: EtapaPipelineCreate) -> Optional[EtapaPipeline]:
+    obj = db.query(EtapaPipeline).filter(EtapaPipeline.id == etapa_id).first()
+    if not obj:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
-        setattr(row, k, v)
+        setattr(obj, k, v)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
-def delete_etapa(db: Session, eid: int) -> bool:
-    row = db.query(EtapaPipeline).filter(EtapaPipeline.id == eid).first()
-    if not row:
+def delete_etapa(db: Session, etapa_id: int) -> bool:
+    obj = db.query(EtapaPipeline).filter(EtapaPipeline.id == etapa_id).first()
+    if not obj:
         return False
-    db.delete(row)
+    db.delete(obj)
     db.commit()
     return True
 
 
-# ═══════════════════════════════════════════════════════════════════
-# PlantillaMensaje
-# ═══════════════════════════════════════════════════════════════════
+# ── Plantillas ──────────────────────────────────────────
 
 def create_plantilla(db: Session, payload: PlantillaMensajeCreate) -> PlantillaMensaje:
-    row = PlantillaMensaje(**payload.model_dump())
-    db.add(row)
+    obj = PlantillaMensaje(**payload.model_dump())
+    db.add(obj)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
 def list_plantillas(db: Session, canal: Optional[str] = None) -> List[PlantillaMensaje]:
     q = db.query(PlantillaMensaje)
     if canal:
         q = q.filter(PlantillaMensaje.canal == canal)
-    return q.order_by(PlantillaMensaje.titulo).all()
+    return q.all()
 
 
-# ═══════════════════════════════════════════════════════════════════
-# CasoCRM
-# ═══════════════════════════════════════════════════════════════════
+# ── Casos ───────────────────────────────────────────────
 
 def create_caso(db: Session, payload: CasoCRMCreate) -> CasoCRM:
-    data = payload.model_dump()
-    data.setdefault("estado", EstadoCasoEnum.ABIERTO)
-    row = CasoCRM(**data)
-    db.add(row)
+    obj = CasoCRM(**payload.model_dump())
+    db.add(obj)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
-def get_caso(db: Session, cid: str) -> Optional[CasoCRM]:
-    return db.query(CasoCRM).filter(CasoCRM.id == cid).first()
+def get_caso(db: Session, caso_id: int) -> Optional[CasoCRM]:
+    return db.query(CasoCRM).filter(CasoCRM.id == caso_id, CasoCRM.deleted_at.is_(None)).first()
 
 
-def list_casos(
-    db: Session,
-    pipeline_id: Optional[int] = None,
-    asignado_a_id: Optional[str] = None,
-    estado: Optional[str] = None,
-) -> List[CasoCRM]:
-    q = db.query(CasoCRM)
-    if pipeline_id is not None:
+def list_casos(db: Session, pipeline_id: Optional[int] = None, asignado_a_id: Optional[str] = None,
+               estado: Optional[str] = None, sede_id: Optional[int] = None) -> List[CasoCRM]:
+    q = db.query(CasoCRM).filter(CasoCRM.deleted_at.is_(None))
+    if pipeline_id:
         q = q.filter(CasoCRM.pipeline_id == pipeline_id)
-    if asignado_a_id is not None:
+    if asignado_a_id:
         q = q.filter(CasoCRM.asignado_a_id == asignado_a_id)
-    if estado is not None:
+    if estado:
         q = q.filter(CasoCRM.estado == estado)
-    return q.order_by(CasoCRM.fecha_creacion.desc()).all()
+    if sede_id:
+        q = q.filter(CasoCRM.sede_id == sede_id)
+    return q.order_by(CasoCRM.created_at.desc()).all()
 
 
-def update_caso(db: Session, cid: str, payload: CasoCRMCreate) -> Optional[CasoCRM]:
-    row = db.query(CasoCRM).filter(CasoCRM.id == cid).first()
-    if not row:
+def update_caso(db: Session, caso_id: int, payload: CasoCRMCreate) -> Optional[CasoCRM]:
+    obj = get_caso(db, caso_id)
+    if not obj:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
-        setattr(row, k, v)
+        setattr(obj, k, v)
+    obj.updated_at = datetime.now(timezone.utc)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
-def mover_etapa(db: Session, caso_id: str, nueva_etapa_id: int) -> Optional[CasoCRM]:
-    row = db.query(CasoCRM).filter(CasoCRM.id == caso_id).first()
-    if not row:
+def mover_etapa(db: Session, caso_id: int, nueva_etapa_id: int) -> Optional[CasoCRM]:
+    obj = get_caso(db, caso_id)
+    if not obj:
         return None
-    row.etapa_actual_id = nueva_etapa_id
+    obj.etapa_actual_id = nueva_etapa_id
+    obj.updated_at = datetime.now(timezone.utc)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
-def close_caso(db: Session, cid: str) -> Optional[CasoCRM]:
-    row = db.query(CasoCRM).filter(CasoCRM.id == cid).first()
-    if not row:
+def close_caso(db: Session, caso_id: int, motivo: Optional[str] = None) -> Optional[CasoCRM]:
+    obj = get_caso(db, caso_id)
+    if not obj:
         return None
-    row.estado = EstadoCasoEnum.CERRADO_PERDIDO
-    row.fecha_cierre = datetime.utcnow()
+    obj.estado = "CERRADO"
+    obj.fecha_cierre = datetime.now(timezone.utc)
+    obj.motivo_cierre = motivo
+    obj.updated_at = datetime.now(timezone.utc)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
-# ═══════════════════════════════════════════════════════════════════
-# InteraccionCRM
-# ═══════════════════════════════════════════════════════════════════
+# ── Interacciones ───────────────────────────────────────
 
 def create_interaccion(db: Session, payload: InteraccionCRMCreate) -> InteraccionCRM:
-    row = InteraccionCRM(**payload.model_dump())
-    db.add(row)
+    obj = InteraccionCRM(**payload.model_dump())
+    db.add(obj)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
-def list_interacciones(db: Session, caso_id: str) -> List[InteraccionCRM]:
-    return (
-        db.query(InteraccionCRM)
-        .filter(InteraccionCRM.caso_id == caso_id)
-        .order_by(InteraccionCRM.fecha_interaccion.desc())
-        .all()
-    )
+def list_interacciones(db: Session, caso_id: int) -> List[InteraccionCRM]:
+    return db.query(InteraccionCRM).filter(InteraccionCRM.caso_id == caso_id).order_by(InteraccionCRM.created_at.desc()).all()
 
 
-# ═══════════════════════════════════════════════════════════════════
-# TareaCRM
-# ═══════════════════════════════════════════════════════════════════
+# ── Tareas ──────────────────────────────────────────────
 
 def create_tarea(db: Session, payload: TareaCRMCreate) -> TareaCRM:
-    row = TareaCRM(**payload.model_dump())
-    db.add(row)
+    obj = TareaCRM(**payload.model_dump())
+    db.add(obj)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj
 
 
-def list_tareas(db: Session, caso_id: str) -> List[TareaCRM]:
-    return (
-        db.query(TareaCRM)
-        .filter(TareaCRM.caso_id == caso_id)
-        .order_by(TareaCRM.fecha_vencimiento)
-        .all()
-    )
+def list_tareas(db: Session, caso_id: int) -> List[TareaCRM]:
+    return db.query(TareaCRM).filter(TareaCRM.caso_id == caso_id).order_by(TareaCRM.created_at.desc()).all()
 
 
-def complete_tarea(db: Session, tid: str) -> Optional[TareaCRM]:
-    row = db.query(TareaCRM).filter(TareaCRM.id == tid).first()
-    if not row:
+def complete_tarea(db: Session, tarea_id: int) -> Optional[TareaCRM]:
+    obj = db.query(TareaCRM).filter(TareaCRM.id == tarea_id).first()
+    if not obj:
         return None
-    row.completada = True
-    row.fecha_completada = datetime.utcnow()
+    obj.completada = True
+    obj.completada_en = datetime.now(timezone.utc)
+    obj.updated_at = datetime.now(timezone.utc)
     db.commit()
-    db.refresh(row)
-    return row
+    db.refresh(obj)
+    return obj

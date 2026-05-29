@@ -69,6 +69,7 @@ class LeccionCreate(BaseModel):
     media_url: Optional[str] = None
     order_index: int
     duration_minutes: int
+    is_published: bool = False
 
 
 class LeccionUpdate(BaseModel):
@@ -78,6 +79,7 @@ class LeccionUpdate(BaseModel):
     media_url: Optional[str] = None
     order_index: Optional[int] = None
     duration_minutes: Optional[int] = None
+    is_published: Optional[bool] = None
 
 
 class LeccionResponse(BaseModel):
@@ -89,6 +91,7 @@ class LeccionResponse(BaseModel):
     media_url: Optional[str] = None
     order_index: int
     duration_minutes: int
+    is_published: bool = False
     model_config = orm_config
 
 
@@ -178,7 +181,6 @@ class MatriculaCreate(BaseModel):
     approved: bool = False
     acta_closed: bool = False
     completed_at: Optional[datetime] = None
-    lessons_completed: list = Field(default_factory=list)
 
 
 class MatriculaResponse(BaseModel):
@@ -193,7 +195,7 @@ class MatriculaResponse(BaseModel):
     approved: bool = False
     acta_closed: bool = False
     completed_at: Optional[datetime] = None
-    lessons_completed: list = Field(default_factory=list)
+    deleted_at: Optional[datetime] = None
     model_config = orm_config
 
 
@@ -334,6 +336,7 @@ class HiloForoResponse(BaseModel):
 
 class ComentarioForoCreate(BaseModel):
     thread_id: int
+    parent_id: Optional[int] = None
     author_persona_id: str
     content: str
 
@@ -341,6 +344,7 @@ class ComentarioForoCreate(BaseModel):
 class ComentarioForoResponse(BaseModel):
     id: int
     thread_id: int
+    parent_id: Optional[int] = None
     author_persona_id: str
     content: str
     created_at: Optional[datetime] = None

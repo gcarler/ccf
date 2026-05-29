@@ -1,0 +1,518 @@
+"""
+Auth v3 — Google SSO, Password Init, ABAC LECTOR.
+
+Usa platform_role_definitions como fuente única de roles (Dimensión C).
+Flujo:
+  - Google SSO: /v3/auth/google → login directo para @gmail.com
+  - Traditional: /v3/auth/login → email+password
+  - Init password: /v3/auth/initialize-password → token de un solo uso
+  - Change password: /v3/auth/change-password → con validación de anterior
+"""
+
+from __future__ import annotations
+
+import logging
+import secrets
+import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.responses import RedirectResponse
+from jose import JWTError, jwt
+from pydantic import BaseModel, EmailStr, Field
+from sqlalchemy.orm import Session
+
+from backend.core.config import get_settings
+from backend.core.database import get_db
+from backend.core.security import get_password_hash, verify_password
+from backend.models_auth import (
+    HistorialContrasena,
+    LogSeguridad,
+    TokenResetContrasena,
+    Usuario,
+)
+from backend.models_kernel import PlatformRoleDefinition
+
+settings = get_settings()
+log = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/v3/auth", tags=["Auth v3"])
+
+SECRET_KEY = settings.secret_key
+ALGORITHM = "HS256"
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _create_access_token(user_id: str, platform_role: str) -> str:
+    to_encode = {
+        "sub": user_id,
+        "role": platform_role,
+        "platform_role": platform_role,
+    }
+    expire = _utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
+    to_encode.update({"exp": expire, "iat": _utcnow()})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def _create_refresh_token(db: Session, user_id: uuid.UUID) -> str:
+    import secrets
+    token = secrets.token_urlsafe(48)
+    expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
+    from backend.models_auth import TokenSesion
+    rt = TokenSesion(
+        user_id=user_id,
+        token=token,
+        expires_at=expires_at,
+        ip_address=None,
+        user_agent=None,
+    )
+    db.add(rt)
+    db.commit()
+    return token
+
+
+def _log_security(db, user_id, evento, ip=None, ua=None, detalles=None):
+    ls = LogSeguridad(user_id=user_id, evento=evento, ip_address=ip, user_agent=ua, detalles=detalles or {})
+    db.add(ls)
+    db.commit()
+
+
+def _set_cookies(response: Response, access_token: str, refresh_token: str):
+    response.set_cookie(
+        key=settings.access_token_cookie_name,
+        value=access_token,
+        httponly=True,
+        secure=settings.access_token_cookie_secure,
+        samesite="lax",
+        max_age=settings.access_token_expire_minutes * 60,
+    )
+    response.set_cookie(
+        key=settings.refresh_token_cookie_name,
+        value=refresh_token,
+        httponly=True,
+        secure=settings.access_token_cookie_secure,
+        samesite="lax",
+        max_age=settings.refresh_token_expire_days * 86400,
+    )
+
+
+# ─── Schemas ──────────────────────────────────────────────────────────────
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class InitPasswordRequest(BaseModel):
+    token: str
+    password: str = Field(..., min_length=8)
+    password_confirm: str = Field(..., min_length=8)
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8)
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user_id: str
+    email: str
+    platform_role: str
+    needs_password_init: bool = False
+
+
+# ─── Helper: resolve user ─────────────────────────────────────────────────
+
+def _resolve_user(db: Session, email: str) -> Usuario | None:
+    return db.query(Usuario).filter(Usuario.email == email).first()
+
+
+def _resolve_token(db: Session, token: str) -> TokenResetContrasena | None:
+    return db.query(TokenResetContrasena).filter(
+        TokenResetContrasena.token == token,
+        TokenResetContrasena.used == False,
+        TokenResetContrasena.expires_at > _utcnow(),
+    ).first()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 1. GOOGLE SSO LOGIN
+# ═══════════════════════════════════════════════════════════════════════
+
+@router.get("/google")
+def google_login(request: Request):
+    """Redirige a pantalla de consentimiento de Google."""
+    if not settings.google_client_id:
+        raise HTTPException(status_code=501, detail="Google OAuth no configurado")
+
+    redirect_uri = settings.google_redirect_uri or request.url_for("google_callback")
+    from urllib.parse import urlencode
+
+    params = {
+        "client_id": settings.google_client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "consent",
+    }
+    return RedirectResponse(url=f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}")
+
+
+@router.get("/google/callback")
+def google_callback(
+    code: str,
+    error: Optional[str] = None,
+    request: Request = None,
+    db: Session = Depends(get_db),
+    response: Response = None,
+):
+    import httpx
+
+    if error or not code:
+        raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
+
+    redirect_uri = settings.google_redirect_uri or (request.url_for("google_callback") if request else "")
+
+    # 1. Exchange code for tokens
+    try:
+        token_resp = httpx.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": settings.google_client_id,
+                "client_secret": settings.google_client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+            timeout=15,
+        )
+        token_resp.raise_for_status()
+        token_data = token_resp.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Error exchanging Google code: {exc}")
+
+    access_token_google = token_data.get("access_token")
+    if not access_token_google:
+        raise HTTPException(status_code=400, detail="No se recibió token de Google")
+
+    # 2. Get user info
+    try:
+        userinfo_resp = httpx.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {access_token_google}"},
+            timeout=15,
+        )
+        userinfo_resp.raise_for_status()
+        google_user = userinfo_resp.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Error getting Google user info: {exc}")
+
+    google_email = google_user.get("email", "")
+    google_name = google_user.get("name", "")
+
+    if not google_email:
+        raise HTTPException(status_code=400, detail="Google no proporcionó un email")
+
+    # 3. Find or create auth_user (linking to personas)
+    user = _resolve_user(db, google_email)
+
+    if not user:
+        # Create silent auth_user linked to persona
+        from backend import models
+        persona = db.query(models.Persona).filter(models.Persona.email == google_email).first()
+        if not persona:
+            raise HTTPException(
+                status_code=404,
+                detail="No tienes una cuenta registrada en la plataforma. Contacta a un administrador.",
+            )
+
+        lector_role = db.query(PlatformRoleDefinition).filter(
+            PlatformRoleDefinition.role == "LECTOR"
+        ).first()
+
+        user = Usuario(
+            id=persona.id,
+            sede_id=persona.sede_id or 1,
+            username=google_email.split("@")[0].replace(".", "_")[:50],
+            email=google_email,
+            password_hash=None,
+            platform_role_id=lector_role.id if lector_role else 4,
+            is_active=True,
+            is_email_verified=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        log.info(f"Nuevo auth_user creado via Google SSO: {google_email}")
+
+    # 4. Verify user is active
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Cuenta desactivada")
+
+    # 5. Ensure email verified for Gmail users
+    if not user.is_email_verified:
+        user.is_email_verified = True
+        db.commit()
+
+    # 6. Get platform role name
+    platform_role_name = "LECTOR"
+    if user.platform_role_id:
+        pr = db.query(PlatformRoleDefinition).filter(
+            PlatformRoleDefinition.id == user.platform_role_id
+        ).first()
+        if pr:
+            platform_role_name = pr.role
+
+    # 7. Generate tokens
+    access_token = _create_access_token(str(user.id), platform_role_name)
+    refresh_token = _create_refresh_token(db, user.id)
+
+    # 8. Set httpOnly cookies + redirect
+    _set_cookies(response, access_token, refresh_token)
+    _log_security(db, user.id, "GOOGLE_LOGIN_EXITOSO", 
+                  ip=request.client.host if request and request.client else None,
+                  ua=request.headers.get("user-agent") if request else None)
+
+    # Redirect to frontend with token in hash
+    frontend_url = getattr(settings, 'frontend_url', 'http://localhost:3000')
+    return RedirectResponse(url=f"{frontend_url}/auth/callback?token={access_token}")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 2. TRADITIONAL LOGIN (email + password)
+# ═══════════════════════════════════════════════════════════════════════
+
+@router.post("/login", response_model=TokenResponse)
+def login(
+    payload: LoginRequest,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Inicio de sesión con email + contraseña."""
+    user = _resolve_user(db, payload.email)
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+
+    if not user:
+        _log_security(db, None, "LOGIN_FALLIDO_NO_EXISTE", ip=ip, ua=ua, detalles={"email": payload.email})
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+
+    # Check if user has a password at all
+    if not user.password_hash:
+        _log_security(db, user.id, "LOGIN_SIN_CONTRASENA", ip=ip, ua=ua)
+        raise HTTPException(
+            status_code=400,
+            detail="CONTRASENA_NO_INICIALIZADA",
+            headers={"X-Needs-Password-Init": "true"},
+        )
+
+    # Verify password
+    if not verify_password(payload.password, user.password_hash):
+        user.failed_login_attempts += 1
+        db.commit()
+        _log_security(db, user.id, "LOGIN_FALLIDO_CONTRASENA", ip=ip, ua=ua)
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+
+    # Check lockout
+    if user.locked_until and user.locked_until > _utcnow():
+        raise HTTPException(status_code=423, detail="Cuenta temporalmente bloqueada. Intenta más tarde.")
+
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="Cuenta desactivada")
+
+    # Reset failed attempts
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    db.commit()
+
+    # Get platform role
+    platform_role_name = "LECTOR"
+    if user.platform_role_id:
+        pr = db.query(PlatformRoleDefinition).filter(
+            PlatformRoleDefinition.id == user.platform_role_id
+        ).first()
+        if pr:
+            platform_role_name = pr.role
+
+    # Generate tokens
+    access_token = _create_access_token(str(user.id), platform_role_name)
+    refresh_token = _create_refresh_token(db, user.id)
+
+    _set_cookies(response, access_token, refresh_token)
+    _log_security(db, user.id, "LOGIN_EXITOSO", ip=ip, ua=ua)
+
+    return TokenResponse(
+        access_token=access_token,
+        user_id=str(user.id),
+        email=user.email,
+        platform_role=platform_role_name,
+        needs_password_init=False,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 3. INITIALIZE PASSWORD (for non-Gmail users)
+# ═══════════════════════════════════════════════════════════════════════
+
+@router.post("/initialize-password", response_model=dict)
+def initialize_password(
+    payload: InitPasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Configura la contraseña por primera vez usando un token de un solo uso."""
+    if payload.password != payload.password_confirm:
+        raise HTTPException(status_code=400, detail="Las contraseñas no coinciden")
+
+    token_record = _resolve_token(db, payload.token)
+    if not token_record:
+        raise HTTPException(status_code=400, detail="Token inválido o expirado")
+
+    user = db.query(Usuario).filter(Usuario.id == token_record.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Hash and set password
+    hashed = get_password_hash(payload.password)
+    user.password_hash = hashed
+    user.is_email_verified = True
+    token_record.used = True
+
+    # Save to password history
+    history = HistorialContrasena(user_id=user.id, password_hash=hashed)
+    db.add(history)
+    db.commit()
+
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    _log_security(db, user.id, "CONTRASENA_INICIALIZADA", ip=ip, ua=ua)
+
+    return {"status": "success", "message": "Contraseña configurada exitosamente. Ya puedes iniciar sesión."}
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 4. CHANGE PASSWORD (self-service)
+# ═══════════════════════════════════════════════════════════════════════
+
+def require_auth_dep(request: Request, db: Session = Depends(get_db)):
+    return _require_auth(request, db)
+
+@router.post("/change-password", response_model=dict)
+def change_password(
+    payload: ChangePasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(require_auth_dep),
+):
+    """Cambio de contraseña para usuarios autenticados."""
+    user = db.query(Usuario).filter(Usuario.id == current_user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if not user.password_hash:
+        raise HTTPException(status_code=400, detail="Debes inicializar tu contraseña primero")
+
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Contraseña actual incorrecta")
+
+    hashed = get_password_hash(payload.new_password)
+    user.password_hash = hashed
+
+    history = HistorialContrasena(user_id=user.id, password_hash=hashed)
+    db.add(history)
+    db.commit()
+
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    _log_security(db, user.id, "CONTRASENA_CAMBIADA", ip=ip, ua=ua)
+
+    return {"status": "success", "message": "Contraseña cambiada exitosamente"}
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 5. AUTH CHECK (verify token + return user info)
+# ═══════════════════════════════════════════════════════════════════════
+
+@router.get("/me")
+def auth_me(request: Request, db: Session = Depends(get_db)):
+    """Verifica el token actual y retorna información del usuario."""
+    token = request.cookies.get(settings.access_token_cookie_name) or ""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+
+    if not token:
+        raise HTTPException(status_code=401, detail="No autenticado")
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub", "")
+        platform_role = payload.get("platform_role", "LECTOR")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+    user = db.query(Usuario).filter(Usuario.id == user_id).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
+
+    return {
+        "user_id": str(user.id),
+        "email": user.email,
+        "username": user.username,
+        "is_verified": user.is_email_verified,
+        "platform_role": platform_role,
+        "has_password": user.password_hash is not None,
+        "is_gmail": user.email.lower().endswith("@gmail.com") if user.email else False,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 6. CHECK EMAIL (for login page — determine if needs password)
+# ═══════════════════════════════════════════════════════════════════════
+
+@router.get("/check-email")
+def check_email(email: str, db: Session = Depends(get_db)):
+    """Verifica si un email existe y cómo debe iniciar sesión."""
+    user = _resolve_user(db, email)
+    is_gmail = email.lower().endswith("@gmail.com") if email else False
+    
+    if not user:
+        return {"exists": False, "is_gmail": is_gmail}
+    
+    return {
+        "exists": True,
+        "is_gmail": is_gmail,
+        "needs_password_init": user.password_hash is None,
+        "has_password": user.password_hash is not None,
+    }
+
+
+# ─── Dependency ─────────────────────────────────────────────────────
+
+def _require_auth(request: Request, db: Session = Depends(get_db)):
+    """FastAPI dependency: require valid JWT."""
+    token = request.cookies.get(settings.access_token_cookie_name) or ""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+
+    if not token:
+        raise HTTPException(status_code=401, detail="No autenticado")
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("sub", "")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+
+# ─── Include this in the main app router ────────────────────────────
+# app.include_router(auth_v3_router)

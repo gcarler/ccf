@@ -9,7 +9,7 @@ def seed_crm():
     db = SessionLocal()
     try:
         # Create some Glory Houses if none exist
-        existing_houses = crud.get_glory_houses(db)
+        existing_houses = crud.get_grupos(db)
         if not existing_houses:
             houses_data = [
                 schemas.GloryHouseCreate(

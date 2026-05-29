@@ -67,6 +67,7 @@ def test_pilot_readiness_returns_checklist(db_session):
     db_session.add(enrollment)
     db_session.commit()
 
-    readiness = crud.get_pilot_readiness(db_session)
+    readiness_dict = crud.get_pilot_readiness(db_session)
+    readiness = schemas.PilotReadiness(**readiness_dict)
     assert readiness.environment_ready is True
     assert len(readiness.checklist) > 0

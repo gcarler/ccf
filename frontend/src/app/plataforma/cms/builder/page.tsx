@@ -195,7 +195,7 @@ const SECTION_TEMPLATES: Array<{ label: string; type: string; props_json: Record
     type: "cta_banner",
     props_json: {
       title: "¿Listo para dar el siguiente paso?",
-      body: "Conoce nuestros próximos eventos y Faros en Casa.",
+      body: "Conoce nuestros próximos eventos y grupos de la iglesia.",
       cta_label: "Ver eventos",
       cta_href: "/eventos",
     },

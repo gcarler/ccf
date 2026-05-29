@@ -107,10 +107,10 @@ export default function GrupoAdmin() {
     if (!isAuthenticated) return null;
 
     return (
-        <AdminShell breadcrumbs={[{ label: "Operacion de Campo", icon: Home }, { label: "Faros en Casa", icon: Star }]}>
+        <AdminShell breadcrumbs={[{ label: "Operacion de Campo", icon: Home }, { label: "Grupos", icon: Star }]}>
             <AdminHero
                 eyebrow="Gestion de Redes"
-                title="Consola de Faros en Casa"
+                title="Consola de Grupos"
                 description="Gestion operativa real de casas, temporadas y reportes semanales de asistencia."
                 tags={["Campo Activo", "Reportes", "Faro"]}
                 watchers={["Coordinacion General", "Consolidacion"]}

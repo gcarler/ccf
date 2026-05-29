@@ -28,8 +28,10 @@ class ClaseEstrategiaEnum(str, Enum):
 class RolEnGrupoEnum(str, Enum):
     LIDER = "LIDER"
     COLIDER = "COLIDER"
-    MIEMBRO = "MIEMBRO"
-    VISITANTE = "VISITANTE"
+    ANFITRION = "ANFITRION"
+    ASISTENTE = "ASISTENTE"
+    INVITADO = "INVITADO"
+    PERSONALIZADO = "PERSONALIZADO"
 
 
 class EstadoAsistenciaEnum(str, Enum):
@@ -141,7 +143,7 @@ class RolPersonalizadoEstrategiaResponse(RolPersonalizadoEstrategiaBase):
 # ──────────────────────────────────────────────
 
 class ParticipanteGrupoBase(BaseModel):
-    role: str = "miembro"
+    role: str = "participante"
     rol_personalizado_id: Optional[int] = None
     activo: bool = True
 
@@ -203,34 +205,94 @@ class AsistenciaSesionResponse(AsistenciaSesionBase):
 
 # ──────────────────────────────────────────────
 # REGISTRO DE SEGUIMIENTO
+# Alineado con columnas reales del modelo:
+#   tipo, fecha_seguimiento, observaciones, estado_completado, responsable_id
 # ──────────────────────────────────────────────
 
 class RegistroSeguimientoBase(BaseModel):
     tipo: TipoSeguimientoEnum
-    fecha_programada: Optional[datetime] = None
-    notas: Optional[str] = None
+    observaciones: Optional[str] = None
+    fecha_seguimiento: Optional[datetime] = None
+    estado_completado: bool = True
+
+    # Alias de back-compat para el frontend que ya usa "notas" y "completado"
+    @model_validator(mode="before")
+    @classmethod
+    def _map_legacy_names(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "notas" in data and "observaciones" not in data:
+                data["observaciones"] = data.pop("notas")
+            if "completado" in data and "estado_completado" not in data:
+                data["estado_completado"] = data.pop("completado")
+            if "fecha_realizada" in data and "fecha_seguimiento" not in data:
+                data["fecha_seguimiento"] = data.pop("fecha_realizada")
+            if "fecha_programada" in data and "fecha_seguimiento" not in data:
+                data["fecha_seguimiento"] = data.pop("fecha_programada")
+        return data
 
 
 class RegistroSeguimientoCreate(RegistroSeguimientoBase):
     asistencia_id: int
+    responsable_id: Optional[str] = None
 
 
 class RegistroSeguimientoUpdate(BaseModel):
-    fecha_realizada: Optional[datetime] = None
-    realizado_por_persona_id: Optional[str] = None
-    notas: Optional[str] = None
-    completado: Optional[bool] = None
-    resultado: Optional[str] = None
+    observaciones: Optional[str] = None
+    estado_completado: Optional[bool] = None
+    fecha_seguimiento: Optional[datetime] = None
+    responsable_id: Optional[str] = None
+    tipo: Optional[TipoSeguimientoEnum] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _map_legacy_names(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "notas" in data and "observaciones" not in data:
+                data["observaciones"] = data.pop("notas")
+            if "completado" in data and "estado_completado" not in data:
+                data["estado_completado"] = data.pop("completado")
+            if "fecha_realizada" in data and "fecha_seguimiento" not in data:
+                data["fecha_seguimiento"] = data.pop("fecha_realizada")
+            if "realizado_por_persona_id" in data and "responsable_id" not in data:
+                data["responsable_id"] = data.pop("realizado_por_persona_id")
+        return data
 
 
-class RegistroSeguimientoResponse(RegistroSeguimientoBase):
+class RegistroSeguimientoResponse(BaseModel):
     id: int
     asistencia_id: int
-    fecha_realizada: Optional[datetime] = None
-    realizado_por_persona_id: Optional[str] = None
-    completado: bool = False
-    resultado: Optional[str] = None
+    tipo: TipoSeguimientoEnum
+    observaciones: Optional[str] = None
+    fecha_seguimiento: Optional[datetime] = None
+    estado_completado: bool = True
+    responsable_id: Optional[str] = None
     created_at: datetime
+
+    # Back-compat: propiedades computadas para frontend legacy
+    @property
+    def completado(self) -> bool:
+        return self.estado_completado
+
+    @property
+    def notas(self) -> Optional[str]:
+        return self.observaciones
+
+    @property
+    def fecha_realizada(self) -> Optional[datetime]:
+        return self.fecha_seguimiento
+
+    @property
+    def fecha_programada(self) -> Optional[datetime]:
+        return self.fecha_seguimiento
+
+    @property
+    def realizado_por_persona_id(self) -> Optional[str]:
+        return self.responsable_id
+
+    @property
+    def resultado(self) -> Optional[str]:
+        return None  # columna no existe en modelo, retorna None
+
     model_config = orm_config
 
 
@@ -279,7 +341,7 @@ class AsistenciaBulkCreate(BaseModel):
 # GRUPO EVANGELISMO (back-compat con CellGroup)
 # ──────────────────────────────────────────────
 
-class GrupoEvangelismoCreate(BaseModel):
+class GrupoCreate(BaseModel):
     code: Optional[str] = None
     name: Optional[str] = None
     zone: Optional[str] = None
@@ -299,12 +361,13 @@ class GrupoEvangelismoCreate(BaseModel):
     base_attendee_ids: Optional[List[str]] = None
 
 
-class CellGroupMemberWithRole(BaseModel):
+# Schema para participantes de grupo
+class ParticipanteGrupoConRol(BaseModel):
     persona_id: str
-    role: str = "miembro"
+    role: str = "participante"
 
 
-class GrupoEvangelismoUpdate(BaseModel):
+class GrupoUpdate(BaseModel):
     code: Optional[str] = None
     name: Optional[str] = None
     zone: Optional[str] = None
@@ -351,3 +414,9 @@ class AsistenciaGrupoCreate(BaseModel):
     persona_id: str
     status: str = "present"
     notes: Optional[str] = None
+
+
+# ── Backward compatibility aliases ────────────────────────────────
+GrupoEvangelismoCreate = GrupoCreate
+GrupoEvangelismoUpdate = GrupoUpdate
+CellGroupMemberWithRole = ParticipanteGrupoConRol

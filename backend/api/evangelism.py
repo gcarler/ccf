@@ -1147,7 +1147,7 @@ def read_evangelism_strategies(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    from backend.models_academy import CellGroup
+    from backend.models import CellGroup
     from backend.crud.evangelism import get_estrategias
     strategies = get_estrategias(db, skip=skip, limit=limit, activa=activa, clase_raiz=clase_raiz)
     result = []
@@ -1167,7 +1167,7 @@ def read_strategy(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     from backend.models_crm import EvangelismStrategy as StrategyModel
-    from backend.models_academy import CellGroup
+    from backend.models import CellGroup
     db_obj = db.query(StrategyModel).filter(StrategyModel.id == strategy_id).first()
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")

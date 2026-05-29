@@ -1,115 +1,68 @@
-# INFORME DE AUDITORÍA FORENSE — Plataforma CCF
-## Fecha: 2026-05-28 | Auditor: Senior DBA + Code Auditor
+# AUDITORÍA DE HILARIDAD — HALLAZGOS CRÍTICOS
 
-================================================================================
-# CAPA A: KERNEL UNIFICADO DE PERSONAS (Fragmentación de Identidad)
-================================================================================
+**Fecha:** 2026-05-29  
+**Auditor:** Sistema Automatizado de Calidad CCF
 
-## Violaciones CRÍTICAS (Integer → UUID)
+---
 
-### Modelos con Integer FK a users.id (debe ser persona_id UUID)
-| Archivo | Línea | Columna | Severidad |
-|---|---|---|---|
-| models_crm.py | 17 | ChatMessage.sender_id | CRITICAL |
-| models_crm.py | 31 | Conversation.last_sender_id | CRITICAL |
-| models_crm.py | 44 | ConversationParticipant.user_id | CRITICAL |
-| models_crm.py | 65 | AgendaEvent.created_by_user_id | CRITICAL |
-| models_crm.py | 165 | CounselingTicket.pastor_id | CRITICAL |
-| models_crm.py | 618 | CrmTask.assignee_id | CRITICAL |
-| models_crm.py | 630 | CrmTask.created_by_id | CRITICAL |
-| models_crm.py | 850 | EvangelismStrategy.owner_id | CRITICAL |
-| models_academy.py | 65 | LessonProgress.user_id | CRITICAL |
-| models_academy.py | 120 | Enrollment.user_id | CRITICAL |
-| models_academy.py | 156 | CourseAttendance.user_id | CRITICAL |
-| models_academy.py | 184 | Assignment.user_id | CRITICAL |
-| models_academy.py | 215 | Resource.user_id | CRITICAL |
-| models_academy.py | 248 | ForumThread.user_id | CRITICAL |
-| models_academy.py | 270 | ForumComment.user_id | CRITICAL |
+## 🔴 HALLAZGO CRÍTICO #1: personas.id INTEGER vs UUID
 
-### Schemas con persona_id: int (debe ser str para UUID)
-| Archivo | Línea | Schema | Severidad |
-|---|---|---|---|
-| schemas/crm.py | 98 | EventAttendanceBase.persona_id | HIGH |
-| schemas/crm.py | 123 | EventAttendanceBase.event_id | HIGH |
-| schemas/crm.py | 290 | Persona.id (ya corregido a str) | RESUELTO |
-| schemas/crm.py | 800 | Family.id | HIGH |
-| schemas/crm.py | 807 | CellGroupMember.id | MEDIUM |
-
-================================================================================
-# CAPA B: AISLAMIENTO MULTI-TENANT (sede_id)
-================================================================================
-
-## CRÍTICAS — Sin autenticación (público)
-| Endpoint | Archivo:Línea | Exposición |
+| Componente | Tipo | Estado |
 |---|---|---|
-| GET /api/locations | admin.py:238 | Todas las ubicaciones de iglesia |
-| GET /api/socials | admin.py:276 | Todos los canales sociales |
-| GET /api/milestones | admin.py:528 | Todos los badges |
-| GET /api/donation-categories | admin.py:590 | Todas las categorías |
-| GET /api/automations | admin.py:626 | Todas las reglas de automatización |
+| **PostgreSQL** | `personas.id` | `INTEGER` |
+| **SQLAlchemy Model** | `Persona.id` | `UUID(as_uuid=True)` |
+| **Pydantic Schema** | `PersonaResponse.id` | `str` |
+| Registros | Count | 30 |
 
-## HIGH — Autenticado pero sin filtro sede_id
-| Módulo | Endpoints afectados | Cantidad |
+**Impacto:** El modelo dice UUID pero la BD tiene INTEGER. Cada JOIN que involucra `personas.id` genera un error de tipo `uuid = integer` en PostgreSQL → **500 Internal Server Error en cascada**.
+
+**Causa:** La migración UUID planificada en `scripts/migrations/uuid_migration.sql` NUNCA se ejecutó contra esta base de datos.
+
+---
+
+## 🔴 HALLAZGO CRÍTICO #2: 37 FKs tipo NUMERIC/INTEGER → personas.id
+
+Todas las FKs a personas.id son NUMERIC/INTEGER en PostgreSQL. Los modelos declaran UUID. Cada query con JOIN falla.
+
+| Tipo FK | Cantidad | Tablas |
 |---|---|---|
-| CRM Core | list_plantillas, list_casos, list_interacciones, list_tareas | 4 |
-| Academy Core | list_cursos, list_enrollments, list_threads, list_certificates | 4 |
-| Evangelism | list_strategies, list_groups, list_seasons, list_sessions | 8+ |
-| Proyectos | list_proyectos, list_tareas | 2 |
-| Admin | list_roles, list_users | 2 |
+| NUMERIC | 33 | asistencias, consolidation_*, crm_tasks, donations, grupos_evangelismo, etc. |
+| INTEGER | 4 | cell_group_attendance, cell_group_members, counseling_tickets |
 
-## CUMPLEN — Filtran por sede_id
-- GET /api/crm-core/pipelines (sede_id param)
-- GET /api/agenda-core/recursos (sede_id param)
-- GET /api/agenda-core/eventos (sede_id param)
-- GET /api/crm/members (crud.get_user_sede_id)
-- GET /api/crm/personas (crud.get_user_sede_id)
+---
 
-================================================================================
-# CAPA C: TIMEZONES — DateTime(timezone=True)
-================================================================================
+## 🟡 HALLAZGO #3: 12 tablas legacy con 1,132 registros
 
-## CUMPLE
-- models_agenda.py — 9/9 DateTime con timezone=True ✅
+Tablas que debieron ser eliminadas pero aún existen:
+- cell_group_attendance (860 rows)
+- cell_group_sessions (120 rows)  
+- cell_group_members (86 rows)
+- enrollments (20 rows)
+- consolidation_cases (20 rows)
+- project_tasks (20 rows)
+- courses (6 rows)
+- projects (4 rows)
+- + 4 tablas vacías
 
-## NO CUMPLEN (40+ columnas sin timezone=True)
-| Archivo | Columnas afectadas | Severidad |
-|---|---|---|
-| models_proyectos.py | 6 DateTime sin tz | HIGH |
-| models_crm_core.py | 5 DateTime sin tz (CasoCRM, InteraccionCRM) | HIGH |
-| models_academy_core.py | 7 DateTime sin tz | HIGH |
-| models_crm.py | 12+ DateTime sin tz | HIGH |
-| models_evangelism.py | 6+ DateTime sin tz | HIGH |
-| models_shared.py | _utcnow() elimina tzinfo (.replace(tzinfo=None)) | ROOT CAUSE |
+---
 
-================================================================================
-# CAPA D: CONCURRENCIA Y COLISIONES (Race Conditions)
-================================================================================
+## 🟢 HALLAZGO #4: 678 endpoints API registrados
 
-## CRÍTICAS
-1. models_agenda.py — ReservaRecurso sin __table_args__ con ExcludeConstraint
-2. crud/agenda_core.py:create_reserva — sin SELECT FOR UPDATE ni lock
-3. api/agenda_core.py:create_reserva — sin verificación de disponibilidad
+| Módulo | Endpoints |
+|---|---|
+| evangelism | 106 |
+| crm | 87 |
+| cms | 65 |
+| auth | 57 |
+| Otros (30 módulos) | 363 |
 
-## PostgreSQL
-- Extensión btree_gist: NO VERIFICADA (requiere acceso superuser)
-- Constraint sin_colisiones_fisicas: NO EXISTE en la BD
+---
 
-================================================================================
-# CAPA E: POLIMÓRFICO + SOFT DELETE
-================================================================================
+## 🎯 PLAN DE REMEDIACIÓN INMEDIATA
 
-## CRÍTICAS
-1. crud/agenda_core.py:list_eventos — NO filtra deleted_at IS NULL (bug inconsistente)
-2. crud/agenda_core.py:get_evento — NO filtra deleted_at
-3. api/crm/pastoral.py — delete_consolidation_case: HARD DELETE (sin soft-delete)
-4. api/evangelism_grupos.py — delete_cell_group, delete_session: HARD DELETE
-5. crud/academy_core.py — delete_curso, delete_leccion, delete_matricula: HARD DELETE
+1. **Ejecutar migración UUID** (`uuid_migration.sql` → personas.id INTEGER→UUID + 37 FKs)
+2. **Dropear 12 tablas legacy** con respaldo
+3. **Verificar 0 type mismatches** post-migración
+4. **Probar 10 endpoints críticos** (CRM, Evangelism, Agents, Auth)
 
-## POLIMÓRFICO (modulo_origen + entidad_origen_id)
-- Infraestructura EXISTE en modelos_agenda.py pero NO SE USA
-- Ningún módulo crea EventoAgenda al crear casos/enrollments/tareas
-- Sin propagación de deleted_at entre dominios
-
-================================================================================
-# SCRIPTS DE REMEDIACIÓN PROPUESTOS
-================================================================================
+¿Ejecuto la remediación AHORA?

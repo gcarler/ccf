@@ -36,12 +36,13 @@ def _can_manage_grupo(db: Session, user: models.User, house) -> bool:
 
 
 @router.get("/grupos", response_model=List[dict])
+@router.get("/faro", response_model=List[dict])
 def list_cell_groups(
     estrategia_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    from backend.models_academy import CellGroup
+    from backend.models import CellGroup
     q = db.query(CellGroup)
     if estrategia_id:
         q = q.filter(CellGroup.evangelism_strategy_id == estrategia_id)
@@ -68,6 +69,7 @@ def list_cell_groups(
 
 
 @router.get("/grupos/mine", response_model=List[dict])
+@router.get("/faro/mine", response_model=List[dict])
 def list_my_cell_groups(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -89,6 +91,7 @@ def list_my_cell_groups(
 
 
 @router.get("/grupos/assignment-summary", response_model=dict)
+@router.get("/faro/assignment-summary", response_model=dict)
 def get_faro_assignment_summary(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -173,13 +176,14 @@ def get_faro_assignment_summary(
 
 
 @router.get("/grupos/{grupo_id}", response_model=dict)
+@router.get("/faro/{grupo_id}", response_model=dict)
 @router.get("/micro/{grupo_id}", response_model=dict)
 def get_cell_group(
     grupo_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    from backend.models_academy import CellGroup, CellGroupMember, CellGroupSession, CellGroupAttendance
+    from backend.models import CellGroup, CellGroupMember, CellGroupSession, CellGroupAttendance
     house = db.query(CellGroup).filter(CellGroup.id == grupo_id).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
@@ -257,7 +261,7 @@ def get_cell_group(
     sessions_data = [
         {
             "id": session.id,
-            "glory_house_id": session.cell_group_id,
+            "grupo_id": session.cell_group_id,
             "session_date": session.session_date.isoformat(),
             "status": session.status,
             "attendance_count": attendance_map.get(session.id, 0),
@@ -414,6 +418,7 @@ def get_cell_group(
 
 
 @router.post("/grupos", response_model=dict)
+@router.post("/faro", response_model=dict)
 def create_cell_group(
     payload: schemas.GrupoEvangelismoCreate,
     db: Session = Depends(get_db),
@@ -423,13 +428,14 @@ def create_cell_group(
 
 
 @router.put("/grupos/{grupo_id}", response_model=dict)
+@router.put("/faro/{grupo_id}", response_model=dict)
 def update_cell_group(
     grupo_id: int,
     payload: schemas.GrupoEvangelismoUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    from backend.models_academy import CellGroup
+    from backend.models import CellGroup
     house_db = db.query(CellGroup).filter(CellGroup.id == grupo_id).first()
     if not house_db:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
@@ -454,22 +460,24 @@ def update_cell_group(
 
 
 @router.delete("/grupos/{grupo_id}", status_code=204)
+@router.delete("/faro/{grupo_id}", status_code=204)
 def delete_cell_group(
     grupo_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Elimina un grupo de evangelismo."""
-    from backend.models_academy import CellGroup
+    """Desactiva un grupo de evangelismo (soft-delete)."""
+    from backend.models import CellGroup
     house = db.query(CellGroup).filter(CellGroup.id == grupo_id).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
-    db.delete(house)
+    house.activo = False
     db.commit()
     return None
 
 
 @router.get("/grupos/seasons")
+@router.get("/faro/seasons")
 def list_campaign_seasons(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -492,6 +500,7 @@ def list_campaign_seasons(
 
 
 @router.post("/grupos/seasons", response_model=dict)
+@router.post("/faro/seasons", response_model=dict)
 def create_campaign_season(
     payload: dict,
     db: Session = Depends(get_db),
@@ -527,6 +536,7 @@ def create_campaign_season(
 
 
 @router.patch("/grupos/seasons/{season_id}", response_model=dict)
+@router.patch("/faro/seasons/{season_id}", response_model=dict)
 def update_campaign_season(
     season_id: int,
     payload: dict,
@@ -546,6 +556,7 @@ def update_campaign_season(
 
 
 @router.get("/grupos/sessions")
+@router.get("/faro/sessions")
 def list_faro_sessions(
     season_id: Optional[int] = None,
     cell_group_id: Optional[int] = None,
@@ -595,6 +606,7 @@ def list_faro_sessions(
 
 
 @router.get("/grupos/sessions/mine/pending")
+@router.get("/faro/sessions/mine/pending")
 def list_my_pending_faro_sessions(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -683,6 +695,7 @@ def list_my_pending_faro_sessions(
 
 
 @router.post("/grupos/sessions", response_model=dict)
+@router.post("/faro/sessions", response_model=dict)
 def create_faro_session(
     payload: dict,
     db: Session = Depends(get_db),
@@ -787,6 +800,7 @@ def create_faro_session(
 
 
 @router.get("/grupos/sessions/{session_id}/attendance")
+@router.get("/faro/sessions/{session_id}/attendance")
 def get_faro_session_attendance(
     session_id: int,
     db: Session = Depends(get_db),
@@ -873,6 +887,7 @@ def get_faro_session_attendance(
 
 
 @router.post("/grupos/sessions/{session_id}/attendance", response_model=dict)
+@router.post("/faro/sessions/{session_id}/attendance", response_model=dict)
 def add_faro_attendance(
     session_id: int,
     payload: dict,
@@ -914,15 +929,22 @@ def add_faro_attendance(
                 detail="El plazo para reportar asistencia en esta sesión ha vencido.",
             )
 
+    import uuid
+
     if attendees and not isinstance(attendees, list):
         raise HTTPException(status_code=400, detail="attendees must be a list")
 
     if attendees:
         processed = 0
         for item in attendees:
-            member_id = item.get("persona_id")
+            member_id = item.get("persona_id") or item.get("member_id")
             if not member_id:
                 continue
+            if isinstance(member_id, str):
+                try:
+                    member_id = uuid.UUID(member_id)
+                except ValueError:
+                    raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {member_id}")
             attended = bool(item.get("attended", True))
             absence_reason = item.get("absence_reason")
             absence_reason_detail = item.get("absence_reason_detail")
@@ -964,6 +986,11 @@ def add_faro_attendance(
             )
         processed = 0
         for member_id in member_ids:
+            if isinstance(member_id, str):
+                try:
+                    member_id = uuid.UUID(member_id)
+                except ValueError:
+                    raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {member_id}")
             exists = (
                 db.query(models.Asistencia)
                 .filter(
@@ -1018,6 +1045,7 @@ def add_faro_attendance(
 
 
 @router.get("/grupos/analytics")
+@router.get("/faro/analytics")
 def get_faro_analytics(
     season_id: Optional[int] = None,
     db: Session = Depends(get_db),
@@ -1184,13 +1212,14 @@ class FaroVisitorCreate(BaseModel):
 
 
 @router.post("/grupos/visitors", response_model=dict)
+@router.post("/faro/visitors", response_model=dict)
 def register_faro_visitor(
     visitor: FaroVisitorCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
     """Register a new guest from a Faro session report as a Persona + CRM lead."""
-    # Check user is leader/assistant of the glory house
+    # Verificar que usuario es líder/asistente del grupo
     house = db.query(models.GrupoEvangelismo).filter(
         models.GrupoEvangelismo.id == visitor.cell_group_id
     ).first()
@@ -1221,7 +1250,7 @@ def register_faro_visitor(
     db.commit()
     db.refresh(new_persona)
 
-    # Link to glory house
+    # Vincular al grupo
     db.add(models.ParticipanteGrupo(
         cell_group_id=visitor.cell_group_id,
         persona_id=new_persona.id,
@@ -1252,7 +1281,7 @@ def list_sessions(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """List sessions, optionally filtered by strategy or house."""
-    from backend.models_academy import CellGroupSession, CellGroup
+    from backend.models import CellGroupSession, CellGroup
 
     q = db.query(CellGroupSession)
     if strategy_id:
@@ -1265,7 +1294,7 @@ def list_sessions(
     return [
         {
             "id": s.id,
-            "glory_house_id": s.cell_group_id,
+            "grupo_id": s.cell_group_id,
             "session_date": s.session_date.isoformat() if s.session_date else None,
             "status": s.status or "Realizada",
             "topic": s.topic,
@@ -1283,9 +1312,9 @@ def create_session(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Create a new session."""
-    from backend.models_academy import CellGroupSession as SessionModel
+    from backend.models import CellGroupSession as SessionModel
     
-    cell_group_id = data.grupo_id or data.glory_house_id
+    cell_group_id = data.grupo_id
     if not cell_group_id:
         raise HTTPException(status_code=400, detail="grupo_id es requerido")
     db_session = SessionModel(
@@ -1307,7 +1336,7 @@ def create_session(
     db.refresh(db_session)
     return {
         "id": db_session.id,
-        "glory_house_id": db_session.cell_group_id,
+        "grupo_id": db_session.cell_group_id,
         "session_date": db_session.session_date.isoformat() if db_session.session_date else None,
         "status": db_session.status or "Realizada",
         "topic": db_session.topic,
@@ -1323,7 +1352,7 @@ def get_session_detail(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Get session with attendance records including member names."""
-    from backend.models_academy import CellGroupSession, CellGroupAttendance, CellGroupMember
+    from backend.models import CellGroupSession, CellGroupAttendance, CellGroupMember
     from backend.models_personas import Persona
 
     session = (
@@ -1390,7 +1419,7 @@ def update_session(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Update session."""
-    from backend.models_academy import CellGroupSession as SessionModel
+    from backend.models import CellGroupSession as SessionModel
     
     db_session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
     if not db_session:
@@ -1412,19 +1441,17 @@ def delete_session(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Delete session and its attendance."""
-    from backend.models_academy import CellGroupSession, CellGroupAttendance
-    
+    """Cancela una sesión (soft-delete: marca como CANCELADA)."""
+    from backend.models import CellGroupSession
+
     db_session = db.query(CellGroupSession).filter(CellGroupSession.id == session_id).first()
     if not db_session:
         raise HTTPException(status_code=404, detail="Session not found")
-    
-    db.query(CellGroupAttendance).filter(
-        CellGroupAttendance.session_id == session_id
-    ).delete()
-    db.delete(db_session)
-    db.commit()
-    return {"ok": True}
+
+    # Soft-delete: marcar como cancelada en lugar de borrar
+    db_session.status = "Cancelada"
+    db.session.commit()  # noqa — commit correcto
+    return {"ok": True, "status": "cancelada"}
 
 
 # ── Attendance ──
@@ -1437,7 +1464,7 @@ def submit_attendance(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Submit attendance for a session. Checks automation triggers."""
-    from backend.models_academy import CellGroupAttendance, CellGroupSession
+    from backend.models import CellGroupAttendance, CellGroupSession
     
     session = db.query(CellGroupSession).filter(CellGroupSession.id == session_id).first()
     if not session:
@@ -1496,7 +1523,7 @@ def submit_attendance(
 
 def _check_absence_trigger(db: Session, session_id: int):
     """If a member has 3 consecutive absences, create N2 task in Consolidation."""
-    from backend.models_academy import (
+    from backend.models import (
         CellGroupAttendance,
         CellGroupSession,
         CellGroup,
@@ -1565,7 +1592,7 @@ def _check_absence_trigger(db: Session, session_id: int):
 
 def _check_first_time_lead_trigger(db: Session, session_id: int):
     """If a first_time attendee is recorded, mark as LEAD_NUEVO in CRM."""
-    from backend.models_academy import CellGroupAttendance
+    from backend.models import CellGroupAttendance
     from backend.models_personas import Persona
     
     first_timers = (
@@ -1597,7 +1624,7 @@ def get_strategy_metrics(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Weekly metrics for a strategy: attendance, absences, first-timers, groups."""
-    from backend.models_academy import (
+    from backend.models import (
         CellGroupSession,
         CellGroupAttendance,
         CellGroup,
@@ -1747,7 +1774,7 @@ def create_seguimiento(
 ):
     """Crea un registro de seguimiento para una asistencia."""
     from backend.crud.evangelism import create_seguimiento
-    from backend.models_academy import CellGroupAttendance
+    from backend.models import CellGroupAttendance
 
     asistencia = db.query(CellGroupAttendance).filter(
         CellGroupAttendance.id == asistencia_id
@@ -1773,62 +1800,3 @@ def update_seguimiento(
     if not result:
         raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
     return result
-
-
-# ── Aliases legacy: /glory-houses → /grupos ────────────────────────────
-# El frontend legacy usa /evangelism/glory-houses.
-# Estos aliases redirigen a los endpoints canónicos /grupos.
-
-
-@router.get("/glory-houses", response_model=List[dict])
-def list_glory_houses_alias(
-    estrategia_id: Optional[str] = None,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    return list_cell_groups(estrategia_id=estrategia_id, db=db, current_user=current_user)
-
-
-@router.get("/glory-houses/mine", response_model=List[dict])
-def list_my_glory_houses_alias(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
-):
-    return list_my_cell_groups(db=db, current_user=current_user)
-
-
-@router.post("/glory-houses", response_model=dict)
-def create_glory_house_alias(
-    payload: schemas.GrupoEvangelismoCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    return create_cell_group(payload=payload, db=db, current_user=current_user)
-
-
-@router.get("/glory-houses/{grupo_id}", response_model=dict)
-def get_glory_house_alias(
-    grupo_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    return get_cell_group(grupo_id=grupo_id, db=db, current_user=current_user)
-
-
-@router.put("/glory-houses/{grupo_id}", response_model=dict)
-def update_glory_house_alias(
-    grupo_id: int,
-    payload: schemas.GrupoEvangelismoUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    return update_cell_group(grupo_id=grupo_id, payload=payload, db=db, current_user=current_user)
-
-
-@router.delete("/glory-houses/{grupo_id}", status_code=204)
-def delete_glory_house_alias(
-    grupo_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    return delete_cell_group(grupo_id=grupo_id, db=db, current_user=current_user)

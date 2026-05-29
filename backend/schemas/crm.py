@@ -16,7 +16,6 @@ EVENT_TYPES = [
     "ANNUAL",  # Anual (ej: Navidad, aniversario de la iglesia)
     "ONCE",  # Única vez / fecha fija especial
     "SPECIAL",  # Campaña, conferencia invitada, evento especial
-    "FARO",  # Servicio de Faro en Casa / célula
     "ONLINE",  # Transmisión en vivo / servicio virtual
 ]
 
@@ -310,7 +309,7 @@ class Persona(BaseModel):
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
     pastoral_notes: Optional[str] = None
-    # Nuevos campos desde hoja de miembros
+    # Nuevos campos desde hoja de personas
     id_type: Optional[str] = None
     id_number: Optional[str] = None
     second_name: Optional[str] = None
@@ -372,7 +371,7 @@ class PersonaCreate(BaseModel):
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
     pastoral_notes: Optional[str] = None
-    # Nuevos campos desde hoja de miembros
+    # Nuevos campos desde hoja de personas
     id_type: Optional[str] = None
     id_number: Optional[str] = None
     second_name: Optional[str] = None
@@ -421,7 +420,7 @@ class PersonaUpdate(BaseModel):
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
     pastoral_notes: Optional[str] = None
-    # Nuevos campos desde hoja de miembros
+    # Nuevos campos desde hoja de personas
     id_type: Optional[str] = None
     id_number: Optional[str] = None
     second_name: Optional[str] = None
@@ -495,7 +494,7 @@ MINISTRY_ROLES = [
     "Miembro Bautizado",
     "Asistente",
     "Visitante Servicios",
-    "Visitante Faro en Casa",
+    "Visitante de Grupo",
     "Visitante Online",
 ]
 
@@ -859,7 +858,7 @@ class CellGroupCreate(BaseModel):
 
 class CellGroupMemberWithRole(BaseModel):
     persona_id: str
-    role: str = "miembro"  # lider | colider | miembro | visitante
+    role: str = "participante"  # lider | colider | participante | visitante
 
 class CellGroupUpdate(BaseModel):
     code: Optional[str] = None
@@ -923,7 +922,7 @@ class FaroSessionAttendance(BaseModel):
     total: int
     attendees: List[FaroSessionAttendanceItem] = []
     absentees: List[FaroSessionAttendanceItem] = []
-    expected_members: List[FaroSessionAttendanceItem] = []
+    expected_participantes: List[FaroSessionAttendanceItem] = []
     model_config = orm_config
 
 class PastoralCallLogCreate(BaseModel):

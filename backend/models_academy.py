@@ -303,7 +303,7 @@ class CellGroupMember(Base):
     persona = relationship("Persona")
 
 class CellGroupSession(Base):
-    """A single weekly/monthly reporting session for a Faro en Casa house."""
+    """Sesión semanal/mensual de un grupo (célula)."""
 
     __tablename__ = "cell_group_sessions"
     __table_args__ = (
@@ -347,7 +347,7 @@ class CellGroupSession(Base):
     reported_by_persona = relationship("Persona")
 
 class CellGroupAttendance(Base):
-    """Attendance record of a member at a Faro en Casa session."""
+    """Registro de asistencia de una persona a una sesión de grupo."""
 
     __tablename__ = "cell_group_attendance"
     __table_args__ = (
@@ -389,7 +389,7 @@ class CellGroupAttendance(Base):
     persona = relationship("Persona")
 
 class CampaignSeason(Base):
-    """Represents an evangelistic campaign season (e.g. 'Faro en Casa 2026')."""
+    """Represents an evangelistic campaign season (e.g. 'Temporada 2026')."""
 
     __tablename__ = "campaign_seasons"
     id = Column(Integer, primary_key=True, index=True)
