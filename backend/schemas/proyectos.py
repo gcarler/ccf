@@ -43,7 +43,7 @@ class ProyectoUpdate(BaseModel):
 # ── Equipo ──────────────────────────────────────────────────────────────────
 
 class EquipoProyectoBase(BaseModel):
-    persona_id: int
+    persona_id: str
     rol_proyecto: str = Field(..., min_length=1, max_length=50)
     permiso_edicion: bool = False
 
@@ -124,7 +124,7 @@ class ComentarioTareaCreate(BaseModel):
 class ComentarioTareaSchema(BaseModel):
     id: int
     tarea_id: uuid.UUID
-    persona_id: int
+    persona_id: str
     comentario: str
     fecha_creacion: Optional[datetime] = None
 

@@ -14,11 +14,29 @@ from backend.api.crm._shared import (_persona_full_name, _serialize_case,
 from backend.auth import (normalize_role, require_active_user,
                           require_pastor_or_admin)
 from backend.core.database import get_db
+from backend.crud.crm import get_user_sede_id
 from backend.services.messaging import MessagingGateway
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
 router = APIRouter(tags=["CRM"])
 logger = logging.getLogger(__name__)
+
+
+def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]) -> models.ConsolidationCase:
+    case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+    case = (
+        db.query(models.ConsolidationCase)
+        .filter(
+            models.ConsolidationCase.id == case_uuid,
+            models.ConsolidationCase.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    if user_sede and case.sede_id != user_sede:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return case
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -31,13 +49,8 @@ def get_consolidation_case(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    case = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
-        .first()
-    )
-    if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    case = _get_case_or_404(db, case_id, user_sede)
     return _serialize_case(case)
 
 
@@ -47,12 +60,20 @@ def create_consolidation_case(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
+    p_uuid = uuid.UUID(payload.persona_id) if isinstance(payload.persona_id, str) else payload.persona_id
     persona = (
-        db.query(models.Persona).filter(models.Persona.id == payload.persona_id).first()
+        db.query(models.Persona).filter(models.Persona.id == p_uuid).first()
     )
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
-    row = models.ConsolidationCase(**payload.model_dump())
+    data = payload.model_dump()
+    data["persona_id"] = p_uuid
+    if data.get("assigned_pastor_id"):
+        data["assigned_pastor_id"] = uuid.UUID(str(data["assigned_pastor_id"]))
+    if data.get("assigned_leader_id"):
+        data["assigned_leader_id"] = uuid.UUID(str(data["assigned_leader_id"]))
+    row = models.ConsolidationCase(**data)
+    row.sede_id = persona.sede_id
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -66,14 +87,11 @@ def update_consolidation_case(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    case = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
-        .first()
-    )
-    if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    case = _get_case_or_404(db, case_id, user_sede)
     for key, value in payload.model_dump(exclude_unset=True).items():
+        if key in ("assigned_pastor_id", "assigned_leader_id") and value is not None:
+            value = uuid.UUID(str(value))
         setattr(case, key, value)
     db.commit()
     db.refresh(case)
@@ -87,18 +105,18 @@ def create_consolidation_assignment(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    case = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
-        .first()
-    )
-    if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    case = _get_case_or_404(db, case_id, user_sede)
     assignment_data = payload.model_dump(exclude={"case_id"})
-    row = models.ConsolidationAssignment(**assignment_data, case_id=case_id)
+    if assignment_data.get("assigned_by_id"):
+        assignment_data["assigned_by_id"] = uuid.UUID(str(assignment_data["assigned_by_id"]))
+    if assignment_data.get("assigned_to_id"):
+        assignment_data["assigned_to_id"] = uuid.UUID(str(assignment_data["assigned_to_id"]))
+    case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+    row = models.ConsolidationAssignment(**assignment_data, case_id=case_uuid)
     db.add(row)
-    case.assigned_pastor_id = payload.assigned_by_id
-    case.assigned_leader_id = payload.assigned_to_id
+    case.assigned_pastor_id = assignment_data["assigned_by_id"]
+    case.assigned_leader_id = assignment_data["assigned_to_id"]
     case.updated_at = utc_now()
     db.commit()
     db.refresh(row)
@@ -120,15 +138,13 @@ def create_consolidation_interaction(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    case = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
-        .first()
-    )
-    if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    case = _get_case_or_404(db, case_id, user_sede)
     interaction_data = payload.model_dump(exclude={"case_id"})
-    row = models.ConsolidationInteraction(**interaction_data, case_id=case_id)
+    if interaction_data.get("performed_by_id"):
+        interaction_data["performed_by_id"] = uuid.UUID(str(interaction_data["performed_by_id"]))
+    case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+    row = models.ConsolidationInteraction(**interaction_data, case_id=case_uuid)
     db.add(row)
     case.last_contact_at = row.interaction_date
     db.commit()
@@ -153,15 +169,11 @@ def create_consolidation_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    case = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
-        .first()
-    )
-    if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    case = _get_case_or_404(db, case_id, user_sede)
     task_data = payload.model_dump(exclude={"case_id"})
-    row = models.ConsolidationTask(**task_data, case_id=case_id)
+    case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+    row = models.ConsolidationTask(**task_data, case_id=case_uuid)
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -191,7 +203,12 @@ def list_consolidation_cases(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Lista casos de consolidación con paginación y filtros."""
-    q = db.query(models.ConsolidationCase)
+    user_sede = get_user_sede_id(db, current_user.id)
+    q = db.query(models.ConsolidationCase).filter(
+        models.ConsolidationCase.deleted_at.is_(None)
+    )
+    if user_sede:
+        q = q.filter(models.ConsolidationCase.sede_id == user_sede)
 
     if source:
         q = q.filter(models.ConsolidationCase.source == source)
@@ -225,15 +242,10 @@ def delete_consolidation_case(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Elimina un caso de consolidación."""
-    case = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
-        .first()
-    )
-    if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
-    db.delete(case)
+    """Archiva un caso de consolidación (soft delete)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    case = _get_case_or_404(db, case_id, user_sede)
+    case.deleted_at = utc_now()
     db.commit()
     return None
 
@@ -246,13 +258,8 @@ def list_consolidation_tasks(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Lista las tareas de seguimiento de un caso."""
-    case = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
-        .first()
-    )
-    if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    _get_case_or_404(db, case_id, user_sede)
 
     q = (
         db.query(models.ConsolidationTask)
@@ -287,6 +294,8 @@ def update_consolidation_task(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Actualiza una tarea de seguimiento (ej. marcar como completada)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _get_case_or_404(db, case_id, user_sede)
     task = (
         db.query(models.ConsolidationTask)
         .filter(
@@ -322,13 +331,8 @@ def list_consolidation_interactions(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Lista las interacciones de un caso de consolidación."""
-    case = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
-        .first()
-    )
-    if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    _get_case_or_404(db, case_id, user_sede)
 
     interactions = (
         db.query(models.ConsolidationInteraction)
@@ -367,6 +371,8 @@ def update_consolidation_assignment(
     )
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    _get_case_or_404(db, str(assignment.case_id), user_sede)
 
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(assignment, key, value)
@@ -399,6 +405,8 @@ async def send_crm_message(
     persona_id = payload.get("persona_id")
     target_segments = payload.get("target_segments") or []
 
+    user_sede = get_user_sede_id(db, current_user.id)
+
     if persona_id:
         target_members = [{"id": persona_id}]
     else:
@@ -406,17 +414,15 @@ async def send_crm_message(
         for segment in target_segments:
             normalized = str(segment).strip().lower()
             if normalized == "active":
-                rows = (
-                    db.query(models.Persona)
-                    .filter(models.Persona.church_role == "Miembro")
-                    .all()
-                )
+                q = db.query(models.Persona).filter(models.Persona.church_role == "Miembro")
+                if user_sede:
+                    q = q.filter(models.Persona.sede_id == user_sede)
+                rows = q.all()
             elif normalized == "groups":
-                rows = (
-                    db.query(models.Persona)
-                    .filter(models.Persona.family_id.isnot(None))
-                    .all()
-                )
+                q = db.query(models.Persona).filter(models.Persona.family_id.isnot(None))
+                if user_sede:
+                    q = q.filter(models.Persona.sede_id == user_sede)
+                rows = q.all()
             else:
                 rows = []
             for persona in rows:
@@ -491,11 +497,13 @@ def list_messaging_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    logs = (
-        db.query(models.CommunicationLog)
-        .order_by(models.CommunicationLog.created_at.desc())
-        .all()
+    user_sede = get_user_sede_id(db, current_user.id)
+    q = db.query(models.CommunicationLog).join(
+        models.Persona, models.CommunicationLog.persona_id == models.Persona.id
     )
+    if user_sede:
+        q = q.filter(models.Persona.sede_id == user_sede)
+    logs = q.order_by(models.CommunicationLog.created_at.desc()).all()
     grouped: "collections.OrderedDict[str, list[models.CommunicationLog]]" = (
         collections.OrderedDict()
     )
@@ -751,7 +759,11 @@ def list_grupos(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    grupos = db.query(models.GrupoEvangelismo).order_by(models.GrupoEvangelismo.nombre.asc()).all()
+    user_sede = get_user_sede_id(db, current_user.id)
+    q = db.query(models.GrupoEvangelismo)
+    if user_sede:
+        q = q.filter(models.GrupoEvangelismo.sede_id == user_sede)
+    grupos = q.order_by(models.GrupoEvangelismo.nombre.asc()).all()
     return [
         {
             "id": g.id,
@@ -886,7 +898,8 @@ def list_counseling_tickets(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    tickets = crud.get_counseling_tickets(db, status=status)
+    user_sede = get_user_sede_id(db, current_user.id)
+    tickets = crud.get_counseling_tickets(db, status=status, sede_id=user_sede)
     return [
         {
             "id": t.id,
@@ -1171,30 +1184,42 @@ def get_crm_analytics_summary(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    total_members = db.query(models.Persona).count()
-    active_members = (
-        db.query(models.Persona)
-        .filter(
-            models.Persona.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
-        )
-        .count()
+    user_sede = get_user_sede_id(db, current_user.id)
+
+    persona_q = db.query(models.Persona)
+    if user_sede:
+        persona_q = persona_q.filter(models.Persona.sede_id == user_sede)
+
+    total_members = persona_q.count()
+    active_members = persona_q.filter(
+        models.Persona.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
+    ).count()
+
+    counseling_q = db.query(models.CounselingTicket).filter(
+        models.CounselingTicket.status == "open",
+        models.CounselingTicket.deleted_at.is_(None),
     )
-    open_counseling = (
-        db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.status == "open")
-        .count()
-    )
+    if user_sede:
+        counseling_q = counseling_q.join(
+            models.Persona, models.CounselingTicket.persona_id == models.Persona.id
+        ).filter(models.Persona.sede_id == user_sede)
+    open_counseling = counseling_q.count()
+
     month_start = (
         datetime.now(timezone.utc)
         .replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         .replace(tzinfo=None)
     )
-    events_this_month = (
-        db.query(models.CrmEvent)
-        .filter(models.CrmEvent.event_date >= month_start)
-        .count()
-    )
-    total_groups = db.query(models.GrupoEvangelismo).count()
+    events_q = db.query(models.CrmEvent).filter(models.CrmEvent.event_date >= month_start)
+    if user_sede:
+        events_q = events_q.filter(models.CrmEvent.sede_id == user_sede)
+    events_this_month = events_q.count()
+
+    groups_q = db.query(models.GrupoEvangelismo)
+    if user_sede:
+        groups_q = groups_q.filter(models.GrupoEvangelismo.sede_id == user_sede)
+    total_groups = groups_q.count()
+
     total_families = db.query(models.Family).count()
     return {
         "total_members": total_members,
@@ -1203,7 +1228,10 @@ def get_crm_analytics_summary(
         "events_this_month": events_this_month,
         "total_groups": total_groups,
         "total_families": total_families,
+        "total_leads": 0,
+        "pipeline_by_stage": {},
     }
+
 
 
 # ── Prayer Requests ──────────────────────────────────────
@@ -1415,28 +1443,39 @@ def list_volunteers(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Lista todos los voluntarios con sus horas y ministerios."""
-    personas = db.query(models.Persona).all()
+    from collections import defaultdict
+    user_sede = get_user_sede_id(db, current_user.id)
+    personas_q = db.query(models.Persona)
+    if user_sede:
+        personas_q = personas_q.filter(models.Persona.sede_id == user_sede)
+    personas = personas_q.all()
+    if not personas:
+        return []
+
+    persona_ids = [p.id for p in personas]
+    all_shifts = (
+        db.query(models.VolunteerShift)
+        .filter(models.VolunteerShift.persona_id.in_(persona_ids))
+        .all()
+    )
+    shifts_by_persona: dict = defaultdict(list)
+    for s in all_shifts:
+        shifts_by_persona[s.persona_id].append(s)
+
     result = []
     for persona in personas:
-        shifts = (
-            db.query(models.VolunteerShift)
-            .filter(models.VolunteerShift.persona_id == persona.id)
-            .all()
+        shifts = shifts_by_persona[persona.id]
+        total_hours = sum(
+            int((s.shift_end - s.shift_start).total_seconds() // 3600)
+            for s in shifts
+            if s.shift_start and s.shift_end
         )
-        total_hours = 0
-        for shift in shifts:
-            if shift.shift_start and shift.shift_end:
-                total_hours += int(
-                    (shift.shift_end - shift.shift_start).total_seconds() // 3600
-                )
-        result.append(
-            {
-                "id": persona.id,
-                "name": f"{persona.first_name} {persona.last_name}",
-                "total_hours": total_hours,
-                "ministry_count": len(set(s.ministry for s in shifts if s.ministry)),
-            }
-        )
+        result.append({
+            "id": persona.id,
+            "name": f"{persona.first_name} {persona.last_name}",
+            "total_hours": total_hours,
+            "ministry_count": len({s.team_name for s in shifts if s.team_name}),
+        })
     return result
 
 
@@ -1547,8 +1586,8 @@ def list_crm_groups(
             "id": m.id,
             "name": m.name,
             "description": m.description,
-            "leader": m.leader_name,
-            "members_count": len(m.members) if m.members else 0,
+            "leader": None,
+            "members_count": len(m.personas) if m.personas else 0,
         }
         for m in ministries
     ]
@@ -1560,16 +1599,30 @@ def get_crm_radar(
     current_user: models.User = Depends(require_active_user),
 ):
     """Datos del radar ministerial para dashboard."""
-    total_members = db.query(models.Persona).count()
+    user_sede = get_user_sede_id(db, current_user.id)
+
+    members_q = db.query(models.Persona)
+    if user_sede:
+        members_q = members_q.filter(models.Persona.sede_id == user_sede)
+    total_members = members_q.count()
+
     total_ministries = db.query(models.Ministry).count()
-    active_cases = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.status == "active")
-        .count()
+
+    cases_q = db.query(models.ConsolidationCase).filter(
+        models.ConsolidationCase.status == "active",
+        models.ConsolidationCase.deleted_at.is_(None),
     )
-    pending_tasks = (
-        db.query(models.CrmTask).filter(models.CrmTask.status == "pending").count()
-    )
+    if user_sede:
+        cases_q = cases_q.filter(models.ConsolidationCase.sede_id == user_sede)
+    active_cases = cases_q.count()
+
+    tasks_q = db.query(models.CrmTask).filter(models.CrmTask.status == "pending")
+    if user_sede:
+        tasks_q = tasks_q.join(
+            models.Persona, models.CrmTask.persona_id == models.Persona.id
+        ).filter(models.Persona.sede_id == user_sede)
+    pending_tasks = tasks_q.count()
+
     return {
         "total_members": total_members,
         "total_ministries": total_ministries,

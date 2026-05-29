@@ -36,8 +36,8 @@ class AgentKnowledgeBase(Base):
     source_url = Column(String(500), nullable=True)
     relevance_score = Column(Float, default=0.5)
     is_active = Column(Boolean, default=True, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     indexed_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
 
     def __repr__(self):

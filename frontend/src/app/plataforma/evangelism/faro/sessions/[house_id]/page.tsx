@@ -13,7 +13,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 
-interface GloryHouse {
+interface Grupo {
     id: number;
     name: string;
     zone: string | null;
@@ -48,7 +48,7 @@ export default function SessionReportPage() {
     const houseId = (params?.house_id as string) || '';
     const { token } = useAuth();
 
-    const [house, setHouse] = useState<GloryHouse | null>(null);
+    const [house, setHouse] = useState<Grupo | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0]);
@@ -62,7 +62,7 @@ export default function SessionReportPage() {
     const fetchHouse = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${houseId}`, { token: token || '' });
+            const data = await apiFetch<Grupo>(`/evangelism/grupos/${houseId}`, { token: token || '' });
             setHouse(data);
 
             const ppl: SessionPerson[] = [];
@@ -127,7 +127,7 @@ export default function SessionReportPage() {
             const sessionData = await apiFetch<any>('/evangelism/sessions', {
                 method: 'POST', token: token || '',
                 body: {
-                    glory_house_id: parseInt(houseId),
+                    grupo_id: parseInt(houseId),
                     session_date: new Date(sessionDate).toISOString(),
                     topic: topic || null,
                     offering_amount: offering ? parseFloat(offering) : null,
@@ -154,7 +154,7 @@ export default function SessionReportPage() {
                             first_name: guest.firstName.trim(),
                             last_name: guest.lastName.trim(),
                             phone: guest.phone.trim() || null,
-                            glory_house_id: parseInt(houseId),
+                            grupo_id: parseInt(houseId),
                             session_id: sessionId,
                         },
                     });

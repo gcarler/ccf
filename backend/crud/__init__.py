@@ -10,8 +10,36 @@ This package re-exports everything so that existing callers using
 from backend.crud._utils import _utcnow  # noqa: F401
 from backend.crud._utils import (analyze_pastoral_priority,
                                  analyze_pastoral_sentiment)
-# Academy (deprecated — replaced by Academy 2.0)
-# from backend.crud.academy import ...
+# Academy (deprecated — replaced by Academy 2.0 but still used by legacy routes and tests)
+from backend.crud.academy import (  # noqa: F401
+    get_courses,
+    get_course,
+    check_user_meets_prerequisites,
+    get_enrollment,
+    get_enrollments_by_user,
+    create_enrollment,
+    get_assessment,
+    get_assessment_with_questions,
+    create_or_update_assessment_attempt,
+    submit_assessment_attempt,
+    get_lesson_progress,
+    update_lesson_progress,
+    get_certificates_by_user,
+    get_certificate_by_code,
+    issue_certificate_for_enrollment,
+    issue_certificate,
+    issue_pending_certificates,
+    close_formal_acta,
+    get_latest_acta_by_course,
+    record_activity_attendance,
+    create_assignment_submission,
+    list_assignment_submissions_with_meta,
+    get_assignment_submission_with_meta,
+    grade_assignment_submission,
+    get_academy_candidates,
+    get_forum_threads,
+    create_forum_thread,
+)
 # Agents
 from backend.crud.agents import acknowledge_insight  # noqa: F401
 from backend.crud.agents import (create_agent_insight, create_agent_task,
@@ -68,6 +96,7 @@ from backend.crud.cms import (archive_cms_section, archive_cms_site,
 from backend.crud.crm import create_communication_log  # noqa: F401
 from backend.crud.crm import (create_community_card,
                               create_counseling_ticket,
+                              create_crm_event,
                               create_crm_task, create_donation,
                               create_evangelism_strategy,
                               create_event_attendance, create_family,
@@ -75,6 +104,7 @@ from backend.crud.crm import (create_community_card,
                               create_milestone, create_persona, create_prayer_request,
                               delete_communication_log, delete_community_card,
                               delete_counseling_ticket,
+                              delete_crm_event,
                               delete_crm_task, delete_donation,
                               delete_evangelism_strategy,
                               delete_event_attendance, delete_family,
@@ -84,7 +114,9 @@ from backend.crud.crm import (create_community_card,
                               get_community_cards,
                               get_communication_log, get_communication_logs,
                               get_community_card, get_counseling_ticket,
-                              get_counseling_tickets, get_crm_tasks, get_donation,
+                              get_counseling_tickets,
+                              get_crm_event, get_crm_events,
+                              get_crm_tasks, get_donation,
                               get_donations, get_evangelism_strategies,
                               get_event_attendance, get_families, get_family,
                               get_family_members, get_cell_group,
@@ -101,6 +133,7 @@ from backend.crud.crm import (create_community_card,
                               search_members_paginated, search_personas,
                               update_communication_log, update_community_card,
                               update_counseling_ticket,
+                              update_crm_event,
                               update_crm_task, update_donation,
                               update_evangelism_strategy, update_family,
                               update_cell_group, update_persona,
@@ -134,14 +167,21 @@ from backend.crud.crm_extended import (  # noqa: F401; Positions; Persona Positi
     update_event_assignment, update_fund, update_member_ministry,
     update_member_position, update_ministry, update_position,
     update_role_definition, update_volunteer_skill)
+from backend.crud.dashboard import get_pilot_readiness  # noqa: F401
 # Dashboard
-from backend.crud.dashboard import get_dashboard_metrics  # noqa: F401
-from backend.crud.dashboard import (get_academy_dashboard, get_admin_dashboard,  # noqa: F401
-                                    get_assets_dashboard, get_crm_dashboard,
-                                    get_finance_dashboard, get_pastor_radar,
-                                    get_pilot_readiness, get_projects_dashboard,
-                                    search_knowledge_base)
-# Governance
+from backend.crud.dashboard import (  # noqa: F401
+    get_academy_dashboard,
+    get_admin_dashboard,
+    get_crm_dashboard,
+    get_evangelism_dashboard,
+    get_finance_dashboard,
+    get_projects_dashboard,
+    get_agenda_dashboard,
+    get_cms_dashboard,
+    get_pastor_radar,
+    get_pilot_readiness,
+    search_knowledge_base,
+)
 from backend.crud.governance import create_automation_rule  # noqa: F401
 from backend.crud.governance import (delete_automation_rule,
                                      get_automation_rule, get_automation_rules,

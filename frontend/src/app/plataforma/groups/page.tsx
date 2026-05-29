@@ -23,7 +23,7 @@ export default function GroupsPage() {
         if (!token) return;
         const loadGroups = async () => {
             try {
-                const data = await apiFetch<any[]>('/evangelism/glory-houses', { token }).catch(() => []);
+                const data = await apiFetch<any[]>('/evangelism/grupos', { token }).catch(() => []);
                 setGroups(data);
             } catch (err) {
                 toast.error('Error al cargar Casas de Bendición');

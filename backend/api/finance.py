@@ -29,11 +29,11 @@ def get_finance_summary(
     )
 
     # Gastos estimados como 66% de ingresos (hasta que haya una tabla de expenses real)
-    total_expense = round(total_income * 0.66)
+    total_expense = round(float(total_income) * 0.66)
 
     # Balance: fondos activos + ingresos del mes
     total_funds = db.query(func.sum(models.Fund.current_balance)).scalar() or 0
-    balance = round(total_funds + total_income * 0.34)
+    balance = round(float(total_funds) + float(total_income) * 0.34)
 
     return {
         "balance": balance,
@@ -73,9 +73,9 @@ def get_ministerial_funds(
 
     return {
         "ingresos_mes": round(total_ingresos),
-        "egresos_mes": round(total_ingresos * 0.66),
-        "balance": round(total_ingresos * 0.34),
-        "reserva": round(total_all_time * 0.10),
+        "egresos_mes": round(float(total_ingresos) * 0.66),
+        "balance": round(float(total_ingresos) * 0.34),
+        "reserva": round(float(total_all_time) * 0.10),
         "total_historico": round(total_all_time),
         "por_tipo": [
             {"tipo": r[0] or "Ofrenda", "total": round(r[1])} for r in by_type

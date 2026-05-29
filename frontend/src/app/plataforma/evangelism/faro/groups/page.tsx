@@ -30,7 +30,7 @@ import type { ViewType } from '@/components/ViewSwitcher';
 
 
 
-interface GloryHouse {
+interface Grupo {
   id: number;
   code?: string;
   name: string;
@@ -138,7 +138,7 @@ function FaroGroupsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { pushSidebarPanel, resetSidebarStack } = useSidebarLayers();
-  const [houses, setHouses] = useState<GloryHouse[]>([]);
+  const [houses, setHouses] = useState<Grupo[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [summary, setSummary] = useState<AssignmentSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,10 +146,10 @@ function FaroGroupsContent() {
   const [viewType, setViewType] = useState<ViewType>('list');
   const [mode, setMode] = useState<Mode>('create');
 
-  const [selectedHouse, setSelectedHouse] = useState<GloryHouse | null>(null);
+  const [selectedHouse, setSelectedHouse] = useState<Grupo | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isAddingMembers, setIsAddingMembers] = useState(false);
-  const [formData, setFormData] = useState<Partial<GloryHouse>>({
+  const [formData, setFormData] = useState<Partial<Grupo>>({
     capacity: 15,
     status: 'Activo',
   });
@@ -184,7 +184,7 @@ function FaroGroupsContent() {
     if (!token) return;
     setLoading(true);
     Promise.all([
-      apiFetch<GloryHouse[]>('/evangelism/glory-houses', { token }),
+      apiFetch<Grupo[]>('/evangelism/grupos', { token }),
       apiFetch<Member[]>('/crm/personas', { token }),
       apiFetch<AssignmentSummary>('/evangelism/faro/assignment-summary', {
         token,
@@ -242,14 +242,14 @@ function FaroGroupsContent() {
         base_attendee_ids: Array.from(selectedMemberIds),
       };
       if (isCreating) {
-        const res = await apiFetch<GloryHouse>('/evangelism/glory-houses', {
+        const res = await apiFetch<Grupo>('/evangelism/grupos', {
           method: 'POST',
           body: payload,
           token,
         });
         setHouses([res, ...houses]);
-        const detail = await apiFetch<GloryHouse>(
-          `/evangelism/glory-houses/${res.id}`,
+        const detail = await apiFetch<Grupo>(
+          `/evangelism/grupos/${res.id}`,
           { token }
         );
         setSelectedHouse(detail);
@@ -264,8 +264,8 @@ function FaroGroupsContent() {
         toast.success('Grupo creado');
         setIsCreating(false);
       } else if (selectedHouse) {
-        const res = await apiFetch<GloryHouse>(
-          `/evangelism/glory-houses/${selectedHouse.id}`,
+        const res = await apiFetch<Grupo>(
+          `/evangelism/grupos/${selectedHouse.id}`,
           {
             method: 'PUT',
             body: payload,
@@ -273,8 +273,8 @@ function FaroGroupsContent() {
           }
         );
         setHouses(houses.map(h => (h.id === res.id ? res : h)));
-        const detail = await apiFetch<GloryHouse>(
-          `/evangelism/glory-houses/${res.id}`,
+        const detail = await apiFetch<Grupo>(
+          `/evangelism/grupos/${res.id}`,
           { token }
         );
         setSelectedHouse(detail);
@@ -297,10 +297,10 @@ function FaroGroupsContent() {
     }
   };
 
-  const handleDeleteHouse = async (house: GloryHouse) => {
+  const handleDeleteHouse = async (house: Grupo) => {
     if (!confirm(`¿Está seguro que desea eliminar "${house.name}"?\n\nEsta acción no se puede deshacer.`)) return;
     try {
-      await apiFetch(`/evangelism/glory-houses/${house.id}`, {
+      await apiFetch(`/evangelism/grupos/${house.id}`, {
         method: 'DELETE',
         token,
       });
@@ -324,8 +324,8 @@ function FaroGroupsContent() {
     }
     setSaving(true);
     try {
-      const detail = await apiFetch<GloryHouse>(
-        `/evangelism/glory-houses/${houseId}`,
+      const detail = await apiFetch<Grupo>(
+        `/evangelism/grupos/${houseId}`,
         { token }
       );
       const current = new Set(
@@ -334,8 +334,8 @@ function FaroGroupsContent() {
           []
       );
       current.add(personaId);
-      const updated = await apiFetch<GloryHouse>(
-        `/evangelism/glory-houses/${houseId}`,
+      const updated = await apiFetch<Grupo>(
+        `/evangelism/grupos/${houseId}`,
         {
           method: 'PUT',
           body: {
@@ -423,7 +423,7 @@ function FaroGroupsContent() {
 
   // ── View Components ────────────────────────────────────────────────
 
-  function ListView({ houses: items }: { houses: GloryHouse[] }) {
+  function ListView({ houses: items }: { houses: Grupo[] }) {
     return (
       <div className="flex-1 overflow-y-auto p-4">
         {items.length === 0 ? (
@@ -439,7 +439,7 @@ function FaroGroupsContent() {
                 onClick={async () => {
                   setIsCreating(false);
                   try {
-                    const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
+                    const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
                     setSelectedHouse(detail);
                     setFormData(detail);
                     setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
@@ -475,7 +475,7 @@ function FaroGroupsContent() {
     );
   }
 
-  function GridView({ houses: items }: { houses: GloryHouse[] }) {
+  function GridView({ houses: items }: { houses: Grupo[] }) {
     return (
       <div className="flex-1 overflow-y-auto p-4">
         {items.length === 0 ? (
@@ -491,7 +491,7 @@ function FaroGroupsContent() {
                 onClick={async () => {
                   setIsCreating(false);
                   try {
-                    const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
+                    const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
                     setSelectedHouse(detail); setFormData(detail);
                     setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
                   } catch {
@@ -527,9 +527,9 @@ function FaroGroupsContent() {
     );
   }
 
-  function KanbanView({ houses: items }: { houses: GloryHouse[] }) {
+  function KanbanView({ houses: items }: { houses: Grupo[] }) {
     const zones = useMemo(() => {
-      const map = new Map<string, GloryHouse[]>();
+      const map = new Map<string, Grupo[]>();
       items.forEach(h => {
         const z = h.zone || 'Sin zona';
         if (!map.has(z)) map.set(z, []);
@@ -560,7 +560,7 @@ function FaroGroupsContent() {
                       onClick={async () => {
                         setIsCreating(false);
                         try {
-                          const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
+                          const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
                           setSelectedHouse(detail); setFormData(detail);
                           setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
                         } catch {
@@ -594,7 +594,7 @@ function FaroGroupsContent() {
     );
   }
 
-  function TableView({ houses: items }: { houses: GloryHouse[] }) {
+  function TableView({ houses: items }: { houses: Grupo[] }) {
     return (
       <div className="flex-1 overflow-auto p-4">
         {items.length === 0 ? (
@@ -625,7 +625,7 @@ function FaroGroupsContent() {
                     onClick={async () => {
                       setIsCreating(false);
                       try {
-                        const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
+                        const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
                         setSelectedHouse(detail); setFormData(detail);
                         setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
                       } catch {
@@ -731,8 +731,8 @@ function FaroGroupsContent() {
                       onClick={async () => {
                         setIsCreating(false);
                         try {
-                          const detail = await apiFetch<GloryHouse>(
-                            `/evangelism/glory-houses/${h.id}`,
+                          const detail = await apiFetch<Grupo>(
+                            `/evangelism/grupos/${h.id}`,
                             { token }
                           );
                           setSelectedHouse(detail);
@@ -885,7 +885,7 @@ function FaroGroupsContent() {
                         setFormData({
                           ...formData,
                           code: e.target.value,
-                        } as Partial<GloryHouse>)
+                        } as Partial<Grupo>)
                       }
                       className={inputCls}
                       placeholder="FARO-001 o dejar vacío"

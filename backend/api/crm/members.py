@@ -13,10 +13,17 @@ from backend.core.database import get_db
 router = APIRouter(tags=["CRM"])
 
 
+def _parse_uuid(val: str | uuid.UUID) -> uuid.UUID:
+    if isinstance(val, uuid.UUID):
+        return val
+    return uuid.UUID(str(val))
+
+
+
 # --- MEMBERS ENDPOINTS ---
 
 
-@router.get("/personas", response_model=List[schemas.Persona])
+@router.get("/personas-legacy", response_model=List[schemas.Persona], deprecated=True)
 def list_personas(
     search: Optional[str] = None,
     role: Optional[str] = None,
@@ -32,7 +39,7 @@ def list_personas(
     return crud.search_members(db, search=search, role=role, sede_id=sede_id, skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir)
 
 
-@router.get("/personas/paginated")
+@router.get("/personas-legacy/paginated")
 def list_members_paginated(
     search: Optional[str] = None,
     role: Optional[str] = None,
@@ -59,7 +66,7 @@ def list_members_paginated(
     )
 
 
-@router.post("/personas/", response_model=schemas.Persona)
+@router.post("/personas-legacy/", response_model=schemas.Persona)
 def create_persona(
     payload: schemas.PersonaCreate,
     db: Session = Depends(get_db),
@@ -69,7 +76,7 @@ def create_persona(
     return crud.create_persona(db, payload)
 
 
-@router.get("/personas/me", response_model=dict)
+@router.get("/personas-legacy/me", response_model=dict)
 def get_my_crm_card(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
@@ -95,7 +102,7 @@ def get_my_crm_card(
     }
 
 
-@router.get("/personas/me/profile", response_model=dict)
+@router.get("/personas-legacy/me/profile", response_model=dict)
 def get_my_ministry_profile(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
@@ -203,14 +210,19 @@ def get_my_ministry_profile(
     }
 
 
-@router.get("/personas/donations", response_model=List[dict])
+@router.get("/personas-legacy/donations", response_model=List[dict])
 def list_all_member_donations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    donations = (
-        db.query(models.Donation).order_by(models.Donation.created_at.desc()).all()
-    )
+    from backend.crud.crm import get_user_sede_id
+    user_sede = get_user_sede_id(db, current_user.id)
+    q = db.query(models.Donation).filter(models.Donation.deleted_at.is_(None))
+    if user_sede:
+        q = q.join(models.Persona, models.Donation.persona_id == models.Persona.id).filter(
+            models.Persona.sede_id == user_sede
+        )
+    donations = q.order_by(models.Donation.created_at.desc()).all()
     result = []
     for donation in donations:
         donor_name = donation.donor_name
@@ -233,14 +245,15 @@ def list_all_member_donations(
     return result
 
 
-@router.get("/personas/{persona_id}", response_model=schemas.Persona)
+@router.get("/personas-legacy/{persona_id}", response_model=schemas.Persona)
 def get_persona(
-    persona_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Obtiene el detalle de un miembro con validacion de propiedad (IDOR)."""
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    persona_uuid = _parse_uuid(persona_id)
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
@@ -260,15 +273,16 @@ def get_persona(
     return persona
 
 
-@router.patch("/personas/{persona_id}", response_model=schemas.Persona)
+@router.patch("/personas-legacy/{persona_id}", response_model=schemas.Persona)
 def update_persona(
-    persona_id: int,
+    persona_id: str,
     payload: schemas.PersonaUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Actualiza datos de un miembro con persistencia y auditoria."""
-    persona = crud.update_persona(db, persona_id=persona_id, payload=payload)
+    persona_uuid = _parse_uuid(persona_id)
+    persona = crud.update_persona(db, persona_id=persona_uuid, payload=payload)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
@@ -283,14 +297,15 @@ def update_persona(
     return persona
 
 
-@router.delete("/personas/{persona_id}", status_code=204)
+@router.delete("/personas-legacy/{persona_id}", status_code=204)
 def delete_persona(
-    persona_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
     """Soft-delete: marca estado_vital = INACTIVO. Nunca eliminar físicamente."""
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    persona_uuid = _parse_uuid(persona_id)
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
@@ -302,49 +317,53 @@ def delete_persona(
 
 
 @router.get(
-    "/personas/{persona_id}/communications", response_model=List[schemas.CommunicationLog]
+    "/personas-legacy/{persona_id}/communications", response_model=List[schemas.CommunicationLog]
 )
 def get_persona_communications(
-    persona_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
+    persona_uuid = _parse_uuid(persona_id)
     return (
         db.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.persona_id == persona_id)
+        .filter(models.CommunicationLog.persona_id == persona_uuid)
         .all()
     )
 
 
-@router.get("/personas/{persona_id}/donations", response_model=List[schemas.Donation])
+@router.get("/personas-legacy/{persona_id}/donations", response_model=List[schemas.Donation])
 def list_persona_donations(
-    persona_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    return crud.get_member_donations(db, persona_id=persona_id)
+    persona_uuid = _parse_uuid(persona_id)
+    return crud.get_member_donations(db, persona_id=persona_uuid)
 
 
-@router.get("/personas/{persona_id}/timeline", response_model=List[dict])
+@router.get("/personas-legacy/{persona_id}/timeline", response_model=List[dict])
 def get_persona_growth_timeline(
-    persona_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Devuelve la línea de tiempo unificada (Academia, Consejería, Comunicaciones)."""
-    return crud.get_member_timeline(db, persona_id=persona_id)
+    persona_uuid = _parse_uuid(persona_id)
+    return crud.get_member_timeline(db, persona_id=persona_uuid)
 
 
-@router.get("/personas/{persona_id}/ministries", response_model=List[dict])
+@router.get("/personas-legacy/{persona_id}/ministries", response_model=List[dict])
 def get_persona_ministries(
-    persona_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Devuelve todas las vinculaciones ministeriales de una persona con su rol."""
+    persona_uuid = _parse_uuid(persona_id)
     rows = (
         db.query(models.MemberMinistry)
-        .filter(models.MemberMinistry.persona_id == persona_id)
+        .filter(models.MemberMinistry.persona_id == persona_uuid)
         .order_by(
             models.MemberMinistry.is_active.desc(),
             models.MemberMinistry.start_date.desc(),
@@ -377,21 +396,22 @@ def get_persona_ministries(
     return result
 
 
-@router.get("/personas/{persona_id}/consolidation", response_model=dict)
+@router.get("/personas-legacy/{persona_id}/consolidation", response_model=dict)
 def get_persona_consolidation_profile(
-    persona_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Devuelve el perfil de consolidación de una persona: roles, casos y seguimiento."""
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    persona_uuid = _parse_uuid(persona_id)
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
     positions = (
         db.query(models.MemberPosition, models.Position)
         .join(models.Position, models.Position.id == models.MemberPosition.position_id)
-        .filter(models.MemberPosition.persona_id == persona_id)
+        .filter(models.MemberPosition.persona_id == persona_uuid)
         .order_by(
             models.MemberPosition.is_active.desc(),
             models.MemberPosition.start_date.desc(),
@@ -401,7 +421,7 @@ def get_persona_consolidation_profile(
 
     cases = (
         db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.persona_id == persona_id)
+        .filter(models.ConsolidationCase.persona_id == persona_uuid)
         .order_by(models.ConsolidationCase.created_at.desc())
         .all()
     )
@@ -536,14 +556,15 @@ def update_position(
     return row
 
 
-@router.post("/personas/{persona_id}/positions", response_model=dict)
+@router.post("/personas-legacy/{persona_id}/positions", response_model=dict)
 def assign_persona_position(
-    persona_id: int,
+    persona_id: str,
     payload: schemas.MemberPositionCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    persona_uuid = _parse_uuid(persona_id)
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
     position = (
@@ -557,7 +578,7 @@ def assign_persona_position(
     existing = (
         db.query(models.MemberPosition)
         .filter(
-            models.MemberPosition.persona_id == persona_id,
+            models.MemberPosition.persona_id == persona_uuid,
             models.MemberPosition.position_id == payload.position_id,
             models.MemberPosition.start_date == payload.start_date,
         )
@@ -572,7 +593,7 @@ def assign_persona_position(
         return {"id": existing.id, "updated": True, "position": position.name}
 
     row = models.MemberPosition(
-        persona_id=persona_id,
+        persona_id=persona_uuid,
         position_id=payload.position_id,
         start_date=payload.start_date,
         end_date=payload.end_date,
@@ -586,20 +607,21 @@ def assign_persona_position(
 
 
 @router.patch(
-    "/personas/{persona_id}/positions/{member_position_id}", response_model=dict
+    "/personas-legacy/{persona_id}/positions/{member_position_id}", response_model=dict
 )
 def update_persona_position(
-    persona_id: int,
+    persona_id: str,
     member_position_id: int,
     payload: schemas.MemberPositionUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
+    persona_uuid = _parse_uuid(persona_id)
     row = (
         db.query(models.MemberPosition)
         .filter(
             models.MemberPosition.id == member_position_id,
-            models.MemberPosition.persona_id == persona_id,
+            models.MemberPosition.persona_id == persona_uuid,
         )
         .first()
     )
@@ -612,18 +634,19 @@ def update_persona_position(
     return {"id": row.id, "updated": True}
 
 
-@router.post("/personas/{persona_id}/ministries", response_model=dict)
+@router.post("/personas-legacy/{persona_id}/ministries", response_model=dict)
 def assign_persona_ministry(
-    persona_id: int,
+    persona_id: str,
     payload: schemas.MemberMinistryCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Vincula a un miembro a un ministerio con un rol especifico."""
+    persona_uuid = _parse_uuid(persona_id)
     existing = (
         db.query(models.MemberMinistry)
         .filter(
-            models.MemberMinistry.persona_id == persona_id,
+            models.MemberMinistry.persona_id == persona_uuid,
             models.MemberMinistry.ministry_id == payload.ministry_id,
         )
         .first()
@@ -636,7 +659,7 @@ def assign_persona_ministry(
         db.refresh(existing)
         return {"id": existing.id, "updated": True}
     mm = models.MemberMinistry(
-        persona_id=persona_id,
+        persona_id=persona_uuid,
         ministry_id=payload.ministry_id,
         role=payload.role,
         notes=payload.notes,
@@ -648,20 +671,21 @@ def assign_persona_ministry(
     return {"id": mm.id, "created": True}
 
 
-@router.patch("/personas/{persona_id}/ministries/{mm_id}", response_model=dict)
+@router.patch("/personas-legacy/{persona_id}/ministries/{mm_id}", response_model=dict)
 def update_persona_ministry(
-    persona_id: int,
+    persona_id: str,
     mm_id: int,
     payload: schemas.MemberMinistryUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Actualiza el rol o estado de una vinculacion ministerial."""
+    persona_uuid = _parse_uuid(persona_id)
     mm = (
         db.query(models.MemberMinistry)
         .filter(
             models.MemberMinistry.id == mm_id,
-            models.MemberMinistry.persona_id == persona_id,
+            models.MemberMinistry.persona_id == persona_uuid,
         )
         .first()
     )

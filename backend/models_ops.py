@@ -10,7 +10,7 @@ class ChurchLocation(Base):
     pastor_name = Column(String(100))
     is_active = Column(Boolean, default=True)
     location_type = Column(String(50), default="Central")
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class SocialChannel(Base):

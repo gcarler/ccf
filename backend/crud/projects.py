@@ -1,38 +1,55 @@
-"""Projects and project tasks CRUD."""
+"""Projects CRUD — corregido para cumplir los 3 axiomas del Kernel CCF."""
 
+from datetime import datetime, timezone
 from typing import Optional
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend.crud.crm import get_user_sede_id
+
+
+# ── Helper ──────────────────────────────────────────────
+
+def get_user_persona_id(db: Session, user_id: int) -> Optional[UUID]:
+    persona = db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
+    return persona.id if persona else None
+
 
 # ── Projects ────────────────────────────────────────────
 
-
-def create_project(db: Session, project: schemas.ProjectCreate):
-    db_project = models.Project(**project.model_dump())
-    db.add(db_project)
+def create_project(db: Session, project: schemas.ProjectCreate, owner_persona_id=None, sede_id=None):
+    data = project.model_dump()
+    data.pop("owner_id", None)
+    row = models.Project(**data)
+    row.owner_id = owner_persona_id
+    row.sede_id = sede_id
+    db.add(row)
     db.commit()
-    db.refresh(db_project)
-    return db_project
+    db.refresh(row)
+    return row
 
 
-def get_projects(db: Session, skip: int = 0, limit: int = 100):
+def get_projects(db: Session, skip: int = 0, limit: int = 100, sede_id=None, status_filter=None):
+    q = db.query(models.Project).filter(models.Project.deleted_at.is_(None))
+    if sede_id is not None:
+        q = q.filter(models.Project.sede_id == sede_id)
+    if status_filter:
+        q = q.filter(models.Project.status == status_filter)
+    return q.order_by(models.Project.updated_at.desc()).offset(skip).limit(limit).all()
+
+
+def get_project(db: Session, project_id):
     return (
         db.query(models.Project)
-        .order_by(models.Project.updated_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
+        .filter(models.Project.id == project_id, models.Project.deleted_at.is_(None))
+        .first()
     )
 
 
-def get_project(db: Session, project_id: int):
-    return db.query(models.Project).filter(models.Project.id == project_id).first()
-
-
-def update_project(db: Session, project_id: int, payload: schemas.ProjectUpdate):
-    row = db.query(models.Project).filter(models.Project.id == project_id).first()
+def update_project(db: Session, project_id, payload: schemas.ProjectUpdate):
+    row = get_project(db, project_id)
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -42,17 +59,16 @@ def update_project(db: Session, project_id: int, payload: schemas.ProjectUpdate)
     return row
 
 
-def delete_project(db: Session, project_id: int) -> bool:
-    row = db.query(models.Project).filter(models.Project.id == project_id).first()
+def delete_project(db: Session, project_id) -> bool:
+    row = get_project(db, project_id)
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 
 
 # ── Project Tasks ───────────────────────────────────────
-
 
 def create_project_task(db: Session, task: schemas.ProjectTaskCreate):
     db_task = models.ProjectTask(**task.model_dump())
@@ -62,21 +78,26 @@ def create_project_task(db: Session, task: schemas.ProjectTaskCreate):
     return db_task
 
 
-def get_project_tasks(db: Session, project_id: int, status: Optional[str] = None):
+def get_project_tasks(db: Session, project_id, status: Optional[str] = None):
     query = db.query(models.ProjectTask).filter(
-        models.ProjectTask.project_id == project_id
+        models.ProjectTask.project_id == project_id,
+        models.ProjectTask.deleted_at.is_(None),
     )
     if status:
         query = query.filter(models.ProjectTask.status == status)
     return query.order_by(models.ProjectTask.order_index.asc()).all()
 
 
-def get_project_task(db: Session, task_id: int):
-    return db.query(models.ProjectTask).filter(models.ProjectTask.id == task_id).first()
+def get_project_task(db: Session, task_id):
+    return (
+        db.query(models.ProjectTask)
+        .filter(models.ProjectTask.id == task_id, models.ProjectTask.deleted_at.is_(None))
+        .first()
+    )
 
 
-def update_project_task(db: Session, task_id: int, payload: schemas.ProjectTaskUpdate):
-    row = db.query(models.ProjectTask).filter(models.ProjectTask.id == task_id).first()
+def update_project_task(db: Session, task_id, payload: schemas.ProjectTaskUpdate):
+    row = get_project_task(db, task_id)
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -86,19 +107,18 @@ def update_project_task(db: Session, task_id: int, payload: schemas.ProjectTaskU
     return row
 
 
-def delete_project_task(db: Session, task_id: int) -> bool:
-    row = db.query(models.ProjectTask).filter(models.ProjectTask.id == task_id).first()
+def delete_project_task(db: Session, task_id) -> bool:
+    row = get_project_task(db, task_id)
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 
 
 # ── Project Phases ───────────────────────────────────────
 
-
-def get_project_phases(db: Session, project_id: int):
+def get_project_phases(db: Session, project_id):
     return (
         db.query(models.ProjectPhase)
         .filter(models.ProjectPhase.project_id == project_id)
@@ -107,13 +127,8 @@ def get_project_phases(db: Session, project_id: int):
     )
 
 
-def set_project_phases(
-    db: Session, project_id: int, phases: list[dict]
-) -> list[models.ProjectPhase]:
-    """Replace all phases for a project. `phases` is a list of {name, slug, color, order_index}."""
-    db.query(models.ProjectPhase).filter(
-        models.ProjectPhase.project_id == project_id
-    ).delete()
+def set_project_phases(db: Session, project_id, phases: list[dict]) -> list[models.ProjectPhase]:
+    db.query(models.ProjectPhase).filter(models.ProjectPhase.project_id == project_id).delete()
     created = []
     for i, p in enumerate(phases):
         phase = models.ProjectPhase(
@@ -131,46 +146,32 @@ def set_project_phases(
     return created
 
 
-def create_default_phases(db: Session, project_id: int):
-    """Create default phases for a new project."""
+def create_default_phases(db: Session, project_id):
     defaults = [
-        {"name": "Por Hacer", "slug": "todo", "color": "#94a3b8"},
-        {"name": "En Curso", "slug": "in_progress", "color": "#3b82f6"},
-        {"name": "Revisión", "slug": "review", "color": "#f59e0b"},
-        {"name": "Completado", "slug": "completed", "color": "#10b981"},
+        {"name": "Por Hacer",  "slug": "todo",        "color": "#94a3b8"},
+        {"name": "En Curso",   "slug": "in_progress",  "color": "#3b82f6"},
+        {"name": "Revisión",   "slug": "review",       "color": "#f59e0b"},
+        {"name": "Completado", "slug": "completed",    "color": "#10b981"},
     ]
     return set_project_phases(db, project_id, defaults)
 
 
 # ── Project Comments ───────────────────────────────────
 
-
-def get_project_comments(
-    db: Session, project_id: int | None = None, task_id: int | None = None
-):
-    query = db.query(models.ProjectComment)
+def get_project_comments(db: Session, project_id=None, task_id=None):
+    q = db.query(models.ProjectComment)
     if project_id is not None:
-        query = query.filter(models.ProjectComment.project_id == project_id)
+        q = q.filter(models.ProjectComment.project_id == project_id)
     if task_id is not None:
-        query = query.filter(models.ProjectComment.task_id == task_id)
-    return query.order_by(models.ProjectComment.created_at.desc()).all()
+        q = q.filter(models.ProjectComment.task_id == task_id)
+    return q.order_by(models.ProjectComment.created_at.desc()).all()
 
 
 def get_comment(db: Session, comment_id: int):
-    return (
-        db.query(models.ProjectComment)
-        .filter(models.ProjectComment.id == comment_id)
-        .first()
-    )
+    return db.query(models.ProjectComment).filter(models.ProjectComment.id == comment_id).first()
 
 
-def create_comment(
-    db: Session,
-    project_id: int,
-    author_id: int,
-    content: str,
-    task_id: int | None = None,
-):
+def create_comment(db: Session, project_id, author_id, content: str, task_id=None):
     row = models.ProjectComment(
         project_id=project_id,
         author_id=author_id,
@@ -183,14 +184,8 @@ def create_comment(
     return row
 
 
-def update_comment(
-    db: Session, comment_id: int, content: str
-) -> Optional[models.ProjectComment]:
-    row = (
-        db.query(models.ProjectComment)
-        .filter(models.ProjectComment.id == comment_id)
-        .first()
-    )
+def update_comment(db: Session, comment_id: int, content: str) -> Optional[models.ProjectComment]:
+    row = get_comment(db, comment_id)
     if not row:
         return None
     row.content = content
@@ -200,11 +195,7 @@ def update_comment(
 
 
 def delete_comment(db: Session, comment_id: int) -> bool:
-    row = (
-        db.query(models.ProjectComment)
-        .filter(models.ProjectComment.id == comment_id)
-        .first()
-    )
+    row = get_comment(db, comment_id)
     if not row:
         return False
     db.delete(row)
@@ -214,38 +205,25 @@ def delete_comment(db: Session, comment_id: int) -> bool:
 
 # ── Project Milestones ─────────────────────────────────
 
-
-def get_project_milestones(db: Session, project_id: int):
+def get_project_milestones(db: Session, project_id):
     return (
         db.query(models.ProjectMilestone)
         .filter(models.ProjectMilestone.project_id == project_id)
-        .order_by(models.ProjectMilestone.due_date.asc())
+        .order_by(models.ProjectMilestone.target_date.asc())
         .all()
     )
 
 
-def get_milestone(db: Session, milestone_id: int):
-    return (
-        db.query(models.ProjectMilestone)
-        .filter(models.ProjectMilestone.id == milestone_id)
-        .first()
-    )
+def get_milestone(db: Session, milestone_id):
+    return db.query(models.ProjectMilestone).filter(models.ProjectMilestone.id == milestone_id).first()
 
 
-def create_milestone(
-    db: Session,
-    project_id: int,
-    title: str,
-    description: str | None = None,
-    due_date=None,
-    status: str = "pending",
-):
+def create_milestone(db: Session, project_id, title: str, description: str | None = None, target_date=None):
     row = models.ProjectMilestone(
         project_id=project_id,
         title=title,
         description=description,
-        due_date=due_date,
-        status=status,
+        target_date=target_date,
     )
     db.add(row)
     db.commit()
@@ -253,14 +231,8 @@ def create_milestone(
     return row
 
 
-def update_milestone(
-    db: Session, milestone_id: int, payload: schemas.ProjectMilestoneUpdate
-) -> Optional[models.ProjectMilestone]:
-    row = (
-        db.query(models.ProjectMilestone)
-        .filter(models.ProjectMilestone.id == milestone_id)
-        .first()
-    )
+def update_milestone(db: Session, milestone_id, payload: schemas.ProjectMilestoneUpdate) -> Optional[models.ProjectMilestone]:
+    row = get_milestone(db, milestone_id)
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -270,12 +242,8 @@ def update_milestone(
     return row
 
 
-def delete_milestone(db: Session, milestone_id: int) -> bool:
-    row = (
-        db.query(models.ProjectMilestone)
-        .filter(models.ProjectMilestone.id == milestone_id)
-        .first()
-    )
+def delete_milestone(db: Session, milestone_id) -> bool:
+    row = get_milestone(db, milestone_id)
     if not row:
         return False
     db.delete(row)
@@ -285,8 +253,7 @@ def delete_milestone(db: Session, milestone_id: int) -> bool:
 
 # ── Project Attachments ────────────────────────────────
 
-
-def get_task_attachments(db: Session, task_id: int):
+def get_task_attachments(db: Session, task_id):
     return (
         db.query(models.ProjectAttachment)
         .filter(models.ProjectAttachment.task_id == task_id)
@@ -296,28 +263,17 @@ def get_task_attachments(db: Session, task_id: int):
 
 
 def get_attachment(db: Session, attachment_id: int):
-    return (
-        db.query(models.ProjectAttachment)
-        .filter(models.ProjectAttachment.id == attachment_id)
-        .first()
-    )
+    return db.query(models.ProjectAttachment).filter(models.ProjectAttachment.id == attachment_id).first()
 
 
-def create_attachment(
-    db: Session,
-    task_id: int,
-    file_url: str,
-    file_name: str,
-    file_size: int = 0,
-    mime_type: str | None = None,
-    uploader_id: int | None = None,
-):
+def create_attachment(db: Session, task_id, file_url: str, filename: str,
+                      file_size: int = 0, file_type: str | None = None, uploader_id=None):
     row = models.ProjectAttachment(
         task_id=task_id,
         file_url=file_url,
-        file_name=file_name,
+        filename=filename,
         file_size=file_size,
-        mime_type=mime_type,
+        file_type=file_type,
         uploader_id=uploader_id,
     )
     db.add(row)
@@ -327,11 +283,7 @@ def create_attachment(
 
 
 def delete_attachment(db: Session, attachment_id: int) -> bool:
-    row = (
-        db.query(models.ProjectAttachment)
-        .filter(models.ProjectAttachment.id == attachment_id)
-        .first()
-    )
+    row = get_attachment(db, attachment_id)
     if not row:
         return False
     db.delete(row)
@@ -341,30 +293,18 @@ def delete_attachment(db: Session, attachment_id: int) -> bool:
 
 # ── Project Whiteboard ─────────────────────────────────
 
-
-def get_project_whiteboard(db: Session, project_id: int):
-    return (
-        db.query(models.ProjectWhiteboard)
-        .filter(models.ProjectWhiteboard.project_id == project_id)
-        .first()
-    )
+def get_project_whiteboard(db: Session, project_id):
+    return db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == project_id).first()
 
 
-def update_project_whiteboard(
-    db: Session, project_id: int, payload: schemas.ProjectWhiteboardUpdate
-) -> models.ProjectWhiteboard:
-    row = (
-        db.query(models.ProjectWhiteboard)
-        .filter(models.ProjectWhiteboard.project_id == project_id)
-        .first()
-    )
+def update_project_whiteboard(db: Session, project_id, payload: schemas.ProjectWhiteboardUpdate) -> models.ProjectWhiteboard:
+    row = get_project_whiteboard(db, project_id)
     if not row:
-        row = models.ProjectWhiteboard(
-            project_id=project_id, canvas_data=payload.canvas_data or {}
-        )
+        row = models.ProjectWhiteboard(project_id=project_id, elements_json=payload.elements_json or "[]")
         db.add(row)
     else:
-        row.canvas_data = payload.canvas_data or row.canvas_data
+        if payload.elements_json is not None:
+            row.elements_json = payload.elements_json
     db.commit()
     db.refresh(row)
     return row
@@ -372,88 +312,49 @@ def update_project_whiteboard(
 
 # ── Project Wiki / Documents ───────────────────────────
 
-
-def get_project_wiki(db: Session, project_id: int):
+def get_project_wiki(db: Session, project_id):
     return (
         db.query(models.ProjectDocument)
-        .filter(
-            models.ProjectDocument.project_id == project_id,
-            models.ProjectDocument.doc_type == "wiki",
-        )
+        .filter(models.ProjectDocument.project_id == project_id)
+        .order_by(models.ProjectDocument.created_at.asc())
         .first()
     )
 
 
-def update_project_wiki(
-    db: Session, project_id: int, content: str, updated_by: int | None = None
-) -> models.ProjectDocument:
-    row = (
-        db.query(models.ProjectDocument)
-        .filter(
-            models.ProjectDocument.project_id == project_id,
-            models.ProjectDocument.doc_type == "wiki",
-        )
-        .first()
-    )
+def update_project_wiki(db: Session, project_id, content: str, author_id=None) -> models.ProjectDocument:
+    row = get_project_wiki(db, project_id)
     if not row:
-        row = models.ProjectDocument(
-            project_id=project_id,
-            doc_type="wiki",
-            content=content,
-            created_by=updated_by,
-        )
+        row = models.ProjectDocument(project_id=project_id, title="Wiki", content=content, author_id=author_id)
         db.add(row)
     else:
         row.content = content
-        row.updated_by = updated_by
+        if author_id:
+            row.author_id = author_id
     db.commit()
     db.refresh(row)
     return row
 
 
-# ── Project Supplies (TaskSupply) ───────────────────────
+# ── Task Supplies ───────────────────────────────────────
 
-
-def get_task_supplies(db: Session, task_id: int):
-    return (
-        db.query(models.TaskSupply)
-        .filter(models.TaskSupply.task_id == task_id)
-        .order_by(models.TaskSupply.created_at.asc())
-        .all()
-    )
+def get_task_supplies(db: Session, task_id):
+    return db.query(models.TaskSupply).filter(models.TaskSupply.task_id == task_id).all()
 
 
 def get_supply(db: Session, supply_id: int):
     return db.query(models.TaskSupply).filter(models.TaskSupply.id == supply_id).first()
 
 
-def create_supply(
-    db: Session,
-    task_id: int,
-    name: str,
-    quantity: int = 1,
-    estimated_cost: float = 0.0,
-    status: str = "pending",
-    requested_by: int | None = None,
-):
-    row = models.TaskSupply(
-        task_id=task_id,
-        name=name,
-        quantity=quantity,
-        estimated_cost=estimated_cost,
-        status=status,
-        requested_by=requested_by,
-    )
+def create_supply(db: Session, task_id, item_name: str, quantity: int = 1, status: str = "pending"):
+    row = models.TaskSupply(task_id=task_id, item_name=item_name, quantity=quantity, status=status)
     db.add(row)
     db.commit()
     db.refresh(row)
     return row
 
 
-def update_supply(
-    db: Session, supply_id: int, payload: schemas.TaskSupplyUpdate
-) -> Optional[models.TaskSupply]:
-    row = db.query(models.TaskSupply).filter(models.TaskSupply.id == supply_id).first()
+def update_supply(db: Session, supply_id: int, payload: schemas.TaskSupplyUpdate) -> Optional[models.TaskSupply]:
+    row = get_supply(db, supply_id)
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -464,7 +365,7 @@ def update_supply(
 
 
 def delete_supply(db: Session, supply_id: int) -> bool:
-    row = db.query(models.TaskSupply).filter(models.TaskSupply.id == supply_id).first()
+    row = get_supply(db, supply_id)
     if not row:
         return False
     db.delete(row)
@@ -474,8 +375,7 @@ def delete_supply(db: Session, supply_id: int) -> bool:
 
 # ── Project Activity Logs ──────────────────────────────
 
-
-def get_project_activities(db: Session, project_id: int, limit: int = 100):
+def get_project_activities(db: Session, project_id, limit: int = 100):
     return (
         db.query(models.ProjectActivityLog)
         .filter(models.ProjectActivityLog.project_id == project_id)
@@ -485,50 +385,41 @@ def get_project_activities(db: Session, project_id: int, limit: int = 100):
     )
 
 
-def create_activity_log(
-    db: Session,
-    project_id: int,
-    action: str,
-    user_id: int | None = None,
-    detail: str | None = None,
-):
+def get_all_activities(db: Session, limit: int = 50, sede_id=None):
+    q = db.query(models.ProjectActivityLog)
+    if sede_id is not None:
+        q = q.join(models.Project, models.ProjectActivityLog.project_id == models.Project.id).filter(
+            models.Project.sede_id == sede_id
+        )
+    return q.order_by(models.ProjectActivityLog.created_at.desc()).limit(limit).all()
+
+
+def create_activity_log(db: Session, project_id, persona_id, action_type: str, description: str):
     row = models.ProjectActivityLog(
         project_id=project_id,
-        action=action,
-        user_id=user_id,
-        detail=detail,
+        persona_id=persona_id,
+        action_type=action_type,
+        description=description,
     )
     db.add(row)
     db.commit()
-    db.refresh(row)
     return row
 
 
-# ── Project Inbox State ────────────────────────────────
+# ── Inbox State ───────────────────────────────────────
 
-
-def get_inbox_state(db: Session, user_id: int, project_id: int | None = None):
-    query = db.query(models.ProjectInboxState).filter(
-        models.ProjectInboxState.user_id == user_id
-    )
-    if project_id is not None:
-        query = query.filter(models.ProjectInboxState.project_id == project_id)
-    return query.all()
-
-
-def update_inbox_state(db: Session, user_id: int, item_id: int, is_read: bool = True):
-    row = (
+def get_inbox_state(db: Session, user_id: int, item_id: str) -> Optional[models.ProjectInboxState]:
+    return (
         db.query(models.ProjectInboxState)
-        .filter(
-            models.ProjectInboxState.user_id == user_id,
-            models.ProjectInboxState.item_id == item_id,
-        )
+        .filter(models.ProjectInboxState.user_id == user_id, models.ProjectInboxState.item_id == item_id)
         .first()
     )
+
+
+def update_inbox_state(db: Session, user_id: int, item_id: str, is_read: bool) -> models.ProjectInboxState:
+    row = get_inbox_state(db, user_id, item_id)
     if not row:
-        row = models.ProjectInboxState(
-            user_id=user_id, item_id=item_id, is_read=is_read
-        )
+        row = models.ProjectInboxState(user_id=user_id, item_id=item_id, is_read=is_read)
         db.add(row)
     else:
         row.is_read = is_read
@@ -537,40 +428,24 @@ def update_inbox_state(db: Session, user_id: int, item_id: int, is_read: bool = 
     return row
 
 
-# ── Portfolio / Summary Queries ────────────────────────
+# ── Portfolio & Workload ───────────────────────────────
+
+def get_portfolio_summary(db: Session, sede_id=None):
+    q = db.query(models.Project).filter(models.Project.deleted_at.is_(None))
+    if sede_id is not None:
+        q = q.filter(models.Project.sede_id == sede_id)
+    projects = q.all()
+    summary = {}
+    for p in projects:
+        summary.setdefault(p.status, []).append(p)
+    return summary
 
 
-def get_portfolio_summary(db: Session):
-    """Return count of projects by status with total tasks."""
-    from sqlalchemy import func as sa_func
-
-    rows = (
-        db.query(
-            models.Project.status,
-            sa_func.count(models.Project.id),
-            sa_func.count(models.ProjectTask.id),
-        )
-        .outerjoin(models.ProjectTask)
-        .group_by(models.Project.status)
-        .all()
-    )
-    return [{"status": r[0], "projects": r[1], "tasks": r[2]} for r in rows]
-
-
-def get_workload_summary(db: Session):
-    """Return task counts per assignee."""
-    from sqlalchemy import func as sa_func
-
-    rows = (
-        db.query(
-            models.ProjectTask.assignee_id,
-            sa_func.count(models.ProjectTask.id),
-            sa_func.sum(
-                sa_func.case((models.ProjectTask.status == "completed", 1), else_=0)
-            ),
-        )
-        .filter(models.ProjectTask.assignee_id.isnot(None))
+def get_workload_summary(db: Session, sede_id=None):
+    from sqlalchemy import func
+    q = (
+        db.query(models.ProjectTask.assignee_id, func.count(models.ProjectTask.id).label("task_count"))
+        .filter(models.ProjectTask.deleted_at.is_(None), models.ProjectTask.assignee_id.isnot(None))
         .group_by(models.ProjectTask.assignee_id)
-        .all()
     )
-    return [{"assignee_id": r[0], "total": r[1], "completed": r[2] or 0} for r in rows]
+    return q.all()

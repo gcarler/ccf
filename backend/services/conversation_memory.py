@@ -39,8 +39,8 @@ class AgentConversation(Base):
     title = Column(String(300), nullable=True)
     agent_name = Column(String(100), nullable=False, server_default="Optimus")
     is_active = Column(Boolean, default=True, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     messages = relationship(
         "AgentMessage", back_populates="conversation",
@@ -63,7 +63,7 @@ class AgentMessage(Base):
     role = Column(String(20), nullable=False)  # user, assistant, system
     content = Column(Text, nullable=False)
     tools_used = Column("tools_used_json", Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     conversation = relationship(
         "AgentConversation", back_populates="messages",

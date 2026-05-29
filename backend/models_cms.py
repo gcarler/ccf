@@ -7,7 +7,7 @@ class NewsletterSubscription(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     status = Column(String(20), default="active")  # active, unsubscribed
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class PageContent(Base):
@@ -16,8 +16,8 @@ class PageContent(Base):
     page_key = Column(String(120), unique=True, nullable=False, index=True)
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class PageContentVersion(Base):
@@ -26,7 +26,7 @@ class PageContentVersion(Base):
     page_key = Column(String(120), nullable=False, index=True)
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class ContentPublication(Base):
@@ -36,13 +36,13 @@ class ContentPublication(Base):
     status = Column(
         String(30), default="draft", index=True
     )  # draft, in_review, approved, published, archived
-    publish_at = Column(DateTime, nullable=True)
-    expire_at = Column(DateTime, nullable=True)
-    last_published_at = Column(DateTime, nullable=True)
+    publish_at = Column(DateTime(timezone=True), nullable=True)
+    expire_at = Column(DateTime(timezone=True), nullable=True)
+    last_published_at = Column(DateTime(timezone=True), nullable=True)
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class ContentMetric(Base):
@@ -51,7 +51,7 @@ class ContentMetric(Base):
     metric_key = Column(String(120), nullable=False, index=True)
     ref_id = Column(Integer, nullable=False, index=True)
     value = Column(Integer, default=0)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class MediaAsset(Base):
@@ -61,7 +61,7 @@ class MediaAsset(Base):
     url = Column(String(500), nullable=False)
     mime_type = Column(String(120), nullable=True)
     size_bytes = Column(Integer, default=0)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class CmsMediaItem(Base):
@@ -77,8 +77,8 @@ class CmsMediaItem(Base):
     tags = Column(JSON, default=[])
     status = Column(String(20), default="active", index=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class CmsSite(Base):
@@ -88,8 +88,8 @@ class CmsSite(Base):
     name = Column(String(120), nullable=False)
     base_path = Column(String(120), unique=True, nullable=False, index=True)
     is_active = Column(Boolean, default=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class CmsTheme(Base):
@@ -107,8 +107,8 @@ class CmsTheme(Base):
     status = Column(String(20), default="active", index=True)
     version = Column(Integer, default=1)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class CmsMenu(Base):
@@ -123,8 +123,8 @@ class CmsMenu(Base):
     menu_key = Column(String(80), nullable=False, index=True)
     name = Column(String(120), nullable=False)
     is_active = Column(Boolean, default=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     __table_args__ = (
         UniqueConstraint("site_id", "menu_key", name="uq_cms_menu_site_key"),
@@ -153,8 +153,8 @@ class CmsMenuItem(Base):
     visibility = Column(String(20), default="public")
     sort_order = Column(Integer, default=0)
     meta_json = Column(JSON, default={})
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class CmsPage(Base):
@@ -182,8 +182,8 @@ class CmsPage(Base):
     locale = Column(String(5), default="es", server_default="es", index=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     __table_args__ = (
         UniqueConstraint("site_id", "slug", name="uq_cms_page_site_slug"),
@@ -205,7 +205,7 @@ class CmsPageVersion(Base):
     snapshot_json = Column(JSON, default={})
     notes = Column(Text, nullable=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
         UniqueConstraint(
@@ -232,8 +232,8 @@ class CmsSection(Base):
     is_global = Column(Boolean, default=False, server_default="0")
     global_key = Column(String(120), nullable=True, unique=True, index=True)
     locale = Column(String(5), default="es", server_default="es", index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class CmsPublishLog(Base):
@@ -258,7 +258,7 @@ class CmsPublishLog(Base):
     to_status = Column(String(30), nullable=True)
     actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     metadata_json = Column(JSON, default={})
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
 
 class CmsPageView(Base):
@@ -268,7 +268,7 @@ class CmsPageView(Base):
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
     referrer = Column(String(500), nullable=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
 
 class SavedView(Base):
@@ -281,8 +281,8 @@ class SavedView(Base):
     filters_json = Column(JSON, default=[])
     grouping_json = Column(JSON, default=[])
     conditional_format_json = Column(JSON, default=[])
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class Announcement(Base):
@@ -295,9 +295,9 @@ class Announcement(Base):
     is_active = Column(Boolean, default=True)
     is_featured = Column(Boolean, default=False)
     status = Column(String(20), default="published", index=True)
-    published_at = Column(DateTime, default=_utcnow)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    published_at = Column(DateTime(timezone=True), default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class Testimonial(Base):
@@ -314,6 +314,6 @@ class Testimonial(Base):
     show_on_home = Column(Boolean, default=False)
     status = Column(String(20), default="pending", index=True)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     author = relationship("User", foreign_keys=[author_id], lazy="joined")

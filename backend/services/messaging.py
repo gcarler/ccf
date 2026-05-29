@@ -53,7 +53,7 @@ class MessagingGateway:
         external_id: str | None = None,
     ):
         """Simula integracion con API de Meta/Twilio para WhatsApp."""
-        persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+        persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(str(persona_id))).first()
         if not persona or not persona.phone:
             raise ValueError("Persona no encontrada o sin numero de telefono")
 
@@ -78,7 +78,7 @@ class MessagingGateway:
         external_id: str | None = None,
     ):
         """Simula integracion con proveedor de SMS."""
-        persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+        persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(str(persona_id))).first()
         if not persona or not persona.phone:
             raise ValueError("Persona sin numero celular")
 
@@ -104,7 +104,7 @@ class MessagingGateway:
     ):
         """Envia email real via SMTP (si configurado)."""
         persona = db.query(models.Persona).filter(
-            models.Persona.id == uuid.UUID(persona_id),
+            models.Persona.id == uuid.UUID(str(persona_id)),
         ).first()
         if not persona or not persona.email:
             raise ValueError("Persona sin correo electronico")

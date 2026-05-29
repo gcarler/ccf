@@ -149,7 +149,7 @@ def test_access_with_correct_permission(client: TestClient, db_session):
     # GET /members list requires crm:read (via require_pastor_or_admin) in members.py
     # Actually, /members requires pastor_or_admin. Let's test via a simpler endpoint.
     # GET /members/me requires crm:read
-    resp = client.get("/api/crm/members/me", headers=headers)
+    resp = client.get("/api/crm/personas-legacy/me", headers=headers)
     assert resp.status_code == 200
 
 
@@ -161,12 +161,12 @@ def test_access_without_permission_returns_403(client: TestClient, db_session):
 
     headers = _auth_header(client)
     # GET /members/me requires crm:read — user only has academy:study
-    resp = client.get("/api/crm/members/me", headers=headers)
+    resp = client.get("/api/crm/personas-legacy/me", headers=headers)
     assert resp.status_code == 403
 
 
 def test_unauthenticated_returns_401(client: TestClient, db_session):
-    resp = client.get("/api/crm/members/me")
+    resp = client.get("/api/crm/personas-legacy/me")
     assert resp.status_code == 401
 
 

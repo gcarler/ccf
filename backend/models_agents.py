@@ -22,8 +22,8 @@ class Agent(Base):
     phone = Column(String(50), unique=True, nullable=True, index=True)
     avatar_url = Column(String(500), nullable=True)
     spiritual_stage = Column(String(30), nullable=False, default="visitor", index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     is_active = Column(Boolean, default=True, index=True)
     created_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
     updated_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
@@ -50,8 +50,8 @@ class AgentAuth(Base):
     provider = Column(String(30), default="local")
     provider_id = Column(String(255), nullable=True)
     is_email_verified = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=_utcnow)
-    last_login_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
     agent = relationship("Agent", back_populates="auth_credentials", foreign_keys=[agent_id])
 
 
@@ -63,7 +63,7 @@ class AgentContact(Base):
     value = Column(String(500), nullable=False)
     is_primary = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
     created_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
     agent = relationship("Agent", back_populates="contacts", foreign_keys=[agent_id])
 
@@ -76,8 +76,8 @@ class AgentRole(Base):
     role_value = Column(String(50), nullable=False, index=True)
     context_id = Column(Integer, nullable=True)
     context_type = Column(String(30), nullable=True)
-    started_at = Column(DateTime, default=_utcnow)
-    ended_at = Column(DateTime, nullable=True)
+    started_at = Column(DateTime(timezone=True), default=_utcnow)
+    ended_at = Column(DateTime(timezone=True), nullable=True)
     is_primary = Column(Boolean, default=False)
     created_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
     agent = relationship("Agent", back_populates="roles", foreign_keys=[agent_id])
@@ -92,8 +92,8 @@ class AgentActivity(Base):
     source_id = Column(Integer, nullable=True)
     status = Column(String(30), nullable=True)
     notes = Column(Text, nullable=True)
-    occurred_at = Column(DateTime, nullable=False, default=_utcnow, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    occurred_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
     agent = relationship("Agent", back_populates="activities", foreign_keys=[agent_id])
 
 
@@ -104,7 +104,7 @@ class AgentFamily(Base):
     agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     related_agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     relationship = Column(String(30), nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class AgentJourney(Base):
@@ -117,7 +117,7 @@ class AgentJourney(Base):
     triggered_by = Column(String(30), nullable=True)
     triggered_by_id = Column(Integer, nullable=True)
     journey_data = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
     agent = relationship("Agent", back_populates="journey_entries", foreign_keys=[agent_id])
 
 
@@ -128,8 +128,8 @@ class AgentPermission(Base):
     agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     permission = Column(String(50), nullable=False, index=True)
     granted_via = Column(String(50), nullable=True)
-    granted_at = Column(DateTime, default=_utcnow)
-    expires_at = Column(DateTime, nullable=True)
+    granted_at = Column(DateTime(timezone=True), default=_utcnow)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
     agent = relationship("Agent", back_populates="permissions", foreign_keys=[agent_id])
 
 
@@ -144,9 +144,9 @@ class AgentTask(Base):
     assigned_to = Column(String(100), nullable=True)
     agent_type = Column(String(50), nullable=True)
     task_data = Column("metadata", JSON, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class AgentInsight(Base):
@@ -160,6 +160,6 @@ class AgentInsight(Base):
     insight_payload = Column("payload", JSON, nullable=True)
     insight_data = Column("metadata", JSON, nullable=True)
     acknowledged = Column(Boolean, nullable=False, server_default="false")
-    acknowledged_at = Column(DateTime, nullable=True)
+    acknowledged_at = Column(DateTime(timezone=True), nullable=True)
     acknowledged_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)

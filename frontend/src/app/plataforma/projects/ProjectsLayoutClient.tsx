@@ -11,11 +11,10 @@ import { usePathname } from 'next/navigation';
 export default function ProjectsLayoutClient({ children, initialProjects }: { children: React.ReactNode, initialProjects: any[] }) {
     const { token } = useAuth();
     const pathname = usePathname();
-    // Path format: /projects/[id] or /projects/[id]/tasks
+    // Path format: /plataforma/projects/[id] or /plataforma/projects/[id]/tasks
     const pathParts = pathname?.split('/') || [];
-    // Si la ruta es /projects/algocomo43 o /projects/43/algo, el ID suele estar en la posición 2
-    // Pero descartamos rutas conocidas globales como /projects/tasks, /projects/inbox, etc.
-    const rawId = pathParts[2];
+    // Split of /plataforma/projects/[id]: ['', 'plataforma', 'projects', '[id]', ...]
+    const rawId = pathParts[3];
     const isGlobalRoute = ['tasks', 'inbox', 'general', 'comments', 'team', 'responses', 'more', 'automations', 'welcome', undefined].includes(rawId);
     const projectId = isGlobalRoute ? undefined : rawId;
 
@@ -79,7 +78,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                     id: `task-${t.id}`,
                     label: t.title,
                     icon: t.status === 'completed' ? CheckCircle2 : Circle,
-                    href: `/projects/${projectId}?task=${t.id}`,
+                    href: `/plataforma/projects/${projectId}?task=${t.id}`,
                     onClick: () => {
                         // Aquí en el futuro podemos abrir el RightPanel con el detalle de la tarea
                     }
@@ -105,7 +104,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                     id: `project-${p.id}`,
                     label: p.title,
                     icon: Home,
-                    href: `/projects/${p.id}`
+                    href: `/plataforma/projects/${p.id}`
                 }))
             }
         ];

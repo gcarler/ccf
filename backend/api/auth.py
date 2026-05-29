@@ -4,7 +4,10 @@ Maneja el inicio de sesion, registro y gestion de tokens con UUID.
 """
 
 import logging
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
+
+def _utcnow():
+    return datetime.now(timezone.utc)
 from typing import List
 
 from fastapi import (APIRouter, Depends, HTTPException, Request, Response,
@@ -66,23 +69,33 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    """Inicio de sesion ministerial. Soporta Email o Username."""
-    from backend.core.security import \
-        verify_password  # Import local para evitar circularidad
+    """Inicio de sesion ministerial. Soporta Email o Username. Puente V1 -> V2."""
+    from backend.core.security import verify_password
+    from sqlalchemy.orm import joinedload
+    from backend.models_auth import Usuario, LogSeguridad
 
     user = None
+    is_v2 = False
     if "@" in form_data.username:
         user = crud.get_user_by_email(db, email=form_data.username)
+        if not user:
+            user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.email == form_data.username).first()
+            is_v2 = True
     else:
         user = crud.get_user_by_username(db, username=form_data.username)
+        if not user:
+            user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.username == form_data.username).first()
+            is_v2 = True
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales ministeriales incorrectas",
-        )
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
 
-    if not verify_password(form_data.password, user.password_hash):
+    if not user or not verify_password(form_data.password, user.password_hash):
+        if is_v2 and user:
+            # Log failed attempt for V2 user
+            db.add(LogSeguridad(user_id=user.id, evento="LOGIN_FAILED", ip_address=ip_address, user_agent=user_agent))
+            db.commit()
+        
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales ministeriales incorrectas",
@@ -94,19 +107,27 @@ def login(
             detail="Cuenta desactivada. Contacta al administrador.",
         )
 
-    ip_address = request.client.host if request.client else None
-    user_agent = request.headers.get("user-agent")
+    # Resolve role and sub
+    if is_v2:
+        role_name = user.rol_plataforma.nombre if user.rol_plataforma else "estudiante"
+        sub = str(user.id)
+        # Log success for V2 user
+        db.add(LogSeguridad(user_id=user.id, evento="LOGIN_SUCCESS", ip_address=ip_address, user_agent=user_agent))
+        db.commit()
+    else:
+        role_name = str(user.role)
+        sub = str(user.id)
 
-    payload = {"sub": str(user.id), "role": normalize_role(str(user.role))}
+    payload = {"sub": sub, "role": normalize_role(role_name)}
     access_token = create_access_token(
         data=payload,
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
     )
     refresh_token = create_refresh_token(
-        db, int(user.id), ip_address=ip_address, user_agent=user_agent
+        db, sub, ip_address=ip_address, user_agent=user_agent
     )
 
-    record_session(int(user.id), access_token)
+    record_session(sub, access_token)
 
     # Access Token Cookie (session-only: expires on browser close)
     response.set_cookie(
@@ -152,35 +173,64 @@ def refresh_access_token(
         )
 
     token_row = crud.get_valid_refresh_token(db, refresh_token)
+    is_v2 = False
+    if not token_row:
+        # Check v2 table
+        from backend.models_auth import TokenSesion
+        token_row = db.query(TokenSesion).filter(
+            TokenSesion.token == refresh_token,
+            TokenSesion.revoked == False,
+            TokenSesion.expires_at > _utcnow()
+        ).first()
+        if token_row:
+            is_v2 = True
+    
     if not token_row:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
         )
 
-    user = crud.get_user(db, int(token_row.user_id))
+    if is_v2:
+        from backend.models_auth import Usuario
+        user = db.query(Usuario).filter(Usuario.id == token_row.user_id).first()
+    else:
+        user = crud.get_user(db, int(token_row.user_id))
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
 
     # Rotación: Invalidar el anterior
-    crud.revoke_refresh_token(db, refresh_token)
+    if is_v2:
+        token_row.revoked = True
+        db.commit()
+    else:
+        crud.revoke_refresh_token(db, refresh_token)
 
     # Capturar info actual
     ip_address = request.client.host if request.client else token_row.ip_address
     user_agent = request.headers.get("user-agent") or token_row.user_agent
 
+    # Resolve sub and role
+    if is_v2:
+        sub = str(user.id)
+        role_name = user.rol_plataforma.nombre if user.rol_plataforma else "estudiante"
+    else:
+        sub = str(user.id)
+        role_name = str(user.role)
+
     # Crear nuevos tokens
     new_refresh_token = create_refresh_token(
-        db, int(user.id), ip_address=ip_address, user_agent=user_agent
+        db, sub, ip_address=ip_address, user_agent=user_agent
     )
     new_access_token = create_access_token(
-        data={"sub": str(user.id), "role": normalize_role(str(user.role))},
+        data={"sub": sub, "role": normalize_role(role_name)},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
     )
 
-    record_session(int(user.id), new_access_token)
+    record_session(sub, new_access_token)
 
     # Actualizar cookies (session-only)
     response.set_cookie(
@@ -610,31 +660,23 @@ def google_callback(
 
     # 3. Find or create user
     user = crud.get_user_by_email(db, google_email)
+    is_v2 = False
+    if not user:
+        from backend.models_auth import Usuario
+        user = db.query(Usuario).filter(Usuario.email == google_email).first()
+        if user:
+            is_v2 = True
+
     if not user:
         # Create new user from Google data
         import secrets
-
+        from backend.models_auth import Usuario, RolPlataforma
         from backend.core.security import get_password_hash
 
-        user = models.User(
-            username=google_email.split("@")[0],
-            email=google_email,
-            password_hash=get_password_hash(secrets.token_urlsafe(32)),
-            role="estudiante",
-            is_active=True,
-            is_email_verified=True,  # Google already verified the email
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-        # Assign default permissions
-        _ensure_default_permissions(db, user)
-
-        # Try to create member profile
-        try:
+        # Ensure persona exists or create one
+        persona = db.query(models.Persona).filter(models.Persona.email == google_email).first()
+        if not persona:
             persona = models.Persona(
-                user_id=user.id,
                 first_name=(
                     google_name.split(" ")[0]
                     if google_name
@@ -648,11 +690,30 @@ def google_callback(
                 email=google_email,
                 church_role="Miembro",
                 spiritual_status="Nuevo",
+                sede_id=1, # Default
+                estado_vital="ACTIVO"
             )
             db.add(persona)
-            db.commit()
-        except Exception:
-            db.rollback()
+            db.flush() # Get persona.id
+        
+        # Get default role "Estudiante"
+        rol = db.query(RolPlataforma).filter(RolPlataforma.nombre == "Estudiante").first()
+        rol_id = rol.id if rol else None
+
+        user = Usuario(
+            id=persona.id,
+            sede_id=persona.sede_id or 1,
+            username=google_email.split("@")[0],
+            email=google_email,
+            password_hash=get_password_hash(secrets.token_urlsafe(32)),
+            rol_plataforma_id=rol_id,
+            is_active=True,
+            is_email_verified=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        is_v2 = True
     else:
         # Existing user — ensure active
         if not user.is_active:
@@ -661,12 +722,19 @@ def google_callback(
     # 4. Generate JWT tokens
     from backend.auth import create_access_token, create_refresh_token
 
-    payload = {"sub": str(user.id), "role": normalize_role(str(user.role))}
+    if is_v2:
+        sub = str(user.id)
+        role_name = user.rol_plataforma.nombre if user.rol_plataforma else "estudiante"
+    else:
+        sub = str(user.id)
+        role_name = str(user.role)
+
+    payload = {"sub": sub, "role": normalize_role(role_name)}
     access_token = create_access_token(
         data=payload,
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
     )
-    refresh_token = create_refresh_token(db, int(user.id))
+    refresh_token = create_refresh_token(db, sub)
 
     # 5. Redirect to frontend with tokens (fragment to avoid server logs)
     frontend_url = settings.frontend_url.rstrip("/")

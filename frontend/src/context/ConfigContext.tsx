@@ -1,8 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { useConfigStore } from '@/stores/configStore';
 
 interface ConfigContextType {
     config: any | null;
@@ -15,31 +14,35 @@ const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 export function ConfigProvider({ children }: { children: React.ReactNode }) {
     const { token } = useAuth();
-    const config = useConfigStore((s) => s.config);
-    const loading = useConfigStore((s) => s.loading);
-    const isFeatureEnabled = useConfigStore((s) => s.isFeatureEnabled);
-    const refreshConfig = useConfigStore((s) => s.refreshConfig);
+    const [config, setConfig] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        refreshConfig(token);
-    }, [token, refreshConfig]);
+    const refreshConfig = useCallback(async () => {
+        if (!token) { setLoading(false); return; }
+        try {
+            const { apiFetch } = await import('@/lib/http');
+            const data = await apiFetch('/workspace/config', { token });
+            setConfig(data);
+        } catch (err) { console.error("Config load failed", err); }
+        finally { setLoading(false); }
+    }, [token]);
+
+    useEffect(() => { refreshConfig(); }, [refreshConfig]);
+
+    const isFeatureEnabled = (featureId: string) => {
+        if (!config) return true;
+        return !!config.features_enabled?.[featureId];
+    };
 
     return (
-        <ConfigContext.Provider value={{
-            config,
-            isFeatureEnabled,
-            refreshConfig: () => refreshConfig(token),
-            loading,
-        }}>
+        <ConfigContext.Provider value={{ config, isFeatureEnabled, refreshConfig, loading }}>
             {children}
         </ConfigContext.Provider>
     );
 }
 
 export function useConfig() {
-    const context = useContext(ConfigContext);
-    if (context === undefined) {
-        throw new Error('useConfig must be used within a ConfigProvider');
-    }
-    return context;
+    const ctx = useContext(ConfigContext);
+    if (!ctx) throw new Error('useConfig must be used within ConfigProvider');
+    return ctx;
 }

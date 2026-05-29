@@ -18,16 +18,16 @@ class ChatMessage(Base):
     room_id = Column(String(100), nullable=True, index=True)
     content = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
 
 class Conversation(Base):
     __tablename__ = "conversations"
     id = Column(Integer, primary_key=True, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     last_message_content = Column(Text, nullable=True)
-    last_message_at = Column(DateTime, nullable=True, index=True)
+    last_message_at = Column(DateTime(timezone=True), nullable=True, index=True)
     last_sender_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
 
@@ -45,9 +45,9 @@ class ConversationParticipant(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False, index=True,
     )
-    last_read_at = Column(DateTime, nullable=True)
+    last_read_at = Column(DateTime(timezone=True), nullable=True)
     is_archived = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     conversation = relationship("Conversation", backref="participants")
     user = relationship("User")
@@ -58,15 +58,15 @@ class AgendaEvent(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
-    start_at = Column(DateTime, nullable=False, index=True)
-    end_at = Column(DateTime, nullable=True, index=True)
+    start_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    end_at = Column(DateTime(timezone=True), nullable=True, index=True)
     location = Column(String(200), nullable=True)
     is_all_day = Column(Boolean, default=True, index=True)
     created_by_user_id = Column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class CrmEvent(Base):
@@ -75,7 +75,7 @@ class CrmEvent(Base):
     sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
     name = Column(String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
-    event_date = Column(DateTime, nullable=True, index=True)
+    event_date = Column(DateTime(timezone=True), nullable=True, index=True)
     event_type = Column(String(20), default="PERMANENT", index=True)
     start_time = Column(String(50), nullable=True)
     end_time = Column(String(50), nullable=True)
@@ -88,8 +88,20 @@ class CrmEvent(Base):
     target_role_id = Column(Integer, ForeignKey("role_definitions.id"), nullable=True)
     target_role_ids = Column(JSON, nullable=True)
     target_member_ids = Column(JSON, nullable=True)
-    fixed_date = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    fixed_date = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+
+    from sqlalchemy.orm import validates
+    import uuid
+
+    @validates("target_member_ids")
+    def validate_target_member_ids(self, key, value):
+        if isinstance(value, list):
+            return [str(v) if isinstance(v, uuid.UUID) else v for v in value]
+        return value
+
+    from sqlalchemy.orm import synonym
+    target_persona_ids = synonym("target_member_ids")
 
     attendances = relationship("EventAttendance", back_populates="event")
     assignments = relationship("EventAssignment", back_populates="event")
@@ -112,10 +124,14 @@ class EventAssignment(Base):
         index=True,
     )
     role = Column(String(50), nullable=False, index=True)  # e.g. MC, PREACHER, OFFERING
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     event = relationship("CrmEvent", back_populates="assignments")
     persona = relationship("Persona")
+
+    from sqlalchemy.orm import synonym
+    member_id = synonym("persona_id")
+
 
 
 class EventAttendance(Base):
@@ -144,14 +160,18 @@ class EventAttendance(Base):
     status = Column(String(30), default="present", index=True)
     role_at_event = Column(String(30), default="attendee", index=True)
     source = Column(String(30), default="manual", index=True)
-    check_in_at = Column(DateTime, nullable=True, index=True)
-    check_out_at = Column(DateTime, nullable=True, index=True)
+    check_in_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    check_out_at = Column(DateTime(timezone=True), nullable=True, index=True)
     notes = Column(Text, nullable=True)
-    scanned_at = Column(DateTime, default=_utcnow, index=True)
+    scanned_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     attended = Column(Boolean, default=True)
 
     event = relationship("CrmEvent", back_populates="attendances")
     persona = relationship("Persona")
+
+    from sqlalchemy.orm import synonym
+    member_id = synonym("persona_id")
+
 
 
 class CounselingTicket(Base):
@@ -170,11 +190,15 @@ class CounselingTicket(Base):
     priority_level = Column(String(20), default="NORMAL", index=True)  # URGENT, HIGH, NORMAL
     sentiment_score = Column(Float, nullable=True)  # -1.0 a 1.0
     sentiment_label = Column(String(20), nullable=True)  # POSITIVE, NEUTRAL, NEGATIVE
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    deleted_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     persona = relationship("Persona", foreign_keys=[persona_id])
     pastor = relationship("User")
+
+    from sqlalchemy.orm import synonym
+    member_id = synonym("persona_id")
+
 
 
 class PrayerRequest(Base):
@@ -188,7 +212,7 @@ class PrayerRequest(Base):
     status = Column(
         String(50), default="pending", index=True
     )  # pending, praying, answered
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
 
 class Ministry(Base):
@@ -201,7 +225,7 @@ class Ministry(Base):
         ForeignKey("personas.id"),
         nullable=True,
     )
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     personas = relationship(
         "Persona",
@@ -301,9 +325,9 @@ class Persona(Base):
     tags = Column(JSON, nullable=True, default=list)
     origen_estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     origen_grupo_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
-    origen_fecha = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    origen_fecha = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     # Computed aliases used by evangelism module
     @hybrid_property
@@ -313,10 +337,9 @@ class Persona(Base):
 
     @nombre_completo.expression
     def nombre_completo(cls):
-        return _func.trim(_func.concat(
-            _func.coalesce(cls.first_name, ""), " ",
-            _func.coalesce(cls.last_name, "")
-        ))
+        return _func.trim(
+            _func.coalesce(cls.first_name, "") + " " + _func.coalesce(cls.last_name, "")
+        )
 
     @hybrid_property
     def telefono(self):
@@ -375,7 +398,7 @@ class Position(Base):
     description = Column(Text, nullable=True)
     category = Column(String(50), nullable=True, index=True)
     is_active = Column(Boolean, default=True, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     member_positions = relationship(
         "MemberPosition", back_populates="position", cascade="all, delete-orphan"
@@ -402,11 +425,11 @@ class MemberPosition(Base):
         nullable=False,
         index=True,
     )
-    start_date = Column(DateTime, nullable=True, index=True)
-    end_date = Column(DateTime, nullable=True, index=True)
+    start_date = Column(DateTime(timezone=True), nullable=True, index=True)
+    end_date = Column(DateTime(timezone=True), nullable=True, index=True)
     is_active = Column(Boolean, default=True, index=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     persona = relationship("Persona", back_populates="positions")
     position = relationship("Position", back_populates="member_positions")
@@ -425,8 +448,8 @@ class ConsolidationCase(Base):
     status = Column(String(20), default="active", index=True)
     source = Column(String(100), nullable=True)
     source_campaign = Column(String(200), nullable=True)
-    last_contact_at = Column(DateTime, nullable=True, index=True)
-    next_contact_at = Column(DateTime, nullable=True, index=True)
+    last_contact_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    next_contact_at = Column(DateTime(timezone=True), nullable=True, index=True)
     assigned_pastor_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="SET NULL"),
@@ -440,8 +463,10 @@ class ConsolidationCase(Base):
         index=True,
     )
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, index=True)
+    sede_id = Column(Integer, ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, index=True)
 
     persona = relationship(
         "Persona", foreign_keys=[persona_id], back_populates="consolidation_cases"
@@ -490,10 +515,10 @@ class ConsolidationAssignment(Base):
     )
     reason = Column(Text, nullable=True)
     priority = Column(String(20), default="normal", index=True)
-    start_date = Column(DateTime, default=_utcnow, index=True)
-    end_date = Column(DateTime, nullable=True, index=True)
+    start_date = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    end_date = Column(DateTime(timezone=True), nullable=True, index=True)
     status = Column(String(20), default="active", index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     case = relationship("ConsolidationCase", back_populates="assignments")
     assigned_by = relationship(
@@ -529,11 +554,11 @@ class ConsolidationInteraction(Base):
         index=True,
     )
     interaction_type = Column(String(50), nullable=False, index=True)
-    interaction_date = Column(DateTime, default=_utcnow, index=True)
+    interaction_date = Column(DateTime(timezone=True), default=_utcnow, index=True)
     result = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)
-    next_action_date = Column(DateTime, nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    next_action_date = Column(DateTime(timezone=True), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     case = relationship("ConsolidationCase", back_populates="interactions")
     performed_by = relationship(
@@ -560,10 +585,10 @@ class ConsolidationTask(Base):
     )
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
-    due_date = Column(DateTime, nullable=True, index=True)
+    due_date = Column(DateTime(timezone=True), nullable=True, index=True)
     status = Column(String(20), default="pending", index=True)
-    completed_at = Column(DateTime, nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     case = relationship("ConsolidationCase", back_populates="tasks")
     assignment = relationship(
@@ -589,12 +614,16 @@ class Donation(Base):
     # donor_name/email solo para donaciones anónimas (persona_id IS NULL)
     donor_name = Column(String(100), nullable=True)
     donor_email = Column(String(200), nullable=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    deleted_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     persona = relationship("Persona", back_populates="donations")
     fund = relationship("Fund")
+
+    from sqlalchemy.orm import synonym
+    member_id = synonym("persona_id")
+
 
 
 class DonationCategory(Base):
@@ -619,10 +648,10 @@ class CrmTask(Base):
         index=True,
     )
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
-    due_date = Column(DateTime, nullable=True)
+    due_date = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(20), default="pending")
     priority = Column(String(20), default="medium")
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     persona = relationship("Persona", back_populates="tasks")
     assignee = relationship("User")
@@ -639,13 +668,16 @@ class VolunteerShift(Base):
     )
     role_name = Column(String(100), nullable=False)
     team_name = Column(String(100), nullable=False)
-    shift_start = Column(DateTime, nullable=False)
-    shift_end = Column(DateTime, nullable=False)
+    shift_start = Column(DateTime(timezone=True), nullable=False)
+    shift_end = Column(DateTime(timezone=True), nullable=False)
     status = Column(String(20), default="confirmed")
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     persona = relationship("Persona", back_populates="volunteer_shifts")
+
+    from sqlalchemy.orm import synonym
+    member_id = synonym("persona_id")
 
 
 class VolunteerSkill(Base):
@@ -690,10 +722,14 @@ class CommunicationLog(Base):
     outcome = Column(String(50), default="sent", index=True)
     external_id = Column(String(120), nullable=True, index=True)
     is_read = Column(Boolean, default=False, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     persona = relationship("Persona", back_populates="communication_logs")
     leader = relationship("User")
+
+    from sqlalchemy.orm import synonym
+    member_id = synonym("persona_id")
+
 
 
 class SpiritualMilestone(Base):
@@ -709,11 +745,15 @@ class SpiritualMilestone(Base):
     event_date = Column(Date, nullable=False)
     minister_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    deleted_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     persona = relationship("Persona")
     minister = relationship("User")
+
+    from sqlalchemy.orm import synonym
+    member_id = synonym("persona_id")
+
 
 
 class CrmAutomation(Base):
@@ -724,7 +764,7 @@ class CrmAutomation(Base):
     action_type = Column(String(50), nullable=False)
     action_payload = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class RoleDefinition(Base):
@@ -734,7 +774,7 @@ class RoleDefinition(Base):
     color = Column(String(50), default="blue")
     is_leadership = Column(Boolean, default=False, index=True)
     is_system_locked = Column(Boolean, default=False, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class MemberRole(Base):
@@ -755,7 +795,7 @@ class MemberRole(Base):
         nullable=False,
         index=True,
     )
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     persona = relationship("Persona")
     role = relationship("RoleDefinition")
@@ -781,8 +821,8 @@ class PastoralCallLog(Base):
     notes = Column(Text, nullable=True)
     duration_seconds = Column(Integer, default=0)
     prayer_requests = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     persona = relationship("Persona", foreign_keys=[persona_id])
     case = relationship("ConsolidationCase")
@@ -814,7 +854,7 @@ class MemberMinistry(Base):
     end_date = Column(Date, nullable=True)
     is_active = Column(Boolean, default=True, index=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     persona = relationship("Persona", overlaps="persona,personas,ministries,ministry")
     ministry = relationship("Ministry", overlaps="persona,personas,ministries,ministry")
@@ -828,7 +868,7 @@ class Fund(Base):
     is_public = Column(Boolean, default=False)
     current_balance = Column(Numeric(14, 2), default=0)
     target_amount = Column(Numeric(14, 2), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class SupportTicket(Base):
@@ -840,8 +880,8 @@ class SupportTicket(Base):
     status = Column(
         String(20), default="open", index=True
     )  # open, in_progress, resolved, closed
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), onupdate=_utcnow)
 
     user = relationship("User")
 
@@ -853,7 +893,7 @@ class CommunityBoardCard(Base):
     title = Column(String(200), nullable=False)
     body = Column(Text, nullable=True)
     position = Column(Integer, default=0)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
 
 class EvangelismStrategy(Base):
@@ -882,11 +922,11 @@ class EvangelismStrategy(Base):
     niche_objective = Column(String(255), nullable=True)
 
     strategy_type = Column(String(100), nullable=True)
-    start_date = Column(DateTime, nullable=True)
-    end_date = Column(DateTime, nullable=True)
+    start_date = Column(DateTime(timezone=True), nullable=True)
+    end_date = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(50), default="active")
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), onupdate=_utcnow)
 
     sede = relationship("Sede", foreign_keys=[sede_id])
     categoria = relationship("CategoriaEstrategia", foreign_keys=[categoria_id])

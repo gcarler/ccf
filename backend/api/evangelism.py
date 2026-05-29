@@ -4,6 +4,7 @@ import uuid
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func, String
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -272,7 +273,7 @@ def update_prayer_request(
     }
 
 
-# --- GLORY HOUSES ---
+# --- GRUPOS ---
 
 
 def _channel_label(channel: str) -> str:
@@ -351,7 +352,7 @@ def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.P
 def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     ordered = sorted(logs, key=lambda log: log.created_at or datetime.min, reverse=True)
     representative = ordered[0]
-    persona = getattr(representative, "member", None)
+    persona = getattr(representative, "persona", None)
     member_name = f"{persona.first_name} {persona.last_name}" if persona else "Desconocido"
     campaign_name = next(
         (log.campaign_name for log in ordered if log.campaign_name), None
@@ -404,7 +405,7 @@ def get_messaging_history(
         from sqlalchemy.orm import joinedload
 
         q = db.query(models.CommunicationLog).options(
-            joinedload(models.CommunicationLog.member)
+            joinedload(models.CommunicationLog.persona)
         )
 
         if persona_id:
@@ -445,7 +446,7 @@ def get_messaging_history_item(
 
     log = (
         db.query(models.CommunicationLog)
-        .options(joinedload(models.CommunicationLog.member))
+        .options(joinedload(models.CommunicationLog.persona))
         .filter(models.CommunicationLog.id == log_id)
         .first()
     )
@@ -455,7 +456,7 @@ def get_messaging_history_item(
     if log.external_id:
         related_logs = (
             db.query(models.CommunicationLog)
-            .options(joinedload(models.CommunicationLog.member))
+            .options(joinedload(models.CommunicationLog.persona))
             .filter(models.CommunicationLog.external_id == log.external_id)
             .order_by(models.CommunicationLog.created_at.desc())
             .all()
@@ -608,7 +609,7 @@ def _serialize_crm_task(
     contact_name: Optional[str] = None,
     assignee_name: Optional[str] = None,
 ) -> dict:
-    persona = getattr(task, "member", None)
+    persona = getattr(task, "persona", None)
     member_name = contact_name or (
         f"{persona.first_name} {persona.last_name}" if persona else None
     )
@@ -644,7 +645,7 @@ def list_crm_tasks(
         from sqlalchemy.orm import joinedload
 
         q = db.query(models.CrmTask).options(
-            joinedload(models.CrmTask.member), joinedload(models.CrmTask.assignee)
+            joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee)
         )
         if assignee_id:
             q = q.filter(models.CrmTask.assignee_id == assignee_id)
@@ -683,7 +684,7 @@ def list_my_crm_tasks(
         q = (
             db.query(models.CrmTask)
             .options(
-                joinedload(models.CrmTask.member), joinedload(models.CrmTask.assignee)
+                joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee)
             )
             .filter(models.CrmTask.assignee_id == current_user.id)
         )
@@ -717,7 +718,7 @@ def get_crm_task(
 
     task = (
         db.query(models.CrmTask)
-        .options(joinedload(models.CrmTask.member), joinedload(models.CrmTask.assignee))
+        .options(joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee))
         .filter(models.CrmTask.id == task_id)
         .first()
     )
@@ -870,13 +871,18 @@ def get_volunteer_detail(
     _warn_deprecated_crm_alias(
         "/api/evangelism/volunteers/{persona_id}", "/api/crm/volunteers/{persona_id}"
     )
-    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    try:
+        db_id = uuid.UUID(persona_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    persona = db.query(models.Persona).filter(models.Persona.id == db_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
     shifts = (
         db.query(models.VolunteerShift)
-        .filter(models.VolunteerShift.persona_id == persona_id)
+        .filter(models.VolunteerShift.persona_id == db_id)
         .order_by(models.VolunteerShift.created_at.desc())
         .all()
     )
@@ -894,7 +900,7 @@ def get_volunteer_detail(
                 models.member_volunteer_skills,
                 models.VolunteerSkill.id == models.member_volunteer_skills.c.skill_id,
             )
-            .filter(models.member_volunteer_skills.c.persona_id == persona_id)
+            .filter(models.member_volunteer_skills.c.persona_id == db_id)
             .order_by(models.VolunteerSkill.name.asc())
             .all()
         )
@@ -1038,7 +1044,13 @@ def validate_scanner_token(
         persona_id = parts[2]
         secret = parts[3] if len(parts) > 3 else None
 
-        persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+        try:
+            db_id = uuid.UUID(persona_id)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Miembro no encontrado")
+
+        persona = db.query(models.Persona).filter(models.Persona.id == db_id).first()
+
 
         if not persona:
             raise HTTPException(status_code=404, detail="Miembro no encontrado")
@@ -1100,7 +1112,7 @@ def crm_analytics(
         .count()
     )
 
-    # Glory houses / grupos
+    # Grupos
     total_groups = db.query(models.CellGroup).count()
 
     # Familia
@@ -1195,6 +1207,72 @@ def update_strategy(
     if strategy.typology == "evento_masivo" and strategy.phases:
         _project_phases_as_tasks(db, strategy_id, db_obj.name, strategy.phases, strategy.start_date)
     return db_obj
+
+
+@router.post("/strategies/{strategy_id}/generate-sessions", response_model=dict)
+def generate_strategy_sessions(
+    strategy_id: int,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Genera sesiones automáticas para todos los grupos de una estrategia según su recurrencia."""
+    from datetime import timedelta
+    from backend.models_crm import EvangelismStrategy as StratModel
+    from backend.models_evangelism import GrupoEvangelismo, SesionGrupo
+
+    strat = db.query(StratModel).filter(StratModel.id == strategy_id).first()
+    if not strat:
+        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+    if not strat.recurrence or not strat.start_date or not strat.end_date:
+        raise HTTPException(status_code=400, detail="La estrategia necesita: recurrence, start_date, end_date")
+
+    # Calcular intervalo
+    RECURRENCE_DAYS = {
+        "SEMANAL": 7, "QUINCENAL": 14, "MENSUAL": 30,
+        "BIMENSUAL": 60, "TRIMESTRAL": 90, "SEMESTRAL": 180, "ANUAL": 365,
+    }
+    interval = RECURRENCE_DAYS.get(strat.recurrence.upper())
+    if not interval:
+        raise HTTPException(status_code=400, detail=f"Recurrencia no soportada: {strat.recurrence}")
+
+    # Generar fechas
+    current = strat.start_date
+    dates = []
+    while current <= strat.end_date:
+        dates.append(current)
+        current = current + timedelta(days=interval)
+
+    # Obtener grupos de esta estrategia
+    groups = db.query(GrupoEvangelismo).filter(
+        (GrupoEvangelismo.evangelism_strategy_id == strategy_id) |
+        (GrupoEvangelismo.estrategia_id == func.cast(strategy_id, String))
+    ).all()
+
+    created = 0
+    for group in groups:
+        for session_date in dates:
+            existing = db.query(SesionGrupo).filter(
+                SesionGrupo.grupo_id == group.id,
+                SesionGrupo.fecha_sesion == session_date,
+            ).first()
+            if not existing:
+                db.add(SesionGrupo(
+                    grupo_id=group.id,
+                    fecha_sesion=session_date,
+                    estado="Programada",
+                ))
+                created += 1
+
+    db.commit()
+    return {
+        "strategy": strat.name,
+        "recurrence": strat.recurrence,
+        "start": str(strat.start_date),
+        "end": str(strat.end_date),
+        "sessions_per_group": len(dates),
+        "groups": len(groups),
+        "total_sessions_created": created,
+    }
 
 
 @router.get("/strategies/{strategy_id}/roles", response_model=List[schemas.RolPersonalizadoEstrategiaResponse])

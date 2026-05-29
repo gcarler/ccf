@@ -4,7 +4,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from backend.core.context import user_role_context
 from backend.schemas._common import orm_config
@@ -276,6 +276,13 @@ class ColombianDepartment(BaseModel):
     model_config = orm_config
 
 class PersonaResponse(BaseModel):
+    model_config = orm_config
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def coerce_id(cls, v):
+        return str(v) if v is not None else v
+
     id: str
     first_name: str
     last_name: str
@@ -591,7 +598,7 @@ class EvangelismStrategyBase(BaseModel):
     typology: Optional[str] = None  # relacional | evento_masivo | sectorial
 
     # Relacional
-    recurrence: Optional[str] = None  # SEMANAL | QUINCENAL | MENSUAL
+    recurrence: Optional[str] = None  # SEMANAL | QUINCENAL | MENSUAL | BIMENSUAL | TRIMESTRAL | SEMESTRAL | ANUAL
     day_of_week: Optional[str] = None
     start_time: Optional[str] = None
 

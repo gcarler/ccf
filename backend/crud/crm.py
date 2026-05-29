@@ -1,4 +1,4 @@
-"""CRM: Members, pipeline, events, tasks, counseling, prayer, glory houses, etc."""
+"""CRM: Members, pipeline, events, tasks, counseling, prayer, grupos, etc."""
 
 import datetime as dt
 import uuid
@@ -551,12 +551,17 @@ def get_counseling_tickets(
     db: Session,
     status: str | None = None,
     persona_id: str | None = None,
+    sede_id: int | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> List[models.CounselingTicket]:
     query = db.query(models.CounselingTicket).filter(
         models.CounselingTicket.deleted_at.is_(None)
     )
+    if sede_id is not None:
+        query = query.join(
+            models.Persona, models.CounselingTicket.persona_id == models.Persona.id
+        ).filter(models.Persona.sede_id == sede_id)
     if status:
         query = query.filter(models.CounselingTicket.status == status)
     if persona_id:
@@ -636,7 +641,7 @@ def create_prayer_request(
         raise ValueError(f"Error al registrar petición de oración: {str(e)}")
 
 
-# ── Glory Houses ───────────────────────────────────────
+# ── Grupos ───────────────────────────────────────
 
 
 def get_cell_groups(db: Session, skip: int = 0, limit: int = 100):
@@ -694,7 +699,7 @@ def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpda
         ).delete()
         for item in payload.base_attendees_with_roles:
             db.add(models.CellGroupMember(
-                cell_group_id=house_id, persona_id=item.persona_id, role=item.role
+                cell_group_id=house_id, persona_id=uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id, role=item.role
             ))
         members_updated = True
     elif payload.base_attendee_ids is not None:
@@ -703,7 +708,7 @@ def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpda
         ).delete()
         for persona_id in payload.base_attendee_ids:
             db.add(models.CellGroupMember(
-                cell_group_id=house_id, persona_id=persona_id, role="miembro"
+                cell_group_id=house_id, persona_id=uuid.UUID(str(persona_id)) if isinstance(persona_id, str) else persona_id, role="miembro"
             ))
         members_updated = True
 
@@ -1302,7 +1307,7 @@ def delete_prayer_request(db: Session, request_id: int) -> bool:
     return True
 
 
-# ── Glory Houses ───────────────────────────────────────
+# ── Grupos ───────────────────────────────────────
 
 
 def get_cell_group(db: Session, house_id: int) -> Optional[models.CellGroup]:

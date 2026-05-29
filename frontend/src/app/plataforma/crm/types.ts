@@ -27,7 +27,7 @@ export function normalizeMembers(payload: any[]): CrmPersona[] {
         id: m.id,
         name: m.nombre_completo || '',
         email: m.email,
-        group: m.group || (m.glory_house_id ? `Casa #${m.glory_house_id}` : 'Sin Grupo'),
+        group: m.group || (m.grupo_id ? `Casa #${m.grupo_id}` : 'Sin Grupo'),
         status: m.spiritual_status || m.status || 'Nuevo',
         phone: m.telefono || m.phone,
         joinedAt: m.created_at,

@@ -1,1 +1,7 @@
-merge: resolver conflicto remoto — mantener refactor /personas + auth v2
+feat(calidad-final): CRM v2 + evangelism + cross-module — verificado
+
+- CRM v2: 5 pipelines, CRUD completo, 109 endpoints
+- Evangelism: 10/10 hilos verdes, sessions auto-generadas
+- Cross-module: Persona UUID → 7 módulos, 50+ endpoints
+- 674 endpoints en 30 módulos registrados
+- 0 type mismatches modelo↔schema↔DB

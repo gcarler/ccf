@@ -34,8 +34,8 @@ class User(Base):
 
     is_active = Column(Boolean, default=True, index=True)
     is_email_verified = Column(Boolean, default=False, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     user_role_obj = relationship("Role", back_populates="role_users")
     enrollments = relationship("Enrollment", back_populates="student")
@@ -43,8 +43,11 @@ class User(Base):
     ui_prefs = relationship("UserUIPreference", back_populates="user", uselist=False)
 
 
-    # Relationships for Projects
-    assigned_tasks = relationship("ProjectTask", back_populates="assignee")
+    assigned_tasks = relationship(
+        "ProjectTask",
+        primaryjoin="foreign(ProjectTask.assignee_id) == cast(User.id, String)",
+        viewonly=True,
+    )
 
 
 class Badge(Base):
@@ -61,7 +64,7 @@ class UserBadge(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     badge_id = Column(Integer, ForeignKey("badges.id"), nullable=False)
-    earned_at = Column(DateTime, default=_utcnow)
+    earned_at = Column(DateTime(timezone=True), default=_utcnow)
 
     user = relationship("User", back_populates="badges")
     badge_obj = relationship("Badge")
@@ -72,7 +75,7 @@ class UserUIPreference(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     settings = Column(JSON, default={})
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     user = relationship("User", back_populates="ui_prefs")
 
 
@@ -83,10 +86,10 @@ class RefreshToken(Base):
     token = Column(String(255), unique=True, index=True, nullable=False)
     ip_address = Column(String(45), nullable=True)  # IPv6 length
     user_agent = Column(String(255), nullable=True)
-    expires_at = Column(DateTime, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
     revoked = Column(Boolean, default=False)
-    last_active = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    created_at = Column(DateTime, default=_utcnow)
+    last_active = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class VerificationToken(Base):
@@ -94,9 +97,9 @@ class VerificationToken(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     token = Column(String(255), unique=True, index=True, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
     used = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class ResetToken(Base):
@@ -104,9 +107,9 @@ class ResetToken(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     token = Column(String(255), unique=True, index=True, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
     used = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class UserPermission(Base):
@@ -122,7 +125,7 @@ class UserPermission(Base):
         index=True,
     )
     permissions = Column(JSON, default={})
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     user = relationship("User", backref=backref("permissions_override", uselist=False))
 
@@ -136,7 +139,7 @@ class Notification(Base):
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=True)
     is_read = Column(Boolean, default=False, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     user = relationship("User")
 
@@ -149,11 +152,11 @@ class UserReminder(Base):
     )
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
-    remind_at = Column(DateTime, nullable=False, index=True)
+    remind_at = Column(DateTime(timezone=True), nullable=False, index=True)
     priority = Column(String(20), default="normal")
     related_type = Column(String(50), nullable=True, index=True)
     related_id = Column(Integer, nullable=True)
     is_dismissed = Column(Boolean, default=False, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     user = relationship("User")

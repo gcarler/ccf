@@ -129,7 +129,7 @@ from backend.schemas.crm import (EVENT_TYPES, MINISTRY_ROLES,
                                  VolunteerShiftUpdate)
 # ── Dashboard & Analytics ───────────────────────────────────────────────────
 from backend.schemas.dashboard import (AcademyDashboard, AdminGlobalDashboard,
-                                       AssetsDashboard, ChartDataPoint,
+                                       ChartDataPoint,
                                        CrmDashboard, FinanceDashboard,
                                        MetricCard, ProjectsDashboard)
 # ── Governance / Audit ───────────────────────────────────────────────────────

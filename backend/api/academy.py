@@ -24,6 +24,16 @@ settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
+def coerce_user_id(user_id):
+    if user_id is None:
+        return None
+    try:
+        return int(user_id)
+    except (ValueError, TypeError):
+        return user_id
+
+
+
 def _serialize_submission_review(
     row: tuple[models.AssignmentSubmission, str, str],
 ) -> schemas.AssignmentSubmissionReview:
@@ -286,7 +296,7 @@ def close_formal_acta(
     acta = crud.close_formal_acta(
         db,
         course_id=course_id,
-        closed_by_user_id=int(getattr(current_user, "id", 0)),
+        closed_by_user_id=coerce_user_id(getattr(current_user, "id", 0)),
         min_grade=payload.min_grade,
         min_attendance=payload.min_attendance,
     )
@@ -318,10 +328,10 @@ def create_enrollment(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
-    user_id = int(getattr(current_user, "id", 0))
+    user_id = coerce_user_id(getattr(current_user, "id", 0))
     if (
         normalize_role(str(current_user.role)) != "admin"
-        and user_id != enrollment.user_id
+        and str(user_id) != str(enrollment.user_id)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -367,8 +377,8 @@ def submit_assessment(
     assessment = crud.get_assessment(db, assessment_id)
     if not enrollment or not assessment:
         raise HTTPException(status_code=404, detail="Not found")
-    current_id = int(getattr(current_user, "id", 0))
-    if int(getattr(enrollment, "user_id", 0)) != current_id:
+    current_id = coerce_user_id(getattr(current_user, "id", 0))
+    if coerce_user_id(getattr(enrollment, "user_id", 0)) != current_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     if payload.answers:
@@ -428,12 +438,12 @@ def list_all_enrollments(
 
 @router.get("/users/{user_id}/enrollments", response_model=List[dict])
 def get_user_enrollments(
-    user_id: int,
+    user_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     """Obtiene las inscripciones de un usuario. Usa Matricula (UUID) si existe persona vinculada."""
-    persona = db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.user_id == coerce_user_id(user_id)).first()
     if persona:
         matriculas = (
             db.query(models.Matricula)
@@ -544,9 +554,9 @@ async def submit_assignment_file(
     enrollment = crud.get_enrollment(db, enrollment_id)
     if not enrollment:
         raise HTTPException(status_code=404, detail="Enrollment not found")
-    current_id = int(getattr(current_user, "id", 0))
+    current_id = coerce_user_id(getattr(current_user, "id", 0))
     if (
-        int(getattr(enrollment, "user_id", 0)) != current_id
+        coerce_user_id(getattr(enrollment, "user_id", 0)) != current_id
         and normalize_role(str(current_user.role)) != "admin"
     ):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
@@ -640,7 +650,7 @@ def get_my_academy_profile(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
-    user_id = int(current_user.id)
+    user_id = coerce_user_id(current_user.id)
     db_user = crud.get_user(db, user_id) or current_user
     enrollments = (
         db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
@@ -672,13 +682,13 @@ def get_my_academy_profile(
 
 @router.get("/users/{user_id}/progress", response_model=List[dict])
 def get_user_course_progress(
-    user_id: int,
+    user_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     """Devuelve el progreso agregado por curso para un usuario."""
-    current_id = int(getattr(current_user, "id", 0))
-    if current_id != user_id and normalize_role(str(current_user.role)) not in {
+    current_id = coerce_user_id(getattr(current_user, "id", 0))
+    if str(current_id) != str(user_id) and normalize_role(str(current_user.role)) not in {
         "admin",
         "coordinador",
     }:

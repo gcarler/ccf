@@ -166,7 +166,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Media',
                 status: 'En curso',
                 comments: '18 grupos confirmados',
-                link: '/community/groups'
+                link: '/community/grupos'
             },
             {
                 id: 'discover-labs',
@@ -285,7 +285,7 @@ const featureCards = [
         title: 'Grupos pequeños',
         description: 'Encuentra tu círculo y mantente conectado entre semana.',
         icon: Users,
-        href: '/plataforma/community/groups',
+        href: '/plataforma/community/grupos',
         tone: 'from-slate-200/40 to-slate-50/30'
     },
     {

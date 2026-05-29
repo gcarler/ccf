@@ -150,12 +150,12 @@ export default function ProjectDetailPage() {
 
     const handleOpenTask = (task: ProjectTaskRecord) => {
         setSelectedTask(task);
-        router.replace(`/projects/${id}?task=${task.id}`);
+        router.replace(`/plataforma/projects/${id}?task=${task.id}`);
     };
 
     const handleCloseTask = () => {
         setSelectedTask(null);
-        router.replace(`/projects/${id}`);
+        router.replace(`/plataforma/projects/${id}`);
     };
 
     const handleTaskUpdated = (updated: ProjectTaskRecord) => {

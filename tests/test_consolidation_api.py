@@ -61,27 +61,29 @@ def test_consolidation_flow_creates_case_assignment_and_follow_up(client, db_ses
     position_id = position_response.json()["id"]
 
     member_position_response = client.post(
-        f"/api/crm/members/{pastor.id}/positions",
+        f"/api/crm/personas-legacy/{pastor.id}/positions",
         json={
-            "member_id": pastor.id,
+            "persona_id": str(pastor.id),
             "position_id": position_id,
             "start_date": datetime(2026, 5, 1).isoformat(),
             "is_active": True,
         },
         headers=headers,
     )
+    print("MEMBER_POSITION_RESPONSE:", member_position_response.json())
     assert member_position_response.status_code == 200
 
     case_response = client.post(
         "/api/crm/consolidation/cases",
         json={
-            "member_id": member.id,
+            "persona_id": str(member.id),
             "stage": "new",
             "status": "active",
             "source": "public register",
         },
         headers=headers,
     )
+    print("CASE_RESPONSE:", case_response.json())
     assert case_response.status_code == 200
     case_id = case_response.json()["id"]
 
@@ -89,8 +91,8 @@ def test_consolidation_flow_creates_case_assignment_and_follow_up(client, db_ses
         f"/api/crm/consolidation/cases/{case_id}/assignments",
         json={
             "case_id": case_id,
-            "assigned_by_member_id": pastor.id,
-            "assigned_to_member_id": leader.id,
+            "assigned_by_id": str(pastor.id),
+            "assigned_to_id": str(leader.id),
             "reason": "Seguimiento semanal",
             "priority": "high",
             "status": "active",
@@ -104,7 +106,7 @@ def test_consolidation_flow_creates_case_assignment_and_follow_up(client, db_ses
         f"/api/crm/consolidation/cases/{case_id}/interactions",
         json={
             "case_id": case_id,
-            "performed_by_member_id": pastor.id,
+            "performed_by_id": str(pastor.id),
             "interaction_type": "visit",
             "result": "ok",
             "notes": "Primera visita",
@@ -126,11 +128,11 @@ def test_consolidation_flow_creates_case_assignment_and_follow_up(client, db_ses
     assert task_response.status_code == 200
 
     profile_response = client.get(
-        f"/api/crm/members/{member.id}/consolidation", headers=headers
+        f"/api/crm/personas-legacy/{member.id}/consolidation", headers=headers
     )
     assert profile_response.status_code == 200
     profile = profile_response.json()
-    assert profile["member"]["id"] == member.id
+    assert profile["persona"]["id"] == str(member.id)
     assert profile["cases"][0]["assignments_count"] == 1
     assert profile["cases"][0]["interactions_count"] == 1
     assert profile["cases"][0]["open_tasks_count"] == 1

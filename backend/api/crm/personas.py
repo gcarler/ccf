@@ -30,6 +30,18 @@ def list_personas(
     )
 
 
+@router.get("/personas/me/profile")
+def my_ministry_profile(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Perfil ministerial del usuario autenticado."""
+    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    if not persona:
+        raise HTTPException(status_code=404, detail="No tienes un perfil ministerial vinculado")
+    return schemas.PersonaResponse.model_validate(persona)
+
+
 @router.get("/personas/{persona_id}", response_model=schemas.PersonaResponse)
 def get_persona(
     persona_id: str,

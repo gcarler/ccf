@@ -120,11 +120,17 @@ def get_expected_members_for_event(
             .all()
         )
     if event.target_audience == "MANUAL":
+        import uuid
         persona_ids = []
         if isinstance(event.target_persona_ids, list):
             for raw_persona_id in event.target_persona_ids:
-                if isinstance(raw_persona_id, str) and raw_persona_id.strip():
-                    persona_ids.append(raw_persona_id.strip())
+                if isinstance(raw_persona_id, uuid.UUID):
+                    persona_ids.append(raw_persona_id)
+                elif isinstance(raw_persona_id, str) and raw_persona_id.strip():
+                    try:
+                        persona_ids.append(uuid.UUID(raw_persona_id.strip()))
+                    except ValueError:
+                        continue
         persona_ids = list(dict.fromkeys(persona_ids))
         if not persona_ids:
             return []

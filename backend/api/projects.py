@@ -16,6 +16,8 @@ from backend.auth import (normalize_role, require_module_access,
                           require_staff_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
+from backend.crud.crm import get_user_sede_id
+from backend.crud.projects import get_user_persona_id
 from backend.mesh_websockets import manager
 from backend.core.database import get_db
 from backend.core.uploads import sanitize_filename, save_upload
@@ -33,9 +35,15 @@ def list_all_my_tasks(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Obtiene todas las tareas asignadas al usuario actual de todos los proyectos."""
+    persona_id = get_user_persona_id(db, current_user.id)
+    if not persona_id:
+        return []
     tasks = (
         db.query(models.ProjectTask)
-        .filter(models.ProjectTask.assignee_id == current_user.id)
+        .filter(
+            models.ProjectTask.assignee_id == persona_id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
         .all()
     )
     for t in tasks:
@@ -47,32 +55,32 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def _ensure_project(db: Session, project_id: int) -> models.Project:
+def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Project:
     project = (
         db.query(models.Project)
         .options(
             selectinload(models.Project.tasks),
             selectinload(models.Project.milestones),
-            selectinload(models.Project.activity_logs).selectinload(
-                models.ProjectActivityLog.user
-            ),
+            selectinload(models.Project.activity_logs),
         )
-        .filter(models.Project.id == project_id)
+        .filter(models.Project.id == project_id, models.Project.deleted_at.is_(None))
         .first()
     )
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if user_sede and project.sede_id and project.sede_id != user_sede:
+        raise HTTPException(status_code=404, detail="Project not found")
     return project
 
 
-def _ensure_task(db: Session, task_id: int) -> models.ProjectTask:
+def _ensure_task(db: Session, task_id: str) -> models.ProjectTask:
     task = (
         db.query(models.ProjectTask)
         .options(
             selectinload(models.ProjectTask.supplies),
             selectinload(models.ProjectTask.attachments),
         )
-        .filter(models.ProjectTask.id == task_id)
+        .filter(models.ProjectTask.id == task_id, models.ProjectTask.deleted_at.is_(None))
         .first()
     )
     if not task:
@@ -80,28 +88,18 @@ def _ensure_task(db: Session, task_id: int) -> models.ProjectTask:
     return task
 
 
-def _ensure_task_in_project(
-    db: Session, project_id: int, task_id: int
-) -> models.ProjectTask:
+def _ensure_task_in_project(db: Session, project_id: str, task_id: str) -> models.ProjectTask:
     task = _ensure_task(db, task_id)
-    if task.project_id != project_id:
+    if str(task.project_id) != str(project_id):
         raise HTTPException(status_code=404, detail="Task not found in project")
     return task
 
 
-def _ensure_supply_in_task(
-    db: Session,
-    project_id: int,
-    task_id: int,
-    supply_id: int,
-) -> models.TaskSupply:
+def _ensure_supply_in_task(db: Session, project_id: str, task_id: str, supply_id: int) -> models.TaskSupply:
     _ensure_task_in_project(db, project_id, task_id)
     supply = (
         db.query(models.TaskSupply)
-        .filter(
-            models.TaskSupply.id == supply_id,
-            models.TaskSupply.task_id == task_id,
-        )
+        .filter(models.TaskSupply.id == supply_id, models.TaskSupply.task_id == task_id)
         .first()
     )
     if not supply:
@@ -109,11 +107,7 @@ def _ensure_supply_in_task(
     return supply
 
 
-def _ensure_milestone_in_project(
-    db: Session,
-    project_id: int,
-    milestone_id: int,
-) -> models.ProjectMilestone:
+def _ensure_milestone_in_project(db: Session, project_id: str, milestone_id: str) -> models.ProjectMilestone:
     milestone = (
         db.query(models.ProjectMilestone)
         .filter(
@@ -182,20 +176,23 @@ def _normalize_dates(obj):
 @router.get("", response_model=List[schemas.Project])
 def list_projects(
     status_filter: Optional[str] = Query(None, alias="status"),
-    owner_id: Optional[int] = None,
+    owner_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
+    user_sede = get_user_sede_id(db, current_user.id)
     query = db.query(models.Project).options(
         selectinload(models.Project.tasks).selectinload(models.ProjectTask.attachments),
         selectinload(models.Project.milestones),
-    )
+    ).filter(models.Project.deleted_at.is_(None))
+    if user_sede:
+        query = query.filter(models.Project.sede_id == user_sede)
     if status_filter:
         query = query.filter(models.Project.status == status_filter)
     if owner_id:
         query = query.filter(models.Project.owner_id == owner_id)
 
-    projects = query.order_by(models.Project.id.desc()).all()
+    projects = query.order_by(models.Project.created_at.desc()).all()
     for p in projects:
         _normalize_dates(p)
         for m in p.milestones:
@@ -232,23 +229,16 @@ def create_project(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    db_project = models.Project(**project.model_dump())
-    db.add(db_project)
-    db.commit()
-    db.refresh(db_project)
+    owner_persona_id = get_user_persona_id(db, current_user.id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    db_project = crud.create_project(db, project, owner_persona_id=owner_persona_id, sede_id=user_sede)
 
-    # Auto-create default kanban phases
     crud.create_default_phases(db, db_project.id)
 
-    # Auditoria real
-    record_admin_action(
-        db,
-        current_user,
-        action="create_project",
-        resource_type="project",
-        resource_id=str(db_project.id),
-    )
+    if owner_persona_id:
+        crud.create_activity_log(db, db_project.id, owner_persona_id, "project_created", f"Proyecto '{db_project.title}' creado")
 
+    record_admin_action(db, current_user, action="create_project", resource_type="project", resource_id=str(db_project.id))
     _normalize_dates(db_project)
     return db_project
 
@@ -258,7 +248,7 @@ def create_project(
 
 @router.get("/{project_id}/phases", response_model=List[schemas.ProjectPhaseSchema])
 def list_project_phases(
-    project_id: int,
+    project_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -269,7 +259,7 @@ def list_project_phases(
 
 @router.put("/{project_id}/phases", response_model=List[schemas.ProjectPhaseSchema])
 def set_project_phases(
-    project_id: int,
+    project_id: str,
     phases: List[schemas.ProjectPhaseInput],
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -365,7 +355,7 @@ def list_all_comments(
     status_code=status.HTTP_201_CREATED,
 )
 def create_project_task(
-    project_id: int,
+    project_id: str,
     task: schemas.ProjectTaskCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -518,7 +508,7 @@ def list_activities(
 
 @router.get("/tasks/{task_id}", response_model=schemas.ProjectTask)
 def get_task(
-    task_id: int,
+    task_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -530,7 +520,7 @@ def get_task(
 
 @router.patch("/tasks/{task_id}", response_model=schemas.ProjectTask)
 def update_task(
-    task_id: int,
+    task_id: str,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -634,7 +624,7 @@ def mark_inbox_read(
 
 @router.get("/{project_id}", response_model=schemas.Project)
 def get_project(
-    project_id: int,
+    project_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -655,7 +645,7 @@ def get_project(
 
 @router.get("/{project_id}/wiki", response_model=Optional[schemas.ProjectDocument])
 def get_project_wiki(
-    project_id: int,
+    project_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -669,7 +659,7 @@ def get_project_wiki(
 
 @router.post("/{project_id}/wiki", response_model=schemas.ProjectDocument)
 def update_project_wiki(
-    project_id: int,
+    project_id: str,
     payload: schemas.ProjectDocumentUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -714,7 +704,7 @@ def update_project_wiki(
     "/{project_id}/whiteboard", response_model=Optional[schemas.ProjectWhiteboard]
 )
 def get_project_whiteboard(
-    project_id: int,
+    project_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -729,7 +719,7 @@ def get_project_whiteboard(
 
 @router.post("/{project_id}/whiteboard", response_model=schemas.ProjectWhiteboard)
 def update_project_whiteboard(
-    project_id: int,
+    project_id: str,
     payload: schemas.ProjectWhiteboardUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -768,8 +758,8 @@ def update_project_whiteboard(
     "/{project_id}/tasks/{task_id}/attachments", response_model=schemas.ProjectTask
 )
 async def upload_task_attachment(
-    project_id: int,
-    task_id: int,
+    project_id: str,
+    task_id: str,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -805,8 +795,8 @@ async def upload_task_attachment(
 
 @router.patch("/{project_id}/tasks/{task_id}", response_model=schemas.ProjectTask)
 def update_project_task(
-    project_id: int,
-    task_id: int,
+    project_id: str,
+    task_id: str,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -827,8 +817,8 @@ def update_project_task(
     "/{project_id}/tasks/{task_id}/supplies", response_model=List[schemas.TaskSupply]
 )
 def list_task_supplies(
-    project_id: int,
-    task_id: int,
+    project_id: str,
+    task_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -848,8 +838,8 @@ def list_task_supplies(
     status_code=status.HTTP_201_CREATED,
 )
 def create_task_supply(
-    project_id: int,
-    task_id: int,
+    project_id: str,
+    task_id: str,
     payload: schemas.TaskSupplyCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -876,8 +866,8 @@ def create_task_supply(
     response_model=schemas.TaskSupply,
 )
 def update_task_supply(
-    project_id: int,
-    task_id: int,
+    project_id: str,
+    task_id: str,
     supply_id: int,
     payload: schemas.TaskSupplyUpdate,
     db: Session = Depends(get_db),
@@ -904,8 +894,8 @@ def update_task_supply(
 
 @router.delete("/{project_id}/tasks/{task_id}/supplies/{supply_id}", response_model=dict)
 def delete_task_supply(
-    project_id: int,
-    task_id: int,
+    project_id: str,
+    task_id: str,
     supply_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -935,8 +925,8 @@ def delete_task_supply(
     status_code=status.HTTP_201_CREATED,
 )
 def create_subtask(
-    project_id: int,
-    task_id: int,
+    project_id: str,
+    task_id: str,
     subtask: schemas.ProjectTaskCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -973,9 +963,9 @@ def create_subtask(
     response_model=schemas.ProjectTask,
 )
 def update_subtask(
-    project_id: int,
-    task_id: int,
-    subtask_id: int,
+    project_id: str,
+    task_id: str,
+    subtask_id: str,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -996,9 +986,9 @@ def update_subtask(
 
 @router.delete("/{project_id}/tasks/{task_id}/subtasks/{subtask_id}")
 def delete_subtask(
-    project_id: int,
-    task_id: int,
-    subtask_id: int,
+    project_id: str,
+    task_id: str,
+    subtask_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -1063,7 +1053,7 @@ def create_comment(
 
 @router.post("/{project_id}/comments", response_model=schemas.ProjectCommentItem)
 def create_project_comment(
-    project_id: int,
+    project_id: str,
     payload: schemas.ProjectCommentCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -1140,7 +1130,7 @@ def update_project_comment(
 
 @router.get("/{project_id}/tasks", response_model=List[schemas.ProjectTask])
 def list_project_tasks(
-    project_id: int,
+    project_id: str,
     status_filter: Optional[str] = Query(None, alias="status"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -1187,7 +1177,7 @@ def list_project_tasks(
 
 @router.patch("/{project_id}", response_model=schemas.Project)
 def update_project(
-    project_id: int,
+    project_id: str,
     payload: schemas.ProjectUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -1206,7 +1196,7 @@ def update_project(
 
 @router.delete("/{project_id}")
 def delete_project(
-    project_id: int,
+    project_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
@@ -1219,8 +1209,8 @@ def delete_project(
 
 @router.delete("/{project_id}/tasks/{task_id}")
 def delete_project_task(
-    project_id: int,
-    task_id: int,
+    project_id: str,
+    task_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -1256,7 +1246,7 @@ def delete_project_comment(
 
 @router.get("/{project_id}/messages", response_model=List[schemas.ProjectMessageItem])
 def list_project_messages(
-    project_id: int,
+    project_id: str,
     limit: int = Query(50, le=200),
     before: Optional[int] = Query(None, alias="before"),
     db: Session = Depends(get_db),
@@ -1297,7 +1287,7 @@ def list_project_messages(
     status_code=status.HTTP_201_CREATED,
 )
 def send_project_message(
-    project_id: int,
+    project_id: str,
     payload: schemas.ProjectMessageCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -1347,7 +1337,7 @@ def send_project_message(
 
 @router.delete("/{project_id}/messages/{message_id}")
 def delete_project_message(
-    project_id: int,
+    project_id: str,
     message_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
@@ -1374,7 +1364,7 @@ def delete_project_message(
 
 @router.get("/{project_id}/milestones", response_model=List[schemas.ProjectMilestone])
 def list_project_milestones(
-    project_id: int,
+    project_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -1397,7 +1387,7 @@ def list_project_milestones(
     status_code=status.HTTP_201_CREATED,
 )
 def create_project_milestone(
-    project_id: int,
+    project_id: str,
     payload: schemas.ProjectMilestoneBase,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -1424,8 +1414,8 @@ def create_project_milestone(
     "/{project_id}/milestones/{milestone_id}", response_model=schemas.ProjectMilestone
 )
 def update_project_milestone(
-    project_id: int,
-    milestone_id: int,
+    project_id: str,
+    milestone_id: str,
     payload: schemas.ProjectMilestoneUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),

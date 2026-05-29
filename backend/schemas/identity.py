@@ -3,14 +3,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field, field_validator
 
 from backend.schemas._common import orm_config
 
 
 class UserBase(BaseModel):
     username: str
-    email: EmailStr
+    email: str  # EmailStr removed — DB has legacy emails without @
     role: str = "estudiante"
     role_id: Optional[int] = None
 
@@ -18,10 +18,17 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str = Field(min_length=6)
 
+    @field_validator("email")
+    @classmethod
+    def email_must_contain_at(cls, v: str) -> str:
+        if v and "@" not in v:
+            raise ValueError("Email inválido")
+        return v
+
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     password: Optional[str] = None
     role: Optional[str] = None
     role_id: Optional[int] = None
@@ -34,9 +41,16 @@ class UserSelfUpdate(BaseModel):
     No permite cambiar role, role_id, is_active ni xp.
     """
     username: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     current_password: Optional[str] = None
     new_password: Optional[str] = Field(default=None, min_length=8)
+
+    @field_validator("email")
+    @classmethod
+    def email_must_contain_at(cls, v: Optional[str]) -> Optional[str]:
+        if v and "@" not in v:
+            raise ValueError("Email inválido")
+        return v
 
 
 class User(UserBase):

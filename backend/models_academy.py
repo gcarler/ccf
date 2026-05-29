@@ -17,7 +17,7 @@ class Course(Base):
     xp_per_lesson = Column(Integer, default=10)
     image_url = Column(String(500), nullable=True)
     instructor_name = Column(String(200), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
     lessons = relationship("Lesson", back_populates="course")
     enrollments = relationship("Enrollment", back_populates="course")
     prerequisites = relationship(
@@ -67,7 +67,7 @@ class LessonProgress(Base):
     progress_percent = Column(Numeric(5, 2), default=0)
     last_position_seconds = Column(Integer, default=0)
     is_completed = Column(Boolean, default=False, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     __table_args__ = (
         UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_progress"),
@@ -124,7 +124,7 @@ class AssessmentAttempt(Base):
     )
     score = Column(Numeric(5, 2), default=0)
     passed = Column(Boolean, default=False, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     answers = relationship(
         "AssessmentAnswer", back_populates="attempt", cascade="all, delete-orphan"
@@ -172,7 +172,7 @@ class AssignmentSubmission(Base):
     comment = Column(Text, nullable=True)
     grade = Column(Numeric(5, 2), nullable=True)
     teacher_feedback = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 class FormalActa(Base):
     __tablename__ = "formal_actas"
@@ -182,7 +182,7 @@ class FormalActa(Base):
     status = Column(String(20), default="closed")  # closed, archived
     min_grade_required = Column(Numeric(5, 2), default=70)
     min_attendance_required = Column(Numeric(5, 2), default=75)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 class ForumComment(Base):
     __tablename__ = "forum_comments"
@@ -190,14 +190,14 @@ class ForumComment(Base):
     thread_id = Column(Integer, ForeignKey("forum_threads.id"), nullable=False)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 class Family(Base):
     __tablename__ = "families"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     address = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
     personas = relationship("Persona", back_populates="family")
 
 class CellGroup(Base):
@@ -237,8 +237,8 @@ class CellGroup(Base):
     )
 
     schedule = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     # ── Alias properties for schema compatibility (leader_id → leader_persona_id) ──
     @property
@@ -296,7 +296,7 @@ class CellGroupMember(Base):
         nullable=True,
         index=True,
     )
-    fecha_ingreso = Column(DateTime, default=_utcnow)
+    fecha_ingreso = Column(DateTime(timezone=True), default=_utcnow)
     activo = Column(Boolean, default=True, index=True)
 
     cell_group = relationship("CellGroup", back_populates="base_attendees")
@@ -325,7 +325,7 @@ class CellGroupSession(Base):
         index=True,
     )
     session_date = Column(Date, nullable=False, index=True)
-    report_deadline = Column(DateTime, nullable=True)
+    report_deadline = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(20), default="Realizada")  # Realizada | Cancelada
     topic = Column(String(255), nullable=True)
     offering_amount = Column(Numeric(12, 2), nullable=True)
@@ -339,8 +339,8 @@ class CellGroupSession(Base):
         nullable=True,
         index=True,
     )
-    reported_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    reported_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     cell_group = relationship("CellGroup")
     season = relationship("CampaignSeason", foreign_keys=[season_id])
@@ -369,7 +369,7 @@ class CellGroupAttendance(Base):
     attended = Column(Boolean, default=True)
     absence_reason = Column(String(50), nullable=True, index=True)
     absence_reason_detail = Column(Text, nullable=True)
-    scanned_at = Column(DateTime, default=_utcnow, index=True)
+    scanned_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     status = Column(String(20), default="present")  # present | absent | first_time
     notes = Column(Text, nullable=True)
 
@@ -400,7 +400,7 @@ class CampaignSeason(Base):
         String(20), default="SEMANAL", nullable=False
     )  # SEMANAL | MENSUAL
     status = Column(String(20), default="Activa", index=True)  # Activa | Finalizada
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 class Enrollment(Base):
     __tablename__ = "enrollments"
@@ -417,10 +417,10 @@ class Enrollment(Base):
     acta_closed = Column(Boolean, default=False)
     certificate_issued = Column(Boolean, default=False)
     certificate_code = Column(String(64), nullable=True)
-    access_window_end = Column(DateTime, nullable=True)
-    completed_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow, nullable=False)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
+    access_window_end = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
     student = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
 
@@ -434,7 +434,7 @@ class AcademyActivityLog(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     modality = Column(String(20), nullable=True)  # formal, no_formal
     value = Column(Numeric(10, 2), default=1.0)
-    created_at = Column(DateTime, default=_utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
 class ForumThread(Base):
     __tablename__ = "forum_threads"
@@ -443,8 +443,8 @@ class ForumThread(Base):
     category = Column(String(50), nullable=False, index=True)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     is_resolved = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 class CourseAttendance(Base):
     __tablename__ = "course_attendance"
@@ -455,7 +455,7 @@ class CourseAttendance(Base):
         nullable=False,
         index=True,
     )
-    session_date = Column(DateTime, default=_utcnow, index=True)
+    session_date = Column(DateTime(timezone=True), default=_utcnow, index=True)
     status = Column(String(20), default="present")  # present, absent, justified
     recorded_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
@@ -468,6 +468,6 @@ class Certificate(Base):
         Integer, ForeignKey("enrollments.id"), nullable=False, index=True
     )
     certificate_code = Column(String(64), unique=True, nullable=False, index=True)
-    issued_at = Column(DateTime, default=_utcnow)
+    issued_at = Column(DateTime(timezone=True), default=_utcnow)
 
     enrollment = relationship("Enrollment")

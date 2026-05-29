@@ -323,7 +323,6 @@ class GrupoEvangelismoUpdate(BaseModel):
 
 class SesionGrupoCreate(BaseModel):
     grupo_id: Optional[int] = None
-    glory_house_id: Optional[int] = None  # alias for grupo_id
     season_id: Optional[int] = None
     session_date: datetime
     topic: Optional[str] = None

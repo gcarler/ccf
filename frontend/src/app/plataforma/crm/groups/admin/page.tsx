@@ -14,7 +14,7 @@ type House = { id: number; name: string; zone?: string; leader_name?: string; me
 type Season = { id: number; name: string; status: string };
 type Attendee = { persona_id: string; name: string };
 
-export default function GloryHouseAdmin() {
+export default function GrupoAdmin() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
     const [houses, setHouses] = useState<House[]>([]);
@@ -31,7 +31,7 @@ export default function GloryHouseAdmin() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<House[]>("/community/glory-houses", { token });
+            const data = await apiFetch<House[]>("/community/grupos", { token });
             setHouses(Array.isArray(data) ? data : []);
         } catch {
             setHouses([]);
@@ -53,7 +53,7 @@ export default function GloryHouseAdmin() {
         try {
             const [seasonData, detail] = await Promise.all([
                 apiFetch<Season[]>("/evangelism/faro/seasons", { token }),
-                apiFetch<any>(`/evangelism/glory-houses/${house.id}`, { token }),
+                apiFetch<any>(`/evangelism/grupos/${house.id}`, { token }),
             ]);
             const nextSeasons = Array.isArray(seasonData) ? seasonData : [];
             const baseAttendees = Array.isArray(detail.base_attendees) ? detail.base_attendees : [];
@@ -76,7 +76,7 @@ export default function GloryHouseAdmin() {
             const session = await apiFetch<any>("/evangelism/faro/sessions", {
                 method: "POST",
                 token,
-                body: { season_id: seasonId, glory_house_id: selectedHouse.id, session_date: reportDate },
+                body: { season_id: seasonId, grupo_id: selectedHouse.id, session_date: reportDate },
             });
             await apiFetch(`/evangelism/faro/sessions/${session.id}/attendance`, {
                 method: "POST",
@@ -96,7 +96,7 @@ export default function GloryHouseAdmin() {
         const name = window.prompt("Nombre de la nueva casa");
         if (!token || !name?.trim()) return;
         try {
-            const created = await apiFetch<House>("/community/glory-houses", { method: "POST", token, body: { name: name.trim(), status: "active" } });
+            const created = await apiFetch<House>("/community/grupos", { method: "POST", token, body: { name: name.trim(), status: "active" } });
             setHouses((prev) => [created, ...prev]);
             addToast("Casa creada correctamente", "success");
         } catch {

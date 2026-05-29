@@ -14,7 +14,8 @@ from sqlalchemy import (
     String, Text, JSON,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import relationship, synonym
 
 from backend.core.database import Base
 from backend.models_shared import _utcnow
@@ -138,7 +139,8 @@ class RolPersonalizadoEstrategia(Base):
     __tablename__ = "estrategia_roles_personalizados"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=False)
+    estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True)
+    evangelism_strategy_id = Column(Integer, ForeignKey("evangelism_strategies.id", ondelete="SET NULL"), nullable=True, index=True)
     nombre_rol = Column(String(100), nullable=False)
     descripcion = Column(String(255), nullable=True)
 
@@ -149,7 +151,8 @@ class GrupoEvangelismo(Base):
     __tablename__ = "grupos_evangelismo"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=False)
+    estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True)
+    evangelism_strategy_id = Column(Integer, ForeignKey("evangelism_strategies.id", ondelete="SET NULL"), nullable=True, index=True)
     sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
     codigo = Column(String(30), unique=True, nullable=True, index=True)
     nombre = Column(String(150), nullable=False)
@@ -161,15 +164,9 @@ class GrupoEvangelismo(Base):
     dia_reunion = Column(String(20), nullable=True)
     hora_reunion = Column(String(10), nullable=True)
     activo = Column(Boolean, default=True)
-    lider_persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
-    )
-    asistente_persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
-    )
-    anfitrion_persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
-    )
+    lider_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    asistente_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    anfitrion_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -180,6 +177,71 @@ class GrupoEvangelismo(Base):
     anfitrion = relationship("Persona", foreign_keys=[anfitrion_persona_id])
     participantes = relationship("ParticipanteGrupo", back_populates="grupo", cascade="all, delete-orphan")
     sesiones = relationship("SesionGrupo", back_populates="grupo", cascade="all, delete-orphan")
+
+    # English aliases used throughout the API layer
+    code = synonym("codigo")
+    name = synonym("nombre")
+    zone = synonym("ubicacion")
+    address = synonym("direccion")
+    capacity = synonym("capacidad")
+    latitude = synonym("latitud")
+    longitude = synonym("longitud")
+    day_of_week = synonym("dia_reunion")
+    start_time = synonym("hora_reunion")
+    leader_id = synonym("lider_persona_id")
+    assistant_id = synonym("asistente_persona_id")
+    host_id = synonym("anfitrion_persona_id")
+    leader_persona_id = synonym("lider_persona_id")
+    assistant_persona_id = synonym("asistente_persona_id")
+    host_persona_id = synonym("anfitrion_persona_id")
+    evangelism_strategy_id = synonym("estrategia_id")
+
+    @hybrid_property
+    def status(self):
+        return "active" if self.activo else "inactive"
+
+    @status.setter
+    def status(self, val):
+        self.activo = val in ("active", "Activo", True)
+
+    @hybrid_property
+    def leader_name(self):
+        val = getattr(self, '_leader_name', None)
+        if not val and self.lider is not None:
+            return f"{self.lider.first_name} {self.lider.last_name}"
+        return val
+
+    @leader_name.setter
+    def leader_name(self, val):
+        self._leader_name = val
+
+    @hybrid_property
+    def members_count(self):
+        return len(self.participantes) if self.participantes is not None else 0
+
+    @members_count.setter
+    def members_count(self, val):
+        self._members_count = val
+
+    @hybrid_property
+    def end_time(self):
+        return getattr(self, "_end_time", None)
+
+    @end_time.setter
+    def end_time(self, val):
+        self._end_time = val
+
+    def __init__(self, **kwargs):
+        leader_name = kwargs.pop("leader_name", None)
+        members_count = kwargs.pop("members_count", None)
+        end_time = kwargs.pop("end_time", None)
+        super().__init__(**kwargs)
+        if leader_name is not None:
+            self._leader_name = leader_name
+        if members_count is not None:
+            self._members_count = members_count
+        if end_time is not None:
+            self._end_time = end_time
 
 
 # ──────────────────────────────────────────────
@@ -201,6 +263,12 @@ class ParticipanteGrupo(Base):
     persona = relationship("Persona", back_populates="participaciones_grupo")
     rol_personalizado = relationship("RolPersonalizadoEstrategia")
 
+    # English aliases
+    role = synonym("rol_base")
+    cell_group_id = synonym("grupo_id")
+    cell_group = synonym("grupo")
+    member_id = synonym("persona_id")
+
 
 class SesionGrupo(Base):
     __tablename__ = "sesiones_grupo"
@@ -212,6 +280,7 @@ class SesionGrupo(Base):
     motivo_cancelacion = Column(String(255), nullable=True)
     tema_estudio = Column(String(200), nullable=True)
     notas_lider = Column(Text, nullable=True)
+    offering_amount = Column(Float, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
     grupo = relationship("GrupoEvangelismo", back_populates="sesiones")
@@ -247,7 +316,11 @@ class SesionGrupo(Base):
 
     @property
     def season_id(self):
-        return None
+        return getattr(self, "_season_id", None)
+
+    @season_id.setter
+    def season_id(self, value):
+        self._season_id = value
 
     @property
     def season(self):
@@ -270,10 +343,6 @@ class SesionGrupo(Base):
         self.motivo_cancelacion = value
 
     @property
-    def offering_amount(self):
-        return None
-
-    @property
     def report_notes(self):
         return self.notas_lider
 
@@ -283,19 +352,59 @@ class SesionGrupo(Base):
 
     @property
     def novelty_type(self):
-        return None
+        return getattr(self, '_novelty_type', None)
+
+    @novelty_type.setter
+    def novelty_type(self, value):
+        self._novelty_type = value
 
     @property
     def novelty_detail(self):
-        return None
+        return getattr(self, '_novelty_detail', None)
+
+    @novelty_detail.setter
+    def novelty_detail(self, value):
+        self._novelty_detail = value
 
     @property
     def reported_by_persona_id(self):
-        return None
+        return getattr(self, '_reported_by_persona_id', None)
+
+    @reported_by_persona_id.setter
+    def reported_by_persona_id(self, value):
+        self._reported_by_persona_id = value
 
     @property
     def reported_at(self):
         return None
+
+    @reported_at.setter
+    def reported_at(self, value):
+        pass
+
+    @property
+    def report_deadline(self):
+        return getattr(self, "_report_deadline", None)
+
+    @report_deadline.setter
+    def report_deadline(self, value):
+        self._report_deadline = value
+
+    def __init__(self, **kwargs):
+        season_id = kwargs.pop("season_id", None)
+        offering_amount = kwargs.pop("offering_amount", None)
+        reported_by_persona_id = kwargs.pop("reported_by_persona_id", None)
+        reported_at = kwargs.pop("reported_at", None)
+        novelty_type = kwargs.pop("novelty_type", None)
+        novelty_detail = kwargs.pop("novelty_detail", None)
+        report_deadline = kwargs.pop("report_deadline", None)
+        super().__init__(**kwargs)
+        if season_id is not None:
+            self._season_id = season_id
+        if offering_amount is not None:
+            self._offering_amount = offering_amount
+        if report_deadline is not None:
+            self._report_deadline = report_deadline
 
 
 class Asistencia(Base):
@@ -309,6 +418,18 @@ class Asistencia(Base):
     detalle_excusa = Column(String(255), nullable=True)
     es_primera_vez = Column(Boolean, default=False)
     requiere_seguimiento = Column(Boolean, default=False)
+
+    # English aliases for legacy support
+    absence_reason = synonym("motivo_excusa_id")
+    absence_reason_detail = synonym("detalle_excusa")
+
+    @property
+    def attended(self):
+        return self.estado in ("Presente", "ASISTIO", "present", True)
+
+    @attended.setter
+    def attended(self, value):
+        self.estado = "Presente" if value else "Ausente"
 
     sesion = relationship("SesionGrupo", back_populates="asistencias")
     persona = relationship("Persona", back_populates="asistencias")

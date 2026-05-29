@@ -37,7 +37,7 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
         {
             title: "Grupos",
             items: [
-                { label: "Grupos Pequeños", icon: Users, href: "/community/groups" },
+                { label: "Grupos Pequeños", icon: Users, href: "/community/grupos" },
                 { label: "Descubrir", icon: Search, href: "/community/discover" }
             ]
         }

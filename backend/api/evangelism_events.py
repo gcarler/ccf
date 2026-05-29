@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import calendar
+import uuid
 import collections
 import csv
 import datetime
@@ -359,18 +360,26 @@ def register_bulk_attendance(
             invalid_persona_ids.append(raw_persona_id)
 
     normalized_persona_ids = list(dict.fromkeys(normalized_persona_ids))
-    valid_persona_ids = (
+    normalized_persona_uuids = []
+    for pid in normalized_persona_ids:
+        try:
+            normalized_persona_uuids.append(uuid.UUID(pid))
+        except ValueError:
+            pass
+
+    valid_persona_uuids = (
         {
             row[0]
             for row in db.query(models.Persona.id)
-            .filter(models.Persona.id.in_(normalized_persona_ids))
+            .filter(models.Persona.id.in_(normalized_persona_uuids))
             .all()
         }
-        if normalized_persona_ids
+        if normalized_persona_uuids
         else set()
     )
+    valid_persona_ids = {str(uid) for uid in valid_persona_uuids}
     missing_persona_ids = sorted(set(normalized_persona_ids) - valid_persona_ids)
-    selected_persona_ids = sorted(valid_persona_ids)
+    selected_persona_uuids = sorted(valid_persona_uuids)
 
     existing_rows = (
         db.query(models.EventAttendance)
@@ -387,8 +396,8 @@ def register_bulk_attendance(
     marked_absent_count = 0
     now = utc_now()
 
-    for persona_id in selected_persona_ids:
-        row = existing_by_persona_id.get(persona_id)
+    for persona_uuid in selected_persona_uuids:
+        row = existing_by_persona_id.get(persona_uuid)
         if row:
             was_attended = bool(row.attended)
             row.attended = True
@@ -403,7 +412,7 @@ def register_bulk_attendance(
             row = models.EventAttendance(
                 event_id=event_id,
                 session_date=session_date,
-                persona_id=persona_id,
+                persona_id=persona_uuid,
                 attended=True,
                 status="present",
                 source=payload.get("source") or "manual",
@@ -414,7 +423,7 @@ def register_bulk_attendance(
             created_count += 1
 
     for row in existing_rows:
-        if row.persona_id in selected_persona_ids:
+        if row.persona_id in selected_persona_uuids:
             continue
         if row.attended or row.status != "absent":
             row.attended = False
@@ -425,7 +434,7 @@ def register_bulk_attendance(
     db.commit()
     return {
         "status": "success",
-        "recorded": len(selected_persona_ids),
+        "recorded": len(selected_persona_uuids),
         "created": created_count,
         "marked_present": marked_present_count,
         "marked_absent": marked_absent_count,
@@ -494,6 +503,7 @@ def get_event_session_detail(
         {
             "id": a.id,
             "persona_id": a.persona_id,
+            "member_id": a.persona_id,
             "role": a.role,
             "persona_name": (
                 a.persona.nombre_completo if a.persona else "Unknown"
@@ -535,6 +545,7 @@ def get_event_session_detail(
         attendee_list.append(
             {
                 "persona_id": persona.id,
+                "member_id": persona.id,
                 "name": persona.nombre_completo,
                 "role": role_name,
                 "scanned_at": att.scanned_at.isoformat() if att.scanned_at else None,
@@ -549,6 +560,7 @@ def get_event_session_detail(
             absentees_full.append(
                 {
                     "persona_id": persona.id,
+                    "member_id": persona.id,
                     "name": persona.nombre_completo,
                     "role": persona.church_role,
                     "phone": persona.phone,

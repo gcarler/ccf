@@ -26,13 +26,13 @@ class TaskSupplyUpdate(BaseModel):
 
 class TaskSupply(TaskSupplyBase):
     id: int
-    task_id: int
+    task_id: str
     model_config = orm_config
 
 
 class ProjectPhaseSchema(BaseModel):
-    id: int
-    project_id: int
+    id: str
+    project_id: str
     name: str
     slug: str
     color: str = "#94a3b8"
@@ -48,7 +48,7 @@ class ProjectPhaseInput(BaseModel):
 
 class ProjectAttachment(BaseModel):
     id: int
-    task_id: int
+    task_id: str
     filename: str
     file_url: str
     file_type: Optional[str] = None
@@ -71,7 +71,7 @@ class ProjectTaskBase(BaseModel):
     description: Optional[str] = None
     status: str = "todo"
     priority: str = "medium"
-    assignee_id: Optional[int] = None
+    assignee_id: Optional[str] = None
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     labels: List[str] = Field(default_factory=list)
@@ -101,8 +101,8 @@ class ProjectTaskBase(BaseModel):
 
 
 class ProjectTaskCreate(ProjectTaskBase):
-    project_id: Optional[int] = None
-    parent_id: Optional[int] = None
+    project_id: Optional[str] = None
+    parent_id: Optional[str] = None
 
 
 class ProjectTaskUpdate(BaseModel):
@@ -110,7 +110,7 @@ class ProjectTaskUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[str] = None
-    assignee_id: Optional[int] = None
+    assignee_id: Optional[str] = None
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     labels: Optional[List[str]] = None
@@ -142,9 +142,9 @@ class ProjectTaskUpdate(BaseModel):
 
 
 class ProjectTask(ProjectTaskBase):
-    id: int
-    project_id: int
-    parent_id: Optional[int] = None
+    id: str
+    project_id: str
+    parent_id: Optional[str] = None
     order_index: int = 0
     supplies: List[TaskSupply] = Field(default_factory=list)
     subtasks: List["ProjectTask"] = Field(default_factory=list)
@@ -155,7 +155,7 @@ class ProjectBase(BaseModel):
     title: str
     description: Optional[str] = None
     status: str = "planning"
-    owner_id: Optional[int] = None
+    owner_id: Optional[str] = None
     color: Optional[str] = None
     icon: Optional[str] = None
 
@@ -168,7 +168,7 @@ class ProjectUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
-    owner_id: Optional[int] = None
+    owner_id: Optional[str] = None
     color: Optional[str] = None
     icon: Optional[str] = None
 
@@ -188,15 +188,15 @@ class ProjectMilestoneUpdate(BaseModel):
 
 
 class ProjectMilestone(ProjectMilestoneBase):
-    id: int
-    project_id: int
+    id: str
+    project_id: str
     model_config = orm_config
 
 
 class ProjectActivityLog(BaseModel):
     id: int
-    project_id: int
-    user_id: Optional[int] = None
+    project_id: str
+    persona_id: Optional[str] = None
     user_name: Optional[str] = "Sistema"
     action_type: str
     description: str
@@ -205,7 +205,7 @@ class ProjectActivityLog(BaseModel):
 
 
 class Project(ProjectBase):
-    id: int
+    id: str
     created_at: datetime
     updated_at: Optional[datetime] = None
     tasks: List[ProjectTask] = Field(default_factory=list)
@@ -233,8 +233,8 @@ class ProjectInboxItem(BaseModel):
     user: str
     content: str
     project: str
-    project_id: int
-    task_id: Optional[int] = None
+    project_id: str
+    task_id: Optional[str] = None
     task_title: Optional[str] = None
     is_read: bool = False
     created_at: datetime
@@ -243,9 +243,9 @@ class ProjectInboxItem(BaseModel):
 class ProjectActivityItem(BaseModel):
     id: str
     kind: str
-    project_id: int
+    project_id: str
     project_title: str
-    task_id: Optional[int] = None
+    task_id: Optional[str] = None
     task_title: Optional[str] = None
     description: str
     created_at: datetime
@@ -253,7 +253,7 @@ class ProjectActivityItem(BaseModel):
 
 class ProjectCommentBase(BaseModel):
     content: str
-    task_id: Optional[int] = None
+    task_id: Optional[str] = None
 
 
 class ProjectCommentCreate(ProjectCommentBase):
@@ -267,8 +267,8 @@ class ProjectCommentUpdate(BaseModel):
 
 class ProjectCommentItem(ProjectCommentBase):
     id: int
-    project_id: int
-    author_id: int
+    project_id: str
+    author_id: str
     author_name: str
     is_resolved: bool = False
     created_at: datetime
@@ -281,10 +281,10 @@ class InboxReadToggle(BaseModel):
 
 class ProjectDocument(BaseModel):
     id: int
-    project_id: int
+    project_id: str
     title: str
     content: Optional[str] = None
-    author_id: Optional[int] = None
+    author_id: Optional[str] = None
     last_edited_at: Optional[datetime] = None
     created_at: datetime
     version: int = 1
@@ -298,7 +298,7 @@ class ProjectDocumentUpdate(BaseModel):
 
 class ProjectWhiteboard(BaseModel):
     id: int
-    project_id: int
+    project_id: str
     title: str
     elements_json: str = "[]"
     created_at: datetime
@@ -322,7 +322,7 @@ class ProjectPortfolioSummaryRow(BaseModel):
 
 
 class ProjectWorkloadSummaryRow(BaseModel):
-    assignee_id: Optional[int] = None
+    assignee_id: Optional[str] = None
     open_tasks: int
     in_review: int
     overdue_tasks: int

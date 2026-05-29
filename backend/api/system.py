@@ -125,7 +125,7 @@ def get_global_calendar(
     except Exception:
         personas = []
 
-    for m in members:
+    for m in personas:
         if not m.birthday:
             continue
         try:

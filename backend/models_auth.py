@@ -62,6 +62,7 @@ class Usuario(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     persona = relationship("Persona", foreign_keys=[id], primaryjoin="Usuario.id == Persona.id")
+    rol_plataforma = relationship("RolPlataforma", foreign_keys=[rol_plataforma_id])
     roles_modulares = relationship("UsuarioRolModulo", back_populates="usuario", cascade="all, delete-orphan")
 
 

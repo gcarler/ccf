@@ -31,7 +31,7 @@ function getZoneColor(id: number) {
     return ZONE_COLORS[id % ZONE_COLORS.length];
 }
 
-interface GloryHouse {
+interface Grupo {
     id: number;
     name: string;
     zone?: string;
@@ -67,18 +67,18 @@ interface Member {
 export default function CrmGroupsPage() {
     const { token } = useAuth();
     const router = useRouter();
-    const [groups, setGroups] = useState<GloryHouse[]>([]);
+    const [groups, setGroups] = useState<Grupo[]>([]);
     const [loading, setLoading] = useState(true);
     const [query, setQuery] = useState('');
     const [members, setMembers] = useState<Member[]>([]);
-    const [inviteGroup, setInviteGroup] = useState<GloryHouse | null>(null);
+    const [inviteGroup, setInviteGroup] = useState<Grupo | null>(null);
     const [memberQuery, setMemberQuery] = useState('');
     const [assigningMemberId, setAssigningMemberId] = useState<string | null>(null);
 
     const loadGroups = useCallback(async () => {
         if (!token) return;
         try {
-            const data = await apiFetch<GloryHouse[]>('/crm/glory-houses', { token }).catch(() => []);
+            const data = await apiFetch<Grupo[]>('/crm/grupos', { token }).catch(() => []);
             setGroups(data);
         } catch {
             toast.error('Error al cargar Casas de Bendición');
@@ -129,10 +129,10 @@ export default function CrmGroupsPage() {
         if (!token || !inviteGroup) return;
         setAssigningMemberId(memberId);
         try {
-            const detail = await apiFetch<GloryHouse>(`/crm/glory-houses/${inviteGroup.id}`, { token });
+            const detail = await apiFetch<Grupo>(`/crm/grupos/${inviteGroup.id}`, { token });
             const current = new Set(detail.base_attendee_ids || detail.base_attendees?.map(member => member.persona_id) || []);
             current.add(memberId);
-            const updated = await apiFetch<GloryHouse>(`/crm/glory-houses/${inviteGroup.id}`, {
+            const updated = await apiFetch<Grupo>(`/crm/grupos/${inviteGroup.id}`, {
                 method: 'PUT',
                 token,
                 body: {

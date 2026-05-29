@@ -16,14 +16,14 @@ import EmptyState from '@/components/ui/EmptyState';
 import { DSMetric, DSCard, DSBadge } from '@/design';
 
 interface FaroSeason { id: number; name: string; start_date: string; end_date: string; periodicity: string; status: string; }
-interface GloryHouse { id: number; name: string; leader_name?: string; zone?: string; day_of_week?: string; time?: string; status?: string; }
+interface Grupo { id: number; name: string; leader_name?: string; zone?: string; day_of_week?: string; time?: string; status?: string; }
 interface FaroAnalytics {
     active_faros: number;
     total_sessions: number;
     total_attendance: number;
     avg_per_session: number;
     per_faro: Array<{
-        glory_house_id: number;
+        grupo_id: number;
         total_sessions: number;
         total_attendance: number;
         avg: number;
@@ -43,7 +43,7 @@ export default function FaroPage() {
     const router = useRouter();
     const { viewType, setViewType } = useViewType('evangelism_faro', 'grid');
     const [seasons, setSeasons] = useState<FaroSeason[]>([]);
-    const [houses, setHouses] = useState<GloryHouse[]>([]);
+    const [houses, setHouses] = useState<Grupo[]>([]);
     const [analytics, setAnalytics] = useState<FaroAnalytics | null>(null);
     const [activeSeason, setActiveSeason] = useState<FaroSeason | null>(null);
     const [loading, setLoading] = useState(true);
@@ -51,10 +51,10 @@ export default function FaroPage() {
     const [showNewSession, setShowNewSession] = useState(false);
     const [savingSession, setSavingSession] = useState(false);
     const [savingSeason, setSavingSeason] = useState(false);
-    const [sessionForm, setSessionForm] = useState({ glory_house_id: '', session_date: new Date().toISOString().split('T')[0], topic: 'S1', report_deadline: '' });
+    const [sessionForm, setSessionForm] = useState({ grupo_id: '', session_date: new Date().toISOString().split('T')[0], topic: 'S1', report_deadline: '' });
     const [seasonForm, setSeasonForm] = useState<SeasonForm>({ name: '', start_date: '', end_date: '', periodicity: 'SEMANAL' });
     const isSeasonFormValid = Boolean(seasonForm.name.trim() && seasonForm.start_date && seasonForm.end_date);
-    const isSessionFormValid = Boolean(sessionForm.glory_house_id && sessionForm.session_date && activeSeason);
+    const isSessionFormValid = Boolean(sessionForm.grupo_id && sessionForm.session_date && activeSeason);
     const role = String(user?.role || '').toLowerCase();
     const isPrivileged = role === 'admin' || role === 'pastor';
 
@@ -62,9 +62,9 @@ export default function FaroPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const [s, h]: [FaroSeason[], GloryHouse[]] = await Promise.all([
+            const [s, h]: [FaroSeason[], Grupo[]] = await Promise.all([
                 apiFetch<FaroSeason[]>('/evangelism/faro/seasons', { token }).catch(() => [] as FaroSeason[]),
-                apiFetch<GloryHouse[]>('/evangelism/glory-houses/mine', { token }).catch(() => [] as GloryHouse[])
+                apiFetch<Grupo[]>('/evangelism/grupos/mine', { token }).catch(() => [] as Grupo[])
             ]);
             setSeasons(s);
             setHouses(h);
@@ -101,12 +101,12 @@ export default function FaroPage() {
     };
 
     const handleCreateSession = async () => {
-        if (!sessionForm.glory_house_id || !sessionForm.session_date || !activeSeason) return toast.error('Selecciona el grupo y la fecha');
+        if (!sessionForm.grupo_id || !sessionForm.session_date || !activeSeason) return toast.error('Selecciona el grupo y la fecha');
         setSavingSession(true);
         try {
             const bodyPayload: any = { ...sessionForm, season_id: activeSeason.id };
-            if (sessionForm.glory_house_id !== 'all') {
-                bodyPayload.glory_house_id = Number(sessionForm.glory_house_id);
+            if (sessionForm.grupo_id !== 'all') {
+                bodyPayload.grupo_id = Number(sessionForm.grupo_id);
             }
             if (sessionForm.report_deadline) {
                 bodyPayload.report_deadline = sessionForm.report_deadline + ':00Z';
@@ -117,7 +117,7 @@ export default function FaroPage() {
             const res = await apiFetch<{ message: string, created_count: number }>('/evangelism/faro/sessions', { method: 'POST', body: bodyPayload, token });
             toast.success(res.message || 'Sesión registrada');
             setShowNewSession(false);
-            setSessionForm({ glory_house_id: '', session_date: new Date().toISOString().split('T')[0], topic: 'S1', report_deadline: '' });
+            setSessionForm({ grupo_id: '', session_date: new Date().toISOString().split('T')[0], topic: 'S1', report_deadline: '' });
             load();
         } catch (e) {
             const detail = e instanceof ApiError && typeof e.detail === 'object' && e.detail && 'detail' in e.detail
@@ -266,13 +266,13 @@ export default function FaroPage() {
                                             </thead>
                                             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                                 {analytics!.per_faro.map((row) => {
-                                                    const house = houses.find(h => h.id === row.glory_house_id);
+                                                    const house = houses.find(h => h.id === row.grupo_id);
                                                     return (
-                                                        <tr key={row.glory_house_id} onClick={() => router.push(`/evangelism/faro/${row.glory_house_id}`)} className="group hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors cursor-pointer">
+                                                        <tr key={row.grupo_id} onClick={() => router.push(`/evangelism/faro/${row.grupo_id}`)} className="group hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors cursor-pointer">
                                                             <td className="px-4 py-2">
                                                                 <div className="flex items-center gap-4">
                                                                     <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Home size={18} /></div>
-                                                                    <span className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{house?.name || `Grupo #${row.glory_house_id}`}</span>
+                                                                    <span className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{house?.name || `Grupo #${row.grupo_id}`}</span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-4 py-2 text-center text-sm font-bold text-slate-600 dark:text-slate-400">{row.total_sessions}</td>
@@ -355,12 +355,12 @@ export default function FaroPage() {
                     
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block">Grupo</label>
-                        <select value={sessionForm.glory_house_id} onChange={e => setSessionForm(p => ({ ...p, glory_house_id: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+                        <select value={sessionForm.grupo_id} onChange={e => setSessionForm(p => ({ ...p, grupo_id: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
                             <option value="">— Seleccionar Grupo —</option>
                             {isPrivileged && <option value="all" className="font-bold">✨ TODOS LOS GRUPOS ACTIVOS</option>}
                             {houses.map(h => <option key={h.id} value={h.id}>{h.name} {h.leader_name ? `· Líder: ${h.leader_name}` : ''}</option>)}
                         </select>
-                        {sessionForm.glory_house_id === 'all' && (
+                        {sessionForm.grupo_id === 'all' && (
                             <p className="text-[10px] text-blue-500 font-bold mt-1">Se creará una sesión idéntica para todas las casas activas simultáneamente.</p>
                         )}
                     </div>

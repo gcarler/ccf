@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -341,13 +342,17 @@ def get_default_roles() -> List[Dict[str, Any]]:
 def get_user_effective_permissions(db: Session, user) -> dict:
     """Compute effective permissions for a user.
 
-    Resolution order: admin bypass → Role model → UserPermission override.
+    Resolution order: admin bypass → v2 Role → legacy Role model → UserPermission override.
     Returns a dict of {permission_key: "allow"}.
     """
     role = normalize_role(getattr(user, "role", ""))
+    
+    # Check v2 role name
+    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
+        role = normalize_role(user.rol_plataforma.nombre)
 
     # Admin bypass: full access
-    if role == "admin":
+    if role in {"admin", "administrador", "super administrador"}:
         perms = {}
         for p_key in PERMISSIONS:
             perms[p_key] = "allow"
@@ -355,8 +360,15 @@ def get_user_effective_permissions(db: Session, user) -> dict:
 
     user_perms: dict = {}
 
-    # 1. Role-based permissions from Role model
-    if getattr(user, "user_role_obj", None):
+    # 1. v2 Role-based permissions
+    if hasattr(user, "rol_plataforma") and user.rol_plataforma:
+        role_perms = user.rol_plataforma.permisos or {}
+        if isinstance(role_perms, dict):
+            for k in role_perms:
+                user_perms[k] = "allow"
+
+    # 2. Legacy Role-based permissions from Role model
+    if not user_perms and getattr(user, "user_role_obj", None):
         role_perms = getattr(user.user_role_obj, "permissions", None) or {}
         if isinstance(role_perms, dict):
             for k in role_perms:
@@ -417,16 +429,34 @@ def create_access_token(
 
 
 def create_refresh_token(
-    db: Session, user_id: int, ip_address: str = None, user_agent: str = None
+    db: Session, user_id: int | str, ip_address: str = None, user_agent: str = None
 ) -> str:
     """Create a cryptographically random refresh token and persist it."""
     from backend import crud  # avoid circular import
 
     token = secrets.token_urlsafe(48)
     expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
+
+    # Bridge: if user_id is a UUID string, use auth_v2 storage
+    if isinstance(user_id, str) and "-" in user_id:
+        from backend.models_auth import TokenSesion
+        try:
+            db.add(TokenSesion(
+                user_id=user_id,
+                token=token,
+                expires_at=expires_at,
+                ip_address=ip_address,
+                user_agent=user_agent
+            ))
+            db.commit()
+            return token
+        except Exception as exc:
+            log.error("Failed to create v2 refresh token: %s", exc)
+            db.rollback()
+
     crud.create_refresh_token(
         db,
-        user_id=user_id,
+        user_id=int(user_id),
         token=token,
         expires_at=expires_at,
         ip_address=ip_address,
@@ -435,7 +465,7 @@ def create_refresh_token(
     return token
 
 
-def record_session(user_id: int, token: str) -> None:
+def record_session(user_id: int | str, token: str) -> None:
     """Record an active session in Redis."""
     redis_client = get_redis()
     ttl = settings.access_token_expire_minutes * 60
@@ -469,13 +499,24 @@ async def get_current_user(
     if subject.isdigit():
         user = crud.get_user(db, int(subject))
     else:
-        user = crud.get_user_by_email(db, email=subject)
+        try:
+            # Try to resolve as UUID for auth_v2
+            val = uuid.UUID(subject)
+            from sqlalchemy.orm import joinedload
+            from backend.models_auth import Usuario
+            user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == val).first()
+        except (ValueError, ImportError):
+            user = crud.get_user_by_email(db, email=subject)
 
     if user is None:
         raise credentials_exception
 
     # Set context for RBAC in schemas
-    user_role_context.set(user.role)
+    role_str = str(getattr(user, "role", ""))
+    if not role_str and hasattr(user, "rol_plataforma"):
+        role_str = user.rol_plataforma.nombre if user.rol_plataforma else ""
+    
+    user_role_context.set(role_str)
     return user
 
 

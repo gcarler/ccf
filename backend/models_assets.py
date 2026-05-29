@@ -9,7 +9,7 @@ class InventoryItem(Base):
     category = Column(String(100), nullable=False)
     stock = Column(Integer, default=0)
     status = Column(String(20), default="ok")
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class AssetItem(Base):
@@ -21,14 +21,14 @@ class AssetItem(Base):
     purchase_price = Column(Float)
     current_status = Column(String(50), default="Disponible")
     category = Column(String(100), default="Mobiliario")
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class MaintenanceLog(Base):
     __tablename__ = "maintenance_logs"
     id = Column(Integer, primary_key=True, index=True)
     item_id = Column(UUID(as_uuid=True), ForeignKey("assets_items.id"))
-    service_date = Column(DateTime, default=_utcnow)
+    service_date = Column(DateTime(timezone=True), default=_utcnow)
     description = Column(Text)
     cost = Column(Float, default=0.0)
 

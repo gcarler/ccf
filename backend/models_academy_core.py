@@ -39,8 +39,8 @@ class Curso(Base):
     duration_hours = Column(Integer, nullable=False)
     xp_per_lesson = Column(Integer, default=10)
     image_url = Column(String(255))
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     lecciones = relationship("Leccion", back_populates="curso",
                              cascade="all, delete-orphan")
@@ -144,8 +144,8 @@ class Matricula(Base):
     attendance_percent = Column(Float, default=0.0)
     approved = Column(Boolean, default=False)
     acta_closed = Column(Boolean, default=False)
-    completed_at = Column(DateTime, nullable=True)
-    deleted_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     persona = relationship("Persona")
     curso = relationship("Curso")
@@ -179,7 +179,7 @@ class AsistenciaClase(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     enrollment_id = Column(UUID(as_uuid=True),
                            ForeignKey("academy_enrollments.id"), nullable=False)
-    session_date = Column(DateTime, nullable=False)
+    session_date = Column(DateTime(timezone=True), nullable=False)
     status = Column(String(50), nullable=False)
     recorded_by_persona_id = Column(UUID(as_uuid=True),
                                     ForeignKey("personas.id"), nullable=False)
@@ -195,7 +195,7 @@ class IntentoEvaluacion(Base):
                            ForeignKey("academy_enrollments.id"), nullable=False)
     score = Column(Float, nullable=True)
     passed = Column(Boolean, default=False)
-    submitted_at = Column(DateTime, default=_utcnow)
+    submitted_at = Column(DateTime(timezone=True), default=_utcnow)
 
     evaluacion = relationship("Evaluacion")
     matricula = relationship("Matricula")
@@ -211,7 +211,7 @@ class EntregaTarea(Base):
     seaweed_fid = Column(String(100), nullable=False)
     teacher_feedback = Column(Text, nullable=True)
     grade = Column(Float, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -226,7 +226,7 @@ class Certificado(Base):
                            ForeignKey("academy_enrollments.id"), nullable=False)
     certificate_code = Column(String(100), nullable=False, unique=True)
     certificate_type = Column(String(50))
-    issued_at = Column(DateTime, default=_utcnow)
+    issued_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class ActaFormal(Base):
@@ -274,7 +274,7 @@ class HiloForo(Base):
                                nullable=False)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class ComentarioForo(Base):
@@ -288,7 +288,7 @@ class ComentarioForo(Base):
     author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
                                nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     respuestas = relationship("ComentarioForo", backref="parent",
                               remote_side="ComentarioForo.id")

@@ -10,7 +10,7 @@ import { DSCard } from "@/design/components/DSCard";
 import { DSBadge } from "@/design/components/DSBadge";
 import { toast } from "sonner";
 
-type GloryHouseDetail = {
+type GrupoDetail = {
     id: number;
     name: string;
     zone: string | null;
@@ -28,7 +28,7 @@ export default function GroupDetailPage() {
     const params = useParams();
     const id = params?.id as string;
     const { token } = useAuth();
-    const [group, setGroup] = useState<GloryHouseDetail | null>(null);
+    const [group, setGroup] = useState<GrupoDetail | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -36,7 +36,7 @@ export default function GroupDetailPage() {
         const loadGroup = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<GloryHouseDetail>(`/evangelism/glory-houses/${id}`, { token });
+                const data = await apiFetch<GrupoDetail>(`/evangelism/grupos/${id}`, { token });
                 setGroup(data);
             } catch (err) {
                 console.error(err);

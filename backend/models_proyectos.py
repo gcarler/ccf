@@ -29,7 +29,7 @@ class Proyecto(Base):
     fecha_fin_real = Column(Date)
     presupuesto_est = Column(Numeric(12, 2))
     creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
-    fecha_creacion = Column(DateTime, default=_utcnow)
+    fecha_creacion = Column(DateTime(timezone=True), default=_utcnow)
 
     padre = relationship("Proyecto", remote_side="Proyecto.id", backref="subproyectos")
     equipo = relationship("EquipoProyecto", back_populates="proyecto", cascade="all, delete-orphan")
@@ -44,7 +44,7 @@ class EquipoProyecto(Base):
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     rol_proyecto = Column(String(50), nullable=False)
     permiso_edicion = Column(Boolean, default=False)
-    fecha_asignacion = Column(DateTime, default=_utcnow)
+    fecha_asignacion = Column(DateTime(timezone=True), default=_utcnow)
     es_historico = Column(Boolean, default=False)
 
     proyecto = relationship("Proyecto", back_populates="equipo")
@@ -71,8 +71,8 @@ class TareaProyecto(Base):
     )
     asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"))
     creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
-    fecha_vencimiento = Column(DateTime, nullable=False)
-    fecha_completado = Column(DateTime)
+    fecha_vencimiento = Column(DateTime(timezone=True), nullable=False)
+    fecha_completado = Column(DateTime(timezone=True))
 
     proyecto = relationship("Proyecto", back_populates="tareas")
     tarea_padre = relationship("TareaProyecto", remote_side="TareaProyecto.id", backref="subtareas")
@@ -106,7 +106,7 @@ class ComentarioTarea(Base):
     tarea_id = Column(UUID(as_uuid=True), ForeignKey("tareas_proyecto.id", ondelete="CASCADE"), nullable=False)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     comentario = Column(Text, nullable=False)
-    fecha_creacion = Column(DateTime, default=_utcnow)
+    fecha_creacion = Column(DateTime(timezone=True), default=_utcnow)
 
     tarea = relationship("TareaProyecto", back_populates="comentarios")
 
@@ -123,5 +123,5 @@ class DocumentoProyecto(Base):
     extension = Column(String(20), nullable=False)
     peso_bytes = Column(Integer, nullable=False)
     subido_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
-    fecha_subida = Column(DateTime, default=_utcnow)
+    fecha_subida = Column(DateTime(timezone=True), default=_utcnow)
     activo = Column(Boolean, default=True)

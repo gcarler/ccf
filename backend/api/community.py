@@ -44,33 +44,36 @@ def delete_community_card(
     return None
 
 
-@router.get("/glory-houses", response_model=List[dict])
+@router.get("/grupos", response_model=List[dict])
 def list_community_cell_groups(db: Session = Depends(get_db)):
-    """Lista casas de gloria para la vista comunitaria."""
+    """Lista grupos para la vista comunitaria."""
+    from sqlalchemy.orm import selectinload
     houses = db.query(models.CellGroup).all()
+    leader_ids = [h.leader_persona_id for h in houses if h.leader_persona_id]
+    leaders: dict = {}
+    if leader_ids:
+        rows = db.query(models.Persona).filter(models.Persona.id.in_(leader_ids)).all()
+        leaders = {str(p.id): f"{p.first_name} {p.last_name}".strip() for p in rows}
     return [
         {
             "id": h.id,
-            "name": h.name,
-            "leader": h.leader_name,
-            "address": h.address,
-            "members_count": len(h.members) if h.members else 0,
+            "name": h.name or f"Grupo {h.id}",
+            "leader": leaders.get(str(h.leader_persona_id), "") if h.leader_persona_id else "",
+            "members_count": len(h.members) if hasattr(h, "members") and h.members else 0,
         }
         for h in houses
     ]
 
 
-@router.post("/glory-houses", response_model=dict)
+@router.post("/grupos", response_model=dict)
 def create_community_cell_group(
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("community", "edit")),
 ):
-    """Crea una nueva casa de gloria desde la vista comunitaria."""
+    """Crea un nuevo grupo desde la vista comunitaria."""
     house = models.CellGroup(
-        name=payload.get("name", "Nueva Casa"),
-        leader_name=payload.get("leader_name") or current_user.username,
-        address=payload.get("address"),
+        name=payload.get("name", "Nuevo Grupo"),
     )
     db.add(house)
     db.commit()
@@ -78,6 +81,4 @@ def create_community_cell_group(
     return {
         "id": house.id,
         "name": house.name,
-        "leader_name": house.leader_name,
-        "address": house.address,
     }

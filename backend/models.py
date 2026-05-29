@@ -25,6 +25,9 @@ from backend.models_cms import (  # noqa: F401
     PageContentVersion, Testimonial)
 # Personas (reemplaza Persona — UUID PK)
 from backend.models_personas import Persona
+Member = Persona  # Backward compatibility alias for legacy tests and CRUDs
+FaroSeason = CampaignSeason  # Backward compatibility alias for FaroSeason
+
 
 # CRM / Pastoral
 from backend.models_crm import (
@@ -113,3 +116,11 @@ from backend.services.conversation_memory import (
 
 # Knowledge Base
 from backend.services.knowledge_base import AgentKnowledgeBase
+
+
+
+CellGroup = GrupoEvangelismo
+CellGroupMember = ParticipanteGrupo
+CellGroupSession = SesionGrupo
+CellGroupAttendance = Asistencia
+

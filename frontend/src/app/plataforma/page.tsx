@@ -174,11 +174,11 @@ function CommandCenterHome({ user, token }: any) {
                                     <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter">{card.value}</span>
                                     <span className={clsx(
                                         "text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5",
-                                        card.trend.includes('-')
+                                        (card.trend || '').includes('-')
                                             ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400"
                                             : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                     )}>
-                                        <ArrowUpRight size={10} strokeWidth={3} className={card.trend.includes('-') ? "rotate-90" : ""} /> {card.trend}
+                                        <ArrowUpRight size={10} strokeWidth={3} className={(card.trend || '').includes('-') ? "rotate-90" : ""} /> {card.trend}
                                     </span>
                                 </div>
                             </div>

@@ -34,7 +34,7 @@ export default function ProjectsWelcomePage() {
                     status: 'planning',
                 },
             });
-            router.push(`/projects/${project.id}`);
+            router.push(`/plataforma/projects/${project.id}`);
         } catch (error) {
             console.error(error);
         } finally {

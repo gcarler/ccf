@@ -30,6 +30,18 @@ const nextConfig = {
     outputFileTracingExcludes: {
         '*': ['**/@swc/core*', '**/@esbuild/**', '**/terser/**'],
     },
+    async headers() {
+        return [
+            {
+                source: '/auth/callback',
+                headers: [
+                    { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+                    { key: 'Pragma', value: 'no-cache' },
+                    { key: 'Expires', value: '0' },
+                ],
+            },
+        ];
+    },
     async rewrites() {
         const target = process.env.API_PROXY_TARGET || 'http://backend:8000';
         return [

@@ -13,6 +13,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 logger = logging.getLogger("module_isolation")
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.ERROR)
 
 # Circuit breaker state: module_name -> {failures: int, last_failure: float, open: bool}
 _circuit_breakers: dict[str, dict] = {}
@@ -85,7 +87,7 @@ async def module_isolation_middleware(request: Request, call_next):
             content={
                 "error": f"Error interno en el módulo {module}",
                 "module": module,
-                "detail": str(e) if request.app.debug else None,
+                "detail": str(e)[:500],
             }
         )
 

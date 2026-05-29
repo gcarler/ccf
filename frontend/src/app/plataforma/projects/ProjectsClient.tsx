@@ -91,7 +91,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 method: 'POST',
                 token,
                 body: {
-                    title: 'Nuevo Proyecto',
+                    title: newProjectTitle.trim() || 'Nuevo Proyecto',
                     description: '',
                     color: '#2563eb',
                     status: 'active',
@@ -103,7 +103,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             setShowCreateForm(false);
             toast.success('Proyecto creado');
             window.dispatchEvent(new CustomEvent('project-updated'));
-            setTimeout(() => router.push(`/projects/${created.id}`), 200);
+            setTimeout(() => router.push(`/plataforma/projects/${created.id}`), 200);
         } catch (e: any) {
             console.error('Error creating project:', e);
             toast.error('Error al crear el proyecto');
@@ -126,7 +126,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         description: project.description || 'Ver proyecto',
         icon: Folder,
         group: 'Proyectos',
-        action: () => router.push(`/projects/${project.id}`),
+        action: () => router.push(`/plataforma/projects/${project.id}`),
     })), [filtered, router]);
 
     useRegisterCommands('projects-quick-links', projectCommands);
@@ -323,7 +323,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         ) : viewType === 'list' ? (
                             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-4">
                                 {filtered.map((project) => (
-                                    <button key={project.id} onClick={() => router.push(`/projects/${project.id}`)} className="w-full rounded-md border border-slate-200 bg-white p-4 text-left transition-all duration-300 hover:border-blue-300 active:scale-[0.99] dark:border-white/10 dark:bg-[#252528] hover:dark:bg-[#2A2B2E]">
+                                    <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}`)} className="w-full rounded-md border border-slate-200 bg-white p-4 text-left transition-all duration-300 hover:border-blue-300 active:scale-[0.99] dark:border-white/10 dark:bg-[#252528] hover:dark:bg-[#2A2B2E]">
                                         <div className="flex items-center justify-between gap-4">
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{project.title}</p>
@@ -351,11 +351,11 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                             </motion.div>
                         ) : viewType === 'calendar' ? (
                             <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-[720px] pb-4">
-                                <UniversalCalendarView events={calendarEvents} title="Calendario de proyectos" onEventClick={(event) => router.push(`/projects/${event.id}`)} />
+                                <UniversalCalendarView events={calendarEvents} title="Calendario de proyectos" onEventClick={(event) => router.push(`/plataforma/projects/${event.id}`)} />
                             </motion.div>
                         ) : viewType === 'gantt' ? (
                             <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-[720px] pb-4">
-                                <UniversalGanttView items={ganttItems} moduleName="Portfolio" onItemClick={(item) => router.push(`/projects/${item.id}`)} />
+                                <UniversalGanttView items={ganttItems} moduleName="Portfolio" onItemClick={(item) => router.push(`/plataforma/projects/${item.id}`)} />
                             </motion.div>
                         ) : (
                             <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-4">
@@ -389,7 +389,7 @@ function ProjectCard({ project, index }: { project: ProjectRecord; index: number
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04, duration: 0.3 }}
-            onClick={() => router.push(`/projects/${project.id}`)}
+            onClick={() => router.push(`/plataforma/projects/${project.id}`)}
             className="group relative bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]"
             style={{ '--card-color': color } as React.CSSProperties}
         >

@@ -12,8 +12,8 @@ class AdminAuditLog(Base):
     ip_address = Column(String(45), nullable=True)
     severity = Column(String(20), default="info")
     metadata_json = Column("metadata", JSON, default={})
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class AutomationRule(Base):
@@ -25,6 +25,6 @@ class AutomationRule(Base):
     action_payload = Column(JSON, default={})
     config_json = Column(Text, nullable=True, default="{}")
     is_active = Column(Boolean, default=True, index=True)
-    last_run = Column(DateTime, nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, index=True)
+    last_run = Column(DateTime(timezone=True), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, index=True)

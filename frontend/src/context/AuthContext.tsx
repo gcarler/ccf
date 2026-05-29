@@ -3,19 +3,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
-import { useAuthStore } from '@/stores/authStore';
 
 interface AuthContextType {
-    user: {
-        id: number;
-        username: string;
-        email: string;
-        role: string;
-        is_email_verified?: boolean;
-        permissions?: Record<string, string>;
-    } | null;
+    user: any;
     token: string | null;
-    login: (token?: string, refreshToken?: string) => Promise<void>;
+    login: (accessToken?: string, refreshToken?: string) => Promise<void>;
     logout: () => void;
     refresh: () => Promise<void>;
     isAuthenticated: boolean;
@@ -27,124 +19,102 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+    const [token, setToken] = useState<string | null>(null);
+    const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
-    const store = useAuthStore();
 
     const redirectByRole = useCallback((role: string) => {
-        const normalizedRole = role.toLowerCase();
-        if (["admin", "coordinador", "docente"].includes(normalizedRole)) {
-            router.push('/plataforma/admin');
-            return;
-        }
-        router.push('/plataforma/academy');
+        const r = role.toLowerCase();
+        if (r === 'admin' || r === 'pastor') router.push('/plataforma/admin');
+        else if (r === 'profesor') router.push('/plataforma/academy');
+        else router.push('/plataforma/crm');
     }, [router]);
 
     const logout = useCallback(() => {
-        void apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
-        store.logout();
+        apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
+        if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('ccf_token');
+            sessionStorage.removeItem('ccf_refresh_token');
+        }
+        setToken(null);
+        setUser(null);
         window.location.href = '/login';
-    }, [store]);
+    }, []);
 
     const fetchUser = useCallback(async (tokenValue?: string) => {
-        const activeToken = tokenValue || (typeof window !== 'undefined' ? sessionStorage.getItem('ccf_token') : null);
+        const t = tokenValue || (typeof window !== 'undefined' ? sessionStorage.getItem('ccf_token') : null);
+        if (!t) { setLoading(false); return null; }
 
-        if (!activeToken) {
-            store.setLoading(false);
-            return null;
-        }
-
-        const safetyTimer = setTimeout(() => {
-            console.warn('[AUTH] fetchUser timeout — forcing loading=false');
-            store.setLoading(false);
-        }, 6000);
-
+        const timer = setTimeout(() => { console.warn('[AUTH] timeout'); setLoading(false); }, 6000);
         try {
-            const userData = await apiFetch<any>('/auth/me', {
-                cache: 'no-store',
-                token: activeToken
-            });
-            if (!userData.permissions) {
+            const data = await apiFetch<any>('/auth/me', { cache: 'no-store', token: t });
+            if (!data.permissions) {
                 try {
-                    const permData = await apiFetch<any>('/auth/me/permissions', {
-                        cache: 'no-store',
-                        token: activeToken
-                    });
-                    userData.permissions = permData.permissions;
-                } catch {
-                    userData.permissions = {};
-                }
+                    const p = await apiFetch<any>('/auth/me/permissions', { cache: 'no-store', token: t });
+                    data.permissions = p.permissions || {};
+                } catch { data.permissions = {}; }
             }
-            store.setAuth(userData, activeToken);
-            if (typeof window !== 'undefined' && tokenValue) {
-                sessionStorage.setItem('ccf_token', tokenValue);
-            }
-            return userData;
-        } catch (error) {
-            console.error('[AUTH] Error fetching user profile:', error);
-            const status = (error as any).status;
-            if (status === 401) {
+            setUser(data);
+            setToken(t);
+            if (tokenValue && typeof window !== 'undefined') sessionStorage.setItem('ccf_token', tokenValue);
+            return data;
+        } catch (err: any) {
+            if (err?.status === 401) {
                 if (typeof window !== 'undefined') {
                     sessionStorage.removeItem('ccf_token');
                     sessionStorage.removeItem('ccf_refresh_token');
                 }
-                store.setAuth(null, null);
-                if (typeof window !== 'undefined') {
-                    window.location.href = '/login?expired=1';
-                }
+                setUser(null);
+                setToken(null);
+                window.location.href = '/login?expired=1';
             }
             return null;
-        } finally {
-            clearTimeout(safetyTimer);
-            store.setLoading(false);
-        }
-    }, [store]);
+        } finally { clearTimeout(timer); setLoading(false); }
+    }, []);
 
-    useEffect(() => {
-        fetchUser();
-    }, [fetchUser]);
+    useEffect(() => { fetchUser(); }, []); // only on mount
 
     const login = useCallback(async (accessToken?: string, refreshToken?: string) => {
-        store.setLoading(true);
         if (accessToken && typeof window !== 'undefined') {
             sessionStorage.setItem('ccf_token', accessToken);
+            setToken(accessToken);
         }
         if (refreshToken && typeof window !== 'undefined') {
             sessionStorage.setItem('ccf_refresh_token', refreshToken);
         }
-        const userData = await fetchUser(accessToken);
-        if (userData?.role) {
-            redirectByRole(userData.role);
-        } else if (accessToken) {
-            console.warn("[AUTH] Login success but profile fetch failed. Forcing entry.");
-            router.push('/plataforma/admin');
-        }
-    }, [fetchUser, redirectByRole, router, store]);
+        const data = await fetchUser(accessToken);
+        if (data?.role) redirectByRole(data.role);
+        else if (accessToken) router.push('/plataforma/admin');
+    }, [fetchUser, redirectByRole, router]);
 
-    const refresh = useCallback(async () => {
-        await fetchUser();
-    }, [fetchUser]);
+    const refresh = useCallback(async () => { await fetchUser(); }, [fetchUser]);
+
+    const hasModuleAccess = (module: string, minLevel = 'read') => {
+        if (!user?.permissions) return false;
+        if (user.role === 'admin') return true;
+        const k = `${module}:${minLevel}`;
+        if (user.permissions[k] === 'allow') return true;
+        if (minLevel === 'read' && (user.permissions[`${module}:edit`] === 'allow' || user.permissions[`${module}:manage`] === 'allow')) return true;
+        if (minLevel === 'edit' && user.permissions[`${module}:manage`] === 'allow') return true;
+        return false;
+    };
+
+    const hasPermission = (perm: string) => {
+        if (!user?.permissions) return false;
+        if (user.role === 'admin') return true;
+        return user.permissions[perm] === 'allow';
+    };
 
     return (
-        <AuthContext.Provider value={{
-            user: store.user,
-            token: store.token,
-            login,
-            logout,
-            refresh,
-            isAuthenticated: store.isAuthenticated,
-            loading: store.loading,
-            hasModuleAccess: store.hasModuleAccess,
-            hasPermission: store.hasPermission,
-        }}>
+        <AuthContext.Provider value={{ user, token, login, logout, refresh, isAuthenticated: !!token, loading, hasModuleAccess, hasPermission }}>
             {children}
         </AuthContext.Provider>
     );
 }
 
 export function useAuth() {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
+    const ctx = useContext(AuthContext);
+    if (ctx === undefined) throw new Error('useAuth must be used within AuthProvider');
+    return ctx;
 }

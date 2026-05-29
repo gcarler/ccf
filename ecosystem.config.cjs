@@ -3,9 +3,8 @@ module.exports = {
     {
       name: "ccf-backend-staging",
       cwd: "/root/ccf",
-      script: "/root/ccf/venv/bin/python3",
-      args: "-m uvicorn backend.main:app --host 0.0.0.0 --port 8000",
-      interpreter: "none",
+      script: "/root/ccf/scripts/start_backend.sh",
+      interpreter: "/bin/bash",
       exec_mode: "fork",
       autorestart: true,
       max_restarts: 10,

@@ -26,6 +26,33 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
 
+# Compilación de CITEXT para SQLite (entornos de pruebas)
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.dialects.postgresql import CITEXT
+
+@compiles(CITEXT, "sqlite")
+def compile_citext_sqlite(element, compiler, **kw):
+    return "TEXT"
+
+
+from sqlalchemy import ARRAY
+
+@compiles(ARRAY, "sqlite")
+def compile_array_sqlite(element, compiler, **kw):
+    return "TEXT"
+
+
+from sqlalchemy.dialects.postgresql import JSONB
+
+@compiles(JSONB, "sqlite")
+def compile_jsonb_sqlite(element, compiler, **kw):
+    return "JSON"
+
+
+
+
+
+
 def get_db():
     """Generador de sesiones síncronas para FastAPI (inyección de dependencias)."""
     db = SessionLocal()

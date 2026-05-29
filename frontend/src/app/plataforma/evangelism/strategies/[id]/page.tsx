@@ -70,7 +70,7 @@ interface StrategyGroup {
 
 interface SessionRow {
     id: number;
-    glory_house_id: number;
+    grupo_id: number;
     session_date: string;
     status: string;
     topic?: string | null;
@@ -196,7 +196,7 @@ export default function StrategyDetailPage() {
     const [sessionsLoading, setSessionsLoading] = useState(false);
     const [isNewSessionDrawerOpen, setIsNewSessionDrawerOpen] = useState(false);
     const [sessionForm, setSessionForm] = useState({
-        glory_house_id: '' as string | number,
+        grupo_id: '' as string | number,
         session_date: new Date().toISOString().split('T')[0],
         topic: '',
         offering_amount: '',
@@ -282,7 +282,7 @@ export default function StrategyDetailPage() {
 
     const fetchGroups = useCallback(async () => {
         try {
-            const all = await apiFetch<StrategyGroup[]>('/evangelism/glory-houses', { token });
+            const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token });
             setGroups((all || []).filter(g => (g as any).evangelism_strategy_id === parseInt(id)));
         } catch { toast.error('Error al cargar grupos'); }
     }, [id]);
@@ -331,7 +331,7 @@ export default function StrategyDetailPage() {
         if (!groupForm.name.trim()) { toast.error('El nombre del grupo es obligatorio'); return; }
         setGroupSaving(true);
         try {
-            await apiFetch('/evangelism/glory-houses', {
+            await apiFetch('/evangelism/grupos', {
                 method: 'POST', token,
                 body: {
                     name: groupForm.name.trim(),
@@ -362,7 +362,7 @@ export default function StrategyDetailPage() {
     const handleDeleteGroup = async (groupId: number, groupName: string) => {
         if (!window.confirm(`¿Eliminar "${groupName}"? Se borrará todo el historial de asistencia.`)) return;
         try {
-            await apiFetch(`/evangelism/glory-houses/${groupId}`, { method: 'DELETE', token });
+            await apiFetch(`/evangelism/grupos/${groupId}`, { method: 'DELETE', token });
             toast.success('Grupo eliminado');
             fetchGroups(); fetchStrategy();
         } catch { toast.error('Error al eliminar'); }
@@ -379,7 +379,7 @@ export default function StrategyDetailPage() {
             } catch { toast.error('Error al cargar miembros'); }
         }
         try {
-            const house = await apiFetch<any>(`/evangelism/glory-houses/${group.id}`, { token });
+            const house = await apiFetch<any>(`/evangelism/grupos/${group.id}`, { token });
             setGroupMembers(house?.base_attendees?.map((a: any) => ({
                 id: a.persona_id,
                 name: a.name || a.member?.nombre_completo || '',
@@ -393,7 +393,7 @@ export default function StrategyDetailPage() {
         if (!selectedGroup) return;
         setMemberSaving(true);
         try {
-            await apiFetch(`/evangelism/glory-houses/${selectedGroup.id}`, {
+            await apiFetch(`/evangelism/grupos/${selectedGroup.id}`, {
                 method: 'PUT', token,
                 body: {
                     base_attendees_with_roles: groupMembers.map(m => ({
@@ -430,14 +430,14 @@ export default function StrategyDetailPage() {
 
     // ── Sessions ──
     const handleCreateSession = async () => {
-        if (!sessionForm.glory_house_id) { toast.error('Selecciona un grupo'); return; }
+        if (!sessionForm.grupo_id) { toast.error('Selecciona un grupo'); return; }
         if (!sessionForm.session_date) { toast.error('Selecciona una fecha'); return; }
         setSessionSaving(true);
         try {
             await apiFetch('/evangelism/sessions', {
                 method: 'POST', token,
                 body: {
-                    glory_house_id: parseInt(String(sessionForm.glory_house_id)),
+                    grupo_id: parseInt(String(sessionForm.grupo_id)),
                     session_date: sessionForm.session_date + 'T12:00:00',
                     topic: sessionForm.topic || null,
                     offering_amount: sessionForm.offering_amount ? parseFloat(sessionForm.offering_amount) : null,
@@ -447,7 +447,7 @@ export default function StrategyDetailPage() {
             });
             toast.success('Sesión registrada');
             setIsNewSessionDrawerOpen(false);
-            setSessionForm({ glory_house_id: '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
+            setSessionForm({ grupo_id: '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
             fetchSessions();
         } catch (e: any) {
             toast.error('Error al guardar: ' + (e.message || 'Intente de nuevo'));
@@ -467,7 +467,7 @@ export default function StrategyDetailPage() {
         }
         try {
             // Get house members to build attendance list
-            const house = await apiFetch<any>(`/evangelism/glory-houses/${session.glory_house_id}`, { token });
+            const house = await apiFetch<any>(`/evangelism/grupos/${session.grupo_id}`, { token });
             const existing = await apiFetch<any>(`/evangelism/sessions/${session.id}`, { token }).catch(() => null);
             const existingMap: Record<string, { status: string; notes: string }> = {};
             if (existing?.attendance) {
@@ -664,7 +664,7 @@ export default function StrategyDetailPage() {
                             id: String(s.id), title: s.topic || `Sesión #${s.id}`,
                             date: s.session_date,
                             color: s.status === 'Realizada' ? 'emerald' : 'blue' as const,
-                            location: groupName(s.glory_house_id),
+                            location: groupName(s.grupo_id),
                         }))}
                     />
                 )}
@@ -684,7 +684,7 @@ export default function StrategyDetailPage() {
                                 start_date: s.session_date, end_date: s.session_date,
                                 progress: s.status === 'Realizada' ? 100 : 0,
                                 color: s.status === 'Realizada' ? 'emerald' as const : 'blue' as const,
-                                subtitle: groupName(s.glory_house_id),
+                                subtitle: groupName(s.grupo_id),
                             })),
                         ]}
                     />
@@ -710,7 +710,7 @@ export default function StrategyDetailPage() {
                                         {filtered.map(s => (
                                             <div key={s.id} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1b1e] p-3">
                                                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{s.topic || `Sesión #${s.id}`}</p>
-                                                <p className="text-xs text-slate-400 mt-1">{groupName(s.glory_house_id)}</p>
+                                                <p className="text-xs text-slate-400 mt-1">{groupName(s.grupo_id)}</p>
                                                 <p className="text-xs text-slate-500 mt-1">{formatDate(s.session_date)}</p>
                                             </div>
                                         ))}
@@ -775,7 +775,7 @@ export default function StrategyDetailPage() {
                                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Calendar size={14} className="text-blue-600 dark:text-blue-400" /></div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{s.topic || `Sesión #${s.id}`}</p>
-                                    <p className="text-xs text-slate-400">{groupName(s.glory_house_id)} · {formatDate(s.session_date)}</p>
+                                    <p className="text-xs text-slate-400">{groupName(s.grupo_id)} · {formatDate(s.session_date)}</p>
                                 </div>
                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? '#10B98120' : '#3B82F620', color: s.status === 'Realizada' ? '#10B981' : '#3B82F6' }}>{s.status}</span>
                             </div>
@@ -804,7 +804,7 @@ export default function StrategyDetailPage() {
                                     <span className="text-xs font-bold text-blue-600 dark:text-blue-400">SESIÓN</span>
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">{s.topic || `Sesión #${s.id}`}</h3>
-                                <p className="text-xs text-slate-400 mt-1">{groupName(s.glory_house_id)}</p>
+                                <p className="text-xs text-slate-400 mt-1">{groupName(s.grupo_id)}</p>
                                 <div className="flex items-center justify-between mt-3">
                                     <span className="text-xs text-slate-500">{formatDate(s.session_date)}</span>
                                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? '#10B98120' : '#3B82F620', color: s.status === 'Realizada' ? '#10B981' : '#3B82F6' }}>{s.status}</span>
@@ -959,7 +959,7 @@ export default function StrategyDetailPage() {
                         <div className="flex items-center justify-between">
                             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Registro de sesiones</h2>
                             <button onClick={() => {
-                                setSessionForm({ glory_house_id: groups[0]?.id || '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
+                                setSessionForm({ grupo_id: groups[0]?.id || '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
                                 setIsNewSessionDrawerOpen(true);
                             }}
                                 className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">
@@ -983,7 +983,7 @@ export default function StrategyDetailPage() {
                             <div className="space-y-2">
                                 {[1, 2, 3].map(i => <div key={i} className="h-14 bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" />)}
                             </div>
-                        ) : sessions.filter(s => sessionGroupFilter === 'all' || s.glory_house_id === sessionGroupFilter).length === 0 ? (
+                        ) : sessions.filter(s => sessionGroupFilter === 'all' || s.grupo_id === sessionGroupFilter).length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg">
                                 <ClipboardList size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
                                 <p className="text-sm font-medium text-slate-500">Sin sesiones registradas</p>
@@ -991,7 +991,7 @@ export default function StrategyDetailPage() {
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {sessions.filter(s => sessionGroupFilter === 'all' || s.glory_house_id === sessionGroupFilter).map(s => (
+                                {sessions.filter(s => sessionGroupFilter === 'all' || s.grupo_id === sessionGroupFilter).map(s => (
                                     <div key={s.id} className="flex items-center gap-3 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg px-4 py-3 hover:border-blue-300 dark:hover:border-blue-800 transition-all">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
@@ -1003,7 +1003,7 @@ export default function StrategyDetailPage() {
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-400">
-                                                <span>{groupName(s.glory_house_id)}</span>
+                                                <span>{groupName(s.grupo_id)}</span>
                                                 {s.topic && <span>· {s.topic}</span>}
                                                 {s.offering_amount != null && <span>· Ofrenda: ${s.offering_amount.toLocaleString()}</span>}
                                             </div>
@@ -1367,7 +1367,7 @@ export default function StrategyDetailPage() {
                 <div className="space-y-4">
                     <div>
                         <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Grupo *</label>
-                        <select value={sessionForm.glory_house_id} onChange={e => setSessionForm(f => ({ ...f, glory_house_id: e.target.value }))}
+                        <select value={sessionForm.grupo_id} onChange={e => setSessionForm(f => ({ ...f, grupo_id: e.target.value }))}
                             className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                             <option value="">Seleccionar grupo...</option>
                             {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}

@@ -78,7 +78,7 @@ class PersonaMinistry(Base):
     )
     ministry = Column(SAEnum(MinistryOffice), nullable=False, index=True)
     is_primary = Column(Boolean, default=False)
-    recognized_at = Column(DateTime, default=_utcnow)
+    recognized_at = Column(DateTime(timezone=True), default=_utcnow)
     recognized_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     notes = Column(Text, nullable=True)
 
@@ -117,7 +117,7 @@ class PersonaRoleAssignment(Base):
         default=ChurchRole.VISITANTE_ONLINE,
         index=True,
     )
-    assigned_at = Column(DateTime, default=_utcnow)
+    assigned_at = Column(DateTime(timezone=True), default=_utcnow)
     assigned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     notes = Column(Text, nullable=True)
 
@@ -140,7 +140,7 @@ class PersonaRoleHistory(Base):
     to_role = Column(SAEnum(ChurchRole), nullable=False)
     reason = Column(String(200), nullable=True)
     changed_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    changed_at = Column(DateTime, default=_utcnow, index=True)
+    changed_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     persona = relationship("Persona")
     changed_by_user = relationship("User", foreign_keys=[changed_by])
@@ -197,7 +197,7 @@ class PlatformRoleDefinition(Base):
         comment="Permisos por módulo: {module: [actions]}"
     )
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     persona_roles = relationship("PersonaPlatformRole", back_populates="role_definition")
 
@@ -216,9 +216,9 @@ class PersonaPlatformRole(Base):
     role_id = Column(
         Integer, ForeignKey("platform_role_definitions.id"), nullable=False, index=True
     )
-    assigned_at = Column(DateTime, default=_utcnow)
+    assigned_at = Column(DateTime(timezone=True), default=_utcnow)
     assigned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    expires_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Boolean, default=True, index=True)
     notes = Column(Text, nullable=True)
 

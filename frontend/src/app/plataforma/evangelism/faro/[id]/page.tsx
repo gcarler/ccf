@@ -54,7 +54,7 @@ type AttendanceReason = 'weather' | 'work' | 'health' | 'family' | 'other';
 interface AttendanceData {
     session_id: number;
     session_date: string;
-    glory_house_id: number;
+    grupo_id: number;
     status: string;
     topic?: string | null;
     offering_amount?: number | null;
@@ -116,7 +116,7 @@ export default function FaroDetailPage() {
     useEffect(() => {
         if (!token || !id) return;
         setLoading(true);
-        apiFetch<HouseDetail>(`/evangelism/glory-houses/${id}`, { token })
+        apiFetch<HouseDetail>(`/evangelism/grupos/${id}`, { token })
             .then(data => {
                 setHouse(data);
                 // Auto-select the most recent session
@@ -149,7 +149,7 @@ export default function FaroDetailPage() {
                                 apiFetch(`/evangelism/faro/sessions`, {
                                     method: 'POST',
                                     body: {
-                                        glory_house_id: house.id,
+                                        grupo_id: house.id,
                                         session_date: new Date().toISOString().split('T')[0],
                                         season_id: house.sessions[0]?.season_name ? null : undefined // Backend automatically grabs active season if we omit or pass null if properly wired, but let's just make it simple.
                                     },

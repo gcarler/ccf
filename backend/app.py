@@ -14,7 +14,7 @@ from backend.api import (academy, academy_core, admin, agenda, agenda_core, agen
                          assets, auth, auth_v2, chat, cms, cms_v2, community, content, crm,
                          crm_core, dashboard, donations, evangelism, finance,
                          governance, graph, kernel, messaging, prayer,
-                         proyectos, public, spiritual_life, support, system,
+                         projects, proyectos, public, spiritual_life, support, system,
                          tables, workspace)
 from backend.core.config import get_settings
 from backend.core.logging import request_id_middleware
@@ -31,6 +31,7 @@ settings = get_settings()
 ROUTER_REGISTRY = [
     (auth.router, "/api/auth", ["auth"]),
     (auth_v2.router, "/api/auth", ["Auth v2"]),
+    (projects.router, "/api/projects", ["projects"]),
     (kernel.router, "/api", ["kernel"]),
     (proyectos.router, "/api", ["Proyectos v2"]),
     (academy.router, "/api/academy", ["academy"]),

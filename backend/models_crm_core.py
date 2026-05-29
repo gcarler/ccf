@@ -76,8 +76,8 @@ class PipelineCRM(Base):
     tipo = Column(SAEnum(TipoPipelineEnum), nullable=False)
     descripcion = Column(Text)
     activo = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     etapas = relationship("EtapaPipeline", back_populates="pipeline",
                           order_by="EtapaPipeline.orden",
@@ -96,7 +96,7 @@ class EtapaPipeline(Base):
     nombre = Column(String(100), nullable=False)
     orden = Column(Integer, nullable=False)
     requiere_accion = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     pipeline = relationship("PipelineCRM", back_populates="etapas")
     casos = relationship("CasoCRM", back_populates="etapa_actual")
@@ -114,7 +114,7 @@ class PlantillaMensaje(Base):
     canal = Column(SAEnum(TipoInteraccionEnum), nullable=False, index=True)
     contenido_texto = Column(Text, nullable=False)
     creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     creado_por = relationship("Persona", foreign_keys=[creado_por_id])
 
@@ -138,10 +138,10 @@ class CasoCRM(Base):
     origen_detalle_id = Column(String(200), nullable=True, index=True)
     payload_web = Column(JSONB, nullable=True)
     asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
-    fecha_creacion = Column(DateTime, default=_utcnow, index=True)
-    fecha_cierre = Column(DateTime, nullable=True)
-    sla_vencimiento_contacto = Column(DateTime, nullable=True)
-    deleted_at = Column(DateTime, nullable=True)
+    fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    fecha_cierre = Column(DateTime(timezone=True), nullable=True)
+    sla_vencimiento_contacto = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     @hybrid_property
     def is_overdue(self) -> bool:
@@ -174,7 +174,7 @@ class InteraccionCRM(Base):
     caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="CASCADE"), nullable=False, index=True)
     realizado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     tipo = Column(SAEnum(TipoInteraccionEnum), nullable=False, index=True)
-    fecha_interaccion = Column(DateTime, default=_utcnow, index=True)
+    fecha_interaccion = Column(DateTime(timezone=True), default=_utcnow, index=True)
     resumen = Column(Text, nullable=False)
     duration_seconds = Column(Integer, default=0)
     plantilla_usada_id = Column(Integer, ForeignKey("crm_plantillas_mensaje.id"), nullable=True)
@@ -195,10 +195,10 @@ class TareaCRM(Base):
     asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     titulo = Column(String(200), nullable=False)
     descripcion = Column(Text)
-    fecha_vencimiento = Column(DateTime, nullable=False, index=True)
+    fecha_vencimiento = Column(DateTime(timezone=True), nullable=False, index=True)
     completada = Column(Boolean, default=False, index=True)
-    fecha_completada = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    fecha_completada = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     caso = relationship("CasoCRM", back_populates="tareas")
     asignado_a = relationship("Persona", foreign_keys=[asignado_a_id])

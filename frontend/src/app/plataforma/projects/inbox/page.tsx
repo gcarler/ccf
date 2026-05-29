@@ -77,7 +77,7 @@ export default function ProjectsInboxPage() {
 
     const handleRespond = (msg: ProjectInboxItem) => {
         if (msg.project_id) {
-            router.push(`/projects/${msg.project_id}`);
+            router.push(`/plataforma/projects/${msg.project_id}`);
         }
     };
 
