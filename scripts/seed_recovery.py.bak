@@ -1,0 +1,388 @@
+"""Seed recovery — regenera todas las personas y datos perdidos."""
+import os, sys, random, uuid, json
+from datetime import datetime, timedelta, timezone
+
+os.environ['ENVIRONMENT'] = 'local'
+os.environ['DATABASE_URL'] = 'postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db'
+sys.path.insert(0, '/root/ccf')
+from sqlalchemy import text
+from backend.core.database import engine
+
+conn = engine.connect()
+random.seed(42)
+now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+def rd(db=0, df=0):
+    if df > 0: return now + timedelta(days=random.randint(1, df), hours=random.randint(0, 23))
+    return now - timedelta(days=random.randint(1, db+1), hours=random.randint(0, 23))
+
+print("=== SEED RECOVERY ===")
+
+# 1. Clean slate for generated data
+for t in ['asistencias', 'sesiones_grupo', 'grupo_participantes', 'donations',
+          'consolidation_cases', 'enrollments', 'lessons', 'courses',
+          'agenda_events', 'project_tasks', 'projects', 'cms_page_versions',
+          'cms_pages', 'auth_reset_tokens']:
+    conn.execute(text(f"DELETE FROM {t}"))
+conn.execute(text("DELETE FROM auth_users WHERE email != 'gscarlosernesto@gmail.com'"))
+# Don't delete gscarlosernesto persona
+conn.execute(text("""
+    DELETE FROM personas WHERE email != 'gscarlosernesto@gmail.com'
+"""))
+conn.commit()
+print("  Clean slate done")
+
+# 2. Generate 972 personas
+pids = []
+firsts = ["María","José","Luis","Ana","Carlos","Laura","Pedro","Sofía","Andrés","Valentina",
+          "Diego","Camila","Jorge","Isabella","Miguel","Gabriela","David","Fernanda","Santiago","Luciana",
+          "Óscar","Natalia","Héctor","Verónica","Raúl","Patricia","Felipe","Daniela","Cristian","Mónica"]
+lasts = ["García","Rodríguez","Martínez","López","González","Pérez","Ramírez","Torres","Flores","Reyes"]
+
+MINISTRY_ROLES = ["Apóstol","Profeta","Evangelista","Pastor","Maestro","Ministro de Culto","Líder","Servidor","Miembro Bautizado","Asistente","Visitante Servicios","Visitante de Grupo","Visitante Online"]
+SPIRITUAL_STATUSES = ["Nuevo","Creyente","Discípulo","Maduro","Líder en formación"]
+
+role_weights = {"Visitante Online": 0.03,"Visitante de Grupo": 0.05,"Visitante Servicios": 0.05,
+    "Asistente": 0.08,"Miembro Bautizado": 0.20,"Servidor": 0.15,"Líder": 0.12,
+    "Ministro de Culto": 0.08,"Maestro": 0.05,"Pastor": 0.04,"Evangelista": 0.04,"Profeta": 0.02,"Apóstol": 0.02}
+total_w = sum(role_weights.values())
+for k in role_weights: role_weights[k] /= total_w
+
+gmail_count = 0
+non_gmail_count = 0
+
+for i in range(972):
+    pid = str(uuid.uuid4())
+    first = random.choice(firsts)
+    last = random.choice(lasts)
+    is_gmail = random.random() < 0.5
+    domain = "gmail.com" if is_gmail else "ccfministerio.com"
+    email = f"{first.lower()}.{last.lower()}.{random.randint(1,999)}@{domain}"
+    
+    # Role distribution
+    r = random.random()
+    cum = 0
+    chosen_role = "Miembro Bautizado"
+    for role, w in role_weights.items():
+        cum += w
+        if r <= cum: chosen_role = role; break
+    
+    senior = {"Apóstol","Profeta","Evangelista","Pastor","Maestro","Ministro de Culto","Líder"}
+    if chosen_role in senior:
+        sp = random.choices(SPIRITUAL_STATUSES, weights=[0.02,0.05,0.15,0.38,0.40])[0]
+    elif chosen_role in {"Servidor","Miembro Bautizado"}:
+        sp = random.choices(SPIRITUAL_STATUSES, weights=[0.05,0.15,0.40,0.30,0.10])[0]
+    else:
+        sp = random.choices(SPIRITUAL_STATUSES, weights=[0.40,0.35,0.15,0.08,0.02])[0]
+    
+    # Tags
+    tags = []
+    if chosen_role in {"Visitante Online","Visitante de Grupo","Visitante Servicios"}:
+        tags.append("VISITANTE")
+        if random.random() < 0.15: tags.append("DONANTE_EXTERNO")
+    if chosen_role in {"Líder","Pastor"}:
+        if random.random() < 0.2: tags.append("FORMACION_LIDERES")
+    
+    conn.execute(text(f"""
+        INSERT INTO personas (id, first_name, last_name, email, phone,
+            church_role, spiritual_status, estado_vital, sede_id,
+            tags, created_at, updated_at)
+        VALUES ('{pid}', '{first}', '{last}', '{email}', '300{random.randint(1000000,9999999)}',
+            '{chosen_role}', '{sp}', 'ACTIVO', 1,
+            '{json.dumps(tags)}'::json, '{rd(180)}', '{rd(7)}')
+    """))
+    pids.append(pid)
+    
+    # Create auth_user
+    username = email.split('@')[0].replace('.', '_')[:40] + f"_{i}"
+    conn.execute(text(f"""
+        INSERT INTO auth_users (id, sede_id, username, email, password_hash,
+            platform_role_id, is_active, is_email_verified,
+            failed_login_attempts, is_mfa_enabled, mfa_backup_codes, xp,
+            created_at, updated_at)
+        VALUES ('{pid}', 1, '{username}', '{email}', NULL,
+                4, true, {'true' if is_gmail else 'false'},
+                0, false, '[]'::json, 0,
+                '{rd(180)}', '{rd(7)}')
+        ON CONFLICT (email) DO NOTHING
+    """))
+    
+    if is_gmail:
+        gmail_count += 1
+    else:
+        non_gmail_count += 1
+        token = str(uuid.uuid4())
+        conn.execute(text(f"""
+            INSERT INTO auth_reset_tokens (id, user_id, token, expires_at, used, created_at)
+            VALUES ('{str(uuid.uuid4())}', '{pid}', '{token}', 
+                    '2026-12-31 23:59:59+00', false, '{rd(90)}')
+            ON CONFLICT (token) DO NOTHING
+        """))
+    
+    if i % 200 == 0 and i > 0:
+        conn.commit()
+        print(f"  {i}/972 personas...")
+
+conn.commit()
+print(f"  ✅ 972 personas creadas")
+print(f"  🟢 {gmail_count} Gmail / 🔑 {non_gmail_count} No-Gmail")
+
+# Tokens already generated via bulk INSERT
+print("  ✅ Tokens ya generados")
+
+# 3. Groups
+zones=[("Chapinero",4.6453,-74.0635),("Usaquén",4.6950,-74.0300),("Suba",4.7450,-74.0850),
+       ("Engativá",4.7050,-74.1150),("Kennedy",4.6250,-74.1450),("Fontibón",4.6750,-74.1450),
+       ("Bosa",4.6050,-74.1950),("San Cristóbal",4.5650,-74.1150),("Usme",4.5150,-74.1250),
+       ("Ciudad Bolívar",4.5550,-74.1650),("Teusaquillo",4.6350,-74.0850),("Barrios Unidos",4.6650,-74.0650),
+       ("Puente Aranda",4.6150,-74.1050),("Mártires",4.6050,-74.0850),("Candelaria",4.5950,-74.0750),
+       ("Santa Fe",4.5950,-74.0550),("Antonio Nariño",4.5850,-74.1050),("Rafael Uribe",4.5650,-74.1050),
+       ("Tunjuelito",4.5650,-74.1350),("Sumapaz",4.4850,-74.1450)]
+
+gids = []
+for zn, lat, lng in zones:
+    gid = conn.execute(text(f"""
+        INSERT INTO grupos_evangelismo (nombre, ubicacion, latitud, longitud, capacidad, 
+            dia_reunion, hora_reunion, activo, sede_id, estrategia_id, created_at)
+        VALUES ('Grupo {zn}', '{zn}', {lat+random.uniform(-.015,.015)}, {lng+random.uniform(-.015,.015)},
+                {random.randint(10,25)}, '{random.choice(["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"])}', 
+                '{random.randint(16,20)}:00', true, 1, 'estrategia-geografica', '{rd(120)}')
+        RETURNING id
+    """)).scalar()
+    gids.append(gid)
+print(f"  ✅ {len(gids)} grupos geográficos")
+
+# 6 culto groups
+for i in range(6):
+    gid = conn.execute(text(f"""
+        INSERT INTO grupos_evangelismo (nombre, ubicacion, capacidad, dia_reunion, hora_reunion, 
+            activo, sede_id, estrategia_id, created_at)
+        VALUES ('Culto {["Principal","Tarde","Jóvenes","Matutino","Familiar","Mujeres"][i]}', 
+                'Templo Central', 200, '{random.choice(["Domingo","Domingo","Sábado"])}', 
+                '{random.choice(["08:00","10:00","16:00","18:00"])}', true, 1, 
+                'estrategia-cultos-dominicales', '{rd(120)}')
+        RETURNING id
+    """)).scalar()
+    gids.append(gid)
+print(f"  ✅ +6 grupos de culto")
+
+# 10 casa de gloria groups
+from sqlalchemy import text as sqlt
+for z in range(1, 11):
+    gid = conn.execute(text(f"""
+        INSERT INTO grupos_evangelismo (nombre, ubicacion, capacidad, dia_reunion, hora_reunion,
+            activo, sede_id, estrategia_id, created_at)
+        VALUES ('Casa de Gloria {z}', 'Zona {((z-1)//3)+1}', 15, 
+                '{random.choice(["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"])}',
+                '{random.randint(16,20)}:00', true, 1, 'casas-de-gloria', '{rd(120)}')
+        RETURNING id
+    """)).scalar()
+    gids.append(gid)
+print(f"  ✅ +10 Casas de Gloria")
+print(f"  ✅ Total: {len(gids)} grupos")
+
+conn.commit()
+
+# 4. Group participants
+def role_to_participant_role(church_role):
+    if church_role in {"Apóstol","Profeta","Evangelista","Pastor","Maestro","Ministro de Culto","Líder"}:
+        return random.choice(["lider","colider","miembro"])
+    return random.choice(["miembro","visitante"])
+
+persona_ids = [r[0] for r in conn.execute(text("SELECT id FROM personas WHERE email != 'gscarlosernesto@gmail.com'")).all()]
+p_count = 0
+for gid in gids:
+    for pid in random.sample(persona_ids, min(random.randint(5, 12), len(persona_ids))):
+        p_role = conn.execute(text(f"SELECT church_role FROM personas WHERE id='{pid}'")).scalar()
+        base_role = role_to_participant_role(p_role)
+        conn.execute(text(f"""
+            INSERT INTO grupo_participantes (grupo_id, persona_id, rol_base, fecha_ingreso, activo)
+            VALUES ({gid}, '{pid}', '{base_role}', '{rd(120)}', true)
+        """))
+        p_count += 1
+conn.commit()
+print(f"  ✅ {p_count} participantes")
+
+# 5. Sessions + Attendance
+EXCUSAS = ["Enfermedad","Viaje de trabajo","Compromiso familiar","Estudio / Exámenes",
+           "Turno laboral","Emergencia médica","No informó","Clima / Transporte"]
+
+session_count = 0
+att_count = 0
+present = 0
+absent = 0
+
+for gid in gids:
+    members = [r[0] for r in conn.execute(text(
+        f"SELECT persona_id FROM grupo_participantes WHERE grupo_id = {gid} AND activo = true"
+    )).all()]
+    if not members: continue
+    
+    for w in range(8):
+        sd = now - timedelta(weeks=7-w, days=random.randint(0, 3))
+        sd = sd.replace(hour=random.randint(17, 20), minute=0, second=0, microsecond=0)
+        tema = random.choice(["La fe","El amor","Oración","Frutos","Gracia","Discipulado","Unidad","Propósito"])
+        
+        conn.execute(text(f"""
+            INSERT INTO sesiones_grupo (grupo_id, fecha_sesion, estado, tema_estudio, created_at)
+            VALUES ({gid}, '{sd}', 'REALIZADA', '{tema}', '{sd}')
+        """))
+        session_count += 1
+        sid = conn.execute(text(f"SELECT id FROM sesiones_grupo WHERE grupo_id = {gid} AND fecha_sesion = '{sd}'")).scalar()
+        
+        for pid in members:
+            is_p = random.random() < 0.75
+            estado = "Presente" if is_p else "Ausente"
+            excusa = None if is_p else random.choice(EXCUSAS)
+            conn.execute(text(f"""
+                INSERT INTO asistencias (sesion_id, persona_id, estado, detalle_excusa,
+                    es_primera_vez, requiere_seguimiento)
+                VALUES ({sid}, '{pid}', '{estado}', {f"'{excusa}'" if excusa else 'NULL'}, 
+                        {str(random.random() < 0.02).lower()}, {str(random.random() < 0.03).lower()})
+            """))
+            att_count += 1
+            if is_p: present += 1
+            else: absent += 1
+
+conn.commit()
+print(f"  ✅ {session_count} sesiones, {att_count} asistencias ({present} presentes, {absent} ausentes)")
+
+# 6. Consolidation cases
+for _ in range(80):
+    pid = random.choice(persona_ids)
+    stage = random.choice(["new","new","contacted","meeting","followup","won","closed","closed"])
+    source = random.choice(["WEB_FORM","EVANGELISMO","ASISTENCIA_SERVICIO"])
+    is_active = stage not in ("won","closed")
+    conn.execute(text(f"""
+        INSERT INTO consolidation_cases (id, persona_id, stage, status, source,
+            last_contact_at, next_contact_at, created_at, updated_at)
+        VALUES ('{str(uuid.uuid4())}', '{pid}', '{stage}', '{"active" if is_active else "closed"}',
+                '{source}', '{rd(15)}', {f"'{rd(0,10)}'" if is_active else 'NULL'},
+                '{rd(90)}', '{rd(7)}')
+    """))
+print(f"  ✅ 80 consolidation cases")
+
+# 7. Donations
+for _ in range(120):
+    pid = random.choice(persona_ids)
+    amount = round(random.uniform(20000, 800000), 2)
+    dtype = random.choice(["Diezmo","Ofrenda","Ofrenda","Donación","Especial"])
+    person = conn.execute(text(f"SELECT first_name, last_name, email FROM personas WHERE id='{pid}'")).first()
+    conn.execute(text(f"""
+        INSERT INTO donations (persona_id, amount, currency, donation_type, status,
+            donor_name, donor_email, created_at, updated_at, payment_method)
+        VALUES ('{pid}', {amount}, 'COP', '{dtype}', 'completed',
+                '{person[0] or ""} {person[1] or ""}', '{person[2] or ""}',
+                '{rd(180)}', '{rd(7)}', '{random.choice(["EFECTIVO","TRANSFERENCIA","NEQUI","DAVIPLATA"])}')
+    """))
+print(f"  ✅ 120 donations")
+
+# 8. Courses + Enrollments
+course_data = [("FE-101","Fundamentos de la Fe",20,"PRESENCIAL"),("VID-201","Vida en el Espíritu",25,"VIRTUAL"),
+    ("DIS-301","Discipulado Avanzado",30,"PRESENCIAL"),("LID-401","Liderazgo Cristiano",35,"VIRTUAL"),
+    ("MAT-501","Matrimonio y Familia",15,"PRESENCIAL"),("MIN-601","Ministerio Práctico",40,"PRESENCIAL"),
+    ("TEOL-101","Teología Sistemática I",45,"VIRTUAL"),("HOM-201","Homilética",30,"PRESENCIAL"),
+    ("CON-301","Consejería Bíblica",35,"VIRTUAL"),("MIS-101","Misiones y Evangelismo",20,"PRESENCIAL")]
+cids = []
+for code, title, hours, mod in course_data:
+    cid = conn.execute(text(f"""
+        INSERT INTO courses (code, title, description, modality, is_published, duration_hours, created_at)
+        VALUES ('{code}', '{title}', 'Curso de formación', '{mod}', true, {hours}, '{rd(200)}')
+        RETURNING id
+    """)).scalar()
+    cids.append(cid)
+    for li in range(random.randint(4, 6)):
+        conn.execute(text(f"""
+            INSERT INTO lessons (course_id, title, content, content_type, order_index)
+            VALUES ({cid}, '{title} - Lección {li+1}', 'Contenido de la lección {li+1}', 'text', {li+1})
+        """))
+
+for uid in range(1, 8):
+    for _ in range(random.randint(3, 6)):
+        cid = random.choice(cids)
+        progress = random.randint(0, 100)
+        cert = progress >= 90
+        conn.execute(text(f"""
+            INSERT INTO enrollments (user_id, course_id, status, progress_percent,
+                certificate_issued, updated_at, created_at)
+            VALUES ({uid}, {cid}, '{"completed" if progress >= 100 else "active"}', {progress},
+                    {str(cert).lower()}, '{rd(120)}', '{rd(120)}')
+            ON CONFLICT (user_id, course_id) DO NOTHING
+        """))
+print(f"  ✅ {len(cids)} cursos con lecciones y matrículas")
+
+# 9. Agenda events
+agenda_data = [("Culto General","Salón Principal",2.5),("Estudio Bíblico","Salón Juvenil",1.5),
+    ("Reunión de Líderes","Auditorio",2.0),("Escuela Dominical","Salones de clase",2.0),
+    ("Ayuno y Oración","Templo Central",3.0),("Taller de Matrimonios","Auditorio",3.0),
+    ("Reunión de Jóvenes","Salón Juvenil",2.0),("Alabanza y Adoración","Templo Central",2.0),
+    ("Capacitación Ministerial","Auditorio",4.0),("Cena de Confraternidad","Patio Central",3.0)]
+for title, loc, dur in agenda_data:
+    for _ in range(random.randint(2, 5)):
+        start = rd(0, 45)
+        end = start + timedelta(hours=dur)
+        conn.execute(text(f"""
+            INSERT INTO agenda_events (title, description, start_at, end_at, location, created_at)
+            VALUES ('{title}', 'Evento programado', '{start}', '{end}', '{loc}', '{rd(60)}')
+        """))
+print(f"  ✅ Agenda events")
+
+# 10. Projects
+projects_data = [("Remodelación del Templo","Renovación","active"),
+    ("Campaña Evangelística 2026","Campaña","active"),("Escuela de Líderes","Formación","active"),
+    ("Programa de Ayuda Social","Asistencia","active"),("Producción Audiovisual","Contenido","active"),
+    ("Jornada de Salud","Salud","completed"),("Retiro Juvenil","Jóvenes","active"),
+    ("Festival de Familias","Familias","planning")]
+for title, desc, status in projects_data:
+    pj_id = str(uuid.uuid4())
+    conn.execute(text(f"""
+        INSERT INTO projects (id, title, description, status, created_at, updated_at)
+        VALUES ('{pj_id}', '{title}', '{desc}', '{status}', '{rd(180)}', '{rd(7)}')
+    """))
+    for task_title, diff in [("Diseñar plan",10),("Reunir equipo",8),("Ejecutar fase",6),("Evaluar",4)]:
+        ts = random.choice(["pending","in_progress","completed"]) if status == "active" else "completed"
+        due = rd(0,30) if ts != "completed" else rd(5)
+        conn.execute(text(f"""
+            INSERT INTO project_tasks (id, project_id, title, status, assignee_id, due_date, created_at, updated_at)
+            VALUES ('{str(uuid.uuid4())}', '{pj_id}', '{task_title}', '{ts}', 
+                    '{random.choice(persona_ids)}', '{due}', '{rd(90)}', '{rd(7)}')
+        """))
+print(f"  ✅ Projects & tasks")
+
+# 11. CMS
+conn.execute(text("""
+    INSERT INTO cms_sites (site_key, name, base_path, is_active)
+    SELECT 'main', 'CCF Principal', '/', true
+    WHERE NOT EXISTS (SELECT 1 FROM cms_sites LIMIT 1)
+"""))
+cms_pages_data = [("Inicio","home","published"),("Nosotros","about","published"),
+    ("Creencias","beliefs","published"),("Ministerios","ministries","published"),
+    ("Eventos","events","published"),("Contacto","contact","published"),
+    ("Devocionales","devotionals","published"),("Galería","gallery","draft"),
+    ("Recursos","resources","draft"),("Calendario Interno","internal-calendar","draft")]
+for title, slug, status in cms_pages_data:
+    site_id = conn.execute(text("SELECT id FROM cms_sites LIMIT 1")).scalar()
+    cid = conn.execute(text(f"""
+        INSERT INTO cms_pages (title, slug, status, site_id, created_at, updated_at)
+        VALUES ('{title}', '{slug}', '{status}', {site_id}, '{rd(120)}', '{rd(7)}')
+        RETURNING id
+    """)).scalar()
+    for vi in range(random.randint(2, 4)):
+        conn.execute(text(f"""
+            INSERT INTO cms_page_versions (page_id, version_number, notes, created_by, created_at)
+            VALUES ({cid}, {vi+1}, 'Versión {vi+1} - {title}', {random.randint(1,5)}, '{rd(60)}')
+        """))
+
+conn.commit()
+
+# Summary
+print("\n=== VERIFICACIÓN FINAL ===")
+for t in ['personas','auth_users','platform_role_definitions','sedes',
+          'grupos_evangelismo','grupo_participantes','sesiones_grupo','asistencias',
+          'consolidation_cases','courses','enrollments','lessons','donations',
+          'agenda_events','projects','project_tasks','cms_pages','cms_page_versions']:
+    cnt = conn.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar()
+    print(f"  {t}: {cnt}")
+
+conn.close()
+print("\n🎉 Seed recovery complete!")

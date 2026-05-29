@@ -216,6 +216,7 @@ def test_project_milestone_creation_adds_activity(client, db_session):
         json={"title": "Primer hito"},
         headers=headers,
     )
+    print("MILESTONE RESPONSE:", milestone_response.text)
     assert milestone_response.status_code == 201
 
     activities_response = client.get(

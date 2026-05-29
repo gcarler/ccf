@@ -101,18 +101,16 @@ def _serialize_grupo(grupo: models.GrupoEvangelismo, db: Session) -> dict:
 @router.get("/multiplication/check", response_model=List[MultiplicationCheckItem])
 def check_multiplication(
     umbral: int = Query(15, description="Umbral de miembros para sugerir división"),
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Analiza todos los grupos y devuelve los que superan el umbral de miembros,
     sugiriendo división."""
-    grupos = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.activo == True)
-        .options(joinedload(models.GrupoEvangelismo.lider))
-        .order_by(models.GrupoEvangelismo.nombre.asc())
-        .all()
-    )
+    q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.activo == True)
+    if sede_id is not None:
+        q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
+    grupos = q.options(joinedload(models.GrupoEvangelismo.lider)).order_by(models.GrupoEvangelismo.nombre.asc()).all()
 
     resultados: list[dict] = []
     for grupo in grupos:

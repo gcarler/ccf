@@ -63,6 +63,7 @@ def get_estrategias(
     limit: int = 100,
     activa: Optional[bool] = None,
     clase_raiz: Optional[ClaseEstrategiaEnum] = None,
+    sede_id: Optional[int] = None,
 ) -> List[EvangelismStrategy]:
     """Lista estrategias con filtros opcionales."""
     q = db.query(EvangelismStrategy).order_by(EvangelismStrategy.created_at.desc())
@@ -70,6 +71,8 @@ def get_estrategias(
         q = q.filter(EvangelismStrategy.activa == activa)
     if clase_raiz is not None:
         q = q.filter(EvangelismStrategy.clase_raiz == clase_raiz.value)
+    if sede_id is not None:
+        q = q.filter(EvangelismStrategy.sede_id == sede_id)
     return q.offset(skip).limit(limit).all()
 
 

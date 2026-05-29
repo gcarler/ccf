@@ -53,10 +53,12 @@ def _last_month_range():
     return _month_range(now.year, now.month - 1)
 
 
-def _active_groups_query(db: Session, strategy_id: Optional[str] = None):
+def _active_groups_query(db: Session, strategy_id: Optional[str] = None, sede_id: Optional[int] = None):
     q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.activo == True)
     if strategy_id:
         q = q.filter(models.GrupoEvangelismo.estrategia_id == strategy_id)
+    if sede_id is not None:
+        q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
     return q
 
 
@@ -68,12 +70,13 @@ def _active_groups_query(db: Session, strategy_id: Optional[str] = None):
 def rankings_groups(
     by: str = Query("attendance", description="attendance | growth | visitors"),
     strategy_id: Optional[str] = Query(None),
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     _current_user: models.User = Depends(require_active_user),
 ):
     """Top-10 grupos ordenados por asistencia, crecimiento o visitantes."""
 
-    groups = _active_groups_query(db, strategy_id).all()
+    groups = _active_groups_query(db, strategy_id, sede_id).all()
 
     this_start, this_end = _this_month_range()
     last_start, last_end = _last_month_range()
@@ -196,6 +199,7 @@ def _rank_by_visitors(db: Session, groups, start, end):
 @router.get("/rankings/monthly-comparison")
 def monthly_comparison(
     strategy_id: Optional[str] = Query(None),
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     _current_user: models.User = Depends(require_active_user),
 ):
@@ -204,11 +208,15 @@ def monthly_comparison(
     last_start, last_end = _last_month_range()
 
     def _stats(start, end):
+        base_filter = models.GrupoEvangelismo.activo == True
+        if sede_id is not None:
+            base_filter = (models.GrupoEvangelismo.activo == True) & (models.GrupoEvangelismo.sede_id == sede_id)
+
         # sessions
         sess_q = (
             db.query(_func.count(models.SesionGrupo.id))
             .join(models.GrupoEvangelismo)
-            .filter(models.GrupoEvangelismo.activo == True)
+            .filter(base_filter)
         )
         if strategy_id:
             sess_q = sess_q.filter(models.GrupoEvangelismo.estrategia_id == strategy_id)
@@ -224,7 +232,7 @@ def monthly_comparison(
             .join(models.SesionGrupo)
             .join(models.GrupoEvangelismo)
             .filter(
-                models.GrupoEvangelismo.activo == True,
+                base_filter,
                 models.Asistencia.estado.in_(_ATTENDED_STATES),
                 models.SesionGrupo.fecha_sesion >= start,
                 models.SesionGrupo.fecha_sesion < end,
@@ -240,7 +248,7 @@ def monthly_comparison(
             .join(models.SesionGrupo)
             .join(models.GrupoEvangelismo)
             .filter(
-                models.GrupoEvangelismo.activo == True,
+                base_filter,
                 models.SesionGrupo.fecha_sesion >= start,
                 models.SesionGrupo.fecha_sesion < end,
             )
@@ -256,7 +264,7 @@ def monthly_comparison(
             db.query(_func.count(models.ParticipanteGrupo.id))
             .join(models.GrupoEvangelismo)
             .filter(
-                models.GrupoEvangelismo.activo == True,
+                base_filter,
                 models.ParticipanteGrupo.rol_base == "visitante",
                 models.ParticipanteGrupo.fecha_ingreso >= start,
                 models.ParticipanteGrupo.fecha_ingreso < end,
@@ -301,13 +309,14 @@ def monthly_comparison(
 @router.get("/rankings/leaders")
 def rankings_leaders(
     strategy_id: Optional[str] = Query(None),
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     _current_user: models.User = Depends(require_active_user),
 ):
     """Tablero de líderes con nombre, grupo, % asistencia, miembros, visitantes este mes."""
     this_start, this_end = _this_month_range()
 
-    groups = _active_groups_query(db, strategy_id).all()
+    groups = _active_groups_query(db, strategy_id, sede_id).all()
     rows: list[dict] = []
 
     for g in groups:
