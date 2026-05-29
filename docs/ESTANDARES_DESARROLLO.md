@@ -1,6 +1,6 @@
 # Manual de Estándares de Desarrollo y Arquitectura — Plataforma CCF
 
-**Versión:** 2.0 (Enterprise-Grade)  
+**Versión:** 2.1 (Enterprise-Grade — Anti-Data-Loss Enforced)  
 **Autor:** Arquitectura de Software y DBA Principal  
 **Audiencia:** Desarrolladores Backend, Frontend, DBAs y Agentes de IA  
 **Última actualización:** 2026-05-29
@@ -139,6 +139,48 @@ EXCLUDE USING gist (
 );
 ```
 
+### F. Protocolo de Migración Segura de Tipos de Datos (Anti-Data-Loss)
+
+Al migrar PK/FK de Integer a UUID, seguir estos 6 pasos **en orden exacto**. La omisión del Paso 3 causa pérdida irreversible de relaciones históricas.
+
+**🚨 El Antipatrón Catastrófico:** Si se elimina la PK entera de la tabla padre para crear la nueva columna UUID, se rompe inmediatamente la posibilidad de hacer JOIN con las tablas hijas. La tabla de backup solo tendrá los enteros antiguos pero no los nuevos UUIDs, dejando huérfanas todas las relaciones.
+
+**🛠️ Receta de 6 Pasos (Ejemplo: `sedes.id` Integer→UUID, hija `grupos_evangelismo.sede_id`):**
+
+```sql
+-- PASO 1: Nueva columna temporal en PADRE (conservando PK original)
+ALTER TABLE sedes ADD COLUMN uuid_id UUID DEFAULT gen_random_uuid();
+UPDATE sedes SET uuid_id = gen_random_uuid() WHERE uuid_id IS NULL;
+
+-- PASO 2: Columna temporal en HIJAS
+ALTER TABLE grupos_evangelismo ADD COLUMN sede_uuid UUID;
+
+-- PASO 3: MAPEO MOLECULAR — cruzar por la PK entera que sigue activa
+-- ESTE PASO GARANTIZA LA INTEGRIDAD DE LAS RELACIONES HISTÓRICAS
+UPDATE grupos_evangelismo 
+SET sede_uuid = sedes.uuid_id 
+FROM sedes 
+WHERE grupos_evangelismo.sede_id = sedes.id;
+
+-- PASO 4: Validación — verificar cero huérfanos
+ALTER TABLE grupos_evangelismo ALTER COLUMN sede_uuid SET NOT NULL;
+
+-- PASO 5: Remover restricciones y columnas antiguas
+ALTER TABLE grupos_evangelismo DROP CONSTRAINT IF EXISTS fk_grupos_sede_id;
+ALTER TABLE sedes DROP CONSTRAINT IF EXISTS sedes_pkey CASCADE;
+ALTER TABLE grupos_evangelismo DROP COLUMN sede_id;
+ALTER TABLE sedes DROP COLUMN id;
+
+-- PASO 6: Renombrar y recrear PK/FKs definitivas
+ALTER TABLE sedes RENAME COLUMN uuid_id TO id;
+ALTER TABLE sedes ADD CONSTRAINT sedes_pkey PRIMARY KEY (id);
+ALTER TABLE grupos_evangelismo RENAME COLUMN sede_uuid TO sede_id;
+ALTER TABLE grupos_evangelismo ADD CONSTRAINT fk_grupos_sede_id 
+    FOREIGN KEY (sede_id) REFERENCES sedes(id) ON DELETE CASCADE;
+```
+
+> ⚠️ **NUNCA** ejecutar PASO 5 sin haber completado y verificado el PASO 3.
+
 ---
 
 ## ⚡ 3. Estándares del Backend (FastAPI + SQLAlchemy)
@@ -234,7 +276,7 @@ Cada módulo nuevo debe registrarse en 3 lugares:
 
 ### C. Carga Perezosa (Lazy Loading)
 
-El frontend no debe solicitar todo el historial de una persona de una sola vez. Usar pestañas independientes:
+El frontend no debe solicitar todo el historial de una persona a la vez mediante consultas masivas. Las consultas deben dividirse de manera modular en pestañas independientes que carguen su información bajo demanda con llamadas API independientes:
 
 ```
 /plataforma/personas/{id}?tab=crm      → GET /api/v2/crm/casos?persona_id=X

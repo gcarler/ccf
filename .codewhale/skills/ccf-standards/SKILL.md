@@ -36,9 +36,17 @@ instructions: |
   3. **Soft Deletes**: Never `db.delete()` on transactional tables. Use `deleted_at` or `estado_vital='INACTIVO'`
   4. **Timezone**: ALWAYS `DateTime(timezone=True)`. Never bare `DateTime`.
   5. **Exclusion Constraints**: Use GIST for resource reservations to prevent race conditions
-  6. **FKs to personas.id**: Use UUID. Never `Integer` FK to `personas.id`
-  7. **JSON not JSONB**: Use `Column(JSON)` for SQLite compatibility
-  8. **Never reference legacy tables**: `consolidation_cases`, `cell_groups`, `cell_group_sessions`, `courses`, `enrollments`, `projects`, `project_tasks` are DROPPED. Use `crm_casos`, `grupos_evangelismo`, `sesiones_grupo`, `academy_courses`, `academy_enrollments`, `proyectos`, `tareas_proyecto`.
+  6. **Safe Migration Protocol**: When migrating PK/FK types (e.g. Integer→UUID), follow the 6-step recipe:
+     Step 1: Add temp UUID column in PARENT (keep original PK)
+     Step 2: Add temp UUID column in CHILD tables
+     Step 3: CROSS-POPULATE via the still-active integer PK (THIS STEP PREVENTS DATA LOSS)
+     Step 4: Validate zero orphans
+     Step 5: Drop old constraints and columns
+     Step 6: Rename temp columns to definitive names + recreate PK/FKs
+     ⚠️ NEVER execute Step 5 without completing and verifying Step 3.
+  7. **FKs to personas.id**: Use UUID. Never `Integer` FK to `personas.id`
+  8. **JSON not JSONB**: Use `Column(JSON)` for SQLite compatibility
+  9. **Never reference legacy tables**: `consolidation_cases`, `cell_groups`, `cell_group_sessions`, `courses`, `enrollments`, `projects`, `project_tasks` are DROPPED. Use `crm_casos`, `grupos_evangelismo`, `sesiones_grupo`, `academy_courses`, `academy_enrollments`, `proyectos`, `tareas_proyecto`.
 
   ### 5 BACKEND RULES
 
