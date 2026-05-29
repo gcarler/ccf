@@ -44,7 +44,7 @@ class Usuario(Base):
     __tablename__ = "auth_users"
 
     id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), primary_key=True)
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     username = Column(CITEXT, nullable=False, unique=True)
     email = Column(CITEXT, nullable=False, unique=True)
     password_hash = Column(String(255), nullable=False)

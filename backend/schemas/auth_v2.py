@@ -54,7 +54,7 @@ class NivelGamificadoRead(NivelGamificadoBase):
 # ── Usuarios ─────────────────────────────────────────────────────────────
 
 class UsuarioBase(BaseModel):
-    sede_id: int
+    sede_id: str
     username: str
     email: EmailStr
     is_active: bool = True
@@ -72,7 +72,7 @@ class UsuarioUpdate(BaseModel):
     password: Optional[str] = None
     is_active: Optional[bool] = None
     rol_plataforma_id: Optional[uuid.UUID] = None
-    sede_id: Optional[int] = None
+    sede_id: Optional[str] = None
 
 
 class UsuarioLogin(BaseModel):
@@ -82,7 +82,7 @@ class UsuarioLogin(BaseModel):
 
 class UsuarioRead(UsuarioBase):
     id: uuid.UUID
-    sede_id: int
+    sede_id: str
     username: str
     email: EmailStr
     rol_plataforma_id: uuid.UUID

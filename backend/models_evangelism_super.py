@@ -149,7 +149,7 @@ class EstrategiaEvangelismo(Base):
     categoria_id = Column(Integer, ForeignKey("categorias_estrategia.id"), nullable=False, index=True)
 
     # MULTI-TENANT
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
 
     fecha_creacion = Column(DateTime, default=_utcnow)
     frecuencia = Column(String(20), nullable=True)  # FrecuenciaEnum
@@ -171,7 +171,7 @@ class GrupoEvangelismoSuper(Base):
     estrategia_id = Column(String(20), ForeignKey("estrategias_evangelismo_super.id"), nullable=False, index=True)
 
     # MULTI-TENANT
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
 
     nombre = Column(String(200), nullable=False)
     ubicacion = Column(String(255), nullable=True)

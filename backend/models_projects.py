@@ -13,7 +13,7 @@ from backend.models_shared import Base, _utcnow
 class Project(Base):
     __tablename__ = "projects"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    sede_id = Column(Integer, ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(20), default="planning", index=True)

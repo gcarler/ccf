@@ -18,7 +18,7 @@ from backend.schemas._common import orm_config
 
 class RecursoFisicoResponse(BaseModel):
     id: int
-    sede_id: int
+    sede_id: str
     nombre: str
     tipo: str
     capacidad_maxima: Optional[int] = None
@@ -28,7 +28,7 @@ class RecursoFisicoResponse(BaseModel):
 
 
 class RecursoFisicoCreate(BaseModel):
-    sede_id: int
+    sede_id: str
     nombre: str
     tipo: str
     capacidad_maxima: Optional[int] = None
@@ -41,7 +41,7 @@ class RecursoFisicoCreate(BaseModel):
 
 class EventoAgendaResponse(BaseModel):
     id: str
-    sede_id: int
+    sede_id: str
     modulo_origen: str
     entidad_origen_id: Optional[str] = None
     titulo: str
@@ -69,7 +69,7 @@ class EventoAgendaResponse(BaseModel):
 
 
 class EventoAgendaCreate(BaseModel):
-    sede_id: int
+    sede_id: str
     modulo_origen: str = "MANUAL"
     entidad_origen_id: Optional[str] = None
     titulo: str

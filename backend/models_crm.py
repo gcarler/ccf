@@ -72,7 +72,7 @@ class AgendaEvent(Base):
 class CrmEvent(Base):
     __tablename__ = "crm_events"
     id = Column(Integer, primary_key=True, index=True)
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
     name = Column(String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
     event_date = Column(DateTime(timezone=True), nullable=True, index=True)
@@ -265,7 +265,7 @@ class Persona(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, unique=True, index=True)
     family_id = Column(Integer, ForeignKey("families.id", ondelete="SET NULL"), nullable=True, index=True)
-    sede_id = Column(Integer, ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     first_name = Column(String(100), nullable=False, index=True)
     last_name = Column(String(100), nullable=False, index=True)
     second_name = Column(String(100), nullable=True)
@@ -463,7 +463,7 @@ class ConsolidationCase(Base):
         index=True,
     )
     notes = Column(Text, nullable=True)
-    sede_id = Column(Integer, ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, index=True)
@@ -907,7 +907,7 @@ class EvangelismStrategy(Base):
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
 
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
     categoria_id = Column(Integer, ForeignKey("categorias_estrategia.id"), nullable=True, index=True)
 
     typology = Column(String(50), nullable=True, index=True)

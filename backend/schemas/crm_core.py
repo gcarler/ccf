@@ -16,7 +16,7 @@ class PipelineCRMCreate(BaseModel):
     nombre: str
     tipo: str
     descripcion: Optional[str] = None
-    sede_id: int
+    sede_id: str
     activo: bool = True
 
 
@@ -26,7 +26,7 @@ class PipelineCRMResponse(BaseModel):
     nombre: str
     tipo: str
     descripcion: Optional[str] = None
-    sede_id: int
+    sede_id: str
     activo: bool
     etapas: List[EtapaPipelineResponse] = []
     created_at: Optional[datetime] = None
@@ -79,7 +79,7 @@ class PlantillaMensajeResponse(BaseModel):
 
 class CasoCRMCreate(BaseModel):
     persona_id: str
-    sede_id: int
+    sede_id: str
     pipeline_id: Optional[int] = None
     etapa_actual_id: Optional[int] = None
     titulo_caso: str
@@ -98,7 +98,7 @@ class CasoCRMResponse(BaseModel):
     model_config = orm_config
     id: int
     persona_id: str
-    sede_id: int
+    sede_id: str
     pipeline_id: Optional[int] = None
     etapa_actual_id: Optional[int] = None
     titulo_caso: str

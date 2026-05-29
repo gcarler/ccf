@@ -27,7 +27,7 @@ class RecursoFisico(Base):
     __tablename__ = "agenda_recursos"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     nombre = Column(String(100), nullable=False)
     tipo = Column(String(50), nullable=False)
     capacidad_maxima = Column(Integer, nullable=True)
@@ -42,7 +42,7 @@ class EventoAgenda(Base):
     __tablename__ = "agenda_eventos"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     modulo_origen = Column(String(50), nullable=False, default="MANUAL")
     entidad_origen_id = Column(String(100), nullable=True)
     titulo = Column(String(200), nullable=False)

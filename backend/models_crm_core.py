@@ -71,7 +71,7 @@ class PipelineCRM(Base):
     __tablename__ = "crm_pipelines"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     nombre = Column(String(100), nullable=False)
     tipo = Column(SAEnum(TipoPipelineEnum), nullable=False)
     descripcion = Column(Text)
@@ -128,7 +128,7 @@ class CasoCRM(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
     pipeline_id = Column(Integer, ForeignKey("crm_pipelines.id"), nullable=False, index=True)
     etapa_actual_id = Column(Integer, ForeignKey("crm_etapas_pipeline.id"), nullable=False, index=True)
     titulo_caso = Column(String(200), nullable=False)

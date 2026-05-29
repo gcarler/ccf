@@ -16,7 +16,7 @@ class Proyecto(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     proyecto_padre_id = Column(UUID(as_uuid=True), ForeignKey("proyectos.id"))
     codigo_wbs = Column(String(50), nullable=False, unique=True)
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     nombre = Column(String(150), nullable=False)
     descripcion = Column(Text)
     estado = Column(

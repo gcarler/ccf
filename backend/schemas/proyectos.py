@@ -14,7 +14,7 @@ from backend.schemas._common import orm_config
 class ProyectoBase(BaseModel):
     proyecto_padre_id: Optional[uuid.UUID] = None
     codigo_wbs: str = Field(..., min_length=1, max_length=50)
-    sede_id: int
+    sede_id: str
     nombre: str = Field(..., min_length=1, max_length=150)
     descripcion: Optional[str] = None
     estado: str = "PLANIFICACION"
@@ -30,7 +30,7 @@ class ProyectoCreate(ProyectoBase):
 class ProyectoUpdate(BaseModel):
     proyecto_padre_id: Optional[uuid.UUID] = None
     codigo_wbs: Optional[str] = None
-    sede_id: Optional[int] = None
+    sede_id: Optional[str] = None
     nombre: Optional[str] = None
     descripcion: Optional[str] = None
     estado: Optional[str] = None

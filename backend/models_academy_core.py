@@ -28,7 +28,7 @@ class Curso(Base):
     __tablename__ = "academy_courses"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True)
     code = Column(String(50), nullable=False, unique=True)
     title = Column(String(200), nullable=False)
     description = Column(Text)

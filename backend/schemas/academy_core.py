@@ -15,7 +15,7 @@ from backend.schemas._common import orm_config
 # ═══════════════════════════════════════════════════════════════════════
 
 class CursoCreate(BaseModel):
-    sede_id: Optional[int] = None
+    sede_id: Optional[str] = None
     code: str
     title: str
     description: Optional[str] = None
@@ -29,7 +29,7 @@ class CursoCreate(BaseModel):
 
 
 class CursoUpdate(BaseModel):
-    sede_id: Optional[int] = None
+    sede_id: Optional[str] = None
     code: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
@@ -44,7 +44,7 @@ class CursoUpdate(BaseModel):
 
 class CursoResponse(BaseModel):
     id: int
-    sede_id: Optional[int] = None
+    sede_id: Optional[str] = None
     code: str
     title: str
     description: Optional[str] = None

@@ -217,7 +217,7 @@ class CellGroup(Base):
     end_time = Column(String(50), nullable=True)
     status = Column(String(20), default="Activo", index=True)
 
-    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
 
     evangelism_strategy_id = Column(
         Integer,
