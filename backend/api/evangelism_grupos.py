@@ -4,7 +4,7 @@ import collections
 from datetime import datetime as _datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
@@ -39,6 +39,7 @@ def _can_manage_grupo(db: Session, user: models.User, house) -> bool:
 @router.get("/faro", response_model=List[dict])
 def list_cell_groups(
     estrategia_id: Optional[str] = None,
+    sede_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -46,6 +47,8 @@ def list_cell_groups(
     q = db.query(CellGroup)
     if estrategia_id:
         q = q.filter(CellGroup.evangelism_strategy_id == estrategia_id)
+    if sede_id is not None:
+        q = q.filter(CellGroup.sede_id == sede_id)
     groups = q.order_by(CellGroup.name.asc()).all()
     return [
         {
@@ -93,10 +96,14 @@ def list_my_cell_groups(
 @router.get("/grupos/assignment-summary", response_model=dict)
 @router.get("/faro/assignment-summary", response_model=dict)
 def get_faro_assignment_summary(
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    houses = db.query(models.GrupoEvangelismo).order_by(models.GrupoEvangelismo.nombre.asc()).all()
+    q = db.query(models.GrupoEvangelismo).order_by(models.GrupoEvangelismo.nombre.asc())
+    if sede_id is not None:
+        q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
+    houses = q.all()
     personas = db.query(models.Persona).all()
     assigned_persona_ids = {
         row[0]
@@ -560,6 +567,7 @@ def update_campaign_season(
 def list_faro_sessions(
     season_id: Optional[int] = None,
     cell_group_id: Optional[int] = None,
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -570,6 +578,8 @@ def list_faro_sessions(
         query = query.filter(models.SesionGrupo.season_id == season_id)
     if cell_group_id:
         query = query.filter(models.SesionGrupo.grupo_id == cell_group_id)
+    if sede_id is not None:
+        query = query.join(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.sede_id == sede_id)
     sessions = query.order_by(models.SesionGrupo.fecha_sesion.desc()).all()
 
     # Single query: get attendance counts for all sessions at once
@@ -1048,6 +1058,7 @@ def add_faro_attendance(
 @router.get("/faro/analytics")
 def get_faro_analytics(
     season_id: Optional[int] = None,
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -1065,6 +1076,8 @@ def get_faro_analytics(
     )
     if season_id:
         query = query.filter(models.SesionGrupo.season_id == season_id)
+    if sede_id is not None:
+        query = query.join(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.sede_id == sede_id)
 
     rows = query.group_by(
         models.SesionGrupo.grupo_id, models.SesionGrupo.season_id
@@ -1099,6 +1112,7 @@ def get_faro_analytics(
 @router.get("/macro/despliegue", response_model=dict)
 def get_macro_despliegue(
     season_id: Optional[int] = None,
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -1130,12 +1144,10 @@ def get_macro_despliegue(
         season_name = season.name if season else f"Temporada {season_id}"
 
     # 2. Get all active houses
-    houses = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.activo.is_(True))
-        .order_by(models.GrupoEvangelismo.nombre.asc())
-        .all()
-    )
+    q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.activo.is_(True))
+    if sede_id is not None:
+        q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
+    houses = q.order_by(models.GrupoEvangelismo.nombre.asc()).all()
 
     # 3. Get all sessions for the season
     sessions = (
@@ -1277,10 +1289,11 @@ def register_faro_visitor(
 def list_sessions(
     strategy_id: Optional[str] = None,
     house_id: Optional[int] = None,
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """List sessions, optionally filtered by strategy or house."""
+    """List sessions, optionally filtered by strategy, house or sede."""
     from backend.models import CellGroupSession, CellGroup
 
     q = db.query(CellGroupSession)
@@ -1290,6 +1303,10 @@ def list_sessions(
         )
     if house_id:
         q = q.filter(CellGroupSession.cell_group_id == house_id)
+    if sede_id is not None:
+        q = q.join(CellGroup, CellGroup.id == CellGroupSession.cell_group_id).filter(
+            CellGroup.sede_id == sede_id
+        )
     rows = q.order_by(CellGroupSession.session_date.desc()).all()
     return [
         {

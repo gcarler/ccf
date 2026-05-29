@@ -1144,12 +1144,13 @@ def read_evangelism_strategies(
     limit: int = 100,
     activa: Optional[bool] = None,
     clase_raiz: Optional[str] = None,
+    sede_id: Optional[int] = None,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     from backend.models import CellGroup
     from backend.crud.evangelism import get_estrategias
-    strategies = get_estrategias(db, skip=skip, limit=limit, activa=activa, clase_raiz=clase_raiz)
+    strategies = get_estrategias(db, skip=skip, limit=limit, activa=activa, clase_raiz=clase_raiz, sede_id=sede_id)
     result = []
     for s in strategies:
         obj = EvangelismStrategy.model_validate(s)

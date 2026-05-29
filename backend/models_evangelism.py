@@ -86,7 +86,7 @@ class LogAuditoria(Base):
     accion = Column(String(20), nullable=False)
     detalles_cambio = Column(JSON, nullable=True)
     usuario_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    fecha_accion = Column(DateTime, default=_utcnow)
+    fecha_accion = Column(DateTime(timezone=True), default=_utcnow)
 
 
 # ──────────────────────────────────────────────
@@ -123,10 +123,10 @@ class EstrategiaEvangelismo(Base):
     nombre = Column(String(200), nullable=False)
     categoria_id = Column(Integer, ForeignKey("categorias_estrategia.id"), nullable=False)
     sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
-    fecha_creacion = Column(DateTime, default=_utcnow)
+    fecha_creacion = Column(DateTime(timezone=True), default=_utcnow)
     frecuencia = Column(String(20), nullable=True)
-    fecha_inicio = Column(DateTime, nullable=True)
-    fecha_fin = Column(DateTime, nullable=True)
+    fecha_inicio = Column(DateTime(timezone=True), nullable=True)
+    fecha_fin = Column(DateTime(timezone=True), nullable=True)
     activa = Column(Boolean, default=True)
 
     categoria = relationship("CategoriaEstrategia")
@@ -168,8 +168,8 @@ class GrupoEvangelismo(Base):
     anfitrion_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     parent_group_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     notes_historial = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     parent_group = relationship("GrupoEvangelismo", remote_side=[id], backref="child_groups")
     estrategia = relationship("EstrategiaEvangelismo", back_populates="grupos")
@@ -258,7 +258,7 @@ class ParticipanteGrupo(Base):
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
     rol_base = Column(String(20), nullable=False)
     rol_personalizado_id = Column(Integer, ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True)
-    fecha_ingreso = Column(DateTime, default=_utcnow)
+    fecha_ingreso = Column(DateTime(timezone=True), default=_utcnow)
     activo = Column(Boolean, default=True)
 
     grupo = relationship("GrupoEvangelismo", back_populates="participantes")
@@ -277,13 +277,13 @@ class SesionGrupo(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     grupo_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)
-    fecha_sesion = Column(DateTime, nullable=False)
+    fecha_sesion = Column(DateTime(timezone=True), nullable=False)
     estado = Column(String(20), default=EstadoSesionEnum.PENDIENTE.value, nullable=False)
     motivo_cancelacion = Column(String(255), nullable=True)
     tema_estudio = Column(String(200), nullable=True)
     notas_lider = Column(Text, nullable=True)
     offering_amount = Column(Float, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     grupo = relationship("GrupoEvangelismo", back_populates="sesiones")
     asistencias = relationship("Asistencia", back_populates="sesion", cascade="all, delete-orphan")
@@ -403,7 +403,7 @@ class RegistroSeguimiento(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     asistencia_id = Column(Integer, ForeignKey("asistencias.id", ondelete="CASCADE"), nullable=False)
     responsable_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
-    fecha_seguimiento = Column(DateTime, default=_utcnow, nullable=False)
+    fecha_seguimiento = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     tipo = Column(String(30), nullable=False)
     observaciones = Column(Text, nullable=True)
     estado_completado = Column(Boolean, default=True)
@@ -423,7 +423,7 @@ class HistorialEmbudo(Base):
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
     rol_anterior = Column(String(100), nullable=True)
     rol_nuevo = Column(String(100), nullable=False)
-    fecha_cambio = Column(DateTime, default=_utcnow)
+    fecha_cambio = Column(DateTime(timezone=True), default=_utcnow)
     dias_en_estado_anterior = Column(Integer, nullable=True)
 
     persona = relationship("Persona", back_populates="historial_embudo")
