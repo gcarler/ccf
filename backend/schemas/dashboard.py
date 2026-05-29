@@ -20,6 +20,7 @@ class MetricCard(BaseModel):
     subtitle: Optional[str] = None
 
 
+
 class ChartDataPoint(BaseModel):
     label: str
     value: float
@@ -66,10 +67,10 @@ class DashboardFilter(BaseModel):
 
 class AcademyDashboard(BaseModel):
     cards: List[MetricCard]
-    enrollment_trends: List[ChartDataPoint]
-    top_courses: List[Dict[str, str | int]]
-    grade_distribution: List[ChartDataPoint]
-    at_risk_students_count: int
+    enrollment_trends: List[ChartDataPoint] = []
+    top_courses: List[Dict[str, str | int]] = []
+    grade_distribution: List[ChartDataPoint] = []
+    at_risk_students_count: int = 0
     filters: Optional[List[DashboardFilter]] = None
     geo_data: Optional[List[GeoBucket]] = None
     last_updated: Optional[str] = None
@@ -78,9 +79,9 @@ class AcademyDashboard(BaseModel):
 
 class CrmDashboard(BaseModel):
     cards: List[MetricCard]
-    pipeline_funnel: List[FunnelStage]
-    growth_chart: List[ChartDataPoint]
-    interaction_heatmap: List[HeatmapItem]
+    pipeline_funnel: List[FunnelStage] = []
+    growth_chart: List[ChartDataPoint] = []
+    interaction_heatmap: List[HeatmapItem] = []
     conversion_rate: Optional[float] = None
     pending_followups: int = 0
     slas_vencidos: int = 0
@@ -91,8 +92,8 @@ class CrmDashboard(BaseModel):
 
 class FinanceDashboard(BaseModel):
     cards: List[MetricCard]
-    income_by_category: List[ChartDataPoint]
-    monthly_series: List[ChartDataPoint]
+    income_by_category: List[ChartDataPoint] = []
+    monthly_series: List[ChartDataPoint] = []
     pending_pledges_total: Optional[float] = 0
     latest_donations: Optional[List[Dict]] = None
     filters: Optional[List[DashboardFilter]] = None
@@ -102,10 +103,10 @@ class FinanceDashboard(BaseModel):
 
 class ProjectsDashboard(BaseModel):
     cards: List[MetricCard]
-    workload_distribution: List[ChartDataPoint]
+    workload_distribution: List[ChartDataPoint] = []
     milestone_timeline: Optional[List[Dict]] = None
-    delayed_tasks_count: int
-    status_distribution: List[ChartDataPoint]
+    delayed_tasks_count: int = 0
+    status_distribution: List[ChartDataPoint] = []
     filters: Optional[List[DashboardFilter]] = None
     last_updated: Optional[str] = None
     model_config = orm_config
@@ -113,11 +114,11 @@ class ProjectsDashboard(BaseModel):
 
 class EvangelismDashboard(BaseModel):
     cards: List[MetricCard]
-    attendance_rate: float
-    grupos_por_ubicacion: List[GeoBucket]
-    asistencia_por_sesion: List[ChartDataPoint]
-    embudo: List[FunnelStage]
-    seguimientos_pendientes: int
+    attendance_rate: float = 0.0
+    grupos_por_ubicacion: List[GeoBucket] = []
+    asistencia_por_sesion: List[ChartDataPoint] = []
+    embudo: List[FunnelStage] = []
+    seguimientos_pendientes: int = 0
     ausentes_detalle: Optional[List[TableRow]] = None
     asistentes_detalle: Optional[List[TableRow]] = None
     filters: Optional[List[DashboardFilter]] = None
@@ -128,8 +129,8 @@ class EvangelismDashboard(BaseModel):
 class AgendaDashboard(BaseModel):
     cards: List[MetricCard]
     eventos_proximos: Optional[List[Dict]] = None
-    recursos_ocupados: List[ChartDataPoint]
-    participacion_por_evento: List[ChartDataPoint]
+    recursos_ocupados: List[ChartDataPoint] = []
+    participacion_por_evento: List[ChartDataPoint] = []
     colisiones_recurso: int = 0
     filters: Optional[List[DashboardFilter]] = None
     last_updated: Optional[str] = None
@@ -138,10 +139,10 @@ class AgendaDashboard(BaseModel):
 
 class CmsDashboard(BaseModel):
     cards: List[MetricCard]
-    versiones_por_pagina: List[ChartDataPoint]
-    publicaciones_por_mes: List[ChartDataPoint]
-    contenido_por_tipo: List[ChartDataPoint]
-    borradores_pendientes: int
+    versiones_por_pagina: List[ChartDataPoint] = []
+    publicaciones_por_mes: List[ChartDataPoint] = []
+    contenido_por_tipo: List[ChartDataPoint] = []
+    borradores_pendientes: int = 0
     filters: Optional[List[DashboardFilter]] = None
     last_updated: Optional[str] = None
     model_config = orm_config
@@ -150,7 +151,7 @@ class CmsDashboard(BaseModel):
 class AdminGlobalDashboard(BaseModel):
     cards: List[MetricCard]
     audit_activity: Optional[List[ChartDataPoint]] = None
-    usuarios_por_rol: List[ChartDataPoint]
+    usuarios_por_rol: List[ChartDataPoint] = []
     sesiones_activas: int = 0
     errores_recientes: int = 0
     filters: Optional[List[DashboardFilter]] = None

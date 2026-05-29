@@ -77,8 +77,8 @@ def get_crm_dashboard(db: Session, sede_id: Optional[int] = None) -> CrmDashboar
 
     total = db.execute(sqlt(f"SELECT COUNT(*) FROM personas p WHERE 1=1 {base_where}")).scalar() or 0
     casos = db.execute(sqlt("""
-        SELECT stage, COUNT(*) as cnt FROM consolidation_cases
-        WHERE status = 'active' GROUP BY stage
+        SELECT estado, COUNT(*) as cnt FROM crm_casos
+        WHERE deleted_at IS NULL GROUP BY estado
     """)).all()
     total_casos = sum(r[1] for r in casos) or 1
     funnel = [FunnelStage(stage=r[0] or 'new', count=r[1],
@@ -128,33 +128,36 @@ def get_evangelism_dashboard(
     from sqlalchemy import text as sqlt
 
     where = ""
+    where_cg = ""
     if sede_id:
         where += f" AND sede_id = {sede_id}"
+        where_cg = f" AND ge.sede_id = {sede_id}"
 
-    total_grupos = db.execute(sqlt(f"SELECT COUNT(*) FROM cell_groups WHERE status = 'active' {where}")).scalar() or 0
+    total_grupos = db.execute(sqlt(f"""
+        SELECT COUNT(*) FROM grupos_evangelismo
+        WHERE activo = true {where}
+    """)).scalar() or 0
     total_participantes = db.execute(sqlt(f"""
-        SELECT COUNT(DISTINCT cgm.persona_id) FROM cell_group_members cgm
-        JOIN cell_groups cg ON cgm.cell_group_id = cg.id
-        WHERE cg.status = 'active' {where}
+        SELECT COUNT(DISTINCT gp.persona_id) FROM grupo_participantes gp
+        JOIN grupos_evangelismo ge ON gp.grupo_id = ge.id
+        WHERE ge.activo = true {where}
     """)).scalar() or 0
 
     cutoff = _utcnow() - timedelta(days=30)
-
-    # Asistencia últimos 30 días
     presentes = db.execute(sqlt(f"""
-        SELECT COUNT(*) FROM cell_group_attendance cga
-        JOIN cell_group_sessions cgs ON cga.session_id = cgs.id
-        JOIN cell_groups cg ON cgs.cell_group_id = cg.id
-        WHERE cgs.session_date >= :cutoff {where}
-        AND cga.attended = 1
+        SELECT COUNT(*) FROM asistencias a
+        JOIN sesiones_grupo sg ON a.sesion_id = sg.id
+        JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
+        WHERE sg.fecha_sesion >= :cutoff {where_cg}
+        AND a.estado = 'Presente'
     """), {"cutoff": cutoff}).scalar() or 0
 
     ausentes = db.execute(sqlt(f"""
-        SELECT COUNT(*) FROM cell_group_attendance cga
-        JOIN cell_group_sessions cgs ON cga.session_id = cgs.id
-        JOIN cell_groups cg ON cgs.cell_group_id = cg.id
-        WHERE cgs.session_date >= :cutoff {where}
-        AND (cga.attended = 0 OR cga.attended IS NULL)
+        SELECT COUNT(*) FROM asistencias a
+        JOIN sesiones_grupo sg ON a.sesion_id = sg.id
+        JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
+        WHERE sg.fecha_sesion >= :cutoff {where_cg}
+        AND (a.estado = 'Ausente' OR a.estado IS NULL)
     """), {"cutoff": cutoff}).scalar() or 0
 
     total_asi = presentes + ausentes
@@ -162,8 +165,8 @@ def get_evangelism_dashboard(
 
     # Grupos por ubicación (geo)
     geo_rows = db.execute(sqlt(f"""
-        SELECT zone, latitude, longitude FROM cell_groups
-        WHERE status = 'active' AND latitude IS NOT NULL {where}
+        SELECT ubicacion, latitud, longitud FROM grupos_evangelismo
+        WHERE activo = true AND latitud IS NOT NULL {where}
         LIMIT 50
     """)).all()
     geo_buckets = [
@@ -173,18 +176,18 @@ def get_evangelism_dashboard(
 
     # Asistencia por sesión (últimas 10)
     sesiones = db.execute(sqlt(f"""
-        SELECT cgs.id, cgs.session_date, cg.name as grupo_nombre,
-            (SELECT COUNT(*) FROM cell_group_attendance WHERE session_id = cgs.id AND attended = 1) as presentes,
-            (SELECT COUNT(*) FROM cell_group_attendance WHERE session_id = cgs.id AND (attended = 0 OR attended IS NULL)) as ausentes
-        FROM cell_group_sessions cgs
-        JOIN cell_groups cg ON cgs.cell_group_id = cg.id
-        WHERE cgs.session_date >= :cutoff {where}
-        ORDER BY cgs.session_date DESC LIMIT 10
+        SELECT sg.id, sg.fecha_sesion, ge.nombre as grupo_nombre,
+            (SELECT COUNT(*) FROM asistencias WHERE sesion_id = sg.id AND estado = 'Presente') as presentes,
+            (SELECT COUNT(*) FROM asistencias WHERE sesion_id = sg.id AND (estado = 'Ausente' OR estado IS NULL)) as ausentes
+        FROM sesiones_grupo sg
+        JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
+        WHERE sg.fecha_sesion >= :cutoff {where_cg}
+        ORDER BY sg.fecha_sesion DESC LIMIT 10
     """), {"cutoff": cutoff}).all()
 
     asistencia_chart = []
     for s in reversed(sesiones):
-        fecha = s.session_date
+        fecha = s.fecha_sesion
         if isinstance(fecha, str):
             try:
                 fecha = datetime.fromisoformat(fecha)
@@ -198,7 +201,7 @@ def get_evangelism_dashboard(
         ))
 
     # Embudo
-    total_estrategias = db.execute(sqlt("SELECT COUNT(*) FROM evangelism_strategies WHERE status = 'active'")).scalar() or 0
+    total_estrategias = db.execute(sqlt("SELECT COUNT(*) FROM evangelism_strategies WHERE activa = true")).scalar() or 0
     funnel = [
         FunnelStage(stage="Estrategias", count=total_estrategias),
         FunnelStage(stage="Grupos", count=total_grupos),
@@ -211,13 +214,13 @@ def get_evangelism_dashboard(
 
     # Detalle ausentes
     ausentes_rows = db.execute(sqlt(f"""
-        SELECT p.id, p.first_name, p.last_name, cg.name as grupo, cgs.session_date, cga.estado, cga.absence_reason_detail
-        FROM cell_group_attendance cga
-        JOIN cell_group_sessions cgs ON cga.session_id = cgs.id
-        JOIN cell_groups cg ON cgs.cell_group_id = cg.id
-        JOIN personas p ON cga.persona_id = p.id
-        WHERE cgs.session_date >= :cutoff {where}
-        AND (cga.attended = 0 OR cga.attended IS NULL)
+        SELECT p.id, p.first_name, p.last_name, ge.nombre as grupo, sg.fecha_sesion, a.estado, a.detalle_excusa
+        FROM asistencias a
+        JOIN sesiones_grupo sg ON a.sesion_id = sg.id
+        JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
+        JOIN personas p ON a.persona_id = p.id
+        WHERE sg.fecha_sesion >= :cutoff {where_cg}
+        AND (a.estado = 'Ausente' OR a.estado IS NULL)
         LIMIT 50
     """), {"cutoff": cutoff}).all()
 
@@ -232,13 +235,13 @@ def get_evangelism_dashboard(
     ]
 
     asistentes_rows = db.execute(sqlt(f"""
-        SELECT DISTINCT p.id, p.first_name, p.last_name, cg.name as grupo
-        FROM cell_group_attendance cga
-        JOIN cell_group_sessions cgs ON cga.session_id = cgs.id
-        JOIN cell_groups cg ON cgs.cell_group_id = cg.id
-        JOIN personas p ON cga.persona_id = p.id
-        WHERE cgs.session_date >= :cutoff {where}
-        AND cga.attended = 1
+        SELECT DISTINCT p.id, p.first_name, p.last_name, ge.nombre as grupo
+        FROM asistencias a
+        JOIN sesiones_grupo sg ON a.sesion_id = sg.id
+        JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
+        JOIN personas p ON a.persona_id = p.id
+        WHERE sg.fecha_sesion >= :cutoff {where_cg}
+        AND a.estado = 'Presente'
         LIMIT 50
     """), {"cutoff": cutoff}).all()
 
