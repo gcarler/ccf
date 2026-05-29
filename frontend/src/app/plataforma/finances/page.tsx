@@ -13,6 +13,7 @@ import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { DSMetric } from '@/design/components/DSMetric';
 import { DSChart } from '@/design/components/DSChart';
+import DashboardEmbed from '@/components/DashboardEmbed';
 import { DSCard } from '@/design/components/DSCard';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -310,7 +311,8 @@ export default function FinancesPage() {
                     </div>
                 </div>
             </div>
-        </WorkspaceLayout>
+        <div className="px-4 pb-2"><DashboardEmbed module="finance" label="Finanzas" /></div>
+</WorkspaceLayout>
     );
 }
 

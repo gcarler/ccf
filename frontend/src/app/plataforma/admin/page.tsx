@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import { ViewType } from "@/components/ViewSwitcher";
+import DashboardEmbed from '@/components/DashboardEmbed';
 import { motion } from 'framer-motion';
 
 export default function AdminDashboardPage() {

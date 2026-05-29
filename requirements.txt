@@ -28,6 +28,9 @@ duckdb
 # Async SQLAlchemy (opcional) — instalar para endpoints async con get_db_async
 # asyncpg
 # aiosqlite
+# Report generation
+reportlab>=4.0
+openpyxl>=3.1
 # Optional agent orchestrator
 openai
 opentelemetry-sdk

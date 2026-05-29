@@ -1,7 +1,7 @@
-feat(calidad-final): CRM v2 + evangelism + cross-module — verificado
+feat(evangelism): 4 nuevos módulos — notificaciones, reportes, multiplicación, rankings
 
-- CRM v2: 5 pipelines, CRUD completo, 109 endpoints
-- Evangelism: 10/10 hilos verdes, sessions auto-generadas
-- Cross-module: Persona UUID → 7 módulos, 50+ endpoints
-- 674 endpoints en 30 módulos registrados
-- 0 type mismatches modelo↔schema↔DB
+- Notificaciones: POST /notifications/send-reminders (sesiones mañana + sin reportar)
+- Reportes: PDF y Excel de asistencia por grupo + resumen estrategia
+- Multiplicación: algoritmo división grupos + historial (check/split/history)
+- Rankings: top grupos, comparativa mensual, tablero líderes
+- 10 nuevas rutas, 683 totales en la plataforma

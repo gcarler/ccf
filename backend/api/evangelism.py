@@ -10,6 +10,10 @@ from sqlalchemy.orm import Session
 from backend import crud, models, schemas
 from backend.api.evangelism_events import router as events_router
 from backend.api.evangelism_grupos import router as grupos_router
+from backend.api.evangelism_multiplication import router as multiplication_router
+from backend.api.evangelism_notifications import router as notifications_router
+from backend.api.evangelism_rankings import router as rankings_router
+from backend.api.evangelism_reports import router as reports_router
 from backend.api.evangelism_shared import utc_now
 from backend.auth import (require_active_user, require_admin,
                           require_module_access, require_pastor_or_admin)
@@ -24,6 +28,10 @@ from backend.mesh_websockets import manager
 router = APIRouter()
 router.include_router(events_router)
 router.include_router(grupos_router)
+router.include_router(multiplication_router)
+router.include_router(notifications_router)
+router.include_router(rankings_router)
+router.include_router(reports_router)
 logger = logging.getLogger(__name__)
 _DEPRECATED_ALIAS_HITS: set[str] = set()
 

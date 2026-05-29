@@ -167,9 +167,12 @@ class GrupoEvangelismo(Base):
     lider_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     asistente_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     anfitrion_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    parent_group_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    notes_historial = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
+    parent_group = relationship("GrupoEvangelismo", remote_side=[id], backref="child_groups")
     estrategia = relationship("EstrategiaEvangelismo", back_populates="grupos")
     sede = relationship("Sede")
     lider = relationship("Persona", foreign_keys=[lider_persona_id])

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
 import {
     LayoutDashboard,
@@ -16,15 +17,9 @@ import {
     FolderKanban,
     Shield,
     AlertTriangle,
-    CheckCircle2,
-    TrendingUp,
-    BarChart3,
     MapPin,
     List,
     Filter,
-    X,
-    Download,
-    LucideIcon,
 } from 'lucide-react';
 import { DSCard } from '@/design/components/DSCard';
 import { DSMetric } from '@/design/components/DSMetric';
@@ -55,13 +50,6 @@ interface MetricCardData {
     tone?: string;
     icon?: string;
     subtitle?: string;
-}
-
-interface ChartPoint {
-    label: string;
-    value: number;
-    secondary_value?: number;
-    metadata?: Record<string, any>;
 }
 
 interface FunnelStage {
@@ -105,15 +93,7 @@ const MODULE_CONFIG: Record<string, { label: string; icon: LucideIcon; color: st
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
-function getIcon(name?: string): LucideIcon {
-    const map: Record<string, LucideIcon> = {
-        Users, BookOpen, Home, PiggyBank, Calendar, FileText,
-        FolderKanban, Shield, AlertTriangle, CheckCircle2, TrendingUp,
-        BarChart3, MapPin, LayoutDashboard,
-    };
-    return name && map[name] ? map[name] : LayoutDashboard;
-}
-
+/* unused getIcon removed */
 function fmtNum(n: number) {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
     if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
@@ -255,7 +235,7 @@ function GeoMap({ data }: { data: GeoBucket[] }) {
 
     return (
         <div className="space-y-2">
-            {data.map((g, i) => (
+            {data.map((g) => (
                 <div
                     key={g.label}
                     className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"

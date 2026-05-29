@@ -27,6 +27,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { DSMetric } from '@/design/components/DSMetric';
 import { DSChart } from '@/design/components/DSChart';
+import DashboardEmbed from '@/components/DashboardEmbed';
 import { DSCard } from '@/design/components/DSCard';
 import { toast } from 'sonner';
 

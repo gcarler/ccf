@@ -18,6 +18,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
 import { useViewType, OPERATIONAL_VIEWS } from '@/hooks/useViewType';
 import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
+import DashboardEmbed from '@/components/DashboardEmbed';
 import { motion } from 'framer-motion';
 
 export interface EvangelismStrategy {

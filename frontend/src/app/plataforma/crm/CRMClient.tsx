@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import DashboardEmbed from '@/components/DashboardEmbed';
 import { DSCard } from '@/design/components/DSCard';
 import { DSMetric } from '@/design/components/DSMetric';
 import { DSChart } from '@/design/components/DSChart';
@@ -200,7 +201,8 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
                     }} />
                 </RightPanel>
             )}
-        </WorkspaceLayout>
+        <div className="px-4 pb-2"><DashboardEmbed module="crm" label="CRM Pastoral" /></div>
+</WorkspaceLayout>
     );
 }
 

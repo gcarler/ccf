@@ -10,6 +10,7 @@ import {
     TrendingUp,
     Sparkles,
 } from 'lucide-react';
+import DashboardEmbed from '@/components/DashboardEmbed';
 import { DSCard } from '@/design/components/DSCard';
 import { DSMetric } from '@/design/components/DSMetric';
 import { DSChart } from '@/design/components/DSChart';
