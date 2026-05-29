@@ -281,17 +281,17 @@ def get_evangelism_dashboard(
 def get_academy_dashboard(db: Session, sede_id: Optional[int] = None) -> AcademyDashboard:
     from sqlalchemy import text as sqlt
 
-    total_cursos = db.execute(sqlt("SELECT COUNT(*) FROM courses")).scalar() or 0
-    publicados = db.execute(sqlt("SELECT COUNT(*) FROM courses WHERE is_published = 1")).scalar() or 0
-    estudiantes = db.execute(sqlt("SELECT COUNT(*) FROM enrollments WHERE status = 'active'")).scalar() or 0
-    avg_prog = db.execute(sqlt("SELECT COALESCE(AVG(progress_percent), 0) FROM enrollments")).scalar() or 0
-    certs = db.execute(sqlt("SELECT COUNT(*) FROM enrollments WHERE certificate_issued = 1")).scalar() or 0
+    total_cursos = db.execute(sqlt("SELECT COUNT(*) FROM academy_courses")).scalar() or 0
+    publicados = db.execute(sqlt("SELECT COUNT(*) FROM academy_courses WHERE is_published = true")).scalar() or 0
+    estudiantes = db.execute(sqlt("SELECT COUNT(*) FROM academy_enrollments WHERE status = 'ACTIVO'")).scalar() or 0
+    avg_prog = db.execute(sqlt("SELECT COALESCE(AVG(progress_percent), 0) FROM academy_enrollments")).scalar() or 0
+    certs = db.execute(sqlt("SELECT COUNT(*) FROM academy_enrollments WHERE approved = true")).scalar() or 0
 
     trends = []
     for i in range(5, -1, -1):
         start, end = _month_range(i)
         c = db.execute(sqlt(
-            "SELECT COUNT(*) FROM enrollments WHERE created_at BETWEEN :s AND :e"
+            "SELECT COUNT(*) FROM academy_enrollments WHERE created_at BETWEEN :s AND :e"
         ), {"s": start, "e": end}).scalar() or 0
         trends.append(ChartDataPoint(label=start.strftime("%b"), value=c))
 

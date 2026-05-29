@@ -1,10 +1,6 @@
-fix(dashboard): reparar queries SQL — tablas legacy → nombres reales
+fix(dashboard): reparar queries academy — legacy tables → real tables
 
-- cell_groups → grupos_evangelismo
-- cell_group_sessions → sesiones_grupo
-- cell_group_attendance → asistencias
-- consolidation_cases → crm_casos
-- cga.attended → a.estado ('Presente'/'Ausente')
-- status → activa (evangelism_strategies)
-- session_date → fecha_sesion
-- cg.sede_id → ge.sede_id
+- courses → academy_courses
+- enrollments → academy_enrollments
+- status = 'active' → status = 'ACTIVO'
+- certificate_issued → approved
