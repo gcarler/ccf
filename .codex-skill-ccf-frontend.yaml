@@ -1,0 +1,8 @@
+name: ccf-frontend
+description: >
+  Reglas de frontend para la plataforma CCF (Next.js + Tailwind CSS). 
+  Úsala cuando trabajes en componentes, páginas, estilos o rutas del frontend de CCF.
+  Contiene: reglas de tokens semánticos, drawers vs modales, lazy loading, convención de rutas,
+  nomenclatura personas (no miembros), glory houses como grupos de evangelismo,
+  y sistema de diseño. Aplica para todos los archivos bajo frontend/src/.
+  Esta skill debe activarse automáticamente al tocar archivos del frontend de CCF.

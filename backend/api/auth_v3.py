@@ -33,6 +33,7 @@ from backend.models_auth import (
     Usuario,
 )
 from backend.models_kernel import PlatformRoleDefinition
+from backend.core.rate_limit import rate_limiter
 
 settings = get_settings()
 log = logging.getLogger(__name__)
@@ -47,11 +48,12 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _create_access_token(user_id: str, platform_role: str) -> str:
+def _create_access_token(user_id: str, platform_role: str, sede_id: str = "") -> str:
     to_encode = {
         "sub": user_id,
         "role": platform_role,
         "platform_role": platform_role,
+        "sede_id": sede_id,
     }
     expire = _utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
     to_encode.update({"exp": expire, "iat": _utcnow()})
@@ -270,8 +272,18 @@ def google_callback(
         if pr:
             platform_role_name = pr.role
 
-    # 7. Generate tokens
-    access_token = _create_access_token(str(user.id), platform_role_name)
+    # 7. Get sede_id from user persona
+    sede_id = ""
+    try:
+        from backend import models
+        persona = db.query(models.Persona).filter(models.Persona.id == user.id).first()
+        if persona and persona.sede_id:
+            sede_id = str(persona.sede_id)
+    except Exception:
+        pass
+
+    # 8. Generate tokens with sede_id
+    access_token = _create_access_token(str(user.id), platform_role_name, sede_id)
     refresh_token = _create_refresh_token(db, user.id)
 
     # 8. Set httpOnly cookies + redirect
@@ -289,7 +301,8 @@ def google_callback(
 # 2. TRADITIONAL LOGIN (email + password)
 # ═══════════════════════════════════════════════════════════════════════
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=TokenResponse,
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))])
 def login(
     payload: LoginRequest,
     request: Request,
@@ -443,7 +456,10 @@ def change_password(
 
 @router.get("/me")
 def auth_me(request: Request, db: Session = Depends(get_db)):
-    """Verifica el token actual y retorna información del usuario."""
+    """Verifica el token actual y retorna información del usuario.
+    
+    Incluye permisos RBAC y sede_id del JWT.
+    """
     token = request.cookies.get(settings.access_token_cookie_name) or ""
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
@@ -456,6 +472,7 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub", "")
         platform_role = payload.get("platform_role", "LECTOR")
+        sede_id = payload.get("sede_id", "")
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
@@ -463,12 +480,27 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
 
+    # Resolve effective permissions from platform role
+    permissions = {}
+    try:
+        from backend.models_kernel import PlatformRoleDefinition
+        pr = db.query(PlatformRoleDefinition).filter(
+            PlatformRoleDefinition.id == user.platform_role_id
+        ).first()
+        if pr and pr.permissions:
+            for p in pr.permissions:
+                permissions[p] = "allow"
+    except Exception:
+        pass
+
     return {
         "user_id": str(user.id),
         "email": user.email,
         "username": user.username,
         "is_verified": user.is_email_verified,
         "platform_role": platform_role,
+        "sede_id": sede_id,
+        "permissions": permissions,
         "has_password": user.password_hash is not None,
         "is_gmail": user.email.lower().endswith("@gmail.com") if user.email else False,
     }
@@ -496,6 +528,80 @@ def check_email(email: str, db: Session = Depends(get_db)):
 
 
 # ─── Dependency ─────────────────────────────────────────────────────
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 7. REFRESH TOKEN (unified for v3)
+# ═══════════════════════════════════════════════════════════════════════
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+@router.post("/refresh", response_model=dict)
+def refresh_token(
+    payload: RefreshRequest,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Refresca el access token usando un refresh token válido."""
+    from datetime import datetime, timezone
+    from backend.models_auth import TokenSesion
+    
+    rt = db.query(TokenSesion).filter(
+        TokenSesion.token == payload.refresh_token,
+        TokenSesion.revoked == False,
+    ).first()
+    
+    if not rt:
+        raise HTTPException(status_code=401, detail="Refresh token inválido")
+    
+    if rt.expires_at.replace(tzinfo=None) < datetime.now(timezone.utc).replace(tzinfo=None):
+        rt.revoked = True
+        db.commit()
+        raise HTTPException(status_code=401, detail="Refresh token expirado")
+    
+    user = db.query(Usuario).filter(Usuario.id == rt.user_id).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
+    
+    # Get platform role
+    platform_role_name = "LECTOR"
+    sede_id = ""
+    if user.platform_role_id:
+        pr = db.query(PlatformRoleDefinition).filter(
+            PlatformRoleDefinition.id == user.platform_role_id
+        ).first()
+        if pr:
+            platform_role_name = pr.role
+    
+    # Get sede_id
+    try:
+        from backend import models
+        persona = db.query(models.Persona).filter(models.Persona.id == user.id).first()
+        if persona and persona.sede_id:
+            sede_id = str(persona.sede_id)
+    except Exception:
+        pass
+    
+    # Rotate refresh token (security best practice)
+    rt.revoked = True
+    db.commit()
+    
+    new_access = _create_access_token(str(user.id), platform_role_name, sede_id)
+    new_refresh = _create_refresh_token(db, user.id)
+    
+    _set_cookies(response, new_access, new_refresh)
+    
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    _log_security(db, user.id, "TOKEN_REFRESH", ip=ip, ua=ua)
+    
+    return {
+        "access_token": new_access,
+        "token_type": "bearer",
+        "refresh_token": new_refresh,
+    }
 
 def _require_auth(request: Request, db: Session = Depends(get_db)):
     """FastAPI dependency: require valid JWT."""

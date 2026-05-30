@@ -48,12 +48,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const timer = setTimeout(() => { console.warn('[AUTH] timeout'); setLoading(false); }, 6000);
         try {
-            const data = await apiFetch<any>('/auth/me', { cache: 'no-store', token: t });
-            if (!data.permissions) {
-                try {
-                    const p = await apiFetch<any>('/auth/me/permissions', { cache: 'no-store', token: t });
-                    data.permissions = p.permissions || {};
-                } catch { data.permissions = {}; }
+            // Try v3 auth first (UUID-based), fallback to v1
+            let data: any = null;
+            let v3Data: any = null;
+            try {
+                v3Data = await apiFetch<any>('/v3/auth/me', { cache: 'no-store', token: t });
+            } catch { /* fallback to v1 */ }
+            
+            if (v3Data && v3Data.user_id) {
+                // Map v3 response to v1-compatible shape
+                data = {
+                    id: v3Data.user_id,
+                    username: v3Data.username || v3Data.email?.split('@')[0],
+                    email: v3Data.email,
+                    role: (v3Data.platform_role || 'LECTOR').toLowerCase(),
+                    is_active: true,
+                    is_email_verified: v3Data.is_verified || false,
+                    xp: 0,
+                    created_at: new Date().toISOString(),
+                    permissions: v3Data.permissions || {},
+                };
+            } else {
+                data = await apiFetch<any>('/auth/me', { cache: 'no-store', token: t });
+                if (!data.permissions) {
+                    try {
+                        const p = await apiFetch<any>('/auth/me/permissions', { cache: 'no-store', token: t });
+                        data.permissions = p.permissions || {};
+                    } catch { data.permissions = {}; }
+                }
             }
             setUser(data);
             setToken(t);
@@ -86,6 +108,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await fetchUser(accessToken);
         if (data?.role) redirectByRole(data.role);
         else if (accessToken) router.push('/plataforma/admin');
+        
+        // Auto-refresh permissions cache
+        try {
+            if (accessToken) {
+                await apiFetch('/v3/auth/me', { token: accessToken, silent: true });
+            }
+        } catch { /* silent */ }
     }, [fetchUser, redirectByRole, router]);
 
     const refresh = useCallback(async () => { await fetchUser(); }, [fetchUser]);

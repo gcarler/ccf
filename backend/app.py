@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.api import (academy, academy_core, admin, agenda, agenda_core, agents,
+from backend.api import (academy, academy_core, admin, agenda, agenda_core, agents, auth_v3,
                          analytics,
                          assets, auth, auth_v2, chat, cms, cms_v2, community, content, crm,
                          crm_core, dashboard, donations, evangelism, evangelism_reports,
@@ -30,6 +30,7 @@ logger = logging.getLogger("CCF-Core")
 settings = get_settings()
 
 ROUTER_REGISTRY = [
+    (auth_v3.router, "/api", ["Auth v3"]),
     (auth.router, "/api/auth", ["auth"]),
     (auth_v2.router, "/api/auth", ["Auth v2"]),
     (projects.router, "/api/projects", ["projects"]),

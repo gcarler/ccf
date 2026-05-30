@@ -358,12 +358,84 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=schemas.User)
 def get_current_ministerial_user(
-    current_user: models.User = Depends(require_active_user),
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    """Obtiene el perfil del usuario autenticado con sus permisos."""
-    current_user.permissions = get_user_effective_permissions(db, current_user)
-    return current_user
+    """Obtiene el perfil del usuario autenticado con sus permisos.
+    
+    Compatible con auth v1 (users table, Integer PK) y auth v3 (auth_users, UUID PK).
+    Extrae el token de Authorization header o cookie.
+    """
+    from jose import JWTError, jwt
+    from backend.core.config import get_settings
+    from backend.models_auth import Usuario
+    
+    settings = get_settings()
+    token = request.headers.get("Authorization", "")
+    if token.startswith("Bearer "):
+        token = token[7:]
+    
+    # Fallback: cookie
+    if not token:
+        token = request.cookies.get(settings.access_token_cookie_name) or ""
+    
+    if not token:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+        subject = str(payload.get("sub", ""))
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+    
+    if not subject:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    
+    # Try v3 first (UUID)
+    user = None
+    if "-" in subject:  # UUID
+        from sqlalchemy.orm import joinedload
+        try:
+            import uuid
+            uid = uuid.UUID(subject)
+            user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == uid).first()
+            if user:
+                # Map to v1 User schema for backward compat
+                v1_user = db.query(models.User).filter(models.User.email == user.email).first()
+                if v1_user:
+                    v1_user.permissions = get_user_effective_permissions(db, v1_user)
+                    return v1_user
+                # Simulate a v1 user
+                from backend.schemas import User as UserSchema
+                role_name = user.rol_plataforma.nombre if user.rol_plataforma else "lector"
+                perms = {}
+                for p in user.rol_plataforma.permisos or {}:
+                    perms[p] = "allow"
+                return UserSchema(
+                    id=0,
+                    username=user.username,
+                    email=user.email,
+                    role=role_name,
+                    xp=user.xp or 0,
+                    is_active=user.is_active,
+                    is_email_verified=user.is_email_verified,
+                    created_at=user.created_at or datetime.now(timezone.utc),
+                    permissions=perms,
+                )
+        except (ValueError, ImportError):
+            pass
+    
+    # Fallback v1 (Integer PK)
+    if subject.isdigit():
+        user = crud.get_user(db, int(subject))
+    else:
+        user = crud.get_user_by_email(db, email=subject)
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuario no encontrado")
+    
+    user.permissions = get_user_effective_permissions(db, user)
+    return user
 
 
 @router.patch("/me", response_model=schemas.User)

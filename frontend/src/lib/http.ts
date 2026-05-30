@@ -30,11 +30,23 @@ async function _refreshSession(): Promise<string | null> {
     try {
       const nativeFetch: typeof fetch =
         (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
-      const res = await nativeFetch(apiUrl("/auth/refresh"), {
+      
+      // Try v3 refresh first (UUID-based), fallback to v1
+      let res = await nativeFetch(apiUrl("/v3/auth/refresh"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh_token: refreshToken }),
       });
+      
+      // Fallback to v1 if v3 returns 404
+      if (res.status === 404) {
+        res = await nativeFetch(apiUrl("/auth/refresh"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+      }
+      
       if (!res.ok) return null;
       const data = await res.json();
       if (data.access_token) {

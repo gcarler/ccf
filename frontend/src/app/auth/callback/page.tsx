@@ -12,23 +12,44 @@ function AuthCallbackContent() {
     const [status, setStatus] = useState('Procesando autenticación...');
 
     useEffect(() => {
-        // Backend redirects with fragment (#token=...&refresh=...)
-        // useSearchParams only reads query params, so we must parse the hash manually
-        const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
-        const hashParams = new URLSearchParams(hash);
+        async function handleAuth() {
+            // Support both hash params (#token=...) and query params (?token=...)
+            // Google SSO redirects with ?token=, v3 login may use #token=
+            const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
+            const hashParams = new URLSearchParams(hash);
 
-        const token = hashParams.get('token') || searchParams?.get('token');
-        const refresh = hashParams.get('refresh') || searchParams?.get('refresh');
+            const token = hashParams.get('token') || searchParams?.get('token') || searchParams?.get('access_token');
+            const refresh = hashParams.get('refresh') || searchParams?.get('refresh') || searchParams?.get('refresh_token');
 
-        if (!token) {
-            setStatus('Error: No se recibió token de autenticación');
-            setTimeout(() => router.push('/login'), 3000);
-            return;
+            if (!token) {
+                setStatus('Error: No se recibió token de autenticación');
+                setTimeout(() => router.push('/login'), 3000);
+                return;
+            }
+
+            setStatus('Autenticación exitosa. Redirigiendo...');
+            
+            // Clean URL params after extracting token
+            if (typeof window !== 'undefined') {
+                window.history.replaceState({}, document.title, '/auth/callback');
+            }
+
+            await login(token, refresh ?? undefined);
+            router.push('/plataforma/dashboard');
         }
+        
+        handleAuth();
+    }, []); // Run once on mount; avoid dependency on mutable objects
 
-        login(token, refresh ?? undefined);
-        setStatus('Autenticación exitosa. Redirigiendo...');
-    }, [searchParams, router, login]);
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+            <div className="text-center">
+                <Loader2 className="animate-spin mx-auto mb-4 text-ccf-blue-dark" size={32} />
+                <p className="text-gray-600 font-medium">{status}</p>
+            </div>
+        </div>
+    );
+}
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
