@@ -110,7 +110,7 @@ export default function FaroDetailPage() {
     const [newMemberForm, setNewMemberForm] = useState({ first_name: '', last_name: '', phone: '', email: '' });
     const [creatingMember, setCreatingMember] = useState(false);
     const role = String(user?.role || '').toLowerCase();
-    const isPrivileged = role === 'admin' || role === 'pastor';
+    const isPrivileged = ['admin', 'administrador', 'pastor'].includes(role);
 
     // Load house detail
     useEffect(() => {

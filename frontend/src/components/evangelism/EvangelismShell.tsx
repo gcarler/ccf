@@ -51,9 +51,9 @@ export default function EvangelismShell({
     onGroup,
     onMore
 }: EvangelismShellProps) {
-    const { user, loading, token } = useAuth();
+    const { user, loading, token, hasModuleAccess } = useAuth();
     const role = (user?.role || '').toLowerCase();
-    const isAuthorized = role === 'admin' || role === 'pastor';
+    const isAuthorized = ['admin', 'administrador', 'pastor'].includes(role) || hasModuleAccess('evangelism', 'read');
     const [strategies, setStrategies] = useState<StrategyItem[]>([]);
 
     const fetchStrategies = useCallback(async () => {

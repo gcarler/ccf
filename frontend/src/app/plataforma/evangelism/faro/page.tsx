@@ -56,7 +56,7 @@ export default function FaroPage() {
     const isSeasonFormValid = Boolean(seasonForm.name.trim() && seasonForm.start_date && seasonForm.end_date);
     const isSessionFormValid = Boolean(sessionForm.grupo_id && sessionForm.session_date && activeSeason);
     const role = String(user?.role || '').toLowerCase();
-    const isPrivileged = role === 'admin' || role === 'pastor';
+    const isPrivileged = ['admin', 'administrador', 'pastor'].includes(role);
 
     const load = useCallback(async () => {
         if (!token) return;

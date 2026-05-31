@@ -85,7 +85,7 @@ export default function PlanificadorPage() {
     const { openModal } = useCreation();
     const router = useRouter();
     const role = (user?.role || '').toLowerCase();
-    const canAccessEvangelism = role === 'admin' || role === 'pastor';
+    const canAccessEvangelism = ['admin', 'administrador', 'pastor'].includes(role);
     const [viewMode, setViewMode] = useState<ViewMode>('semana');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [events, setEvents] = useState<CalEvent[]>([]);
