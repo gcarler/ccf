@@ -19,10 +19,22 @@ router = APIRouter()
 
 
 def _is_crm_admin_or_pastor(user: models.User) -> bool:
-    return normalize_role(str(getattr(user, "role", ""))) in {"admin", "pastor"}
+    role = normalize_role(str(getattr(user, "role", "")))
+    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
+        role = normalize_role(user.rol_plataforma.nombre)
+    return role in {"admin", "administrador", "pastor"}
 
 
-def _get_persona_for_user(db: Session, user_id: int) -> Optional[models.Persona]:
+def _get_persona_for_user(db: Session, user_id) -> Optional[models.Persona]:
+    import uuid as _uuid
+    # UUID-based user (v3): persona.id == user.id
+    if isinstance(user_id, _uuid.UUID) or (isinstance(user_id, str) and "-" in str(user_id)):
+        try:
+            uid = _uuid.UUID(str(user_id))
+            return db.query(models.Persona).filter(models.Persona.id == uid).first()
+        except (ValueError, AttributeError):
+            pass
+    # Integer user (legacy): persona.user_id == user.id
     return db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
 
 
@@ -431,7 +443,23 @@ def create_cell_group(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    return crud.create_cell_group(db, payload)
+    obj = crud.create_cell_group(db, payload)
+    return {
+        "id": obj.id,
+        "code": obj.codigo,
+        "name": obj.nombre,
+        "zone": obj.ubicacion,
+        "address": obj.direccion,
+        "capacity": obj.capacidad,
+        "day_of_week": obj.dia_reunion,
+        "start_time": obj.hora_reunion,
+        "leader_id": str(obj.lider_persona_id) if obj.lider_persona_id else None,
+        "assistant_id": str(obj.asistente_persona_id) if obj.asistente_persona_id else None,
+        "host_id": str(obj.anfitrion_persona_id) if obj.anfitrion_persona_id else None,
+        "status": "Activo" if obj.activo else "Inactivo",
+        "members_count": len(obj.participantes) if obj.participantes else 0,
+        "evangelism_strategy_id": obj.evangelism_strategy_id,
+    }
 
 
 @router.put("/grupos/{grupo_id}", response_model=dict)
