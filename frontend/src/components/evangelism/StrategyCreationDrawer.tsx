@@ -126,6 +126,14 @@ export default function StrategyCreationDrawer({
         }
     };
 
+    const strategyTypes = [
+        'Geográfica',
+        'Temática',
+        'Sectorial',
+        'Poblacional',
+        'Servicios (Cultos)',
+    ];
+
     return (
         <WorkspaceDrawer
             isOpen={isOpen}
@@ -305,6 +313,29 @@ export default function StrategyCreationDrawer({
                         />
                     </div>
                 )}
+
+                {/* ── Strategy Type ── */}
+                <div>
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                        Tipo de Estrategia
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {strategyTypes.map(opt => (
+                            <button
+                                key={opt}
+                                type="button"
+                                onClick={() => setValue('strategyType', opt)}
+                                className={`px-3 py-2 rounded-lg text-[11px] font-bold transition-all text-left ${
+                                    watch('strategyType') === opt
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
+                                }`}
+                            >
+                                {opt}
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
                 {/* ── Name ── */}
                 <div>
