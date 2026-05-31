@@ -24,11 +24,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    const redirectByRole = useCallback((role: string) => {
-        const r = role.toLowerCase();
-        if (r === 'admin' || r === 'pastor') router.push('/plataforma/admin');
-        else if (r === 'profesor') router.push('/plataforma/academy');
-        else router.push('/plataforma/crm');
+    const redirectByRole = useCallback((_role: string) => {
+        router.push('/plataforma/messages');
     }, [router]);
 
     const logout = useCallback(() => {
@@ -107,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         const data = await fetchUser(accessToken);
         if (data?.role) redirectByRole(data.role);
-        else if (accessToken) router.push('/plataforma/admin');
+        else if (accessToken) router.push('/plataforma/messages');
         
         // Auto-refresh permissions cache
         try {
@@ -121,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const hasModuleAccess = (module: string, minLevel = 'read') => {
         if (!user?.permissions) return false;
-        if (user.role === 'admin') return true;
+        if (user.role === 'admin' || user.role === 'administrador') return true;
         const k = `${module}:${minLevel}`;
         if (user.permissions[k] === 'allow') return true;
         if (minLevel === 'read' && (user.permissions[`${module}:edit`] === 'allow' || user.permissions[`${module}:manage`] === 'allow')) return true;
@@ -131,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const hasPermission = (perm: string) => {
         if (!user?.permissions) return false;
-        if (user.role === 'admin') return true;
+        if (user.role === 'admin' || user.role === 'administrador') return true;
         return user.permissions[perm] === 'allow';
     };
 

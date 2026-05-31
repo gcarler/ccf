@@ -35,21 +35,11 @@ function AuthCallbackContent() {
             }
 
             await login(token, refresh ?? undefined);
-            router.push('/plataforma/dashboard');
+            router.push('/plataforma/messages');
         }
         
         handleAuth();
     }, []); // Run once on mount; avoid dependency on mutable objects
-
-    return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
-            <div className="text-center">
-                <Loader2 className="animate-spin mx-auto mb-4 text-ccf-blue-dark" size={32} />
-                <p className="text-gray-600 font-medium">{status}</p>
-            </div>
-        </div>
-    );
-}
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50">

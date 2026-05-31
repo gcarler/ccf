@@ -13,16 +13,63 @@ from backend import crud, models, schemas
 from backend.auth import require_module_access
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
+from backend.models_shared import _utcnow
 
 router = APIRouter()
+
+
+@router.get("/chat/users/search")
+def search_chat_users(
+    q: str = Query(..., min_length=2, max_length=100),
+    limit: int = Query(10, le=50),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(
+        require_module_access("messaging", "read")
+    ),
+):
+    """Search users to start a conversation with (excludes self)."""
+    # Escape LIKE wildcards to prevent unintended pattern matching
+    safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    pattern = f"%{safe_q}%"
+    users = (
+        db.query(models.User)
+        .filter(
+            models.User.id != current_user.id,
+            models.User.is_active == True,
+            (models.User.username.ilike(pattern))
+            | (models.User.email.ilike(pattern)),
+        )
+        .order_by(models.User.username)
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "avatar_url": getattr(u, "avatar_url", None),
+        }
+        for u in users
+    ]
 
 
 def _serialize_conversation(
     db: Session, conv: models.Conversation, current_user_id: int
 ) -> schemas.ConversationRead:
+    # Batch-fetch all participant users in one query (avoid N+1)
+    participant_user_ids = [cp.user_id for cp in conv.participants]
+    user_map: dict[int, models.User] = {}
+    if participant_user_ids:
+        users = (
+            db.query(models.User)
+            .filter(models.User.id.in_(participant_user_ids))
+            .all()
+        )
+        user_map = {u.id: u for u in users}
     participants = []
     for cp in conv.participants:
-        user = db.query(models.User).filter(models.User.id == cp.user_id).first()
+        user = user_map.get(cp.user_id)
         participants.append(
             schemas.ConversationParticipantRead(
                 user_id=cp.user_id,
@@ -165,6 +212,16 @@ def list_direct_messages(
         else []
     )
     user_map = {u.id: u.username for u in users}
+    # Determine read status per message based on participant's last_read_at
+    participant = (
+        db.query(models.ConversationParticipant)
+        .filter(
+            models.ConversationParticipant.conversation_id == conv_id,
+            models.ConversationParticipant.user_id == current_user.id,
+        )
+        .first()
+    )
+    last_read = participant.last_read_at if participant else None
     return [
         schemas.DirectMessageItem(
             id=r.id,
@@ -172,7 +229,10 @@ def list_direct_messages(
             sender_name=user_map.get(r.sender_id, "Usuario"),
             content=r.content,
             created_at=r.created_at,
-            is_read=r.is_read,
+            is_read=(
+                r.sender_id == current_user.id
+                or (last_read is not None and r.created_at <= last_read)
+            ),
         )
         for r in rows
     ]
@@ -280,6 +340,7 @@ def delete_chat_message_endpoint(
         raise HTTPException(
             status_code=403, detail="Cannot delete another user's message"
         )
-    db.delete(msg)
+    msg.deleted_at = _utcnow()
+    msg.content = "[Mensaje eliminado]"
     db.commit()
     return {"ok": True}

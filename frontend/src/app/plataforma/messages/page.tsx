@@ -47,6 +47,8 @@ export default function MessagesPage() {
     const [messages, setMessages] = useState<DirectMessageItem[]>([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(true);
+    const [loadingMessages, setLoadingMessages] = useState(false);
+    const [conversationFilter, setConversationFilter] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
     const userId = user?.id;
     const inputRef = useRef<HTMLInputElement>(null);
@@ -74,10 +76,13 @@ export default function MessagesPage() {
     useEffect(() => {
         if (!token || !activeConv) return;
         setMessages([]);
+        setLoadingMessages(true);
         apiFetch<DirectMessageItem[]>(
             `/chat/conversations/${activeConv.id}/messages`,
             { token, query: { limit: "100" } }
-        ).then((data) => { if (Array.isArray(data)) setMessages(data.reverse()); }).catch(() => {});
+        ).then((data) => { if (Array.isArray(data)) setMessages(data.reverse()); })
+        .catch(() => {})
+        .finally(() => setLoadingMessages(false));
         apiFetch(`/chat/conversations/${activeConv.id}/read`, { method: "POST", token }).catch(() => {});
     }, [activeConv?.id, token]);
 
@@ -126,6 +131,15 @@ export default function MessagesPage() {
     const getOtherParticipant = (conv: ConversationRead) =>
         conv.participants.find((p) => p.user_id !== userId);
 
+    // Filtered conversations for search bar
+    const filteredConversations = conversationFilter.trim()
+        ? conversations.filter((c) => {
+            const other = getOtherParticipant(c);
+            const name = (other?.username || "").toLowerCase();
+            return name.includes(conversationFilter.toLowerCase());
+          })
+        : conversations;
+
     const handleSearchChange = (value: string) => {
         setSearchQuery(value);
         setSearchError("");
@@ -144,6 +158,11 @@ export default function MessagesPage() {
             } finally { setSearching(false); }
         }, 300);
     };
+
+    // Cleanup search timeout on unmount
+    useEffect(() => {
+        return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
+    }, []);
 
     const handleCreateConversation = async (participantId: number) => {
         if (!token) return;
@@ -203,6 +222,8 @@ export default function MessagesPage() {
                     <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
+                        value={conversationFilter}
+                        onChange={(e) => setConversationFilter(e.target.value)}
                         placeholder="Buscar conversación..."
                         className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
                     />
@@ -216,7 +237,7 @@ export default function MessagesPage() {
                         <Loader2 size={16} className="animate-spin" />
                         <p className="text-[11px]">Cargando...</p>
                     </div>
-                ) : conversations.length === 0 ? (
+                ) : filteredConversations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 gap-3 px-3 text-center">
                         <div className="size-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                             <MessageCircle size={18} className="text-slate-300 dark:text-slate-600" />
@@ -230,7 +251,7 @@ export default function MessagesPage() {
                         </button>
                     </div>
                 ) : (
-                    conversations.map((conv) => {
+                    filteredConversations.map((conv) => {
                         const other = getOtherParticipant(conv);
                         const isActive = activeConv?.id === conv.id;
                         return (
@@ -333,7 +354,12 @@ export default function MessagesPage() {
                             ref={scrollRef}
                             className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-3 bg-slate-50/30 dark:bg-[#111213]"
                         >
-                            {messages.length === 0 ? (
+                            {loadingMessages ? (
+                                <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
+                                    <Loader2 size={20} className="animate-spin" />
+                                    <p className="text-[12px]">Cargando mensajes...</p>
+                                </div>
+                            ) : messages.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
                                     <div className="size-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                                         <MessageCircle size={18} className="text-slate-300 dark:text-slate-600" />

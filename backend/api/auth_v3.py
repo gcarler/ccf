@@ -488,8 +488,13 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
             PlatformRoleDefinition.id == user.platform_role_id
         ).first()
         if pr and pr.permissions:
-            for p in pr.permissions:
-                permissions[p] = "allow"
+            if "*" in pr.permissions:
+                from backend.core.permissions import PERMISSIONS
+                for p_key in PERMISSIONS:
+                    permissions[p_key] = "allow"
+            else:
+                for p in pr.permissions:
+                    permissions[p] = "allow"
     except Exception:
         pass
 

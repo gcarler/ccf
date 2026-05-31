@@ -18,6 +18,7 @@ class ChatMessage(Base):
     room_id = Column(String(100), nullable=True, index=True)
     content = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
 

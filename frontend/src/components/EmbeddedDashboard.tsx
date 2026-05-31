@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion';
 "use client";
+
+import { motion } from 'framer-motion';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 

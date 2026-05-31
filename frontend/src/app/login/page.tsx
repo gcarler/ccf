@@ -20,12 +20,7 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (isAuthenticated && user?.role) {
-            const role = user.role.toLowerCase();
-            if (["admin", "coordinador", "docente"].includes(role)) {
-                router.push('/admin');
-            } else {
-                router.push('/academy');
-            }
+            router.push('/plataforma/messages');
         }
     }, [isAuthenticated, user, router]);
 
@@ -71,7 +66,7 @@ export default function LoginPage() {
             });
             if (response.access_token) {
                 await login(response.access_token, response.refresh_token);
-                router.push('/plataforma/dashboard');
+                router.push('/plataforma/messages');
             } else {
                 setError('No se recibió el token de acceso.');
             }

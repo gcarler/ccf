@@ -537,7 +537,7 @@ def _has_permission(role: str, user_perms: set | dict, required: str) -> bool:
 
     Higher-level permissions imply lower-level ones (manage > edit > read).
     """
-    if role == "admin":
+    if role in {"admin", "administrador"}:
         return True
 
     module = required.split(":")[0]
@@ -585,10 +585,12 @@ def require_permission(permission: str):
     ):
         from backend import crud  # avoid circular import
 
-        role = normalize_role(current_user.role)
+        role = normalize_role(str(getattr(current_user, "role", "")))
+        if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+            role = normalize_role(current_user.rol_plataforma.nombre)
 
         # Check row-level permissions from the Role model
-        db_user = crud.get_user(db, current_user.id)
+        db_user = crud.get_user(db, current_user.id) if str(getattr(current_user, "id", "")).isdigit() else None
         user_perms: set[str] = set()
 
         # 1. Role-based permissions
@@ -611,7 +613,7 @@ def require_permission(permission: str):
             return current_user
 
         # Role-based fallback for backwards compatibility
-        if role == "admin":
+        if role in {"admin", "administrador"}:
             return current_user
         if permission.startswith("crm:") and role == "pastor":
             return current_user
@@ -647,7 +649,9 @@ async def require_pastor_or_admin(
 ):
     """Require pastor or admin role (CRM-level access)."""
     role = normalize_role(str(getattr(current_user, "role", "")))
-    if role not in {"admin", "pastor"}:
+    if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+        role = normalize_role(current_user.rol_plataforma.nombre)
+    if role not in {"admin", "administrador", "pastor"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permisos insuficientes. Se requiere: crm:manage",

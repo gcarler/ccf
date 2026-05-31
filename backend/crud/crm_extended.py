@@ -792,7 +792,8 @@ def get_conversation_messages(
     before_id: Optional[int] = None,
 ) -> list[models.ChatMessage]:
     q = db.query(models.ChatMessage).filter(
-        models.ChatMessage.room_id == f"dm_{conversation_id}"
+        models.ChatMessage.room_id == f"dm_{conversation_id}",
+        models.ChatMessage.deleted_at == None,
     )
     if before_id:
         q = q.filter(models.ChatMessage.id < before_id)
