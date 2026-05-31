@@ -30,7 +30,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void }) {
     const pathname = usePathname();
-    const { user, hasModuleAccess } = useAuth();
+    const { user, hasModuleAccess, hasPermission } = useAuth();
     const { openModal } = useCreation();
     const { resetSidebarStack } = useSidebarLayers();
 
@@ -66,7 +66,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     };
 
     const visibleModuleItems = moduleItems.filter((item) => {
-        if (item.id === 'admin') return user?.role === 'admin';
+        if (item.id === 'admin') return user?.role === 'admin' || user?.role === 'administrador' || hasPermission('system:config');
         const permModule = MODULE_PERM_MAP[item.id];
         if (!permModule) return true;
         return hasModuleAccess(permModule, 'read');

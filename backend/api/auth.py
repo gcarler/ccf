@@ -407,10 +407,18 @@ def get_current_ministerial_user(
                     return v1_user
                 # Simulate a v1 user
                 from backend.schemas import User as UserSchema
-                role_name = user.rol_plataforma.nombre if user.rol_plataforma else "lector"
+                from backend.core.permissions import normalize_role, PERMISSIONS
+                raw_role = user.rol_plataforma.nombre if user.rol_plataforma else "lector"
+                role_name = normalize_role(raw_role)
+                raw_perms = user.rol_plataforma.permisos or {}
                 perms = {}
-                for p in user.rol_plataforma.permisos or {}:
-                    perms[p] = "allow"
+                if "*" in raw_perms:
+                    # Wildcard: grant all known permissions
+                    for p_key in PERMISSIONS:
+                        perms[p_key] = "allow"
+                else:
+                    for p in raw_perms:
+                        perms[p] = "allow"
                 return UserSchema(
                     id=0,
                     username=user.username,
@@ -797,11 +805,13 @@ def google_callback(
     if is_v2:
         sub = str(user.id)
         role_name = user.rol_plataforma.nombre if user.rol_plataforma else "estudiante"
+        platform_role = user.platform_role.role if user.platform_role else role_name.upper()
     else:
         sub = str(user.id)
         role_name = str(user.role)
+        platform_role = role_name.upper()
 
-    payload = {"sub": sub, "role": normalize_role(role_name)}
+    payload = {"sub": sub, "role": normalize_role(role_name), "platform_role": platform_role}
     access_token = create_access_token(
         data=payload,
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),

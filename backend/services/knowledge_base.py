@@ -76,7 +76,7 @@ class KnowledgeIndexer:
         from backend import models
 
         courses = self.db.query(models.Course).filter(
-            models.Course.is_active,
+            models.Course.is_published,
         ).all()
         count = 0
         for c in courses:
@@ -84,9 +84,8 @@ class KnowledgeIndexer:
                 title=f"Curso: {c.title}",
                 content=(
                     f"{c.title}: {c.description or ''}\n"
-                    f"Módulo: {c.module or 'N/A'}\n"
-                    f"Nivel: {c.level or 'N/A'}\n"
-                    f"Duración: {c.duration or 'N/A'}"
+                    f"Modalidad: {c.modality or 'N/A'}\n"
+                    f"Duración: {c.duration_hours or 0}h"
                 ),
                 summary=(c.description or "")[:200] if c.description else None,
                 category="academy",
