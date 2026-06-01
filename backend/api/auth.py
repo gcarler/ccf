@@ -351,7 +351,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         subject, html = render_verify_email(token_row.token)
         send_email(to=created.email, subject=subject, html=html)
     except Exception as exc:
-        log.warning("No se pudo enviar email de verificación: %s", exc)
+        log.warning("No se pudo enviar email de verificación: %s", type(exc).__name__)
 
     return created
 
@@ -512,7 +512,7 @@ def update_current_user(
             subject, html = render_verify_email(token_row.token)
             send_email(to=user.email, subject=subject, html=html)
         except Exception as exc:
-            log.warning("No se pudo enviar email de verificación tras cambio de email: %s", exc)
+            log.warning("No se pudo enviar email de verificación tras cambio de email: %s", type(exc).__name__)
 
     return user
 

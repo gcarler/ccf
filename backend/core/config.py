@@ -6,12 +6,19 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Centralized runtime configuration."""
+    """Centralized runtime configuration.
+
+    Security defaults are intentionally weak for local dev.
+    The model_validator enforces strong values in staging/prod.
+    """
 
     environment: str = Field(
         default="local", validation_alias=AliasChoices("environment", "ENV")
     )
-    database_url: str = Field(default="sqlite:////root/ccf/ccf_final.db")
+    database_url: str = Field(
+        default="sqlite:///./ccf_dev.db",
+        description="DB URL - must be PostgreSQL in prod/staging (enforced by validator).",
+    )
     secret_key: str = Field(default="change-me")
     encryption_key: str | None = Field(default=None)
     access_token_expire_minutes: int = Field(
@@ -90,6 +97,25 @@ class Settings(BaseSettings):
 
         if env in {"production", "prod", "staging"} and not self.encryption_key:
             raise ValueError("ENCRYPTION_KEY must be set in production environments")
+
+        # Warn if encryption_key is missing in non-local envs (staging already
+        # blocked above; this covers custom env names like "qa", "pre-prod", etc.)
+        if env not in {"local", "test", "testing", "ci"} and not self.encryption_key:
+            import logging as _logging
+            _logging.getLogger(__name__).warning(
+                "ENCRYPTION_KEY is not set - encryption will fall back to SECRET_KEY. "
+                "Set ENCRYPTION_KEY for proper key separation."
+            )
+
+        # Warn if SMTP is unconfigured in non-local environments
+        if env not in {"local", "test", "testing", "ci"} and (
+            not self.smtp_host or self.smtp_host == "localhost"
+        ):
+            import logging as _logging
+            _logging.getLogger(__name__).warning(
+                "SMTP is not configured - email verification and password reset "
+                "emails will not be delivered. Configure SMTP_HOST / SMTP_USER / SMTP_PASSWORD."
+            )
 
         if (
             env in {"production", "prod", "staging"}

@@ -8,8 +8,19 @@ from backend.core.config import get_settings
 
 settings = get_settings()
 
-# Derive a deterministic 32-byte key using SHA-256 so any length secret works safely.
-raw_key = settings.encryption_key or settings.secret_key
+import logging as _logging
+_security_log = _logging.getLogger(__name__)
+
+# Prefer ENCRYPTION_KEY if set; fall back to SECRET_KEY with a warning.
+if settings.encryption_key:
+    raw_key = settings.encryption_key
+else:
+    _security_log.warning(
+        "ENCRYPTION_KEY not set — falling back to SECRET_KEY for data encryption. "
+        "This is insecure in production. Set the ENCRYPTION_KEY environment variable."
+    )
+    raw_key = settings.secret_key
+
 _key = base64.urlsafe_b64encode(hashlib.sha256(raw_key.encode()).digest())
 _fernet = Fernet(_key)
 

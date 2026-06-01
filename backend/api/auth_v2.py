@@ -503,7 +503,11 @@ def forgot_password(
     db.add(TokenResetContrasena(user_id=user.id, token=token, expires_at=expires_at))
     db.commit()
 
-    log.info("Reset password token for %s: %s", user.email, token)
+    # Send the reset email (not just log the token)
+    from backend.services.email import render_reset_password, send_email
+
+    subject, html = render_reset_password(token)
+    send_email(to=user.email, subject=subject, html=html)
     return {"status": "success", "message": "Si el correo existe, recibirás instrucciones"}
 
 

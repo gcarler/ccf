@@ -78,9 +78,14 @@ def _create_refresh_token(db: Session, user_id: uuid.UUID) -> str:
 
 
 def _log_security(db, user_id, evento, ip=None, ua=None, detalles=None):
-    ls = LogSeguridad(user_id=user_id, evento=evento, ip_address=ip, user_agent=ua, detalles=detalles or {})
-    db.add(ls)
-    db.commit()
+    if user_id is None:
+        return
+    try:
+        ls = LogSeguridad(user_id=user_id, evento=evento, ip_address=ip, user_agent=ua, detalles=detalles or {})
+        db.add(ls)
+        db.commit()
+    except Exception:
+        db.rollback()
 
 
 def _set_cookies(response: Response, access_token: str, refresh_token: str):
@@ -250,9 +255,9 @@ def google_callback(
             is_email_verified=True,
         )
         db.add(user)
-        db.commit()
-        db.refresh(user)
-        log.info(f"Nuevo auth_user creado via Google SSO: {google_email}")
+    db.commit()
+    db.refresh(user)
+    log.info("Nuevo auth_user creado via Google SSO")
 
     # 4. Verify user is active
     if not user.is_active:

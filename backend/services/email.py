@@ -35,13 +35,13 @@ def send_email(to: str, subject: str, html: str, text: str = "") -> bool:
     """
     env = (settings.environment or "local").strip().lower()
     if env in {"local", "test", "testing", "ci"}:
-        log.info("[EMAIL LOG] To: %s | Subject: %s", to, subject)
-        log.info("[EMAIL LOG] Body: %s", html[:300])
+        log.info("[EMAIL LOG] Subject: %s", subject)
+        log.debug("[EMAIL LOG] Body: %s", html[:300])
         return True
 
     if not settings.smtp_host or settings.smtp_host == "localhost":
         log.warning(
-            "SMTP not configured; email to %s skipped (subject: %s)", to, subject
+            "SMTP not configured; email skipped (subject: %s)", subject
         )
         return False
 
@@ -53,10 +53,10 @@ def send_email(to: str, subject: str, html: str, text: str = "") -> bool:
             if settings.smtp_user:
                 server.login(settings.smtp_user, settings.smtp_password)
             server.send_message(msg)
-        log.info("Email sent to %s (subject: %s)", to, subject)
-        return True
+            log.info("Email sent (subject: %s)", subject)
+            return True
     except Exception as exc:
-        log.error("Failed to send email to %s: %s", to, exc)
+        log.error("Failed to send email (subject: %s): %s", subject, exc)
         return False
 
 
