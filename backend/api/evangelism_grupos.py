@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import collections
-from datetime import datetime as _datetime
+from datetime import datetime as _datetime, timezone as _timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -58,25 +58,25 @@ def list_cell_groups(
     from backend.models import CellGroup
     q = db.query(CellGroup)
     if estrategia_id:
-        q = q.filter(CellGroup.evangelism_strategy_id == estrategia_id)
+        q = q.filter(GrupoEvangelismo.evangelism_strategy_id == estrategia_id)
     if sede_id is not None:
-        q = q.filter(CellGroup.sede_id == sede_id)
-    groups = q.order_by(CellGroup.name.asc()).all()
+        q = q.filter(GrupoEvangelismo.sede_id == sede_id)
+    groups = q.order_by(GrupoEvangelismo.nombre.asc()).all()
     return [
         {
             "id": g.id,
-            "name": g.name,
-            "zone": g.zone,
-            "address": g.address,
-            "leader_name": g.leader_name,
-            "leader_id": str(g.leader_persona_id) if g.leader_persona_id else None,
-            "assistant_id": str(g.assistant_persona_id) if g.assistant_persona_id else None,
-            "host_id": str(g.host_persona_id) if g.host_persona_id else None,
-            "members_count": g.members_count or 0,
-            "capacity": g.capacity,
-            "day_of_week": g.day_of_week,
-            "start_time": g.start_time,
-            "status": g.status,
+            "name": g.nombre,
+            "zone": g.ubicacion,
+            "address": g.direccion,
+            "leader_name": g.lider.nombre_completo if g.lider else "",
+            "leader_id": str(g.lider_persona_id) if g.lider_persona_id else None,
+            "assistant_id": str(g.asistente_persona_id) if g.asistente_persona_id else None,
+            "host_id": str(g.anfitrion_persona_id) if g.anfitrion_persona_id else None,
+            "members_count": len(g.participantes) if g.participantes else 0,
+            "capacity": g.capacidad,
+            "day_of_week": g.dia_reunion,
+            "start_time": g.hora_reunion,
+            "status": "Activo" if g.activo else "Inactivo",
             "evangelism_strategy_id": g.evangelism_strategy_id,
         }
         for g in groups
@@ -1327,13 +1327,13 @@ def list_sessions(
     q = db.query(CellGroupSession)
     if strategy_id:
         q = q.join(CellGroup, CellGroup.id == CellGroupSession.cell_group_id).filter(
-            CellGroup.evangelism_strategy_id == strategy_id
+            GrupoEvangelismo.evangelism_strategy_id == strategy_id
         )
     if house_id:
         q = q.filter(CellGroupSession.cell_group_id == house_id)
     if sede_id is not None:
         q = q.join(CellGroup, CellGroup.id == CellGroupSession.cell_group_id).filter(
-            CellGroup.sede_id == sede_id
+            GrupoEvangelismo.sede_id == sede_id
         )
     rows = q.order_by(CellGroupSession.session_date.desc()).all()
     return [
@@ -1373,7 +1373,7 @@ def create_session(
         novelty_detail=data.novelty_detail,
         cancellation_reason=data.cancellation_reason,
         reported_by_persona_id=data.reported_by_persona_id,
-        reported_at=_datetime.utcnow(),
+        reported_at=_datetime.now(_timezone.utc),
         status=data.status,
     )
     db.add(db_session)
@@ -1474,7 +1474,7 @@ def update_session(
     for key, value in update_data.items():
         setattr(db_session, key, value)
     
-    db_session.reported_at = _datetime.utcnow()
+    db_session.reported_at = _datetime.now(_timezone.utc)
     db.commit()
     db.refresh(db_session)
     return db_session
@@ -1679,7 +1679,7 @@ def get_strategy_metrics(
     # Get all houses for this strategy
     strategy_ref = str(strategy_id)
     houses = db.query(CellGroup).filter(
-        CellGroup.evangelism_strategy_id == strategy_ref
+        GrupoEvangelismo.evangelism_strategy_id == strategy_ref
     ).all()
     house_ids = [h.id for h in houses]
     
@@ -1696,7 +1696,7 @@ def get_strategy_metrics(
             },
         }
     
-    cutoff = _datetime.utcnow() - timedelta(weeks=weeks)
+    cutoff = _datetime.now(_timezone.utc) - timedelta(weeks=weeks)
 
     sessions = (
         db.query(CellGroupSession)

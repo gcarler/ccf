@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { ConversationRead, DirectMessageItem } from "@/types/directMessages";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
+import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import clsx from "clsx";
 
 interface SearchedUser {
@@ -49,12 +50,13 @@ export default function MessagesPage() {
     const [loading, setLoading] = useState(true);
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [conversationFilter, setConversationFilter] = useState("");
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const scrollRef = useRef<HTMLDivElement>(null);
     const userId = user?.id;
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // ── New conversation modal ──────────────────────────────────────────
-    const [showNewConvModal, setShowNewConvModal] = useState(false);
+    // ── New conversation drawer ──────────────────────────────────────────
+    const [showNewConvDrawer, setShowNewConvDrawer] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
     const [searching, setSearching] = useState(false);
@@ -131,7 +133,6 @@ export default function MessagesPage() {
     const getOtherParticipant = (conv: ConversationRead) =>
         conv.participants.find((p) => p.user_id !== userId);
 
-    // Filtered conversations for search bar
     const filteredConversations = conversationFilter.trim()
         ? conversations.filter((c) => {
             const other = getOtherParticipant(c);
@@ -159,7 +160,6 @@ export default function MessagesPage() {
         }, 300);
     };
 
-    // Cleanup search timeout on unmount
     useEffect(() => {
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, []);
@@ -173,25 +173,31 @@ export default function MessagesPage() {
             });
             await loadConversations();
             setActiveConv(conv);
-            setShowNewConvModal(false);
+            setShowNewConvDrawer(false);
             setSearchQuery("");
             setSearchResults([]);
-            setTimeout(() => inputRef.current?.focus(), 100);
+            setSidebarOpen(false);
+            setTimeout(() => inputRef.current?.focus(), 200);
         } catch { setSearchError("Error al crear la conversación"); }
         finally { setCreatingConv(false); }
     };
 
-    const openNewConvModal = () => {
-        setShowNewConvModal(true);
+    const openNewConvDrawer = () => {
+        setShowNewConvDrawer(true);
         setSearchQuery("");
         setSearchResults([]);
         setSearchError("");
-        setTimeout(() => searchInputRef.current?.focus(), 100);
+        setTimeout(() => searchInputRef.current?.focus(), 200);
+    };
+
+    const selectConversation = (conv: ConversationRead) => {
+        setActiveConv(conv);
+        setSidebarOpen(false);
     };
 
     const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
 
-    // ── Conversation sidebar (passed as customSidebar to WorkspaceLayout) ──
+    // ── Conversation sidebar ─────────────────────────────────────────────
     const conversationSidebar = (
         <div className="flex flex-col h-full bg-slate-50/30 dark:bg-[#1a1b1d] border-r border-slate-100 dark:border-white/[0.05]">
             {/* Header */}
@@ -199,7 +205,7 @@ export default function MessagesPage() {
                 <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                         <MessageCircle size={12} />
-                        Mensajes
+                        <span className="hidden xs:inline">Mensajes</span>
                     </span>
                     {totalUnread > 0 && (
                         <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold">
@@ -208,7 +214,7 @@ export default function MessagesPage() {
                     )}
                 </div>
                 <button
-                    onClick={openNewConvModal}
+                    onClick={openNewConvDrawer}
                     className="size-6 rounded-md flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
                     title="Nueva conversación"
                 >
@@ -216,7 +222,7 @@ export default function MessagesPage() {
                 </button>
             </div>
 
-            {/* Search bar */}
+            {/* Search */}
             <div className="px-2 py-2 shrink-0">
                 <div className="relative">
                     <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -224,7 +230,7 @@ export default function MessagesPage() {
                         type="text"
                         value={conversationFilter}
                         onChange={(e) => setConversationFilter(e.target.value)}
-                        placeholder="Buscar conversación..."
+                        placeholder="Buscar..."
                         className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
                     />
                 </div>
@@ -242,13 +248,17 @@ export default function MessagesPage() {
                         <div className="size-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                             <MessageCircle size={18} className="text-slate-300 dark:text-slate-600" />
                         </div>
-                        <p className="text-[11px] font-semibold text-slate-500">Sin conversaciones</p>
-                        <button
-                            onClick={openNewConvModal}
-                            className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-500 hover:text-blue-600 transition-colors"
-                        >
-                            <UserPlus size={12} /> Iniciar chat
-                        </button>
+                        <p className="text-[11px] font-semibold text-slate-500">
+                            {conversationFilter ? "Sin resultados" : "Sin conversaciones"}
+                        </p>
+                        {!conversationFilter && (
+                            <button
+                                onClick={openNewConvDrawer}
+                                className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+                            >
+                                <UserPlus size={12} /> Iniciar chat
+                            </button>
+                        )}
                     </div>
                 ) : (
                     filteredConversations.map((conv) => {
@@ -257,7 +267,7 @@ export default function MessagesPage() {
                         return (
                             <button
                                 key={conv.id}
-                                onClick={() => setActiveConv(conv)}
+                                onClick={() => selectConversation(conv)}
                                 className={clsx(
                                     "w-full text-left flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all group mb-0.5",
                                     isActive
@@ -274,17 +284,22 @@ export default function MessagesPage() {
                                         )}>
                                             {other?.username || "Usuario"}
                                         </p>
+                                        {conv.last_message_at && (
+                                            <span className="text-[9px] text-slate-400 shrink-0">
+                                                {new Date(conv.last_message_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <p className="text-[11px] text-slate-400 truncate flex-1">
+                                            {conv.last_message_content || "Sin mensajes"}
+                                        </p>
                                         {conv.unread_count > 0 && (
-                                            <span className="shrink-0 h-4 min-w-[16px] px-1 rounded-full bg-blue-500 text-white text-[9px] font-bold flex items-center justify-center">
+                                            <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-blue-500 text-white text-[9px] font-bold shrink-0">
                                                 {conv.unread_count}
                                             </span>
                                         )}
                                     </div>
-                                    {conv.last_message_content && (
-                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                                            {conv.last_message_content}
-                                        </p>
-                                    )}
                                 </div>
                             </button>
                         );
@@ -294,20 +309,11 @@ export default function MessagesPage() {
         </div>
     );
 
-    // ── Render ────────────────────────────────────────────────────────────
     return (
         <WorkspaceLayout
-            breadcrumbs={[{ label: "Mensajes", icon: MessageCircle }]}
-            allowedPermissions={["messaging:read"]}
+            sidebarTitle="Mensajes"
             customSidebar={conversationSidebar}
-            rightActions={
-                <button
-                    onClick={openNewConvModal}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide bg-blue-600 text-white rounded-md hover:bg-blue-700 active:scale-95 transition-all shadow-sm shadow-blue-500/20"
-                >
-                    <Plus size={13} /> Nuevo mensaje
-                </button>
-            }
+            sidebarSections={[]}
         >
             <div className="flex flex-col h-full bg-white dark:bg-[#141517]">
                 {!activeConv ? (
@@ -321,7 +327,7 @@ export default function MessagesPage() {
                             <p className="text-[12px] text-slate-400 mt-1">o empieza una nueva desde el panel izquierdo</p>
                         </div>
                         <button
-                            onClick={openNewConvModal}
+                            onClick={openNewConvDrawer}
                             className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wide bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition-all shadow-sm shadow-blue-500/20 mt-1"
                         >
                             <Plus size={13} /> Nueva conversación
@@ -330,10 +336,11 @@ export default function MessagesPage() {
                 ) : (
                     <>
                         {/* ── Thread header ── */}
-                        <div className="h-10 px-4 flex items-center gap-3 shrink-0 border-b border-slate-100 dark:border-white/[0.05] bg-white dark:bg-[#141517]">
+                        <div className="h-10 px-3 md:px-4 flex items-center gap-3 shrink-0 border-b border-slate-100 dark:border-white/[0.05] bg-white dark:bg-[#141517]">
                             <button
-                                onClick={() => setActiveConv(null)}
-                                className="md:hidden p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"
+                                onClick={() => setSidebarOpen(true)}
+                                className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"
+                                title="Volver a conversaciones"
                             >
                                 <ChevronLeft size={15} />
                             </button>
@@ -344,7 +351,7 @@ export default function MessagesPage() {
                                 </p>
                                 <div className="flex items-center gap-1 text-[10px] text-slate-400">
                                     <Circle size={7} className="fill-emerald-400 text-emerald-400" />
-                                    Activo
+                                    <span className="hidden xs:inline">Activo</span>
                                 </div>
                             </div>
                         </div>
@@ -352,7 +359,7 @@ export default function MessagesPage() {
                         {/* ── Messages ── */}
                         <div
                             ref={scrollRef}
-                            className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-3 bg-slate-50/30 dark:bg-[#111213]"
+                            className="flex-1 overflow-y-auto scrollbar-thin p-3 md:p-4 space-y-3 bg-slate-50/30 dark:bg-[#111213]"
                         >
                             {loadingMessages ? (
                                 <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
@@ -376,18 +383,18 @@ export default function MessagesPage() {
                                             className={clsx("flex", isOwn ? "justify-end" : "justify-start")}
                                         >
                                             {!isOwn && (
-                                                <div className="mr-2 mt-1 shrink-0">
+                                                <div className="mr-2 mt-1 shrink-0 hidden xs:block">
                                                     <AvatarInitial name={msg.sender_name || "U"} size="sm" />
                                                 </div>
                                             )}
-                                            <div className="max-w-[68%] space-y-0.5">
+                                            <div className={clsx("space-y-0.5", isOwn ? "max-w-[80%] md:max-w-[68%]" : "max-w-[85%] md:max-w-[68%]")}>
                                                 {!isOwn && (
                                                     <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 px-1">
                                                         {msg.sender_name}
                                                     </p>
                                                 )}
                                                 <div className={clsx(
-                                                    "px-3.5 py-2 rounded-2xl text-sm leading-relaxed",
+                                                    "px-3 md:px-3.5 py-2 rounded-2xl text-[13px] md:text-sm leading-relaxed",
                                                     isOwn
                                                         ? "bg-blue-600 text-white rounded-br-md"
                                                         : "bg-white dark:bg-white/[0.07] border border-slate-100 dark:border-white/[0.06] text-slate-800 dark:text-slate-100 rounded-bl-md shadow-sm"
@@ -413,7 +420,7 @@ export default function MessagesPage() {
                         </div>
 
                         {/* ── Input bar ── */}
-                        <div className="border-t border-slate-100 dark:border-white/[0.05] p-3 bg-white dark:bg-[#141517]">
+                        <div className="border-t border-slate-100 dark:border-white/[0.05] p-2 md:p-3 bg-white dark:bg-[#141517]">
                             <div className="flex items-center gap-2">
                                 <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
                                     <input
@@ -423,13 +430,13 @@ export default function MessagesPage() {
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={handleKeyDown}
                                         placeholder="Escribe un mensaje..."
-                                        className="flex-1 text-sm bg-transparent outline-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                                        className="flex-1 text-sm bg-transparent outline-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 min-w-0"
                                     />
                                 </div>
                                 <button
                                     onClick={handleSend}
                                     disabled={!input.trim()}
-                                    className="size-9 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shadow-blue-500/20"
+                                    className="size-9 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shadow-blue-500/20 shrink-0"
                                 >
                                     <Send size={15} />
                                 </button>
@@ -439,78 +446,69 @@ export default function MessagesPage() {
                 )}
             </div>
 
-            {/* ── New Conversation Modal ─────────────────────────────────── */}
-            {showNewConvModal && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center">
-                    <div
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        onClick={() => { if (!creatingConv) { setShowNewConvModal(false); setSearchQuery(""); setSearchResults([]); } }}
-                    />
-                    <div className="relative bg-white dark:bg-[#1e1f21] rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-slate-200 dark:border-white/10">
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-white/[0.05]">
-                            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                                <UserPlus size={15} className="text-blue-500" />
-                                Nueva conversación
-                            </h3>
-                            <button
-                                onClick={() => { setShowNewConvModal(false); setSearchQuery(""); setSearchResults([]); }}
-                                disabled={creatingConv}
-                                className="size-7 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-40"
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
+            {/* ── New Conversation Drawer ─────────────────────────────────── */}
+            <WorkspaceDrawer
+                isOpen={showNewConvDrawer}
+                onClose={() => {
+                    if (!creatingConv) {
+                        setShowNewConvDrawer(false);
+                        setSearchQuery("");
+                        setSearchResults([]);
+                    }
+                }}
+                title="Nueva conversación"
+                subtitle="Busca un usuario para iniciar un chat"
+            >
+                <div className="space-y-4">
+                    {/* Search input */}
+                    <div className="relative">
+                        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => handleSearchChange(e.target.value)}
+                            placeholder="Buscar por nombre o email..."
+                            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
+                            autoComplete="off"
+                        />
+                    </div>
 
-                        <div className="px-5 pt-4 pb-2">
-                            <div className="relative">
-                                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input
-                                    ref={searchInputRef}
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => handleSearchChange(e.target.value)}
-                                    placeholder="Buscar por nombre o email..."
-                                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
-                                    autoComplete="off"
-                                />
+                    {/* Results */}
+                    <div className="space-y-1">
+                        {searching ? (
+                            <div className="flex items-center justify-center py-8 text-slate-400 gap-2">
+                                <Loader2 size={15} className="animate-spin" />
+                                <span className="text-sm">Buscando...</span>
                             </div>
-                        </div>
-
-                        <div className="max-h-64 overflow-y-auto px-2 pb-3 scrollbar-thin">
-                            {searching ? (
-                                <div className="flex items-center justify-center py-8 text-slate-400 gap-2">
-                                    <Loader2 size={15} className="animate-spin" />
-                                    <span className="text-sm">Buscando...</span>
-                                </div>
-                            ) : searchError ? (
-                                <p className="text-center py-8 text-sm text-slate-400">{searchError}</p>
-                            ) : searchResults.length > 0 ? (
-                                searchResults.map((u) => (
-                                    <button
-                                        key={u.id}
-                                        onClick={() => handleCreateConversation(u.id)}
-                                        disabled={creatingConv}
-                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50 text-left"
-                                    >
-                                        <AvatarInitial name={u.username} />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{u.username}</p>
-                                            <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
-                                        </div>
-                                        {creatingConv && <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />}
-                                    </button>
-                                ))
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-8 text-slate-400 gap-2">
-                                    <Search size={24} className="opacity-20" />
-                                    <p className="text-sm">{searchQuery.trim().length >= 2 ? "Sin resultados" : "Escribe para buscar"}</p>
-                                    {searchQuery.trim().length < 2 && <p className="text-[11px]">Mínimo 2 caracteres</p>}
-                                </div>
-                            )}
-                        </div>
+                        ) : searchError ? (
+                            <p className="text-center py-8 text-sm text-slate-400">{searchError}</p>
+                        ) : searchResults.length > 0 ? (
+                            searchResults.map((u) => (
+                                <button
+                                    key={u.id}
+                                    onClick={() => handleCreateConversation(u.id)}
+                                    disabled={creatingConv}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50 text-left"
+                                >
+                                    <AvatarInitial name={u.username} />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{u.username}</p>
+                                        <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
+                                    </div>
+                                    {creatingConv && <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />}
+                                </button>
+                            ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8 text-slate-400 gap-2">
+                                <Search size={24} className="opacity-20" />
+                                <p className="text-sm">{searchQuery.trim().length >= 2 ? "Sin resultados" : "Escribe para buscar"}</p>
+                                {searchQuery.trim().length < 2 && <p className="text-[11px]">Mínimo 2 caracteres</p>}
+                            </div>
+                        )}
                     </div>
                 </div>
-            )}
+            </WorkspaceDrawer>
         </WorkspaceLayout>
     );
 }

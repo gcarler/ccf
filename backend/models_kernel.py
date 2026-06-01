@@ -8,7 +8,7 @@ Dimensión B: Roles Iglesia — embudo de consolidación
 Dimensión C: Roles Plataforma — permisos RBAC
 Estado Vital: ACTIVO / INACTIVO
 """
-from datetime import datetime
+from datetime import datetime, timezone
 
 import enum
 
@@ -21,7 +21,7 @@ from backend.core.database import Base
 
 
 def _utcnow():
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 # ──────────────────────────────────────────────

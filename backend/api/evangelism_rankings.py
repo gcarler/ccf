@@ -42,12 +42,12 @@ def _month_range(year: int, month: int):
 
 
 def _this_month_range():
-    now = _dt.datetime.utcnow()
+    now = _dt.datetime.now(_dt.timezone.utc)
     return _month_range(now.year, now.month)
 
 
 def _last_month_range():
-    now = _dt.datetime.utcnow()
+    now = _dt.datetime.now(_dt.timezone.utc)
     if now.month == 1:
         return _month_range(now.year - 1, 12)
     return _month_range(now.year, now.month - 1)

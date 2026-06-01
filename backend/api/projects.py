@@ -921,7 +921,7 @@ def delete_task_supply(
         "supply_deleted",
         f"Insumo '{supply.item_name}' eliminado de '{task.title}'",
     )
-    db.delete(supply)
+    supply.deleted_at = datetime.utcnow()
     db.commit()
     return {"ok": True, "deleted": supply_id}
 
@@ -1008,7 +1008,7 @@ def delete_subtask(
     subtask = _ensure_task_in_project(db, project_id, subtask_id)
     if subtask.parent_id != task_id:
         raise HTTPException(status_code=404, detail="Subtask not found under task")
-    db.delete(subtask)
+    subtask.deleted_at = datetime.utcnow()
     db.commit()
     return {"ok": True, "deleted": subtask_id}
 
@@ -1212,7 +1212,7 @@ def delete_project(
 ):
     """Elimina un proyecto y todos sus datos relacionados."""
     project = _ensure_project(db, project_id)
-    db.delete(project)
+    project.deleted_at = datetime.utcnow()
     db.commit()
     return {"ok": True, "deleted": project_id}
 
@@ -1227,7 +1227,7 @@ def delete_project_task(
     """Elimina una tarea de un proyecto."""
     _ensure_project(db, project_id)
     task = _ensure_task_in_project(db, project_id, task_id)
-    db.delete(task)
+    task.deleted_at = datetime.utcnow()
     db.commit()
     return {"ok": True, "deleted": task_id}
 
@@ -1246,7 +1246,7 @@ def delete_project_comment(
     )
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
-    db.delete(comment)
+    comment.deleted_at = datetime.utcnow()
     db.commit()
     return {"ok": True, "deleted": comment_id}
 
@@ -1364,7 +1364,7 @@ def delete_project_message(
         role = normalize_role(getattr(current_user, "role", ""))
         if role not in ("admin", "pastor", "coordinador"):
             raise HTTPException(403, detail="Cannot delete another user's message")
-    db.delete(msg)
+    msg.deleted_at = datetime.utcnow()
     db.commit()
     return {"ok": True}
 

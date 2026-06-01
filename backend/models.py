@@ -2,18 +2,13 @@
 # Barrel re-export file — all imports intentionally unused here
 
 # Identity & auth
-# Academy / LMS (legacy + CellGroup models still used by evangelism)
+# Academy / LMS (legacy — Course, Enrollment, Lesson still in use via api/academy.py)
 from backend.models_academy import (
     AcademyActivityLog, Assessment, AssessmentAttempt, AssessmentOption,
     AssessmentQuestion, AssignmentSubmission, CampaignSeason, CellGroup,
-    CellGroupAttendance, CellGroupMember, CellGroupSession, Certificate,
-    Course, CourseAttendance, CoursePrerequisite, Enrollment, Family,
-    FormalActa, ForumComment, ForumThread, Lesson, LessonProgress, Resource)
-
-
-# Assets / Agents / Governance / Ops
-from backend.models_assets import (AssetItem, InventoryItem,
-                                   MaintenanceLog)
+    Certificate, Course, CourseAttendance, CoursePrerequisite, Enrollment,
+    Family, FormalActa, ForumComment, ForumThread, Lesson, LessonProgress,
+    Resource)
 # CMS
 from backend.models_cms import CmsMediaItem  # noqa: F401
 from backend.models_cms import (  # noqa: F401
@@ -21,7 +16,7 @@ from backend.models_cms import (  # noqa: F401
     CmsPageVersion, CmsPublishLog, CmsSection,
     CmsSite, CmsTheme, ContentMetric,
     ContentPublication, MediaAsset,
-    NewsletterSubscription, PageContent,
+    PageContent,
     PageContentVersion, Testimonial)
 # Personas (reemplaza Persona — UUID PK)
 from backend.models_personas import Persona
@@ -34,7 +29,7 @@ from backend.models_crm import (
     AgendaEvent, ChatMessage, ConsolidationAssignment,
     ConsolidationCase, ConsolidationInteraction, ConsolidationTask,
     CrmAutomation, CrmEvent,
-    ColombianCity, ColombianDepartment,
+    ColombianDepartment,
     CommunicationLog, CommunityBoardCard,
     Conversation, ConversationParticipant,
     CounselingTicket, CrmTask, Donation, DonationCategory, EventAssignment,

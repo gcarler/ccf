@@ -2,14 +2,6 @@ from backend.models_shared import *
 from backend.models_shared import _utcnow
 
 
-class NewsletterSubscription(Base):
-    __tablename__ = "newsletter_subscriptions"
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, nullable=False, index=True)
-    status = Column(String(20), default="active")  # active, unsubscribed
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-
-
 class PageContent(Base):
     __tablename__ = "page_contents"
     id = Column(Integer, primary_key=True, index=True)

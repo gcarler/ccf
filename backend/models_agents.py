@@ -1,5 +1,5 @@
 """Agent Identity Model — Canonical person identity for the CCF platform."""
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer
 from sqlalchemy import String, Text, UniqueConstraint, JSON
@@ -9,7 +9,7 @@ from backend.core.database import Base
 
 
 def _utcnow():
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 class Agent(Base):

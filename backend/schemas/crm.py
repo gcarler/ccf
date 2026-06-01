@@ -114,7 +114,7 @@ class EventAttendance(EventAttendanceBase):
     model_config = orm_config
 
 class CounselingTicketBase(BaseModel):
-    persona_id: int
+    persona_id: str
     subject: str
     notes: Optional[str] = None
     status: str = "open"
@@ -285,6 +285,7 @@ class PersonaResponse(BaseModel):
     id: str
     first_name: str
     last_name: str
+    nombre_completo: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
     church_role: Optional[str] = None

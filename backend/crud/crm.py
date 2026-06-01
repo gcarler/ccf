@@ -1260,8 +1260,7 @@ def delete_counseling_ticket(db: Session, ticket_id: int) -> bool:
     )
     if not row:
         return False
-    from datetime import datetime
-    row.deleted_at = datetime.utcnow()
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1455,8 +1454,7 @@ def delete_donation(db: Session, donation_id: int) -> bool:
     ).first()
     if not row:
         return False
-    from datetime import datetime
-    row.deleted_at = datetime.utcnow()
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1492,8 +1490,7 @@ def delete_milestone(db: Session, milestone_id: int) -> bool:
     )
     if not row:
         return False
-    from datetime import datetime
-    row.deleted_at = datetime.utcnow()
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 

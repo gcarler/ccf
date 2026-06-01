@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -17,8 +18,11 @@ def list_agenda_events(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):
+    from backend.crud.crm import get_user_sede_id
+    sede_id = get_user_sede_id(db, current_user.id)
     return (
         db.query(models.AgendaEvent)
+        .filter(models.AgendaEvent.sede_id == sede_id)
         .order_by(models.AgendaEvent.start_at.asc(), models.AgendaEvent.id.asc())
         .all()
     )
@@ -95,6 +99,6 @@ def delete_agenda_event(
     if not agenda_event:
         raise HTTPException(status_code=404, detail="Agenda event not found")
 
-    db.delete(agenda_event)
+    agenda_event.deleted_at = datetime.utcnow()
     db.commit()
     return {"status": "deleted", "id": event_id}

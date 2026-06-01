@@ -9,7 +9,6 @@ from sqlalchemy.orm import relationship
 
 from backend.models_shared import Base, _utcnow
 
-
 class Proyecto(Base):
     __tablename__ = "proyectos"
 
@@ -35,6 +34,7 @@ class Proyecto(Base):
     equipo = relationship("EquipoProyecto", back_populates="proyecto", cascade="all, delete-orphan")
     tareas = relationship("TareaProyecto", back_populates="proyecto", cascade="all, delete-orphan")
 
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 class EquipoProyecto(Base):
     __tablename__ = "equipo_proyecto"
@@ -49,6 +49,7 @@ class EquipoProyecto(Base):
 
     proyecto = relationship("Proyecto", back_populates="equipo")
 
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 class TareaProyecto(Base):
     __tablename__ = "tareas_proyecto"
@@ -73,6 +74,7 @@ class TareaProyecto(Base):
     creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     fecha_vencimiento = Column(DateTime(timezone=True), nullable=False)
     fecha_completado = Column(DateTime(timezone=True))
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     proyecto = relationship("Proyecto", back_populates="tareas")
     tarea_padre = relationship("TareaProyecto", remote_side="TareaProyecto.id", backref="subtareas")

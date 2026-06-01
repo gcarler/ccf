@@ -56,6 +56,7 @@ class ConversationParticipant(Base):
 
 class AgendaEvent(Base):
     __tablename__ = "agenda_events"
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
@@ -205,6 +206,7 @@ class CounselingTicket(Base):
 class PrayerRequest(Base):
     __tablename__ = "prayer_requests"
     id = Column(Integer, primary_key=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     requester_name = Column(String(200), nullable=False, index=True)
     request_text = Column(Text, nullable=False)
     category = Column(String(50), default="General")
@@ -245,20 +247,6 @@ class ColombianDepartment(Base):
     name = Column(String(50), unique=True, nullable=False)
     code = Column(String(3), unique=True, nullable=False)
     capital = Column(String(100), nullable=False)
-    cities = relationship("ColombianCity", back_populates="department", cascade="all, delete-orphan")
-
-
-class ColombianCity(Base):
-    __tablename__ = "colombian_cities"
-    id = Column(Integer, primary_key=True, index=True)
-    department_id = Column(
-        Integer,
-        ForeignKey("colombian_departments.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    name = Column(String(100), nullable=False)
-    department = relationship("ColombianDepartment", back_populates="cities")
 
 
 class Persona(Base):
@@ -277,6 +265,8 @@ class Persona(Base):
     landline_phone = Column(String(20), nullable=True)
     other_phone = Column(String(20), nullable=True)
     # DEPRECADO: usar church_role_effective (resuelto desde Kernel PersonaRoleAssignment)
+    # La columna física se eliminará en próxima migración.
+    # Mientras tanto, el @property church_role_effective resuelve desde Kernel.
     church_role = Column(String(50), default="Miembro", index=True)
     is_baptized = Column(Boolean, default=False, index=True)
     fecha_bautismo = Column(Date, nullable=True)
@@ -354,6 +344,16 @@ class Persona(Base):
     # Este @property resuelve church_role desde el Kernel cuando existe,
     # con fallback a la columna legacy (Persona.church_role).
     # Migración pendiente: eliminar la columna física y usar solo Kernel.
+    @property
+    def church_role(self) -> str:
+        """Proxy a church_role_effective — redirige desde Kernel."""
+        return self.church_role_effective
+
+    @church_role.setter
+    def church_role(self, value: str):
+        """Setter para compatibilidad — escribe en la columna física."""
+        self._church_role = value
+
     @property
     def church_role_effective(self) -> str:
         """Rol en la iglesia resuelto desde el Kernel (PersonaRoleAssignment).
@@ -736,6 +736,7 @@ class CommunicationLog(Base):
 class SpiritualMilestone(Base):
     __tablename__ = "spiritual_milestones"
     id = Column(Integer, primary_key=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
@@ -890,11 +891,13 @@ class SupportTicket(Base):
 class CommunityBoardCard(Base):
     __tablename__ = "community_board_cards"
     id = Column(Integer, primary_key=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     column_id = Column(String(50), nullable=True, index=True)
     title = Column(String(200), nullable=False)
     body = Column(Text, nullable=True)
     position = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class EvangelismStrategy(Base):

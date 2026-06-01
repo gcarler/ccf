@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -951,7 +951,7 @@ def get_page_analytics(
     """Get page view analytics."""
     from datetime import timedelta
     from sqlalchemy import func
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     page = db.query(models.CmsPage).join(models.CmsSite).filter(
         models.CmsPage.slug == page_key,
     ).first()

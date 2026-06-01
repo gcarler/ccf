@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.auth import require_active_user, require_admin
 from backend.core.database import get_db
+from backend.crud.crm import get_user_sede_id
 
 router = APIRouter()
 
@@ -65,7 +66,8 @@ def get_global_calendar(
     current_user: models.User = Depends(require_active_user),
 ):
     events = []
-    agenda_events = db.query(models.AgendaEvent).all()
+    sede_id = get_user_sede_id(db, current_user.id)
+    agenda_events = db.query(models.AgendaEvent).filter(models.AgendaEvent.sede_id == sede_id).all()
     for event in agenda_events:
         events.append(
             {
@@ -81,7 +83,7 @@ def get_global_calendar(
             }
         )
     evangelism_events = (
-        db.query(models.CrmEvent).filter(models.CrmEvent.event_date.isnot(None)).all()
+        db.query(models.CrmEvent).filter(models.CrmEvent.event_date.isnot(None), models.CrmEvent.sede_id == sede_id).all()
     )
     for event in evangelism_events:
         events.append(
@@ -100,7 +102,7 @@ def get_global_calendar(
     tasks = (
         db.query(models.ProjectTask)
         .filter(models.ProjectTask.due_date.isnot(None))
-        .all()
+        .all()  # 🛡️ TODO: filtrar por sede_id si los proyectos son multi-sede
     )
     for t in tasks:
         events.append(
@@ -121,6 +123,7 @@ def get_global_calendar(
         personas = db.query(models.Persona).filter(
             models.Persona.birthday.isnot(None),
             sqlfunc.extract("month", models.Persona.birthday) >= 1,
+            models.Persona.sede_id == sede_id,
         ).all()
     except Exception:
         personas = []

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.auth import require_active_user, require_admin
+from backend.crud.crm import get_user_sede_id
 from backend.core.database import get_db
 from backend.core.permissions import (MODULE_PERMISSION_MAP, PERMISSION_LEVELS,
                                       expand_module_permissions,
@@ -323,7 +324,7 @@ def list_admin_members(
     db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
 ):
     """Lista miembros para administracion."""
-    personas = db.query(models.Persona).all()
+    personas = db.query(models.Persona).filter(models.Persona.sede_id == get_user_sede_id(db, current_user.id)).all()
     return [
         {
             "id": m.id,
@@ -697,3 +698,187 @@ def delete_automation(
     db.delete(rule)
     db.commit()
     return {"status": "success"}
+
+
+# ──────────────────────────────────────────────
+# ROLES MODULARES GRANULARES (auth_user_module_roles)
+# ──────────────────────────────────────────────
+
+@router.get("/auth-role-definitions")
+def list_auth_role_definitions(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Lista todas las definiciones de roles del sistema auth (RolPlataforma)."""
+    try:
+        from backend.models_auth import RolPlataforma
+        roles = db.query(RolPlataforma).all()
+        return [
+            {"id": str(r.id), "nombre": r.nombre, "permisos": r.permisos}
+            for r in roles
+        ]
+    except Exception:
+        return []
+
+
+@router.post("/auth-role-definitions")
+def create_auth_role_definition(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Crea un nuevo rol auth (RolPlataforma)."""
+    from backend.models_auth import RolPlataforma
+    nombre = str(payload.get("nombre", "")).strip()
+    if not nombre:
+        raise HTTPException(status_code=400, detail="nombre es requerido")
+    existing = db.query(RolPlataforma).filter(RolPlataforma.nombre == nombre).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="El rol ya existe")
+    permisos = payload.get("permisos", {})
+    rol = RolPlataforma(nombre=nombre, permisos=permisos)
+    db.add(rol)
+    db.commit()
+    db.refresh(rol)
+    return {"id": str(rol.id), "nombre": rol.nombre, "permisos": rol.permisos}
+
+
+@router.patch("/auth-role-definitions/{role_id}")
+def update_auth_role_definition(
+    role_id: str,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Actualiza permisos de un rol auth."""
+    import uuid
+    from backend.models_auth import RolPlataforma
+    try:
+        rid = uuid.UUID(role_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="role_id invalido")
+    rol = db.query(RolPlataforma).filter(RolPlataforma.id == rid).first()
+    if not rol:
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+    if "permisos" in payload:
+        rol.permisos = payload["permisos"]
+    if "nombre" in payload:
+        rol.nombre = payload["nombre"]
+    db.commit()
+    db.refresh(rol)
+    return {"id": str(rol.id), "nombre": rol.nombre, "permisos": rol.permisos}
+
+
+@router.delete("/auth-role-definitions/{role_id}", status_code=204)
+def delete_auth_role_definition(
+    role_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Elimina un rol auth (solo si no esta asignado a ningun usuario)."""
+    import uuid
+    from backend.models_auth import RolPlataforma, Usuario
+    try:
+        rid = uuid.UUID(role_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="role_id invalido")
+    rol = db.query(RolPlataforma).filter(RolPlataforma.id == rid).first()
+    if not rol:
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+    assigned = db.query(Usuario).filter(Usuario.rol_plataforma_id == rid).count()
+    if assigned > 0:
+        raise HTTPException(
+            status_code=409,
+            detail=f"No se puede eliminar el rol \"{rol.nombre}\" porque tiene {assigned} usuario(s) asignado(s)",
+        )
+    db.delete(rol)
+    db.commit()
+
+
+@router.get("/user-module-roles")
+def list_user_module_roles(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Lista todas las asignaciones de roles modulares."""
+    try:
+        from backend.models_auth import UsuarioRolModulo, RolPlataforma
+        rows = (
+            db.query(UsuarioRolModulo, RolPlataforma)
+            .join(RolPlataforma, RolPlataforma.id == UsuarioRolModulo.rol_id)
+            .all()
+        )
+        return [
+            {
+                "id": str(umr.id),
+                "user_id": str(umr.user_id),
+                "modulo": umr.modulo,
+                "rol_id": str(umr.rol_id),
+                "rol_nombre": r.nombre,
+                "created_at": umr.created_at.isoformat() if umr.created_at else None,
+            }
+            for umr, r in rows
+        ]
+    except Exception:
+        return []
+
+
+@router.post("/user-module-roles")
+def assign_user_module_role(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Asigna un rol modular a un usuario UUID-based."""
+    import uuid
+    from backend.models_auth import UsuarioRolModulo, RolPlataforma, Usuario
+    user_id_str = str(payload.get("user_id", ""))
+    modulo = str(payload.get("modulo", "")).strip().lower()
+    rol_id_str = str(payload.get("rol_id", ""))
+    if not user_id_str or not modulo or not rol_id_str:
+        raise HTTPException(status_code=400, detail="user_id, modulo y rol_id son requeridos")
+    try:
+        uid = uuid.UUID(user_id_str)
+        rid = uuid.UUID(rol_id_str)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="user_id o rol_id invalidos")
+    user = db.query(Usuario).filter(Usuario.id == uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    rol = db.query(RolPlataforma).filter(RolPlataforma.id == rid).first()
+    if not rol:
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+    existing = db.query(UsuarioRolModulo).filter(
+        UsuarioRolModulo.user_id == uid,
+        UsuarioRolModulo.modulo == modulo,
+    ).first()
+    if existing:
+        existing.rol_id = rid
+        db.commit()
+        db.refresh(existing)
+        return {"id": str(existing.id), "user_id": str(existing.user_id), "modulo": existing.modulo, "rol_id": str(existing.rol_id), "updated": True}
+    umr = UsuarioRolModulo(user_id=uid, modulo=modulo, rol_id=rid)
+    db.add(umr)
+    db.commit()
+    db.refresh(umr)
+    return {"id": str(umr.id), "user_id": str(umr.user_id), "modulo": umr.modulo, "rol_id": str(umr.rol_id), "created": True}
+
+
+@router.delete("/user-module-roles/{assignment_id}", status_code=204)
+def remove_user_module_role(
+    assignment_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Elimina una asignacion de rol modular."""
+    import uuid
+    from backend.models_auth import UsuarioRolModulo
+    try:
+        aid = uuid.UUID(assignment_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="assignment_id invalido")
+    umr = db.query(UsuarioRolModulo).filter(UsuarioRolModulo.id == aid).first()
+    if not umr:
+        raise HTTPException(status_code=404, detail="Asignacion no encontrada")
+    db.delete(umr)
+    db.commit()

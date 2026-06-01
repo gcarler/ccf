@@ -151,10 +151,17 @@ export default function AccessManagementPage() {
         setLoading(true);
         try {
             const [rolesData, usersData] = await Promise.all([
-                apiFetch<any[]>('/admin/roles', { token, cache: 'no-store' }),
+                apiFetch<any[]>('/admin/auth-role-definitions', { token, cache: 'no-store' }),
                 apiFetch<any[]>('/admin/users', { token, cache: 'no-store' })
             ]);
-            setRoles(Array.isArray(rolesData) ? rolesData : []);
+            // Map auth roles to the format expected by the UI
+            const mappedRoles = (Array.isArray(rolesData) ? rolesData : []).map((r: any) => ({
+                id: r.id,
+                name: r.nombre,
+                permissions: r.permisos || {},
+                users_count: 0,
+            }));
+            setRoles(mappedRoles);
             setUsers(Array.isArray(usersData) ? usersData : []);
         } catch (err) { 
             console.error(err);
@@ -173,6 +180,7 @@ export default function AccessManagementPage() {
 
         if (activeTab === 'users' && token) {
             try {
+                // Load user permissions from kernel and auth_user_module_roles
                 const permData = await apiFetch<any>(`/admin/users/${entity.id}/permissions`, { token });
                 const overrides = permData?.override_permissions || {};
                 setLocalPermissions(toModuleLevelMap(overrides));
@@ -193,10 +201,19 @@ export default function AccessManagementPage() {
         try {
             if (activeTab === 'roles') {
                 const flatPerms = flattenModuleMap(localPermissions);
-                await apiFetch(`/admin/roles/${selectedEntity.id}`, {
+                // Save to auth-role-definitions (RolPlataforma) — supports both dict and flat list
+                const permDict: Record<string, any> = {};
+                if (Array.isArray(flatPerms)) {
+                    for (const p of flatPerms) {
+                        permDict[p] = 'allow';
+                    }
+                } else {
+                    Object.assign(permDict, flatPerms);
+                }
+                await apiFetch(`/admin/auth-role-definitions/${selectedEntity.id}`, {
                     method: 'PATCH',
                     token,
-                    body: { permissions: flatPerms },
+                    body: { permisos: permDict },
                 });
                 addToast("Permisos del rol actualizados", "success");
             } else {
@@ -297,13 +314,13 @@ export default function AccessManagementPage() {
 
     const handleCreateEntity = useCallback(() => {
         if (activeTab === 'roles') {
-            const name = prompt('Nombre del nuevo rol ministerial:');
+            const name = prompt('Nombre del nuevo rol de plataforma:');
             if (!name?.trim()) return;
             setIsAssigning(true);
-            apiFetch('/admin/roles', {
+            apiFetch('/admin/auth-role-definitions', {
                 method: 'POST',
                 token,
-                body: { name: name.trim(), permissions: {} },
+                body: { nombre: name.trim(), permisos: {} },
             }).then(() => {
                 addToast(`Rol "${name.trim()}" creado`, 'success');
                 fetchData();

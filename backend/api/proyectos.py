@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -59,7 +60,9 @@ def listar_proyectos(
     db: Session = Depends(get_db),
     _=Depends(require_module_access("projects", "read")),
 ):
-    return db.query(Proyecto).order_by(Proyecto.fecha_creacion.desc()).all()
+    from backend.crud.crm import get_user_sede_id
+    sede_id = get_user_sede_id(db, current_user.id)
+    return db.query(Proyecto).filter(Proyecto.sede_id == sede_id).order_by(Proyecto.fecha_creacion.desc()).all()
 
 
 @router.post("/", response_model=ProyectoSchema, status_code=status.HTTP_201_CREATED)
@@ -107,7 +110,7 @@ def eliminar_proyecto(
     _=Depends(require_module_access("projects", "manage")),
 ):
     proy = _get_proyecto_o_404(proyecto_id, db)
-    db.delete(proy)
+    proy.deleted_at = datetime.utcnow()
     db.commit()
 
 
@@ -123,7 +126,7 @@ def listar_equipo(
     return db.query(EquipoProyecto).filter(
         EquipoProyecto.proyecto_id == uuid.UUID(proyecto_id),
         EquipoProyecto.es_historico.is_(False),
-    ).all()
+    ).all()  # Scoped por proyecto_id — OK
 
 
 @router.post("/{proyecto_id}/equipo", response_model=EquipoProyectoSchema, status_code=status.HTTP_201_CREATED)
@@ -156,7 +159,7 @@ def remover_miembro(
     ).first()
     if not miembro:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Miembro no encontrado en el equipo")
-    db.delete(miembro)
+    miembro.deleted_at = datetime.utcnow()
     db.commit()
 
 
@@ -171,7 +174,7 @@ def listar_tareas(
     _get_proyecto_o_404(proyecto_id, db)
     return db.query(TareaProyecto).filter(
         TareaProyecto.proyecto_id == uuid.UUID(proyecto_id),
-    ).order_by(TareaProyecto.fecha_vencimiento).all()
+    ).order_by(TareaProyecto.fecha_vencimiento).all()  # Scoped por proyecto_id — OK
 
 
 @router.post("/{proyecto_id}/tareas", response_model=TareaProyectoSchema, status_code=status.HTTP_201_CREATED)
@@ -219,7 +222,7 @@ def eliminar_tarea(
     tarea = _get_tarea_o_404(tarea_id, db)
     if str(tarea.proyecto_id) != proyecto_id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="La tarea no pertenece a este proyecto")
-    db.delete(tarea)
+    tarea.deleted_at = datetime.utcnow()
     db.commit()
 
 

@@ -13,12 +13,16 @@ log = logging.getLogger(__name__)
 settings = get_settings()
 
 # ── Síncrono (existente) ──────────────────────────────────────────────
+_pool_kwargs = {}
+if not settings.database_url.startswith("sqlite"):
+    _pool_kwargs["pool_size"] = 10
+    _pool_kwargs["max_overflow"] = 20
+
 engine = create_engine(
     settings.database_url,
     future=True,
     pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
+    **_pool_kwargs,
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)

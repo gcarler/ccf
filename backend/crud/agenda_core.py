@@ -2,7 +2,7 @@
 
 RecursoFisico, EventoAgenda, ParticipanteEvento, ReservaRecurso.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -125,7 +125,7 @@ def delete_evento(db: Session, evento_id: str) -> bool:
     row = db.query(EventoAgenda).filter(EventoAgenda.id == evento_id).first()
     if not row:
         return False
-    row.deleted_at = datetime.utcnow()
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 

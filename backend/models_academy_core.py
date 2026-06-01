@@ -3,7 +3,7 @@
 Modelos para la Academia con Kernel UUID, motor de evaluaciones (quizzes),
 seguimiento de progreso por lección, foros, y certificaciones.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 
 import uuid as _uuid
 
@@ -17,7 +17,7 @@ from backend.core.database import Base
 
 
 def _utcnow():
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 # ═══════════════════════════════════════════════════════════════════

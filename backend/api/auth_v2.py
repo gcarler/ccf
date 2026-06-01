@@ -403,7 +403,7 @@ def register(
 
 @router.get("/v2/roles", response_model=list[RolPlataformaRead])
 def list_roles(db: Session = Depends(get_db)):
-    return db.query(RolPlataforma).all()
+    return db.query(RolPlataforma).all()  # Catálogo < 100 registros — excepción permitida
 
 
 @router.post("/v2/roles", response_model=RolPlataformaRead, status_code=status.HTTP_201_CREATED)
@@ -606,7 +606,7 @@ def get_backup_codes(
 
 @router.get("/v2/levels", response_model=list[NivelGamificadoRead])
 def list_levels(db: Session = Depends(get_db)):
-    return db.query(NivelGamificado).order_by(NivelGamificado.min_xp).all()
+    return db.query(NivelGamificado).order_by(NivelGamificado.min_xp).all()  # Catálogo — excepción permitida
 
 
 @router.post("/v2/levels", response_model=NivelGamificadoRead, status_code=status.HTTP_201_CREATED)
@@ -622,7 +622,7 @@ def create_level(payload: NivelGamificadoCreate, db: Session = Depends(get_db)):
 
 @router.get("/v2/badges", response_model=list[MedallaRead])
 def list_badges(db: Session = Depends(get_db)):
-    return db.query(Medalla).all()
+    return db.query(Medalla).all()  # Catálogo — excepción permitida
 
 
 @router.post("/v2/badges", response_model=MedallaRead, status_code=status.HTTP_201_CREATED)

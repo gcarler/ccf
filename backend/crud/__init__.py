@@ -46,11 +46,6 @@ from backend.crud.agents import (create_agent_insight, create_agent_task,
                                  delete_agent_insight, delete_agent_task,
                                  list_agent_insights, list_agent_tasks,
                                  update_agent_task)
-# Assets
-from backend.crud.assets import create_asset  # noqa: F401
-from backend.crud.assets import (create_maintenance_log, delete_asset,
-                                 get_asset, get_assets, get_maintenance_logs,
-                                 update_asset)
 # Audit
 from backend.crud.audit import create_admin_audit_log  # noqa: F401
 from backend.crud.audit import get_admin_audit_logs

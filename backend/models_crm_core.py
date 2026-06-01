@@ -3,14 +3,15 @@
 Modelos para el CRM 2.0: pipelines configurables, call center omnicanal,
 trazabilidad de origen, y SLAs de tiempo de respuesta.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 
 import enum
 import uuid as _uuid
 
 from sqlalchemy import (Boolean, Column, DateTime, Enum as SAEnum, ForeignKey,
                         Integer, String, Text, UniqueConstraint, func)
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
@@ -18,7 +19,7 @@ from backend.core.database import Base
 
 
 def _utcnow():
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 # ──────────────────────────────────────────────
@@ -136,7 +137,7 @@ class CasoCRM(Base):
     estado = Column(SAEnum(EstadoCasoEnum), default=EstadoCasoEnum.ABIERTO, index=True)
     origen_canal = Column(SAEnum(CanalOrigenEnum), nullable=False, index=True)
     origen_detalle_id = Column(String(200), nullable=True, index=True)
-    payload_web = Column(JSONB, nullable=True)
+    payload_web = Column(JSON, nullable=True)
     asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, index=True)
     fecha_cierre = Column(DateTime(timezone=True), nullable=True)
@@ -186,6 +187,7 @@ class InteraccionCRM(Base):
 # ──────────────────────────────────────────────
 # TAREAS CRM
 # ──────────────────────────────────────────────
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 class TareaCRM(Base):
     __tablename__ = "crm_tareas"
@@ -198,6 +200,7 @@ class TareaCRM(Base):
     fecha_vencimiento = Column(DateTime(timezone=True), nullable=False, index=True)
     completada = Column(Boolean, default=False, index=True)
     fecha_completada = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     caso = relationship("CasoCRM", back_populates="tareas")

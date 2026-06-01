@@ -145,6 +145,7 @@ class RolPersonalizadoEstrategia(Base):
 
     estrategia = relationship("EstrategiaEvangelismo", back_populates="roles_personalizados")
 
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 class GrupoEvangelismo(Base):
     __tablename__ = "grupos_evangelismo"
@@ -249,6 +250,7 @@ class GrupoEvangelismo(Base):
 # ──────────────────────────────────────────────
 # PARTICIPANTES, SESIONES Y ASISTENCIA
 # ──────────────────────────────────────────────
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 class ParticipanteGrupo(Base):
     __tablename__ = "grupo_participantes"
@@ -271,6 +273,7 @@ class ParticipanteGrupo(Base):
     cell_group = synonym("grupo")
     member_id = synonym("persona_id")
 
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 class SesionGrupo(Base):
     __tablename__ = "sesiones_grupo"
@@ -284,6 +287,7 @@ class SesionGrupo(Base):
     notas_lider = Column(Text, nullable=True)
     offering_amount = Column(Float, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     grupo = relationship("GrupoEvangelismo", back_populates="sesiones")
     asistencias = relationship("Asistencia", back_populates="sesion", cascade="all, delete-orphan")

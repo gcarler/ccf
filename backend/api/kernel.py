@@ -9,7 +9,7 @@ Endpoints del Protocolo de Identidad y Roles, centrados en Persona (UUID).
 """
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -44,6 +44,17 @@ class PlatformRoleAssign(BaseModel):
     platform_role: str
     expires_at: Optional[datetime] = None
     notes: Optional[str] = None
+
+
+class PlatformRoleDefinitionCreate(BaseModel):
+    role: str
+    permissions: Optional[Dict[str, List[str]]] = None
+    description: Optional[str] = None
+
+
+class PlatformRoleDefinitionUpdate(BaseModel):
+    permissions: Optional[Dict[str, List[str]]] = None
+    description: Optional[str] = None
 
 
 class ActivityStatusUpdate(BaseModel):
@@ -330,3 +341,144 @@ def check_can_receive_assignment(
     from backend.crud import kernel as kernel_crud
     can_assign = kernel_crud.can_receive_assignment(db, persona_id)
     return {"persona_id": persona_id, "can_receive_assignment": can_assign}
+
+
+# ──────────────────────────────────────────────
+# CRUD DE ROLES DE PLATAFORMA (PlatformRoleDefinition)
+# ──────────────────────────────────────────────
+
+@router.get("/admin/platform-role-definitions")
+def list_platform_role_definitions(
+    db: Session = Depends(get_db),
+    current_user=Depends(require_kernel_permission("system:config")),
+):
+    """Lista todas las definiciones de roles de plataforma (Dimensión C)."""
+    from backend.crud import kernel as kernel_crud
+    return kernel_crud.get_platform_role_definitions(db)
+
+
+@router.post("/admin/platform-role-definitions")
+def create_platform_role_definition(
+    payload: PlatformRoleDefinitionCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_kernel_permission("system:config")),
+):
+    """Crea una nueva definición de rol de plataforma."""
+    from backend.models_kernel import PlatformRoleDefinition
+    existing = db.query(PlatformRoleDefinition).filter(
+        PlatformRoleDefinition.role == payload.role
+    ).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="El rol ya existe")
+    
+    perms = payload.permissions or PlatformRoleDefinition.__table__.c.permissions.default.arg.get(payload.role, {})
+    role_def = PlatformRoleDefinition(
+        role=payload.role,
+        permissions=perms,
+        description=payload.description,
+    )
+    db.add(role_def)
+    db.commit()
+    db.refresh(role_def)
+    return {"id": role_def.id, "role": role_def.role, "permissions": role_def.permissions}
+
+
+@router.patch("/admin/platform-role-definitions/{definition_id}")
+def update_platform_role_definition(
+    definition_id: int,
+    payload: PlatformRoleDefinitionUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_kernel_permission("system:config")),
+):
+    """Actualiza permisos y descripción de una definición de rol."""
+    from backend.models_kernel import PlatformRoleDefinition
+    role_def = db.query(PlatformRoleDefinition).filter(
+        PlatformRoleDefinition.id == definition_id
+    ).first()
+    if not role_def:
+        raise HTTPException(status_code=404, detail="Definición de rol no encontrada")
+    if payload.permissions is not None:
+        role_def.permissions = payload.permissions
+    if payload.description is not None:
+        role_def.description = payload.description
+    db.commit()
+    db.refresh(role_def)
+    return {"id": role_def.id, "role": role_def.role, "permissions": role_def.permissions}
+
+
+@router.delete("/admin/platform-role-definitions/{definition_id}", status_code=204)
+def delete_platform_role_definition(
+    definition_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_kernel_permission("system:config")),
+):
+    """Elimina una definición de rol (solo si no está asignada a nadie)."""
+    from backend.models_kernel import PlatformRoleDefinition, PersonaPlatformRole
+    role_def = db.query(PlatformRoleDefinition).filter(
+        PlatformRoleDefinition.id == definition_id
+    ).first()
+    if not role_def:
+        raise HTTPException(status_code=404, detail="Definición de rol no encontrada")
+    assigned = db.query(PersonaPlatformRole).filter(
+        PersonaPlatformRole.role_id == definition_id,
+        PersonaPlatformRole.is_active,
+    ).count()
+    if assigned > 0:
+        raise HTTPException(
+            status_code=409,
+            detail=f'No se puede eliminar el rol "{role_def.role}" porque tiene {assigned} persona(s) asignada(s)',
+        )
+    db.delete(role_def)
+    db.commit()
+
+
+# ──────────────────────────────────────────────
+# ADMIN: ASIGNACIONES MASIVAS DE ROLES
+# ──────────────────────────────────────────────
+
+@router.get("/admin/persona-platform-roles")
+def list_all_persona_platform_roles(
+    db: Session = Depends(get_db),
+    current_user=Depends(require_kernel_permission("system:config")),
+):
+    """Lista todas las asignaciones activas de roles de plataforma a personas."""
+    from backend.models_kernel import PersonaPlatformRole, PlatformRoleDefinition
+    from backend import models as backend_models
+    rows = (
+        db.query(PersonaPlatformRole, PlatformRoleDefinition, backend_models.Persona)
+        .join(PlatformRoleDefinition, PlatformRoleDefinition.id == PersonaPlatformRole.role_id)
+        .join(backend_models.Persona, backend_models.Persona.id == PersonaPlatformRole.persona_id)
+        .filter(PersonaPlatformRole.is_active)
+        .all()
+    )
+    return [
+        {
+            "id": upr.id,
+            "persona_id": str(upr.persona_id),
+            "persona_name": f"{p.first_name} {p.last_name}",
+            "role": rd.role if not hasattr(rd.role, "value") else rd.role.value,
+            "assigned_at": upr.assigned_at,
+            "expires_at": upr.expires_at,
+            "notes": upr.notes,
+        }
+        for upr, rd, p in rows
+    ]
+
+
+@router.delete("/admin/persona-platform-roles/{assignment_id}", status_code=204)
+def revoke_persona_platform_role(
+    assignment_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_kernel_permission("system:config")),
+):
+    """Revoca (soft-delete) una asignación de rol de plataforma."""
+    from backend.models_kernel import PersonaPlatformRole
+    row = db.query(PersonaPlatformRole).filter(
+        PersonaPlatformRole.id == assignment_id,
+        PersonaPlatformRole.is_active,
+    ).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Asignación no encontrada")
+    row.is_active = False
+    db.commit()
+    return {"message": "Rol revocado exitosamente"}

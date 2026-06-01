@@ -10,9 +10,9 @@ import { Shield, Plus, Check, Save, Trash2 } from 'lucide-react';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
 interface Role {
-    role_id: number;
+    id: string;
     name: string;
-    permissions: string[];
+    permissions: any;
 }
 
 export default function RolesPage() {
@@ -32,10 +32,16 @@ export default function RolesPage() {
         setLoading(true);
         try {
             const [rolesRes, permsRes] = await Promise.all([
-                apiFetch<Role[]>('/admin/roles', { token }),
+                apiFetch<any[]>('/admin/auth-role-definitions', { token }),
                 apiFetch<Record<string, string>>('/admin/permissions', { token })
             ]);
-            setRoles(rolesRes || []);
+            // Map auth roles to the expected format
+            const mapped = (Array.isArray(rolesRes) ? rolesRes : []).map((r: any) => ({
+                id: r.id,
+                name: r.nombre,
+                permissions: r.permisos ? Object.keys(r.permisos) : [],
+            }));
+            setRoles(mapped);
             setPermissionsMap(permsRes || {});
         } catch {
             addToast("Error al cargar roles", "error");
@@ -74,18 +80,23 @@ export default function RolesPage() {
             return;
         }
         try {
-            if (editingRole.role_id) {
-                await apiFetch(`/admin/roles/${editingRole.role_id}`, {
+            if (editingRole.id) {
+                // Convert array of perm keys to permisos dict
+                const permDict: Record<string, string> = {};
+                for (const p of (editingRole.permissions || [])) {
+                    permDict[p] = 'allow';
+                }
+                await apiFetch(`/admin/auth-role-definitions/${editingRole.id}`, {
                     method: 'PATCH',
                     token,
-                    body: { permissions: editingRole.permissions }
+                    body: { permisos: permDict }
                 });
                 addToast("Rol actualizado", "success");
             } else {
-                await apiFetch('/admin/roles', {
+                await apiFetch('/admin/auth-role-definitions', {
                     method: 'POST',
                     token,
-                    body: editingRole
+                    body: { nombre: editingRole.name, permisos: {} }
                 });
                 addToast("Rol creado", "success");
             }
@@ -96,11 +107,11 @@ export default function RolesPage() {
         }
     };
 
-    const handleDelete = async (e: React.MouseEvent, id: number) => {
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         if (!window.confirm("¿Seguro que deseas eliminar este rol?")) return;
         try {
-            await apiFetch(`/admin/roles/${id}`, {
+            await apiFetch(`/admin/auth-role-definitions/${id}`, {
                 method: 'DELETE',
                 token
             });

@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Quote, BookOpen } from 'lucide-react';
-import { FAROHeader, FAROFooter } from '@/components/public/FAROShared';
 import { useContentBlock } from '@/hooks/useContent';
 import { PASTORS } from '@/data/pastors';
 
@@ -52,7 +51,6 @@ export default function PastorDetailPage() {
 
     return (
         <div className="min-h-screen bg-white dark:bg-[#0b0d11] selection:bg-blue-500/30 selection:text-blue-900">
-            <FAROHeader />
 
             <main>
                 <div className="relative pt-32 pb-4 lg:pt-48 lg:pb-4 overflow-hidden">
@@ -115,8 +113,6 @@ export default function PastorDetailPage() {
                     </div>
                 </div>
             </main>
-
-            <FAROFooter />
         </div>
     );
 }

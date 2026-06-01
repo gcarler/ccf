@@ -4,17 +4,17 @@ Modelo, indexador automático y búsqueda full-text para que los agentes
 tengan acceso a información real de la plataforma.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Index,
-                        Integer, String, Text, func)
+                        Integer, String, Text, cast, func)
 from sqlalchemy.orm import Session
 
 from backend.core.database import Base
 
 
 def _utcnow():
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 class AgentKnowledgeBase(Base):
@@ -154,15 +154,25 @@ class KnowledgeIndexer:
 
     def _index_member_stats(self, agent_id: int) -> int:
         """Indexa estadísticas de miembros (no datos personales)."""
-        from backend import models
+        from backend import models, models_kernel
 
         total = self.db.query(models.Persona).count()
         by_role = {}
-        for role, cnt in self.db.query(
-            models.Persona.church_role, func.count(models.Persona.id),
-        ).filter(
-            models.Persona.church_role.isnot(None),
-        ).group_by(models.Persona.church_role).all():
+        # Usa el rol del Kernel cuando existe, fallback a columna legacy
+        effective_role = func.coalesce(
+            cast(models_kernel.PersonaChurchRole.church_role, String),
+            models.Persona.church_role,
+        )
+        for role, cnt in (
+            self.db.query(effective_role, func.count(models.Persona.id))
+            .outerjoin(
+                models_kernel.PersonaChurchRole,
+                models_kernel.PersonaChurchRole.persona_id == models.Persona.id,
+            )
+            .filter(effective_role.isnot(None))
+            .group_by(effective_role)
+            .all()
+        ):
             by_role[role] = cnt
 
         self._upsert_kb(

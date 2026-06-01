@@ -1,4 +1,5 @@
 import datetime
+from datetime import timezone as _tz
 import logging
 import uuid
 from typing import List, Optional
@@ -1408,7 +1409,7 @@ def _project_phases_as_tasks(db, strategy_id: int, strategy_name: str, phases: l
         title=f"[MASIVO] {strategy_name}",
         description=f"Evento masivo generado desde estrategia de evangelismo #{strategy_id}",
         status="active",
-        created_at=datetime.utcnow(),
+        created_at=datetime.datetime.now(_tz.utc),
     )
     # Store strategy link in description
     db.add(project)
@@ -1439,7 +1440,7 @@ def _project_phases_as_tasks(db, strategy_id: int, strategy_name: str, phases: l
             due_date=dd,
             order_index=i,
             labels=["N1", "Evangelismo", phase_type] if phase_type else ["N1", "Evangelismo"],
-            created_at=datetime.utcnow(),
+            created_at=datetime.datetime.now(_tz.utc),
         )
         db.add(task)
 

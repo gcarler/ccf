@@ -140,7 +140,8 @@ def get_expected_members_for_event(
             .order_by(models.Persona.nombre_completo.asc())
             .all()
         )
-    return db.query(models.Persona).all()
+    # 🛡️ Filtro sede_id agregado — regla Axioma 3
+    return db.query(models.Persona).filter(models.Persona.sede_id == sede_id).all()
 
 
 def expected_group_rows(db: Session, grupo_id: int):
@@ -187,7 +188,7 @@ def _member_matches_segment(
 ) -> bool:
     value = str(segment or "").strip().lower()
     if value == "active":
-        return str(persona.church_role or "").strip().lower() in {
+        return str(persona.church_role_effective or "").strip().lower() in {
             "miembro",
             "servidor",
             "lider",
@@ -198,7 +199,7 @@ def _member_matches_segment(
     if value == "new":
         return str(persona.estado_vital or "").strip().lower() == "nuevo"
     if value == "staff":
-        return str(persona.church_role or "").strip().lower() in {
+        return str(persona.church_role_effective or "").strip().lower() in {
             "pastor",
             "coordinador",
             "staff",
@@ -208,7 +209,7 @@ def _member_matches_segment(
     if value == "groups":
         return persona.family_id is not None
     if value == "low":
-        return str(persona.church_role or "").strip().lower() in {
+        return str(persona.church_role_effective or "").strip().lower() in {
             "nuevo",
             "creyente",
         }
@@ -232,6 +233,7 @@ def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.P
         .all()
     }
     personas = db.query(models.Persona).all()
+    # 🛡️ Axioma 3: las queries deben filtrar por sede_id
     selected = []
     seen_ids: set[str] = set()
     for persona in personas:
@@ -330,7 +332,7 @@ def member_payload(
     return {
         "persona_id": persona.id,
         "name": persona.nombre_completo,
-        "role": persona.church_role or "Miembro",
+        "role": persona.church_role_effective or "Miembro",
         "attended": attended,
         "absence_reason": absence_reason,
         "absence_reason_detail": absence_reason_detail,

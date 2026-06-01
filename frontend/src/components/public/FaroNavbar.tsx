@@ -39,7 +39,15 @@ export default function FaroNavbar() {
         label: item.label,
         children: [],
     }));
-    const navLinks = menuItemsV2.length > 0 ? menuItemsV2 : fallbackLinks;
+    // Ensure /pastores is always in the nav, deduped by href
+    const _ensurePastores = (links: Array<{ href: string; label: string; children?: any[] }>) => {
+        const hasPastores = links.some(l => l.href === '/pastores');
+        if (!hasPastores) {
+            return [...links, { href: '/pastores', label: 'Pastores', children: [] }];
+        }
+        return links;
+    };
+    const navLinks = _ensurePastores(menuItemsV2.length > 0 ? menuItemsV2 : fallbackLinks);
 
     useEffect(() => {
         let mounted = true;

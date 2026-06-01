@@ -830,7 +830,7 @@ def update_grupo(
 
         for row in current_rows:
             if row.persona_id not in incoming_ids:
-                db.delete(row)
+                row.deleted_at = utc_now()
         for persona_id in normalized_ids:
             if persona_id in current_by_persona:
                 continue

@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.api import (academy, academy_core, admin, agenda, agenda_core, agents, auth_v3,
                          analytics,
-                         assets, auth, auth_v2, chat, cms, cms_v2, community, content, crm,
+                         auth, auth_v2, chat, cms, cms_v2, community, content, crm,
                          crm_core, dashboard, donations, evangelism, evangelism_reports,
                          finance,
                          governance, graph, kernel, messaging, prayer,
@@ -52,7 +52,6 @@ ROUTER_REGISTRY = [
     (agents.router, "/api", None),
     (agents.analytics_router, "/api/agents", None),
     (admin.router, "/api/admin", ["admin"]),
-    (assets.router, "/api", None),
     (finance.router, "/api", ["finance"]),
     (donations.router, "/api", ["donations"]),
     (governance.router, "/api", ["governance"]),

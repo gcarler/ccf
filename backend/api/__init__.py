@@ -3,28 +3,31 @@
 
 from backend.api import (academy, academy_core, admin, agenda, agenda_core, agents,
                          analytics,
-                         assets, auth, auth_v2, chat, cms, cms_v2, community, content, crm,
+                         auth, auth_v2, auth_v3, chat, cms, cms_v2, community, content, crm,
                          crm_core, dashboard, donations, evangelism, evangelism_multiplication,
                          evangelism_notifications, evangelism_rankings, evangelism_reports,
                          finance, governance,
-                         graph, kernel, messaging, prayer, proyectos,
-                         public, spiritual_life, support, system, workspace)
+                         graph, kernel, messaging, prayer, projects, proyectos,
+                         public, spiritual_life, support, system, tables, workspace)
 
 __all__ = [
     "academy",
+    "academy_core",
     "admin",
     "agenda",
+    "agenda_core",
     "agents",
     "analytics",
-    "assets",
     "auth",
     "auth_v2",
+    "auth_v3",
     "chat",
     "cms",
     "cms_v2",
     "community",
     "content",
     "crm",
+    "crm_core",
     "dashboard",
     "donations",
     "evangelism",
@@ -44,5 +47,6 @@ __all__ = [
     "spiritual_life",
     "support",
     "system",
+    "tables",
     "workspace",
 ]

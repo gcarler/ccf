@@ -2,7 +2,7 @@ import logging
 import os
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
@@ -99,7 +99,7 @@ def public_register_event(
 @router.get("/courses", response_model=list[schemas.Course])
 def public_list_courses(db: Session = Depends(get_db)):
     """Retorna la lista de cursos publicos disponibles."""
-    courses = db.query(models.Course).filter(models.Course.is_published == True).all()
+    courses = db.query(models.Course).filter(models.Course.is_published == True).all()  # Cursos públicos globales (landing page) — OK sin sede_id
     for c in courses:
         c.lesson_count = (
             db.query(models.Lesson).filter(models.Lesson.course_id == c.id).count()
@@ -123,38 +123,6 @@ def public_get_course(course_id: int, db: Session = Depends(get_db)):
     )
     return course
 
-
-@router.post("/newsletter/subscribe", response_model=schemas.NewsletterSubscriptionRead)
-def public_newsletter_subscribe(
-    payload: schemas.NewsletterSubscriptionCreate, db: Session = Depends(get_db)
-):
-    """Registra un correo en el boletin (Newsletter)."""
-    email = payload.email.strip().lower()
-    existing_sub = (
-        db.query(models.NewsletterSubscription)
-        .filter(models.NewsletterSubscription.email == email)
-        .first()
-    )
-
-    if existing_sub:
-        return existing_sub
-
-    subscription = models.NewsletterSubscription(email=email)
-    db.add(subscription)
-
-    tracker.record_contact(db, ContactRecord(
-        email=email,
-        phone=payload.phone,
-        first_name=payload.first_name,
-        last_name=payload.last_name,
-        source=payload.source or "newsletter-web",
-        landing_page=payload.landing_page,
-        campaign=payload.campaign,
-    ))
-
-    db.commit()
-    db.refresh(subscription)
-    return subscription
 
 
 class PublicEnrollCreate(BaseModel):
@@ -251,7 +219,7 @@ def public_course_enroll(
             case_id=case.id,
             title=f"Seguimiento: nuevo estudiante en {course.title}",
             description=f"Contactar a {persona.first_name} {persona.last_name} para dar la bienvenida al curso '{course.title}' y ofrecer apoyo pastoral.",
-            due_date=datetime.utcnow() + timedelta(days=3),
+            due_date=datetime.now(timezone.utc) + timedelta(days=3),
             status="pending",
         )
         db.add(followup_task)

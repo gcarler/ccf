@@ -733,8 +733,8 @@ def delete_role(
     )
 
     # Soft-delete: marcar como inactivo y renombrar para liberar el unique constraint
-    from datetime import datetime
-    suffix = datetime.utcnow().strftime("_deleted_%Y%m%d_%H%M%S")
+    from datetime import datetime, timezone
+    suffix = datetime.now(timezone.utc).strftime("_deleted_%Y%m%d_%H%M%S")
     role.name = f"{role.name}{suffix}"
     role.is_leadership = False
     db.commit()
