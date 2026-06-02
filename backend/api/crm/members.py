@@ -420,9 +420,9 @@ def get_persona_consolidation_profile(
     )
 
     cases = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.persona_id == persona_uuid)
-        .order_by(models.ConsolidationCase.created_at.desc())
+        db.query(models.CasoCRM)
+        .filter(models.CasoCRM.persona_id == persona_uuid)
+        .order_by(models.CasoCRM.created_at.desc())
         .all()
     )
 

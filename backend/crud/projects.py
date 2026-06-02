@@ -6,6 +6,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from backend.models_shared import _utcnow
 from backend import models, schemas
 from backend.crud.crm import get_user_sede_id
 
@@ -198,7 +199,7 @@ def delete_comment(db: Session, comment_id: int) -> bool:
     row = get_comment(db, comment_id)
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -246,7 +247,7 @@ def delete_milestone(db: Session, milestone_id) -> bool:
     row = get_milestone(db, milestone_id)
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -286,7 +287,7 @@ def delete_attachment(db: Session, attachment_id: int) -> bool:
     row = get_attachment(db, attachment_id)
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -368,7 +369,7 @@ def delete_supply(db: Session, supply_id: int) -> bool:
     row = get_supply(db, supply_id)
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 

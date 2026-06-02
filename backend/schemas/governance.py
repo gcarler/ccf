@@ -12,7 +12,7 @@ class AdminAuditLog(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: int
-    actor_user_id: Optional[int] = None
+    actor_persona_id: Optional[str] = None
     action: str
     resource_type: Optional[str] = None
     resource_id: Optional[str] = None

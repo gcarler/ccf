@@ -68,6 +68,7 @@ class ActivityStatusUpdate(BaseModel):
 def _resolve_persona_id(db: Session, current_user, persona_id: str) -> str:
     """Permite que un admin/pastor actúe sobre cualquier persona_id.
     Un usuario normal solo puede actuar sobre su propia persona."""
+    from backend.models_shared import _utcnow
     from backend import models
     import uuid as _uuid
 
@@ -428,7 +429,7 @@ def delete_platform_role_definition(
             status_code=409,
             detail=f'No se puede eliminar el rol "{role_def.role}" porque tiene {assigned} persona(s) asignada(s)',
         )
-    db.delete(role_def)
+    role_def.deleted_at = _utcnow()
     db.commit()
 
 

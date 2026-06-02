@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.auth import require_pastor_or_admin
+from backend.crud.crm import get_user_sede_id
 from backend.core.database import get_db
 from backend.api.evangelism_shared import utc_now
 
@@ -44,6 +45,7 @@ def send_reminders(
     tomorrow_start = datetime.datetime.combine(tomorrow, datetime.time.min)
     tomorrow_end = datetime.datetime.combine(tomorrow, datetime.time.max)
 
+    user_sede_id = get_user_sede_id(db, current_user.id)
     sessions_tomorrow = (
         db.query(models.SesionGrupo)
         .filter(
@@ -53,6 +55,10 @@ def send_reminders(
         )
         .all()
     )
+    # Axioma 3: filtrar por sede
+    if user_sede_id:
+        _valid_group_ids = {g.id for g in db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.sede_id == user_sede_id).all()}
+        sessions_tomorrow = [s for s in sessions_tomorrow if s.grupo_id in _valid_group_ids]
 
     group_ids_tomorrow: set[int] = {s.grupo_id for s in sessions_tomorrow}
     groups_map: Dict[int, models.GrupoEvangelismo] = {}
@@ -126,7 +132,7 @@ def send_reminders(
         .subquery()
     )
 
-    inactive_groups = (
+    inactive_groups_q = (
         db.query(models.GrupoEvangelismo)
         .filter(
             models.GrupoEvangelismo.activo == True,
@@ -135,8 +141,10 @@ def send_reminders(
                 db.query(groups_with_recent_report.c.grupo_id)
             ),
         )
-        .all()
     )
+    if user_sede_id:
+        inactive_groups_q = inactive_groups_q.filter(models.GrupoEvangelismo.sede_id == user_sede_id)
+    inactive_groups = inactive_groups_q.all()
 
     # Collect leader ids for inactive groups and verify auth_users
     _inactive_leader_ids: set[uuid.UUID] = set()

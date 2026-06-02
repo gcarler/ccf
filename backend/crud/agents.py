@@ -2,6 +2,7 @@
 
 from sqlalchemy.orm import Session
 
+from backend.models_shared import _utcnow
 from backend import models, schemas
 
 
@@ -85,7 +86,7 @@ def delete_agent_task(db: Session, task_id: int) -> bool:
     row = db.query(models.AgentTask).filter(models.AgentTask.id == task_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -98,6 +99,6 @@ def delete_agent_insight(db: Session, insight_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True

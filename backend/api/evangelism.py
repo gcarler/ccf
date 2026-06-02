@@ -1149,14 +1149,14 @@ def read_evangelism_strategies(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    from backend.models import CellGroup
+    from backend.models_evangelism import GrupoEvangelismo
     from backend.crud.evangelism import get_estrategias
     strategies = get_estrategias(db, skip=skip, limit=limit, activa=activa, clase_raiz=clase_raiz, sede_id=sede_id)
     result = []
     for s in strategies:
         obj = EvangelismStrategy.model_validate(s)
-        obj.group_count = db.query(CellGroup).filter(
-            CellGroup.evangelism_strategy_id == s.id
+        obj.group_count = db.query(GrupoEvangelismo).filter(
+            GrupoEvangelismo.estrategia_id == s.id
         ).count()
         result.append(obj)
     return result
@@ -1169,13 +1169,13 @@ def read_strategy(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     from backend.models_crm import EvangelismStrategy as StrategyModel
-    from backend.models import CellGroup
+    from backend.models_evangelism import GrupoEvangelismo
     db_obj = db.query(StrategyModel).filter(StrategyModel.id == strategy_id).first()
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
-    result.group_count = db.query(CellGroup).filter(
-        CellGroup.evangelism_strategy_id == strategy_id
+    result.group_count = db.query(GrupoEvangelismo).filter(
+        GrupoEvangelismo.estrategia_id == strategy_id
     ).count()
     return result
 
@@ -1293,7 +1293,7 @@ def list_strategy_roles(
 ):
     """Lista los roles personalizados de una estrategia."""
     from backend.crud.evangelism import get_roles_personalizados
-    strategy = db.query(models.EvangelismStrategy).filter(
+    strategy = db.query(models.EstrategiaEvangelismo).filter(
         models.EvangelismStrategy.id == strategy_id
     ).first()
     if not strategy or not strategy.codigo:
@@ -1310,7 +1310,7 @@ def create_strategy_role(
 ):
     """Crea un rol personalizado para una estrategia."""
     from backend.crud.evangelism import create_rol_personalizado
-    strategy = db.query(models.EvangelismStrategy).filter(
+    strategy = db.query(models.EstrategiaEvangelismo).filter(
         models.EvangelismStrategy.id == strategy_id
     ).first()
     if not strategy or not strategy.codigo:

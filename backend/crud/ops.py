@@ -3,6 +3,7 @@
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from backend.models_shared import _utcnow
 from backend import models
 
 # ── Schemas (inline — lightweight) ─────────────────────────────────────────
@@ -97,7 +98,7 @@ def delete_church_location(db: Session, location_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -151,7 +152,7 @@ def delete_social_channel(db: Session, channel_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -219,6 +220,6 @@ def delete_system_variable(db: Session, key: str) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True

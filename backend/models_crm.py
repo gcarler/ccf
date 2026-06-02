@@ -14,7 +14,7 @@ from backend.models_shared import _utcnow
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
-    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    sender_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     room_id = Column(String(100), nullable=True, index=True)
     content = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False, index=True)
@@ -29,7 +29,7 @@ class Conversation(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     last_message_content = Column(Text, nullable=True)
     last_message_at = Column(DateTime(timezone=True), nullable=True, index=True)
-    last_sender_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    last_sender_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
 
 
 class ConversationParticipant(Base):
@@ -43,7 +43,7 @@ class ConversationParticipant(Base):
         nullable=False, index=True,
     )
     user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"),
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False, index=True,
     )
     last_read_at = Column(DateTime(timezone=True), nullable=True)
@@ -51,7 +51,7 @@ class ConversationParticipant(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     conversation = relationship("Conversation", backref="participants")
-    user = relationship("User")
+    user = relationship("Persona")
 
 
 class AgendaEvent(Base):
@@ -64,8 +64,8 @@ class AgendaEvent(Base):
     end_at = Column(DateTime(timezone=True), nullable=True, index=True)
     location = Column(String(200), nullable=True)
     is_all_day = Column(Boolean, default=True, index=True)
-    created_by_user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    created_by_persona_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True
     )
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -185,7 +185,7 @@ class CounselingTicket(Base):
         nullable=False,
         index=True,
     )
-    pastor_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    pastor_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
     subject = Column(String(200), nullable=False)
     notes = Column(Text, nullable=True)
     status = Column(String(50), default="open", index=True)  # open, in_progress, resolved
@@ -196,7 +196,7 @@ class CounselingTicket(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     persona = relationship("Persona", foreign_keys=[persona_id])
-    pastor = relationship("User")
+    pastor = relationship("Persona", foreign_keys=[pastor_id])
 
     from sqlalchemy.orm import synonym
     member_id = synonym("persona_id")
@@ -265,9 +265,9 @@ class Persona(Base):
     landline_phone = Column(String(20), nullable=True)
     other_phone = Column(String(20), nullable=True)
     # DEPRECADO: usar church_role_effective (resuelto desde Kernel PersonaRoleAssignment)
-    # La columna física se eliminará en próxima migración.
-    # Mientras tanto, el @property church_role_effective resuelve desde Kernel.
-    church_role = Column(String(50), default="Miembro", index=True)
+    # La columna física se mantiene por compatibilidad DB pero NO se debe usar en código nuevo.
+    # El @property church_role_effective resuelve desde Kernel PersonaRoleAssignment.
+    church_role = Column(String(50), default="Miembro", index=True)  # DEPRECATED — do not use in new code
     is_baptized = Column(Boolean, default=False, index=True)
     fecha_bautismo = Column(Date, nullable=True)
     spiritual_status = Column(String(50), default="Nuevo", index=True)
@@ -341,19 +341,7 @@ class Persona(Base):
         return _func.coalesce(cls.phone, cls.mobile_phone)
 
     # ── church_role deprecado: usar Kernel PersonaRoleAssignment ──
-    # Este @property resuelve church_role desde el Kernel cuando existe,
-    # con fallback a la columna legacy (Persona.church_role).
     # Migración pendiente: eliminar la columna física y usar solo Kernel.
-    @property
-    def church_role(self) -> str:
-        """Proxy a church_role_effective — redirige desde Kernel."""
-        return self.church_role_effective
-
-    @church_role.setter
-    def church_role(self, value: str):
-        """Setter para compatibilidad — escribe en la columna física."""
-        self._church_role = value
-
     @property
     def church_role_effective(self) -> str:
         """Rol en la iglesia resuelto desde el Kernel (PersonaRoleAssignment).
@@ -379,17 +367,17 @@ class Persona(Base):
     consolidation_assignments_sent = relationship("ConsolidationAssignment", foreign_keys="ConsolidationAssignment.assigned_by_id", back_populates="assigned_by")
     consolidation_assignments_received = relationship("ConsolidationAssignment", foreign_keys="ConsolidationAssignment.assigned_to_id", back_populates="assigned_to")
     consolidation_interactions = relationship("ConsolidationInteraction", foreign_keys="ConsolidationInteraction.performed_by_id", back_populates="performed_by")
-    donations = relationship("Donation", back_populates="persona")
-    tasks = relationship("CrmTask", back_populates="persona")
-    volunteer_shifts = relationship("VolunteerShift", back_populates="persona")
-    communication_logs = relationship("CommunicationLog", back_populates="persona")
+    donations = relationship("Donation", foreign_keys="Donation.persona_id", back_populates="persona")
+    tasks = relationship("CrmTask", foreign_keys="CrmTask.persona_id", back_populates="persona")
+    volunteer_shifts = relationship("VolunteerShift", foreign_keys="VolunteerShift.persona_id", back_populates="persona")
+    communication_logs = relationship("CommunicationLog", foreign_keys="CommunicationLog.persona_id", back_populates="persona")
     participaciones_grupo = relationship("ParticipanteGrupo", back_populates="persona")
     asistencias = relationship("Asistencia", back_populates="persona")
     seguimientos_realizados = relationship("RegistroSeguimiento", foreign_keys="RegistroSeguimiento.responsable_id", back_populates="responsable")
     historial_embudo = relationship("HistorialEmbudo", back_populates="persona")
-    ministerios_kernel = relationship("PersonaMinistry", back_populates="persona")
-    rol_iglesia = relationship("PersonaRoleAssignment", back_populates="persona", uselist=False)
-    roles_plataforma = relationship("PersonaPlatformRole", back_populates="persona")
+    ministerios_kernel = relationship("PersonaMinistry", foreign_keys="PersonaMinistry.persona_id", back_populates="persona")
+    rol_iglesia = relationship("PersonaRoleAssignment", foreign_keys="PersonaRoleAssignment.persona_id", back_populates="persona", uselist=False)
+    roles_plataforma = relationship("PersonaPlatformRole", foreign_keys="PersonaPlatformRole.persona_id", back_populates="persona")
 
 
 class Position(Base):
@@ -648,14 +636,14 @@ class CrmTask(Base):
         nullable=True,
         index=True,
     )
-    assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    assignee_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(20), default="pending")
     priority = Column(String(20), default="medium")
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
-    persona = relationship("Persona", back_populates="tasks")
-    assignee = relationship("User")
+    persona = relationship("Persona", foreign_keys=[persona_id], back_populates="tasks")
+    assignee = relationship("Persona", foreign_keys=[assignee_id])
 
 
 class VolunteerShift(Base):
@@ -719,14 +707,14 @@ class CommunicationLog(Base):
     recipient_phone = Column(String(30), nullable=True)
     campaign_name = Column(String(120), nullable=True, index=True)
     content = Column(Text, nullable=False)
-    leader_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    leader_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
     outcome = Column(String(50), default="sent", index=True)
     external_id = Column(String(120), nullable=True, index=True)
     is_read = Column(Boolean, default=False, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
-    persona = relationship("Persona", back_populates="communication_logs")
-    leader = relationship("User")
+    persona = relationship("Persona", foreign_keys=[persona_id], back_populates="communication_logs")
+    leader = relationship("Persona", foreign_keys=[leader_id])
 
     from sqlalchemy.orm import synonym
     member_id = synonym("persona_id")
@@ -745,13 +733,13 @@ class SpiritualMilestone(Base):
     )
     type = Column(String(100), nullable=False, index=True)
     event_date = Column(Date, nullable=False)
-    minister_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    minister_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
-    persona = relationship("Persona")
-    minister = relationship("User")
+    persona = relationship("Persona", foreign_keys=[persona_id])
+    minister = relationship("Persona", foreign_keys=[minister_id])
 
     from sqlalchemy.orm import synonym
     member_id = synonym("persona_id")
@@ -818,7 +806,7 @@ class PastoralCallLog(Base):
         nullable=True,
         index=True,
     )
-    pastor_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    pastor_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     outcome = Column(String(120), nullable=False)
     notes = Column(Text, nullable=True)
     duration_seconds = Column(Integer, default=0)
@@ -828,7 +816,7 @@ class PastoralCallLog(Base):
 
     persona = relationship("Persona", foreign_keys=[persona_id])
     case = relationship("ConsolidationCase")
-    pastor = relationship("User")
+    pastor = relationship("Persona", foreign_keys=[pastor_id])
 
 
 class MemberMinistry(Base):
@@ -876,7 +864,7 @@ class Fund(Base):
 class SupportTicket(Base):
     __tablename__ = "support_tickets"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     subject = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(
@@ -885,7 +873,7 @@ class SupportTicket(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), onupdate=_utcnow)
 
-    user = relationship("User")
+    user = relationship("Persona")
 
 
 class CommunityBoardCard(Base):
@@ -938,3 +926,7 @@ class EvangelismStrategy(Base):
 
 
 
+
+# ── Legacy compatibility aliases (cell_groups → grupos_evangelismo) ──
+# CellGroup and related classes are defined here for backward compat.
+# The v2 models live in models_evangelism.py (GrupoEvangelismo, etc.)

@@ -22,13 +22,13 @@ router = APIRouter(tags=["CRM"])
 logger = logging.getLogger(__name__)
 
 
-def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]) -> models.ConsolidationCase:
+def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]) -> models.CasoCRM:
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
     case = (
-        db.query(models.ConsolidationCase)
+        db.query(models.CasoCRM)
         .filter(
-            models.ConsolidationCase.id == case_uuid,
-            models.ConsolidationCase.deleted_at.is_(None),
+            models.CasoCRM.id == case_uuid,
+            models.CasoCRM.deleted_at.is_(None),
         )
         .first()
     )
@@ -56,7 +56,7 @@ def get_consolidation_case(
 
 @router.post("/consolidation/cases", response_model=dict)
 def create_consolidation_case(
-    payload: schemas.ConsolidationCaseCreate,
+    payload: schemas.CasoCRMCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -72,7 +72,7 @@ def create_consolidation_case(
         data["assigned_pastor_id"] = uuid.UUID(str(data["assigned_pastor_id"]))
     if data.get("assigned_leader_id"):
         data["assigned_leader_id"] = uuid.UUID(str(data["assigned_leader_id"]))
-    row = models.ConsolidationCase(**data)
+    row = models.CasoCRM(**data)
     row.sede_id = persona.sede_id
     db.add(row)
     db.commit()
@@ -83,7 +83,7 @@ def create_consolidation_case(
 @router.patch("/consolidation/cases/{case_id}", response_model=dict)
 def update_consolidation_case(
     case_id: str,
-    payload: schemas.ConsolidationCaseUpdate,
+    payload: schemas.CasoCRMUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -204,24 +204,24 @@ def list_consolidation_cases(
 ):
     """Lista casos de consolidación con paginación y filtros."""
     user_sede = get_user_sede_id(db, current_user.id)
-    q = db.query(models.ConsolidationCase).filter(
-        models.ConsolidationCase.deleted_at.is_(None)
+    q = db.query(models.CasoCRM).filter(
+        models.CasoCRM.deleted_at.is_(None)
     )
     if user_sede:
-        q = q.filter(models.ConsolidationCase.sede_id == user_sede)
+        q = q.filter(models.CasoCRM.sede_id == user_sede)
 
     if source:
-        q = q.filter(models.ConsolidationCase.source == source)
+        q = q.filter(models.CasoCRM.origen_canal == source)
     if stage:
-        q = q.filter(models.ConsolidationCase.stage == stage)
+        q = q.filter(models.CasoCRM.estado == stage)
     if status:
-        q = q.filter(models.ConsolidationCase.status == status)
+        q = q.filter(models.CasoCRM.status == status)
     if persona_id:
-        q = q.filter(models.ConsolidationCase.persona_id == persona_id)
+        q = q.filter(models.CasoCRM.persona_id == persona_id)
 
     total = q.count()
     cases = (
-        q.order_by(models.ConsolidationCase.created_at.desc())
+        q.order_by(models.CasoCRM.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
@@ -1296,7 +1296,7 @@ def list_prayer_requests(
     """Lista pedidos de oracion. Opcionalmente filtra por source (web, crm)."""
     q = db.query(models.PrayerRequest).order_by(models.PrayerRequest.created_at.desc())
     if source:
-        q = q.filter(models.PrayerRequest.source == source)
+        q = q.filter(models.PrayerRequest.origen_canal == source)
     prayers = q.all()
     return [
         {
@@ -1608,12 +1608,12 @@ def get_crm_radar(
 
     total_ministries = db.query(models.Ministry).count()
 
-    cases_q = db.query(models.ConsolidationCase).filter(
-        models.ConsolidationCase.status == "active",
-        models.ConsolidationCase.deleted_at.is_(None),
+    cases_q = db.query(models.CasoCRM).filter(
+        models.CasoCRM.estado != "CERRADO",
+        models.CasoCRM.deleted_at.is_(None),
     )
     if user_sede:
-        cases_q = cases_q.filter(models.ConsolidationCase.sede_id == user_sede)
+        cases_q = cases_q.filter(models.CasoCRM.sede_id == user_sede)
     active_cases = cases_q.count()
 
     tasks_q = db.query(models.CrmTask).filter(models.CrmTask.status == "pending")
@@ -1653,30 +1653,30 @@ def get_newsletter_leads(
     Permite filtrar por source, stage, landing_page, campaign y rango de fechas.
     """
     query = (
-        db.query(models.ConsolidationCase)
-        .join(models.Persona, models.ConsolidationCase.persona_id == models.Persona.id)
+        db.query(models.CasoCRM)
+        .join(models.Persona, models.CasoCRM.persona_id == models.Persona.id)
         .filter(
-            models.ConsolidationCase.source.like("%newsletter%"),
-            models.ConsolidationCase.status == "active",
+            models.CasoCRM.origen_canal.like("%newsletter%"),
+            models.CasoCRM.estado != "CERRADO",
         )
     )
 
     if source:
-        query = query.filter(models.ConsolidationCase.source == source)
+        query = query.filter(models.CasoCRM.origen_canal == source)
     if stage:
-        query = query.filter(models.ConsolidationCase.stage == stage)
+        query = query.filter(models.CasoCRM.estado == stage)
     if landing_page:
-        query = query.filter(models.ConsolidationCase.notes.like(f"%Landing: {landing_page}%"))
+        query = query.filter(models.CasoCRM.payload_web.like(f"%Landing: {landing_page}%"))
     if campaign:
-        query = query.filter(models.ConsolidationCase.notes.like(f"%Campaign: {campaign}%"))
+        query = query.filter(models.CasoCRM.payload_web.like(f"%Campaign: {campaign}%"))
     if date_from:
-        query = query.filter(models.ConsolidationCase.created_at >= date_from)
+        query = query.filter(models.CasoCRM.created_at >= date_from)
     if date_to:
-        query = query.filter(models.ConsolidationCase.created_at <= date_to)
+        query = query.filter(models.CasoCRM.created_at <= date_to)
 
     total = query.count()
     cases = (
-        query.order_by(models.ConsolidationCase.created_at.desc())
+        query.order_by(models.CasoCRM.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
@@ -1718,22 +1718,22 @@ def export_newsletter_leads_csv(
     Exporta leads de newsletter como lista de dicts (para generar CSV en frontend).
     """
     query = (
-        db.query(models.ConsolidationCase)
-        .join(models.Persona, models.ConsolidationCase.persona_id == models.Persona.id)
+        db.query(models.CasoCRM)
+        .join(models.Persona, models.CasoCRM.persona_id == models.Persona.id)
         .filter(
-            models.ConsolidationCase.source.like("%newsletter%"),
-            models.ConsolidationCase.status == "active",
+            models.CasoCRM.origen_canal.like("%newsletter%"),
+            models.CasoCRM.estado != "CERRADO",
         )
     )
 
     if source:
-        query = query.filter(models.ConsolidationCase.source == source)
+        query = query.filter(models.CasoCRM.origen_canal == source)
     if date_from:
-        query = query.filter(models.ConsolidationCase.created_at >= date_from)
+        query = query.filter(models.CasoCRM.created_at >= date_from)
     if date_to:
-        query = query.filter(models.ConsolidationCase.created_at <= date_to)
+        query = query.filter(models.CasoCRM.created_at <= date_to)
 
-    cases = query.order_by(models.ConsolidationCase.created_at.desc()).all()
+    cases = query.order_by(models.CasoCRM.created_at.desc()).all()
 
     rows = []
     for case in cases:

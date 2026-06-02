@@ -19,6 +19,7 @@ from backend.api.evangelism_shared import (ABSENTEES_PREVIEW_LIMIT,
                                            get_expected_members_for_event,
                                            normalize_role_scope_payload,
                                            parse_session_date, utc_now)
+from backend.crud.crm import get_user_sede_id
 from backend.auth import (normalize_role, require_active_user, require_module_access,
                           require_pastor_or_admin)
 from backend.core.audit import record_admin_action
@@ -1067,12 +1068,15 @@ def fast_checkin_visitor(
 
     # Create CRM follow-up records for new visitors
     if not already_exists:
-        # ConsolidationCase for follow-up tracking
-        case = models.ConsolidationCase(
+        # CasoCRM for follow-up tracking (v2 — replaces ConsolidationCase)
+        case = models.CasoCRM(
             persona_id=new_visitor.id,
-            stage="new",
-            status="active",
-            source="evangelism_event",
+            sede_id=new_visitor.sede_id,
+            pipeline_id=1,  # default pipeline
+            etapa_actual_id=1,  # default first stage
+            titulo_caso=f"Seguimiento: {new_visitor.first_name} {new_visitor.last_name}",
+            origen_canal="evangelismo",
+            estado="ABIERTO",
         )
         db.add(case)
 

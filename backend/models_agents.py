@@ -1,7 +1,7 @@
 """Agent Identity Model — Canonical person identity for the CCF platform."""
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, UUID
 from sqlalchemy import String, Text, UniqueConstraint, JSON
 from sqlalchemy.orm import relationship
 
@@ -161,5 +161,5 @@ class AgentInsight(Base):
     insight_data = Column("metadata", JSON, nullable=True)
     acknowledged = Column(Boolean, nullable=False, server_default="false")
     acknowledged_at = Column(DateTime(timezone=True), nullable=True)
-    acknowledged_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    acknowledged_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)

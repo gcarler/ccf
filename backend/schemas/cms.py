@@ -325,7 +325,7 @@ class CmsPublishLogRead(BaseModel):
     action: str
     from_status: Optional[str] = None
     to_status: Optional[str] = None
-    actor_user_id: Optional[int] = None
+    actor_persona_id: Optional[str] = None
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     model_config = orm_config

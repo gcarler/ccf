@@ -73,3 +73,4 @@ venv/
 .venv/
 ccf_final.db
 openapi_debug.json
+.env.backup

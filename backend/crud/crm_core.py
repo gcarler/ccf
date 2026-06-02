@@ -51,7 +51,7 @@ def delete_pipeline(db: Session, pipeline_id: int) -> bool:
     obj = get_pipeline(db, pipeline_id)
     if not obj:
         return False
-    db.delete(obj)
+    obj.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -85,7 +85,7 @@ def delete_etapa(db: Session, etapa_id: int) -> bool:
     obj = db.query(EtapaPipeline).filter(EtapaPipeline.id == etapa_id).first()
     if not obj:
         return False
-    db.delete(obj)
+    obj.deleted_at = _utcnow()
     db.commit()
     return True
 

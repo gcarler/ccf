@@ -58,13 +58,23 @@ def _utcnow() -> datetime:
 def _log_project_activity(db: Session, project_id: Any, user_id: Any, action_type: str, description: str):
     persona_id = get_user_persona_id(db, user_id)
     activity = models.ProjectActivityLog(
-        project_id=project_id,
+        project_id=_to_uuid(project_id),
         persona_id=persona_id,
         action_type=action_type,
         description=description,
     )
     db.add(activity)
     return activity
+
+
+def _to_uuid(val):
+    """Convert string UUID to uuid.UUID object for SQLAlchemy compatibility with SQLite."""
+    if isinstance(val, uuid.UUID):
+        return val
+    try:
+        return uuid.UUID(str(val))
+    except (ValueError, AttributeError):
+        return val
 
 
 def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Project:
@@ -75,7 +85,7 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
             selectinload(models.Project.milestones),
             selectinload(models.Project.activity_logs),
         )
-        .filter(models.Project.id == project_id, models.Project.deleted_at.is_(None))
+        .filter(models.Project.id == _to_uuid(project_id), models.Project.deleted_at.is_(None))
         .first()
     )
     if not project:
@@ -92,7 +102,7 @@ def _ensure_task(db: Session, task_id: str) -> models.ProjectTask:
             selectinload(models.ProjectTask.supplies),
             selectinload(models.ProjectTask.attachments),
         )
-        .filter(models.ProjectTask.id == task_id, models.ProjectTask.deleted_at.is_(None))
+        .filter(models.ProjectTask.id == _to_uuid(task_id), models.ProjectTask.deleted_at.is_(None))
         .first()
     )
     if not task:
@@ -111,7 +121,7 @@ def _ensure_supply_in_task(db: Session, project_id: str, task_id: str, supply_id
     _ensure_task_in_project(db, project_id, task_id)
     supply = (
         db.query(models.TaskSupply)
-        .filter(models.TaskSupply.id == supply_id, models.TaskSupply.task_id == task_id)
+        .filter(models.TaskSupply.id == supply_id, models.TaskSupply.task_id == _to_uuid(task_id))
         .first()
     )
     if not supply:
@@ -123,8 +133,8 @@ def _ensure_milestone_in_project(db: Session, project_id: str, milestone_id: str
     milestone = (
         db.query(models.ProjectMilestone)
         .filter(
-            models.ProjectMilestone.id == milestone_id,
-            models.ProjectMilestone.project_id == project_id,
+            models.ProjectMilestone.id == _to_uuid(milestone_id),
+            models.ProjectMilestone.project_id == _to_uuid(project_id),
         )
         .first()
     )
@@ -323,8 +333,8 @@ def set_project_phases(
 def list_all_comments(
     unresolved_only: bool = False,
     limit: int = Query(120, le=500),
-    project_id: Optional[int] = None,
-    task_id: Optional[int] = None,
+    project_id: Optional[str] = None,
+    task_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -333,9 +343,9 @@ def list_all_comments(
     if unresolved_only:
         q = q.filter(models.ProjectComment.is_resolved.is_(False))
     if project_id:
-        q = q.filter(models.ProjectComment.project_id == project_id)
+        q = q.filter(models.ProjectComment.project_id == _to_uuid(project_id))
     if task_id:
-        q = q.filter(models.ProjectComment.task_id == task_id)
+        q = q.filter(models.ProjectComment.task_id == _to_uuid(task_id))
     rows = q.order_by(models.ProjectComment.created_at.desc()).limit(limit).all()
     # Batch-fetch authors to avoid N+1 queries
     author_ids = {row.author_id for row in rows if row.author_id}
@@ -375,12 +385,12 @@ def create_project_task(
     _ensure_project(db, project_id)
     max_order = (
         db.query(func.max(models.ProjectTask.order_index))
-        .filter(models.ProjectTask.project_id == project_id)
+        .filter(models.ProjectTask.project_id == _to_uuid(project_id))
         .scalar()
         or 0
     )
     payload = task.model_dump()
-    payload["project_id"] = project_id
+    payload["project_id"] = _to_uuid(project_id)
     payload["order_index"] = max_order + 1
     db_task = models.ProjectTask(**payload)
     db.add(db_task)
@@ -487,7 +497,7 @@ def workload_summary(
 @router.get("/activities", response_model=List[schemas.ProjectActivityItem])
 def list_activities(
     limit: int = Query(20, le=200),
-    project_id: Optional[int] = None,
+    project_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -496,7 +506,7 @@ def list_activities(
         models.ProjectActivityLog.created_at.desc()
     )
     if project_id:
-        q = q.filter(models.ProjectActivityLog.project_id == project_id)
+        q = q.filter(models.ProjectActivityLog.project_id == _to_uuid(project_id))
     logs = q.limit(limit).all()
 
     result = []
@@ -724,7 +734,7 @@ def get_project_whiteboard(
     _ensure_project(db, project_id)
     board = (
         db.query(models.ProjectWhiteboard)
-        .filter(models.ProjectWhiteboard.project_id == project_id)
+        .filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id))
         .first()
     )
     return _normalize_dates(board)
@@ -740,7 +750,7 @@ def update_project_whiteboard(
     _ensure_project(db, project_id)
     board = (
         db.query(models.ProjectWhiteboard)
-        .filter(models.ProjectWhiteboard.project_id == project_id)
+        .filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id))
         .first()
     )
     title = payload.title or "Pizarra Estrategica"
@@ -748,7 +758,7 @@ def update_project_whiteboard(
 
     if not board:
         board = models.ProjectWhiteboard(
-            project_id=project_id, title=title, elements_json=elements
+            project_id=_to_uuid(project_id), title=title, elements_json=elements
         )
         db.add(board)
     else:
@@ -859,7 +869,7 @@ def create_task_supply(
 ):
     """Crea un insumo requerido para una tarea."""
     task = _ensure_task_in_project(db, project_id, task_id)
-    supply = models.TaskSupply(task_id=task_id, **payload.model_dump())
+    supply = models.TaskSupply(task_id=_to_uuid(task_id), **payload.model_dump())
     db.add(supply)
     _log_project_activity(
         db,
@@ -1030,18 +1040,18 @@ def create_comment(
             status_code=400, detail="project_id and content are required"
         )
     task_id = payload.get("task_id")
-    _ensure_project(db, int(project_id))
+    _ensure_project(db, project_id)
     author_persona_id = get_user_persona_id(db, current_user.id)
     comment = models.ProjectComment(
-        project_id=int(project_id),
-        task_id=int(task_id) if task_id else None,
+        project_id=_to_uuid(project_id),
+        task_id=_to_uuid(task_id) if task_id else None,
         author_id=author_persona_id,
         content=content,
     )
     db.add(comment)
     _log_project_activity(
         db,
-        int(project_id),
+        project_id,
         current_user.id,
         "comment_added",
         content,
@@ -1154,7 +1164,7 @@ def list_project_tasks(
             selectinload(models.ProjectTask.supplies),
             selectinload(models.ProjectTask.subtasks),
         )
-        .filter(models.ProjectTask.project_id == project_id)
+        .filter(models.ProjectTask.project_id == _to_uuid(project_id))
     )
 
     if status_filter:
@@ -1382,7 +1392,7 @@ def list_project_milestones(
     _ensure_project(db, project_id)
     milestones = (
         db.query(models.ProjectMilestone)
-        .filter(models.ProjectMilestone.project_id == project_id)
+        .filter(models.ProjectMilestone.project_id == _to_uuid(project_id))
         .order_by(models.ProjectMilestone.target_date.asc())
         .all()
     )
@@ -1404,7 +1414,7 @@ def create_project_milestone(
 ):
     """Crea un hito en un proyecto."""
     _ensure_project(db, project_id)
-    milestone = models.ProjectMilestone(project_id=project_id, **payload.model_dump())
+    milestone = models.ProjectMilestone(project_id=_to_uuid(project_id), **payload.model_dump())
     db.add(milestone)
     _log_project_activity(
         db,

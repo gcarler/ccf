@@ -1,5 +1,7 @@
 """Tests for CCF Kernel — Protocolo de Identidad y Roles."""
 
+import uuid as _uuid
+
 import pytest
 from sqlalchemy.orm import Session
 
@@ -18,7 +20,7 @@ from backend.models_kernel import (
 
 @pytest.fixture
 def test_user(db_session: Session) -> models.User:
-    """Crear un usuario de prueba."""
+    """Crear un usuario de prueba con Persona vinculada."""
     user = models.User(
         username="kernel_test_user",
         email="kernel_test@ccf.test",
@@ -27,6 +29,15 @@ def test_user(db_session: Session) -> models.User:
         is_active=True,
     )
     db_session.add(user)
+    db_session.flush()
+    persona = models.Persona(
+        id=_uuid.uuid4(),
+        user_id=user.id,
+        first_name="Kernel",
+        last_name="Test",
+        email="kernel_test@ccf.test",
+    )
+    db_session.add(persona)
     db_session.commit()
     db_session.refresh(user)
     return user
@@ -34,7 +45,7 @@ def test_user(db_session: Session) -> models.User:
 
 @pytest.fixture
 def inactive_user(db_session: Session) -> models.User:
-    """Crear un usuario inactivo de prueba."""
+    """Crear un usuario inactivo de prueba con Persona vinculada."""
     user = models.User(
         username="kernel_inactive_user",
         email="kernel_inactive@ccf.test",
@@ -43,6 +54,16 @@ def inactive_user(db_session: Session) -> models.User:
         is_active=False,
     )
     db_session.add(user)
+    db_session.flush()
+    persona = models.Persona(
+        id=_uuid.uuid4(),
+        user_id=user.id,
+        first_name="Kernel",
+        last_name="Inactive",
+        email="kernel_inactive@ccf.test",
+        estado_vital="INACTIVO",
+    )
+    db_session.add(persona)
     db_session.commit()
     db_session.refresh(user)
     return user

@@ -75,7 +75,7 @@ def delete_user(db: Session, user_id: int) -> bool:
     row = db.query(models.User).filter(models.User.id == user_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 

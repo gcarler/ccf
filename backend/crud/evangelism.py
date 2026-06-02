@@ -146,7 +146,7 @@ def delete_estrategia(db: Session, strategy_id: int) -> bool:
     )
     if not db_obj:
         return False
-    db.delete(db_obj)
+    db_obj.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -184,7 +184,7 @@ def delete_rol_personalizado(db: Session, role_id: int) -> bool:
     )
     if not db_obj:
         return False
-    db.delete(db_obj)
+    db_obj.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -421,7 +421,7 @@ def delete_motivo_excusa(db: Session, excusa_id: int) -> bool:
     db_obj = db.query(models.MotivoExcusa).filter(models.MotivoExcusa.id == excusa_id).first()
     if not db_obj or db_obj.es_del_sistema:
         return False
-    db.delete(db_obj)
+    db_obj.deleted_at = _utcnow()
     db.commit()
     return True
 

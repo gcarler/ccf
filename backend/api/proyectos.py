@@ -147,7 +147,7 @@ def agregar_miembro(
 @router.delete("/{proyecto_id}/equipo/{persona_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remover_miembro(
     proyecto_id: str,
-    persona_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     _=Depends(require_module_access("projects", "manage")),
 ):

@@ -8,6 +8,7 @@ Tablas: sedes, categorias_estrategia, motivos_excusa, logs_auditoria,
 from __future__ import annotations
 
 import enum
+import uuid as _uuid
 
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Integer,
@@ -67,7 +68,7 @@ class EstadoSesionEnum(str, enum.Enum):
 class Sede(Base):
     __tablename__ = "sedes"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     nombre = Column(String(150), nullable=False)
     ciudad = Column(String(100), nullable=False)
     es_activa = Column(Boolean, default=True)

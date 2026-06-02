@@ -8,6 +8,7 @@ Create Date: 2026-05-05 09:00:00
 from __future__ import annotations
 
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from alembic import op
 
@@ -485,7 +486,7 @@ def upgrade() -> None:
         op.create_table(
             "consolidation_follow_up_tasks",
             sa.Column("id", sa.Integer(), primary_key=True),
-            sa.Column("case_id", sa.Integer(), nullable=False),
+            sa.Column("case_id", PG_UUID(as_uuid=True), nullable=False),
             sa.Column("assignment_id", sa.Integer(), nullable=True),
             sa.Column("title", sa.String(length=200), nullable=False),
             sa.Column("description", sa.Text(), nullable=True),

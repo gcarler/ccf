@@ -51,7 +51,7 @@ def update_curso(db: Session, curso_id: int, payload: CursoCreate) -> Optional[C
 def delete_curso(db: Session, curso_id: int) -> bool:
     obj = get_curso(db, curso_id)
     if not obj: return False
-    db.delete(obj); db.commit()
+    obj.deleted_at = _utcnow(); db.commit()
     return True
 
 
@@ -83,7 +83,7 @@ def update_leccion(db: Session, leccion_id: int, payload: LeccionCreate) -> Opti
 def delete_leccion(db: Session, leccion_id: int) -> bool:
     obj = get_leccion(db, leccion_id)
     if not obj: return False
-    db.delete(obj); db.commit()
+    obj.deleted_at = _utcnow(); db.commit()
     return True
 
 

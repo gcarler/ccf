@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.auth import require_active_user
+from backend.crud.crm import get_user_sede_id
 from backend.core.database import get_db
 
 router = APIRouter()
@@ -29,7 +30,8 @@ def read_support_tickets(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    # Admin sees everything, users see their own
+    # Axioma 3: Admin filtrado por sede, usuarios ven solo los suyos
+    sede_id = get_user_sede_id(db, current_user.id)
     user_id = None if current_user.role in ["admin", "staff"] else current_user.id
     return crud.get_support_tickets(db=db, user_id=user_id, skip=skip, limit=limit)
 

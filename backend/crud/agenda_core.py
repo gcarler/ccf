@@ -56,7 +56,7 @@ def delete_recurso(db: Session, recurso_id: int) -> bool:
     row = db.query(RecursoFisico).filter(RecursoFisico.id == recurso_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -190,7 +190,7 @@ def delete_participante(db: Session, participante_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -235,6 +235,6 @@ def delete_reserva(db: Session, reserva_id: int) -> bool:
     row = db.query(ReservaRecurso).filter(ReservaRecurso.id == reserva_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True

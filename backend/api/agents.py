@@ -3,6 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from backend.models_shared import _utcnow
 from backend import crud, models, schemas
 from backend.agents.orchestrator import AgentOrchestrator
 from backend.auth import require_active_user, require_admin
@@ -105,7 +106,7 @@ def delete_task(
     task = db.query(models.AgentTask).filter(models.AgentTask.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    db.delete(task)
+    task.deleted_at = _utcnow()
     db.commit()
     return None
 
@@ -170,7 +171,7 @@ def delete_insight(
     )
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
-    db.delete(insight)
+    insight.deleted_at = _utcnow()
     db.commit()
     return None
 

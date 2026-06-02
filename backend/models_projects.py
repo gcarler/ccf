@@ -156,9 +156,9 @@ class ProjectPhase(Base):
 
 class ProjectInboxState(Base):
     __tablename__ = "project_inbox_state"
-    __table_args__ = (UniqueConstraint("user_id", "item_id", name="uq_user_project_item"),)
+    __table_args__ = (UniqueConstraint("persona_id", "item_id", name="uq_persona_project_item"),)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
     item_id = Column(String(80), nullable=False)
     is_read = Column(Boolean, default=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)

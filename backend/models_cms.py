@@ -31,7 +31,7 @@ class ContentPublication(Base):
     publish_at = Column(DateTime(timezone=True), nullable=True)
     expire_at = Column(DateTime(timezone=True), nullable=True)
     last_published_at = Column(DateTime(timezone=True), nullable=True)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -68,7 +68,7 @@ class CmsMediaItem(Base):
     section = Column(String(120), nullable=False, index=True, default="general")
     tags = Column(JSON, default=[])
     status = Column(String(20), default="active", index=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -98,7 +98,7 @@ class CmsTheme(Base):
     is_active = Column(Boolean, default=False, index=True)
     status = Column(String(20), default="active", index=True)
     version = Column(Integer, default=1)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -172,8 +172,8 @@ class CmsPage(Base):
         nullable=True,
     )
     locale = Column(String(5), default="es", server_default="es", index=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -196,7 +196,7 @@ class CmsPageVersion(Base):
     version_number = Column(Integer, nullable=False)
     snapshot_json = Column(JSON, default={})
     notes = Column(Text, nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
@@ -248,7 +248,7 @@ class CmsPublishLog(Base):
     action = Column(String(50), nullable=False, index=True)
     from_status = Column(String(30), nullable=True)
     to_status = Column(String(30), nullable=True)
-    actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    actor_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     metadata_json = Column(JSON, default={})
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
@@ -267,7 +267,7 @@ class SavedView(Base):
     """Saved table views with schema, filters, grouping, and conditional format."""
     __tablename__ = "saved_views"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(200), nullable=False)
     schema_json = Column(JSON, default={})
     filters_json = Column(JSON, default=[])
@@ -305,7 +305,7 @@ class Testimonial(Base):
     is_approved = Column(Boolean, default=False)
     show_on_home = Column(Boolean, default=False)
     status = Column(String(20), default="pending", index=True)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    author = relationship("User", foreign_keys=[author_id], lazy="joined")
+    author = relationship("Persona", foreign_keys=[author_persona_id], lazy="joined")

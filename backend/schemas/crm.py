@@ -693,7 +693,7 @@ class TeachingAssignment(TeachingAssignmentBase):
     id: int
     model_config = orm_config
 
-class ConsolidationCaseBase(BaseModel):
+class CasoCRMBase(BaseModel):  # v2 — replaces ConsolidationCaseBase
     persona_id: str
     stage: str = "new"
     status: str = "active"
@@ -705,10 +705,12 @@ class ConsolidationCaseBase(BaseModel):
     assigned_leader_id: Optional[str] = None
     notes: Optional[str] = None
 
-class ConsolidationCaseCreate(ConsolidationCaseBase):
+class CasoCRMCreate(CasoCRMBase):  # v2
+
     pass
 
-class ConsolidationCaseUpdate(BaseModel):
+class CasoCRMUpdate(BaseModel):  # v2
+
     stage: Optional[str] = None
     status: Optional[str] = None
     source: Optional[str] = None
@@ -719,7 +721,8 @@ class ConsolidationCaseUpdate(BaseModel):
     assigned_leader_id: Optional[str] = None
     notes: Optional[str] = None
 
-class ConsolidationCase(ConsolidationCaseBase):
+class CasoCRM(CasoCRMBase):  # v2
+
     id: str
     created_at: datetime
     updated_at: datetime
@@ -991,3 +994,9 @@ class CellGroupAttendanceCreate(CellGroupAttendanceBase):
 class CellGroupAttendance(CellGroupAttendanceBase):
     id: int
     model_config = orm_config
+
+# Backward compatibility aliases
+ConsolidationCaseBase = CasoCRMBase
+ConsolidationCaseCreate = CasoCRMCreate
+ConsolidationCaseUpdate = CasoCRMUpdate
+ConsolidationCase = CasoCRM

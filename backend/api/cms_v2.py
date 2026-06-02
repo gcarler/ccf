@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
+from backend.models_shared import _utcnow
 from backend import crud, models, schemas
 from backend.auth import normalize_role, require_module_access
 from backend.core.database import get_db
@@ -915,7 +916,7 @@ def delete_global_block(
     ).first()
     if not block:
         raise HTTPException(status_code=404, detail="Global block not found")
-    db.delete(block)
+    block.deleted_at = _utcnow()
     db.commit()
     return {"ok": True, "deleted": section_id}
 

@@ -1297,12 +1297,15 @@ def register_faro_visitor(
         role="visitante",
     ))
 
-    # CRM follow-up
-    case = models.ConsolidationCase(
+    # CRM follow-up (v2 — CasoCRM replaces ConsolidationCase)
+    case = models.CasoCRM(
         persona_id=new_persona.id,
-        stage="new",
-        status="active",
-        source="faro_session",
+        sede_id=new_persona.sede_id,
+        pipeline_id=1,  # default pipeline
+        etapa_actual_id=1,  # default first stage
+        titulo_caso=f"Seguimiento: {new_persona.first_name} {new_persona.last_name}",
+        origen_canal="evangelismo",
+        estado="ABIERTO",
     )
     db.add(case)
 

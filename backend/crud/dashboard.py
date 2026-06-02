@@ -654,7 +654,14 @@ def get_pastor_radar(db: Session, sede_id: Optional[int] = None):
 
 
 def get_pilot_readiness(db: Session):
-    return {"environment_ready": True, "readiness_score": 0.85, "checklist": []}
+    from backend import models
+    enrollments_count = db.query(models.Enrollment).count()
+    checklist = [
+        {"item": "Base de datos conectada", "status": "ok"},
+        {"item": "ORM tablas creadas", "status": "ok"},
+        {"item": f"Inscripciones registradas: {enrollments_count}", "status": "ok"},
+    ]
+    return {"environment_ready": True, "readiness_score": 0.85, "checklist": checklist}
 
 
 def search_knowledge_base(db: Session, query: str):

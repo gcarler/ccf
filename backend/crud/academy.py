@@ -21,8 +21,11 @@ def get_courses(
     limit: int = 100,
     modality: str | None = None,
     published_only: bool = True,
+    sede_id: str | None = None,
 ):
     query = db.query(models.Course)
+    if sede_id:
+        query = query.filter(models.Course.sede_id == sede_id)
     if modality:
         query = query.filter(models.Course.modality == modality)
     if published_only:
@@ -231,7 +234,7 @@ def submit_assessment_attempt(
         .first()
     )
     if existing_attempt:
-        db.delete(existing_attempt)
+        existing_attempt.deleted_at = _utcnow()
         db.flush()
 
     attempt = models.AssessmentAttempt(
@@ -720,7 +723,7 @@ def delete_course(db: Session, course_id: int) -> bool:
     row = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -775,7 +778,7 @@ def delete_lesson(db: Session, lesson_id: int) -> bool:
     row = db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -833,7 +836,7 @@ def delete_assessment(db: Session, assessment_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -893,7 +896,7 @@ def delete_assessment_question(db: Session, question_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -943,7 +946,7 @@ def delete_assessment_option(db: Session, option_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -976,7 +979,7 @@ def delete_enrollment(db: Session, enrollment_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1011,7 +1014,7 @@ def delete_certificate(db: Session, certificate_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1047,7 +1050,7 @@ def delete_course_attendance(db: Session, attendance_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1076,7 +1079,7 @@ def delete_resource(db: Session, resource_id: int) -> bool:
     row = db.query(models.Resource).filter(models.Resource.id == resource_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1096,6 +1099,6 @@ def delete_forum_thread(db: Session, thread_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True

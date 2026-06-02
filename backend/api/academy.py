@@ -11,6 +11,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
+from backend.crud.crm import get_user_sede_id
 from backend.auth import (normalize_role, require_admin,
                           require_coordinator_or_admin, require_module_access,
                           require_teacher_or_admin)
@@ -59,9 +60,11 @@ def read_courses(
     modality: Optional[str] = None,
     published_only: bool = True,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("academy", "read")),
 ):
+    sede_id = get_user_sede_id(db, current_user.id)
     return crud.get_courses(
-        db, skip=skip, limit=limit, modality=modality, published_only=published_only
+        db, skip=skip, limit=limit, modality=modality, published_only=published_only, sede_id=sede_id
     )
 
 

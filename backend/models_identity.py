@@ -38,7 +38,6 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     user_role_obj = relationship("Role", back_populates="role_users")
-    enrollments = relationship("Enrollment", back_populates="student")
     badges = relationship("UserBadge", back_populates="user")
     ui_prefs = relationship("UserUIPreference", back_populates="user", uselist=False)
 

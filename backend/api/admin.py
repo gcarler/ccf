@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from backend.models_shared import _utcnow
 from backend import crud, models, schemas
 from backend.auth import require_active_user, require_admin
 from backend.crud.crm import get_user_sede_id
@@ -103,7 +104,7 @@ def delete_role(
         raise HTTPException(
             status_code=409, detail=f"Cannot delete role with {assigned} assigned users"
         )
-    db.delete(role)
+    role.deleted_at = _utcnow()
     db.commit()
 
 
@@ -459,7 +460,7 @@ def list_admin_audit(
         result.append(
             {
                 "id": log.id,
-                "actor_user_id": log.actor_user_id,
+                "actor_persona_id": str(log.actor_persona_id or ""),
                 "action": log.action,
                 "resource_type": log.resource_type,
                 "resource_id": log.resource_id,
@@ -518,7 +519,7 @@ def delete_comment(
     )
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
-    db.delete(comment)
+    comment.deleted_at = _utcnow()
     db.commit()
     return {"status": "success"}
 
@@ -695,7 +696,7 @@ def delete_automation(
     )
     if not rule:
         raise HTTPException(status_code=404, detail="Automation rule not found")
-    db.delete(rule)
+    rule.deleted_at = _utcnow()
     db.commit()
     return {"status": "success"}
 
@@ -791,7 +792,7 @@ def delete_auth_role_definition(
             status_code=409,
             detail=f"No se puede eliminar el rol \"{rol.nombre}\" porque tiene {assigned} usuario(s) asignado(s)",
         )
-    db.delete(rol)
+    rol.deleted_at = _utcnow()
     db.commit()
 
 
@@ -880,5 +881,5 @@ def remove_user_module_role(
     umr = db.query(UsuarioRolModulo).filter(UsuarioRolModulo.id == aid).first()
     if not umr:
         raise HTTPException(status_code=404, detail="Asignacion no encontrada")
-    db.delete(umr)
+    umr.deleted_at = _utcnow()
     db.commit()

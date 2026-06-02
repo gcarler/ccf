@@ -161,7 +161,7 @@ def put_content_block(
     )
     crud.create_admin_audit_log(
         db,
-        actor_user_id=current_user.id,
+        actor_persona_id=str(current_user.id),
         action="content_update",
         resource_type="content",
         resource_id=page_key,
@@ -185,7 +185,7 @@ def patch_content_block(
     )
     crud.create_admin_audit_log(
         db,
-        actor_user_id=current_user.id,
+        actor_persona_id=str(current_user.id),
         action="content_update",
         resource_type="content",
         resource_id=page_key,
@@ -209,7 +209,7 @@ def post_content_block(
     )
     crud.create_admin_audit_log(
         db,
-        actor_user_id=current_user.id,
+        actor_persona_id=str(current_user.id),
         action="content_create_or_update",
         resource_type="content",
         resource_id=page_key,
@@ -244,7 +244,7 @@ def rollback_content_version(
     )
     crud.create_admin_audit_log(
         db,
-        actor_user_id=current_user.id,
+        actor_persona_id=str(current_user.id),
         action="content_rollback",
         resource_type="content",
         resource_id=page_key,
@@ -303,7 +303,7 @@ def patch_content_workflow(
     )
     crud.create_admin_audit_log(
         db,
-        actor_user_id=current_user.id,
+        actor_persona_id=str(current_user.id),
         action="content_workflow_transition",
         resource_type="content_workflow",
         resource_id=page_key,

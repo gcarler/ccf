@@ -9,7 +9,7 @@ from backend import models
 
 def create_admin_audit_log(
     db: Session,
-    actor_user_id: int | None,
+    actor_persona_id: str | None,
     action: str,
     resource_type: str | None = None,
     resource_id: str | None = None,
@@ -18,7 +18,7 @@ def create_admin_audit_log(
 ):
     now = dt.datetime.now(dt.UTC).replace(tzinfo=None)
     row = models.AdminAuditLog(
-        actor_user_id=actor_user_id,
+        actor_persona_id=actor_persona_id,
         action=action,
         resource_type=resource_type,
         resource_id=resource_id,
@@ -36,12 +36,12 @@ def create_admin_audit_log(
 def get_admin_audit_logs(
     db: Session,
     limit: int = 100,
-    actor_user_id: int | None = None,
+    actor_persona_id: str | None = None,
     resource_type: str | None = None,
 ):
     query = db.query(models.AdminAuditLog)
-    if actor_user_id is not None:
-        query = query.filter(models.AdminAuditLog.actor_user_id == actor_user_id)
+    if actor_persona_id is not None:
+        query = query.filter(models.AdminAuditLog.actor_persona_id == actor_persona_id)
     if resource_type is not None:
         query = query.filter(models.AdminAuditLog.resource_type == resource_type)
     return query.order_by(models.AdminAuditLog.created_at.desc()).limit(limit).all()

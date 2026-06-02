@@ -79,11 +79,12 @@ class PersonaMinistry(Base):
     ministry = Column(SAEnum(MinistryOffice), nullable=False, index=True)
     is_primary = Column(Boolean, default=False)
     recognized_at = Column(DateTime(timezone=True), default=_utcnow)
-    recognized_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    recognized_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     notes = Column(Text, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
-    persona = relationship("Persona", back_populates="ministerios_kernel")
-    recognized_by_user = relationship("User", foreign_keys=[recognized_by])
+    persona = relationship("Persona", foreign_keys=[persona_id], back_populates="ministerios_kernel")
+    recognized_by_persona = relationship("Persona", foreign_keys=[recognized_by_persona_id])
 
     __table_args__ = (
         UniqueConstraint("persona_id", "ministry", name="uq_persona_ministry"),
@@ -118,11 +119,11 @@ class PersonaRoleAssignment(Base):
         index=True,
     )
     assigned_at = Column(DateTime(timezone=True), default=_utcnow)
-    assigned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    assigned_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     notes = Column(Text, nullable=True)
 
-    persona = relationship("Persona", back_populates="rol_iglesia")
-    assigned_by_user = relationship("User", foreign_keys=[assigned_by])
+    persona = relationship("Persona", foreign_keys=[persona_id], back_populates="rol_iglesia")
+    assigned_by_persona = relationship("Persona", foreign_keys=[assigned_by_persona_id])
 
 
 class PersonaRoleHistory(Base):
@@ -139,11 +140,11 @@ class PersonaRoleHistory(Base):
     from_role = Column(SAEnum(ChurchRole), nullable=True)
     to_role = Column(SAEnum(ChurchRole), nullable=False)
     reason = Column(String(200), nullable=True)
-    changed_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    changed_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     changed_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
-    persona = relationship("Persona")
-    changed_by_user = relationship("User", foreign_keys=[changed_by])
+    persona = relationship("Persona", foreign_keys=[persona_id])
+    changed_by_persona = relationship("Persona", foreign_keys=[changed_by_persona_id])
 
     __table_args__ = (
         Index("ix_persona_role_history_lookup", "persona_id", "changed_at"),
@@ -217,14 +218,14 @@ class PersonaPlatformRole(Base):
         Integer, ForeignKey("platform_role_definitions.id"), nullable=False, index=True
     )
     assigned_at = Column(DateTime(timezone=True), default=_utcnow)
-    assigned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    assigned_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     expires_at = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Boolean, default=True, index=True)
     notes = Column(Text, nullable=True)
 
-    persona = relationship("Persona", back_populates="roles_plataforma")
+    persona = relationship("Persona", foreign_keys=[persona_id], back_populates="roles_plataforma")
     role_definition = relationship("PlatformRoleDefinition", back_populates="persona_roles")
-    assigned_by_user = relationship("User", foreign_keys=[assigned_by])
+    assigned_by_persona = relationship("Persona", foreign_keys=[assigned_by_persona_id])
 
     __table_args__ = (
         UniqueConstraint("persona_id", "role_id", name="uq_persona_platform_role"),

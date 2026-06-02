@@ -27,7 +27,7 @@ FaroSeason = CampaignSeason  # Backward compatibility alias for FaroSeason
 # CRM / Pastoral
 from backend.models_crm import (
     AgendaEvent, ChatMessage, ConsolidationAssignment,
-    ConsolidationCase, ConsolidationInteraction, ConsolidationTask,
+    ConsolidationCase, ConsolidationInteraction, ConsolidationTask,  # legacy (use CasoCRM from models_crm_core)
     CrmAutomation, CrmEvent,
     ColombianDepartment,
     CommunicationLog, CommunityBoardCard,

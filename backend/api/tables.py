@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from backend.models_shared import _utcnow
 from backend import models, schemas
 from backend.core.database import get_db
 from backend.core.permissions import require_active_user
@@ -114,6 +115,6 @@ def delete_table_schema(
     ).first()
     if not view:
         raise HTTPException(status_code=404, detail="View not found")
-    db.delete(view)
+    view.deleted_at = _utcnow()
     db.commit()
     return {"ok": True}

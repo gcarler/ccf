@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from backend.models_shared import _utcnow
 from backend import crud, models
 from backend.auth import require_admin, require_module_access
 from backend.core.database import get_db
@@ -224,7 +225,7 @@ def delete_fund(
         from fastapi import HTTPException
 
         raise HTTPException(status_code=404, detail="Fund not found")
-    db.delete(fund)
+    fund.deleted_at = _utcnow()
     db.commit()
 
 

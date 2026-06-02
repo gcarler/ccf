@@ -67,7 +67,7 @@ def _create_auth_user(db_session: Session, persona_id: str) -> str:
     from backend import models as m
     sede = db_session.query(m.Sede).first()
     if not sede:
-        sede = m.Sede(name="TestSede")
+        sede = m.Sede(nombre="TestSede", ciudad="Bogota", es_activa=True)
         db_session.add(sede)
         db_session.commit()
         db_session.refresh(sede)
@@ -85,6 +85,21 @@ def _create_auth_user(db_session: Session, persona_id: str) -> str:
     return str(user.id)
 
 
+def _seed_auth_roles(db_session: Session):
+    """Seed RolPlataforma definitions needed by tests."""
+    from backend.models_auth import RolPlataforma
+    roles_to_seed = [
+        ("ADMINISTRADOR", {"*": ["create", "read", "update", "delete", "admin"]}),
+        ("GESTOR", {"crm": ["create", "read", "update"], "projects": ["create", "read", "update"]}),
+        ("EDITOR", {"cms": ["read", "update"], "projects": ["read", "update"]}),
+        ("LECTOR", {"crm": ["read"], "projects": ["read"]}),
+    ]
+    for nombre, permisos in roles_to_seed:
+        if not db_session.query(RolPlataforma).filter(RolPlataforma.nombre == nombre).first():
+            db_session.add(RolPlataforma(nombre=nombre, permisos=permisos))
+    db_session.commit()
+
+
 # ──────────────────────────────────────────────
 # TESTS
 # ──────────────────────────────────────────────
@@ -93,12 +108,12 @@ class TestAuthRoleDefinitions:
     """CRUD de RolPlataforma via /admin/auth-role-definitions."""
 
     def test_list_auth_roles(self, client: TestClient, db_session: Session):
+        _seed_auth_roles(db_session)
         token = _login_as_admin(client, db_session)
         resp = client.get("/api/admin/auth-role-definitions", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
         data = resp.json()
         assert isinstance(data, list)
-        # Should have at least the 4 seeded roles
         nombres = [r["nombre"] for r in data]
         assert "ADMINISTRADOR" in nombres
         assert "LECTOR" in nombres
@@ -166,6 +181,7 @@ class TestUserModuleRoles:
     """CRUD de UsuarioRolModulo via /admin/user-module-roles."""
 
     def test_assign_and_list_module_role(self, client: TestClient, db_session: Session):
+        _seed_auth_roles(db_session)
         token = _login_as_admin(client, db_session)
         persona_id = _create_persona(db_session)
         auth_user_id = _create_auth_user(db_session, persona_id)
@@ -192,6 +208,7 @@ class TestUserModuleRoles:
         assert any(a["user_id"] == auth_user_id and a["modulo"] == "crm" for a in assignments)
 
     def test_reassign_module_role_updates(self, client: TestClient, db_session: Session):
+        _seed_auth_roles(db_session)
         token = _login_as_admin(client, db_session)
         persona_id = _create_persona(db_session)
         auth_user_id = _create_auth_user(db_session, persona_id)
@@ -216,6 +233,7 @@ class TestUserModuleRoles:
         assert resp.json().get("updated") is True
 
     def test_delete_module_role(self, client: TestClient, db_session: Session):
+        _seed_auth_roles(db_session)
         token = _login_as_admin(client, db_session)
         persona_id = _create_persona(db_session)
         auth_user_id = _create_auth_user(db_session, persona_id)
@@ -236,10 +254,25 @@ class TestUserModuleRoles:
         assert resp.status_code == 204
 
 
+def _seed_platform_role_defs(db_session: Session):
+    """Seed kernel PlatformRoleDefinition entries needed by tests."""
+    from backend.models_kernel import PlatformRoleDefinition, PlatformRole
+    for role, perms in [
+        (PlatformRole.ADMINISTRADOR, {"*": ["create", "read", "update", "delete", "admin"]}),
+        (PlatformRole.GESTOR, {"crm": ["create", "read", "update"]}),
+        (PlatformRole.EDITOR, {"cms": ["read", "update"]}),
+        (PlatformRole.LECTOR, {"crm": ["read"]}),
+    ]:
+        if not db_session.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.role == role).first():
+            db_session.add(PlatformRoleDefinition(role=role, permissions=perms))
+    db_session.commit()
+
+
 class TestPlatformRoleDefinitions:
     """CRUD de PlatformRoleDefinition via /kernel/admin/platform-role-definitions."""
 
     def test_list_platform_role_defs(self, client: TestClient, db_session: Session):
+        _seed_platform_role_defs(db_session)
         token = _login_as_admin(client, db_session)
         resp = client.get("/api/kernel/admin/platform-role-definitions", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
@@ -282,6 +315,7 @@ class TestPersonaPlatformRoles:
     """Asignación de roles de plataforma a personas via Kernel API."""
 
     def test_assign_and_list_persona_platform_roles(self, client: TestClient, db_session: Session):
+        _seed_platform_role_defs(db_session)
         token = _login_as_admin(client, db_session)
         persona_id = _create_persona(db_session)
         _create_auth_user(db_session, persona_id)
@@ -304,6 +338,7 @@ class TestPersonaPlatformRoles:
         assert any(a["persona_id"] == persona_id for a in assignments)
 
     def test_revoke_persona_platform_role(self, client: TestClient, db_session: Session):
+        _seed_platform_role_defs(db_session)
         token = _login_as_admin(client, db_session)
         persona_id = _create_persona(db_session)
         _create_auth_user(db_session, persona_id)

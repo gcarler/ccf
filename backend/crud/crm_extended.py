@@ -198,7 +198,7 @@ def delete_position(db: Session, position_id: int) -> bool:
     row = db.query(models.Position).filter(models.Position.id == position_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -262,7 +262,7 @@ def delete_member_position(db: Session, mp_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -329,7 +329,7 @@ def delete_event_assignment(db: Session, ea_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -370,7 +370,7 @@ def delete_ministry(db: Session, ministry_id: int) -> bool:
     row = db.query(models.Ministry).filter(models.Ministry.id == ministry_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -437,7 +437,7 @@ def delete_member_ministry(db: Session, mm_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -505,7 +505,7 @@ def delete_crm_automation(db: Session, automation_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -565,7 +565,7 @@ def delete_role_definition(db: Session, role_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -598,7 +598,7 @@ def delete_member_role(db: Session, mr_id: int) -> bool:
     row = db.query(models.MemberRole).filter(models.MemberRole.id == mr_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -642,7 +642,7 @@ def delete_fund(db: Session, fund_id: int) -> bool:
     row = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -702,7 +702,7 @@ def delete_volunteer_skill(db: Session, skill_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -744,7 +744,7 @@ def delete_chat_message(db: Session, message_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 

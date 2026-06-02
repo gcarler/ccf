@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
+from backend.models_shared import _utcnow
 from backend import models
 from backend.schemas.crm import (ConsolidationAssignmentCreate,
                                  ConsolidationAssignmentUpdate,
@@ -82,7 +83,7 @@ def delete_consolidation_assignment(db: Session, assignment_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -156,7 +157,7 @@ def delete_consolidation_interaction(db: Session, interaction_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -227,6 +228,6 @@ def delete_consolidation_task(db: Session, task_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True

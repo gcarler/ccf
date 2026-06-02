@@ -500,7 +500,7 @@ def delete_crm_task(db: Session, task_id: int) -> bool:
     row = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1089,7 +1089,7 @@ def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
     )
     if not db_obj:
         return False
-    db.delete(db_obj)
+    db_obj.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1141,7 +1141,7 @@ def delete_crm_event(db: Session, event_id: int) -> bool:
     row = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1162,7 +1162,7 @@ def delete_event_attendance(db: Session, attendance_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1203,7 +1203,7 @@ def delete_volunteer_shift(db: Session, shift_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1301,7 +1301,7 @@ def delete_prayer_request(db: Session, request_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1317,7 +1317,7 @@ def delete_cell_group(db: Session, house_id: int) -> bool:
     row = db.query(models.CellGroup).filter(models.CellGroup.id == house_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1343,7 +1343,7 @@ def delete_family(db: Session, family_id: int) -> bool:
     row = db.query(models.Family).filter(models.Family.id == family_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1419,7 +1419,7 @@ def delete_communication_log(db: Session, log_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1514,7 +1514,7 @@ def delete_support_ticket(db: Session, ticket_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1557,7 +1557,7 @@ def delete_community_card(db: Session, card_id: int) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -1567,16 +1567,16 @@ def delete_community_card(db: Session, card_id: int) -> bool:
 
 def get_consolidation_case(db: Session, case_id: str):
     return (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
+        db.query(models.CasoCRM)
+        .filter(models.CasoCRM.id == case_id)
         .first()
     )
 
 
 def create_consolidation_case(
-    db: Session, payload: schemas.ConsolidationCaseCreate
-) -> models.ConsolidationCase:
-    row = models.ConsolidationCase(**payload.model_dump())
+    db: Session, payload: schemas.CasoCRMCreate
+) -> models.CasoCRM:
+    row = models.CasoCRM(**payload.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -1587,11 +1587,11 @@ def create_consolidation_case(
 
 
 def update_consolidation_case(
-    db: Session, case_id: str, payload: schemas.ConsolidationCaseUpdate
-) -> Optional[models.ConsolidationCase]:
+    db: Session, case_id: str, payload: schemas.CasoCRMUpdate
+) -> Optional[models.CasoCRM]:
     row = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
+        db.query(models.CasoCRM)
+        .filter(models.CasoCRM.id == case_id)
         .first()
     )
     if not row:
@@ -1610,12 +1610,12 @@ def update_consolidation_case(
 
 def delete_consolidation_case(db: Session, case_id: str) -> bool:
     row = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.id == case_id)
+        db.query(models.CasoCRM)
+        .filter(models.CasoCRM.id == case_id)
         .first()
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True

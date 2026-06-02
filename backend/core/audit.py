@@ -21,7 +21,7 @@ def record_admin_action(
         return
     crud.create_admin_audit_log(
         db,
-        actor_user_id=int(actor_id),
+        actor_persona_id=str(actor_id),
         action=action,
         resource_type=resource_type,
         resource_id=str(resource_id) if resource_id is not None else None,

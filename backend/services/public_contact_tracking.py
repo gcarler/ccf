@@ -2,7 +2,7 @@
 Public Contact Tracking Service (Task 3.1)
 
 Reusable service that encapsulates the pattern:
-  "find-or-create Persona, create ConsolidationCase/Pipeline lead, track source"
+  "find-or-create Persona, create CasoCRM/Pipeline lead, track source"
 
 All public-facing endpoints should use this service instead of inline duplication.
 """
@@ -39,7 +39,7 @@ class ContactResult:
     """Output record after tracking a contact."""
     persona: Optional[models.Persona] = None
     persona_created: bool = False
-    case: Optional[models.ConsolidationCase] = None
+    case: Optional[models.CasoCRM] = None
     case_created: bool = False
 
 
@@ -88,7 +88,7 @@ class PublicContactTracker:
 
         result.persona = persona
 
-        # 3. Create ConsolidationCase
+        # 3. Create CasoCRM
         notes_lines = list(record.extra_notes)
         if record.notes:
             notes_lines.append(record.notes)
@@ -97,7 +97,7 @@ class PublicContactTracker:
         if record.campaign:
             notes_lines.append(f"Campaign: {record.campaign}")
 
-        case = models.ConsolidationCase(
+        case = models.CasoCRM(
             persona_id=persona.id,
             stage="new",
             status="active",

@@ -291,7 +291,7 @@ def delete_media_asset(db: Session, asset_id: int) -> bool:
     row = db.query(models.MediaAsset).filter(models.MediaAsset.id == asset_id).first()
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
@@ -906,7 +906,7 @@ def transition_cms_page_status(
             action=action,
             from_status=previous_status,
             to_status=next_status,
-            actor_user_id=user_id,
+            actor_persona_id=str(user_id),
             metadata_json={"notes": notes} if notes else {},
         )
     )

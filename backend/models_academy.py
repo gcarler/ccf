@@ -17,6 +17,7 @@ class Course(Base):
     xp_per_lesson = Column(Integer, default=10)
     image_url = Column(String(500), nullable=True)
     instructor_name = Column(String(200), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     lessons = relationship("Lesson", back_populates="course")
     enrollments = relationship("Enrollment", back_populates="course")
@@ -62,7 +63,7 @@ class Lesson(Base):
 class LessonProgress(Base):
     __tablename__ = "lesson_progress"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False, index=True)
     progress_percent = Column(Numeric(5, 2), default=0)
     last_position_seconds = Column(Integer, default=0)
@@ -70,7 +71,7 @@ class LessonProgress(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     __table_args__ = (
-        UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_progress"),
+        UniqueConstraint("persona_id", "lesson_id", name="uq_persona_lesson_progress"),
     )
 
 class Assessment(Base):
@@ -178,7 +179,7 @@ class FormalActa(Base):
     __tablename__ = "formal_actas"
     id = Column(Integer, primary_key=True, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
-    closed_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    closed_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     status = Column(String(20), default="closed")  # closed, archived
     min_grade_required = Column(Numeric(5, 2), default=70)
     min_attendance_required = Column(Numeric(5, 2), default=75)
@@ -188,7 +189,7 @@ class ForumComment(Base):
     __tablename__ = "forum_comments"
     id = Column(Integer, primary_key=True, index=True)
     thread_id = Column(Integer, ForeignKey("forum_threads.id"), nullable=False)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
@@ -286,9 +287,9 @@ class CampaignSeason(Base):
 
 class Enrollment(Base):
     __tablename__ = "enrollments"
-    __table_args__ = (UniqueConstraint("user_id", "course_id", name="uq_user_course"),)
+    __table_args__ = (UniqueConstraint("persona_id", "course_id", name="uq_persona_course"),)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
     status = Column(String(20), default="active")  # active, completed, dropped
     progress_percent = Column(Float, default=0)
@@ -303,7 +304,7 @@ class Enrollment(Base):
     completed_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
-    student = relationship("User", back_populates="enrollments")
+    persona = relationship("Persona")
     course = relationship("Course", back_populates="enrollments")
 
 class AcademyActivityLog(Base):
@@ -313,7 +314,7 @@ class AcademyActivityLog(Base):
         String(50), nullable=False, index=True
     )  # enrollment, completion, drop, certificate
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     modality = Column(String(20), nullable=True)  # formal, no_formal
     value = Column(Numeric(10, 2), default=1.0)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
@@ -323,7 +324,7 @@ class ForumThread(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False, index=True)
     category = Column(String(50), nullable=False, index=True)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     is_resolved = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -339,7 +340,7 @@ class CourseAttendance(Base):
     )
     session_date = Column(DateTime(timezone=True), default=_utcnow, index=True)
     status = Column(String(20), default="present")  # present, absent, justified
-    recorded_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    recorded_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
 
     enrollment = relationship("Enrollment")
 

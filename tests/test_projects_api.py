@@ -1,3 +1,5 @@
+import uuid as _uuid
+
 from backend import models
 from backend.core.security import get_password_hash
 
@@ -138,7 +140,7 @@ def test_projects_list_coerces_legacy_string_labels(client, db_session):
 
     # Insert legacy-like task payload where labels is stored as scalar text.
     legacy_task = models.ProjectTask(
-        project_id=project_id,
+        project_id=_uuid.UUID(project_id),
         title="Tarea Legacy",
         status="todo",
         priority="normal",

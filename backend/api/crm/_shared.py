@@ -33,7 +33,7 @@ def _serialize_member_position(member_position: models.MemberPosition) -> dict:
     }
 
 
-def _serialize_case(case: models.ConsolidationCase) -> dict:
+def _serialize_case(case: models.CasoCRM) -> dict:
     return {
         "id": case.id,
         "persona_id": case.persona_id,
