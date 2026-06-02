@@ -1,15 +1,14 @@
 import base64
 import hashlib
+import logging as _logging
 
 import bcrypt
 from cryptography.fernet import Fernet
 
 from backend.core.config import get_settings
 
-settings = get_settings()
-
-import logging as _logging
 _security_log = _logging.getLogger(__name__)
+settings = get_settings()
 
 # Prefer ENCRYPTION_KEY if set; fall back to SECRET_KEY with a warning.
 if settings.encryption_key:

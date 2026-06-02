@@ -9,8 +9,6 @@ import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Optional
-
 from backend.core.config import get_settings
 
 log = logging.getLogger(__name__)
@@ -227,4 +225,3 @@ def render_reset_password(
 </table>"""
 
     return subject, _brand_wrap(body)
-    return subject, html
