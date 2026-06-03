@@ -65,7 +65,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   hasPermission: (perm: string) => {
     const { user } = get();
     if (!user?.permissions) return false;
-    if (user.role === 'admin') return true;
-    return user.permissions[perm] === 'allow';
+    if (user.role === 'admin' || user.role === 'administrador') return true;
+    const val = user.permissions[perm];
+    return val === 'allow' || (Array.isArray(val) && val.length > 0);
   },
 }));

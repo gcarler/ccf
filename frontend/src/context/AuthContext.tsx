@@ -137,7 +137,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const hasPermission = (perm: string) => {
         if (!user?.permissions) return false;
         if (user.role === 'admin' || user.role === 'administrador') return true;
-        return user.permissions[perm] === 'allow';
+        const val = user.permissions[perm];
+        // Soporta formato v1 ("allow") y formato v3 (array como ["admin","read"])
+        return val === 'allow' || (Array.isArray(val) && val.length > 0);
     };
 
     return (
