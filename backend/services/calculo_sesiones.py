@@ -5,57 +5,96 @@ fechas (inicio-fin).
 Reglas de calidad aplicadas:
 1. Validación de frecuencia soportada (ValueError si no coincide).
 2. Normalización de timezone a UTC para evitar sesgos por huso.
-3. Protección contra delta cero (bucle infinito).
+3. Protección contra incremento cero (bucle infinito).
 4. Validación fecha_inicio <= fecha_fin.
 5. Cada sesión se compara con deleted_at IS NULL para evitar duplicados.
 6. Cada iteración genera una sesión por grupo por fecha.
+7. Frecuencias basadas en meses (MENSUAL, TRIMESTRAL, etc.) usan
+   relativedelta para respetar los meses calendario reales.
+8. Preservación del día original: si la estrategia empieza el 31 de enero,
+   las sesiones serán: 31 ene → 28 feb → 31 mar → 30 abr → ..., no se
+   desfasan por truncamiento.
 """
 
 from __future__ import annotations
 
+import calendar
 from datetime import datetime, timedelta, timezone
-from typing import List
+from typing import Callable, List, Union
 import uuid
 
+from dateutil.relativedelta import relativedelta
 from sqlalchemy.orm import Session
 
 from backend.models_evangelism import SesionGrupo, FrecuenciaEnum
 
-# Mapa de frecuencia → delta temporal.
-# Las claves son los valores del FrecuenciaEnum (mayúsculas ISO).
-_FRECUENCIA_A_DELTA: dict[str, timedelta] = {
-    FrecuenciaEnum.SEMANAL.value: timedelta(weeks=1),
-    FrecuenciaEnum.QUINCENAL.value: timedelta(weeks=2),
-    FrecuenciaEnum.MENSUAL.value: timedelta(days=30),
-    FrecuenciaEnum.BIMENSUAL.value: timedelta(days=60),
-    FrecuenciaEnum.TRIMESTRAL.value: timedelta(days=90),
-    FrecuenciaEnum.SEMESTRAL.value: timedelta(days=180),
-    FrecuenciaEnum.ANUAL.value: timedelta(days=365),
-    # Back-compat: datos legacy con capitalización
-    "Semanal": timedelta(weeks=1),
-    "Quincenal": timedelta(weeks=2),
-    "Mensual": timedelta(days=30),
-    "Bimensual": timedelta(days=60),
-    "Trimestral": timedelta(days=90),
-    "Semestral": timedelta(days=180),
-    "Anual": timedelta(days=365),
+# ──────────────────────────────────────────────
+# Estrategia de incremento
+# ──────────────────────────────────────────────
+# SEMANAL / QUINCENAL → timedelta (siempre exacto).
+# MENSUAL / TRIMESTRAL / etc. → relativedelta con preservación del día
+# original. Ej: si la estrategia empieza el 31 de enero, febrero se
+# trunca al 28, pero marzo vuelve al 31.
+# ──────────────────────────────────────────────
+
+_IncT = Union[timedelta, relativedelta]
+
+
+class _IncProvider:
+    """Provee el incremento y la estrategia de generación para una frecuencia."""
+
+    def __init__(self, incremento: _IncT, dia_original: int | None = None) -> None:
+        self.incremento = incremento
+        self.dia_original = dia_original  # None para timedelta, int para relativedelta
+
+    def saltar(self, dt: datetime) -> datetime:
+        """Avanza dt según el incremento, preservando el día original si aplica."""
+        siguiente = dt + self.incremento
+        if self.dia_original is not None and siguiente.day != self.dia_original:
+            # El día se truncó (ej: 31 → 28 en febrero),
+            # lo corregimos al próximo mes con ese día
+            ultimo = calendar.monthrange(siguiente.year, siguiente.month)[1]
+            siguiente = siguiente.replace(day=min(self.dia_original, ultimo))
+        return siguiente
+
+
+_FRECUENCIA_A_PROVIDER: dict[str, _IncProvider] = {
+    FrecuenciaEnum.SEMANAL.value: _IncProvider(timedelta(weeks=1)),
+    FrecuenciaEnum.QUINCENAL.value: _IncProvider(timedelta(weeks=2)),
+    FrecuenciaEnum.MENSUAL.value: _IncProvider(relativedelta(months=1), dia_original=True),
+    FrecuenciaEnum.BIMENSUAL.value: _IncProvider(relativedelta(months=2), dia_original=True),
+    FrecuenciaEnum.TRIMESTRAL.value: _IncProvider(relativedelta(months=3), dia_original=True),
+    FrecuenciaEnum.SEMESTRAL.value: _IncProvider(relativedelta(months=6), dia_original=True),
+    FrecuenciaEnum.ANUAL.value: _IncProvider(relativedelta(years=1), dia_original=True),
+    # Back-compat: datos legacy
+    "Semanal": _IncProvider(timedelta(weeks=1)),
+    "Quincenal": _IncProvider(timedelta(weeks=2)),
+    "Mensual": _IncProvider(relativedelta(months=1), dia_original=True),
+    "Bimensual": _IncProvider(relativedelta(months=2), dia_original=True),
+    "Trimestral": _IncProvider(relativedelta(months=3), dia_original=True),
+    "Semestral": _IncProvider(relativedelta(months=6), dia_original=True),
+    "Anual": _IncProvider(relativedelta(years=1), dia_original=True),
 }
 
 
-def _delta_para_frecuencia(frecuencia: str) -> timedelta:
-    """Retorna el timedelta para una frecuencia dada.
+def _provider_para_frecuencia(frecuencia: str, dia_original: int) -> _IncProvider:
+    """Retorna el provider de incremento para una frecuencia.
+
+    El ``dia_original`` se inyecta en el provider cuando usa relativedelta,
+    para que preserve el día correcto (ej: 31 ene → 28 feb → 31 mar).
 
     Raises:
         ValueError: si la frecuencia no está soportada.
     """
-    delta = _FRECUENCIA_A_DELTA.get(frecuencia)
-    if delta is None:
+    p = _FRECUENCIA_A_PROVIDER.get(frecuencia)
+    if p is None:
         soportadas = ", ".join([e.value for e in FrecuenciaEnum])
         raise ValueError(
             f"Frecuencia no soportada: '{frecuencia}'. "
             f"Soportadas: {soportadas}"
         )
-    return delta
+    # Clonar con el día original correcto
+    return _IncProvider(p.incremento, dia_original if p.dia_original else None)
 
 
 def _a_utc(dt: datetime) -> datetime:
@@ -65,13 +104,17 @@ def _a_utc(dt: datetime) -> datetime:
     return dt.astimezone(timezone.utc)
 
 
-def _generar_fechas(inicio: datetime, fin: datetime, delta: timedelta) -> List[datetime]:
-    """Genera lista de fechas desde inicio hasta fin saltando por delta.
+def _generar_fechas(inicio: datetime, fin: datetime, provider: _IncProvider) -> List[datetime]:
+    """Genera lista de fechas desde inicio hasta fin saltando por incremento.
+
+    Soporta tanto timedelta (SEMANAL, QUINCENAL) como relativedelta con
+    preservación del día original (MENSUAL, TRIMESTRAL, etc.).
 
     Raises:
-        ValueError: si el delta es cero (evitaría bucle infinito).
+        ValueError: si el incremento es cero o negativo (solo timedelta).
+        ValueError: si inicio > fin.
     """
-    if delta.total_seconds() <= 0:
+    if isinstance(provider.incremento, timedelta) and provider.incremento.total_seconds() <= 0:
         raise ValueError("El intervalo de frecuencia debe ser mayor a cero.")
     if inicio > fin:
         raise ValueError("La fecha de inicio no puede ser posterior a la fecha de fin.")
@@ -80,7 +123,7 @@ def _generar_fechas(inicio: datetime, fin: datetime, delta: timedelta) -> List[d
     current = inicio
     while current <= fin:
         fechas.append(current)
-        current += delta
+        current = provider.saltar(current)
     return fechas
 
 
@@ -107,12 +150,12 @@ def calcular_sesiones(
     Returns:
         Número total de sesiones creadas (nuevas, no duplicadas).
     """
-    delta = _delta_para_frecuencia(frecuencia)
+    provider = _provider_para_frecuencia(frecuencia, fecha_inicio.day)
 
     inicio_utc = _a_utc(fecha_inicio)
     fin_utc = _a_utc(fecha_fin)
 
-    fechas = _generar_fechas(inicio_utc, fin_utc, delta)
+    fechas = _generar_fechas(inicio_utc, fin_utc, provider)
 
     if not fechas or not grupos_ids:
         return 0
