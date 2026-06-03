@@ -123,6 +123,12 @@ def search_personas(
     search: str | None = None,
     role: str | None = None,
     estado_vital: str | None = None,
+    sex: str | None = None,
+    group_name: str | None = None,
+    membership_type: str | None = None,
+    id_type: str | None = None,
+    min_age: int | None = None,
+    max_age: int | None = None,
     family_id: int | None = None,
     sede_id: str | None = None,
     skip: int = 0,
@@ -144,12 +150,30 @@ def search_personas(
                 models.Persona.nombre_completo.ilike(like),
                 models.Persona.email.ilike(like),
                 models.Persona.church_role.ilike(like),
+                models.Persona.id_number.ilike(like),
+                models.Persona.phone.ilike(like),
+                models.Persona.mobile_phone.ilike(like),
             )
         )
     if role:
         query = query.filter(models.Persona.church_role == role)
     if estado_vital:
         query = query.filter(models.Persona.estado_vital == estado_vital)
+    if sex:
+        query = query.filter(models.Persona.sex == sex)
+    if id_type:
+        query = query.filter(models.Persona.id_type == id_type)
+    if group_name:
+        query = query.filter(models.Persona.group_name == group_name)
+    if membership_type:
+        query = query.filter(models.Persona.membership_type == membership_type)
+    if min_age is not None:
+        from sqlalchemy import func as sa_func
+        cutoff = dt.date.today() - dt.timedelta(days=min_age * 365)
+        query = query.filter(models.Persona.birthday <= cutoff)
+    if max_age is not None:
+        cutoff = dt.date.today() - dt.timedelta(days=max_age * 365 + 1)
+        query = query.filter(models.Persona.birthday >= cutoff)
     if family_id:
         query = query.filter(models.Persona.family_id == family_id)
 
