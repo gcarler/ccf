@@ -11,15 +11,11 @@ import TableView, { TableColumn } from '@/components/ui/TableView';
 import { useTableView } from '@/hooks/useTableView';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Users,
     Plus,
     Search,
     ChevronRight,
     ChevronDown,
     LayoutDashboard,
-    Filter,
-    TrendingUp,
-    CheckCircle2,
     Loader2,
     Send,
     X,
@@ -234,22 +230,6 @@ export default function MembersPage() {
         return r ? r.color : 'text-slate-600 bg-slate-100 dark:bg-white/10 dark:text-slate-400';
     };
 
-    const stats = useMemo(() => {
-        const total = members.length;
-        const baptized = members.filter(m => m.baptism_date).length;
-        const leaders = members.filter(m =>
-            ['Apóstol','Profeta','Evangelista','Pastor','Maestro','Líder','Ministro de Culto'].some(r =>
-                m.church_role?.includes(r)
-            )
-        ).length;
-        const newThisMonth = members.filter(m => {
-            const d = new Date(m.created_at);
-            const now = new Date();
-            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        }).length;
-        return { total, baptized, leaders, newThisMonth };
-    }, [members]);
-
     const filteredMembers = useMemo(() => {
         let list = members;
         if (query) {
@@ -344,26 +324,6 @@ export default function MembersPage() {
                 </div>
 
                 <div className="p-4 lg:p-4 space-y-4 w-full">
-                    {/* Metrics */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[
-                            { label: 'Total Miembros', value: stats.total, icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-                            { label: 'Líderes Activos', value: stats.leaders, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-                            { label: 'Bautizados', value: stats.baptized, icon: Filter, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-                            { label: 'Nuevos (Mes)', value: stats.newThisMonth, icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-                        ].map((s, i) => (
-                            <div key={i} className="p-3 rounded-md border border-slate-100 dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-white/5 flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-all">
-                                <div className={clsx("size-8 rounded-md flex items-center justify-center", s.bg, s.color)}>
-                                    <s.icon size={20} />
-                                </div>
-                                <div>
-                                    <p className="text-xl font-bold text-slate-800 dark:text-white">{s.value}</p>
-                                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mt-1">{s.label}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
                     {/* Filters Toolbar */}
                     <div className="sticky top-0 z-10 bg-slate-50/80 dark:bg-[#121212]/80 backdrop-blur-xl pt-2 space-y-2">
                         {/* Search + Filter Toggle Row */}
