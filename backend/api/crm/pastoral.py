@@ -592,7 +592,9 @@ def get_crm_task_detail(
         "pastor",
         "coordinador",
     }
-    if not is_staff and task.assignee_user_id != current_user.id:
+    my_persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    my_persona_id = my_persona.id if my_persona else None
+    if not is_staff and task.assignee_id != my_persona_id:
         raise HTTPException(status_code=403, detail="No autorizado para ver esta tarea")
     return _serialize_task(task)
 
@@ -624,9 +626,7 @@ def update_crm_task(
                     val = datetime.fromisoformat(val.replace("Z", "+00:00"))
                 except ValueError:
                     raise HTTPException(status_code=400, detail="Formato de fecha inválido")
-            # Frontend sends "assignee_id" as Integer (user ID); map to assignee_user_id column
-            target_field = "assignee_user_id" if field == "assignee_id" else field
-            setattr(task, target_field, val)
+            setattr(task, field, val)
     db.commit()
     db.refresh(task)
     return _serialize_task(task)

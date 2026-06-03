@@ -826,9 +826,10 @@ def get_persona_timeline(db: Session, persona_id: str):
 
 def create_communication_log(db: Session, payload: schemas.CommunicationLogCreate):
     data = payload.model_dump()
-    if data.get("leader_id") is not None:
-        data["leader_user_id"] = data.pop("leader_id")
-    row = models.CommunicationLog(**data)
+    # leader_id → leader_id (UUID FK to personas.id) — do NOT map to legacy leader_user_id
+    data.pop("leader_user_id", None)
+    row = models.CommunicationLog(**{k: v for k, v in data.items()
+                                     if hasattr(models.CommunicationLog, k)})
     db.add(row)
     db.commit()
     db.refresh(row)
