@@ -127,39 +127,35 @@ def read_all_permissions(current_user: models.User = Depends(require_admin)):
 
 @router.get("/users/{user_id}/permissions")
 def get_user_permissions(
-    user_id: int,
+    user_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
-    """Obtiene los permisos actuales de un usuario (rol + override)."""
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    """Obtiene los permisos actuales de un usuario auth_users."""
+    import uuid as _uuid
+    from backend.models_auth import Usuario, RolPlataforma
+    from sqlalchemy.orm import joinedload
+    try:
+        uid = _uuid.UUID(str(user_id))
+        user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == uid).first()
+    except ValueError:
+        user = None
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Role-based permissions
-    role_perms = {}
-    if user.user_role_obj:
-        perms = user.user_role_obj.permissions or {}
-        role_perms = dict(perms) if isinstance(perms, dict) else {}
-
-    # Per-user overrides
-    override_perms = {}
-    if user.permissions_override:
-        perms = user.permissions_override.permissions or {}
-        override_perms = dict(perms) if isinstance(perms, dict) else {}
-
-    # Effective permissions (merged)
-    effective = dict(role_perms)
-    effective.update(override_perms)
+    rol = user.rol_plataforma
+    permisos = rol.permisos if rol else {}
+    if not isinstance(permisos, dict):
+        permisos = {}
 
     return {
-        "user_id": user.id,
+        "user_id": str(user.id),
         "username": user.username,
         "email": user.email,
-        "role": user.role,
-        "role_permissions": role_perms,
-        "override_permissions": override_perms,
-        "effective_permissions": effective,
+        "role": rol.nombre if rol else "LECTOR",
+        "role_permissions": permisos,
+        "override_permissions": permisos,
+        "effective_permissions": permisos,
     }
 
 
@@ -219,23 +215,32 @@ def set_user_permissions(
     # profile:manage is always preserved
     resolved_perms["profile:manage"] = "allow"
 
-    # Persist en RolPlataforma del usuario: crear/actualizar rol personalizado
+    # Persist en RolPlataforma personal del usuario (nunca tocar roles compartidos)
     from backend.models_auth import RolPlataforma
     rol = user.rol_plataforma
-    if rol:
-        # Actualizar permisos del rol existente
-        current = dict(rol.permisos or {})
-        current.update(resolved_perms)
-        rol.permisos = current
+    personal_nombre = f"PERSONALIZADO_{str(user.id).replace('-', '').upper()}"
+    is_personal = rol and rol.nombre == personal_nombre
+
+    if is_personal:
+        # Reemplazar completamente — permite quitar permisos
+        rol.permisos = resolved_perms
     else:
-        # Crear rol personal para este usuario
-        new_rol = RolPlataforma(
-            nombre=f"PERSONALIZADO_{str(user.id)[:8].upper()}",
-            permisos=resolved_perms,
-        )
-        db.add(new_rol)
-        db.flush()
-        user.rol_plataforma_id = new_rol.id
+        # Buscar si ya existe un rol personal creado antes para este usuario
+        existing_personal = db.query(RolPlataforma).filter(
+            RolPlataforma.nombre == personal_nombre
+        ).first()
+        if existing_personal:
+            existing_personal.permisos = resolved_perms
+            user.rol_plataforma_id = existing_personal.id
+        else:
+            # Crear rol personal nuevo sin modificar el rol compartido
+            new_rol = RolPlataforma(
+                nombre=personal_nombre,
+                permisos=resolved_perms,
+            )
+            db.add(new_rol)
+            db.flush()
+            user.rol_plataforma_id = new_rol.id
 
     db.commit()
     return {"status": "success", "user_id": user_id, "permissions": resolved_perms}

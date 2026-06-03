@@ -182,7 +182,9 @@ export default function AccessManagementPage() {
             try {
                 // Load user permissions from kernel and auth_user_module_roles
                 const permData = await apiFetch<any>(`/admin/users/${entity.id}/permissions`, { token });
-                const overrides = permData?.override_permissions || {};
+                const overrides = permData?.override_permissions
+                    || permData?.effective_permissions
+                    || {};
                 setLocalPermissions(toModuleLevelMap(overrides));
             } catch {
                 addToast("Error al cargar permisos del usuario", "error");
