@@ -87,6 +87,19 @@ def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Person
             "church_role": row.church_role,
         },
     )
+
+    # Inter-módulos: notificar registro de nuevo miembro/persona
+    try:
+        from backend.services.event_consumers import dispatch_event
+        dispatch_event("member_registered", {
+            "persona_id": str(row.id),
+            "name": f"{row.first_name} {row.last_name or ''}".strip(),
+            "church_role": str(row.church_role) if row.church_role else "Visitante",
+            "email": row.email,
+        })
+    except Exception:
+        pass
+
     return row
 
 
@@ -212,6 +225,26 @@ def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate)
         "UPDATE",
         detalles={"church_role": row.church_role, "estado_vital": row.estado_vital},
     )
+
+    # Inter-módulos: disparar eventos cuando cambia estado espiritual o rol
+    try:
+        from backend.services.event_consumers import dispatch_event
+        if old_church_role != row.church_role:
+            dispatch_event("member_status_changed", {
+                "persona_id": str(row.id),
+                "from_role": str(old_church_role) if old_church_role else None,
+                "to_role": str(row.church_role) if row.church_role else None,
+            })
+        if old_estado_vital != row.estado_vital:
+            dispatch_event("spiritual_stage_transition", {
+                "persona_id": str(row.id),
+                "from_stage": old_estado_vital,
+                "to_stage": row.estado_vital,
+                "agent_id": str(row.id),
+            })
+    except Exception:
+        pass  # eventos son best-effort, nunca bloquean la transacción
+
     return row
 
 
@@ -473,12 +506,18 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
 
 def get_crm_tasks(
     db: Session,
-    assignee_user_id: Optional[int] = None,
+    assignee_persona_id: Optional[str] = None,
+    assignee_user_id: Optional[int] = None,  # DEPRECATED: use assignee_persona_id
     persona_id: Optional[str] = None,
 ) -> List[models.CrmTask]:
     query = db.query(models.CrmTask)
-    if assignee_user_id:
-        query = query.filter(models.CrmTask.assignee_user_id == assignee_user_id)
+    if assignee_persona_id:
+        query = query.filter(models.CrmTask.assignee_id == assignee_persona_id)
+    elif assignee_user_id:
+        # Legacy fallback: resolve user→persona then filter by assignee_id
+        persona = db.query(models.Persona).filter(models.Persona.user_id == assignee_user_id).first()
+        if persona:
+            query = query.filter(models.CrmTask.assignee_id == persona.id)
     if persona_id:
         query = query.filter(models.CrmTask.persona_id == persona_id)
     return query.order_by(models.CrmTask.due_date.asc()).all()

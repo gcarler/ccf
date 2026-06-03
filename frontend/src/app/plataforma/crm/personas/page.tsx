@@ -316,7 +316,7 @@ export default function MembersPage() {
                             onClick={() => setIsCreateOpen(true)}
                             className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:bg-slate-100 dark:hover:bg-white/10 transition-all shrink-0"
                         >
-                            <Plus size={16} /> Nuevo Miembro
+                            <Plus size={16} /> Nueva Persona
                         </button>
                     </div>
                 </div>
@@ -644,7 +644,7 @@ export default function MembersPage() {
             <WorkspaceDrawer
                 isOpen={isCreateOpen}
                 onClose={() => setIsCreateOpen(false)}
-                title="Nuevo Miembro"
+                title="Nueva Persona"
                 subtitle="Registrar perfil en la base ministerial"
                 actions={
                     <>

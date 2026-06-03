@@ -167,7 +167,7 @@ export default function CrmSidebar() {
                             </button>
                             {expandedSpaces.includes('comunidad') && (
                                 <div className="ml-6 space-y-0.5 border-l border-white/5 pl-2">
-                                    {navItem('/crm/personas', <Users />, 'Miembros')}
+                                    {navItem('/crm/personas', <Users />, 'Personas')}
                                     {navItem('/crm/volunteers', <ShieldCheck />, 'Servidores')}
                                     {navItem('/crm/contacts', <UserPlus />, 'Contactos')}
                                     {navItem('/crm/tasks', <CheckCircle2 />, 'Seguimiento')}

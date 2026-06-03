@@ -188,7 +188,7 @@ export default function CrmGroupsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-3 -mt-3 mb-3 relative z-10">
                     {[
                         { label: 'Total Casas', value: stats.total, icon: Home, bg: 'bg-emerald-500' },
-                        { label: 'Miembros Activos', value: stats.totalMembers, icon: Users, bg: 'bg-[hsl(var(--primary))]' },
+                        { label: 'Integrantes Activos', value: stats.totalMembers, icon: Users, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Casas Activas', value: stats.active, icon: Activity, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Ocup. Promedio', value: `${stats.avgCapacity}%`, icon: TrendingUp, bg: 'bg-amber-500' },
                     ].map(s => (
@@ -321,7 +321,7 @@ export default function CrmGroupsPage() {
                                             <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
                                                 <div className="flex items-center gap-1.5 text-slate-400">
                                                     <Users size={13} />
-                                                    <span className="text-[11px] font-bold">{group.members_count || 0} miembros</span>
+                                                    <span className="text-[11px] font-bold">{group.members_count || 0} integrantes</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-md transition-colors">
