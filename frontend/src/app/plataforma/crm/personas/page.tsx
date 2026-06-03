@@ -305,19 +305,16 @@ export default function MembersPage() {
             ]}
         >
             <main className="flex-1 overflow-y-auto scrollbar-thin">
-                {/* Header Hero */}
-                <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 px-3 py-2 overflow-hidden">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.1)_0%,_transparent_60%)] pointer-events-none" />
-                    <div className="absolute -bottom-8 -right-8 size-10 rounded-full bg-white/5 blur-2xl" />
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                {/* Header */}
+                <div className="px-3 py-2 border-b border-slate-200 dark:border-white/5">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-blue-200 mb-2">Consolidación</p>
-                            <h1 className="text-lg font-bold text-white tracking-tight mb-1">Directorio de Personas</h1>
-                            <p className="text-blue-200 text-sm font-medium">Directorio completo de la comunidad CCF</p>
+                            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Personas</h1>
+                            <p className="text-xs text-slate-400 font-medium">Directorio completo de la comunidad</p>
                         </div>
                         <button
                             onClick={() => setIsCreateOpen(true)}
-                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 shrink-0"
+                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:bg-slate-100 dark:hover:bg-white/10 transition-all shrink-0"
                         >
                             <Plus size={16} /> Nuevo Miembro
                         </button>

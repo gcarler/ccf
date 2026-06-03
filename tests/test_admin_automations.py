@@ -1,3 +1,5 @@
+from fastapi.testclient import TestClient
+
 from tests.conftest import seed_admin_v2, auth_headers_v2
 
 

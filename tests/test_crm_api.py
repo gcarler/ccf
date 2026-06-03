@@ -3,30 +3,16 @@ from datetime import datetime
 
 import pytest
 from backend import models
-from backend.core.security import get_password_hash
+from tests.conftest import seed_admin_v2, auth_headers_v2, seed_user_with_role_v2
 
 
 def seed_admin(db_session, email="admin@example.com", password="secret123", role="admin"):
-    user = models.User(
-        username="admin",
-        email=email,
-        password_hash=get_password_hash(password),
-        role=role,
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    return user
+    user_obj, _, _ = seed_admin_v2(db_session, email, password)
+    return user_obj
 
 
 def auth_headers(client, email="admin@example.com", password="secret123"):
-    response = client.post(
-        "/api/auth/login",
-        data={"username": email, "password": password, "grant_type": "password"},
-    )
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+    return auth_headers_v2(client, email, password)
 
 
 def seed_strategy(db_session):
@@ -58,18 +44,8 @@ def seed_sede(db_session):
 
 
 def seed_user_with_role(db_session, role: str, email: str, password: str = "secret123"):
-    user = models.User(
-        username=email.split("@")[0],
-        email=email,
-        password_hash=get_password_hash(password),
-        role=role,
-        role_id=None,
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    return user
+    user_obj, _, _ = seed_user_with_role_v2(db_session, role, email, password)
+    return user_obj
 
 
 async def _failing_send_whatsapp(db, member_id, content, sender_user_id):

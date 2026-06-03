@@ -134,7 +134,7 @@ def test_strategy_summary(client, db_session):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert data["estrategia_id"] == estrategia.id
+    assert data["estrategia_id"] == str(estrategia.id)
     assert data["nombre"] == "Estrategia Resumen"
     assert "grupos" in data
 
