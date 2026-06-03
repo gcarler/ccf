@@ -10,16 +10,17 @@ import AdminHero from "@/components/admin/AdminHero";
 import AdminShell from "@/components/admin/AdminShell";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 
-type House = { id: number; name: string; zone?: string; leader_name?: string; members_count?: number; status?: string };
+type Grupo = { id: number; name: string; zone?: string; leader_name?: string; total_personas?: number; status?: string };
+type GrupoApi = Grupo & { members_count?: number };
 type Season = { id: number; name: string; status: string };
 type Attendee = { persona_id: string; name: string };
 
 export default function GrupoAdmin() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
-    const [houses, setHouses] = useState<House[]>([]);
+    const [grupos, setGrupos] = useState<Grupo[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedHouse, setSelectedHouse] = useState<House | null>(null);
+    const [selectedGrupo, setSelectedGrupo] = useState<Grupo | null>(null);
     const [reportDate, setReportDate] = useState(new Date().toISOString().split("T")[0]);
     const [seasons, setSeasons] = useState<Season[]>([]);
     const [seasonId, setSeasonId] = useState<number | "">("");
@@ -27,33 +28,40 @@ export default function GrupoAdmin() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
-    const fetchHouses = useCallback(async () => {
+    const fetchGrupos = useCallback(async () => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<House[]>("/community/grupos", { token });
-            setHouses(Array.isArray(data) ? data : []);
+            const data = await apiFetch<GrupoApi[]>("/community/grupos", { token });
+            setGrupos(
+                Array.isArray(data)
+                    ? data.map(({ members_count, ...grupo }) => ({
+                        ...grupo,
+                        total_personas: grupo.total_personas ?? members_count ?? 0,
+                    }))
+                    : []
+            );
         } catch {
-            setHouses([]);
-            addToast("No se pudieron cargar las casas", "error");
+            setGrupos([]);
+            addToast("No se pudieron cargar los grupos", "error");
         } finally {
             setLoading(false);
         }
     }, [addToast, token]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchHouses();
-    }, [fetchHouses, isAuthenticated]);
+        if (isAuthenticated) fetchGrupos();
+    }, [fetchGrupos, isAuthenticated]);
 
-    const totalMembers = useMemo(() => houses.reduce((sum, house) => sum + (house.members_count || 0), 0), [houses]);
+    const totalPersonas = useMemo(() => grupos.reduce((sum, grupo) => sum + (grupo.total_personas || 0), 0), [grupos]);
 
-    const openReport = async (house: House) => {
+    const openReport = async (grupo: Grupo) => {
         if (!token) return;
-        setSelectedHouse(house);
+        setSelectedGrupo(grupo);
         try {
             const [seasonData, detail] = await Promise.all([
                 apiFetch<Season[]>("/evangelism/faro/seasons", { token }),
-                apiFetch<any>(`/evangelism/grupos/${house.id}`, { token }),
+                apiFetch<any>(`/evangelism/grupos/${grupo.id}`, { token }),
             ]);
             const nextSeasons = Array.isArray(seasonData) ? seasonData : [];
             const baseAttendees = Array.isArray(detail.base_attendees) ? detail.base_attendees : [];
@@ -67,7 +75,7 @@ export default function GrupoAdmin() {
     };
 
     const sendReport = async () => {
-        if (!token || !selectedHouse || !seasonId) {
+        if (!token || !selectedGrupo || !seasonId) {
             addToast("Selecciona una temporada", "error");
             return;
         }
@@ -76,15 +84,15 @@ export default function GrupoAdmin() {
             const session = await apiFetch<any>("/evangelism/faro/sessions", {
                 method: "POST",
                 token,
-                body: { season_id: seasonId, grupo_id: selectedHouse.id, session_date: reportDate },
+                body: { season_id: seasonId, grupo_id: selectedGrupo.id, session_date: reportDate },
             });
             await apiFetch(`/evangelism/faro/sessions/${session.id}/attendance`, {
                 method: "POST",
                 token,
                 body: { persona_ids: selectedIds },
             });
-            addToast(`Reporte enviado para ${selectedHouse.name}`, "success");
-            setSelectedHouse(null);
+            addToast(`Reporte enviado para ${selectedGrupo.name}`, "success");
+            setSelectedGrupo(null);
         } catch {
             addToast("No se pudo enviar el reporte", "error");
         } finally {
@@ -92,15 +100,15 @@ export default function GrupoAdmin() {
         }
     };
 
-    const createHouse = async () => {
-        const name = window.prompt("Nombre de la nueva casa");
+    const createGrupo = async () => {
+        const name = window.prompt("Nombre del nuevo grupo");
         if (!token || !name?.trim()) return;
         try {
-            const created = await apiFetch<House>("/community/grupos", { method: "POST", token, body: { name: name.trim(), status: "active" } });
-            setHouses((prev) => [created, ...prev]);
-            addToast("Casa creada correctamente", "success");
+            const created = await apiFetch<Grupo>("/community/grupos", { method: "POST", token, body: { name: name.trim(), status: "active" } });
+            setGrupos((prev) => [created, ...prev]);
+            addToast("Grupo creado correctamente", "success");
         } catch {
-            addToast("No se pudo crear la casa", "error");
+            addToast("No se pudo crear el grupo", "error");
         }
     };
 
@@ -111,42 +119,42 @@ export default function GrupoAdmin() {
             <AdminHero
                 eyebrow="Gestion de Redes"
                 title="Consola de Grupos"
-                description="Gestion operativa real de casas, temporadas y reportes semanales de asistencia."
+                description="Gestion operativa real de grupos, temporadas y reportes semanales de asistencia."
                 tags={["Campo Activo", "Reportes", "Faro"]}
                 watchers={["Coordinacion General", "Consolidacion"]}
-                primaryAction={{ label: "Nueva Casa", icon: Plus, onClick: createHouse }}
+                primaryAction={{ label: "Nuevo Grupo", icon: Plus, onClick: createGrupo }}
                 secondaryAction={{ label: "Exportar Reportes", icon: FileText, onClick: () => window.print() }}
             />
 
             <main className="space-y-4 pb-4">
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <Stat label="Casas Activas" value={loading ? "..." : houses.length.toString()} />
-                    <Stat label="Miembros Base" value={loading ? "..." : totalMembers.toString()} />
+                    <Stat label="Grupos Activos" value={loading ? "..." : grupos.length.toString()} />
+                    <Stat label="Integrantes Base" value={loading ? "..." : totalPersonas.toString()} />
                     <Stat label="Temporadas" value={seasons.length.toString()} />
                 </section>
 
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {houses.map((house) => (
+                    {grupos.map((grupo) => (
                         <motion.button
-                            key={house.id}
+                            key={grupo.id}
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
-                            onClick={() => openReport(house)}
+                            onClick={() => openReport(grupo)}
                             className="rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
                         >
                             <div className="mb-3 flex items-start justify-between">
                                 <div className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/20"><Home size={24} /></div>
-                                <span className="rounded-lg bg-emerald-50 px-2 py-1 text-[8px] font-bold uppercase text-emerald-600 dark:bg-emerald-900/20">{house.status || "Activa"}</span>
+                                <span className="rounded-lg bg-emerald-50 px-2 py-1 text-[8px] font-bold uppercase text-emerald-600 dark:bg-emerald-900/20">{grupo.status || "Activo"}</span>
                             </div>
-                            <h4 className="text-base font-bold uppercase tracking-tight">{house.name}</h4>
-                            <p className="mt-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400"><MapPin size={12} /> {house.zone || "Sin zona"}</p>
-                            <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-6 text-[11px] font-bold text-slate-500 dark:border-white/5"><Users size={14} /> {house.members_count || 0} miembros</div>
+                            <h4 className="text-base font-bold uppercase tracking-tight">{grupo.name}</h4>
+                            <p className="mt-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400"><MapPin size={12} /> {grupo.zone || "Sin zona"}</p>
+                            <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-6 text-[11px] font-bold text-slate-500 dark:border-white/5"><Users size={14} /> {grupo.total_personas || 0} integrantes</div>
                         </motion.button>
                     ))}
                 </section>
             </main>
 
-            <WorkspaceDrawer isOpen={Boolean(selectedHouse)} onClose={() => setSelectedHouse(null)} title={selectedHouse?.name || "Reporte"} subtitle="REPORTE OPERATIVO SEMANAL">
+            <WorkspaceDrawer isOpen={Boolean(selectedGrupo)} onClose={() => setSelectedGrupo(null)} title={selectedGrupo?.name || "Reporte"} subtitle="REPORTE OPERATIVO SEMANAL">
                 <div className="space-y-3 pb-4">
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="Fecha"><input type="date" value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none" /></Field>
@@ -174,7 +182,7 @@ export default function GrupoAdmin() {
                                     />
                                 </label>
                             ))}
-                            {attendees.length === 0 && <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400 dark:border-white/10">No hay miembros base asignados.</div>}
+                            {attendees.length === 0 && <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400 dark:border-white/10">No hay integrantes base asignados.</div>}
                         </div>
                     </section>
 

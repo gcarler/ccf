@@ -38,7 +38,7 @@ def seed_everything():
         db.query(models.CommunicationLog).delete()
         db.query(models.ConsolidationPipeline).delete()
         db.query(models.Member).delete()
-        db.query(models.GloryHouse).delete()
+        db.query(models.GrupoEvangelismo).delete()
         db.query(models.Family).delete()
         db.query(models.User).delete()
         db.commit()
@@ -114,14 +114,14 @@ def seed_everything():
 
         # --- 4. CASAS DE GLORIA (GRUPOS PEQUEÑOS) ---
         print("🏘️ Configurando Casas de Gloria...")
-        gh1 = models.GloryHouse(
+        gh1 = models.GrupoEvangelismo(
             name="Bethel - Norte",
             zone="Norte",
             leader_name="Juan Rodríguez",
             members_count=12,
             schedule="Jueves 7:00 PM",
         )
-        gh2 = models.GloryHouse(
+        gh2 = models.GrupoEvangelismo(
             name="Sion - Centro",
             zone="Centro",
             leader_name="Elena García",

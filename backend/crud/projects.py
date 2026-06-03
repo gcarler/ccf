@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session, selectinload
 
 from backend.models_shared import _utcnow
 from backend import models, schemas
-from backend.crud.crm import get_user_sede_id
 
 
 # ── Helper ──────────────────────────────────────────────

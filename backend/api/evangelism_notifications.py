@@ -135,7 +135,7 @@ def send_reminders(
     inactive_groups_q = (
         db.query(models.GrupoEvangelismo)
         .filter(
-            models.GrupoEvangelismo.activo == True,
+            models.GrupoEvangelismo.activo,
             models.GrupoEvangelismo.lider_persona_id.isnot(None),
             ~models.GrupoEvangelismo.id.in_(
                 db.query(groups_with_recent_report.c.grupo_id)

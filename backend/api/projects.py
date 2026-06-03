@@ -4,16 +4,14 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from fastapi import (APIRouter, Depends, File, HTTPException, Query,
-                     UploadFile, status)
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import cast, func, Integer
 from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
-from backend.auth import (normalize_role, require_module_access,
-                          require_staff_or_admin)
+from backend.auth import normalize_role, require_module_access, require_staff_or_admin
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.crud.crm import get_user_sede_id
@@ -179,9 +177,7 @@ def _normalize_dates(obj):
                 setattr(
                     obj,
                     attr,
-                    datetime.fromisoformat(
-                        clean_val.replace(" ", "T").replace("Z", "+00:00")
-                    ),
+                    datetime.fromisoformat(clean_val.replace(" ", "T").replace("Z", "+00:00")),
                 )
             except MemoryError:
                 raise
@@ -203,10 +199,14 @@ def list_projects(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
-    query = db.query(models.Project).options(
-        selectinload(models.Project.tasks).selectinload(models.ProjectTask.attachments),
-        selectinload(models.Project.milestones),
-    ).filter(models.Project.deleted_at.is_(None))
+    query = (
+        db.query(models.Project)
+        .options(
+            selectinload(models.Project.tasks).selectinload(models.ProjectTask.attachments),
+            selectinload(models.Project.milestones),
+        )
+        .filter(models.Project.deleted_at.is_(None))
+    )
     if user_sede:
         query = query.filter(models.Project.sede_id == user_sede)
     if status_filter:
@@ -258,9 +258,13 @@ def create_project(
     crud.create_default_phases(db, db_project.id)
 
     if owner_persona_id:
-        crud.create_activity_log(db, db_project.id, owner_persona_id, "project_created", f"Proyecto '{db_project.title}' creado")
+        crud.create_activity_log(
+            db, db_project.id, owner_persona_id, "project_created", f"Proyecto '{db_project.title}' creado"
+        )
 
-    record_admin_action(db, current_user, action="create_project", resource_type="project", resource_id=str(db_project.id))
+    record_admin_action(
+        db, current_user, action="create_project", resource_type="project", resource_id=str(db_project.id)
+    )
     _normalize_dates(db_project)
     return db_project
 
@@ -318,10 +322,7 @@ def set_project_phases(
                 detail=f"No se puede eliminar la fase '{next(iter(removed))}': tiene {has_tasks} tarea(s) asignada(s). Mueve las tareas primero.",
             )
 
-    phase_dicts = [
-        {"name": p.name, "slug": p.slug, "color": p.color, "order_index": i}
-        for i, p in enumerate(phases)
-    ]
+    phase_dicts = [{"name": p.name, "slug": p.slug, "color": p.color, "order_index": i} for i, p in enumerate(phases)]
     created = crud.set_project_phases(db, project_id, phase_dicts)
     return created
 
@@ -417,9 +418,9 @@ def portfolio_summary(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Resumen de portafolio agrupado por estatus de proyecto."""
-    done_case = func.coalesce(func.sum(
-        cast(models.ProjectTask.status == "completed", Integer)
-    ), 0).label("completed_tasks")
+    done_case = func.coalesce(func.sum(cast(models.ProjectTask.status == "completed", Integer)), 0).label(
+        "completed_tasks"
+    )
 
     rows = (
         db.query(
@@ -428,9 +429,7 @@ def portfolio_summary(
             func.count(models.ProjectTask.id).label("total_tasks"),
             done_case,
         )
-        .outerjoin(
-            models.ProjectTask, models.ProjectTask.project_id == models.Project.id
-        )
+        .outerjoin(models.ProjectTask, models.ProjectTask.project_id == models.Project.id)
         .group_by(models.Project.status)
         .all()
     )
@@ -453,9 +452,7 @@ def workload_summary(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Resumen de carga de trabajo por persona."""
-    review_case = func.coalesce(func.sum(
-        cast(models.ProjectTask.status == "review", Integer)
-    ), 0).label("in_review")
+    review_case = func.coalesce(func.sum(cast(models.ProjectTask.status == "review", Integer)), 0).label("in_review")
 
     rows = (
         db.query(
@@ -502,9 +499,7 @@ def list_activities(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Feed de actividad global de proyectos."""
-    q = db.query(models.ProjectActivityLog).order_by(
-        models.ProjectActivityLog.created_at.desc()
-    )
+    q = db.query(models.ProjectActivityLog).order_by(models.ProjectActivityLog.created_at.desc())
     if project_id:
         q = q.filter(models.ProjectActivityLog.project_id == _to_uuid(project_id))
     logs = q.limit(limit).all()
@@ -512,9 +507,7 @@ def list_activities(
     result = []
     for log in logs:
         _normalize_dates(log)
-        project = (
-            db.query(models.Project).filter(models.Project.id == log.project_id).first()
-        )
+        project = db.query(models.Project).filter(models.Project.id == log.project_id).first()
         result.append(
             schemas.ProjectActivityItem(
                 id=str(log.id),
@@ -595,9 +588,7 @@ def list_inbox(
         )
         is_read = state.is_read if state else False
 
-        author = (
-            db.query(models.User).filter(models.User.id == comment.author_id).first()
-        )
+        author = db.query(models.User).filter(models.User.id == comment.author_id).first()
         inbox_items.append(
             schemas.ProjectInboxItem(
                 id=f"comment-{comment.id}",
@@ -633,9 +624,7 @@ def mark_inbox_read(
     if state:
         state.is_read = True
     else:
-        state = models.ProjectInboxState(
-            user_id=current_user.id, item_id=item_id, is_read=True
-        )
+        state = models.ProjectInboxState(user_id=current_user.id, item_id=item_id, is_read=True)
         db.add(state)
     db.commit()
     return {"ok": True, "item_id": item_id}
@@ -671,11 +660,7 @@ def get_project_wiki(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    doc = (
-        db.query(models.ProjectDocument)
-        .filter(models.ProjectDocument.project_id == project_id)
-        .first()
-    )
+    doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == project_id).first()
     return _normalize_dates(doc)
 
 
@@ -687,11 +672,7 @@ def update_project_wiki(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     _ensure_project(db, project_id)  # Validates project exists
-    doc = (
-        db.query(models.ProjectDocument)
-        .filter(models.ProjectDocument.project_id == project_id)
-        .first()
-    )
+    doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == project_id).first()
     title = payload.title or "Wiki Ministerial"
     content = payload.content or ""
     author_persona_id = get_user_persona_id(db, current_user.id)
@@ -723,9 +704,7 @@ def update_project_wiki(
     return _normalize_dates(doc)
 
 
-@router.get(
-    "/{project_id}/whiteboard", response_model=Optional[schemas.ProjectWhiteboard]
-)
+@router.get("/{project_id}/whiteboard", response_model=Optional[schemas.ProjectWhiteboard])
 def get_project_whiteboard(
     project_id: str,
     db: Session = Depends(get_db),
@@ -733,9 +712,7 @@ def get_project_whiteboard(
 ):
     _ensure_project(db, project_id)
     board = (
-        db.query(models.ProjectWhiteboard)
-        .filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id))
-        .first()
+        db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
     )
     return _normalize_dates(board)
 
@@ -749,17 +726,13 @@ def update_project_whiteboard(
 ):
     _ensure_project(db, project_id)
     board = (
-        db.query(models.ProjectWhiteboard)
-        .filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id))
-        .first()
+        db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
     )
     title = payload.title or "Pizarra Estrategica"
     elements = payload.elements_json or "[]"
 
     if not board:
-        board = models.ProjectWhiteboard(
-            project_id=_to_uuid(project_id), title=title, elements_json=elements
-        )
+        board = models.ProjectWhiteboard(project_id=_to_uuid(project_id), title=title, elements_json=elements)
         db.add(board)
     else:
         board.elements_json = elements
@@ -777,9 +750,7 @@ def update_project_whiteboard(
 # --- ATTACHMENTS & SUPPLIES ---
 
 
-@router.post(
-    "/{project_id}/tasks/{task_id}/attachments", response_model=schemas.ProjectTask
-)
+@router.post("/{project_id}/tasks/{task_id}/attachments", response_model=schemas.ProjectTask)
 async def upload_task_attachment(
     project_id: str,
     task_id: str,
@@ -836,9 +807,7 @@ def update_project_task(
     return task
 
 
-@router.get(
-    "/{project_id}/tasks/{task_id}/supplies", response_model=List[schemas.TaskSupply]
-)
+@router.get("/{project_id}/tasks/{task_id}/supplies", response_model=List[schemas.TaskSupply])
 def list_task_supplies(
     project_id: str,
     task_id: str,
@@ -955,10 +924,7 @@ def create_subtask(
     _ensure_project(db, project_id)
     parent_task = _ensure_task_in_project(db, project_id, task_id)
     max_order = (
-        db.query(func.max(models.ProjectTask.order_index))
-        .filter(models.ProjectTask.parent_id == task_id)
-        .scalar()
-        or 0
+        db.query(func.max(models.ProjectTask.order_index)).filter(models.ProjectTask.parent_id == task_id).scalar() or 0
     )
     payload = subtask.model_dump()
     payload["project_id"] = project_id
@@ -1036,9 +1002,7 @@ def create_comment(
     project_id = payload.get("project_id")
     content = (payload.get("content") or "").strip()
     if not project_id or not content:
-        raise HTTPException(
-            status_code=400, detail="project_id and content are required"
-        )
+        raise HTTPException(status_code=400, detail="project_id and content are required")
     task_id = payload.get("task_id")
     _ensure_project(db, project_id)
     author_persona_id = get_user_persona_id(db, current_user.id)
@@ -1118,11 +1082,7 @@ def update_project_comment(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Actualiza un comentario (contenido o estado de resolución)."""
-    comment = (
-        db.query(models.ProjectComment)
-        .filter(models.ProjectComment.id == comment_id)
-        .first()
-    )
+    comment = db.query(models.ProjectComment).filter(models.ProjectComment.id == comment_id).first()
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     if payload.content is not None:
@@ -1249,11 +1209,7 @@ def delete_project_comment(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Elimina un comentario."""
-    comment = (
-        db.query(models.ProjectComment)
-        .filter(models.ProjectComment.id == comment_id)
-        .first()
-    )
+    comment = db.query(models.ProjectComment).filter(models.ProjectComment.id == comment_id).first()
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     comment.deleted_at = datetime.utcnow()
@@ -1282,11 +1238,7 @@ def list_project_messages(
     sender_ids = {r.sender_id for r in rows}
     users_map = {}
     if sender_ids:
-        users = (
-            db.query(models.User)
-            .filter(models.User.id.in_(sender_ids))
-            .all()
-        )
+        users = db.query(models.User).filter(models.User.id.in_(sender_ids)).all()
         users_map = {u.id: u.username for u in users}
     return [
         schemas.ProjectMessageItem(
@@ -1345,7 +1297,6 @@ def send_project_message(
     except RuntimeError:
         pass
 
-
     return schemas.ProjectMessageItem(
         id=msg.id,
         sender_id=msg.sender_id,
@@ -1363,11 +1314,7 @@ def delete_project_message(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Delete a chat message (own message or admin)."""
-    msg = (
-        db.query(models.ChatMessage)
-        .filter(models.ChatMessage.id == message_id)
-        .first()
-    )
+    msg = db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
     if not msg:
         raise HTTPException(404, detail="Message not found")
     if msg.sender_id != current_user.id:
@@ -1429,9 +1376,7 @@ def create_project_milestone(
     return milestone
 
 
-@router.patch(
-    "/{project_id}/milestones/{milestone_id}", response_model=schemas.ProjectMilestone
-)
+@router.patch("/{project_id}/milestones/{milestone_id}", response_model=schemas.ProjectMilestone)
 def update_project_milestone(
     project_id: str,
     milestone_id: str,
@@ -1448,13 +1393,9 @@ def update_project_milestone(
         setattr(milestone, key, value)
 
     if "is_completed" in update_data and milestone.is_completed != previous_completed:
-        action_type = (
-            "milestone_completed" if milestone.is_completed else "milestone_reopened"
-        )
+        action_type = "milestone_completed" if milestone.is_completed else "milestone_reopened"
         description = (
-            f"Hito '{milestone.title}' completado"
-            if milestone.is_completed
-            else f"Hito '{milestone.title}' reabierto"
+            f"Hito '{milestone.title}' completado" if milestone.is_completed else f"Hito '{milestone.title}' reabierto"
         )
     else:
         action_type = "milestone_updated"

@@ -4,7 +4,6 @@ import logging
 import os
 import pathlib
 import uuid
-from typing import BinaryIO
 
 from backend.core.config import get_settings
 

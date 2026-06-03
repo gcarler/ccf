@@ -1,4 +1,4 @@
-"""add strategy typology columns and glory_houses FK
+"""add strategy typology columns and grupos_evangelismo FK
 
 Revision ID: 20260524_0027_strategy_typology
 Revises: 20260524_0026_prod_ops
@@ -28,21 +28,21 @@ def upgrade() -> None:
     op.add_column('evangelism_strategies', sa.Column('phases', sa.JSON(), nullable=True))
     op.add_column('evangelism_strategies', sa.Column('niche_objective', sa.String(255), nullable=True))
 
-    # ── Glory Houses strategy FK ──
-    op.add_column('glory_houses', sa.Column('evangelism_strategy_id', sa.Integer(), nullable=True))
-    op.create_index(op.f('ix_glory_houses_evangelism_strategy_id'), 'glory_houses', ['evangelism_strategy_id'], unique=False)
+    # ── Grupos strategy FK ──
+    op.add_column('grupos_evangelismo', sa.Column('evangelism_strategy_id', sa.Integer(), nullable=True))
+    op.create_index(op.f('ix_grupos_evangelismo_evangelism_strategy_id'), 'grupos_evangelismo', ['evangelism_strategy_id'], unique=False)
     op.create_foreign_key(
-        'fk_glory_houses_evangelism_strategy',
-        'glory_houses', 'evangelism_strategies',
+        'fk_grupos_evangelismo_evangelism_strategy',
+        'grupos_evangelismo', 'evangelism_strategies',
         ['evangelism_strategy_id'], ['id'],
         ondelete='SET NULL'
     )
 
 
 def downgrade() -> None:
-    op.drop_constraint('fk_glory_houses_evangelism_strategy', 'glory_houses', type_='foreignkey')
-    op.drop_index(op.f('ix_glory_houses_evangelism_strategy_id'), table_name='glory_houses')
-    op.drop_column('glory_houses', 'evangelism_strategy_id')
+    op.drop_constraint('fk_grupos_evangelismo_evangelism_strategy', 'grupos_evangelismo', type_='foreignkey')
+    op.drop_index(op.f('ix_grupos_evangelismo_evangelism_strategy_id'), table_name='grupos_evangelismo')
+    op.drop_column('grupos_evangelismo', 'evangelism_strategy_id')
 
     op.drop_column('evangelism_strategies', 'niche_objective')
     op.drop_column('evangelism_strategies', 'phases')

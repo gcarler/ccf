@@ -38,9 +38,9 @@ Referencia:
 
 ### 2) Faro
 
-- `GET /api/evangelism/glory-houses`: `require_pastor_or_admin`
-- `POST /api/evangelism/glory-houses`: `require_pastor_or_admin`
-- `PUT /api/evangelism/glory-houses/{id}`: `require_pastor_or_admin`
+- `GET /api/evangelism/grupos`: `require_pastor_or_admin`
+- `POST /api/evangelism/grupos`: `require_pastor_or_admin`
+- `PUT /api/evangelism/grupos/{id}`: `require_pastor_or_admin`
 - `GET /api/evangelism/faro/seasons`: `require_pastor_or_admin`
 - `POST /api/evangelism/faro/seasons`: `require_pastor_or_admin`
 - `PATCH /api/evangelism/faro/seasons/{id}`: `require_pastor_or_admin`

@@ -22,7 +22,7 @@ from backend.models_auth import (
     HistorialContrasena, LogSeguridad, Medalla, MedallaUsuario,
     NivelGamificado, NotificacionUsuario, PreferenciaUI,
     RecordatorioUsuario, RolPlataforma, TokenResetContrasena,
-    TokenSesion, TokenVerificacionEmail, Usuario, UsuarioRolModulo)
+    TokenSesion, Usuario, UsuarioRolModulo)
 from backend.schemas.auth_v2 import (
     CambioPasswordRequest, ForgotPasswordRequest, LogSeguridadRead,
     MedallaCreate, MedallaRead, MedallaUsuarioRead, MfaRecoveryResponse,
@@ -543,8 +543,6 @@ def setup_mfa(
     current_user: Usuario = Depends(_require_user),
 ):
     """Configura MFA/TOTP para el usuario."""
-    import base64
-    import struct
 
     try:
         import pyotp

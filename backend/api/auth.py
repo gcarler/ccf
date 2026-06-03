@@ -5,25 +5,31 @@ Maneja el inicio de sesion, registro y gestion de tokens con UUID.
 
 import logging
 from datetime import datetime, timezone, timedelta
-
-def _utcnow():
-    return datetime.now(timezone.utc)
 from typing import List
 
-from fastapi import (APIRouter, Depends, HTTPException, Request, Response,
-                     status)
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import (create_access_token, create_refresh_token,
-                          normalize_role, require_active_user, require_admin)
+from backend.auth import (
+    create_access_token,
+    create_refresh_token,
+    normalize_role,
+    require_active_user,
+    require_admin,
+)
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import get_user_effective_permissions, record_session
 from backend.core.rate_limit import rate_limiter
+
+
+def _utcnow():
+    return datetime.now(timezone.utc)
+
 
 settings = get_settings()
 log = logging.getLogger(__name__)
@@ -79,12 +85,22 @@ def login(
     if "@" in form_data.username:
         user = crud.get_user_by_email(db, email=form_data.username)
         if not user:
-            user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.email == form_data.username).first()
+            user = (
+                db.query(Usuario)
+                .options(joinedload(Usuario.rol_plataforma))
+                .filter(Usuario.email == form_data.username)
+                .first()
+            )
             is_v2 = True
     else:
         user = crud.get_user_by_username(db, username=form_data.username)
         if not user:
-            user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.username == form_data.username).first()
+            user = (
+                db.query(Usuario)
+                .options(joinedload(Usuario.rol_plataforma))
+                .filter(Usuario.username == form_data.username)
+                .first()
+            )
             is_v2 = True
 
     ip_address = request.client.host if request.client else None
@@ -93,9 +109,16 @@ def login(
     if not user or not verify_password(form_data.password, user.password_hash):
         if is_v2 and user:
             # Log failed attempt for V2 user
-            db.add(LogSeguridad(user_id=user.id, evento="LOGIN_FAILED", ip_address=ip_address, user_agent=user_agent))
+            db.add(
+                LogSeguridad(
+                    user_id=user.id,
+                    evento="LOGIN_FAILED",
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                )
+            )
             db.commit()
-        
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales ministeriales incorrectas",
@@ -112,7 +135,14 @@ def login(
         role_name = user.rol_plataforma.nombre if user.rol_plataforma else "estudiante"
         sub = str(user.id)
         # Log success for V2 user
-        db.add(LogSeguridad(user_id=user.id, evento="LOGIN_SUCCESS", ip_address=ip_address, user_agent=user_agent))
+        db.add(
+            LogSeguridad(
+                user_id=user.id,
+                evento="LOGIN_SUCCESS",
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
+        )
         db.commit()
     else:
         role_name = str(user.role)
@@ -123,9 +153,7 @@ def login(
         data=payload,
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
     )
-    refresh_token = create_refresh_token(
-        db, sub, ip_address=ip_address, user_agent=user_agent
-    )
+    refresh_token = create_refresh_token(db, sub, ip_address=ip_address, user_agent=user_agent)
 
     record_session(sub, access_token)
 
@@ -168,23 +196,26 @@ def refresh_access_token(
         refresh_token = payload.refresh_token
 
     if not refresh_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token")
 
     token_row = crud.get_valid_refresh_token(db, refresh_token)
     is_v2 = False
     if not token_row:
         # Check v2 table
         from backend.models_auth import TokenSesion
-        token_row = db.query(TokenSesion).filter(
-            TokenSesion.token == refresh_token,
-            TokenSesion.revoked == False,
-            TokenSesion.expires_at > _utcnow()
-        ).first()
+
+        token_row = (
+            db.query(TokenSesion)
+            .filter(
+                TokenSesion.token == refresh_token,
+                TokenSesion.revoked.is_(False),
+                TokenSesion.expires_at > _utcnow(),
+            )
+            .first()
+        )
         if token_row:
             is_v2 = True
-    
+
     if not token_row:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -193,14 +224,13 @@ def refresh_access_token(
 
     if is_v2:
         from backend.models_auth import Usuario
+
         user = db.query(Usuario).filter(Usuario.id == token_row.user_id).first()
     else:
         user = crud.get_user(db, int(token_row.user_id))
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     # Rotación: Invalidar el anterior
     if is_v2:
@@ -222,9 +252,7 @@ def refresh_access_token(
         role_name = str(user.role)
 
     # Crear nuevos tokens
-    new_refresh_token = create_refresh_token(
-        db, sub, ip_address=ip_address, user_agent=user_agent
-    )
+    new_refresh_token = create_refresh_token(db, sub, ip_address=ip_address, user_agent=user_agent)
     new_access_token = create_access_token(
         data={"sub": sub, "role": normalize_role(role_name)},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
@@ -282,25 +310,30 @@ def logout(
 @router.get("/sessions")
 def get_sessions(
     current_user: models.User = Depends(require_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Lista las sesiones activas del usuario autenticado."""
     from backend.models_identity import RefreshToken
-    sessions = db.query(RefreshToken).filter(
-        RefreshToken.user_id == current_user.id,
-        RefreshToken.revoked.is_(False)
-    ).order_by(RefreshToken.last_active.desc()).all()
+
+    sessions = (
+        db.query(RefreshToken)
+        .filter(RefreshToken.user_id == current_user.id, RefreshToken.revoked.is_(False))
+        .order_by(RefreshToken.last_active.desc())
+        .all()
+    )
     result = []
     for s in sessions:
-        result.append({
-            "id": s.id,
-            "ip_address": s.ip_address,
-            "user_agent": s.user_agent,
-            "last_active": s.last_active.isoformat() if s.last_active else None,
-            "created_at": s.created_at.isoformat() if s.created_at else None,
-            "expires_at": s.expires_at.isoformat() if s.expires_at else None,
-            "is_current": True,  # Will be refined client-side
-        })
+        result.append(
+            {
+                "id": s.id,
+                "ip_address": s.ip_address,
+                "user_agent": s.user_agent,
+                "last_active": s.last_active.isoformat() if s.last_active else None,
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+                "expires_at": s.expires_at.isoformat() if s.expires_at else None,
+                "is_current": True,  # Will be refined client-side
+            }
+        )
     return result
 
 
@@ -308,15 +341,20 @@ def get_sessions(
 def revoke_session(
     session_id: int,
     current_user: models.User = Depends(require_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Revoca una sesión específica del usuario autenticado."""
     from backend.models_identity import RefreshToken
-    session = db.query(RefreshToken).filter(
-        RefreshToken.id == session_id,
-        RefreshToken.user_id == current_user.id,
-        RefreshToken.revoked.is_(False)
-    ).first()
+
+    session = (
+        db.query(RefreshToken)
+        .filter(
+            RefreshToken.id == session_id,
+            RefreshToken.user_id == current_user.id,
+            RefreshToken.revoked.is_(False),
+        )
+        .first()
+    )
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
     session.revoked = True
@@ -332,9 +370,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """Registro de nuevos miembros. Envía email de verificación automáticamente."""
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
-        raise HTTPException(
-            status_code=400, detail="El correo ya esta registrado en el ministerio"
-        )
+        raise HTTPException(status_code=400, detail="El correo ya esta registrado en el ministerio")
 
     user.role = "estudiante"
     created = crud.create_user(db=db, user=user)
@@ -362,41 +398,43 @@ def get_current_ministerial_user(
     db: Session = Depends(get_db),
 ):
     """Obtiene el perfil del usuario autenticado con sus permisos.
-    
+
     Compatible con auth v1 (users table, Integer PK) y auth v3 (auth_users, UUID PK).
     Extrae el token de Authorization header o cookie.
     """
     from jose import JWTError, jwt
     from backend.core.config import get_settings
     from backend.models_auth import Usuario
-    
+
     settings = get_settings()
     token = request.headers.get("Authorization", "")
     if token.startswith("Bearer "):
         token = token[7:]
-    
+
     # Fallback: cookie
     if not token:
         token = request.cookies.get(settings.access_token_cookie_name) or ""
-    
+
     if not token:
         raise HTTPException(status_code=401, detail="No autenticado")
-    
+
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
         subject = str(payload.get("sub", ""))
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
-    
+
     if not subject:
         raise HTTPException(status_code=401, detail="Token inválido")
-    
+
     # Try v3 first (UUID)
     user = None
     if "-" in subject:  # UUID
         from sqlalchemy.orm import joinedload
+
         try:
             import uuid
+
             uid = uuid.UUID(subject)
             user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == uid).first()
             if user:
@@ -408,6 +446,7 @@ def get_current_ministerial_user(
                 # Simulate a v1 user
                 from backend.schemas import User as UserSchema
                 from backend.core.permissions import normalize_role, PERMISSIONS
+
                 raw_role = user.rol_plataforma.nombre if user.rol_plataforma else "lector"
                 role_name = normalize_role(raw_role)
                 raw_perms = user.rol_plataforma.permisos or {}
@@ -432,16 +471,16 @@ def get_current_ministerial_user(
                 )
         except (ValueError, ImportError):
             pass
-    
+
     # Fallback v1 (Integer PK)
     if subject.isdigit():
         user = crud.get_user(db, int(subject))
     else:
         user = crud.get_user_by_email(db, email=subject)
-    
+
     if not user:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
-    
+
     user.permissions = get_user_effective_permissions(db, user)
     return user
 
@@ -508,11 +547,15 @@ def update_current_user(
         try:
             from backend.crud.identity import create_verification_token
             from backend.services.email import render_verify_email, send_email
+
             token_row = create_verification_token(db, user.id)
             subject, html = render_verify_email(token_row.token)
             send_email(to=user.email, subject=subject, html=html)
         except Exception as exc:
-            log.warning("No se pudo enviar email de verificación tras cambio de email: %s", type(exc).__name__)
+            log.warning(
+                "No se pudo enviar email de verificación tras cambio de email: %s",
+                type(exc).__name__,
+            )
 
     return user
 
@@ -640,9 +683,7 @@ def forgot_password(email: str, db: Session = Depends(get_db)):
 def reset_password(token: str, new_password: str, db: Session = Depends(get_db)):
     """Restablece la contraseña usando un token enviado por email."""
     if len(new_password) < 8:
-        raise HTTPException(
-            status_code=400, detail="La contraseña debe tener al menos 8 caracteres"
-        )
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 8 caracteres")
 
     success = crud.use_reset_token(db, token, new_password)
     if not success:
@@ -710,9 +751,7 @@ def google_callback(
         token_resp.raise_for_status()
         token_data = token_resp.json()
     except Exception as exc:
-        raise HTTPException(
-            status_code=400, detail=f"Error exchanging Google code: {exc}"
-        )
+        raise HTTPException(status_code=400, detail=f"Error exchanging Google code: {exc}")
 
     id_token = token_data.get("id_token")
     access_token_google = token_data.get("access_token")
@@ -729,9 +768,7 @@ def google_callback(
         userinfo_resp.raise_for_status()
         google_user = userinfo_resp.json()
     except Exception as exc:
-        raise HTTPException(
-            status_code=400, detail=f"Error getting Google user info: {exc}"
-        )
+        raise HTTPException(status_code=400, detail=f"Error getting Google user info: {exc}")
 
     google_email = google_user.get("email", "")
     google_name = google_user.get("name", "")
@@ -746,6 +783,7 @@ def google_callback(
     is_v2 = False
     if not user:
         from backend.models_auth import Usuario
+
         user = db.query(Usuario).filter(Usuario.email == google_email).first()
         if user:
             is_v2 = True
@@ -760,25 +798,19 @@ def google_callback(
         persona = db.query(models.Persona).filter(models.Persona.email == google_email).first()
         if not persona:
             persona = models.Persona(
-                first_name=(
-                    google_name.split(" ")[0]
-                    if google_name
-                    else google_email.split("@")[0]
-                ),
+                first_name=(google_name.split(" ")[0] if google_name else google_email.split("@")[0]),
                 last_name=(
-                    " ".join(google_name.split(" ")[1:])
-                    if google_name and len(google_name.split(" ")) > 1
-                    else ""
+                    " ".join(google_name.split(" ")[1:]) if google_name and len(google_name.split(" ")) > 1 else ""
                 ),
                 email=google_email,
                 church_role="Miembro",
                 spiritual_status="Nuevo",
-                sede_id=1, # Default
-                estado_vital="ACTIVO"
+                sede_id=1,  # Default
+                estado_vital="ACTIVO",
             )
             db.add(persona)
-            db.flush() # Get persona.id
-        
+            db.flush()  # Get persona.id
+
         # Get default role "Estudiante"
         rol = db.query(RolPlataforma).filter(RolPlataforma.nombre == "Estudiante").first()
         rol_id = rol.id if rol else None
@@ -814,7 +846,11 @@ def google_callback(
         role_name = str(user.role)
         platform_role = role_name.upper()
 
-    payload = {"sub": sub, "role": normalize_role(role_name), "platform_role": platform_role}
+    payload = {
+        "sub": sub,
+        "role": normalize_role(role_name),
+        "platform_role": platform_role,
+    }
     access_token = create_access_token(
         data=payload,
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
@@ -823,11 +859,7 @@ def google_callback(
 
     # 5. Redirect to frontend with tokens (fragment to avoid server logs)
     frontend_url = settings.frontend_url.rstrip("/")
-    redirect_target = (
-        f"{frontend_url}/auth/callback"
-        f"#token={access_token}"
-        f"&refresh={refresh_token}"
-    )
+    redirect_target = f"{frontend_url}/auth/callback#token={access_token}&refresh={refresh_token}"
     return RedirectResponse(url=redirect_target)
 
 
@@ -839,14 +871,8 @@ def auth_stats_summary(
     """Resumen estadistico de autenticacion para el dashboard."""
     total = db.query(models.User).count()
     active = db.query(models.User).filter(models.User.is_active.is_(True)).count()
-    verified = (
-        db.query(models.User).filter(models.User.is_email_verified.is_(True)).count()
-    )
-    roles = (
-        db.query(models.User.role, func.count(models.User.id))
-        .group_by(models.User.role)
-        .all()
-    )
+    verified = db.query(models.User).filter(models.User.is_email_verified.is_(True)).count()
+    roles = db.query(models.User.role, func.count(models.User.id)).group_by(models.User.role).all()
     return {
         "total_users": total,
         "active_users": active,

@@ -1,4 +1,4 @@
-"""Make evangelism_strategy_id NOT NULL on glory_houses
+"""Make evangelism_strategy_id NOT NULL on grupos_evangelismo
 
 Faro groups must belong to a Relacional strategy. No standalone groups allowed.
 """
@@ -14,11 +14,11 @@ depends_on = None
 def upgrade() -> None:
     # Ensure no NULL values exist before adding constraint
     op.execute("""
-        DELETE FROM glory_houses WHERE evangelism_strategy_id IS NULL
+        DELETE FROM grupos_evangelismo WHERE evangelism_strategy_id IS NULL
     """)
     # Make column NOT NULL with a default for new records
     op.alter_column(
-        'glory_houses',
+        'grupos_evangelismo',
         'evangelism_strategy_id',
         existing_type=sa.Integer(),
         nullable=False,
@@ -27,7 +27,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.alter_column(
-        'glory_houses',
+        'grupos_evangelismo',
         'evangelism_strategy_id',
         existing_type=sa.Integer(),
         nullable=True,

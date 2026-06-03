@@ -93,8 +93,8 @@ def get_sessions(current_user: models.User = Depends(require_active_user), ...):
 | `/api/evangelism/strategies/{id}` | GET | ✅ 200 | **FIXED** — Strategy detail |
 | `/api/evangelism/strategies` | POST | ✅ 200 | Create strategy |
 | `/api/evangelism/strategies/{id}` | DELETE | ✅ 204 | **FIXED** — Delete strategy |
-| `/api/evangelism/glory-houses` | GET | ✅ 200 | 9 grupos |
-| `/api/evangelism/glory-houses` | POST | ✅ 200 | Create group |
+| `/api/evangelism/grupos` | GET | ✅ 200 | 9 grupos |
+| `/api/evangelism/grupos` | POST | ✅ 200 | Create group |
 | `/api/projects` | GET | ✅ 200 | Lista proyectos |
 | `/api/projects` | POST | ✅ 201 | Create project |
 | `/api/projects/{id}` | DELETE | ✅ 200 | Delete project |

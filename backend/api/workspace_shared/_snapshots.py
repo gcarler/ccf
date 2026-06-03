@@ -14,19 +14,14 @@ from backend.api.workspace_shared._audit import (_enrich_audit_rows,
                                                  _summarize_audit)
 from backend.api.workspace_shared._incidents import (
     _detect_anomalies, _incident_daily_trends, _pct_delta, _period_bounds,
-    _period_incident_stats, _scan_incidents_from_anomalies,
-    _summarize_incidents)
+    _period_incident_stats, _summarize_incidents)
 from backend.api.workspace_shared._storage import (_append_notification,
-                                                   _append_snapshot_history,
                                                    _json_canonical,
                                                    _load_incidents,
                                                    _load_workspace_config,
                                                    _now_iso,
                                                    _read_audit_events,
-                                                   _read_notifications,
-                                                   _read_snapshot_history,
-                                                   _save_snapshot_history,
-                                                   _save_workspace_config)
+                                                   _read_notifications)
 
 
 def _snapshot_hash(snapshot: Dict[str, Any]) -> str:

@@ -1,7 +1,7 @@
 """Add missing columns to match SQLAlchemy models — critical path tables
 
 Adds columns that exist in models but are missing from the production PostgreSQL
-schema. These are actively referenced by API code (messaging, glory houses,
+schema. These are actively referenced by API code (messaging, grupos,
 pastoral calls, etc.) and would cause UndefinedColumn errors at runtime.
 
 Revision ID: 20260524_0029
@@ -48,33 +48,33 @@ def upgrade() -> None:
         sa.Column("recipient_phone", sa.String(30), nullable=True),
     )
 
-    # --- glory_houses (used by CRM glory house endpoints) ---
+    # --- grupos_evangelismo (used by CRM grupo endpoints) ---
     op.add_column(
-        "glory_houses",
+        "grupos_evangelismo",
         sa.Column("code", sa.String(30), nullable=True, unique=True, index=True),
     )
     op.add_column(
-        "glory_houses",
+        "grupos_evangelismo",
         sa.Column("address", sa.String(255), nullable=True),
     )
     op.add_column(
-        "glory_houses",
+        "grupos_evangelismo",
         sa.Column("latitude", sa.Numeric(10, 8), nullable=True),
     )
     op.add_column(
-        "glory_houses",
+        "grupos_evangelismo",
         sa.Column("longitude", sa.Numeric(11, 8), nullable=True),
     )
     op.add_column(
-        "glory_houses",
+        "grupos_evangelismo",
         sa.Column("day_of_week", sa.String(20), nullable=True),
     )
     op.add_column(
-        "glory_houses",
+        "grupos_evangelismo",
         sa.Column("start_time", sa.String(50), nullable=True),
     )
     op.add_column(
-        "glory_houses",
+        "grupos_evangelismo",
         sa.Column("end_time", sa.String(50), nullable=True),
     )
 
@@ -199,14 +199,14 @@ def downgrade() -> None:
     # pastoral_call_logs
     op.drop_column("pastoral_call_logs", "duration_seconds")
 
-    # glory_houses
-    op.drop_column("glory_houses", "end_time")
-    op.drop_column("glory_houses", "start_time")
-    op.drop_column("glory_houses", "day_of_week")
-    op.drop_column("glory_houses", "longitude")
-    op.drop_column("glory_houses", "latitude")
-    op.drop_column("glory_houses", "address")
-    op.drop_column("glory_houses", "code")
+    # grupos_evangelismo
+    op.drop_column("grupos_evangelismo", "end_time")
+    op.drop_column("grupos_evangelismo", "start_time")
+    op.drop_column("grupos_evangelismo", "day_of_week")
+    op.drop_column("grupos_evangelismo", "longitude")
+    op.drop_column("grupos_evangelismo", "latitude")
+    op.drop_column("grupos_evangelismo", "address")
+    op.drop_column("grupos_evangelismo", "code")
 
     # communication_logs
     op.drop_column("communication_logs", "recipient_phone")

@@ -39,17 +39,17 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
 
-    if inspector.has_table("glory_house_sessions") and _has_column(
-        inspector, "glory_house_sessions", "reported_by_member_id"
+    if inspector.has_table("sesiones_grupo") and _has_column(
+        inspector, "sesiones_grupo", "reported_by_member_id"
     ):
         if not _has_fk(
             inspector,
-            "glory_house_sessions",
-            "fk_glory_house_sessions_reported_by_member_id",
+            "sesiones_grupo",
+            "fk_sesiones_grupo_reported_by_member_id",
         ):
-            with op.batch_alter_table("glory_house_sessions") as batch_op:
+            with op.batch_alter_table("sesiones_grupo") as batch_op:
                 batch_op.create_foreign_key(
-                    "fk_glory_house_sessions_reported_by_member_id",
+                    "fk_sesiones_grupo_reported_by_member_id",
                     "members",
                     ["reported_by_member_id"],
                     ["id"],
@@ -59,39 +59,39 @@ def upgrade() -> None:
 
         if not _has_index(
             inspector,
-            "glory_house_sessions",
-            "ix_glory_house_sessions_reported_by_member_id",
+            "sesiones_grupo",
+            "ix_sesiones_grupo_reported_by_member_id",
         ):
             op.create_index(
-                "ix_glory_house_sessions_reported_by_member_id",
-                "glory_house_sessions",
+                "ix_sesiones_grupo_reported_by_member_id",
+                "sesiones_grupo",
                 ["reported_by_member_id"],
                 unique=False,
             )
             inspector = sa.inspect(bind)
 
-    if inspector.has_table("glory_house_attendance") and _has_column(
-        inspector, "glory_house_attendance", "absence_reason"
+    if inspector.has_table("asistencias") and _has_column(
+        inspector, "asistencias", "absence_reason"
     ):
         if not _has_index(
             inspector,
-            "glory_house_attendance",
-            "ix_glory_house_attendance_absence_reason",
+            "asistencias",
+            "ix_asistencias_absence_reason",
         ):
             op.create_index(
-                "ix_glory_house_attendance_absence_reason",
-                "glory_house_attendance",
+                "ix_asistencias_absence_reason",
+                "asistencias",
                 ["absence_reason"],
                 unique=False,
             )
             inspector = sa.inspect(bind)
 
-    if inspector.has_table("glory_houses") and _has_column(
-        inspector, "glory_houses", "code"
+    if inspector.has_table("grupos_evangelismo") and _has_column(
+        inspector, "grupos_evangelismo", "code"
     ):
-        if not _has_index(inspector, "glory_houses", "ix_glory_houses_code"):
+        if not _has_index(inspector, "grupos_evangelismo", "ix_grupos_evangelismo_code"):
             op.create_index(
-                "ix_glory_houses_code", "glory_houses", ["code"], unique=True
+                "ix_grupos_evangelismo_code", "grupos_evangelismo", ["code"], unique=True
             )
 
 
@@ -99,38 +99,38 @@ def downgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
 
-    if inspector.has_table("glory_houses") and _has_index(
-        inspector, "glory_houses", "ix_glory_houses_code"
+    if inspector.has_table("grupos_evangelismo") and _has_index(
+        inspector, "grupos_evangelismo", "ix_grupos_evangelismo_code"
     ):
-        op.drop_index("ix_glory_houses_code", table_name="glory_houses")
+        op.drop_index("ix_grupos_evangelismo_code", table_name="grupos_evangelismo")
 
     inspector = sa.inspect(bind)
-    if inspector.has_table("glory_house_attendance") and _has_index(
-        inspector, "glory_house_attendance", "ix_glory_house_attendance_absence_reason"
+    if inspector.has_table("asistencias") and _has_index(
+        inspector, "asistencias", "ix_asistencias_absence_reason"
     ):
         op.drop_index(
-            "ix_glory_house_attendance_absence_reason",
-            table_name="glory_house_attendance",
+            "ix_asistencias_absence_reason",
+            table_name="asistencias",
         )
 
     inspector = sa.inspect(bind)
-    if inspector.has_table("glory_house_sessions") and _has_index(
+    if inspector.has_table("sesiones_grupo") and _has_index(
         inspector,
-        "glory_house_sessions",
-        "ix_glory_house_sessions_reported_by_member_id",
+        "sesiones_grupo",
+        "ix_sesiones_grupo_reported_by_member_id",
     ):
         op.drop_index(
-            "ix_glory_house_sessions_reported_by_member_id",
-            table_name="glory_house_sessions",
+            "ix_sesiones_grupo_reported_by_member_id",
+            table_name="sesiones_grupo",
         )
 
     inspector = sa.inspect(bind)
-    if inspector.has_table("glory_house_sessions") and _has_fk(
+    if inspector.has_table("sesiones_grupo") and _has_fk(
         inspector,
-        "glory_house_sessions",
-        "fk_glory_house_sessions_reported_by_member_id",
+        "sesiones_grupo",
+        "fk_sesiones_grupo_reported_by_member_id",
     ):
-        with op.batch_alter_table("glory_house_sessions") as batch_op:
+        with op.batch_alter_table("sesiones_grupo") as batch_op:
             batch_op.drop_constraint(
-                "fk_glory_house_sessions_reported_by_member_id", type_="foreignkey"
+                "fk_sesiones_grupo_reported_by_member_id", type_="foreignkey"
             )

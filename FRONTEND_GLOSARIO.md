@@ -8,7 +8,7 @@
 |---|---|---|
 | Cualquier persona en el sistema | persona, integrante, participante | miembro, member |
 | Grupo pequeño comunitario | Grupo Pequeño / Comunidad | Cell Group, Célula |
-| Grupo de evangelismo | Grupo de Evangelismo / Casa de Gloria | Glory House |
+| Grupo de evangelismo | Grupo de Evangelismo / Casa de Gloria | nombres heredados en inglés |
 | Líder de grupo | Líder | no hay tabla "líderes" |
 | Cantidad de personas en grupo | total_personas, Integrantes | members_count, Miembros |
 | Usuario de la plataforma | usuario (solo para login) | no confundir con persona |

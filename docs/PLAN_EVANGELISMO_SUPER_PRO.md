@@ -16,10 +16,10 @@ integrándolo con lo existente sin romper nada.
 | `MotivoExcusa` | ✅ Ya existe en models_evangelism.py | ✅ VERIFICAR + migrar si necesario |
 | `EstrategiaEvangelismo` | ✅ Existe como `EvangelismStrategy` | ✅ AGREGAR sede_id, categoria_id |
 | `RolPersonalizadoEstrategia` | ✅ Ya existe | ✅ VERIFICAR compatibilidad |
-| `GrupoEvangelismo` | ✅ Existe como `GloryHouse` | ✅ AGREGAR sede_id, lat/long Float |
-| `ParticipanteGrupo` | ✅ Existe como `GloryHouseMember` | ✅ VERIFICAR compatibilidad |
-| `SesionGrupo` | ✅ Existe como `GloryHouseSession` | ✅ VERIFICAR compatibilidad |
-| `Asistencia` | ✅ Existe como `GloryHouseAttendance` | ✅ VERIFICAR compatibilidad |
+| `GrupoEvangelismo` | ✅ Existe como `GrupoEvangelismo` | ✅ AGREGAR sede_id, lat/long Float |
+| `ParticipanteGrupo` | ✅ Existe como `ParticipanteGrupo` | ✅ VERIFICAR compatibilidad |
+| `SesionGrupo` | ✅ Existe como `SesionGrupo` | ✅ VERIFICAR compatibilidad |
+| `Asistencia` | ✅ Existe como `Asistencia` | ✅ VERIFICAR compatibilidad |
 | `RegistroSeguimiento` | ✅ Ya existe | ✅ VERIFICAR compatibilidad |
 | `Persona` | ✅ Existe como `Member`/`Agent` | ✅ NO CREAR — usar existentes |
 | `HistorialEmbudo` | ⚠️ Existe parcialmente `kernel_role_history` | ✅ CREAR tabla específica de embudo |
@@ -35,7 +35,7 @@ integrándolo con lo existente sin romper nada.
 3. **logs_auditoria** — Auditoría con JSONB (antes/después)
 
 ### FASE 2: Extender Tablas Existentes
-4. Agregar `sede_id` a `evangelism_strategies`, `glory_houses`
+4. Agregar `sede_id` a `evangelism_strategies`, `grupos_evangelismo`
 5. Agregar `categoria_id` FK a `evangelism_strategies`
 6. Verificar compatibilidad de enums existentes vs propuestos
 
@@ -59,7 +59,7 @@ integrándolo con lo existente sin romper nada.
 
 | Riesgo | Impacto | Mitigación |
 |---|---|---|
-| Cambiar FK de `glory_houses` | Alto (rompe frontend) | Agregar columnas como nullable primero |
+| Cambiar FK de `grupos_evangelismo` | Alto (rompe frontend) | Agregar columnas como nullable primero |
 | Enums diferentes | Medio | Crear mapeo en código, no cambiar BD existente |
 | UUID vs Integer para Persona | Alto | NO cambiar — Member usa Integer, usarlo |
 | Migración grande | Medio | Dividir en 2-3 migraciones pequeñas |

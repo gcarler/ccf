@@ -26,13 +26,13 @@ print("ondelete CASCADE in EventAttendance:", "ondelete" in ea_block)
 
 # Check FaroSeason exists in models
 print("\nFaroSeason in models.py:", "class FaroSeason" in models_f)
-print("GloryHouseSession in models.py:", "class GloryHouseSession" in models_f)
-print("GloryHouseAttendance in models.py:", "class GloryHouseAttendance" in models_f)
+print("SesionGrupo in models.py:", "class SesionGrupo" in models_f)
+print("Asistencia in models.py:", "class Asistencia" in models_f)
 print(
-    "day_of_week in GloryHouse:",
+    "day_of_week in GrupoEvangelismo:",
     "day_of_week"
     in models_f[
-        models_f.find("class GloryHouse") : models_f.find("class GloryHouse") + 500
+        models_f.find("class GrupoEvangelismo") : models_f.find("class GrupoEvangelismo") + 500
     ],
 )
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import Any, Dict, List
 
 try:
     import duckdb  # type: ignore[import]

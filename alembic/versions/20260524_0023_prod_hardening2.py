@@ -133,7 +133,7 @@ def upgrade() -> None:
         "members", "users", "donations", "enrollments",
         "courses", "certificates", "consolidation_cases",
         "projects", "project_tasks", "crm_events",
-        "glory_houses", "families",
+        "grupos_evangelismo", "families",
     ]
 
     for table_name in audit_tables:
@@ -335,7 +335,7 @@ def downgrade() -> None:
         "members", "users", "donations", "enrollments",
         "courses", "certificates", "consolidation_cases",
         "projects", "project_tasks", "crm_events",
-        "glory_houses", "families",
+        "grupos_evangelismo", "families",
     ]
     for table_name in audit_tables:
         op.execute(f"DROP TRIGGER IF EXISTS tr_audit_{table_name} ON {table_name}")

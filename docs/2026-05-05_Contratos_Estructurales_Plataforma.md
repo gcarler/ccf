@@ -157,10 +157,10 @@ Debe resolver:
 
 ### Faro en Casa
 El dominio Faro se apoya en:
-- `glory_houses`
-- `glory_house_members`
-- `glory_house_sessions`
-- `glory_house_attendance`
+- `grupos_evangelismo`
+- `grupo_participantes`
+- `sesiones_grupo`
+- `asistencias`
 - `faro_seasons`
 
 Regla:

@@ -5,7 +5,7 @@ import uuid
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, String
+
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -16,14 +16,23 @@ from backend.api.evangelism_notifications import router as notifications_router
 from backend.api.evangelism_rankings import router as rankings_router
 from backend.api.evangelism_reports import router as reports_router
 from backend.api.evangelism_shared import utc_now
-from backend.auth import (require_active_user, require_admin,
-                          require_module_access, require_pastor_or_admin)
+from backend.auth import (
+    require_active_user,
+    require_admin,
+    require_module_access,
+    require_pastor_or_admin,
+)
 from backend.core.database import get_db
-from backend.crud.crm import (create_evangelism_strategy,
-                              delete_evangelism_strategy,
-                              update_evangelism_strategy)
-from backend.schemas.crm import (EvangelismStrategy, EvangelismStrategyCreate,
-                                 EvangelismStrategyUpdate)
+from backend.crud.crm import (
+    create_evangelism_strategy,
+    delete_evangelism_strategy,
+    update_evangelism_strategy,
+)
+from backend.schemas.crm import (
+    EvangelismStrategy,
+    EvangelismStrategyCreate,
+    EvangelismStrategyUpdate,
+)
 from backend.mesh_websockets import manager
 
 router = APIRouter()
@@ -69,20 +78,12 @@ def get_counseling_ticket(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/counseling/{ticket_id}", "/api/crm/counseling/{ticket_id}"
-    )
-    ticket = (
-        db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.id == ticket_id)
-        .first()
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/counseling/{ticket_id}", "/api/crm/counseling/{ticket_id}")
+    ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    persona = (
-        db.query(models.Persona).filter(models.Persona.id == ticket.persona_id).first()
-    )
+    persona = db.query(models.Persona).filter(models.Persona.id == ticket.persona_id).first()
     related_history = (
         db.query(models.CounselingTicket)
         .filter(models.CounselingTicket.persona_id == ticket.persona_id)
@@ -94,9 +95,7 @@ def get_counseling_ticket(
     return {
         "id": ticket.id,
         "persona_id": ticket.persona_id,
-        "member_name": (
-            f"{persona.first_name} {persona.last_name}" if persona else "Miembro CCF"
-        ),
+        "member_name": (f"{persona.first_name} {persona.last_name}" if persona else "Miembro CCF"),
         "pastor_id": ticket.pastor_id,
         "topic": ticket.subject,
         "summary": ticket.subject,
@@ -131,11 +130,7 @@ def get_counseling_by_lead(
     """Devuelve sesiones de consejerÃ­a asociadas a un prospecto (por lead_id o member_id combinado)."""
     try:
         # Buscar tickets donde el member_id coincida (lead puede haberse convertido en miembro)
-        tickets = (
-            db.query(models.CounselingTicket)
-            .filter(models.CounselingTicket.persona_id == lead_id)
-            .all()
-        )
+        tickets = db.query(models.CounselingTicket).filter(models.CounselingTicket.persona_id == lead_id).all()
         return [
             {
                 "id": t.id,
@@ -150,12 +145,8 @@ def get_counseling_by_lead(
     except MemoryError:
         raise
     except Exception:
-        logger.exception(
-            "Failed to list counseling tickets by lead", extra={"lead_id": lead_id}
-        )
-        raise HTTPException(
-            status_code=500, detail="No se pudo consultar la consejeria"
-        )
+        logger.exception("Failed to list counseling tickets by lead", extra={"lead_id": lead_id})
+        raise HTTPException(status_code=500, detail="No se pudo consultar la consejeria")
 
 
 @router.post("/counseling/", response_model=schemas.CounselingTicket)
@@ -175,14 +166,8 @@ def update_counseling_ticket(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/counseling/{ticket_id}", "/api/crm/counseling/{ticket_id}"
-    )
-    ticket = (
-        db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.id == ticket_id)
-        .first()
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/counseling/{ticket_id}", "/api/crm/counseling/{ticket_id}")
+    ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(404, "Ticket not found")
     if "status" in payload:
@@ -198,9 +183,7 @@ def list_prayer_requests(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/prayer-requests/", "/api/crm/prayer-requests"
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/prayer-requests/", "/api/crm/prayer-requests")
     return crud.get_prayer_requests(db, status=status)
 
 
@@ -210,9 +193,7 @@ def create_prayer_request(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/prayer-requests/", "/api/crm/prayer-requests"
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/prayer-requests/", "/api/crm/prayer-requests")
     return crud.create_prayer_request(db, payload)
 
 
@@ -226,11 +207,7 @@ def get_prayer_request_detail(
         "/api/evangelism/prayer-requests/{request_id}",
         "/api/crm/prayer-requests/{request_id}",
     )
-    req = (
-        db.query(models.PrayerRequest)
-        .filter(models.PrayerRequest.id == request_id)
-        .first()
-    )
+    req = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Prayer request not found")
     return {
@@ -257,11 +234,7 @@ def update_prayer_request(
         "/api/crm/prayer-requests/{request_id}",
     )
     """Actualiza estado de una peticiÃ³n de oraciÃ³n (pending/praying/answered)."""
-    req = (
-        db.query(models.PrayerRequest)
-        .filter(models.PrayerRequest.id == request_id)
-        .first()
-    )
+    req = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Prayer request not found")
     if "status" in payload:
@@ -294,9 +267,7 @@ def _channel_label(channel: str) -> str:
     return "SMS"
 
 
-def _member_matches_segment(
-    persona: models.Persona, segment: str, donation_persona_ids: set[str]
-) -> bool:
+def _member_matches_segment(persona: models.Persona, segment: str, donation_persona_ids: set[str]) -> bool:
     value = str(segment or "").strip().lower()
     if value == "active":
         return str(persona.church_role or "").strip().lower() in {
@@ -330,9 +301,7 @@ def _member_matches_segment(
 
 
 def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.Persona]:
-    normalized_segments = [
-        segment for segment in (s.strip().lower() for s in segments) if segment
-    ]
+    normalized_segments = [segment for segment in (s.strip().lower() for s in segments) if segment]
     if not normalized_segments:
         return []
 
@@ -349,10 +318,7 @@ def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.P
     for persona in personas:
         if persona.id in seen_ids:
             continue
-        if any(
-            _member_matches_segment(persona, segment, donation_persona_ids)
-            for segment in normalized_segments
-        ):
+        if any(_member_matches_segment(persona, segment, donation_persona_ids) for segment in normalized_segments):
             selected.append(persona)
             seen_ids.add(persona.id)
     return selected
@@ -363,13 +329,9 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     representative = ordered[0]
     persona = getattr(representative, "persona", None)
     member_name = f"{persona.first_name} {persona.last_name}" if persona else "Desconocido"
-    campaign_name = next(
-        (log.campaign_name for log in ordered if log.campaign_name), None
-    )
+    campaign_name = next((log.campaign_name for log in ordered if log.campaign_name), None)
     sent_at_dt = ordered[0].created_at
-    delivered_count = sum(
-        1 for log in ordered if str(log.outcome).lower() in {"sent", "delivered"}
-    )
+    delivered_count = sum(1 for log in ordered if str(log.outcome).lower() in {"sent", "delivered"})
     failed_count = sum(1 for log in ordered if str(log.outcome).lower() == "failed")
     if failed_count and not delivered_count:
         status = "failed"
@@ -378,9 +340,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     else:
         status = str(representative.outcome or "sent").lower()
     display_name = campaign_name or (
-        f"Mensaje a {member_name}"
-        if len(ordered) == 1
-        else f"CampaÃ±a a {len(ordered)} contactos"
+        f"Mensaje a {member_name}" if len(ordered) == 1 else f"CampaÃ±a a {len(ordered)} contactos"
     )
     return {
         "id": representative.id,
@@ -406,16 +366,12 @@ def get_messaging_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/messaging/history", "/api/crm/messaging/history"
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/messaging/history", "/api/crm/messaging/history")
     """Devuelve el historial de mensajes optimizado con JOIN para evitar N+1."""
     try:
         from sqlalchemy.orm import joinedload
 
-        q = db.query(models.CommunicationLog).options(
-            joinedload(models.CommunicationLog.persona)
-        )
+        q = db.query(models.CommunicationLog).options(joinedload(models.CommunicationLog.persona))
 
         if persona_id:
             q = q.filter(models.CommunicationLog.persona_id == persona_id)
@@ -436,9 +392,7 @@ def get_messaging_history(
             "Failed to list CRM messaging history",
             extra={"persona_id": persona_id, "limit": limit},
         )
-        raise HTTPException(
-            status_code=500, detail="No se pudo consultar el historial de mensajes"
-        )
+        raise HTTPException(status_code=500, detail="No se pudo consultar el historial de mensajes")
 
 
 @router.get("/messaging/history/{log_id}", response_model=dict)
@@ -482,9 +436,7 @@ async def send_crm_message(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/messaging/send", "/api/crm/messaging/send"
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/messaging/send", "/api/crm/messaging/send")
     from backend.services.messaging import MessagingGateway
 
     persona_id = payload.get("persona_id")
@@ -495,9 +447,7 @@ async def send_crm_message(
     try:
         if target_segments:
             if not campaign_name or not content:
-                raise HTTPException(
-                    status_code=400, detail="campaign_name and content required"
-                )
+                raise HTTPException(status_code=400, detail="campaign_name and content required")
             personas = _resolve_campaign_members(db, list(target_segments))
             if not personas:
                 raise HTTPException(
@@ -568,9 +518,7 @@ async def send_crm_message(
             }
 
         if not persona_id or not content:
-            raise HTTPException(
-                status_code=400, detail="persona_id and content required"
-            )
+            raise HTTPException(status_code=400, detail="persona_id and content required")
 
         if channel.lower() == "whatsapp":
             log = await MessagingGateway.send_whatsapp(
@@ -619,9 +567,7 @@ def _serialize_crm_task(
     assignee_name: Optional[str] = None,
 ) -> dict:
     persona = getattr(task, "persona", None)
-    member_name = contact_name or (
-        f"{persona.first_name} {persona.last_name}" if persona else None
-    )
+    member_name = contact_name or (f"{persona.first_name} {persona.last_name}" if persona else None)
     assignee = getattr(task, "assignee", None)
     assigned_to = assignee_name or (assignee.username if assignee else None)
     return {
@@ -653,9 +599,7 @@ def list_crm_tasks(
     try:
         from sqlalchemy.orm import joinedload
 
-        q = db.query(models.CrmTask).options(
-            joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee)
-        )
+        q = db.query(models.CrmTask).options(joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee))
         if assignee_id:
             q = q.filter(models.CrmTask.assignee_id == assignee_id)
         if persona_id:
@@ -692,9 +636,7 @@ def list_my_crm_tasks(
 
         q = (
             db.query(models.CrmTask)
-            .options(
-                joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee)
-            )
+            .options(joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee))
             .filter(models.CrmTask.assignee_id == current_user.id)
         )
         tasks = q.order_by(models.CrmTask.created_at.desc()).all()
@@ -709,9 +651,7 @@ def list_my_crm_tasks(
             "Failed to list my CRM tasks",
             extra={"user_id": getattr(current_user, "id", None)},
         )
-        raise HTTPException(
-            status_code=500, detail="No se pudieron consultar mis tareas"
-        )
+        raise HTTPException(status_code=500, detail="No se pudieron consultar mis tareas")
 
 
 @router.get("/tasks/{task_id}", response_model=dict)
@@ -720,9 +660,7 @@ def get_crm_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/tasks/{task_id}", "/api/crm/tasks/{task_id}"
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/tasks/{task_id}", "/api/crm/tasks/{task_id}")
     from sqlalchemy.orm import joinedload
 
     task = (
@@ -785,9 +723,7 @@ async def create_crm_task(
             "created_at": task.created_at.isoformat(),
         }
     except ValueError:
-        raise HTTPException(
-            status_code=400, detail="Formato de fecha o identificador invalido"
-        )
+        raise HTTPException(status_code=400, detail="Formato de fecha o identificador invalido")
     except MemoryError:
         raise
     except Exception:
@@ -805,9 +741,7 @@ def update_crm_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/tasks/{task_id}", "/api/crm/tasks/{task_id}"
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/tasks/{task_id}", "/api/crm/tasks/{task_id}")
     task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not task:
         raise HTTPException(404, "Task not found")
@@ -836,11 +770,7 @@ def update_crm_task(
         "priority": getattr(task, "priority", "medium"),
         "category": getattr(task, "category", "Pastoral"),
         "due_date": task.due_date.isoformat() if task.due_date else None,
-        "created_at": (
-            task.created_at.isoformat()
-            if hasattr(task, "created_at") and task.created_at
-            else None
-        ),
+        "created_at": (task.created_at.isoformat() if hasattr(task, "created_at") and task.created_at else None),
     }
 
 
@@ -853,9 +783,7 @@ def list_volunteer_shifts(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/volunteers/shifts", "/api/crm/volunteers"
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/volunteers/shifts", "/api/crm/volunteers")
     return crud.get_volunteer_shifts(db, persona_id=persona_id)
 
 
@@ -865,9 +793,7 @@ def create_shift(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/volunteers/shifts", "/api/crm/volunteers"
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/volunteers/shifts", "/api/crm/volunteers")
     return crud.create_volunteer_shift(db, payload)
 
 
@@ -877,9 +803,7 @@ def get_volunteer_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/volunteers/{persona_id}", "/api/crm/volunteers/{persona_id}"
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/volunteers/{persona_id}", "/api/crm/volunteers/{persona_id}")
     try:
         db_id = uuid.UUID(persona_id)
     except ValueError:
@@ -920,19 +844,9 @@ def get_volunteer_detail(
         "id": persona.id,
         "name": f"{persona.first_name} {persona.last_name}".strip(),
         "role": persona.church_role,
-        "team": (
-            primary_shift.team_name
-            if primary_shift
-            else (persona.church_role or "General")
-        ),
-        "status": (
-            primary_shift.status
-            if primary_shift
-            else ("active" if persona.is_baptized else "pending")
-        ),
-        "joined_date": (
-            persona.created_at.date().isoformat() if persona.created_at else None
-        ),
+        "team": (primary_shift.team_name if primary_shift else (persona.church_role or "General")),
+        "status": (primary_shift.status if primary_shift else ("active" if persona.is_baptized else "pending")),
+        "joined_date": (persona.created_at.date().isoformat() if persona.created_at else None),
         "total_hours": total_hours,
         "skills": skills,
     }
@@ -944,19 +858,13 @@ def apply_volunteer(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
-        "/api/evangelism/volunteers/apply", "/api/crm/volunteers"
-    )
+    _warn_deprecated_crm_alias("/api/evangelism/volunteers/apply", "/api/crm/volunteers")
     """Registra la postulaciÃ³n de un miembro a un equipo de voluntariado."""
     try:
         from datetime import timedelta
 
         # Crear un turno pendiente como postulaciÃ³n
-        persona = (
-            db.query(models.Persona)
-            .filter(models.Persona.user_id == current_user.id)
-            .first()
-        )
+        persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
         if not persona:
             raise HTTPException(404, "Perfil de miembro no encontrado")
         shift = models.VolunteerShift(
@@ -966,7 +874,7 @@ def apply_volunteer(
             shift_start=utc_now(),
             shift_end=utc_now() + timedelta(hours=2),
             status="pending",
-            notes=f"Disponibilidad: {payload.get('availability','')} | {payload.get('notes','')}",
+            notes=f"Disponibilidad: {payload.get('availability', '')} | {payload.get('notes', '')}",
         )
         db.add(shift)
         db.commit()
@@ -992,16 +900,12 @@ CRM_DEFAULTS = {"churchName": "CCF Faro", "timezone": "UTC"}
 
 
 @router.get("/settings", response_model=dict)
-def get_crm_settings(
-    db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
-):
+def get_crm_settings(db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
     _warn_deprecated_crm_alias("/api/evangelism/settings", "/api/crm/settings")
     """Lee la configuración de CRM desde system_variables."""
     settings = dict(CRM_DEFAULTS)
     rows = (
-        db.query(models.SystemVariable)
-        .filter(models.SystemVariable.key.in_(["crm_church_name", "crm_timezone"]))
-        .all()
+        db.query(models.SystemVariable).filter(models.SystemVariable.key.in_(["crm_church_name", "crm_timezone"])).all()
     )
     for row in rows:
         if row.key == "crm_church_name":
@@ -1022,11 +926,7 @@ def update_crm_settings(
     mapping = {"churchName": "crm_church_name", "timezone": "crm_timezone"}
     for js_key, db_key in mapping.items():
         if js_key in payload:
-            var = (
-                db.query(models.SystemVariable)
-                .filter(models.SystemVariable.key == db_key)
-                .first()
-            )
+            var = db.query(models.SystemVariable).filter(models.SystemVariable.key == db_key).first()
             if var:
                 var.value = str(payload[js_key])
             else:
@@ -1060,15 +960,12 @@ def validate_scanner_token(
 
         persona = db.query(models.Persona).filter(models.Persona.id == db_id).first()
 
-
         if not persona:
             raise HTTPException(status_code=404, detail="Miembro no encontrado")
 
         # VALIDACIÃ“N DE INTEGRIDAD (Simulada para MVP, en PROD comparar con hash en DB)
         if not secret or len(secret) < 6:
-            raise HTTPException(
-                status_code=403, detail="CÃ³digo de seguridad invÃ¡lido o expirado"
-            )
+            raise HTTPException(status_code=403, detail="CÃ³digo de seguridad invÃ¡lido o expirado")
 
         return {
             "valid": True,
@@ -1082,7 +979,7 @@ def validate_scanner_token(
         raise HTTPException(status_code=400, detail="CÃ³digo malformado")
 
 
-# â”€â”€â”€ FARO EN CASA: TEMPORADAS & SESIONES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â”€â”€â”€ FARO EN CASA: TEMPORADAS & SESIONES â”€â”€â”€
 
 
 @router.get("/analytics", response_model=dict)
@@ -1095,31 +992,19 @@ def crm_analytics(
     total_members = db.query(models.Persona).count()
     active_members = (
         db.query(models.Persona)
-        .filter(
-            models.Persona.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
-        )
+        .filter(models.Persona.spiritual_status.in_(["Activo", "active", "Miembro Activo"]))
         .count()
     )
 
     # Consejería
-    open_counseling = (
-        db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.status == "open")
-        .count()
-    )
+    open_counseling = db.query(models.CounselingTicket).filter(models.CounselingTicket.status == "open").count()
 
     # Eventos del mes
     from datetime import datetime, timezone
 
     now = datetime.now(timezone.utc)
-    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).replace(
-        tzinfo=None
-    )
-    events_this_month = (
-        db.query(models.CrmEvent)
-        .filter(models.CrmEvent.event_date >= month_start)
-        .count()
-    )
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
+    events_this_month = db.query(models.CrmEvent).filter(models.CrmEvent.event_date >= month_start).count()
 
     # Grupos
     total_groups = db.query(models.CellGroup).count()
@@ -1139,6 +1024,7 @@ def crm_analytics(
 
 # --- EVANGELISM STRATEGIES ---
 
+
 @router.get("/strategies", response_model=List[EvangelismStrategy])
 def read_evangelism_strategies(
     skip: int = 0,
@@ -1151,13 +1037,19 @@ def read_evangelism_strategies(
 ):
     from backend.models_evangelism import GrupoEvangelismo
     from backend.crud.evangelism import get_estrategias
-    strategies = get_estrategias(db, skip=skip, limit=limit, activa=activa, clase_raiz=clase_raiz, sede_id=sede_id)
+
+    strategies = get_estrategias(
+        db,
+        skip=skip,
+        limit=limit,
+        activa=activa,
+        clase_raiz=clase_raiz,
+        sede_id=sede_id,
+    )
     result = []
     for s in strategies:
         obj = EvangelismStrategy.model_validate(s)
-        obj.group_count = db.query(GrupoEvangelismo).filter(
-            GrupoEvangelismo.estrategia_id == str(s.id)
-        ).count()
+        obj.group_count = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.estrategia_id == str(s.id)).count()
         result.append(obj)
     return result
 
@@ -1170,13 +1062,12 @@ def read_strategy(
 ):
     from backend.models_evangelism import EstrategiaEvangelismo as StrategyModel
     from backend.models_evangelism import GrupoEvangelismo
+
     db_obj = db.query(StrategyModel).filter(StrategyModel.id == strategy_id).first()
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
-    result.group_count = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.estrategia_id == str(strategy_id)
-    ).count()
+    result.group_count = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.estrategia_id == str(strategy_id)).count()
     return result
 
 
@@ -1205,9 +1096,7 @@ def update_strategy(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     try:
-        db_obj = update_evangelism_strategy(
-            db=db, strategy_id=strategy_id, strategy=strategy
-        )
+        db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, strategy=strategy)
     except Exception:
         db.rollback()
         raise
@@ -1234,11 +1123,12 @@ def generate_strategy_sessions(
     if not strat:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
     if not strat.frecuencia or not strat.fecha_inicio or not strat.fecha_fin:
-        raise HTTPException(status_code=400, detail="La estrategia necesita: frecuencia, fecha_inicio, fecha_fin")
+        raise HTTPException(
+            status_code=400,
+            detail="La estrategia necesita: frecuencia, fecha_inicio, fecha_fin",
+        )
 
-    groups = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.estrategia_id == strategy_id
-    ).all()
+    groups = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.estrategia_id == strategy_id).all()
 
     try:
         created = proyectar_sesiones(
@@ -1265,7 +1155,10 @@ def generate_strategy_sessions(
     }
 
 
-@router.get("/strategies/{strategy_id}/roles", response_model=List[schemas.RolPersonalizadoEstrategiaResponse])
+@router.get(
+    "/strategies/{strategy_id}/roles",
+    response_model=List[schemas.RolPersonalizadoEstrategiaResponse],
+)
 def list_strategy_roles(
     strategy_id: int,
     db: Session = Depends(get_db),
@@ -1273,15 +1166,17 @@ def list_strategy_roles(
 ):
     """Lista los roles personalizados de una estrategia."""
     from backend.crud.evangelism import get_roles_personalizados
-    strategy = db.query(models.EstrategiaEvangelismo).filter(
-        models.EstrategiaEvangelismo.id == strategy_id
-    ).first()
+
+    strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
     if not strategy or not strategy.codigo:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada o sin código")
     return get_roles_personalizados(db, strategy.codigo)
 
 
-@router.post("/strategies/{strategy_id}/roles", response_model=schemas.RolPersonalizadoEstrategiaResponse)
+@router.post(
+    "/strategies/{strategy_id}/roles",
+    response_model=schemas.RolPersonalizadoEstrategiaResponse,
+)
 def create_strategy_role(
     strategy_id: int,
     payload: schemas.RolPersonalizadoEstrategiaCreate,
@@ -1290,9 +1185,8 @@ def create_strategy_role(
 ):
     """Crea un rol personalizado para una estrategia."""
     from backend.crud.evangelism import create_rol_personalizado
-    strategy = db.query(models.EstrategiaEvangelismo).filter(
-        models.EstrategiaEvangelismo.id == strategy_id
-    ).first()
+
+    strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
     if not strategy or not strategy.codigo:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada o sin código")
     payload.estrategia_id = strategy.codigo
@@ -1308,6 +1202,7 @@ def delete_strategy_role(
 ):
     """Elimina un rol personalizado de una estrategia."""
     from backend.crud.evangelism import delete_rol_personalizado
+
     if not delete_rol_personalizado(db, role_id):
         raise HTTPException(status_code=404, detail="Rol no encontrado")
     return {"ok": True}
@@ -1326,6 +1221,7 @@ def list_motivos_excusa(
 ):
     """Lista el catálogo de motivos de excusa."""
     from backend.crud.evangelism import get_motivos_excusa
+
     return get_motivos_excusa(db, solo_activos=solo_activos)
 
 
@@ -1337,6 +1233,7 @@ def create_motivo_excusa(
 ):
     """Crea un nuevo motivo de excusa."""
     from backend.crud.evangelism import create_motivo_excusa
+
     return create_motivo_excusa(db, payload.descripcion)
 
 
@@ -1349,6 +1246,7 @@ def update_motivo_excusa(
 ):
     """Actualiza un motivo de excusa (no permite modificar los del sistema)."""
     from backend.crud.evangelism import update_motivo_excusa
+
     result = update_motivo_excusa(db, excusa_id, descripcion=payload.descripcion, activo=payload.activo)
     if not result:
         raise HTTPException(status_code=404, detail="Excusa no encontrada o es del sistema")
@@ -1363,6 +1261,7 @@ def delete_motivo_excusa(
 ):
     """Elimina un motivo de excusa (no permite eliminar los del sistema)."""
     from backend.crud.evangelism import delete_motivo_excusa
+
     if not delete_motivo_excusa(db, excusa_id):
         raise HTTPException(status_code=404, detail="Excusa no encontrada o es del sistema")
     return {"ok": True}
@@ -1375,6 +1274,7 @@ def seed_motivos_excusa(
 ):
     """Inserta las excusas base del sistema (SALUD, TRABAJO, FAMILIA, OTRA)."""
     from backend.crud.evangelism import seed_motivos_excusa
+
     created = seed_motivos_excusa(db)
     return {"created": len(created), "excusas": [e.descripcion for e in created]}
 

@@ -55,7 +55,7 @@ def _get_leader_name(db: Session, grupo: models.GrupoEvangelismo) -> str:
 def _count_participants(db: Session, grupo_id: int) -> int:
     return db.query(func.count(models.ParticipanteGrupo.id)).filter(
         models.ParticipanteGrupo.grupo_id == grupo_id,
-        models.ParticipanteGrupo.activo == True,
+        models.ParticipanteGrupo.activo,
     ).scalar() or 0
 
 

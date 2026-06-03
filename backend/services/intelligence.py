@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import datetime as dt
 
-from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from backend import crud, models, schemas
+from backend import models
 
 
 class IntelligenceMESH:
@@ -93,7 +92,7 @@ class IntelligenceMESH:
             db.query(models.AgentInsight)
             .filter(
                 models.AgentInsight.title == data["title"],
-                models.AgentInsight.acknowledged == False,
+                not models.AgentInsight.acknowledged,
             )
             .first()
         )

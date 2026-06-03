@@ -66,7 +66,6 @@ from backend.schemas.evangelism import (AsistenciaBulkCreate, AsistenciaBulkItem
 from backend.schemas.crm import (EVENT_TYPES, MINISTRY_ROLES,
                                  AgendaEvent,
                                  AgendaEventBase, AgendaEventCreate,
-                                 PersonaCreate, PersonaResponse, PersonaUpdate,
                                  ConsolidationAssignment,
                                  ConsolidationAssignmentBase,
                                  ConsolidationAssignmentCreate,

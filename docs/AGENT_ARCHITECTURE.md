@@ -87,7 +87,7 @@ CREATE TABLE agent_roles (
     role_value      VARCHAR(50) NOT NULL,
     -- admin, pastor, docente, miembro, visitante, lider, MC, preacher, etc.
     context_id      INT,              -- FK contextual (event_id, project_id, etc.)
-    context_type    VARCHAR(30),      -- event, project, glory_house, course
+    context_type    VARCHAR(30),      -- event, project, grupo, course
     started_at      TIMESTAMPTZ DEFAULT NOW(),
     ended_at        TIMESTAMPTZ,      -- NULL = rol activo
     is_primary      BOOLEAN DEFAULT FALSE,
@@ -107,7 +107,7 @@ CREATE TABLE agent_activities (
     -- attendance, enrollment, donation, service, interaction, milestone
     
     source_type     VARCHAR(30) NOT NULL,
-    -- crm_event, glory_house, course, donation_form, ministry, counseling
+    -- crm_event, grupo, course, donation_form, ministry, counseling
     
     source_id       INT,            -- ID del evento/sesión/curso/donación
     status          VARCHAR(30),    -- present, absent, active, completed, etc.
@@ -184,9 +184,9 @@ CREATE TABLE agent_permissions (
 | `donations` | person_id, member_id | → `agent_id` FK | Unificar a agent_id |
 | `spiritual_milestones` | person_id | → `agent_id` FK | Unificar |
 | `event_attendances` | member_id | → `agent_id` + `agent_activities` | Doble write → migrar |
-| `glory_house_attendance` | member_id | → `agent_id` + `agent_activities` | Doble write → migrar |
+| `asistencias` | member_id | → `agent_id` + `agent_activities` | Doble write → migrar |
 | `course_attendance` | enrollment_id | → `agent_activities` | Nuevo modelo |
-| `glory_houses` | leader_id, assistant_id | → `agent_roles` (role_type='evangelism') | Migrar |
+| `grupos_evangelismo` | leader_id, assistant_id | → `agent_roles` (role_type='evangelism') | Migrar |
 | `event_assignments` | member_id, role | → `agent_roles` (role_type='event') | Migrar |
 | `project_tasks` | assignee_id (users.id) | → `agent_roles` (role_type='project') | Migrar |
 | `enrollments` | user_id | → `agent_roles` (role_type='academy') | Migrar |

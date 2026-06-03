@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -26,7 +26,7 @@ def read_prayer_requests(
     """Solo devuelve pedidos publicos (is_public=True). Los privados van al CRM."""
     return (
         db.query(models.PrayerRequest)
-        .filter(models.PrayerRequest.is_public == True)
+        .filter(models.PrayerRequest.is_public)
         .order_by(models.PrayerRequest.created_at.desc())
         .offset(skip)
         .limit(limit)

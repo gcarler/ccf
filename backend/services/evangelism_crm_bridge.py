@@ -27,7 +27,7 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
         .filter(
             PipelineCRM.sede_id == sede_id,
             PipelineCRM.tipo == TipoPipelineEnum.NUEVOS_VISITANTES,
-            PipelineCRM.activo == True,
+            PipelineCRM.activo,
         )
         .first()
     )

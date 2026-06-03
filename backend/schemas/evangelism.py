@@ -6,11 +6,11 @@ Los esquemas antiguos en schemas/crm.py se mantienen para back-compat.
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, model_validator, computed_field
+from pydantic import BaseModel, model_validator, computed_field
 
 from backend.schemas._common import orm_config
 

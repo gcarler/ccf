@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -31,7 +31,7 @@ def read_support_tickets(
     current_user: models.User = Depends(require_active_user),
 ):
     # Axioma 3: Admin filtrado por sede, usuarios ven solo los suyos
-    sede_id = get_user_sede_id(db, current_user.id)
+    get_user_sede_id(db, current_user.id)
     user_id = None if current_user.role in ["admin", "staff"] else current_user.id
     return crud.get_support_tickets(db=db, user_id=user_id, skip=skip, limit=limit)
 

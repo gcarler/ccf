@@ -840,8 +840,8 @@ def list_global_blocks(
         .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
         .filter(
             models.CmsPage.site_id == site.id,
-            models.CmsSection.is_global == True,
-            models.CmsSection.is_visible == True,
+            models.CmsSection.is_global,
+            models.CmsSection.is_visible,
         )
         .order_by(models.CmsSection.global_key)
         .all()
@@ -892,7 +892,7 @@ def patch_global_block(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     block = db.query(models.CmsSection).filter(
-        models.CmsSection.id == section_id, models.CmsSection.is_global == True,
+        models.CmsSection.id == section_id, models.CmsSection.is_global,
     ).first()
     if not block:
         raise HTTPException(status_code=404, detail="Global block not found")
@@ -912,7 +912,7 @@ def delete_global_block(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     block = db.query(models.CmsSection).filter(
-        models.CmsSection.id == section_id, models.CmsSection.is_global == True,
+        models.CmsSection.id == section_id, models.CmsSection.is_global,
     ).first()
     if not block:
         raise HTTPException(status_code=404, detail="Global block not found")

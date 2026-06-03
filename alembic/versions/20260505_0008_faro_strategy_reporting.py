@@ -27,83 +27,83 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
 
-    if inspector.has_table("glory_houses") and not _has_column(
-        inspector, "glory_houses", "code"
+    if inspector.has_table("grupos_evangelismo") and not _has_column(
+        inspector, "grupos_evangelismo", "code"
     ):
-        with op.batch_alter_table("glory_houses") as batch_op:
+        with op.batch_alter_table("grupos_evangelismo") as batch_op:
             batch_op.add_column(sa.Column("code", sa.String(length=30), nullable=True))
-        op.create_index("ix_glory_houses_code", "glory_houses", ["code"], unique=True)
+        op.create_index("ix_grupos_evangelismo_code", "grupos_evangelismo", ["code"], unique=True)
 
-    if inspector.has_table("glory_house_sessions"):
-        with op.batch_alter_table("glory_house_sessions") as batch_op:
-            if not _has_column(inspector, "glory_house_sessions", "topic"):
+    if inspector.has_table("sesiones_grupo"):
+        with op.batch_alter_table("sesiones_grupo") as batch_op:
+            if not _has_column(inspector, "sesiones_grupo", "topic"):
                 batch_op.add_column(
                     sa.Column("topic", sa.String(length=255), nullable=True)
                 )
-            if not _has_column(inspector, "glory_house_sessions", "offering_amount"):
+            if not _has_column(inspector, "sesiones_grupo", "offering_amount"):
                 batch_op.add_column(
                     sa.Column("offering_amount", sa.Numeric(12, 2), nullable=True)
                 )
-            if not _has_column(inspector, "glory_house_sessions", "report_notes"):
+            if not _has_column(inspector, "sesiones_grupo", "report_notes"):
                 batch_op.add_column(sa.Column("report_notes", sa.Text(), nullable=True))
-            if not _has_column(inspector, "glory_house_sessions", "novelty_type"):
+            if not _has_column(inspector, "sesiones_grupo", "novelty_type"):
                 batch_op.add_column(
                     sa.Column("novelty_type", sa.String(length=50), nullable=True)
                 )
-            if not _has_column(inspector, "glory_house_sessions", "novelty_detail"):
+            if not _has_column(inspector, "sesiones_grupo", "novelty_detail"):
                 batch_op.add_column(
                     sa.Column("novelty_detail", sa.Text(), nullable=True)
                 )
             if not _has_column(
-                inspector, "glory_house_sessions", "cancellation_reason"
+                inspector, "sesiones_grupo", "cancellation_reason"
             ):
                 batch_op.add_column(
                     sa.Column("cancellation_reason", sa.Text(), nullable=True)
                 )
             if not _has_column(
-                inspector, "glory_house_sessions", "reported_by_member_id"
+                inspector, "sesiones_grupo", "reported_by_member_id"
             ):
                 batch_op.add_column(
                     sa.Column("reported_by_member_id", sa.Integer(), nullable=True)
                 )
-            if not _has_column(inspector, "glory_house_sessions", "reported_at"):
+            if not _has_column(inspector, "sesiones_grupo", "reported_at"):
                 batch_op.add_column(
                     sa.Column("reported_at", sa.DateTime(), nullable=True)
                 )
             if not _has_column(
-                inspector, "glory_house_sessions", "reported_by_member_id"
+                inspector, "sesiones_grupo", "reported_by_member_id"
             ):
                 batch_op.create_foreign_key(
-                    "fk_glory_house_sessions_reported_by_member_id",
+                    "fk_sesiones_grupo_reported_by_member_id",
                     "members",
                     ["reported_by_member_id"],
                     ["id"],
                     ondelete="SET NULL",
                 )
-        if not _has_column(inspector, "glory_house_sessions", "reported_by_member_id"):
+        if not _has_column(inspector, "sesiones_grupo", "reported_by_member_id"):
             op.create_index(
-                "ix_glory_house_sessions_reported_by_member_id",
-                "glory_house_sessions",
+                "ix_sesiones_grupo_reported_by_member_id",
+                "sesiones_grupo",
                 ["reported_by_member_id"],
                 unique=False,
             )
 
-    if inspector.has_table("glory_house_attendance"):
-        with op.batch_alter_table("glory_house_attendance") as batch_op:
-            if not _has_column(inspector, "glory_house_attendance", "absence_reason"):
+    if inspector.has_table("asistencias"):
+        with op.batch_alter_table("asistencias") as batch_op:
+            if not _has_column(inspector, "asistencias", "absence_reason"):
                 batch_op.add_column(
                     sa.Column("absence_reason", sa.String(length=50), nullable=True)
                 )
             if not _has_column(
-                inspector, "glory_house_attendance", "absence_reason_detail"
+                inspector, "asistencias", "absence_reason_detail"
             ):
                 batch_op.add_column(
                     sa.Column("absence_reason_detail", sa.Text(), nullable=True)
                 )
-        if not _has_column(inspector, "glory_house_attendance", "absence_reason"):
+        if not _has_column(inspector, "asistencias", "absence_reason"):
             op.create_index(
-                "ix_glory_house_attendance_absence_reason",
-                "glory_house_attendance",
+                "ix_asistencias_absence_reason",
+                "asistencias",
                 ["absence_reason"],
                 unique=False,
             )
@@ -113,25 +113,25 @@ def downgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
 
-    if inspector.has_table("glory_house_attendance") and _has_column(
-        inspector, "glory_house_attendance", "absence_reason_detail"
+    if inspector.has_table("asistencias") and _has_column(
+        inspector, "asistencias", "absence_reason_detail"
     ):
         op.drop_index(
-            "ix_glory_house_attendance_absence_reason",
-            table_name="glory_house_attendance",
+            "ix_asistencias_absence_reason",
+            table_name="asistencias",
         )
-        with op.batch_alter_table("glory_house_attendance") as batch_op:
+        with op.batch_alter_table("asistencias") as batch_op:
             if _has_column(
-                inspector, "glory_house_attendance", "absence_reason_detail"
+                inspector, "asistencias", "absence_reason_detail"
             ):
                 batch_op.drop_column("absence_reason_detail")
-            if _has_column(inspector, "glory_house_attendance", "absence_reason"):
+            if _has_column(inspector, "asistencias", "absence_reason"):
                 batch_op.drop_column("absence_reason")
 
-    if inspector.has_table("glory_house_sessions") and _has_column(
-        inspector, "glory_house_sessions", "topic"
+    if inspector.has_table("sesiones_grupo") and _has_column(
+        inspector, "sesiones_grupo", "topic"
     ):
-        with op.batch_alter_table("glory_house_sessions") as batch_op:
+        with op.batch_alter_table("sesiones_grupo") as batch_op:
             for column in [
                 "reported_at",
                 "reported_by_member_id",
@@ -142,17 +142,17 @@ def downgrade() -> None:
                 "offering_amount",
                 "topic",
             ]:
-                if _has_column(inspector, "glory_house_sessions", column):
+                if _has_column(inspector, "sesiones_grupo", column):
                     batch_op.drop_column(column)
-        if _has_column(inspector, "glory_house_sessions", "reported_by_member_id"):
+        if _has_column(inspector, "sesiones_grupo", "reported_by_member_id"):
             op.drop_index(
-                "ix_glory_house_sessions_reported_by_member_id",
-                table_name="glory_house_sessions",
+                "ix_sesiones_grupo_reported_by_member_id",
+                table_name="sesiones_grupo",
             )
 
-    if inspector.has_table("glory_houses") and _has_column(
-        inspector, "glory_houses", "code"
+    if inspector.has_table("grupos_evangelismo") and _has_column(
+        inspector, "grupos_evangelismo", "code"
     ):
-        op.drop_index("ix_glory_houses_code", table_name="glory_houses")
-        with op.batch_alter_table("glory_houses") as batch_op:
+        op.drop_index("ix_grupos_evangelismo_code", table_name="grupos_evangelismo")
+        with op.batch_alter_table("grupos_evangelismo") as batch_op:
             batch_op.drop_column("code")

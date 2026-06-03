@@ -250,11 +250,11 @@ def seed_database():
 
         # 1. Clean existing records in dependency order
         print("Cleaning old data...")
-        db.query(models.GloryHouseAttendance).delete()
-        db.query(models.GloryHouseSession).delete()
+        db.query(models.Asistencia).delete()
+        db.query(models.SesionGrupo).delete()
         db.query(models.FaroSeason).delete()
-        db.query(models.GloryHouseMember).delete()
-        db.query(models.GloryHouse).delete()
+        db.query(models.ParticipanteGrupo).delete()
+        db.query(models.GrupoEvangelismo).delete()
         db.query(models.CounselingTicket).delete()
         db.query(models.Enrollment).delete()
         db.query(models.Course).delete()
@@ -468,8 +468,8 @@ def seed_database():
         db.commit()
         print(f"Created {students_count} student user accounts linked to members.")
 
-        # 7. Seed Glory Houses
-        print("Creating Glory Houses...")
+        # 7. Seed Grupos
+        print("Creating Grupos...")
         grupos = []
 
         # Pick potential leaders (Servidores with Líder role, or just Servidores)
@@ -549,7 +549,7 @@ def seed_database():
             lat = 4.6097 + random.uniform(-0.05, 0.05)
             lng = -74.0817 + random.uniform(-0.05, 0.05)
 
-            house = models.GloryHouse(
+            house = models.GrupoEvangelismo(
                 code=code,
                 name=name,
                 zone=zone,
@@ -571,7 +571,7 @@ def seed_database():
             grupos.append(house)
         db.commit()
 
-        # 8. Assign members to Glory Houses
+        # 8. Assign members to Grupos
         print("Assigning members to houses...")
         # Get all members who are not leaders/assistants/hosts of any house
         core_roles_ids = set()
@@ -597,7 +597,7 @@ def seed_database():
 
             for _ in range(num_to_assign):
                 m = assignable_members[member_idx]
-                gh_member = models.GloryHouseMember(
+                gh_member = models.ParticipanteGrupo(
                     cell_group_id=h.id, member_id=m.id, role="asistente"
                 )
                 db.add(gh_member)
@@ -606,7 +606,7 @@ def seed_database():
             h.members_count = num_to_assign
 
         db.commit()
-        print("Glory Houses assignment completed.")
+        print("Grupos assignment completed.")
 
         # 9. Seed Courses
         print("Creating courses...")
@@ -783,7 +783,7 @@ def seed_database():
 
             # Get members assigned to this house
             gh_members = (
-                db.query(models.GloryHouseMember)
+                db.query(models.ParticipanteGrupo)
                 .filter(models.cell_group_members.cell_group_id == h.id)
                 .all()
             )
@@ -792,7 +792,7 @@ def seed_database():
 
             for s_idx, s_date in enumerate(session_dates):
                 # Create session
-                session = models.GloryHouseSession(
+                session = models.SesionGrupo(
                     cell_group_id=h.id,
                     season_id=season.id,
                     session_date=s_date,
@@ -812,7 +812,7 @@ def seed_database():
                         reason = random.choice(["Trabajo", "Salud", "Viaje", "Otros"])
                         detail = f"No pudo asistir por motivos de {reason.lower()}."
 
-                    attendance = models.GloryHouseAttendance(
+                    attendance = models.Asistencia(
                         session_id=session.id,
                         member_id=ghm.member_id,
                         attended=attended,

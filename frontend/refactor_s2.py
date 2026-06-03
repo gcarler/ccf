@@ -79,7 +79,7 @@ use_effect_block = """
                     onClick={async () => {
                       setIsCreating(false);
                       try {
-                        const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
+                        const detail = await apiFetch<GrupoEvangelismo>(`/evangelism/grupos/${h.id}`, { token });
                         setSelectedHouse(detail);
                         setFormData(detail);
                         setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.member_id) || []));

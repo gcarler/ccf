@@ -7,7 +7,6 @@ captura y se retorna un 500 con detalle del módulo, sin tumbar todo el servidor
 import logging
 import time
 import traceback
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

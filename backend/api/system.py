@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.auth import require_active_user, require_admin
+from backend.core.ai import generate_ministerial_content
 from backend.core.database import get_db
 from backend.crud.crm import get_user_sede_id
 
@@ -24,9 +25,7 @@ def global_search(
     """Búsqueda global inteligente."""
     results = []
     projects = db.execute(
-        text(
-            "SELECT id, title, description FROM projects WHERE title LIKE :q OR description LIKE :q LIMIT 10"
-        ),
+        text("SELECT id, title, description FROM projects WHERE title LIKE :q OR description LIKE :q LIMIT 10"),
         {"q": f"%{q}%"},
     ).fetchall()
     for p in projects:
@@ -41,9 +40,7 @@ def global_search(
         )
 
     tasks = db.execute(
-        text(
-            "SELECT id, project_id, title FROM project_tasks WHERE title LIKE :q LIMIT 10"
-        ),
+        text("SELECT id, project_id, title FROM project_tasks WHERE title LIKE :q LIMIT 10"),
         {"q": f"%{q}%"},
     ).fetchall()
     for t in tasks:
@@ -83,7 +80,9 @@ def get_global_calendar(
             }
         )
     evangelism_events = (
-        db.query(models.CrmEvent).filter(models.CrmEvent.event_date.isnot(None), models.CrmEvent.sede_id == sede_id).all()
+        db.query(models.CrmEvent)
+        .filter(models.CrmEvent.event_date.isnot(None), models.CrmEvent.sede_id == sede_id)
+        .all()
     )
     for event in evangelism_events:
         events.append(
@@ -118,13 +117,18 @@ def get_global_calendar(
 
     # Birthday events from members
     from sqlalchemy import func as sqlfunc
+
     today = datetime.now(timezone.utc).date()
     try:
-        personas = db.query(models.Persona).filter(
-            models.Persona.birthday.isnot(None),
-            sqlfunc.extract("month", models.Persona.birthday) >= 1,
-            models.Persona.sede_id == sede_id,
-        ).all()
+        personas = (
+            db.query(models.Persona)
+            .filter(
+                models.Persona.birthday.isnot(None),
+                sqlfunc.extract("month", models.Persona.birthday) >= 1,
+                models.Persona.sede_id == sede_id,
+            )
+            .all()
+        )
     except Exception:
         personas = []
 
@@ -138,16 +142,18 @@ def get_global_calendar(
             # Show birthday on the current-year date
             event_date = bday.replace(year=today.year)
             age = today.year - bday.year
-            events.append({
-                "id": f"birthday-{m.id}",
-                "title": f"🎂 {m.first_name} {m.last_name or ''} — {age} años".strip(),
-                "start": event_date.isoformat(),
-                "end": None,
-                "type": "reminder",
-                "color": "purple",
-                "allDay": True,
-                "href": f"/crm/members/{m.id}",
-            })
+            events.append(
+                {
+                    "id": f"birthday-{m.id}",
+                    "title": f"🎂 {m.first_name} {m.last_name or ''} — {age} años".strip(),
+                    "start": event_date.isoformat(),
+                    "end": None,
+                    "type": "reminder",
+                    "color": "purple",
+                    "allDay": True,
+                    "href": f"/crm/members/{m.id}",
+                }
+            )
         except Exception:
             continue
 
@@ -187,13 +193,8 @@ def get_team_workload(
     return result
 
 
-from backend.core.ai import generate_ministerial_content
-
-
 @router.post("/ai/generate")
-async def ai_generate(
-    payload: Dict[str, str], current_user: models.User = Depends(require_active_user)
-):
+async def ai_generate(payload: Dict[str, str], current_user: models.User = Depends(require_active_user)):
     """Genera contenido ministerial usando Llama 3 local."""
     prompt = payload.get("prompt", "")
     context = payload.get("context", "")
@@ -231,11 +232,30 @@ def get_module_health():
 
     # List all registered modules
     known_modules = [
-        "evangelism", "crm", "academy", "projects", "agents",
-        "admin", "finance", "donations", "governance", "messaging",
-        "support", "spiritual_life", "graph", "community", "prayer",
-        "analytics", "dashboard", "tables", "system", "auth",
-        "kernel", "agenda", "public", "workspace",
+        "evangelism",
+        "crm",
+        "academy",
+        "projects",
+        "agents",
+        "admin",
+        "finance",
+        "donations",
+        "governance",
+        "messaging",
+        "support",
+        "spiritual_life",
+        "graph",
+        "community",
+        "prayer",
+        "analytics",
+        "dashboard",
+        "tables",
+        "system",
+        "auth",
+        "kernel",
+        "agenda",
+        "public",
+        "workspace",
     ]
     for mod in known_modules:
         if mod not in modules:
@@ -264,9 +284,7 @@ def get_database_health(
     health = {"status": "ok", "checks": {}}
 
     # 1. Connection count
-    conn_row = db.execute(
-        text("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()")
-    ).first()
+    conn_row = db.execute(text("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()")).first()
     health["checks"]["active_connections"] = conn_row[0] if conn_row else 0
 
     # 2. Database size
@@ -293,15 +311,12 @@ def get_database_health(
             "ORDER BY pg_total_relation_size(oid) DESC LIMIT 10"
         )
     ).fetchall()
-    health["checks"]["largest_tables"] = [
-        {"table": r[0], "size": r[1]} for r in size_rows
-    ]
+    health["checks"]["largest_tables"] = [{"table": r[0], "size": r[1]} for r in size_rows]
 
     # 5. Index usage ratio
     idx_row = db.execute(
         text(
-            "SELECT round(100.0 * sum(idx_scan) / nullif(sum(idx_scan) + sum(seq_scan), 0), 2) "
-            "FROM pg_stat_user_tables"
+            "SELECT round(100.0 * sum(idx_scan) / nullif(sum(idx_scan) + sum(seq_scan), 0), 2) FROM pg_stat_user_tables"
         )
     ).first()
     health["checks"]["index_usage_percent"] = idx_row[0] if idx_row else None
@@ -313,9 +328,7 @@ def get_database_health(
             "WHERE n_dead_tup > 1000 ORDER BY n_dead_tup DESC LIMIT 5"
         )
     ).fetchall()
-    health["checks"]["tables_needing_vacuum"] = [
-        {"table": r[0], "dead_tuples": r[1]} for r in dead_row
-    ]
+    health["checks"]["tables_needing_vacuum"] = [{"table": r[0], "dead_tuples": r[1]} for r in dead_row]
 
     # 7. Materialized view freshness
     mv_rows = db.execute(
@@ -327,9 +340,7 @@ def get_database_health(
             "WHERE schemaname = 'public' AND matviewname = 'mv_academy_summary'"
         )
     ).fetchall()
-    health["checks"]["mv_academy_age_seconds"] = (
-        mv_rows[0][1] if mv_rows else "not refreshed"
-    )
+    health["checks"]["mv_academy_age_seconds"] = mv_rows[0][1] if mv_rows else "not refreshed"
 
     # 8. Long-running queries (> 30s)
     slow_row = db.execute(
@@ -359,12 +370,12 @@ def run_db_maintenance(
 
     VACUUM runs in background to avoid request timeout.
     """
-    import subprocess
     import threading
 
     def _run_vacuum():
         """Run VACUUM ANALYZE in background thread."""
         from backend.core.database import engine
+
         try:
             with engine.connect() as conn:
                 conn = conn.execution_options(isolation_level="AUTOCOMMIT")
@@ -374,7 +385,10 @@ def run_db_maintenance(
 
     # 1. Refresh materialized views (fast, runs inline)
     try:
-        db.execute(text("SELECT refresh_dashboard_views()"), execution_options={"autocommit": True})
+        db.execute(
+            text("SELECT refresh_dashboard_views()"),
+            execution_options={"autocommit": True},
+        )
         refresh_ok = True
     except Exception:
         refresh_ok = False

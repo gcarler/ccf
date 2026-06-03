@@ -11,43 +11,42 @@ from backend import models, schemas
 from backend.core.security import decrypt_data, encrypt_data
 from backend.crud._utils import _utcnow
 from backend.models_crm import EvangelismStrategy
-from backend.schemas.crm import (CrmEventUpdate, EvangelismStrategyCreate,
-                                 EvangelismStrategyUpdate)
+from backend.schemas.crm import CrmEventUpdate, EvangelismStrategyCreate, EvangelismStrategyUpdate
 from backend.schemas.legacy import CommunityBoardCardUpdate
 from backend.schemas.notifications import CommunicationLogUpdate
 
 
 def get_user_sede_id(db: Session, user_id: int) -> int | None:
     """Obtiene el sede_id de la Persona vinculada al usuario actual.
-    
+
     Retorna None si el usuario no tiene persona asociada o la persona no tiene sede.
     Usado para imponer filtro Multi-Tenant (Axioma 3) en todas las queries.
     """
-    persona = (
-        db.query(models.Persona)
-        .filter(models.Persona.user_id == user_id)
-        .first()
-    )
+    persona = db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
     if persona:
         return persona.sede_id
     return None
 
 
-def _audit_log(db: Session, tabla: str, registro_id: str, accion: str,
-               detalles: dict | None = None, usuario_id: str | None = None) -> None:
+def _audit_log(
+    db: Session, tabla: str, registro_id: str, accion: str, detalles: dict | None = None, usuario_id: str | None = None
+) -> None:
     """Registra una entrada en logs_auditoria (JSONB) para trazabilidad.
-    
+
     Axioma 1 — Auditoría Estricta: toda mutación sensible debe dejar traza.
     """
     from backend.models_evangelism import LogAuditoria
     import uuid as _uuid
-    db.add(LogAuditoria(
-        tabla_afectada=tabla,
-        registro_id=str(registro_id),
-        accion=accion,
-        detalles_cambio=detalles or {},
-        usuario_id=_uuid.UUID(usuario_id) if usuario_id else None,
-    ))
+
+    db.add(
+        LogAuditoria(
+            tabla_afectada=tabla,
+            registro_id=str(registro_id),
+            accion=accion,
+            detalles_cambio=detalles or {},
+            usuario_id=_uuid.UUID(usuario_id) if usuario_id else None,
+        )
+    )
 
 
 # ── Personas ────────────────────────────────────────────
@@ -60,23 +59,33 @@ def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Person
     if existing:
         # Si existe, devolver el registro existente (no crear duplicado)
         return existing
-    
+
     import uuid as _uuid
+
     data = payload.model_dump(exclude_unset=True)
     data.setdefault("qr_token", _uuid.uuid4().hex[:16].upper())
     row = models.Persona(**data)
     db.add(row)
     db.commit()
     db.refresh(row)
-    _audit_log(db, "personas", str(row.id), "CREATE",
-               detalles={"first_name": row.first_name, "last_name": row.last_name,
-                         "phone": row.phone, "church_role": row.church_role})
+    _audit_log(
+        db,
+        "personas",
+        str(row.id),
+        "CREATE",
+        detalles={
+            "first_name": row.first_name,
+            "last_name": row.last_name,
+            "phone": row.phone,
+            "church_role": row.church_role,
+        },
+    )
     return row
 
 
 def _find_existing_persona(db: Session, payload: schemas.PersonaCreate) -> Optional[models.Persona]:
     """Busca una persona existente por teléfono o número de documento.
-    
+
     Axioma 1 — Person-Centric Kernel: anexar al UUID existente, no duplicar.
     """
     phones = [p for p in (payload.phone, payload.mobile_phone) if p]
@@ -93,16 +102,12 @@ def _find_existing_persona(db: Session, payload: schemas.PersonaCreate) -> Optio
         )
         if match:
             return match
-    
+
     if payload.id_number:
-        match = (
-            db.query(models.Persona)
-            .filter(models.Persona.id_number == payload.id_number)
-            .first()
-        )
+        match = db.query(models.Persona).filter(models.Persona.id_number == payload.id_number).first()
         if match:
             return match
-    
+
     return None
 
 
@@ -151,75 +156,84 @@ def get_persona(db: Session, persona_id: str) -> Optional[models.Persona]:
     return db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
 
 
-def update_persona(
-    db: Session, persona_id: str, payload: schemas.PersonaUpdate
-) -> Optional[models.Persona]:
+def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate) -> Optional[models.Persona]:
     row = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
     if not row:
         return None
-    
+
     # Capturar valores anteriores para el trigger de embudo
     old_church_role = row.church_role
     old_estado_vital = row.estado_vital
     old_fecha_bautismo = row.fecha_bautismo
-    
+
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(row, key, value)
-    
+
     # Axioma 1 — Integridad de Embudo: registrar cambios en historial_embudo
     _track_funnel_changes(db, row, old_church_role, old_estado_vital, old_fecha_bautismo)
-    
+
     db.commit()
     db.refresh(row)
-    _audit_log(db, "personas", str(row.id), "UPDATE",
-               detalles={"church_role": row.church_role,
-                         "estado_vital": row.estado_vital})
+    _audit_log(
+        db,
+        "personas",
+        str(row.id),
+        "UPDATE",
+        detalles={"church_role": row.church_role, "estado_vital": row.estado_vital},
+    )
     return row
 
 
 def _track_funnel_changes(db: Session, persona, old_church_role, old_estado_vital, old_fecha_bautismo):
     """Registra en HistorialEmbudo los cambios en church_role, estado_vital, o fecha_bautismo."""
     from backend.models_evangelism import HistorialEmbudo
-    
+
     now = _utcnow()
-    pid = persona.id if hasattr(persona, 'id') else persona.id
-    
+    pid = persona.id if hasattr(persona, "id") else persona.id
+
     # church_role
     if old_church_role and old_church_role != persona.church_role:
         days = _compute_days_in_state(db, pid, old_church_role)
-        db.add(HistorialEmbudo(
-            persona_id=pid,
-            rol_anterior=str(old_church_role),
-            rol_nuevo=str(persona.church_role),
-            fecha_cambio=now,
-            dias_en_estado_anterior=days,
-        ))
-    
+        db.add(
+            HistorialEmbudo(
+                persona_id=pid,
+                rol_anterior=str(old_church_role),
+                rol_nuevo=str(persona.church_role),
+                fecha_cambio=now,
+                dias_en_estado_anterior=days,
+            )
+        )
+
     # estado_vital
     if old_estado_vital and old_estado_vital != persona.estado_vital:
         days = _compute_days_in_state(db, pid, old_estado_vital)
-        db.add(HistorialEmbudo(
-            persona_id=pid,
-            rol_anterior=str(old_estado_vital),
-            rol_nuevo=str(persona.estado_vital),
-            fecha_cambio=now,
-            dias_en_estado_anterior=days,
-        ))
-    
+        db.add(
+            HistorialEmbudo(
+                persona_id=pid,
+                rol_anterior=str(old_estado_vital),
+                rol_nuevo=str(persona.estado_vital),
+                fecha_cambio=now,
+                dias_en_estado_anterior=days,
+            )
+        )
+
     # fecha_bautismo (nuevo bautismo)
     if old_fecha_bautismo is None and persona.fecha_bautismo is not None:
-        db.add(HistorialEmbudo(
-            persona_id=pid,
-            rol_anterior="NO_BAUTIZADO",
-            rol_nuevo="BAUTIZADO",
-            fecha_cambio=now,
-            dias_en_estado_anterior=None,
-        ))
+        db.add(
+            HistorialEmbudo(
+                persona_id=pid,
+                rol_anterior="NO_BAUTIZADO",
+                rol_nuevo="BAUTIZADO",
+                fecha_cambio=now,
+                dias_en_estado_anterior=None,
+            )
+        )
 
 
 def _compute_days_in_state(db: Session, persona_id, state_name: str) -> int | None:
     """Calcula cuántos días pasó la persona en el estado anterior."""
     from backend.models_evangelism import HistorialEmbudo
+
     last_entry = (
         db.query(HistorialEmbudo)
         .filter(HistorialEmbudo.persona_id == persona_id)
@@ -241,9 +255,13 @@ def delete_persona(db: Session, persona_id: str) -> bool:
     row.estado_vital = "INACTIVO"
     row.unregistration_date = _utcnow().date()
     db.commit()
-    _audit_log(db, "personas", str(row.id), "SOFT_DELETE",
-               detalles={"estado_vital": "INACTIVO",
-                         "unregistration_date": str(row.unregistration_date)})
+    _audit_log(
+        db,
+        "personas",
+        str(row.id),
+        "SOFT_DELETE",
+        detalles={"estado_vital": "INACTIVO", "unregistration_date": str(row.unregistration_date)},
+    )
     return True
 
 
@@ -259,30 +277,13 @@ def get_persona_donations(db: Session, persona_id: str):
     )
 
 
-def create_persona(db: Session, payload: schemas.PersonaCreate):
-    # Axioma 1 — Validación de Identidad Previa
-    existing = _find_existing_persona(db, payload)
-    if existing:
-        return existing
-    data = payload.model_dump()
-    data.setdefault("qr_token", uuid.uuid4().hex[:16].upper())
-    row = models.Persona(**data)
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    _audit_log(db, "personas", str(row.id), "CREATE",
-               detalles={"first_name": row.first_name, "last_name": row.last_name,
-                         "phone": row.phone, "church_role": row.church_role})
-    return row
-
-
 _MEMBER_SORT_FIELDS = {
-    "first_name":       models.Persona.first_name,
-    "last_name":        models.Persona.last_name,
-    "email":            models.Persona.email,
-    "church_role":      models.Persona.church_role,
+    "first_name": models.Persona.first_name,
+    "last_name": models.Persona.last_name,
+    "email": models.Persona.email,
+    "church_role": models.Persona.church_role,
     "spiritual_status": models.Persona.spiritual_status,
-    "created_at":       models.Persona.created_at,
+    "created_at": models.Persona.created_at,
 }
 
 
@@ -332,9 +333,7 @@ def search_members(
     progress_map = {}
     if user_ids:
         progress_data = (
-            db.query(
-                models.Enrollment.user_id, func.avg(models.Enrollment.progress_percent)
-            )
+            db.query(models.Enrollment.user_id, func.avg(models.Enrollment.progress_percent))
             .filter(models.Enrollment.user_id.in_(user_ids))
             .group_by(models.Enrollment.user_id)
             .all()
@@ -411,39 +410,11 @@ def get_personas(db: Session, search: str | None = None, role: str | None = None
     return search_members(db, search=search, role=role)
 
 
-def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate):
-    row = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
-    if not row:
-        return None
-    # Capturar valores anteriores para el trigger de embudo
-    old_church_role = row.church_role
-    old_estado_vital = row.estado_vital
-    old_fecha_bautismo = row.fecha_bautismo
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        setattr(row, key, value)
-    # Axioma 1 — Integridad de Embudo: registrar cambios en historial_embudo
-    _track_funnel_changes(db, row, old_church_role, old_estado_vital, old_fecha_bautismo)
-    db.commit()
-    db.refresh(row)
-    _audit_log(db, "personas", str(row.id), "UPDATE",
-               detalles={"church_role": row.church_role,
-                         "estado_vital": row.estado_vital})
-    return row
-
-
 # ── CRM Events ─────────────────────────────────────────
 
 
-def get_crm_events(
-    db: Session, skip: int = 0, limit: int = 100
-) -> List[models.CrmEvent]:
-    return (
-        db.query(models.CrmEvent)
-        .order_by(models.CrmEvent.event_date.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+def get_crm_events(db: Session, skip: int = 0, limit: int = 100) -> List[models.CrmEvent]:
+    return db.query(models.CrmEvent).order_by(models.CrmEvent.event_date.desc()).offset(skip).limit(limit).all()
 
 
 def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.CrmEvent:
@@ -452,9 +423,7 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
         role_ids = payload_data.get("target_role_ids") or []
         payload_data["target_role_ids"] = role_ids or None
         if payload_data.get("target_audience") == "ROLE":
-            payload_data["target_role_id"] = (
-                role_ids[0] if role_ids else payload_data.get("target_role_id")
-            )
+            payload_data["target_role_id"] = role_ids[0] if role_ids else payload_data.get("target_role_id")
         else:
             payload_data["target_role_id"] = None
             payload_data["target_role_ids"] = None
@@ -492,9 +461,7 @@ def create_crm_task(db: Session, payload: schemas.CrmTaskCreate) -> models.CrmTa
     return row
 
 
-def update_crm_task(
-    db: Session, task_id: int, payload: schemas.CrmTaskUpdate
-) -> models.CrmTask:
+def update_crm_task(db: Session, task_id: int, payload: schemas.CrmTaskUpdate) -> models.CrmTask:
     row = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not row:
         return None
@@ -517,18 +484,14 @@ def delete_crm_task(db: Session, task_id: int) -> bool:
 # ── Volunteers ─────────────────────────────────────────
 
 
-def get_volunteer_shifts(
-    db: Session, persona_id: Optional[str] = None
-) -> List[models.VolunteerShift]:
+def get_volunteer_shifts(db: Session, persona_id: Optional[str] = None) -> List[models.VolunteerShift]:
     query = db.query(models.VolunteerShift)
     if persona_id:
         query = query.filter(models.VolunteerShift.persona_id == persona_id)
     return query.order_by(models.VolunteerShift.shift_start.asc()).all()
 
 
-def create_volunteer_shift(
-    db: Session, payload: schemas.VolunteerShiftCreate
-) -> models.VolunteerShift:
+def create_volunteer_shift(db: Session, payload: schemas.VolunteerShiftCreate) -> models.VolunteerShift:
     row = models.VolunteerShift(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -539,9 +502,7 @@ def create_volunteer_shift(
 # ── Event Attendance ───────────────────────────────────
 
 
-def create_event_attendance(
-    db: Session, payload: schemas.EventAttendanceCreate
-) -> models.EventAttendance:
+def create_event_attendance(db: Session, payload: schemas.EventAttendanceCreate) -> models.EventAttendance:
     try:
         row = models.EventAttendance(**payload.model_dump())
         db.add(row)
@@ -564,23 +525,16 @@ def get_counseling_tickets(
     skip: int = 0,
     limit: int = 100,
 ) -> List[models.CounselingTicket]:
-    query = db.query(models.CounselingTicket).filter(
-        models.CounselingTicket.deleted_at.is_(None)
-    )
+    query = db.query(models.CounselingTicket).filter(models.CounselingTicket.deleted_at.is_(None))
     if sede_id is not None:
-        query = query.join(
-            models.Persona, models.CounselingTicket.persona_id == models.Persona.id
-        ).filter(models.Persona.sede_id == sede_id)
+        query = query.join(models.Persona, models.CounselingTicket.persona_id == models.Persona.id).filter(
+            models.Persona.sede_id == sede_id
+        )
     if status:
         query = query.filter(models.CounselingTicket.status == status)
     if persona_id:
         query = query.filter(models.CounselingTicket.persona_id == persona_id)
-    tickets = (
-        query.order_by(models.CounselingTicket.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    tickets = query.order_by(models.CounselingTicket.created_at.desc()).offset(skip).limit(limit).all()
 
     for t in tickets:
         if t.notes:
@@ -589,11 +543,8 @@ def get_counseling_tickets(
     return tickets
 
 
-def create_counseling_ticket(
-    db: Session, payload: schemas.CounselingTicketCreate
-) -> models.CounselingTicket:
-    from backend.crud._utils import (analyze_pastoral_priority,
-                                     analyze_pastoral_sentiment)
+def create_counseling_ticket(db: Session, payload: schemas.CounselingTicketCreate) -> models.CounselingTicket:
+    from backend.crud._utils import analyze_pastoral_priority, analyze_pastoral_sentiment
 
     try:
         data = payload.model_dump()
@@ -628,17 +579,10 @@ def get_prayer_requests(
     query = db.query(models.PrayerRequest)
     if status:
         query = query.filter(models.PrayerRequest.status == status)
-    return (
-        query.order_by(models.PrayerRequest.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    return query.order_by(models.PrayerRequest.created_at.desc()).offset(skip).limit(limit).all()
 
 
-def create_prayer_request(
-    db: Session, payload: schemas.PrayerRequestCreate
-) -> models.PrayerRequest:
+def create_prayer_request(db: Session, payload: schemas.PrayerRequestCreate) -> models.PrayerRequest:
     try:
         row = models.PrayerRequest(**payload.model_dump())
         db.add(row)
@@ -660,13 +604,10 @@ def get_cell_groups(db: Session, skip: int = 0, limit: int = 100):
 def create_cell_group(db: Session, payload: schemas.CellGroupCreate):
     data = payload.model_dump(exclude={"base_attendee_ids"})
     if not str(data.get("code") or "").strip():
-        base = (
-            str(data.get("name") or data.get("address") or "FARO")
-            .strip()
-            .upper()
-            .replace(" ", "-")
-        )[:12]  # truncate to leave room for suffix
-        suffix = _utcnow().strftime('%m%d%H%M')  # 8 chars
+        base = (str(data.get("name") or data.get("address") or "FARO").strip().upper().replace(" ", "-"))[
+            :12
+        ]  # truncate to leave room for suffix
+        suffix = _utcnow().strftime("%m%d%H%M")  # 8 chars
         data["code"] = f"{base}-{suffix}"[:30]
     if not str(data.get("name") or "").strip():
         fallback_name = str(data.get("address") or data["code"]).strip()
@@ -677,9 +618,7 @@ def create_cell_group(db: Session, payload: schemas.CellGroupCreate):
     if payload.base_attendee_ids:
         db.flush()  # Get the ID without committing
         for persona_id in payload.base_attendee_ids:
-            attendee = models.CellGroupMember(
-                cell_group_id=db_obj.id, persona_id=persona_id, role="asistente"
-            )
+            attendee = models.CellGroupMember(cell_group_id=db_obj.id, persona_id=persona_id, role="asistente")
             db.add(attendee)
 
     db.commit()
@@ -703,29 +642,37 @@ def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpda
 
     members_updated = False
     if payload.base_attendees_with_roles is not None:
-        db.query(models.CellGroupMember).filter(
-            models.CellGroupMember.cell_group_id == house_id
-        ).update({models.CellGroupMember.deleted_at: _utcnow()}, synchronize_session=False)
+        db.query(models.CellGroupMember).filter(models.CellGroupMember.cell_group_id == house_id).update(
+            {models.CellGroupMember.deleted_at: _utcnow()}, synchronize_session=False
+        )
         for item in payload.base_attendees_with_roles:
-            db.add(models.CellGroupMember(
-                cell_group_id=house_id, persona_id=uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id, role=item.role
-            ))
+            db.add(
+                models.CellGroupMember(
+                    cell_group_id=house_id,
+                    persona_id=uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id,
+                    role=item.role,
+                )
+            )
         members_updated = True
     elif payload.base_attendee_ids is not None:
-        db.query(models.CellGroupMember).filter(
-            models.CellGroupMember.cell_group_id == house_id
-        ).update({models.CellGroupMember.deleted_at: _utcnow()}, synchronize_session=False)
+        db.query(models.CellGroupMember).filter(models.CellGroupMember.cell_group_id == house_id).update(
+            {models.CellGroupMember.deleted_at: _utcnow()}, synchronize_session=False
+        )
         for persona_id in payload.base_attendee_ids:
-            db.add(models.CellGroupMember(
-                cell_group_id=house_id, persona_id=uuid.UUID(str(persona_id)) if isinstance(persona_id, str) else persona_id, role="miembro"
-            ))
+            db.add(
+                models.CellGroupMember(
+                    cell_group_id=house_id,
+                    persona_id=uuid.UUID(str(persona_id)) if isinstance(persona_id, str) else persona_id,
+                    role="miembro",
+                )
+            )
         members_updated = True
 
     db.flush()
     if members_updated:
-        house.members_count = db.query(models.CellGroupMember).filter(
-            models.CellGroupMember.cell_group_id == house_id
-        ).count()
+        house.members_count = (
+            db.query(models.CellGroupMember).filter(models.CellGroupMember.cell_group_id == house_id).count()
+        )
 
     db.commit()
     db.refresh(house)
@@ -742,9 +689,7 @@ def get_talents(db: Session, search: str | None = None):
 def get_families(db: Session, skip: int = 0, limit: int = 100):
     families = db.query(models.Family).offset(skip).limit(limit).all()
     for f in families:
-        f.members_count = (
-            db.query(models.Persona).filter(models.Persona.family_id == f.id).count()
-        )
+        f.members_count = db.query(models.Persona).filter(models.Persona.family_id == f.id).count()
     return families
 
 
@@ -778,11 +723,7 @@ def get_persona_timeline(db: Session, persona_id: str):
     )
 
     if persona.user_id:
-        enrollments = (
-            db.query(models.Enrollment)
-            .filter(models.Enrollment.user_id == persona.user_id)
-            .all()
-        )
+        enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == persona.user_id).all()
         for en in enrollments:
             timeline.append(
                 {
@@ -806,32 +747,20 @@ def get_persona_timeline(db: Session, persona_id: str):
                     }
                 )
 
-    ministries = (
-        db.query(models.MemberMinistry)
-        .filter(models.MemberMinistry.persona_id == persona_id)
-        .all()
-    )
+    ministries = db.query(models.MemberMinistry).filter(models.MemberMinistry.persona_id == persona_id).all()
     for mm in ministries:
         timeline.append(
             {
                 "type": "ministry",
                 "title": "Vinculación Ministerial",
                 "description": f"Se integró al ministerio de {mm.name}.",
-                "date": (
-                    mm.created_at.isoformat()
-                    if mm.created_at
-                    else persona.created_at.isoformat()
-                ),
+                "date": (mm.created_at.isoformat() if mm.created_at else persona.created_at.isoformat()),
                 "icon": "ShieldCheck",
                 "color": "bg-indigo-600",
             }
         )
 
-    sessions = (
-        db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.persona_id == persona_id)
-        .all()
-    )
+    sessions = db.query(models.CounselingTicket).filter(models.CounselingTicket.persona_id == persona_id).all()
     for s in sessions:
         timeline.append(
             {
@@ -844,11 +773,7 @@ def get_persona_timeline(db: Session, persona_id: str):
             }
         )
 
-    calls = (
-        db.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.persona_id == persona_id)
-        .all()
-    )
+    calls = db.query(models.CommunicationLog).filter(models.CommunicationLog.persona_id == persona_id).all()
     for c in calls:
         timeline.append(
             {
@@ -880,20 +805,13 @@ def create_communication_log(db: Session, payload: schemas.CommunicationLogCreat
 
 
 def get_communication_logs(db: Session, limit: int = 50):
-    return (
-        db.query(models.CommunicationLog)
-        .order_by(models.CommunicationLog.created_at.desc())
-        .limit(limit)
-        .all()
-    )
+    return db.query(models.CommunicationLog).order_by(models.CommunicationLog.created_at.desc()).limit(limit).all()
 
 
 # ── Notifications ────────────────────────────────────────
 
 
-def get_user_notifications(
-    db: Session, user_id: int, limit: int = 20
-) -> List[models.Notification]:
+def get_user_notifications(db: Session, user_id: int, limit: int = 20) -> List[models.Notification]:
     return (
         db.query(models.Notification)
         .filter(models.Notification.user_id == user_id)
@@ -904,11 +822,7 @@ def get_user_notifications(
 
 
 def mark_notification_as_read(db: Session, notification_id: int):
-    notification = (
-        db.query(models.Notification)
-        .filter(models.Notification.id == notification_id)
-        .first()
-    )
+    notification = db.query(models.Notification).filter(models.Notification.id == notification_id).first()
     if not notification:
         return None
     notification.is_read = True
@@ -936,9 +850,7 @@ def create_donation(db: Session, payload: schemas.DonationCreate) -> models.Dona
     return row
 
 
-def get_donations(
-    db: Session, skip: int = 0, limit: int = 100
-) -> List[models.Donation]:
+def get_donations(db: Session, skip: int = 0, limit: int = 100) -> List[models.Donation]:
     return (
         db.query(models.Donation)
         .filter(models.Donation.deleted_at.is_(None))
@@ -999,9 +911,7 @@ def get_family_members(db: Session, family_id: int):
 # ── Support Tickets ─────────────────────────────────────
 
 
-def create_support_ticket(
-    db: Session, ticket: schemas.SupportTicketCreate
-) -> models.SupportTicket:
+def create_support_ticket(db: Session, ticket: schemas.SupportTicketCreate) -> models.SupportTicket:
     row = models.SupportTicket(**ticket.model_dump())
     db.add(row)
     db.commit()
@@ -1019,11 +929,7 @@ def get_support_tickets(
 
 
 def update_support_ticket(db: Session, ticket_id: int, new_status: str):
-    ticket = (
-        db.query(models.SupportTicket)
-        .filter(models.SupportTicket.id == ticket_id)
-        .first()
-    )
+    ticket = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
     if not ticket:
         return None
     ticket.status = new_status
@@ -1035,20 +941,14 @@ def update_support_ticket(db: Session, ticket_id: int, new_status: str):
 # ── Community Board ─────────────────────────────────────
 
 
-def get_community_cards(
-    db: Session, column_id: Optional[str] = None
-) -> List[models.CommunityBoardCard]:
-    q = db.query(models.CommunityBoardCard).order_by(
-        models.CommunityBoardCard.position.asc()
-    )
+def get_community_cards(db: Session, column_id: Optional[str] = None) -> List[models.CommunityBoardCard]:
+    q = db.query(models.CommunityBoardCard).order_by(models.CommunityBoardCard.position.asc())
     if column_id:
         q = q.filter(models.CommunityBoardCard.column_id == column_id)
     return q.all()
 
 
-def create_community_card(
-    db: Session, card: schemas.CommunityBoardCardCreate
-) -> models.CommunityBoardCard:
+def create_community_card(db: Session, card: schemas.CommunityBoardCardCreate) -> models.CommunityBoardCard:
     max_pos = db.query(func.max(models.CommunityBoardCard.position)).scalar() or 0
     row = models.CommunityBoardCard(**card.model_dump(), position=max_pos + 1)
     db.add(row)
@@ -1074,14 +974,8 @@ def create_evangelism_strategy(db: Session, strategy: EvangelismStrategyCreate):
     return db_obj
 
 
-def update_evangelism_strategy(
-    db: Session, strategy_id: int, strategy: EvangelismStrategyUpdate
-):
-    db_obj = (
-        db.query(EvangelismStrategy)
-        .filter(EvangelismStrategy.id == strategy_id)
-        .first()
-    )
+def update_evangelism_strategy(db: Session, strategy_id: int, strategy: EvangelismStrategyUpdate):
+    db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
     if not db_obj:
         return None
     valid_cols = {c.key for c in EvangelismStrategy.__table__.columns}
@@ -1094,11 +988,7 @@ def update_evangelism_strategy(
 
 
 def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
-    db_obj = (
-        db.query(EvangelismStrategy)
-        .filter(EvangelismStrategy.id == strategy_id)
-        .first()
-    )
+    db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
     if not db_obj:
         return False
     db_obj.deleted_at = _utcnow()
@@ -1111,24 +1001,6 @@ def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
 # ── Members ─────────────────────────────────────────────
 
 
-def get_persona(db: Session, persona_id: str) -> Optional[models.Persona]:
-    return db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
-
-
-def delete_persona(db: Session, persona_id: str) -> bool:
-    row = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
-    if not row:
-        return False
-    # Soft-delete: nunca eliminar físicamente una Persona.
-    row.estado_vital = "INACTIVO"
-    row.unregistration_date = _utcnow().date()
-    db.commit()
-    _audit_log(db, "personas", str(row.id), "SOFT_DELETE",
-               detalles={"estado_vital": "INACTIVO",
-                         "unregistration_date": str(row.unregistration_date)})
-    return True
-
-
 # ── CRM Events ─────────────────────────────────────────
 
 
@@ -1136,9 +1008,7 @@ def get_crm_event(db: Session, event_id: int) -> Optional[models.CrmEvent]:
     return db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
 
 
-def update_crm_event(
-    db: Session, event_id: int, payload: CrmEventUpdate
-) -> Optional[models.CrmEvent]:
+def update_crm_event(db: Session, event_id: int, payload: CrmEventUpdate) -> Optional[models.CrmEvent]:
     row = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not row:
         return None
@@ -1159,19 +1029,11 @@ def delete_crm_event(db: Session, event_id: int) -> bool:
 
 
 def get_event_attendance(db: Session, event_id: int) -> List[models.EventAttendance]:
-    return (
-        db.query(models.EventAttendance)
-        .filter(models.EventAttendance.event_id == event_id)
-        .all()
-    )
+    return db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).all()
 
 
 def delete_event_attendance(db: Session, attendance_id: int) -> bool:
-    row = (
-        db.query(models.EventAttendance)
-        .filter(models.EventAttendance.id == attendance_id)
-        .first()
-    )
+    row = db.query(models.EventAttendance).filter(models.EventAttendance.id == attendance_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -1183,21 +1045,13 @@ def delete_event_attendance(db: Session, attendance_id: int) -> bool:
 
 
 def get_volunteer_shift(db: Session, shift_id: int) -> Optional[models.VolunteerShift]:
-    return (
-        db.query(models.VolunteerShift)
-        .filter(models.VolunteerShift.id == shift_id)
-        .first()
-    )
+    return db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
 
 
 def update_volunteer_shift(
     db: Session, shift_id: int, payload: schemas.VolunteerShiftUpdate
 ) -> Optional[models.VolunteerShift]:
-    row = (
-        db.query(models.VolunteerShift)
-        .filter(models.VolunteerShift.id == shift_id)
-        .first()
-    )
+    row = db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -1208,11 +1062,7 @@ def update_volunteer_shift(
 
 
 def delete_volunteer_shift(db: Session, shift_id: int) -> bool:
-    row = (
-        db.query(models.VolunteerShift)
-        .filter(models.VolunteerShift.id == shift_id)
-        .first()
-    )
+    row = db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -1223,9 +1073,7 @@ def delete_volunteer_shift(db: Session, shift_id: int) -> bool:
 # ── Counseling ─────────────────────────────────────────
 
 
-def get_counseling_ticket(
-    db: Session, ticket_id: int
-) -> Optional[models.CounselingTicket]:
+def get_counseling_ticket(db: Session, ticket_id: int) -> Optional[models.CounselingTicket]:
     row = (
         db.query(models.CounselingTicket)
         .filter(
@@ -1242,11 +1090,7 @@ def get_counseling_ticket(
 def update_counseling_ticket(
     db: Session, ticket_id: int, payload: schemas.CounselingTicketUpdate
 ) -> Optional[models.CounselingTicket]:
-    row = (
-        db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.id == ticket_id)
-        .first()
-    )
+    row = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -1281,21 +1125,13 @@ def delete_counseling_ticket(db: Session, ticket_id: int) -> bool:
 
 
 def get_prayer_request(db: Session, request_id: int) -> Optional[models.PrayerRequest]:
-    return (
-        db.query(models.PrayerRequest)
-        .filter(models.PrayerRequest.id == request_id)
-        .first()
-    )
+    return db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
 
 
 def update_prayer_request(
     db: Session, request_id: int, payload: schemas.PrayerRequestUpdate
 ) -> Optional[models.PrayerRequest]:
-    row = (
-        db.query(models.PrayerRequest)
-        .filter(models.PrayerRequest.id == request_id)
-        .first()
-    )
+    row = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -1306,11 +1142,7 @@ def update_prayer_request(
 
 
 def delete_prayer_request(db: Session, request_id: int) -> bool:
-    row = (
-        db.query(models.PrayerRequest)
-        .filter(models.PrayerRequest.id == request_id)
-        .first()
-    )
+    row = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -1363,10 +1195,9 @@ def delete_family(db: Session, family_id: int) -> bool:
 # ── Consolidation ──────────────────────────────────────
 
 
-def _emit_mesh_event(event_type: str, case_id: str, persona_id: str | None = None,
-                     extra: dict | None = None) -> None:
+def _emit_mesh_event(event_type: str, case_id: str, persona_id: str | None = None, extra: dict | None = None) -> None:
     """Emite un evento asíncrono al motor Mesh vía Redis PubSub.
-    
+
     No bloquea el request HTTP. El motor Mesh consume estos eventos para
     calcular SLAs, asignar alertas Overdue, y actualizar dashboards en tiempo real.
     """
@@ -1374,11 +1205,11 @@ def _emit_mesh_event(event_type: str, case_id: str, persona_id: str | None = Non
         from backend.core.cache import get_redis
         from backend.core.config import get_settings
         import json
-        
+
         redis_client = get_redis()
         if redis_client is None:
             return
-        
+
         settings = get_settings()
         channel = f"{settings.environment}:ws"
         payload = {
@@ -1396,24 +1227,14 @@ def _emit_mesh_event(event_type: str, case_id: str, persona_id: str | None = Non
 # ── Communication Logs ─────────────────────────────────
 
 
-def get_communication_log(
-    db: Session, log_id: int
-) -> Optional[models.CommunicationLog]:
-    return (
-        db.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.id == log_id)
-        .first()
-    )
+def get_communication_log(db: Session, log_id: int) -> Optional[models.CommunicationLog]:
+    return db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
 
 
 def update_communication_log(
     db: Session, log_id: int, payload: CommunicationLogUpdate
 ) -> Optional[models.CommunicationLog]:
-    row = (
-        db.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.id == log_id)
-        .first()
-    )
+    row = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -1424,11 +1245,7 @@ def update_communication_log(
 
 
 def delete_communication_log(db: Session, log_id: int) -> bool:
-    row = (
-        db.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.id == log_id)
-        .first()
-    )
+    row = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -1440,15 +1257,17 @@ def delete_communication_log(db: Session, log_id: int) -> bool:
 
 
 def get_donation(db: Session, donation_id: int) -> Optional[models.Donation]:
-    return db.query(models.Donation).filter(
-        models.Donation.id == donation_id,
-        models.Donation.deleted_at.is_(None),
-    ).first()
+    return (
+        db.query(models.Donation)
+        .filter(
+            models.Donation.id == donation_id,
+            models.Donation.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
-def update_donation(
-    db: Session, donation_id: int, payload: schemas.DonationUpdate
-) -> Optional[models.Donation]:
+def update_donation(db: Session, donation_id: int, payload: schemas.DonationUpdate) -> Optional[models.Donation]:
     row = db.query(models.Donation).filter(models.Donation.id == donation_id).first()
     if not row:
         return None
@@ -1460,10 +1279,14 @@ def update_donation(
 
 
 def delete_donation(db: Session, donation_id: int) -> bool:
-    row = db.query(models.Donation).filter(
-        models.Donation.id == donation_id,
-        models.Donation.deleted_at.is_(None),
-    ).first()
+    row = (
+        db.query(models.Donation)
+        .filter(
+            models.Donation.id == donation_id,
+            models.Donation.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -1474,14 +1297,8 @@ def delete_donation(db: Session, donation_id: int) -> bool:
 # ── Spiritual Milestones ─────────────────────────────────
 
 
-def update_milestone(
-    db: Session, milestone_id: int, **kwargs
-) -> Optional[models.SpiritualMilestone]:
-    row = (
-        db.query(models.SpiritualMilestone)
-        .filter(models.SpiritualMilestone.id == milestone_id)
-        .first()
-    )
+def update_milestone(db: Session, milestone_id: int, **kwargs) -> Optional[models.SpiritualMilestone]:
+    row = db.query(models.SpiritualMilestone).filter(models.SpiritualMilestone.id == milestone_id).first()
     if not row:
         return None
     for key, value in kwargs.items():
@@ -1511,19 +1328,11 @@ def delete_milestone(db: Session, milestone_id: int) -> bool:
 
 
 def get_support_ticket(db: Session, ticket_id: int) -> Optional[models.SupportTicket]:
-    return (
-        db.query(models.SupportTicket)
-        .filter(models.SupportTicket.id == ticket_id)
-        .first()
-    )
+    return db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
 
 
 def delete_support_ticket(db: Session, ticket_id: int) -> bool:
-    row = (
-        db.query(models.SupportTicket)
-        .filter(models.SupportTicket.id == ticket_id)
-        .first()
-    )
+    row = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -1534,24 +1343,14 @@ def delete_support_ticket(db: Session, ticket_id: int) -> bool:
 # ── Community Board ─────────────────────────────────────
 
 
-def get_community_card(
-    db: Session, card_id: int
-) -> Optional[models.CommunityBoardCard]:
-    return (
-        db.query(models.CommunityBoardCard)
-        .filter(models.CommunityBoardCard.id == card_id)
-        .first()
-    )
+def get_community_card(db: Session, card_id: int) -> Optional[models.CommunityBoardCard]:
+    return db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
 
 
 def update_community_card(
     db: Session, card_id: int, payload: CommunityBoardCardUpdate
 ) -> Optional[models.CommunityBoardCard]:
-    row = (
-        db.query(models.CommunityBoardCard)
-        .filter(models.CommunityBoardCard.id == card_id)
-        .first()
-    )
+    row = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -1562,11 +1361,7 @@ def update_community_card(
 
 
 def delete_community_card(db: Session, card_id: int) -> bool:
-    row = (
-        db.query(models.CommunityBoardCard)
-        .filter(models.CommunityBoardCard.id == card_id)
-        .first()
-    )
+    row = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -1578,34 +1373,25 @@ def delete_community_card(db: Session, card_id: int) -> bool:
 
 
 def get_consolidation_case(db: Session, case_id: str):
-    return (
-        db.query(models.CasoCRM)
-        .filter(models.CasoCRM.id == case_id)
-        .first()
-    )
+    return db.query(models.CasoCRM).filter(models.CasoCRM.id == case_id).first()
 
 
-def create_consolidation_case(
-    db: Session, payload: schemas.CasoCRMCreate
-) -> models.CasoCRM:
+def create_consolidation_case(db: Session, payload: schemas.CasoCRMCreate) -> models.CasoCRM:
     row = models.CasoCRM(**payload.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
-    _emit_mesh_event("consolidation.case.created", str(row.id),
-                     persona_id=str(row.persona_id) if row.persona_id else None,
-                     extra={"status": row.status})
+    _emit_mesh_event(
+        "consolidation.case.created",
+        str(row.id),
+        persona_id=str(row.persona_id) if row.persona_id else None,
+        extra={"status": row.status},
+    )
     return row
 
 
-def update_consolidation_case(
-    db: Session, case_id: str, payload: schemas.CasoCRMUpdate
-) -> Optional[models.CasoCRM]:
-    row = (
-        db.query(models.CasoCRM)
-        .filter(models.CasoCRM.id == case_id)
-        .first()
-    )
+def update_consolidation_case(db: Session, case_id: str, payload: schemas.CasoCRMUpdate) -> Optional[models.CasoCRM]:
+    row = db.query(models.CasoCRM).filter(models.CasoCRM.id == case_id).first()
     if not row:
         return None
     old_status = row.status
@@ -1614,18 +1400,17 @@ def update_consolidation_case(
     db.commit()
     db.refresh(row)
     if old_status != row.status:
-        _emit_mesh_event("consolidation.case.updated", str(row.id),
-                         persona_id=str(row.persona_id) if row.persona_id else None,
-                         extra={"old_status": old_status, "new_status": row.status})
+        _emit_mesh_event(
+            "consolidation.case.updated",
+            str(row.id),
+            persona_id=str(row.persona_id) if row.persona_id else None,
+            extra={"old_status": old_status, "new_status": row.status},
+        )
     return row
 
 
 def delete_consolidation_case(db: Session, case_id: str) -> bool:
-    row = (
-        db.query(models.CasoCRM)
-        .filter(models.CasoCRM.id == case_id)
-        .first()
-    )
+    row = db.query(models.CasoCRM).filter(models.CasoCRM.id == case_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()

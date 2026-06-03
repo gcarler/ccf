@@ -72,7 +72,7 @@ def _count_members(db: Session, grupo_id: int) -> int:
         db.query(models.ParticipanteGrupo)
         .filter(
             models.ParticipanteGrupo.grupo_id == grupo_id,
-            models.ParticipanteGrupo.activo == True,
+            models.ParticipanteGrupo.activo,
         )
         .count()
     )
@@ -107,7 +107,7 @@ def check_multiplication(
 ):
     """Analiza todos los grupos y devuelve los que superan el umbral de miembros,
     sugiriendo división."""
-    q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.activo == True)
+    q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.activo)
     if sede_id is not None:
         q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
     grupos = q.options(joinedload(models.GrupoEvangelismo.lider)).order_by(models.GrupoEvangelismo.nombre.asc()).all()
@@ -188,7 +188,7 @@ def split_group(
         db.query(models.ParticipanteGrupo)
         .filter(
             models.ParticipanteGrupo.grupo_id == payload.grupo_id,
-            models.ParticipanteGrupo.activo == True,
+            models.ParticipanteGrupo.activo,
         )
         .order_by(models.ParticipanteGrupo.id.asc())
         .all()

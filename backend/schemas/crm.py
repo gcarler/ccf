@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from backend.core.context import user_role_context
 from backend.schemas._common import orm_config

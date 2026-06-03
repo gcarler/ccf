@@ -5,26 +5,54 @@ import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from backend.api import (academy, academy_core, admin, agenda, agenda_core, agents, auth_v3,
-                         analytics,
-                         auth, auth_v2, chat, cms, cms_v2, community, content, crm,
-                         crm_core, dashboard, donations, evangelism, evangelism_reports,
-                         finance,
-                         governance, graph, kernel, messaging, prayer,
-                         projects, proyectos, public, spiritual_life, support, system,
-                         tables, workspace)
+from backend.api import (
+    academy,
+    academy_core,
+    admin,
+    agenda,
+    agenda_core,
+    agents,
+    auth_v3,
+    analytics,
+    auth,
+    auth_v2,
+    chat,
+    cms,
+    cms_v2,
+    community,
+    content,
+    crm,
+    crm_core,
+    dashboard,
+    donations,
+    evangelism,
+    finance,
+    governance,
+    graph,
+    kernel,
+    messaging,
+    prayer,
+    projects,
+    proyectos,
+    public,
+    spiritual_life,
+    support,
+    system,
+    tables,
+    workspace,
+)
 from backend.core.config import get_settings
 from backend.core.logging import request_id_middleware
 from backend.core.security_headers import mount_security_headers
 from backend.middleware.module_isolation import register_module_isolation
 
-logging.basicConfig(
-    level=logging.INFO
-)  # Fallback; configure_logging() in core/logging overrides
+logging.basicConfig(level=logging.INFO)  # Fallback; configure_logging() in core/logging overrides
 logger = logging.getLogger("CCF-Core")
 
 settings = get_settings()
@@ -81,8 +109,8 @@ async def lifespan(_: FastAPI):
     # Ensure all ORM-managed tables exist (safe idempotent operation, retries for DB readiness)
     for attempt in range(1, 6):
         try:
-            from backend import models, models_cms, models_crm
-            import backend.models_agents  # ensure agent_task/insight tables registered
+            from backend import models, models_cms, models_crm  # noqa: F401
+            import backend.models_agents  # noqa: F401
             from backend.core.database import Base, engine
 
             Base.metadata.create_all(bind=engine, checkfirst=True)
@@ -91,6 +119,7 @@ async def lifespan(_: FastAPI):
             # Register all agent tools
             try:
                 from backend.services.tool_registry import register_all_tools
+
                 registry = register_all_tools()
                 logger.info("Agent tools registered: %d tools", registry.count)
             except Exception as exc:
@@ -99,6 +128,7 @@ async def lifespan(_: FastAPI):
             # Register event consumers
             try:
                 from backend.services.event_consumers import register_all_consumers
+
                 consumers = register_all_consumers()
                 logger.info("Event consumers registered: %d handlers", len(consumers))
             except Exception as exc:
@@ -108,6 +138,7 @@ async def lifespan(_: FastAPI):
             try:
                 from backend.core.database import SessionLocal
                 from backend.services.knowledge_base import KnowledgeIndexer
+
                 db = SessionLocal()
                 indexer = KnowledgeIndexer(db)
                 stats = indexer.rebuild_all()
@@ -125,14 +156,10 @@ async def lifespan(_: FastAPI):
                 logger.info("ORM schema already up-to-date (idempotent).")
                 break
             if attempt < 5:
-                logger.warning(
-                    "create_all attempt %d/5 failed: %s — retrying...", attempt, exc
-                )
+                logger.warning("create_all attempt %d/5 failed: %s — retrying...", attempt, exc)
                 await asyncio.sleep(3)
             else:
-                logger.warning(
-                    "Could not verify/create ORM tables after 5 attempts: %s", exc
-                )
+                logger.warning("Could not verify/create ORM tables after 5 attempts: %s", exc)
 
     # Run outstanding Alembic migrations (idempotent, fast when up-to-date)
     # FAIL HARD: if migrations cannot run, the app must not start
@@ -148,9 +175,7 @@ async def lifespan(_: FastAPI):
         command.upgrade(alembic_cfg, "head")
         logger.info("Alembic migrations verified/applied.")
     else:
-        logger.error(
-            "alembic.ini not found — cannot verify schema. App will not start."
-        )
+        logger.error("alembic.ini not found — cannot verify schema. App will not start.")
         raise RuntimeError("alembic.ini not found; database migrations cannot run")
 
     yield
@@ -182,18 +207,12 @@ async def quality_assurance_middleware(request: Request, call_next):
     return response
 
 
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
-
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, (StarletteHTTPException, RequestValidationError)):
         raise exc
 
-    logger.exception(
-        "Unhandled request error on %s %s", request.method, request.url.path
-    )
+    logger.exception("Unhandled request error on %s %s", request.method, request.url.path)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Error interno en el servidor ministerial"},

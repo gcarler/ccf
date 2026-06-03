@@ -23,7 +23,7 @@ Endpoints clave protegidos:
   - `/api/evangelism/attendance*`
   - `/api/evangelism/events/*/sessions/*`
 - Faro:
-  - `/api/evangelism/glory-houses*`
+  - `/api/evangelism/grupos*`
   - `/api/evangelism/faro/*`
 - Scanner:
   - `/api/evangelism/scanner/validate/{token}`

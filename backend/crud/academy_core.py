@@ -8,14 +8,12 @@ from sqlalchemy.orm import Session
 from backend.models_academy_core import (
     Curso, Leccion, Matricula, Evaluacion, ActaFormal,
     HiloForo, ComentarioForo, Certificado,
-    ProgresoLeccion, AsistenciaClase, IntentoEvaluacion,
-    EntregaTarea, PrerrequisitoCurso,
+    PrerrequisitoCurso,
 )
 from backend.schemas.academy_core import (
     CursoCreate, LeccionCreate, MatriculaCreate, EvaluacionCreate,
     ActaFormalCreate, HiloForoCreate, ComentarioForoCreate,
-    CertificadoCreate, ProgresoLeccionCreate, AsistenciaClaseCreate,
-    IntentoEvaluacionCreate, EntregaTareaCreate, PrerrequisitoCursoCreate,
+    CertificadoCreate, PrerrequisitoCursoCreate,
 )
 
 

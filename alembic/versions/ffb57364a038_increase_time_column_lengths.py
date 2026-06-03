@@ -34,7 +34,7 @@ def upgrade() -> None:
             existing_nullable=True,
         )
 
-    with op.batch_alter_table("glory_houses") as batch_op:
+    with op.batch_alter_table("grupos_evangelismo") as batch_op:
         batch_op.alter_column(
             "start_time",
             existing_type=sa.VARCHAR(length=10),
@@ -50,7 +50,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    with op.batch_alter_table("glory_houses") as batch_op:
+    with op.batch_alter_table("grupos_evangelismo") as batch_op:
         batch_op.alter_column(
             "end_time",
             existing_type=sa.VARCHAR(length=50),

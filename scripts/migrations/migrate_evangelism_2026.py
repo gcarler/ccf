@@ -3,8 +3,8 @@
 Migration: Add new columns for evangelism refactoring.
 
 Adds codigo/clase_raiz/activa to evangelism_strategies,
-estado/es_primera_vez/requiere_seguimiento to glory_house_attendance,
-rol_personalizado_id/fecha_ingreso/activo to glory_house_members,
+estado/es_primera_vez/requiere_seguimiento to asistencias,
+rol_personalizado_id/fecha_ingreso/activo to grupo_participantes,
 tags/origen_* to members, and creates new tables.
 
 Usage:
@@ -71,36 +71,36 @@ def run():
     else:
         print("[3/10] activa already exists, skipping...")
 
-    # ── 2. glory_house_members — add rol_personalizado_id, fecha_ingreso, activo ──
-    if not column_exists("glory_house_members", "rol_personalizado_id"):
-        print("[4/10] Adding rol_personalizado_id to glory_house_members...")
+    # ── 2. grupo_participantes — add rol_personalizado_id, fecha_ingreso, activo ──
+    if not column_exists("grupo_participantes", "rol_personalizado_id"):
+        print("[4/10] Adding rol_personalizado_id to grupo_participantes...")
         db.execute(text(
-            "ALTER TABLE glory_house_members ADD COLUMN rol_personalizado_id INTEGER "
+            "ALTER TABLE grupo_participantes ADD COLUMN rol_personalizado_id INTEGER "
             "REFERENCES roles_personalizados_estrategia(id) ON DELETE SET NULL"
         ))
     else:
         print("[4/10] rol_personalizado_id already exists, skipping...")
 
-    if not column_exists("glory_house_members", "fecha_ingreso"):
-        print("[5/10] Adding fecha_ingreso to glory_house_members...")
-        db.execute(text("ALTER TABLE glory_house_members ADD COLUMN fecha_ingreso TIMESTAMP DEFAULT NOW()"))
-        db.execute(text("UPDATE glory_house_members SET fecha_ingreso = NOW() WHERE fecha_ingreso IS NULL"))
+    if not column_exists("grupo_participantes", "fecha_ingreso"):
+        print("[5/10] Adding fecha_ingreso to grupo_participantes...")
+        db.execute(text("ALTER TABLE grupo_participantes ADD COLUMN fecha_ingreso TIMESTAMP DEFAULT NOW()"))
+        db.execute(text("UPDATE grupo_participantes SET fecha_ingreso = NOW() WHERE fecha_ingreso IS NULL"))
     else:
         print("[5/10] fecha_ingreso already exists, skipping...")
 
-    if not column_exists("glory_house_members", "activo"):
-        print("[6/10] Adding activo to glory_house_members...")
-        db.execute(text("ALTER TABLE glory_house_members ADD COLUMN activo BOOLEAN DEFAULT TRUE"))
-        db.execute(text("UPDATE glory_house_members SET activo = TRUE WHERE activo IS NULL"))
+    if not column_exists("grupo_participantes", "activo"):
+        print("[6/10] Adding activo to grupo_participantes...")
+        db.execute(text("ALTER TABLE grupo_participantes ADD COLUMN activo BOOLEAN DEFAULT TRUE"))
+        db.execute(text("UPDATE grupo_participantes SET activo = TRUE WHERE activo IS NULL"))
     else:
         print("[6/10] activo already exists, skipping...")
 
-    # ── 3. glory_house_attendance — add estado, es_primera_vez, requiere_seguimiento ──
-    if not column_exists("glory_house_attendance", "estado"):
-        print("[7/10] Adding estado/es_primera_vez/requiere_seguimiento to glory_house_attendance...")
-        db.execute(text("ALTER TABLE glory_house_attendance ADD COLUMN estado VARCHAR(20) DEFAULT 'presente'"))
+    # ── 3. asistencias — add estado, es_primera_vez, requiere_seguimiento ──
+    if not column_exists("asistencias", "estado"):
+        print("[7/10] Adding estado/es_primera_vez/requiere_seguimiento to asistencias...")
+        db.execute(text("ALTER TABLE asistencias ADD COLUMN estado VARCHAR(20) DEFAULT 'presente'"))
         db.execute(text(
-            "UPDATE glory_house_attendance SET estado = "
+            "UPDATE asistencias SET estado = "
             "CASE "
             "  WHEN status = 'first_time' THEN 'primera_vez' "
             "  WHEN attended = TRUE THEN 'presente' "
@@ -108,9 +108,9 @@ def run():
             "END "
             "WHERE estado IS NULL"
         ))
-        db.execute(text("ALTER TABLE glory_house_attendance ADD COLUMN es_primera_vez BOOLEAN DEFAULT FALSE"))
-        db.execute(text("UPDATE glory_house_attendance SET es_primera_vez = TRUE WHERE status = 'first_time'"))
-        db.execute(text("ALTER TABLE glory_house_attendance ADD COLUMN requiere_seguimiento BOOLEAN DEFAULT FALSE"))
+        db.execute(text("ALTER TABLE asistencias ADD COLUMN es_primera_vez BOOLEAN DEFAULT FALSE"))
+        db.execute(text("UPDATE asistencias SET es_primera_vez = TRUE WHERE status = 'first_time'"))
+        db.execute(text("ALTER TABLE asistencias ADD COLUMN requiere_seguimiento BOOLEAN DEFAULT FALSE"))
     else:
         print("[7/10] estado already exists, skipping...")
 
@@ -141,7 +141,7 @@ def run():
         db.execute(text("""
             CREATE TABLE registros_seguimiento (
                 id SERIAL PRIMARY KEY,
-                asistencia_id INTEGER NOT NULL REFERENCES glory_house_attendance(id) ON DELETE CASCADE,
+                asistencia_id INTEGER NOT NULL REFERENCES asistencias(id) ON DELETE CASCADE,
                 tipo VARCHAR(20) NOT NULL,
                 fecha_programada TIMESTAMP,
                 fecha_realizada TIMESTAMP,
@@ -187,7 +187,7 @@ def run():
         ))
         db.execute(text(
             "ALTER TABLE members ADD COLUMN origen_grupo_id INTEGER "
-            "REFERENCES glory_houses(id) ON DELETE SET NULL"
+            "REFERENCES grupos_evangelismo(id) ON DELETE SET NULL"
         ))
         db.execute(text("ALTER TABLE members ADD COLUMN origen_fecha TIMESTAMP"))
     else:

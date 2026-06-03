@@ -1,6 +1,6 @@
 """Nuevo schema canónico de evangelismo.
 
-Elimina tablas legacy (evangelism_strategies, glory_houses, glory_house_*).
+Elimina tablas legacy (evangelism_strategies, grupos_evangelismo, grupo_*).
 Crea: sedes, categorias_estrategia, motivos_excusa, logs_auditoria,
       estrategias_evangelismo, estrategia_roles_personalizados,
       grupos_evangelismo, personas, grupo_participantes,
@@ -29,10 +29,10 @@ def upgrade():
     op.drop_index("ix_members_origen_grupo_id", table_name="members")
 
     # ── 2. Eliminar tablas legacy (CASCADE elimina sus FKs dependientes) ──────
-    op.execute("DROP TABLE IF EXISTS glory_house_attendance CASCADE")
-    op.execute("DROP TABLE IF EXISTS glory_house_members CASCADE")
-    op.execute("DROP TABLE IF EXISTS glory_house_sessions CASCADE")
-    op.execute("DROP TABLE IF EXISTS glory_houses CASCADE")
+    op.execute("DROP TABLE IF EXISTS asistencias CASCADE")
+    op.execute("DROP TABLE IF EXISTS grupo_participantes CASCADE")
+    op.execute("DROP TABLE IF EXISTS sesiones_grupo CASCADE")
+    op.execute("DROP TABLE IF EXISTS grupos_evangelismo CASCADE")
     op.execute("DROP TABLE IF EXISTS evangelism_strategies CASCADE")
     # Tablas intermedias que no se migraron y quedan obsoletas
     op.execute("DROP TABLE IF EXISTS roles_personalizados_estrategia CASCADE")

@@ -1,12 +1,12 @@
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.models_shared import _utcnow
-from backend import crud, models
+from backend import models
 from backend.auth import require_admin, require_module_access
 from backend.core.database import get_db
 

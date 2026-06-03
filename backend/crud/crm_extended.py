@@ -770,7 +770,7 @@ def get_user_conversations(db: Session, user_id: int) -> list[models.Conversatio
         .join(models.ConversationParticipant)
         .filter(
             models.ConversationParticipant.user_id == user_id,
-            models.ConversationParticipant.is_archived == False,
+            not models.ConversationParticipant.is_archived,
         )
         .order_by(models.Conversation.last_message_at.desc().nullslast())
         .all()

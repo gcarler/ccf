@@ -107,7 +107,7 @@ def seed_mass_data():
         db.query(models.CommunicationLog).delete()
         db.query(models.ConsolidationPipeline).delete()
         db.query(models.Member).delete()
-        db.query(models.GloryHouse).delete()
+        db.query(models.GrupoEvangelismo).delete()
         db.query(models.Family).delete()
         db.query(models.User).delete()
         db.commit()
@@ -205,7 +205,7 @@ def seed_mass_data():
             pastor = random.choice(
                 [m for m in miembros if m.church_role in ["Líder", "Pastor de Zona"]]
             )
-            gh = models.GloryHouse(
+            gh = models.GrupoEvangelismo(
                 name=f"Casa {nombres_casas[i]} - {random.choice(zonas)}",
                 zone=random.choice(zonas),
                 leader_name=f"{pastor.first_name} {pastor.last_name}",
@@ -256,7 +256,7 @@ def seed_mass_data():
         print(f"   - Usuarios: {db.query(models.User).count()}")
         print(f"   - Familias: {db.query(models.Family).count()}")
         print(f"   - Miembros: {db.query(models.Member).count()}")
-        print(f"   - Casas de Gloria: {db.query(models.GloryHouse).count()}")
+        print(f"   - Casas de Gloria: {db.query(models.GrupoEvangelismo).count()}")
         print(f"   - Peticiones de Oración: {db.query(models.PrayerRequest).count()}")
         print(f"La base de datos es ahora un ecosistema vivo y denso.")
 

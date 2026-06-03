@@ -12,7 +12,7 @@ SesionGrupo, Asistencia, ParticipanteGrupo) and Persona from CRM.
 from __future__ import annotations
 
 import datetime as _dt
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func as _func
@@ -54,7 +54,7 @@ def _last_month_range():
 
 
 def _active_groups_query(db: Session, strategy_id: Optional[str] = None, sede_id: Optional[int] = None):
-    q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.activo == True)
+    q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.activo)
     if strategy_id:
         q = q.filter(models.GrupoEvangelismo.estrategia_id == strategy_id)
     if sede_id is not None:
@@ -139,7 +139,7 @@ def _rank_by_growth(db: Session, groups, this_start, this_end, last_start, last_
             db.query(_func.count(models.ParticipanteGrupo.id))
             .filter(
                 models.ParticipanteGrupo.grupo_id == g.id,
-                models.ParticipanteGrupo.activo == True,
+                models.ParticipanteGrupo.activo,
                 models.ParticipanteGrupo.fecha_ingreso < this_end,
             )
             .scalar()
@@ -149,7 +149,7 @@ def _rank_by_growth(db: Session, groups, this_start, this_end, last_start, last_
             db.query(_func.count(models.ParticipanteGrupo.id))
             .filter(
                 models.ParticipanteGrupo.grupo_id == g.id,
-                models.ParticipanteGrupo.activo == True,
+                models.ParticipanteGrupo.activo,
                 models.ParticipanteGrupo.fecha_ingreso < last_end,
             )
             .scalar()
@@ -208,9 +208,9 @@ def monthly_comparison(
     last_start, last_end = _last_month_range()
 
     def _stats(start, end):
-        base_filter = models.GrupoEvangelismo.activo == True
+        base_filter = models.GrupoEvangelismo.activo
         if sede_id is not None:
-            base_filter = (models.GrupoEvangelismo.activo == True) & (models.GrupoEvangelismo.sede_id == sede_id)
+            base_filter = (models.GrupoEvangelismo.activo) & (models.GrupoEvangelismo.sede_id == sede_id)
 
         # sessions
         sess_q = (
@@ -361,7 +361,7 @@ def rankings_leaders(
             db.query(_func.count(models.ParticipanteGrupo.id))
             .filter(
                 models.ParticipanteGrupo.grupo_id == g.id,
-                models.ParticipanteGrupo.activo == True,
+                models.ParticipanteGrupo.activo,
             )
             .scalar()
         ) or 0

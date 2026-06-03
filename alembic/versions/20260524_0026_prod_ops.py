@@ -96,8 +96,8 @@ def upgrade() -> None:
         "consolidation_cases": "New member follow-up and integration pipeline",
         "consolidation_interactions": "Contact logs for consolidation cases",
         "consolidation_assignments": "Task assignments within consolidation",
-        "glory_houses": "Small cell groups (casas de gloria)",
-        "glory_house_sessions": "Weekly session reports for glory houses",
+        "grupos_evangelismo": "Small cell groups (casas de gloria)",
+        "sesiones_grupo": "Weekly session reports for grupos",
         "counseling_tickets": "Pastoral counseling cases",
         "prayer_requests": "Prayer requests from members and public",
 

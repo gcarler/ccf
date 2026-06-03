@@ -1,10 +1,10 @@
-"""0040_rename_glory_house_to_cell_group
+"""0040_rename_legacy_groups_to_grupos_evangelismo
 
 Revision ID: 20260527_0040
 Revises: 20260527_0039
 Create Date: 2026-05-27
 
-Renames GloryHouse tables to CellGroup (church-agnostic).
+Renames legacy group tables to canonical evangelism group tables.
 Only renames if tables exist (idempotent).
 """
 
@@ -23,10 +23,10 @@ def upgrade() -> None:
     conn = op.get_bind()
     tables = sa.inspect(conn).get_table_names()
     renames = [
-        ("glory_houses", "cell_groups"),
-        ("glory_house_members", "cell_group_members"),
-        ("glory_house_sessions", "cell_group_sessions"),
-        ("glory_house_attendance", "cell_group_attendance"),
+        ("cell_groups", "grupos_evangelismo"),
+        ("cell_group_members", "grupo_participantes"),
+        ("cell_group_sessions", "sesiones_grupo"),
+        ("cell_group_attendance", "asistencias"),
     ]
     for old, new in renames:
         if old in tables:
@@ -37,10 +37,10 @@ def downgrade() -> None:
     conn = op.get_bind()
     tables = sa.inspect(conn).get_table_names()
     renames = [
-        ("cell_groups", "glory_houses"),
-        ("cell_group_members", "glory_house_members"),
-        ("cell_group_sessions", "glory_house_sessions"),
-        ("cell_group_attendance", "glory_house_attendance"),
+        ("grupos_evangelismo", "cell_groups"),
+        ("grupo_participantes", "cell_group_members"),
+        ("sesiones_grupo", "cell_group_sessions"),
+        ("asistencias", "cell_group_attendance"),
     ]
     for old, new in renames:
         if old in tables:

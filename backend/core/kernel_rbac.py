@@ -228,7 +228,6 @@ def require_active_for_assignment():
     Regla de Inactividad: Usuarios INACTIVOS no pueden ser delegados
     en tareas de proyectos, ni aparecer en listas de selección activa.
     """
-    from backend.crud.kernel import can_receive_assignment
 
     async def _check(
         current_user=Depends(get_current_active_user),

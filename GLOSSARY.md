@@ -14,7 +14,6 @@
 | usuario (para referirse a un ser humano) | persona | `users` es solo para autenticación; la persona es la entidad real |
 | estudiante / alumno (como tabla) | persona con rol B en academy | Axioma 1: no hay tabla `estudiantes`, hay `personas` con enrollment |
 | líder (como tabla separada) | persona con rol B de "LIDER" | Axioma 1: el liderazgo es un rol, no una entidad separada |
-| Glory House (en UI pública) | Casa de Gloria / Grupo de Evangelismo | Contexto: público vs plataforma |
 | Cell Group / Célula | Grupo de Evangelismo | Estandarización del lenguaje |
 | Consolidation Case | Caso CRM | Migración v2 completada |
 | Project (tabla) | Proyecto | Migración v2 completada |
@@ -39,11 +38,11 @@ Cualquier ser humano registrado en el sistema. Su ficha vive en la tabla `person
 
 ## 🏠 Grupos y Casas de Gloria
 
-### Grupo de Evangelismo (antes "Glory House" o "Cell Group")
-- **DB:** `grupos_evangelismo` (antes `glory_houses`, `cell_groups`)
+### Grupo de Evangelismo
+- **DB:** `grupos_evangelismo`
 - **Propósito:** Reunión semanal de discipulado y evangelismo
 - **Liderazgo:** `leader_persona_id`, `assistant_persona_id` (FK a `personas.id`)
-- **Sesiones:** `sesiones_grupo` (antes `cell_group_sessions`)
+- **Sesiones:** `sesiones_grupo`
 
 ### Grupo Pequeño / Grupo Comunitario
 - **DB:** No tiene tabla separada; se maneja como una categoría de `grupos_evangelismo`
@@ -51,8 +50,8 @@ Cualquier ser humano registrado en el sistema. Su ficha vive en la tabla `person
 - **UI:** Aparece en `/plataforma/community/grupos`
 
 ### Casa de Gloria
-- **Término legacy:** Se usaba antes de la estandarización v2
-- **Estado:** Reemplazado por `grupos_evangelismo` en DB, pero se puede mostrar como "Casas de Gloria" en landing público
+- **Uso permitido:** Etiqueta pública o pastoral para grupos de evangelismo.
+- **Código:** Usar siempre `grupos`, `grupos_evangelismo` o `sesiones_grupo`.
 
 ## 🗺️ Rutas de API
 
@@ -69,7 +68,6 @@ Cualquier ser humano registrado en el sistema. Su ficha vive en la tabla `person
 
 | Legacy (❌) | v2 (✅) |
 |---|---|
-| `glory_houses` | `grupos_evangelismo` |
 | `cell_groups` | `grupos_evangelismo` |
 | `cell_group_sessions` | `sesiones_grupo` |
 | `consolidation_cases` | `crm_casos` |

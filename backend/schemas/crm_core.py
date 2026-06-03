@@ -3,9 +3,8 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional, List
-from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 
 from backend.schemas._common import orm_config  # ConfigDict(from_attributes=True)
 

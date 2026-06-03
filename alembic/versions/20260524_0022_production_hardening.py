@@ -224,7 +224,7 @@ def upgrade() -> None:
             (SELECT COUNT(*) FROM members WHERE created_at >= NOW() - INTERVAL '30 days') AS new_members_30d,
             (SELECT COUNT(*) FROM members WHERE created_at >= NOW() - INTERVAL '7 days') AS new_members_7d,
             (SELECT COUNT(*) FROM families) AS total_families,
-            (SELECT COUNT(*) FROM glory_houses WHERE status = 'active') AS active_glory_houses,
+            (SELECT COUNT(*) FROM grupos_evangelismo WHERE status = 'active') AS active_grupos_evangelismo,
             NOW() AS refreshed_at
         """
     )

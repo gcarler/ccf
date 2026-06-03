@@ -203,9 +203,21 @@ MODULE_PERMISSION_MAP: Dict[str, Dict[str, str]] = {
         "manage": "academy:manage",
     },
     "messaging": {"read": "messaging:read", "edit": "messaging:edit"},
-    "evangelism": {"read": "evangelism:read", "edit": "evangelism:edit", "manage": "evangelism:manage"},
-    "community": {"read": "community:read", "edit": "community:edit", "manage": "community:manage"},
-    "spiritual_life": {"read": "spiritual_life:read", "edit": "spiritual_life:edit", "manage": "spiritual_life:manage"},
+    "evangelism": {
+        "read": "evangelism:read",
+        "edit": "evangelism:edit",
+        "manage": "evangelism:manage",
+    },
+    "community": {
+        "read": "community:read",
+        "edit": "community:edit",
+        "manage": "community:manage",
+    },
+    "spiritual_life": {
+        "read": "spiritual_life:read",
+        "edit": "spiritual_life:edit",
+        "manage": "spiritual_life:manage",
+    },
 }
 
 
@@ -346,7 +358,7 @@ def get_user_effective_permissions(db: Session, user) -> dict:
     Returns a dict of {permission_key: "allow"}.
     """
     role = normalize_role(getattr(user, "role", ""))
-    
+
     # Check v2 role name
     if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
         role = normalize_role(user.rol_plataforma.nombre)
@@ -428,9 +440,7 @@ def create_access_token(
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_refresh_token(
-    db: Session, user_id: int | str, ip_address: str = None, user_agent: str = None
-) -> str:
+def create_refresh_token(db: Session, user_id: int | str, ip_address: str = None, user_agent: str = None) -> str:
     """Create a cryptographically random refresh token and persist it."""
     from backend import crud  # avoid circular import
 
@@ -440,14 +450,17 @@ def create_refresh_token(
     # Bridge: if user_id is a UUID string, use auth_v2 storage
     if isinstance(user_id, str) and "-" in user_id:
         from backend.models_auth import TokenSesion
+
         try:
-            db.add(TokenSesion(
-                user_id=user_id,
-                token=token,
-                expires_at=expires_at,
-                ip_address=ip_address,
-                user_agent=user_agent
-            ))
+            db.add(
+                TokenSesion(
+                    user_id=user_id,
+                    token=token,
+                    expires_at=expires_at,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                )
+            )
             db.commit()
             return token
         except Exception as exc:
@@ -504,6 +517,7 @@ async def get_current_user(
             val = uuid.UUID(subject)
             from sqlalchemy.orm import joinedload
             from backend.models_auth import Usuario
+
             user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == val).first()
         except (ValueError, ImportError):
             user = crud.get_user_by_email(db, email=subject)
@@ -515,7 +529,7 @@ async def get_current_user(
     role_str = str(getattr(user, "role", ""))
     if not role_str and hasattr(user, "rol_plataforma"):
         role_str = user.rol_plataforma.nombre if user.rol_plataforma else ""
-    
+
     user_role_context.set(role_str)
     return user
 
@@ -565,7 +579,6 @@ def _has_permission(role: str, user_perms: set | dict, required: str) -> bool:
     if level not in hierarchy:
         return required in user_perms
 
-    implied = hierarchy[level]
     for user_perm in user_perms:
         user_module = user_perm.split(":")[0] if ":" in user_perm else ""
         user_level = user_perm.split(":")[1] if ":" in user_perm else ""
@@ -624,7 +637,11 @@ def require_permission(permission: str):
             "estudiante",
         }:
             return current_user
-        if permission.startswith("projects:") and role in {"coordinador", "docente", "pastor"}:
+        if permission.startswith("projects:") and role in {
+            "coordinador",
+            "docente",
+            "pastor",
+        }:
             return current_user
 
         raise HTTPException(

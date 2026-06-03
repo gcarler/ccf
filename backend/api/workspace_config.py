@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from backend import models
 from backend.api.workspace_shared import (_load_workspace_config,

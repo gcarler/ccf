@@ -8,38 +8,42 @@ from backend.core.database import SessionLocal
 def seed_crm():
     db = SessionLocal()
     try:
-        # Create some Glory Houses if none exist
-        existing_houses = crud.get_grupos(db)
-        if not existing_houses:
-            houses_data = [
-                schemas.GloryHouseCreate(
+        # Create some grupos if none exist
+        existing_grupos = db.query(models.GrupoEvangelismo).first()
+        if not existing_grupos:
+            grupos_data = [
+                models.GrupoEvangelismo(
                     name="Casa de Bendición Faro Norte",
                     zone="Norte",
                     leader_name="Pedro Martínez",
-                    schedule="Jueves 7:00 PM",
+                    day_of_week="Jueves",
+                    start_time="7:00 PM",
                     address="Calle 100 #45-12",
-                    is_active=True,
+                    status="Activo",
                 ),
-                schemas.GloryHouseCreate(
+                models.GrupoEvangelismo(
                     name="Centro Vida Central",
                     zone="Centro",
                     leader_name="Marta Lucía",
-                    schedule="Martes 6:30 PM",
+                    day_of_week="Martes",
+                    start_time="6:30 PM",
                     address="Carrera 15 #32-10",
-                    is_active=True,
+                    status="Activo",
                 ),
-                schemas.GloryHouseCreate(
+                models.GrupoEvangelismo(
                     name="Jóvenes CCF Sur",
                     zone="Sur",
                     leader_name="Andrés Felipe",
-                    schedule="Sábado 4:00 PM",
+                    day_of_week="Sábado",
+                    start_time="4:00 PM",
                     address="Calle 45 Sur #12-34",
-                    is_active=True,
+                    status="Activo",
                 ),
             ]
-            for h in houses_data:
-                crud.create_glory_house(db, h)
-            print("Glory Houses seeded!")
+            for grupo in grupos_data:
+                db.add(grupo)
+            db.commit()
+            print("Grupos seeded!")
 
         # Create some Members if none exist
         existing_members = crud.get_members(db)

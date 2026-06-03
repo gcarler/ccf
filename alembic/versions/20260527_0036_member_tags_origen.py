@@ -28,7 +28,7 @@ def upgrade():
     )
     op.create_foreign_key(
         "fk_members_origen_grupo",
-        "members", "glory_houses",
+        "members", "grupos_evangelismo",
         ["origen_grupo_id"], ["id"],
         ondelete="SET NULL",
     )

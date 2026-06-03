@@ -5,9 +5,8 @@ métricas, tendencias y distribuciones para alimentar los dashboards.
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-from sqlalchemy import case, desc, func, text
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -23,7 +22,6 @@ from backend.schemas.dashboard import (
     FinanceDashboard,
     FunnelStage,
     GeoBucket,
-    HeatmapItem,
     MetricCard,
     ProjectsDashboard,
     TableRow,
@@ -46,7 +44,7 @@ def _month_range(months_ago: int = 0):
 def _sede_filters(db: Session) -> List[DashboardFilter]:
     try:
         sedes = db.query(models.Sede.id, models.Sede.nombre).filter(
-            models.Sede.es_activa == True
+            models.Sede.es_activa
         ).all()
     except Exception:
         sedes = []
@@ -329,7 +327,7 @@ def get_academy_dashboard(db: Session) -> AcademyDashboard:
 
     total_courses = db.execute(sqlt("SELECT COUNT(*) FROM courses")).scalar() or 0
     total_enrollments = db.execute(sqlt("SELECT COUNT(*) FROM enrollments")).scalar() or 0
-    total_lessons = db.execute(sqlt("SELECT COUNT(*) FROM lessons")).scalar() or 0
+    db.execute(sqlt("SELECT COUNT(*) FROM lessons")).scalar() or 0
     completed = db.execute(sqlt(
         "SELECT COUNT(*) FROM enrollments WHERE status = 'completed'"
     )).scalar() or 0

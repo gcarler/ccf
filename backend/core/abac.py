@@ -12,9 +12,7 @@ Basado en platform_role_definitions como fuente única de roles (Dimensión C).
 from __future__ import annotations
 
 import logging
-from enum import Enum
-from functools import wraps
-from typing import Callable, List, Optional
+from typing import Optional
 
 from fastapi import Depends, HTTPException, Request, status
 from jose import JWTError, jwt
@@ -22,7 +20,6 @@ from sqlalchemy.orm import Session
 
 from backend.core.config import get_settings
 from backend.core.database import get_db
-from backend.models_kernel import PlatformRoleDefinition
 
 log = logging.getLogger(__name__)
 settings = get_settings()

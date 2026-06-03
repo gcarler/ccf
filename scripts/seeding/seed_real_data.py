@@ -12,7 +12,7 @@ from backend.models import (
     ConsolidationPipeline,
     Course,
     Family,
-    GloryHouse,
+    GrupoEvangelismo,
     Lesson,
     Member,
     PastoralCallLog,
@@ -285,7 +285,7 @@ def seed_real_data():
                 db.add(task)
                 db.commit()
 
-        # 6. Glory Houses (Casas de Gloria)
+        # 6. Grupos (Casas de Gloria)
         ghouses_data = [
             {
                 "name": "Casa de Gloria Norte - Los Pinos",
@@ -313,12 +313,12 @@ def seed_real_data():
             },
         ]
         for gh_data in ghouses_data:
-            gh = db.query(GloryHouse).filter(GloryHouse.name == gh_data["name"]).first()
+            gh = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.name == gh_data["name"]).first()
             if not gh:
-                gh = GloryHouse(**gh_data)
+                gh = GrupoEvangelismo(**gh_data)
                 db.add(gh)
                 db.commit()
-                print(f"Created Glory House: {gh.name}")
+                print(f"Created Grupo: {gh.name}")
 
         # 7. Academy (Courses & Lessons)
         course1 = db.query(Course).filter(Course.code == "DISC-A-2026").first()

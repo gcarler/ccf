@@ -8,11 +8,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.api.crm._shared import (_persona_full_name, _serialize_case,
-                                     _serialize_message_group, _serialize_task,
-                                     utc_now)
-from backend.auth import (normalize_role, require_active_user,
-                          require_pastor_or_admin)
+from backend.api.crm._shared import (
+    _persona_full_name,
+    _serialize_case,
+    _serialize_message_group,
+    _serialize_task,
+    utc_now,
+)
+from backend.auth import normalize_role, require_active_user, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.crud.crm import get_user_sede_id
 from backend.services.messaging import MessagingGateway
@@ -43,6 +46,7 @@ def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]):
 # REDIRECTS: Old consolidation endpoints → new CRM Core
 # ═══════════════════════════════════════════════════════════════════
 
+
 @router.get("/consolidation/cases/{case_id}", response_model=dict)
 def get_consolidation_case(
     case_id: str,
@@ -61,9 +65,7 @@ def create_consolidation_case(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     p_uuid = uuid.UUID(payload.persona_id) if isinstance(payload.persona_id, str) else payload.persona_id
-    persona = (
-        db.query(models.Persona).filter(models.Persona.id == p_uuid).first()
-    )
+    persona = db.query(models.Persona).filter(models.Persona.id == p_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
     data = payload.model_dump()
@@ -154,9 +156,7 @@ def create_consolidation_interaction(
         "case_id": str(row.case_id),
         "performed_by_id": str(row.performed_by_id),
         "interaction_type": row.interaction_type,
-        "interaction_date": (
-            row.interaction_date.isoformat() if row.interaction_date else None
-        ),
+        "interaction_date": (row.interaction_date.isoformat() if row.interaction_date else None),
         "result": row.result,
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
@@ -170,7 +170,7 @@ def create_consolidation_task(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
-    case = _get_case_or_404(db, case_id, user_sede)
+    _get_case_or_404(db, case_id, user_sede)
     task_data = payload.model_dump(exclude={"case_id"})
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
     row = models.ConsolidationTask(**task_data, case_id=case_uuid)
@@ -204,9 +204,7 @@ def list_consolidation_cases(
 ):
     """Lista casos de consolidación con paginación y filtros."""
     user_sede = get_user_sede_id(db, current_user.id)
-    q = db.query(models.CasoCRM).filter(
-        models.CasoCRM.deleted_at.is_(None)
-    )
+    q = db.query(models.CasoCRM).filter(models.CasoCRM.deleted_at.is_(None))
     if user_sede:
         q = q.filter(models.CasoCRM.sede_id == user_sede)
 
@@ -220,12 +218,7 @@ def list_consolidation_cases(
         q = q.filter(models.CasoCRM.persona_id == persona_id)
 
     total = q.count()
-    cases = (
-        q.order_by(models.CasoCRM.created_at.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
-    )
+    cases = q.order_by(models.CasoCRM.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
     return {
         "cases": [_serialize_case(c) for c in cases],
@@ -261,10 +254,7 @@ def list_consolidation_tasks(
     user_sede = get_user_sede_id(db, current_user.id)
     _get_case_or_404(db, case_id, user_sede)
 
-    q = (
-        db.query(models.ConsolidationTask)
-        .filter(models.ConsolidationTask.case_id == case_id)
-    )
+    q = db.query(models.ConsolidationTask).filter(models.ConsolidationTask.case_id == case_id)
     if status_filter:
         q = q.filter(models.ConsolidationTask.status == status_filter)
 
@@ -365,9 +355,7 @@ def update_consolidation_assignment(
 ):
     """Actualiza una asignación de consolidación."""
     assignment = (
-        db.query(models.ConsolidationAssignment)
-        .filter(models.ConsolidationAssignment.id == assignment_id)
-        .first()
+        db.query(models.ConsolidationAssignment).filter(models.ConsolidationAssignment.id == assignment_id).first()
     )
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
@@ -479,9 +467,7 @@ async def send_crm_message(
             failed_count += 1
             if len(target_members) == 1:
                 logger.exception("Messaging gateway failure")
-                raise HTTPException(
-                    status_code=502, detail="No se pudo enviar el mensaje"
-                )
+                raise HTTPException(status_code=502, detail="No se pudo enviar el mensaje")
 
     return {
         "status": "success",
@@ -498,15 +484,11 @@ def list_messaging_history(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
-    q = db.query(models.CommunicationLog).join(
-        models.Persona, models.CommunicationLog.persona_id == models.Persona.id
-    )
+    q = db.query(models.CommunicationLog).join(models.Persona, models.CommunicationLog.persona_id == models.Persona.id)
     if user_sede:
         q = q.filter(models.Persona.sede_id == user_sede)
     logs = q.order_by(models.CommunicationLog.created_at.desc()).all()
-    grouped: "collections.OrderedDict[str, list[models.CommunicationLog]]" = (
-        collections.OrderedDict()
-    )
+    grouped: "collections.OrderedDict[str, list[models.CommunicationLog]]" = collections.OrderedDict()
     for log in logs:
         key = log.external_id or f"log-{log.id}"
         grouped.setdefault(key, []).append(log)
@@ -519,11 +501,7 @@ def get_messaging_history_item(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    log = (
-        db.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.id == log_id)
-        .first()
-    )
+    log = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
     if not log:
         raise HTTPException(status_code=404, detail="Message not found")
     if log.external_id:
@@ -568,9 +546,7 @@ def create_crm_task(
         try:
             due_date = datetime.fromisoformat(str(raw_due_date).replace("Z", "+00:00"))
         except ValueError:
-            raise HTTPException(
-                status_code=400, detail="Formato de fecha o identificador invalido"
-            )
+            raise HTTPException(status_code=400, detail="Formato de fecha o identificador invalido")
 
     task = models.CrmTask(
         title=title,
@@ -647,9 +623,7 @@ def update_crm_task(
                 try:
                     val = datetime.fromisoformat(val.replace("Z", "+00:00"))
                 except ValueError:
-                    raise HTTPException(
-                        status_code=400, detail="Formato de fecha inválido"
-                    )
+                    raise HTTPException(status_code=400, detail="Formato de fecha inválido")
             setattr(task, field, val)
     db.commit()
     db.refresh(task)
@@ -663,11 +637,7 @@ def delete_crm_task(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Elimina una tarea del CRM."""
-    task = (
-        db.query(models.CrmTask)
-        .filter(models.CrmTask.id == task_id)
-        .first()
-    )
+    task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     task.deleted_at = utc_now()
@@ -681,19 +651,13 @@ def get_counseling_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    ticket = (
-        db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.id == ticket_id)
-        .first()
-    )
+    ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Counseling ticket not found")
     history_rows = (
         db.query(models.CounselingTicket)
         .filter(models.CounselingTicket.persona_id == ticket.persona_id)
-        .order_by(
-            models.CounselingTicket.created_at.desc(), models.CounselingTicket.id.desc()
-        )
+        .order_by(models.CounselingTicket.created_at.desc(), models.CounselingTicket.id.desc())
         .all()
     )
     return {
@@ -810,9 +774,7 @@ def update_grupo(
         raw = str(payload["status"]).strip().lower()
         grupo.activo = raw in ("active", "activo", "true", "1")
 
-    if "participante_ids" in payload and isinstance(
-        payload["participante_ids"], list
-    ):
+    if "participante_ids" in payload and isinstance(payload["participante_ids"], list):
         normalized_ids = []
         for raw_id in payload["participante_ids"]:
             try:
@@ -820,11 +782,7 @@ def update_grupo(
             except (TypeError, ValueError):
                 continue
         normalized_ids = list(dict.fromkeys(normalized_ids))
-        current_rows = (
-            db.query(models.ParticipanteGrupo)
-            .filter(models.ParticipanteGrupo.grupo_id == grupo.id)
-            .all()
-        )
+        current_rows = db.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == grupo.id).all()
         current_by_persona = {row.persona_id: row for row in current_rows}
         incoming_ids = set(normalized_ids)
 
@@ -860,10 +818,7 @@ def update_grupo(
         "end_time": None,
         "status": "active" if grupo.activo else "inactive",
         "participante_ids": [row.persona_id for row in (grupo.participantes or [])],
-        "participantes": [
-            {"persona_id": row.persona_id, "role": row.rol_base}
-            for row in (grupo.participantes or [])
-        ],
+        "participantes": [{"persona_id": row.persona_id, "role": row.rol_base} for row in (grupo.participantes or [])],
     }
 
 
@@ -873,11 +828,7 @@ def get_prayer_request_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    prayer = (
-        db.query(models.PrayerRequest)
-        .filter(models.PrayerRequest.id == request_id)
-        .first()
-    )
+    prayer = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
     if not prayer:
         raise HTTPException(status_code=404, detail="Prayer request not found")
     return {
@@ -970,11 +921,7 @@ def update_counseling_ticket(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    ticket = (
-        db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.id == ticket_id)
-        .first()
-    )
+    ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Counseling ticket not found")
     for field in ("status", "notes", "priority_level"):
@@ -1027,9 +974,7 @@ def save_crm_settings(
     crud.update_page_content(
         db,
         "crm_settings",
-        schemas.PageContentUpdate(
-            title="CRM Settings", content=json.dumps(payload, ensure_ascii=False)
-        ),
+        schemas.PageContentUpdate(title="CRM Settings", content=json.dumps(payload, ensure_ascii=False)),
     )
     return payload
 
@@ -1041,9 +986,7 @@ def list_crm_roles(
 ):
     rows = (
         db.query(models.RoleDefinition)
-        .order_by(
-            models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc()
-        )
+        .order_by(models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc())
         .all()
     )
     return [
@@ -1067,11 +1010,7 @@ def create_crm_role(
     color = str(payload.get("color") or "").strip()
     if not name or not color:
         raise HTTPException(status_code=400, detail="name and color are required")
-    exists = (
-        db.query(models.RoleDefinition)
-        .filter(models.RoleDefinition.name == name)
-        .first()
-    )
+    exists = db.query(models.RoleDefinition).filter(models.RoleDefinition.name == name).first()
     if exists:
         raise HTTPException(status_code=400, detail="El rol ya existe")
     row = models.RoleDefinition(
@@ -1097,11 +1036,7 @@ def update_crm_role(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    row = (
-        db.query(models.RoleDefinition)
-        .filter(models.RoleDefinition.id == role_id)
-        .first()
-    )
+    row = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
 
@@ -1119,12 +1054,8 @@ def update_crm_role(
             .first()
         )
         if exists:
-            raise HTTPException(
-                status_code=400, detail="Ya existe otro rol con ese nombre"
-            )
-        db.query(models.Persona).filter(models.Persona.church_role == row.name).update(
-            {"church_role": new_name}
-        )
+            raise HTTPException(status_code=400, detail="Ya existe otro rol con ese nombre")
+        db.query(models.Persona).filter(models.Persona.church_role == row.name).update({"church_role": new_name})
         row.name = new_name
 
     if "color" in payload:
@@ -1154,23 +1085,13 @@ def delete_crm_role(
             status_code=400,
             detail="El rol de reemplazo no puede ser el mismo rol a eliminar",
         )
-    role = (
-        db.query(models.RoleDefinition)
-        .filter(models.RoleDefinition.id == role_id)
-        .first()
-    )
-    fallback = (
-        db.query(models.RoleDefinition)
-        .filter(models.RoleDefinition.id == fallback_id)
-        .first()
-    )
+    role = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
+    fallback = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == fallback_id).first()
     if not role:
         raise HTTPException(status_code=404, detail="Rol a eliminar no encontrado")
     if not fallback:
         raise HTTPException(status_code=400, detail="Rol de reemplazo no valido")
-    db.query(models.Persona).filter(models.Persona.church_role == role.name).update(
-        {"church_role": fallback.name}
-    )
+    db.query(models.Persona).filter(models.Persona.church_role == role.name).update({"church_role": fallback.name})
     role.deleted_at = utc_now()
     db.commit()
     return {
@@ -1206,9 +1127,7 @@ def get_crm_analytics_summary(
     open_counseling = counseling_q.count()
 
     month_start = (
-        datetime.now(timezone.utc)
-        .replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        .replace(tzinfo=None)
+        datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
     )
     events_q = db.query(models.CrmEvent).filter(models.CrmEvent.event_date >= month_start)
     if user_sede:
@@ -1233,7 +1152,6 @@ def get_crm_analytics_summary(
     }
 
 
-
 # ── Prayer Requests ──────────────────────────────────────
 
 
@@ -1251,16 +1169,19 @@ def create_public_prayer_request(
     last_name = name_parts[1] if len(name_parts) > 1 else ""
 
     # Create Persona + ConsolidationCase via ContactTracker
-    result = tracker.record_contact(db, ContactRecord(
-        email=payload.email,
-        phone=payload.phone,
-        first_name=first_name,
-        last_name=last_name,
-        source="prayer-web",
-        landing_page=payload.landing_page,
-        campaign=payload.campaign,
-        notes=payload.request_text[:200],  # Truncate for notes
-    ))
+    result = tracker.record_contact(
+        db,
+        ContactRecord(
+            email=payload.email,
+            phone=payload.phone,
+            first_name=first_name,
+            last_name=last_name,
+            source="prayer-web",
+            landing_page=payload.landing_page,
+            campaign=payload.campaign,
+            notes=payload.request_text[:200],  # Truncate for notes
+        ),
+    )
 
     # Create PrayerRequest linked to the member
     prayer = models.PrayerRequest(
@@ -1349,11 +1270,7 @@ def update_prayer_request(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    prayer = (
-        db.query(models.PrayerRequest)
-        .filter(models.PrayerRequest.id == request_id)
-        .first()
-    )
+    prayer = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
     if not prayer:
         raise HTTPException(status_code=404, detail="Prayer request not found")
     for field in ("status", "category", "request_text", "requester_name", "source"):
@@ -1403,16 +1320,12 @@ def create_volunteer(
     shift_end = None
     if payload.get("shift_start"):
         try:
-            shift_start = datetime.fromisoformat(
-                str(payload["shift_start"]).replace("Z", "+00:00")
-            )
+            shift_start = datetime.fromisoformat(str(payload["shift_start"]).replace("Z", "+00:00"))
         except ValueError:
             pass
     if payload.get("shift_end"):
         try:
-            shift_end = datetime.fromisoformat(
-                str(payload["shift_end"]).replace("Z", "+00:00")
-            )
+            shift_end = datetime.fromisoformat(str(payload["shift_end"]).replace("Z", "+00:00"))
         except ValueError:
             pass
 
@@ -1444,6 +1357,7 @@ def list_volunteers(
 ):
     """Lista todos los voluntarios con sus horas y ministerios."""
     from collections import defaultdict
+
     user_sede = get_user_sede_id(db, current_user.id)
     personas_q = db.query(models.Persona)
     if user_sede:
@@ -1453,11 +1367,7 @@ def list_volunteers(
         return []
 
     persona_ids = [p.id for p in personas]
-    all_shifts = (
-        db.query(models.VolunteerShift)
-        .filter(models.VolunteerShift.persona_id.in_(persona_ids))
-        .all()
-    )
+    all_shifts = db.query(models.VolunteerShift).filter(models.VolunteerShift.persona_id.in_(persona_ids)).all()
     shifts_by_persona: dict = defaultdict(list)
     for s in all_shifts:
         shifts_by_persona[s.persona_id].append(s)
@@ -1466,16 +1376,16 @@ def list_volunteers(
     for persona in personas:
         shifts = shifts_by_persona[persona.id]
         total_hours = sum(
-            int((s.shift_end - s.shift_start).total_seconds() // 3600)
-            for s in shifts
-            if s.shift_start and s.shift_end
+            int((s.shift_end - s.shift_start).total_seconds() // 3600) for s in shifts if s.shift_start and s.shift_end
         )
-        result.append({
-            "id": persona.id,
-            "name": f"{persona.first_name} {persona.last_name}",
-            "total_hours": total_hours,
-            "ministry_count": len({s.team_name for s in shifts if s.team_name}),
-        })
+        result.append(
+            {
+                "id": persona.id,
+                "name": f"{persona.first_name} {persona.last_name}",
+                "total_hours": total_hours,
+                "ministry_count": len({s.team_name for s in shifts if s.team_name}),
+            }
+        )
     return result
 
 
@@ -1498,9 +1408,7 @@ def get_volunteer_detail(
     total_hours = 0
     for shift in shifts:
         if shift.shift_start and shift.shift_end:
-            total_hours += int(
-                (shift.shift_end - shift.shift_start).total_seconds() // 3600
-            )
+            total_hours += int((shift.shift_end - shift.shift_start).total_seconds() // 3600)
     skills = sorted(
         row.name
         for row in (
@@ -1520,11 +1428,7 @@ def get_volunteer_detail(
         "role": persona.church_role,
         "team": latest_shift.team_name if latest_shift else None,
         "status": latest_shift.status if latest_shift else "inactive",
-        "joined_date": (
-            latest_shift.shift_start.isoformat()
-            if latest_shift and latest_shift.shift_start
-            else None
-        ),
+        "joined_date": (latest_shift.shift_start.isoformat() if latest_shift and latest_shift.shift_start else None),
         "total_hours": total_hours,
         "skills": skills,
     }
@@ -1564,12 +1468,13 @@ def delete_volunteer(
     if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     # Cancelar turnos futuros del voluntario (datos satélite, no Persona)
-    db.query(models.VolunteerShift).filter(
-        models.VolunteerShift.persona_id == persona_id
-    ).update({models.VolunteerShift.deleted_at: utc_now()}, synchronize_session=False)
+    db.query(models.VolunteerShift).filter(models.VolunteerShift.persona_id == persona_id).update(
+        {models.VolunteerShift.deleted_at: utc_now()}, synchronize_session=False
+    )
     # Soft-delete de la Persona
     persona.estado_vital = "INACTIVO"
     from datetime import date
+
     persona.unregistration_date = date.today()
     db.commit()
 
@@ -1618,9 +1523,9 @@ def get_crm_radar(
 
     tasks_q = db.query(models.CrmTask).filter(models.CrmTask.status == "pending")
     if user_sede:
-        tasks_q = tasks_q.join(
-            models.Persona, models.CrmTask.persona_id == models.Persona.id
-        ).filter(models.Persona.sede_id == user_sede)
+        tasks_q = tasks_q.join(models.Persona, models.CrmTask.persona_id == models.Persona.id).filter(
+            models.Persona.sede_id == user_sede
+        )
     pending_tasks = tasks_q.count()
 
     return {
@@ -1634,6 +1539,7 @@ def get_crm_radar(
 # ---------------------------------------------------------------------------
 # Task 3.2: Newsletter Leads Dashboard
 # ---------------------------------------------------------------------------
+
 
 @router.get("/leads/newsletter", response_model=dict)
 def get_newsletter_leads(
@@ -1675,27 +1581,24 @@ def get_newsletter_leads(
         query = query.filter(models.CasoCRM.created_at <= date_to)
 
     total = query.count()
-    cases = (
-        query.order_by(models.CasoCRM.created_at.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
-    )
+    cases = query.order_by(models.CasoCRM.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
     leads = []
     for case in cases:
         persona = case.persona
-        leads.append({
-            "case_id": case.id,
-            "persona_id": persona.id if persona else None,
-            "nombre_completo": persona.nombre_completo if persona else "",
-            "email": persona.email if persona else None,
-            "telefono": persona.telefono if persona else None,
-            "source": case.source,
-            "stage": case.stage,
-            "notes": case.notes,
-            "created_at": case.created_at.isoformat() if case.created_at else None,
-        })
+        leads.append(
+            {
+                "case_id": case.id,
+                "persona_id": persona.id if persona else None,
+                "nombre_completo": persona.nombre_completo if persona else "",
+                "email": persona.email if persona else None,
+                "telefono": persona.telefono if persona else None,
+                "source": case.source,
+                "stage": case.stage,
+                "notes": case.notes,
+                "created_at": case.created_at.isoformat() if case.created_at else None,
+            }
+        )
 
     return {
         "leads": leads,
@@ -1738,16 +1641,18 @@ def export_newsletter_leads_csv(
     rows = []
     for case in cases:
         persona = case.persona
-        rows.append({
-            "first_name": persona.first_name if persona else "",
-            "last_name": persona.last_name if persona else "",
-            "email": persona.email if persona else "",
-            "phone": persona.phone if persona else "",
-            "source": case.source,
-            "stage": case.stage,
-            "notes": case.notes or "",
-            "created_at": str(case.created_at) if case.created_at else "",
-        })
+        rows.append(
+            {
+                "first_name": persona.first_name if persona else "",
+                "last_name": persona.last_name if persona else "",
+                "email": persona.email if persona else "",
+                "phone": persona.phone if persona else "",
+                "source": case.source,
+                "stage": case.stage,
+                "notes": case.notes or "",
+                "created_at": str(case.created_at) if case.created_at else "",
+            }
+        )
 
     return {"rows": rows, "count": len(rows)}
 
@@ -1771,4 +1676,3 @@ def _redirect_consolidation_case(case_id: str):
 @router.post("/consolidation/cases/legacy")
 def _redirect_create_consolidation_case():
     return RedirectResponse(url="/api/v2/crm/casos", status_code=307)
-

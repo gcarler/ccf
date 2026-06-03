@@ -17,10 +17,10 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.core.config import get_settings
@@ -63,9 +63,11 @@ def _create_access_token(user_id: str, platform_role: str, sede_id: str = "") ->
 
 def _create_refresh_token(db: Session, user_id: uuid.UUID) -> str:
     import secrets
+
     token = secrets.token_urlsafe(48)
     expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
     from backend.models_auth import TokenSesion
+
     rt = TokenSesion(
         user_id=user_id,
         token=token,
@@ -82,7 +84,13 @@ def _log_security(db, user_id, evento, ip=None, ua=None, detalles=None):
     if user_id is None:
         return
     try:
-        ls = LogSeguridad(user_id=user_id, evento=evento, ip_address=ip, user_agent=ua, detalles=detalles or {})
+        ls = LogSeguridad(
+            user_id=user_id,
+            evento=evento,
+            ip_address=ip,
+            user_agent=ua,
+            detalles=detalles or {},
+        )
         db.add(ls)
         db.commit()
     except Exception:
@@ -109,6 +117,7 @@ def _set_cookies(response: Response, access_token: str, refresh_token: str):
 
 
 # ─── Schemas ──────────────────────────────────────────────────────────────
+
 
 class LoginRequest(BaseModel):
     email: str
@@ -137,21 +146,27 @@ class TokenResponse(BaseModel):
 
 # ─── Helper: resolve user ─────────────────────────────────────────────────
 
+
 def _resolve_user(db: Session, email: str) -> Usuario | None:
     return db.query(Usuario).filter(Usuario.email == email).first()
 
 
 def _resolve_token(db: Session, token: str) -> TokenResetContrasena | None:
-    return db.query(TokenResetContrasena).filter(
-        TokenResetContrasena.token == token,
-        TokenResetContrasena.used == False,
-        TokenResetContrasena.expires_at > _utcnow(),
-    ).first()
+    return (
+        db.query(TokenResetContrasena)
+        .filter(
+            TokenResetContrasena.token == token,
+            TokenResetContrasena.used.is_(False),
+            TokenResetContrasena.expires_at > _utcnow(),
+        )
+        .first()
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # 1. GOOGLE SSO LOGIN
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @router.get("/google")
 def google_login(request: Request):
@@ -223,7 +238,6 @@ def google_callback(
         raise HTTPException(status_code=400, detail=f"Error getting Google user info: {exc}")
 
     google_email = google_user.get("email", "")
-    google_name = google_user.get("name", "")
 
     if not google_email:
         raise HTTPException(status_code=400, detail="Google no proporcionó un email")
@@ -234,6 +248,7 @@ def google_callback(
     if not user:
         # Create silent auth_user linked to persona
         from backend import models
+
         persona = db.query(models.Persona).filter(models.Persona.email == google_email).first()
         if not persona:
             raise HTTPException(
@@ -241,9 +256,7 @@ def google_callback(
                 detail="No tienes una cuenta registrada en la plataforma. Contacta a un administrador.",
             )
 
-        lector_role = db.query(PlatformRoleDefinition).filter(
-            PlatformRoleDefinition.role == "LECTOR"
-        ).first()
+        lector_role = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.role == "LECTOR").first()
 
         user = Usuario(
             id=persona.id,
@@ -272,9 +285,7 @@ def google_callback(
     # 6. Get platform role name
     platform_role_name = "LECTOR"
     if user.platform_role_id:
-        pr = db.query(PlatformRoleDefinition).filter(
-            PlatformRoleDefinition.id == user.platform_role_id
-        ).first()
+        pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
         if pr:
             platform_role_name = pr.role
 
@@ -282,6 +293,7 @@ def google_callback(
     sede_id = ""
     try:
         from backend import models
+
         persona = db.query(models.Persona).filter(models.Persona.id == user.id).first()
         if persona and persona.sede_id:
             sede_id = str(persona.sede_id)
@@ -294,12 +306,16 @@ def google_callback(
 
     # 8. Set httpOnly cookies + redirect
     _set_cookies(response, access_token, refresh_token)
-    _log_security(db, user.id, "GOOGLE_LOGIN_EXITOSO", 
-                  ip=request.client.host if request and request.client else None,
-                  ua=request.headers.get("user-agent") if request else None)
+    _log_security(
+        db,
+        user.id,
+        "GOOGLE_LOGIN_EXITOSO",
+        ip=request.client.host if request and request.client else None,
+        ua=request.headers.get("user-agent") if request else None,
+    )
 
     # Redirect to frontend with token in hash
-    frontend_url = getattr(settings, 'frontend_url', 'http://localhost:3000')
+    frontend_url = getattr(settings, "frontend_url", "http://localhost:3000")
     return RedirectResponse(url=f"{frontend_url}/auth/callback?token={access_token}")
 
 
@@ -307,8 +323,12 @@ def google_callback(
 # 2. TRADITIONAL LOGIN (email + password)
 # ═══════════════════════════════════════════════════════════════════════
 
-@router.post("/login", response_model=TokenResponse,
-    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))])
+
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
 def login(
     payload: LoginRequest,
     request: Request,
@@ -321,7 +341,14 @@ def login(
     ua = request.headers.get("user-agent")
 
     if not user:
-        _log_security(db, None, "LOGIN_FALLIDO_NO_EXISTE", ip=ip, ua=ua, detalles={"email": payload.email})
+        _log_security(
+            db,
+            None,
+            "LOGIN_FALLIDO_NO_EXISTE",
+            ip=ip,
+            ua=ua,
+            detalles={"email": payload.email},
+        )
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
     # Check if user has a password at all
@@ -355,9 +382,7 @@ def login(
     # Get platform role
     platform_role_name = "LECTOR"
     if user.platform_role_id:
-        pr = db.query(PlatformRoleDefinition).filter(
-            PlatformRoleDefinition.id == user.platform_role_id
-        ).first()
+        pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
         if pr:
             platform_role_name = pr.role
 
@@ -380,6 +405,7 @@ def login(
 # ═══════════════════════════════════════════════════════════════════════
 # 3. INITIALIZE PASSWORD (for non-Gmail users)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @router.post("/initialize-password", response_model=dict)
 def initialize_password(
@@ -414,15 +440,20 @@ def initialize_password(
     ua = request.headers.get("user-agent")
     _log_security(db, user.id, "CONTRASENA_INICIALIZADA", ip=ip, ua=ua)
 
-    return {"status": "success", "message": "Contraseña configurada exitosamente. Ya puedes iniciar sesión."}
+    return {
+        "status": "success",
+        "message": "Contraseña configurada exitosamente. Ya puedes iniciar sesión.",
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # 4. CHANGE PASSWORD (self-service)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def require_auth_dep(request: Request, db: Session = Depends(get_db)):
     return _require_auth(request, db)
+
 
 @router.post("/change-password", response_model=dict)
 def change_password(
@@ -460,10 +491,11 @@ def change_password(
 # 5. AUTH CHECK (verify token + return user info)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @router.get("/me")
 def auth_me(request: Request, db: Session = Depends(get_db)):
     """Verifica el token actual y retorna información del usuario.
-    
+
     Incluye permisos RBAC y sede_id del JWT.
     """
     token = request.cookies.get(settings.access_token_cookie_name) or ""
@@ -494,12 +526,12 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
     permissions = {}
     try:
         from backend.models_kernel import PlatformRoleDefinition
-        pr = db.query(PlatformRoleDefinition).filter(
-            PlatformRoleDefinition.id == user.platform_role_id
-        ).first()
+
+        pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
         if pr and pr.permissions:
             if "*" in pr.permissions:
                 from backend.core.permissions import PERMISSIONS
+
                 for p_key in PERMISSIONS:
                     permissions[p_key] = "allow"
             else:
@@ -525,15 +557,16 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
 # 6. CHECK EMAIL (for login page — determine if needs password)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @router.get("/check-email")
 def check_email(email: str, db: Session = Depends(get_db)):
     """Verifica si un email existe y cómo debe iniciar sesión."""
     user = _resolve_user(db, email)
     is_gmail = email.lower().endswith("@gmail.com") if email else False
-    
+
     if not user:
         return {"exists": False, "is_gmail": is_gmail}
-    
+
     return {
         "exists": True,
         "is_gmail": is_gmail,
@@ -549,8 +582,10 @@ def check_email(email: str, db: Session = Depends(get_db)):
 # 7. REFRESH TOKEN (unified for v3)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class RefreshRequest(BaseModel):
     refresh_token: str
+
 
 @router.post("/refresh", response_model=dict)
 def refresh_token(
@@ -562,61 +597,65 @@ def refresh_token(
     """Refresca el access token usando un refresh token válido."""
     from datetime import datetime, timezone
     from backend.models_auth import TokenSesion
-    
-    rt = db.query(TokenSesion).filter(
-        TokenSesion.token == payload.refresh_token,
-        TokenSesion.revoked == False,
-    ).first()
-    
+
+    rt = (
+        db.query(TokenSesion)
+        .filter(
+            TokenSesion.token == payload.refresh_token,
+            TokenSesion.revoked.is_(False),
+        )
+        .first()
+    )
+
     if not rt:
         raise HTTPException(status_code=401, detail="Refresh token inválido")
-    
+
     if rt.expires_at.replace(tzinfo=None) < datetime.now(timezone.utc).replace(tzinfo=None):
         rt.revoked = True
         db.commit()
         raise HTTPException(status_code=401, detail="Refresh token expirado")
-    
+
     user = db.query(Usuario).filter(Usuario.id == rt.user_id).first()
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
-    
+
     # Get platform role
     platform_role_name = "LECTOR"
     sede_id = ""
     if user.platform_role_id:
-        pr = db.query(PlatformRoleDefinition).filter(
-            PlatformRoleDefinition.id == user.platform_role_id
-        ).first()
+        pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
         if pr:
             platform_role_name = pr.role
-    
+
     # Get sede_id
     try:
         from backend import models
+
         persona = db.query(models.Persona).filter(models.Persona.id == user.id).first()
         if persona and persona.sede_id:
             sede_id = str(persona.sede_id)
     except Exception:
         pass
-    
+
     # Rotate refresh token (security best practice)
     rt.revoked = True
     db.commit()
-    
+
     new_access = _create_access_token(str(user.id), platform_role_name, sede_id)
     new_refresh = _create_refresh_token(db, user.id)
-    
+
     _set_cookies(response, new_access, new_refresh)
-    
+
     ip = request.client.host if request.client else None
     ua = request.headers.get("user-agent")
     _log_security(db, user.id, "TOKEN_REFRESH", ip=ip, ua=ua)
-    
+
     return {
         "access_token": new_access,
         "token_type": "bearer",
         "refresh_token": new_refresh,
     }
+
 
 def _require_auth(request: Request, db: Session = Depends(get_db)):
     """FastAPI dependency: require valid JWT."""

@@ -356,10 +356,10 @@ class SesionGrupo(Base):
     def __init__(self, **kwargs):
         season_id = kwargs.pop("season_id", None)
         offering_amount = kwargs.pop("offering_amount", None)
-        reported_by_persona_id = kwargs.pop("reported_by_persona_id", None)
-        reported_at = kwargs.pop("reported_at", None)
-        novelty_type = kwargs.pop("novelty_type", None)
-        novelty_detail = kwargs.pop("novelty_detail", None)
+        kwargs.pop("reported_by_persona_id", None)
+        kwargs.pop("reported_at", None)
+        kwargs.pop("novelty_type", None)
+        kwargs.pop("novelty_detail", None)
         report_deadline = kwargs.pop("report_deadline", None)
         super().__init__(**kwargs)
         if season_id is not None:

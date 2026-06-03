@@ -250,13 +250,13 @@ def ask_optimus(
 
 
 # ── Agent Identity API (Canonical Person Model) ──
-from typing import List as TypingList
-from sqlalchemy.orm import Session
-from backend.models import User
-from sqlalchemy import or_
-from backend.models_agents import (Agent as AgentModel, AgentActivity,
+from typing import List as TypingList  # noqa: E402
+from sqlalchemy.orm import Session  # noqa: E402
+from backend.models import User  # noqa: E402
+from sqlalchemy import or_  # noqa: E402
+from backend.models_agents import (Agent as AgentModel, AgentActivity,  # noqa: E402
                                     AgentJourney, AgentRole)
-from backend.schemas.agents import (AgentCreate, AgentProfileResponse,
+from backend.schemas.agents import (AgentCreate, AgentProfileResponse,  # noqa: E402
                                      AgentResponse, AgentRoleCreate,
                                      AgentRoleResponse, AgentSearchResult,
                                      AgentTimelineItem, AgentUpdate,
@@ -371,7 +371,7 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
 # These are called from existing registration/member creation endpoints
 # to ensure a canonical Agent is created alongside User/Persona records.
 
-from backend.models_agents import AgentAuth as AgentModelAuth
+from backend.models_agents import AgentAuth as AgentModelAuth  # noqa: E402
 
 
 def sync_persona_to_agent(db: Session, persona) -> int:
@@ -463,10 +463,10 @@ def sync_user_to_agent(db: Session, user) -> int:
 
 
 # ── Knowledge Base Endpoints ──
-from backend.services.knowledge_base import (
+from backend.services.knowledge_base import (  # noqa: E402
     KnowledgeIndexer, AgentKnowledgeBase,
 )
-from sqlalchemy import func
+from sqlalchemy import func  # noqa: E402
 
 
 class KBRebuildResponse(BaseModel):
@@ -536,7 +536,7 @@ def kb_stats(
 
 
 # ── Conversation Endpoints ──
-from backend.services.conversation_memory import (
+from backend.services.conversation_memory import (  # noqa: E402
     create_conversation, get_user_conversations,
     get_conversation_messages, delete_conversation,
 )
@@ -595,8 +595,8 @@ def delete_conv(
 
 
 # ── SSE Event Stream ──
-from fastapi.responses import StreamingResponse
-import asyncio
+from fastapi.responses import StreamingResponse  # noqa: E402
+import asyncio  # noqa: E402
 
 
 async def _event_generator(user_id: int):

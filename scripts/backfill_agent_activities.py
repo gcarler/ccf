@@ -59,22 +59,22 @@ db.commit()
 print(f"  Event attendances: {migrated_ea} migrated")
 total += migrated_ea
 
-# 2. Glory House attendances
-gha_count = db.query(GloryHouseAttendance).count()
-print(f"Migrating {gha_count} glory house attendances...")
+# 2. Grupo attendances
+gha_count = db.query(Asistencia).count()
+print(f"Migrating {gha_count} grupo attendances...")
 migrated_gha = 0
-for gha in db.query(GloryHouseAttendance).all():
+for gha in db.query(Asistencia).all():
     member = db.query(Member).filter(Member.id == gha.member_id).first()
     if not member:
         continue
     agent = get_agent_for_member(member)
     if not agent:
         continue
-    session = db.query(GloryHouseSession).filter(GloryHouseSession.id == gha.session_id).first()
+    session = db.query(SesionGrupo).filter(SesionGrupo.id == gha.session_id).first()
     db.add(AgentActivity(
         agent_id=agent.id,
         activity_type="attendance",
-        source_type="glory_house",
+        source_type="grupo",
         source_id=gha.session_id,
         status="present" if gha.attended else "absent",
         notes=gha.absence_reason_detail if hasattr(gha, 'absence_reason_detail') else gha.absence_reason,
@@ -85,7 +85,7 @@ for gha in db.query(GloryHouseAttendance).all():
         db.commit()
         print(f"  {migrated_gha} migrated...")
 db.commit()
-print(f"  Glory house attendances: {migrated_gha} migrated")
+print(f"  grupo attendances: {migrated_gha} migrated")
 total += migrated_gha
 
 # 3. Course enrollments

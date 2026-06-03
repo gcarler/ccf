@@ -6,7 +6,7 @@
 
 ## HIGH (frontend llama endpoints inexistentes)  
 3. /api/projects/{id}/tasks → 404 — frontend 6 calls, no backend route
-4. /api/evangelism/glory-houses → debe funcionar vía alias
+4. /api/evangelism/grupos → debe funcionar vía alias
 
 ## MEDIUM
 5. /api/crm/members/donations → renombrado a /personas/donations

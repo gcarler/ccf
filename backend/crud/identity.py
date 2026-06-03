@@ -1,13 +1,12 @@
 """User, auth, badges, XP, and UI preferences CRUD."""
 
 import secrets
-from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.core.security import decrypt_data, encrypt_data, get_password_hash
+from backend.core.security import get_password_hash
 from backend.crud._utils import _utcnow
 
 # ── Users ──────────────────────────────────────────────

@@ -21,9 +21,9 @@ En el frontend de CCF **nunca** se usa la palabra "miembro" para referirse a una
 
 **Excepción:** La tabla/grupo de base de datos puede llamarse internamente "miembros" solo si se refiere a un rol específico (rol B del Axioma 2), pero la UI **siempre** debe presentarlo como "integrantes", "participantes" o "personas del grupo".
 
-### 2. Glory Houses → Grupos de Evangelismo / Casas de Gloria
+### 2. Grupos Comunitarios y de Evangelismo
 
-El concepto "Glory House" o "Casa de Gloria" en la UI debe presentarse como **Grupo de Evangelismo** o **Casa de Gloria**, dependiendo del contexto. En inglés técnico puede persistir `glory_houses` en la DB, pero el frontend etiqueta:
+El concepto de grupos comunitarios y de evangelismo debe presentarse como **Grupo de Evangelismo**, **Grupo Comunitario** o **Casa de Gloria**, dependiendo del contexto. El código, rutas y APIs deben usar nombres canónicos en español (`grupos`, `grupos_evangelismo`).
 
 | Contexto | Término UI |
 |---|---|

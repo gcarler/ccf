@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.models_shared import _utcnow
-from backend import models, schemas
+from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import require_active_user
 

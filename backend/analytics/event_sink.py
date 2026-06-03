@@ -15,7 +15,7 @@ except ImportError:  # pragma: no cover
     duckdb = None  # type: ignore
 
 if TYPE_CHECKING:  # pragma: no cover
-    from duckdb import DuckDBPyConnection
+    pass
 
 from backend.core.config import get_settings
 

@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -99,7 +99,7 @@ def public_register_event(
 @router.get("/courses", response_model=list[schemas.Course])
 def public_list_courses(db: Session = Depends(get_db)):
     """Retorna la lista de cursos publicos disponibles."""
-    courses = db.query(models.Course).filter(models.Course.is_published == True).all()  # Cursos públicos globales (landing page) — OK sin sede_id
+    courses = db.query(models.Course).filter(models.Course.is_published).all()  # Cursos públicos globales (landing page) — OK sin sede_id
     for c in courses:
         c.lesson_count = (
             db.query(models.Lesson).filter(models.Lesson.course_id == c.id).count()
@@ -112,7 +112,7 @@ def public_get_course(course_id: int, db: Session = Depends(get_db)):
     """Retorna los detalles de un curso especifico."""
     course = (
         db.query(models.Course)
-        .filter(models.Course.id == course_id, models.Course.is_published == True)
+        .filter(models.Course.id == course_id, models.Course.is_published)
         .first()
     )
     if not course:
@@ -143,7 +143,7 @@ def public_course_enroll(
     """Inscripcion publica a un curso."""
     course = (
         db.query(models.Course)
-        .filter(models.Course.id == course_id, models.Course.is_published == True)
+        .filter(models.Course.id == course_id, models.Course.is_published)
         .first()
     )
     if not course:
