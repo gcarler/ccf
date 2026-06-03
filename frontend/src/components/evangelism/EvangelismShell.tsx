@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ViewType } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
-import { ShieldAlert, Flame, Calendar, Scan, Zap } from 'lucide-react';
+import { ShieldAlert, Flame, Calendar, Scan, Zap, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
@@ -13,6 +13,12 @@ export interface BreadcrumbOption {
     label: string;
     href?: string;
     icon?: LucideIcon;
+}
+
+interface SidebarGroup {
+    id: number;
+    name: string;
+    estrategiaId?: string;
 }
 
 interface EvangelismShellProps {
@@ -29,6 +35,7 @@ interface EvangelismShellProps {
     onColumns?: () => void;
     onGroup?: () => void;
     onMore?: () => void;
+    sidebarGroups?: SidebarGroup[];
 }
 
 interface StrategyItem {
@@ -49,7 +56,8 @@ export default function EvangelismShell({
     onFilter,
     onColumns,
     onGroup,
-    onMore
+    onMore,
+    sidebarGroups,
 }: EvangelismShellProps) {
     const { user, loading, token, hasModuleAccess } = useAuth();
     const role = (user?.role || '').toLowerCase();
@@ -90,6 +98,17 @@ export default function EvangelismShell({
                 })),
             ],
         },
+        ...(sidebarGroups && sidebarGroups.length > 0 ? [{
+            title: 'Grupos',
+            items: sidebarGroups.map(g => ({
+                id: `ev-group-${g.id}`,
+                label: g.name,
+                href: g.estrategiaId
+                    ? `/plataforma/evangelism/strategies/${g.estrategiaId}#group-${g.id}`
+                    : '#',
+                icon: Users,
+            })),
+        }] : []),
         {
             title: 'Herramientas',
             items: [

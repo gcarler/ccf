@@ -285,7 +285,12 @@ export default function StrategyDetailPage() {
             const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token });
             setGroups((all || []).filter(g => (g as any).evangelism_strategy_id === id));
         } catch { toast.error('Error al cargar grupos'); }
-    }, [id]);
+    }, [id, token]);
+
+    // Cargar grupos al montar para que aparezcan en el sidebar
+    useEffect(() => {
+        if (token) fetchGroups();
+    }, [fetchGroups, token]);
 
     const fetchMetrics = useCallback(async () => {
         try {
@@ -601,11 +606,14 @@ export default function StrategyDetailPage() {
     }
 
     return (
-        <EvangelismShell breadcrumbs={[
-            { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
-            { label: 'Estrategias', href: '/plataforma/evangelism' },
-            { label: strategy.name }
-        ]}>
+        <EvangelismShell
+            breadcrumbs={[
+                { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
+                { label: 'Estrategias', href: '/plataforma/evangelism' },
+                { label: strategy.name }
+            ]}
+            sidebarGroups={groups.map(g => ({ id: g.id, name: g.name, estrategiaId: id as string }))}
+        >
             <div className="p-4 lg:p-3 space-y-3 animate-fade-in px-3 md:px-6 lg:px-8 xl:px-12">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4">
