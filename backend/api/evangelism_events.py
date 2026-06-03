@@ -606,7 +606,7 @@ def sync_event_assignments(
     db.query(models.EventAssignment).filter(
         models.EventAssignment.event_id == event_id,
         models.EventAssignment.session_date == payload.session_date,
-    ).delete()
+    ).update({models.EventAssignment.deleted_at: _utcnow()}, synchronize_session=False)
 
     for assignment in payload.assignments:
         db.add(

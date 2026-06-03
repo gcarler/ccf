@@ -24,11 +24,11 @@ interface FormValues {
 const PRIORITIES = [
     { value: 'urgent', label: 'Urgente', color: 'bg-rose-500', iconColor: 'text-rose-500' },
     { value: 'high', label: 'Alta', color: 'bg-amber-500', iconColor: 'text-amber-500' },
-    { value: 'medium', label: 'Normal', color: 'bg-blue-500', iconColor: 'text-blue-500' },
+    { value: 'medium', label: 'Normal', color: 'bg-[hsl(var(--primary))]', iconColor: 'text-[hsl(var(--primary))]' },
     { value: 'low', label: 'Baja', color: 'bg-slate-500', iconColor: 'text-slate-500' }
 ];
 
-export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onClose, onSubmit }: Props) {
+export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onClose, onSubmit }: Props) {
     const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<FormValues>({
         defaultValues: {
             title: '',
@@ -67,7 +67,7 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
                         type="button"
                         onClick={handleSubmit(onFormSubmit)}
                         disabled={isSubmitting}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isSubmitting ? <Loader2 className="animate-spin" size={12} /> : <CheckSquare size={12} />}
                         {isSubmitting ? 'Creando...' : 'Crear Tarea'}

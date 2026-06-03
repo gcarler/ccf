@@ -58,7 +58,7 @@ export default function SpiritualCertificatesPanel() {
                                 initial={{ opacity: 0, y: 15 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.1, type: 'spring', damping: 20 }}
-                                className="group relative bg-white dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05] rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-blue-500/5 transition-all hover:border-blue-500/20"
+                                className="group relative bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05] rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-blue-500/5 transition-all hover:border-blue-500/20"
                             >
                                 <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:opacity-10 transition-opacity">
                                     <Award size={80} strokeWidth={1} />
@@ -67,13 +67,13 @@ export default function SpiritualCertificatesPanel() {
                                 <div className="flex items-start justify-between mb-3 relative z-10">
                                     <div className={clsx(
                                         "size-7 rounded-lg flex items-center justify-center border-2 shadow-lg transition-transform group-hover:scale-110",
-                                        isSacramento ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-500" : "bg-blue-500/10 border-blue-500/20 text-blue-500"
+                                        isSacramento ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-500" : "bg-blue-500/10 border-blue-500/20 text-[hsl(var(--primary))]"
                                     )}>
                                         {isSacramento ? <Waves size={24} /> : <FileCheck size={24} />}
                                     </div>
                                     <span className={clsx(
                                         "text-[9px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-md border-2",
-                                        isSacramento ? "bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/40 dark:border-cyan-500/30" : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/40 dark:border-blue-500/30"
+                                        isSacramento ? "bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/40 dark:border-cyan-500/30" : "bg-blue-50 text-[hsl(var(--primary))] border-blue-100 dark:bg-blue-900/40 dark:border-blue-500/30"
                                     )}>
                                         {cert.certificate_type || 'ACADEMIA'}
                                     </span>
@@ -94,10 +94,10 @@ export default function SpiritualCertificatesPanel() {
                                         <code className="text-[10px] font-mono text-slate-500 dark:text-slate-400 font-bold tracking-tight">{cert.certificate_code}</code>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="px-3 py-2.5 bg-slate-900 dark:bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wider rounded-lg shadow-lg active:scale-95 transition-all flex items-center gap-2">
+                                        <button className="px-3 py-2.5 bg-slate-900 dark:bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wider rounded-lg shadow-lg active:scale-95 transition-all flex items-center gap-2">
                                             <Download size={14} /> PDF
                                         </button>
-                                        <button className="p-2.5 bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-blue-500 rounded-lg transition-all active:scale-90">
+                                        <button className="p-2.5 bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-[hsl(var(--primary))] rounded-lg transition-all active:scale-90">
                                             <ExternalLink size={16} />
                                         </button>
                                     </div>

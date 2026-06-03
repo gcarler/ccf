@@ -37,7 +37,7 @@ export default function EmptyState({
             {onAction && (
                 <button 
                     onClick={onAction}
-                    className="flex items-center gap-2 px-3 py-3 bg-blue-600 text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
                     <Plus size={16} /> {actionLabel || 'Añadir Nuevo'}
                 </button>

@@ -86,7 +86,7 @@ export default function AcademyForumPage() {
                 rightActions={
                     <button
                         onClick={() => setIsCreateOpen(true)}
-                        className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-white shadow-xl shadow-blue-500/20 transition-all active:scale-95"
+                        className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-white shadow-xl shadow-blue-500/20 transition-all active:scale-95"
                     >
                         <Plus size={14} /> Iniciar Debate
                     </button>
@@ -96,7 +96,7 @@ export default function AcademyForumPage() {
             <main className="flex-1 overflow-y-auto p-4 scrollbar-thin lg:p-4">
                 <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 lg:grid-cols-12">
                     <aside className="space-y-3 lg:col-span-3">
-                        <section className="space-y-3 rounded-md border border-slate-200 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
+                        <section className="space-y-3 rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
                             <h3 className="px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Categorias</h3>
                             <div className="space-y-1">
                                 {categories.map((category) => (
@@ -106,18 +106,18 @@ export default function AcademyForumPage() {
                                         className={clsx(
                                             "flex w-full items-center justify-between rounded-lg p-4 text-[12px] font-bold transition-all",
                                             activeCategory === category
-                                                ? "bg-blue-50 text-blue-600 dark:bg-blue-600/10"
+                                                ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-600/10"
                                                 : "text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5"
                                         )}
                                     >
                                         {category}
-                                        {activeCategory === category && <div className="size-1.5 rounded-full bg-blue-600 shadow-[0_0_8px_#2563eb]" />}
+                                        {activeCategory === category && <div className="size-1.5 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_#2563eb]" />}
                                     </button>
                                 ))}
                             </div>
                         </section>
 
-                        <section className="relative overflow-hidden rounded-lg bg-blue-600 p-4 text-white shadow-2xl">
+                        <section className="relative overflow-hidden rounded-lg bg-[hsl(var(--primary))] p-4 text-white shadow-2xl">
                             <div className="absolute -right-10 -top-5 size-10 rounded-full bg-white/10 blur-3xl" />
                             <div className="relative z-10 space-y-4">
                                 <div className="flex items-center gap-3">
@@ -139,7 +139,7 @@ export default function AcademyForumPage() {
                                     value={search}
                                     onChange={(event) => setSearch(event.target.value)}
                                     placeholder="Buscar temas..."
-                                    className="w-full rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-bold outline-none transition-all focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
+                                    className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-1.5 text-sm font-bold outline-none transition-all focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
                                 />
                                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                             </div>
@@ -158,19 +158,19 @@ export default function AcademyForumPage() {
                                     key={thread.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="group cursor-pointer rounded-md border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-500/20 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
+                                    className="group cursor-pointer rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-sm transition-all hover:border-blue-500/20 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
                                 >
                                     <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
                                         <div className="flex shrink-0 flex-col items-center gap-1 rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-white/5 dark:bg-white/5">
-                                            <ThumbsUp size={18} className="text-slate-400 transition-colors group-hover:text-blue-600" />
+                                            <ThumbsUp size={18} className="text-slate-400 transition-colors group-hover:text-[hsl(var(--primary))]" />
                                             <span className="font-semibold text-slate-700 dark:text-slate-200">{thread.upvotes}</span>
                                         </div>
                                         <div className="flex-1 space-y-3">
                                             <div className="flex items-center gap-3">
-                                                <span className="rounded-full bg-blue-50 px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">{thread.category}</span>
+                                                <span className="rounded-full bg-blue-50 px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-900/20 dark:text-[hsl(var(--primary))]">{thread.category}</span>
                                                 {thread.is_resolved && <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-emerald-600 dark:bg-emerald-900/20"><CheckCircle2 size={12} /> Resuelto</span>}
                                             </div>
-                                            <h4 className="text-base font-bold tracking-tight text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white">{thread.title}</h4>
+                                            <h4 className="text-base font-bold tracking-tight text-slate-900 transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">{thread.title}</h4>
                                             <div className="flex items-center gap-4 text-slate-400">
                                                 <div className="flex items-center gap-1.5"><User size={14} /><span className="text-[11px] font-bold">{thread.author}</span></div>
                                                 <div className="size-1 rounded-full bg-slate-300" />
@@ -182,7 +182,7 @@ export default function AcademyForumPage() {
                                                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{thread.replies}</p>
                                                 <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Respuestas</p>
                                             </div>
-                                            <ChevronRight size={24} className="text-slate-200 transition-all group-hover:translate-x-1 group-hover:text-blue-600" />
+                                            <ChevronRight size={24} className="text-slate-200 transition-all group-hover:translate-x-1 group-hover:text-[hsl(var(--primary))]" />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -219,7 +219,7 @@ export default function AcademyForumPage() {
                             {categories.filter((category) => category !== "Todos").map((category) => <option key={category} value={category}>{category}</option>)}
                         </select>
                     </div>
-                    <button disabled={saving} className="w-full rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white disabled:opacity-60">
+                    <button disabled={saving} className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white disabled:opacity-60">
                         {saving ? "Publicando..." : "Publicar debate"}
                     </button>
                 </form>

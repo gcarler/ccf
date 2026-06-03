@@ -151,7 +151,7 @@ export default function SupportPage() {
     useRegisterCommands('support-hub', supportCommands);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in">
             <WorkspaceToolbar 
                 breadcrumbs={[
                     { label: 'CCF', icon: Layout },
@@ -204,7 +204,7 @@ export default function SupportPage() {
                 ) : viewType === 'list' ? (
                     <div className="mx-auto max-w-5xl space-y-3 p-3">
                         {filteredTickets.map((ticket) => (
-                            <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-lg border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/5">
+                            <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{ticket.subject}</p>
@@ -226,7 +226,7 @@ export default function SupportPage() {
                                 </div>
                                 <div className="space-y-2">
                                     {column.tickets.map((ticket) => (
-                                        <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-md border border-slate-200 bg-white p-3 text-left shadow-sm dark:border-white/10 dark:bg-white/5">
+                                        <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 text-left shadow-sm dark:border-white/10 dark:bg-white/5">
                                             <p className="line-clamp-2 text-xs font-semibold text-slate-900 dark:text-white">{ticket.subject}</p>
                                             <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{ticket.category || 'General'}</p>
                                         </button>
@@ -264,7 +264,7 @@ export default function SupportPage() {
                                 <p className="text-blue-100 font-medium text-lg mb-3 max-w-xl">Nuestro equipo pastoral y técnico está listo para apoyarte en lo que necesites.</p>
                                 <button 
                                     onClick={() => setIsCreateDrawerOpen(true)}
-                                    className="px-4 py-1.5 bg-white text-blue-600 rounded-lg font-black text-sm uppercase tracking-wide shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                    className="px-4 py-1.5 bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] rounded-lg font-black text-sm uppercase tracking-wide shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
                                 >
                                     Abrir Nuevo Ticket
                                 </button>
@@ -272,12 +272,12 @@ export default function SupportPage() {
                         </section>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg shadow-sm space-y-4">
-                                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600"><Mail size={24} /></div>
+                            <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg shadow-sm space-y-4">
+                                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-[hsl(var(--primary))]"><Mail size={24} /></div>
                                 <h3 className="text-xl font-bold">Correo Electrónico</h3>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm">Escríbenos directamente a soporte@ccf.org para consultas institucionales.</p>
                             </div>
-                            <div className="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg shadow-sm space-y-4">
+                            <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg shadow-sm space-y-4">
                                 <div className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600"><MessageSquare size={24} /></div>
                                 <h3 className="text-xl font-bold">WhatsApp</h3>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm">Respuesta rápida para emergencias pastorales y dudas técnicas.</p>
@@ -289,7 +289,7 @@ export default function SupportPage() {
                             {tickets.length === 0 ? (
                                 <div className="p-4 text-center border-2 border-dashed border-slate-100 dark:border-white/5 rounded-lg text-slate-400 text-sm font-medium italic">No has abierto tickets recientemente.</div>
                             ) : tickets.map(ticket => (
-                                <div key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg hover:border-blue-500/30 transition-all cursor-pointer flex items-center justify-between group">
+                                <div key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg hover:border-blue-500/30 transition-all cursor-pointer flex items-center justify-between group">
                                     <div className="flex items-center gap-4">
                                         <div className="size-10 rounded-md bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400"><FileText size={20} /></div>
                                         <div>
@@ -300,9 +300,9 @@ export default function SupportPage() {
                                     <div className="flex items-center gap-4">
                                         <div className={clsx(
                                             "px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-tight",
-                                            ticket.status === 'abierto' ? "bg-blue-50 text-blue-600" : "bg-emerald-50 text-emerald-600"
+                                            ticket.status === 'abierto' ? "bg-blue-50 text-[hsl(var(--primary))]" : "bg-emerald-50 text-emerald-600"
                                         )}>{ticket.status}</div>
-                                        <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+                                        <ChevronRight size={16} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors" />
                                     </div>
                                 </div>
                             ))}
@@ -319,7 +319,7 @@ export default function SupportPage() {
                 actions={
                     <>
                         <button className="px-4 py-2 text-[11px] font-bold text-slate-500" onClick={() => setIsDrawerOpen(false)}>Cerrar</button>
-                        <button className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Enviar Mensaje</button>
+                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Enviar Mensaje</button>
                     </>
                 }
             >
@@ -343,11 +343,11 @@ export default function SupportPage() {
 
                     <section className="space-y-4 pt-6 border-t border-slate-100 dark:border-white/5">
                         <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2">
-                            <History size={14} className="text-blue-500" /> Historial de Resolución
+                            <History size={14} className="text-[hsl(var(--primary))]" /> Historial de Resolución
                         </h4>
                         <div className="space-y-3">
                             <div className="flex gap-4 p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/5">
-                                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 shrink-0"><Send size={14} /></div>
+                                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-[hsl(var(--primary))] shrink-0"><Send size={14} /></div>
                                 <div><p className="text-[12px] font-bold text-slate-700 dark:text-slate-200">Ticket Recibido</p><p className="text-[10px] text-slate-400">Asignado automáticamente al departamento correspondiente.</p></div>
                             </div>
                         </div>
@@ -370,7 +370,7 @@ export default function SupportPage() {
                             form="create-ticket-form"
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
                             Enviar Solicitud

@@ -26,14 +26,14 @@ export default function CertificateView({ data }: CertificateProps) {
     return (
         <div className="max-w-4xl mx-auto space-y-3 animate-fade-in">
             {/* Professional Certificate Render */}
-            <div className="relative aspect-[1.414/1] w-full bg-white dark:bg-slate-900 border-[16px] border-slate-900 dark:border-blue-900/20 shadow-2xl p-4 flex flex-col items-center justify-between text-center overflow-hidden group">
+            <div className="relative aspect-[1.414/1] w-full bg-[hsl(var(--bg-primary))] dark:bg-slate-900 border-[16px] border-slate-900 dark:border-blue-900/20 shadow-2xl p-4 flex flex-col items-center justify-between text-center overflow-hidden group">
                 {/* Background Decoration */}
                 <div className="absolute top-0 right-0 w-64 h-48 bg-slate-50 dark:bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-64 h-48 bg-slate-50 dark:bg-blue-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
                 {/* Header */}
                 <div className="relative z-10 space-y-4">
-                    <div className="size-10 bg-slate-900 dark:bg-blue-600 rounded-lg mx-auto flex items-center justify-center text-white shadow-xl">
+                    <div className="size-10 bg-slate-900 dark:bg-[hsl(var(--primary))] rounded-lg mx-auto flex items-center justify-center text-white shadow-xl">
                         <Award size={40} />
                     </div>
                     <h1 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Certificado de Logro Academico</h1>
@@ -50,7 +50,7 @@ export default function CertificateView({ data }: CertificateProps) {
 
                     <div className="max-w-lg mx-auto">
                         <p className="text-slate-500 dark:text-slate-400 font-medium">Ha completado satisfactoriamente los requisitos academicos para el curso de:</p>
-                        <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-2">
+                        <h3 className="text-xl font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] mt-2">
                             {data.enrollment.course.title}
                         </h3>
                     </div>
@@ -64,7 +64,7 @@ export default function CertificateView({ data }: CertificateProps) {
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
-                        <div className="relative size-10 border-2 border-slate-100 dark:border-white/10 rounded-lg overflow-hidden bg-white p-1">
+                        <div className="relative size-10 border-2 border-slate-100 dark:border-white/10 rounded-lg overflow-hidden bg-[hsl(var(--bg-primary))] p-1">
                             <Image
                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : 'https://ccf.la')}/academy/certificates/${data.certificate_code}`}
                                 alt="QR Code"
@@ -85,10 +85,10 @@ export default function CertificateView({ data }: CertificateProps) {
 
             {/* Actions */}
             <div className="flex items-center justify-center gap-4">
-                <button className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 shadow-xl active:scale-95 transition-all">
+                <button className="px-3 py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 shadow-xl active:scale-95 transition-all">
                     <Download size={18} /> Descargar PDF
                 </button>
-                <button className="px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:bg-slate-50 transition-all active:scale-95">
+                <button className="px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:bg-slate-50 transition-all active:scale-95">
                     <Share2 size={18} /> Compartir Logro
                 </button>
             </div>

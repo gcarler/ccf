@@ -10,7 +10,7 @@ import { apiFetch } from '@/lib/http';
 
 const CHANNELS = [
     { icon: MessageSquare, label: 'Chat en Vivo', desc: 'Lun-Vie 8am-6pm', color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10', badge: 'En linea' },
-    { icon: Mail, label: 'Correo Electronico', desc: 'soporte@ccfaro.org', color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10', badge: 'Responde en 24h' },
+    { icon: Mail, label: 'Correo Electronico', desc: 'soporte@ccfaro.org', color: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10', badge: 'Responde en 24h' },
     { icon: Phone, label: 'Linea Directa', desc: '+57 (8) 420 0000', color: 'text-sky-500 bg-sky-50 dark:bg-sky-500/10', badge: 'Horario habil' },
 ];
 
@@ -75,7 +75,7 @@ export default function SupportContactPage() {
                 <p className="text-[11px] text-slate-400 mt-1">Numero de caso: CCF-{ticketId}</p>
             </motion.div>
             <button onClick={resetForm}
-                className="px-3 py-3 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
+                className="px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-semibold hover:bg-[hsl(var(--primary))] transition-all shadow-lg shadow-blue-500/20">
                 Enviar otra consulta
             </button>
         </div>
@@ -83,7 +83,7 @@ export default function SupportContactPage() {
 
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
-            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-white dark:bg-[#1a1d27]">
+            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
                 <LifeBuoy size={16} className="text-rose-500" />
                 <h1 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Contacto Directo</h1>
             </header>
@@ -93,7 +93,7 @@ export default function SupportContactPage() {
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         {CHANNELS.map((channel, index) => (
                             <motion.div key={channel.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}
-                                className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm hover:shadow-md transition-all group">
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm hover:shadow-md transition-all group">
                                 <div className={clsx('size-6 rounded-md flex items-center justify-center mb-3', channel.color)}>
                                     <channel.icon size={20} />
                                 </div>
@@ -107,7 +107,7 @@ export default function SupportContactPage() {
                     </div>
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                        className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-4 shadow-sm">
+                        className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-4 shadow-sm">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Enviar Mensaje</p>
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -144,7 +144,7 @@ export default function SupportContactPage() {
                                     {['normal', 'alta', 'urgente'].map((priority) => (
                                         <button type="button" key={priority} onClick={() => setForm((current) => ({ ...current, priority }))}
                                             className={clsx('flex-1 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border-2 transition-all',
-                                                form.priority === priority ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600'
+                                                form.priority === priority ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]'
                                                     : 'border-slate-200 dark:border-white/5 text-slate-400 hover:border-slate-300')}>
                                             {priority}
                                         </button>
@@ -160,7 +160,7 @@ export default function SupportContactPage() {
                             </div>
 
                             <button type="submit" disabled={submitting}
-                                className="w-full flex items-center justify-center gap-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-black text-[12px] uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
+                                className="w-full flex items-center justify-center gap-2 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[12px] uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
                                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                                 {submitting ? 'Enviando...' : 'Enviar Mensaje'}
                             </button>

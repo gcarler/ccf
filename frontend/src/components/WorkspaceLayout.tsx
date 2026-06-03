@@ -13,7 +13,7 @@ import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useCreation } from '@/context/CreationContext';
-import UniversalCreationModal from '@/components/ui/UniversalCreationModal';
+import UniversalCreationDrawer from '@/components/ui/UniversalCreationDrawer';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -258,12 +258,12 @@ function WorkspaceLayoutInner({
     const currentS2Width = layers.S2 ? `${s2WidthNum}px` : '0px';
 
     if (!isMounted) return (
-        <div className="h-screen w-full bg-white dark:bg-[#111213] flex items-center justify-center">
+        <div className="h-screen w-full bg-[hsl(var(--bg-primary))] dark:bg-[#111213] flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
                 <div className="size-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-xs">
                     CCF
                 </div>
-                <div className="size-1.5 rounded-full bg-blue-500 animate-pulse" />
+                <div className="size-1.5 rounded-full bg-[hsl(var(--primary))] animate-pulse" />
             </div>
         </div>
     );
@@ -282,8 +282,8 @@ function WorkspaceLayoutInner({
                 className={clsx(
                     "p-1.5 rounded-md transition-all",
                     isFocusMode
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-                        : "text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-white/5"
+                        ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]"
+                        : "text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-slate-100 dark:hover:bg-white/5"
                 )}
                 aria-label={isFocusMode ? "Salir de modo enfoque" : "Entrar en modo enfoque"}
                 title={isFocusMode ? "Salir de modo enfoque" : "Modo enfoque"}
@@ -293,7 +293,7 @@ function WorkspaceLayoutInner({
 
             <button
                 onClick={() => setShowInbox(!showInbox)}
-                className="p-1.5 text-slate-400 hover:text-blue-600 relative rounded-md hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                className="p-1.5 text-slate-400 hover:text-[hsl(var(--primary))] relative rounded-md hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
                 aria-label="Notificaciones"
             >
                 <Bell size={14} />
@@ -318,13 +318,13 @@ function WorkspaceLayoutInner({
             <div className="workspace-platform flex flex-col h-screen w-full bg-slate-50 dark:bg-[#111213] overflow-hidden font-display relative transition-colors duration-500">
 
                 <motion.div
-                    className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600 z-[10000]"
+                    className="absolute top-0 left-0 right-0 h-[2px] bg-[hsl(var(--primary))] z-[10000]"
                     initial={{ scaleX: 0, originX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ duration: 0.4 }}
                 />
 
-                <UniversalCreationModal isOpen={isModalOpen} onClose={closeModal} initialType={defaultType} />
+                <UniversalCreationDrawer isOpen={isModalOpen} onClose={closeModal} initialType={defaultType} />
 
                 {/* ── UNIFIED TOOLBAR / HEADER (100% WIDTH) ── */}
                 <div className="w-full shrink-0 z-[60]">
@@ -362,7 +362,7 @@ function WorkspaceLayoutInner({
                             onAddOption={onAddOption}
                         />
                     ) : (
-                        <header className="h-10 border-b border-slate-100/80 dark:border-white/[0.05] flex items-center px-3 gap-2 shrink-0 bg-white dark:bg-[#141517] relative">
+                        <header className="h-10 border-b border-slate-100/80 dark:border-white/[0.05] flex items-center px-3 gap-2 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#141517] relative">
                             {depth > 1 && (
                                 <button
                                     onClick={onBack}
@@ -374,7 +374,7 @@ function WorkspaceLayoutInner({
 
                             <div className="flex-1 flex items-center gap-2 overflow-hidden min-w-0">
                                 <div className="flex items-center gap-1.5 min-w-0">
-                                    <div className="size-1.5 rounded-full bg-blue-500 shrink-0" />
+                                    <div className="size-1.5 rounded-full bg-[hsl(var(--primary))] shrink-0" />
                                     <h1 className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate tracking-tight leading-none">
                                         {displayTitle}
                                     </h1>
@@ -383,7 +383,7 @@ function WorkspaceLayoutInner({
                             {defaultRightActions}
                             <button
                                 onClick={logout}
-                                className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all text-slate-400 hover:text-red-500"
+                                className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all text-slate-400 hover:text-[hsl(var(--destructive))]"
                                 title="Cerrar sesión"
                             >
                                 <LogOut size={14} />
@@ -442,14 +442,14 @@ function WorkspaceLayoutInner({
                                     onMouseDown={handleMouseDownS2}
                                 >
                                     <div className={clsx(
-                                        "w-[2px] h-full bg-blue-500 opacity-0 transition-opacity",
+                                        "w-[2px] h-full bg-[hsl(var(--primary))] opacity-0 transition-opacity",
                                         isDraggingS2 ? "opacity-100" : "group-hover:opacity-100"
                                     )} />
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#141517] shadow-[inset_1px_0_0_rgba(0,0,0,0.03)] dark:shadow-none relative z-10 border-l border-slate-100 dark:border-white/5 overflow-hidden">
+                        <div className="flex-1 flex flex-col min-w-0 bg-[hsl(var(--bg-primary))] dark:bg-[#141517] shadow-[inset_1px_0_0_rgba(0,0,0,0.03)] dark:shadow-none relative z-10 border-l border-slate-100 dark:border-white/5 overflow-hidden">
                             <div className="flex-1 overflow-hidden relative">
                                 <ErrorBoundary moduleName={displayTitle}>
                                     {children}

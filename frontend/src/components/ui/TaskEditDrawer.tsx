@@ -72,7 +72,7 @@ const PRIORITY_OPTIONS = [
 
 const STATUS_OPTIONS = [
     { value: 'todo',        label: 'Por hacer',   color: 'text-slate-600 dark:text-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800/60',      icon: Circle },
-    { value: 'in_progress', label: 'En progreso', color: 'text-blue-600 dark:text-blue-400',     bg: 'bg-blue-50 dark:bg-blue-500/10',          icon: Clock },
+    { value: 'in_progress', label: 'En progreso', color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     bg: 'bg-blue-50 dark:bg-blue-500/10',          icon: Clock },
     { value: 'done',        label: 'Completada',  color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10',  icon: CheckCircle2 },
     { value: 'blocked',     label: 'Bloqueada',   color: 'text-rose-600 dark:text-rose-400',     bg: 'bg-rose-50 dark:bg-rose-500/10',          icon: AlertTriangle },
 ];
@@ -238,7 +238,7 @@ export default function TaskEditDrawer({
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: '100%', opacity: 0 }}
                         transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-                        className="fixed right-0 top-0 bottom-0 w-full max-w-[460px] z-[101] flex flex-col bg-white dark:bg-[#18191c] shadow-[-32px_0_80px_rgba(0,0,0,0.14)] dark:shadow-[-32px_0_80px_rgba(0,0,0,0.5)]"
+                        className="fixed right-0 top-0 bottom-0 w-full max-w-[460px] z-[101] flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#18191c] shadow-[-32px_0_80px_rgba(0,0,0,0.14)] dark:shadow-[-32px_0_80px_rgba(0,0,0,0.5)]"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Priority accent bar — top */}
@@ -272,7 +272,7 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-48 bg-white dark:bg-[#222326] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#222326] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {STATUS_OPTIONS.map(opt => (
                                                         <button key={opt.value}
@@ -305,7 +305,7 @@ export default function TaskEditDrawer({
                                     <AnimatePresence mode="wait">
                                         {saving ? (
                                             <motion.div key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-500/10">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10">
                                                 <Loader2 size={11} className="animate-spin" /> Guardando...
                                             </motion.div>
                                         ) : saved ? (
@@ -316,7 +316,7 @@ export default function TaskEditDrawer({
                                         ) : dirty ? (
                                             <motion.button key="save" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                                                 onClick={handleSave}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-blue-600 text-white shadow-md shadow-blue-500/25 hover:bg-blue-700 active:scale-95 transition-all">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[hsl(var(--primary))] text-white shadow-md shadow-blue-500/25 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                                                 <Save size={11} /> Guardar
                                             </motion.button>
                                         ) : null}
@@ -369,7 +369,7 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-44 bg-white dark:bg-[#222326] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#222326] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {PRIORITY_OPTIONS.map(opt => (
                                                         <button key={opt.value}
@@ -438,8 +438,8 @@ export default function TaskEditDrawer({
                                             <div className="size-6 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm">
                                                 <Sparkles size={11} className="text-white" />
                                             </div>
-                                            <span className="font-semibold text-blue-700 dark:text-blue-300 tracking-wide uppercase">MESH AI</span>
-                                            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-semibold rounded-md uppercase tracking-wider">Beta</span>
+                                            <span className="font-semibold text-[hsl(var(--primary))] dark:text-blue-300 tracking-wide uppercase">MESH AI</span>
+                                            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-semibold rounded-md uppercase tracking-wider">Beta</span>
                                         </div>
                                         <button
                                             onClick={handleAiSuggest}
@@ -463,7 +463,7 @@ export default function TaskEditDrawer({
                                                 </motion.p>
                                             ) : aiLoading ? (
                                                 <motion.div key="ai-loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                    className="flex items-center gap-2 text-blue-500">
+                                                    className="flex items-center gap-2 text-[hsl(var(--primary))]">
                                                     <Loader2 size={14} className="animate-spin" />
                                                     <span className="text-[12px] font-medium">Analizando la tarea...</span>
                                                 </motion.div>
@@ -507,7 +507,7 @@ export default function TaskEditDrawer({
                                                         Sí, eliminar
                                                     </button>
                                                     <button onClick={() => setShowDeleteConfirm(false)}
-                                                        className="flex-1 py-2.5 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-md text-[11px] font-bold hover:bg-slate-50 dark:hover:bg-white/8 transition-all">
+                                                        className="flex-1 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-md text-[11px] font-bold hover:bg-slate-50 dark:hover:bg-white/8 transition-all">
                                                         Cancelar
                                                     </button>
                                                 </div>
@@ -551,7 +551,7 @@ export default function TaskEditDrawer({
                                 className={clsx(
                                     'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all',
                                     dirty
-                                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 active:scale-95'
+                                        ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95'
                                         : saved
                                         ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                                         : 'bg-transparent text-slate-300 dark:text-slate-600 cursor-default'
@@ -592,7 +592,7 @@ function QuickBtn({ icon: Icon, label, onClick, danger = false }: { icon: any; l
                 'flex items-center gap-2 px-3 py-2.5 rounded-md text-[11px] font-semibold border transition-all group hover:-translate-y-[1px] hover:shadow-sm active:scale-95',
                 danger
                     ? 'text-rose-500 dark:text-rose-400 bg-transparent border-rose-200 dark:border-rose-500/20 hover:bg-rose-50 dark:hover:bg-rose-500/10'
-                    : 'text-slate-500 dark:text-slate-400 bg-white dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.07] hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                    : 'text-slate-500 dark:text-slate-400 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.07] hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
             )}
         >
             <Icon size={13} className="transition-transform group-hover:scale-110" />

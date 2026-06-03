@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud._utils import _utcnow
-from backend.models_crm import EvangelismStrategy
+from backend.models_evangelism import EstrategiaEvangelismo as EvangelismStrategy
 from backend.models_evangelism import (
     ParticipanteGrupo, Asistencia,
 )
@@ -96,6 +96,11 @@ def create_estrategia(
             if hasattr(dump["clase_raiz"], "value")
             else dump["clase_raiz"]
         )
+    # Map English schema fields to Spanish model columns
+    field_map = {"name": "nombre", "description": "descripcion", "status": "estado"}
+    for eng, esp in field_map.items():
+        if eng in dump and esp not in dump:
+            dump[esp] = dump.pop(eng)
     row_data = {k: v for k, v in dump.items() if k in valid_cols}
     db_obj = EvangelismStrategy(**row_data)
     db.add(db_obj)
@@ -130,6 +135,11 @@ def update_estrategia(
             if hasattr(dump["clase_raiz"], "value")
             else dump["clase_raiz"]
         )
+    # Map English schema fields to Spanish model columns
+    field_map = {"name": "nombre", "description": "descripcion", "status": "estado"}
+    for eng, esp in field_map.items():
+        if eng in dump and esp not in dump:
+            dump[esp] = dump.pop(eng)
     update_data = {k: v for k, v in dump.items() if k in valid_cols}
     for key, value in update_data.items():
         setattr(db_obj, key, value)

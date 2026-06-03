@@ -110,7 +110,7 @@ export default function CrmTaskDetailPage() {
                                     <div className="space-y-2">
                                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Asignado a</p>
                                         <div className="flex items-center gap-2 p-2 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                                            <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
+                                            <div className="size-8 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs">
                                                 {task.assigned_to?.charAt(0)}
                                             </div>
                                             <span className="text-xs font-bold">{task.assigned_to}</span>

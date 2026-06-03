@@ -57,7 +57,7 @@ export default function InlineEdit({
                     onBlur={handleSave}
                     onKeyDown={handleKeyDown}
                     className={clsx(
-                        "w-full bg-white dark:bg-slate-800 border border-blue-500 rounded px-2 py-0.5 text-sm outline-none shadow-[0_0_0_2px_rgba(59,130,246,0.1)]",
+                        "w-full bg-[hsl(var(--bg-primary))] dark:bg-slate-800 border border-blue-500 rounded px-2 py-0.5 text-sm outline-none shadow-[0_0_0_2px_rgba(59,130,246,0.1)]",
                         inputClassName
                     )}
                 />

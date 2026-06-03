@@ -21,7 +21,7 @@ import {
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
-import TaskCreationModal from '@/components/projects/TaskCreationModal';
+import TaskCreationDrawer from '@/components/projects/TaskCreationDrawer';
 import TaskDetailPanel from '@/components/projects/TaskDetailPanel';
 import ProjectActivityFeed from '@/components/projects/ProjectActivityFeed';
 import ProjectWikiEditor from '@/components/projects/ProjectWikiEditor';
@@ -34,7 +34,7 @@ import TaskTableView from '@/components/projects/TaskTableView';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectActivityItem, ProjectMilestoneRecord, ProjectTaskRecord } from '@/types/projects';
 import type { PhaseDef } from '@/components/projects/ProjectKanbanBoard';
-import { PhaseManagerModal } from '@/components/projects/PhaseManagerModal';
+import { PhaseManagerDrawer } from '@/components/projects/PhaseManagerDrawer';
 import { toast } from 'sonner';
 import UserSelect from '@/components/ui/UserSelect';
 
@@ -301,10 +301,10 @@ export default function ProjectDetailPage() {
                 availableViews={PROJECT_DETAIL_VIEWS}
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setShowTaskModal(true)} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
+                        <button onClick={() => setShowTaskModal(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
                             <Plus size={14} /> Nueva Tarea
                         </button>
-                        <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2 dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2 dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900">
                             <PencilRuler size={14} /> Pizarra
                         </button>
                         {phases.length > 0 && (
@@ -325,7 +325,7 @@ export default function ProjectDetailPage() {
             <div className="flex min-h-0 flex-1 overflow-hidden">
             <main className="flex-1 overflow-y-auto p-4 space-y-3">
                 {editingProject ? (
-                    <div className="bg-white dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10 space-y-3">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10 space-y-3">
                         <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600">Editar Proyecto</h3>
                         <input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm font-medium" placeholder="Título del proyecto" />
                         <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm" placeholder="Descripción" />
@@ -342,7 +342,7 @@ export default function ProjectDetailPage() {
                             placeholder="Responsable del proyecto"
                         />
                         <div className="flex gap-2">
-                            <button onClick={handleUpdateProject} className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Guardar Cambios</button>
+                            <button onClick={handleUpdateProject} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Guardar Cambios</button>
                             <button onClick={() => setEditingProject(false)} className="px-3 py-1.5 bg-slate-200 dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Cancelar</button>
                         </div>
                     </div>
@@ -373,7 +373,7 @@ export default function ProjectDetailPage() {
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                     <aside className="space-y-3 lg:col-span-1">
                                         <div className="p-3 bg-blue-50/50 dark:bg-slate-900 border border-blue-100 dark:border-white/5 rounded-lg shadow-sm dark:shadow-xl space-y-2">
-                                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
                                                 <Sparkles size={14} /> Asistente Ministerial
                                             </div>
                                             <p className="text-[11px] font-medium leading-relaxed italic text-slate-700 dark:text-slate-300">
@@ -392,19 +392,19 @@ export default function ProjectDetailPage() {
                                                                 <input
                                                                     value={milestoneDraftTitle}
                                                                     onChange={(event) => setMilestoneDraftTitle(event.target.value)}
-                                                                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                                                                    className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-xs font-bold dark:border-white/10 dark:bg-white/5"
                                                                 />
                                                                 <div className="flex gap-2">
                                                                     <input
                                                                         type="date"
                                                                         value={milestoneDraftDate}
                                                                         onChange={(event) => setMilestoneDraftDate(event.target.value)}
-                                                                        className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                                                                        className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-xs font-bold dark:border-white/10 dark:bg-white/5"
                                                                     />
                                                                     <button
                                                                         onClick={() => handleUpdateMilestone(m.id)}
                                                                         disabled={updatingMilestoneId === m.id || !milestoneDraftTitle.trim()}
-                                                                        className="rounded-lg bg-blue-600 px-2 py-1.5 text-[10px] font-semibold uppercase text-white disabled:opacity-50"
+                                                                        className="rounded-lg bg-[hsl(var(--primary))] px-2 py-1.5 text-[10px] font-semibold uppercase text-white disabled:opacity-50"
                                                                     >
                                                                         Guardar
                                                                     </button>
@@ -455,19 +455,19 @@ export default function ProjectDetailPage() {
                                                     value={milestoneTitle}
                                                     onChange={(event) => setMilestoneTitle(event.target.value)}
                                                     placeholder="Nuevo hito"
-                                                    className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                                                    className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
                                                 />
                                                 <div className="flex gap-2">
                                                     <input
                                                         type="date"
                                                         value={milestoneDate}
                                                         onChange={(event) => setMilestoneDate(event.target.value)}
-                                                        className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                                                        className="min-w-0 flex-1 rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
                                                     />
                                                     <button
                                                         onClick={handleCreateMilestone}
                                                         disabled={creatingMilestone || !milestoneTitle.trim()}
-                                                        className="rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"
+                                                        className="rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"
                                                     >
                                                         {creatingMilestone ? '...' : 'Crear'}
                                                     </button>
@@ -475,7 +475,7 @@ export default function ProjectDetailPage() {
                                             </div>
                                         </DSCard>
                                     </aside>
-                                    <div className="min-h-[420px] lg:col-span-2 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                                    <div className="min-h-[420px] lg:col-span-2 overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                                         <ProjectActivityFeed activities={activities} />
                                     </div>
                                 </div>
@@ -483,7 +483,7 @@ export default function ProjectDetailPage() {
                         )}
 
                         {viewType === 'table' && (
-                            <div className="h-[calc(100vh-8rem)] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden bg-white dark:bg-[#252528] shadow-sm">
+                            <div className="h-[calc(100vh-8rem)] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[#252528] shadow-sm">
                                 <TaskTableView
                                     projectId={project?.id}
                                     tasks={tasks}
@@ -500,7 +500,7 @@ export default function ProjectDetailPage() {
                                     <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Plan de Acción</h3>
                                     <div className="space-y-2">
                                         {tasks.map(task => (
-                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-3 rounded-lg bg-white dark:bg-[#252528] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300 active:scale-[0.99] cursor-pointer">
+                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300 active:scale-[0.99] cursor-pointer">
                                                 <div className="flex items-center gap-4 flex-1">
                                                     <button
                                                         onClick={(event) => {
@@ -514,7 +514,7 @@ export default function ProjectDetailPage() {
                                                         ) : task.status === 'review' ? (
                                                             <Clock size={18} className="text-amber-500" />
                                                         ) : task.status === 'in_progress' ? (
-                                                            <AlertTriangle size={18} className="text-blue-500" />
+                                                            <AlertTriangle size={18} className="text-[hsl(var(--primary))]" />
                                                         ) : (
                                                             <Circle size={18} className="text-slate-400" />
                                                         )}
@@ -559,7 +559,7 @@ export default function ProjectDetailPage() {
                                             </div>
                                             <div className="space-y-2">
                                                 {columnTasks.map((task) => (
-                                                    <article key={task.id} onClick={() => handleOpenTask(task)} className="rounded-md border border-slate-200 bg-white p-2 shadow-sm dark:border-white/10 dark:bg-[#1E1F21] cursor-pointer transition-all duration-300 hover:border-blue-300 active:scale-[0.99]">
+                                                    <article key={task.id} onClick={() => handleOpenTask(task)} className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-2 shadow-sm dark:border-white/10 dark:bg-[#1E1F21] cursor-pointer transition-all duration-300 hover:border-blue-300 active:scale-[0.99]">
                                                         <p className="text-sm font-bold text-slate-900 dark:text-white">{task.title}</p>
                                                         <div className="mt-2 flex items-center justify-between gap-2">
                                                             <span className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-100 text-slate-600 dark:border-white/10">
@@ -613,7 +613,7 @@ export default function ProjectDetailPage() {
             />
             </div>
 
-            <TaskCreationModal
+            <TaskCreationDrawer
                 isOpen={showTaskModal}
                 onClose={() => setShowTaskModal(false)}
                 onSubmit={handleCreateTask}
@@ -624,7 +624,7 @@ export default function ProjectDetailPage() {
                 onClose={() => setWhiteboardOpen(false)}
             />
             {showPhaseManager && (
-                <PhaseManagerModal
+                <PhaseManagerDrawer
                     projectId={Number(project?.id || id)}
                     phases={phases}
                     onClose={() => setShowPhaseManager(false)}

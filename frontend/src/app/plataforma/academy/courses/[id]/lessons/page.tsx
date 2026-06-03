@@ -19,7 +19,7 @@ const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-slate-400"
 
 const CONTENT_TYPE_META: Record<string, { label: string; icon: any; color: string; bg: string }> = {
     video:    { label: 'Video',    icon: Video,     color: 'text-rose-600',   bg: 'bg-rose-50 dark:bg-rose-500/10' },
-    text:     { label: 'Texto',    icon: FileText,  color: 'text-blue-600',   bg: 'bg-blue-50 dark:bg-blue-500/10' },
+    text:     { label: 'Texto',    icon: FileText,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-500/10' },
     document: { label: 'Documento',icon: FileText,  color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
     link:     { label: 'Enlace',   icon: LinkIcon,  color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
 };
@@ -139,13 +139,13 @@ export default function LessonsPage() {
                 setViewType={setViewType}
                 availableViews={['table', 'list']}
                 leftActions={
-                    <button onClick={() => router.back()} className="p-2.5 hover:bg-white dark:hover:bg-white/5 rounded-md transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10">
+                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-md transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10">
                         <ArrowLeft size={18} className="text-slate-500" />
                     </button>
                 }
                 rightActions={
                     <button onClick={openCreate}
-                        className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                         <Plus size={16} strokeWidth={3} /> Nueva Lección
                     </button>
                 }
@@ -154,7 +154,7 @@ export default function LessonsPage() {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-3 relative z-10">
                 {loading ? (
                     <div className="flex justify-center items-center h-48">
-                        <Loader2 className="animate-spin text-blue-600" size={32} />
+                        <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={32} />
                     </div>
                 ) : sorted.length === 0 ? (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -167,12 +167,12 @@ export default function LessonsPage() {
                             <p className="text-sm text-slate-400 mt-1">Crea la primera lección de este curso.</p>
                         </div>
                         <button onClick={openCreate}
-                            className="flex items-center gap-2 px-3 py-3 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                            className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                             <Plus size={16} strokeWidth={3} /> Crear Lección
                         </button>
                     </motion.div>
                 ) : viewType === 'table' ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left min-w-[640px]">
                                 <thead className="bg-slate-50 dark:bg-black/20">
@@ -213,7 +213,7 @@ export default function LessonsPage() {
                                                 <td className="py-3 px-4">
                                                     {lesson.media_url ? (
                                                         <a href={lesson.media_url} target="_blank" rel="noopener noreferrer"
-                                                            className="text-[10px] text-blue-600 font-bold hover:underline flex items-center gap-1">
+                                                            className="text-[10px] text-[hsl(var(--primary))] font-bold hover:underline flex items-center gap-1">
                                                             <LinkIcon size={11} /> Ver recurso
                                                         </a>
                                                     ) : (
@@ -223,7 +223,7 @@ export default function LessonsPage() {
                                                 <td className="py-3 px-4">
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button onClick={() => openEdit(lesson)}
-                                                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-slate-400 hover:text-blue-600 transition-all">
+                                                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-all">
                                                             <Pencil size={14} />
                                                         </button>
                                                         {deleteId === lesson.id ? (
@@ -261,7 +261,7 @@ export default function LessonsPage() {
                                 <motion.div key={lesson.id}
                                     initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: idx * 0.05 }}
-                                    className="bg-white dark:bg-[#15171c] rounded-md border border-slate-200 dark:border-white/5 p-4 flex items-center gap-4 group hover:border-blue-500/20 transition-all shadow-sm">
+                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-md border border-slate-200 dark:border-white/5 p-4 flex items-center gap-4 group hover:border-blue-500/20 transition-all shadow-sm">
                                     <div className={clsx("size-10 rounded-md flex items-center justify-center flex-shrink-0", meta.bg, meta.color)}>
                                         <Icon size={18} />
                                     </div>
@@ -270,7 +270,7 @@ export default function LessonsPage() {
                                         <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">{meta.label} · Lección {lesson.order_index}</p>
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => openEdit(lesson)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-slate-400 hover:text-blue-600 transition-all">
+                                        <button onClick={() => openEdit(lesson)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-all">
                                             <Pencil size={14} />
                                         </button>
                                         {deleteId === lesson.id ? (
@@ -302,12 +302,12 @@ export default function LessonsPage() {
                             initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                            className="fixed top-0 right-0 h-screen z-[100] w-full max-w-md bg-white dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col">
+                            className="fixed top-0 right-0 h-screen z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col">
 
                             {/* Header drawer */}
                             <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100 dark:border-white/5 flex-shrink-0">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                    <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                         <BookOpen size={16} />
                                     </div>
                                     <div>
@@ -377,7 +377,7 @@ export default function LessonsPage() {
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
+                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
                                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                     {saving ? 'Guardando...' : (editing ? 'Actualizar' : 'Crear')}
                                 </button>

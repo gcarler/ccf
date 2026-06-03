@@ -103,7 +103,7 @@ export default function CmsThemesPage() {
 
   return (
     <div className="space-y-3 p-3">
-      <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-3">
+      <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2</p>
           <h1 className="mt-2 text-lg font-semibold">Editor de temas multisitio</h1>
@@ -114,7 +114,7 @@ export default function CmsThemesPage() {
       </div>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
           <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Sitio</label>
           <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
             {sites.length === 0 && <option value="faro">faro</option>}
@@ -165,7 +165,7 @@ export default function CmsThemesPage() {
           {message && <p className="text-xs text-slate-500">{message}</p>}
         </div>
 
-        <div className="lg:col-span-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
+        <div className="lg:col-span-2 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
           <div
             className="rounded-lg border border-slate-200 dark:border-white/10 p-3"
             style={{

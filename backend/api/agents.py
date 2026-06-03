@@ -19,10 +19,26 @@ def analytics_summary(
     db=Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    """Resumen global para el Dashboard de Administración."""
-    total_members = db.query(models.Persona).count()
-    total_projects = db.query(models.Project).count()
-    total_enrollments = db.query(models.Enrollment).count()
+    """Resumen global para el Dashboard de Administración.
+    
+    Axioma 3: filtra métricas por sede_id del usuario autenticado.
+    """
+    from backend.crud.crm import get_user_sede_id
+    user_sede = get_user_sede_id(db, current_user.id)
+    
+    persona_q = db.query(models.Persona)
+    project_q = db.query(models.Project).filter(models.Project.deleted_at.is_(None))
+    enrollment_q = db.query(models.Enrollment)
+    
+    if user_sede is not None:
+        persona_q = persona_q.filter(models.Persona.sede_id == user_sede)
+        project_q = project_q.filter(models.Project.sede_id == user_sede)
+        # Enrollments join through persona or course sede
+        enrollment_q = enrollment_q.join(models.Persona, models.Enrollment.persona_id == models.Persona.id).filter(models.Persona.sede_id == user_sede)
+    
+    total_members = persona_q.count()
+    total_projects = project_q.count()
+    total_enrollments = enrollment_q.count()
     total_certificates = db.query(models.Certificate).count()
     pending_tasks = (
         db.query(models.AgentTask).filter(models.AgentTask.status == "pending").count()

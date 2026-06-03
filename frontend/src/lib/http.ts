@@ -14,6 +14,7 @@ export interface ApiFetchOptions {
   credentials?: RequestCredentials;
   timeout?: number;
   silent?: boolean;
+  signal?: AbortSignal;
 }
 
 // Deduplicate concurrent refresh calls — all callers share the same promise.
@@ -138,6 +139,18 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
+  // Link external signal (e.g., from component unmount) with internal timeout controller
+  let cleanupExternalSignal: (() => void) | undefined;
+  if (options.signal) {
+    if (options.signal.aborted) {
+      controller.abort();
+    } else {
+      const onAbort = () => controller.abort();
+      options.signal.addEventListener('abort', onAbort);
+      cleanupExternalSignal = () => options.signal?.removeEventListener('abort', onAbort);
+    }
+  }
+
   const nativeFetch: typeof fetch =
     (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
 
@@ -154,6 +167,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _
     throw new ApiError(err.message || 'Network error', 0, err);
   } finally {
     clearTimeout(timeoutId);
+    cleanupExternalSignal?.();
   }
 
   const raw = await response.text();

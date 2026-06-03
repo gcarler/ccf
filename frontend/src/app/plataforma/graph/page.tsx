@@ -83,7 +83,7 @@ export default function KnowledgeGraphPage() {
 
   return (
     <WorkspaceLayout sidebarTitle="Análisis" sidebarSections={sidebarSections}>
-      <div className="flex h-full flex-col overflow-hidden bg-white font-display dark:bg-[#0f1114]">
+      <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] font-display dark:bg-[#0f1114]">
       <WorkspaceToolbar
         breadcrumbs={[{ label: "Insights", icon: Network }, { label: "Knowledge Graph", icon: Network }]}
         viewType={viewType}
@@ -99,7 +99,7 @@ export default function KnowledgeGraphPage() {
         {viewType === "list" && (
           <section className="space-y-4 overflow-y-auto">
             {filtered.nodes.map((node) => (
-              <article key={node.id} className="rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+              <article key={node.id} className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
                 <h3 className="font-bold text-slate-900 dark:text-white">{node.label}</h3>
                 <p className="mt-1 text-sm text-slate-500">{node.type}</p>
               </article>
@@ -108,7 +108,7 @@ export default function KnowledgeGraphPage() {
         )}
 
         {viewType === "table" && (
-          <section className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+          <section className="overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
             <table className="w-full text-left">
               <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:bg-white/5">
                 <tr><th className="px-3 py-1.5">Nodo</th><th className="px-3 py-1.5">Tipo</th><th className="px-3 py-1.5">Conexiones</th></tr>
@@ -136,7 +136,7 @@ export default function KnowledgeGraphPage() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Buscar nodo por nombre, id o detalle..."
-                  className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none ring-blue-500/20 transition focus:ring-4 dark:border-white/10 dark:bg-white/5"
+                  className="h-10 w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] pl-9 pr-3 text-sm outline-none ring-blue-500/20 transition focus:ring-4 dark:border-white/10 dark:bg-white/5"
                 />
               </div>
 
@@ -198,7 +198,7 @@ export default function KnowledgeGraphPage() {
             </div>
           </div>
 
-          <aside className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <aside className="space-y-3 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/5">
             <h2 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Panel de Nodo</h2>
             {selectedNode ? (
               <>
@@ -208,7 +208,7 @@ export default function KnowledgeGraphPage() {
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{selectedNode.detail || "Sin detalle"}</p>
                 </div>
                 {selectedNode.meta ? (
-                  <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-black/20">
+                  <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-black/20">
                     <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Metadata</h4>
                     <dl className="space-y-2">
                       {Object.entries(selectedNode.meta).map(([key, value]) => (
@@ -247,8 +247,8 @@ function TypeChip({ label, active, onClick }: { label: string; active: boolean; 
       onClick={onClick}
       className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
         active
-          ? "bg-blue-600 text-white"
-          : "border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5"
+          ? "bg-[hsl(var(--primary))] text-white"
+          : "border border-slate-200 bg-[hsl(var(--bg-primary))] text-slate-500 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5"
       }`}
     >
       {label}
@@ -258,7 +258,7 @@ function TypeChip({ label, active, onClick }: { label: string; active: boolean; 
 
 function SummaryBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-center dark:border-white/10 dark:bg-white/5">
+    <div className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-center dark:border-white/10 dark:bg-white/5">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
       <p className="text-lg font-bold text-slate-800 dark:text-white">{value}</p>
     </div>

@@ -188,11 +188,11 @@ export default function CrmGroupsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-3 -mt-3 mb-3 relative z-10">
                     {[
                         { label: 'Total Casas', value: stats.total, icon: Home, bg: 'bg-emerald-500' },
-                        { label: 'Miembros Activos', value: stats.totalMembers, icon: Users, bg: 'bg-blue-500' },
-                        { label: 'Casas Activas', value: stats.active, icon: Activity, bg: 'bg-blue-500' },
+                        { label: 'Miembros Activos', value: stats.totalMembers, icon: Users, bg: 'bg-[hsl(var(--primary))]' },
+                        { label: 'Casas Activas', value: stats.active, icon: Activity, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Ocup. Promedio', value: `${stats.avgCapacity}%`, icon: TrendingUp, bg: 'bg-amber-500' },
                     ].map(s => (
-                        <div key={s.label} className="bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
+                        <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
                             <div className={`inline-flex size-8 rounded-md ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
                                 <s.icon size={18} />
                             </div>
@@ -210,7 +210,7 @@ export default function CrmGroupsPage() {
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                             placeholder="Buscar por nombre, zona o líder..."
-                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all placeholder:text-slate-400"
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all placeholder:text-slate-400"
                         />
                     </div>
 
@@ -249,7 +249,7 @@ export default function CrmGroupsPage() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.04 }}
                                         onClick={() => router.push(`/plataforma/crm/groups/${group.id}`)}
-                                        className="group bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                                        className="group bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                                     >
                                         {/* Card top accent */}
                                         <div className={`h-[3px] bg-gradient-to-r ${getZoneColor(group.id)}`} />

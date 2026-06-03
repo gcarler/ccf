@@ -54,11 +54,11 @@ export default function Navbar() {
                     }`}>
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="bg-blue-600 p-1.5 rounded-md group-hover:scale-105 transition-transform shadow-md shadow-blue-500/20">
+                        <div className="bg-[hsl(var(--primary))] p-1.5 rounded-md group-hover:scale-105 transition-transform shadow-md shadow-blue-500/20">
                             <Church size={16} className="text-white" />
                         </div>
                         <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white transition-colors">
-                            CCF <span className="text-blue-500">Platform</span>
+                            CCF <span className="text-[hsl(var(--primary))]">Platform</span>
                         </span>
                     </Link>
 
@@ -113,7 +113,7 @@ export default function Navbar() {
                                 <Link href="/login" className="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                                     Login
                                 </Link>
-                                <Link href="/register" className="px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-semibold shadow-md shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                                <Link href="/register" className="px-3 py-1.5 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-semibold shadow-md shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                                     Empezar
                                 </Link>
                             </div>
@@ -133,7 +133,7 @@ export default function Navbar() {
             {/* Mobile Menu */}
             {mobileMenuOpen && (
                 <div className="lg:hidden px-4 mt-2">
-                    <div className="bg-white dark:bg-[#252528] rounded-lg p-4 space-y-1.5 shadow-xl border border-slate-200/50 dark:border-white/5 animate-in slide-in-from-top-4 duration-200 max-h-[70vh] overflow-y-auto">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg p-4 space-y-1.5 shadow-xl border border-slate-200/50 dark:border-white/5 animate-in slide-in-from-top-4 duration-200 max-h-[70vh] overflow-y-auto">
                         {navItems.map((item: any) => (
                             <div key={item.label}>
                                 {item.submenu ? (
@@ -162,7 +162,7 @@ export default function Navbar() {
                             </div>
                         ))}
                         <div className="pt-2 mt-1 border-t border-slate-100 dark:border-white/5">
-                            <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-xs font-semibold text-blue-600 dark:text-blue-400">Iniciar Sesión</Link>
+                            <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-xs font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">Iniciar Sesión</Link>
                         </div>
                     </div>
                 </div>
@@ -182,7 +182,7 @@ function NavDropdown({ label, items, active }: { label: string, items: any[], ac
         >
             <button
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1 ${active
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10'
+                    ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
             >
@@ -192,12 +192,12 @@ function NavDropdown({ label, items, active }: { label: string, items: any[], ac
 
             {/* Dropdown Menu */}
             <div className={`absolute top-full left-0 mt-1 w-48 pt-1 transition-all duration-200 origin-top-left ${isOpen ? 'opacity-100 translate-y-0 scale-100 visible' : 'opacity-0 -translate-y-1 scale-95 invisible'}`}>
-                <div className="bg-white dark:bg-[#252528] rounded-lg shadow-lg border border-slate-200/50 dark:border-white/5 p-1 overflow-hidden">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg shadow-lg border border-slate-200/50 dark:border-white/5 p-1 overflow-hidden">
                     {items.map((sub) => (
                         <Link
                             key={sub.href}
                             href={sub.href}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
                         >
                             {sub.label}
                         </Link>
@@ -221,7 +221,7 @@ function NavLink({
         <Link
             href={href}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all relative group flex items-center ${active
-                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10'
+                ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10'
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                 }`}
         >

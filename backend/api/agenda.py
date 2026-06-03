@@ -41,7 +41,7 @@ def create_agenda_event(
         end_at=payload.end_at,
         location=payload.location,
         is_all_day=payload.is_all_day,
-        created_by_user_id=current_user.id,
+        created_by_persona_id=None,
     )
     db.add(agenda_event)
     db.commit()
@@ -56,7 +56,7 @@ def get_agenda_event(
     current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):
     agenda_event = (
-        db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
+        db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id, models.AgendaEvent.deleted_at.is_(None)).first()
     )
     if not agenda_event:
         raise HTTPException(status_code=404, detail="Agenda event not found")
@@ -71,7 +71,7 @@ def update_agenda_event(
     current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):
     agenda_event = (
-        db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
+        db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id, models.AgendaEvent.deleted_at.is_(None)).first()
     )
     if not agenda_event:
         raise HTTPException(status_code=404, detail="Agenda event not found")
@@ -94,7 +94,7 @@ def delete_agenda_event(
     current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):
     agenda_event = (
-        db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
+        db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id, models.AgendaEvent.deleted_at.is_(None)).first()
     )
     if not agenda_event:
         raise HTTPException(status_code=404, detail="Agenda event not found")

@@ -121,8 +121,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (user.role === 'admin' || user.role === 'administrador') return true;
         const k = `${module}:${minLevel}`;
         if (user.permissions[k] === 'allow') return true;
-        if (minLevel === 'read' && (user.permissions[`${module}:edit`] === 'allow' || user.permissions[`${module}:manage`] === 'allow')) return true;
+        if (minLevel === 'read' && (
+            user.permissions[`${module}:edit`] === 'allow' ||
+            user.permissions[`${module}:manage`] === 'allow' ||
+            user.permissions[`${module}:study`] === 'allow'
+        )) return true;
         if (minLevel === 'edit' && user.permissions[`${module}:manage`] === 'allow') return true;
+        if (minLevel === 'study' && (
+            user.permissions[`${module}:edit`] === 'allow' ||
+            user.permissions[`${module}:manage`] === 'allow'
+        )) return true;
         return false;
     };
 

@@ -25,9 +25,9 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
             >
                 <div className="flex items-center gap-3">
                     {isNight ? (
-                        <Moon size={18} className="text-slate-400 group-hover:text-blue-500" />
+                        <Moon size={18} className="text-slate-400 group-hover:text-[hsl(var(--primary))]" />
                     ) : (
-                        <Sun size={18} className="text-slate-400 group-hover:text-blue-500" />
+                        <Sun size={18} className="text-slate-400 group-hover:text-[hsl(var(--primary))]" />
                     )}
                     <span className="text-[13px] font-bold leading-none">
                         {isNight ? "Modo Oscuro" : "Modo Claro"}
@@ -36,11 +36,11 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                 {/* Pill toggle */}
                 <div
                     className={`relative w-9 h-5 rounded-full transition-colors duration-300 ${
-                        isNight ? "bg-blue-600" : "bg-slate-200"
+                        isNight ? "bg-[hsl(var(--primary))]" : "bg-slate-200"
                     }`}
                 >
                     <span
-                        className={`absolute top-0.5 size-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${
+                        className={`absolute top-0.5 size-4 bg-[hsl(var(--bg-primary))] rounded-full shadow-sm transition-transform duration-300 ${
                             isNight ? "translate-x-4" : "translate-x-0.5"
                         }`}
                     />
@@ -63,7 +63,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                     onClick={() => isNight && toggleTheme()}
                     className={`size-6 rounded-lg flex items-center justify-center transition-all ${
                         !isNight
-                            ? "bg-white text-amber-500 shadow-sm"
+                            ? "bg-[hsl(var(--bg-primary))] text-amber-500 shadow-sm"
                             : "text-slate-500 hover:text-slate-300"
                     }`}
                     title="Cambiar a modo claro"
@@ -75,7 +75,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                     onClick={() => !isNight && toggleTheme()}
                     className={`size-6 rounded-lg flex items-center justify-center transition-all ${
                         isNight
-                            ? "bg-white/10 text-blue-400"
+                            ? "bg-white/10 text-[hsl(var(--primary))]"
                             : "text-slate-400 hover:text-slate-600"
                     }`}
                     title="Cambiar a modo oscuro"
@@ -95,7 +95,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                 className={`size-10 rounded-lg flex items-center justify-center transition-all group ${
                     isNight
                         ? "text-slate-400 hover:bg-white/5 hover:text-amber-300"
-                        : "text-slate-600 hover:bg-black/5 hover:text-blue-600"
+                        : "text-slate-600 hover:bg-black/5 hover:text-[hsl(var(--primary))]"
                 } ${className}`}
             >
                 {isNight ? <Sun size={19} /> : <Moon size={19} />}

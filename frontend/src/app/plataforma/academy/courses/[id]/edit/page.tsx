@@ -88,7 +88,7 @@ export default function EditCoursePage() {
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 leftActions={
-                    <button onClick={() => router.back()} className="p-2.5 hover:bg-white dark:hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10">
+                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10">
                         <ArrowLeft size={18} className="text-slate-500" />
                     </button>
                 }
@@ -97,7 +97,7 @@ export default function EditCoursePage() {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative z-10">
                 {loading ? (
                     <div className="flex justify-center items-center h-48">
-                        <Loader2 className="animate-spin text-blue-600" size={32} />
+                        <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={32} />
                     </div>
                 ) : (
  <motion.div variants={containerVariants} initial="hidden"animate="show"className="w-full space-y-3">
@@ -113,8 +113,8 @@ export default function EditCoursePage() {
                         </motion.header>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <motion.div variants={itemVariants} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-blue-500/20 transition-all">
-                                <div className="flex items-center gap-4 text-blue-600">
+                            <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-blue-500/20 transition-all">
+                                <div className="flex items-center gap-4 text-[hsl(var(--primary))]">
                                     <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shadow-inner">
                                         <FileText size={22} strokeWidth={2.5} />
                                     </div>
@@ -137,7 +137,7 @@ export default function EditCoursePage() {
                                 </div>
                             </motion.div>
 
-                            <motion.div variants={itemVariants} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-sky-500/20 transition-all">
+                            <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-sky-500/20 transition-all">
                                 <div className="flex items-center gap-4 text-sky-600">
                                     <div className="size-9 rounded-lg bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center shadow-inner">
                                         <Clock size={22} strokeWidth={2.5} />
@@ -186,7 +186,7 @@ export default function EditCoursePage() {
                                     Descartar
                                 </button>
                                 <button type="submit" disabled={saving}
-                                    className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-wait group">
+                                    className="px-3 py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-wait group">
                                     {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} className="group-hover:-translate-y-0.5 transition-transform" />}
                                     {saving ? 'Guardando...' : 'Guardar Cambios'}
                                 </button>

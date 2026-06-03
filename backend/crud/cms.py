@@ -906,7 +906,7 @@ def transition_cms_page_status(
             action=action,
             from_status=previous_status,
             to_status=next_status,
-            actor_persona_id=str(user_id),
+            actor_user_id=user_id,
             metadata_json={"notes": notes} if notes else {},
         )
     )

@@ -50,8 +50,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (minLevel === 'read') {
       if (user.permissions[`${module}:edit`] === 'allow') return true;
       if (user.permissions[`${module}:manage`] === 'allow') return true;
+      if (user.permissions[`${module}:study`] === 'allow') return true;
     }
     if (minLevel === 'edit') {
+      if (user.permissions[`${module}:manage`] === 'allow') return true;
+    }
+    if (minLevel === 'study') {
+      if (user.permissions[`${module}:edit`] === 'allow') return true;
       if (user.permissions[`${module}:manage`] === 'allow') return true;
     }
     return false;

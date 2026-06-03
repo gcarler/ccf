@@ -84,7 +84,7 @@ function ResetPasswordContent() {
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex-1 bg-white flex flex-col justify-center items-center px-4 min-h-screen"
+          className="flex-1 bg-[hsl(var(--bg-primary))] flex flex-col justify-center items-center px-4 min-h-screen"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -97,7 +97,7 @@ function ResetPasswordContent() {
           <h2 className="text-lg font-extrabold text-[#001B48] tracking-[-0.02em] mb-3">
             Contraseña actualizada
           </h2>
-          <p className="text-gray-500 text-sm">Redirigiendo al inicio de sesión...</p>
+          <p className="text-[hsl(var(--text-primary))] text-sm">Redirigiendo al inicio de sesión...</p>
         </motion.section>
       </div>
     );
@@ -146,7 +146,7 @@ function ResetPasswordContent() {
           <p className="text-[#018ABD] text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
             Comunidad <br /> Cristiana
           </p>
-          <div className="w-16 h-1.5 bg-white mt-3 rounded-full" />
+          <div className="w-16 h-1.5 bg-[hsl(var(--bg-primary))] mt-3 rounded-full" />
         </motion.div>
 
         <motion.div
@@ -173,7 +173,7 @@ function ResetPasswordContent() {
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="flex-1 bg-white flex flex-col justify-center px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen"
+        className="flex-1 bg-[hsl(var(--bg-primary))] flex flex-col justify-center px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen"
       >
         <div className="w-full max-w-[420px] mx-auto">
           <motion.div
@@ -185,7 +185,7 @@ function ResetPasswordContent() {
             <h2 className="text-[clamp(1.8rem,3.5vw,2.5rem)] font-extrabold text-[#001B48] tracking-[-0.02em] leading-none m-0 mb-4">
               Restablecer contraseña
             </h2>
-            <p className="text-gray-400 font-bold uppercase tracking-wide text-[10px] m-0">
+            <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px] m-0">
               Crea una nueva clave segura
             </p>
           </motion.div>
@@ -197,7 +197,7 @@ function ResetPasswordContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45 }}
             >
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3 ml-2">
+              <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
                 Nueva contraseña
               </label>
               <div className="relative">
@@ -208,12 +208,12 @@ function ResetPasswordContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-lg py-1.5 px-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#018ABD] focus:bg-white transition-all pr-14"
+                  className="w-full bg-[hsl(var(--bg-muted))] border-2 border-gray-100 rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--text-primary))] placeholder-gray-300 focus:outline-none focus:border-[#018ABD] focus:bg-[hsl(var(--bg-primary))] transition-all pr-14"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300 bg-transparent border-none cursor-pointer p-0 flex"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] bg-transparent border-none cursor-pointer p-0 flex"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -226,7 +226,7 @@ function ResetPasswordContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.55 }}
             >
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3 ml-2">
+              <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
                 Confirmar contraseña
               </label>
               <div className="relative">
@@ -237,7 +237,7 @@ function ResetPasswordContent() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-lg py-1.5 px-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#018ABD] focus:bg-white transition-all pr-14"
+                  className="w-full bg-[hsl(var(--bg-muted))] border-2 border-gray-100 rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--text-primary))] placeholder-gray-300 focus:outline-none focus:border-[#018ABD] focus:bg-[hsl(var(--bg-primary))] transition-all pr-14"
                 />
               </div>
             </motion.div>

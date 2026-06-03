@@ -11,6 +11,7 @@ import {
     QrCode,
     Verified
 } from 'lucide-react';
+import { RightPanel } from '@/components/ui/RightPanel';
 
 interface Certificate {
     id: number;
@@ -32,27 +33,25 @@ interface Enrollment {
     };
 }
 
-interface CertificateModalProps {
+interface CertificateDrawerProps {
     certificate: Certificate;
     enrollment: Enrollment;
     userName: string;
     onClose: () => void;
 }
 
-export default function CertificateModal({ certificate, enrollment, userName, onClose }: CertificateModalProps) {
+export default function CertificateDrawer({ certificate, enrollment, userName, onClose }: CertificateDrawerProps) {
     const handlePrint = () => {
         window.print();
     };
 
     const handleDownloadImage = () => {
-        // En una implementación real usaríamos html2canvas o similar.
-        // Por ahora, sugerimos imprimir como PDF para máxima calidad.
         window.print();
     };
 
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-0 md:p-4 bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300">
-            <div className="relative w-full max-w-6xl bg-white dark:bg-[#0b0d11] md:rounded-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col md:flex-row h-full md:h-[min(90vh,800px)]">
+        <RightPanel open={true} onClose={onClose} title="Certificado Oficial" width={960}>
+            <div className="relative w-full h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] flex flex-col md:flex-row overflow-hidden">
                 
                 {/* Close Button - Premium Positioning */}
                 <button 
@@ -65,7 +64,7 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                 {/* Sidebar - Control Panel */}
                 <div className="w-full md:w-80 bg-slate-50 dark:bg-[#15171c] p-4 border-r border-slate-100 dark:border-white/5 print:hidden flex flex-col shrink-0">
                     <div className="mb-3">
-                        <div className="size-8 bg-blue-600 text-white rounded-lg flex items-center justify-center mb-3 shadow-xl shadow-blue-600/20">
+                        <div className="size-8 bg-[hsl(var(--primary))] text-white rounded-lg flex items-center justify-center mb-3 shadow-xl shadow-blue-600/20">
                             <Award size={36} />
                         </div>
                         <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter leading-tight">Certificado Oficial</h2>
@@ -75,9 +74,9 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                     </div>
 
                     <div className="space-y-3 mb-auto">
-                        <div className="p-3 bg-white dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 space-y-4 shadow-sm">
+                        <div className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 space-y-4 shadow-sm">
                             <div className="flex items-start gap-3">
-                                <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-md text-blue-600">
+                                <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-md text-[hsl(var(--primary))]">
                                     <ShieldCheck size={18} />
                                 </div>
                                 <div className="min-w-0">
@@ -109,13 +108,13 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                     <div className="grid grid-cols-1 gap-3 mt-3">
                         <button 
                             onClick={handlePrint}
-                            className="w-full py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold uppercase tracking-wide hover:bg-blue-500 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20"
+                            className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20"
                         >
                             <Printer size={18} /> Imprimir / PDF
                         </button>
                         <button 
                             onClick={handleDownloadImage}
-                            className="w-full py-1.5 bg-white dark:bg-white/5 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-50 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-3"
+                            className="w-full py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-50 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-3"
                         >
                             <Download size={18} /> Guardar Imagen
                         </button>
@@ -126,7 +125,7 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                 <div className="flex-1 p-4 md:p-4 flex items-center justify-center bg-[#f1f5f9] dark:bg-black overflow-y-auto">
                     
                     {/* The Actual Document */}
-                    <div id="certificate-to-print" className="certificate-paper w-full aspect-[1.414/1] max-w-[850px] bg-white border-[16px] border-double border-[#e2e8f0] p-4 md:p-4 relative flex flex-col items-center text-center shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] print:shadow-none">
+                    <div id="certificate-to-print" className="certificate-paper w-full aspect-[1.414/1] max-w-[850px] bg-[hsl(var(--bg-primary))] border-[16px] border-double border-[#e2e8f0] p-4 md:p-4 relative flex flex-col items-center text-center shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] print:shadow-none">
                         
                         {/* Elegant Corner Motifs */}
                         <div className="absolute top-4 left-4 size-10 border-t-4 border-l-4 border-amber-400/30 rounded-tl-[2rem]"></div>
@@ -249,6 +248,6 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                     }
                 }
             `}</style>
-        </div>
+        </RightPanel>
     );
 }

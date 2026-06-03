@@ -104,7 +104,7 @@ export default function CandidatesDashboard() {
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
                     <div className="flex-1 h-1.5 w-32 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${row.original.progress}%` }} className={clsx("h-full", row.original.progress >= 100 ? "bg-emerald-500" : "bg-blue-600")} />
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${row.original.progress}%` }} className={clsx("h-full", row.original.progress >= 100 ? "bg-emerald-500" : "bg-[hsl(var(--primary))]")} />
                     </div>
                     <span className="font-semibold text-slate-500">{Math.round(row.original.progress)}%</span>
                 </div>
@@ -113,7 +113,7 @@ export default function CandidatesDashboard() {
         { 
             accessorKey: 'target_level', 
             header: 'Nivel Objetivo',
-            cell: info => <span className="font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">{info.getValue() as string}</span>
+            cell: info => <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide">{info.getValue() as string}</span>
         },
         { 
             accessorKey: 'status', 
@@ -121,7 +121,7 @@ export default function CandidatesDashboard() {
             cell: ({ row }) => (
                 <span className={clsx(
                     "px-4 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wide border",
-                    row.original.status === 'ready' ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800" : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800"
+                    row.original.status === 'ready' ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800" : "bg-blue-50 text-[hsl(var(--primary))] border-blue-100 dark:bg-blue-900/20 dark:border-blue-800"
                 )}>
                     {row.original.status === 'ready' ? 'Óptimo para Hito' : 'En Discipulado'}
                 </span>
@@ -130,7 +130,7 @@ export default function CandidatesDashboard() {
         {
             id: 'actions',
             header: '',
-            cell: () => <button className="p-2 text-slate-300 hover:text-blue-600 transition-all hover:bg-blue-50 dark:hover:bg-white/5 rounded-md"><ChevronRight size={18} /></button>
+            cell: () => <button className="p-2 text-slate-300 hover:text-[hsl(var(--primary))] transition-all hover:bg-blue-50 dark:hover:bg-white/5 rounded-md"><ChevronRight size={18} /></button>
         }
     ], []);
 
@@ -162,14 +162,14 @@ export default function CandidatesDashboard() {
                 </section>
 
                 {/* Main Table Area Cinematic */}
-                <section className="bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-xl space-y-3">
+                <section className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-xl space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-4">
                         <div>
                             <h3 className="text-xl font-bold tracking-tighter uppercase leading-none dark:text-white">Nómina de Candidatos</h3>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-2">Basado en el rendimiento de los últimos 30 días</p>
                         </div>
                         <div className="relative w-full md:w-96 group">
-                            <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                            <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[hsl(var(--primary))] transition-colors" />
                             <input 
                                 value={search} onChange={e => setSearch(e.target.value)}
                                 placeholder="Filtrar por nombre de estudiante..." 
@@ -181,7 +181,7 @@ export default function CandidatesDashboard() {
                     <AnimatePresence mode="wait">
                         {loading ? (
                             <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-slate-400 font-semibold uppercase tracking-wide animate-pulse">
-                                <Loader2 className="animate-spin text-blue-600" size={48} /> Procesando Big Data...
+                                <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} /> Procesando Big Data...
                             </div>
                         ) : (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -198,12 +198,12 @@ export default function CandidatesDashboard() {
 function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
     const colors: any = {
         emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800',
-        blue: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800',
+        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800',
         amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800'
     };
     return (
         <div
-            className="p-4 bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg shadow-sm flex items-center gap-3 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg shadow-sm flex items-center gap-3 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >
             <style jsx>{`

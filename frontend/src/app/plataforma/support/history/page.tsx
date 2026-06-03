@@ -13,7 +13,7 @@ const HISTORY = [
 
 const STATUS_CONFIG: Record<string, any> = {
     closed: { icon: CheckCircle, label: 'Cerrado', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-    in_progress: { icon: Clock, label: 'En Proceso', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+    in_progress: { icon: Clock, label: 'En Proceso', color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
     open: { icon: AlertCircle, label: 'Abierto', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
 };
 
@@ -22,7 +22,7 @@ export default function SupportHistoryPage() {
 
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
-            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-white dark:bg-[#1a1d27]">
+            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
                 <History size={16} className="text-slate-400" />
                 <h1 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Historial de Soporte</h1>
                 <span className="ml-auto text-[10px] text-slate-400 font-bold">{HISTORY.length} conversaciones</span>
@@ -47,7 +47,7 @@ export default function SupportHistoryPage() {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.05 }}
-                                    className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 shadow-sm overflow-hidden"
+                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 shadow-sm overflow-hidden"
                                 >
                                     {/* Header row */}
                                     <button
@@ -101,7 +101,7 @@ export default function SupportHistoryPage() {
                                                 <p className="text-[12px] text-slate-400 italic">Ticket en proceso de resolución...</p>
                                             )}
                                             {item.status === 'closed' && (
-                                                <button className="flex items-center gap-2 font-semibold text-blue-600 hover:opacity-70 transition-opacity uppercase tracking-wide">
+                                                <button className="flex items-center gap-2 font-semibold text-[hsl(var(--primary))] hover:opacity-70 transition-opacity uppercase tracking-wide">
                                                     <RotateCcw size={11} /> Reabrir ticket
                                                 </button>
                                             )}

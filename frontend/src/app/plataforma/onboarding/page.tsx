@@ -33,10 +33,10 @@ export default function OnboardingPage() {
     const prevStep = () => setStep(prev => prev - 1);
 
     return (
-        <div className="min-h-screen bg-white dark:bg-[#1e1f21] flex flex-col items-center justify-center p-3 lg:p-4 overflow-hidden relative">
+        <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] flex flex-col items-center justify-center p-3 lg:p-4 overflow-hidden relative">
             {/* Background Orbs */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20 dark:opacity-40">
-                <div className="absolute top-[-10%] left-[-10%] size-96 bg-blue-500 rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute top-[-10%] left-[-10%] size-96 bg-[hsl(var(--primary))] rounded-full blur-[120px] animate-pulse" />
                 <div className="absolute bottom-[-10%] right-[-10%] size-96 bg-sky-500 rounded-full blur-[120px] animate-pulse delay-700" />
             </div>
 
@@ -50,7 +50,7 @@ export default function OnboardingPage() {
                             className={clsx(
                                 "size-8 rounded-full flex items-center justify-center font-semibold z-10 transition-all duration-500",
                                 step >= s 
-                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-110" 
+                                    ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/30 scale-110" 
                                     : "bg-slate-50 dark:bg-white/5 text-slate-400 border border-slate-200 dark:border-white/5"
                             )}
                         >
@@ -60,7 +60,7 @@ export default function OnboardingPage() {
                 </div>
             </div>
 
-            <main className="relative z-10 w-full max-w-2xl bg-white dark:bg-[#1e1f21] rounded-lg p-4 lg:p-4 shadow-2xl border border-slate-100 dark:border-white/5 overflow-hidden">
+            <main className="relative z-10 w-full max-w-2xl bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg p-4 lg:p-4 shadow-2xl border border-slate-100 dark:border-white/5 overflow-hidden">
                 <AnimatePresence mode="wait">
                     {step === 1 && (
                         <motion.div 
@@ -68,7 +68,7 @@ export default function OnboardingPage() {
                             className="space-y-3"
                         >
                             <div className="text-center space-y-4">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-semibold uppercase tracking-wide">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide">
                                     <Sparkles size={14} /> Bienvenido a la Familia
                                 </div>
                                 <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter leading-tight">
@@ -87,7 +87,7 @@ export default function OnboardingPage() {
 
                             <button 
                                 onClick={nextStep}
-                                className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black text-sm uppercase tracking-wide shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
+                                className="w-full py-2 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg font-black text-sm uppercase tracking-wide shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
                             >
                                 Empezar Experiencia <ArrowRight size={18} />
                             </button>
@@ -127,7 +127,7 @@ export default function OnboardingPage() {
                                             <p className="text-[10px] font-bold text-slate-400">{campus.location}</p>
                                         </div>
                                         {selectedCampus === campus.id && (
-                                            <div className="absolute top-3 right-3 text-blue-600 dark:text-blue-400"><CheckCircle2 size={16} /></div>
+                                            <div className="absolute top-3 right-3 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"><CheckCircle2 size={16} /></div>
                                         )}
                                     </div>
                                 ))}
@@ -135,7 +135,7 @@ export default function OnboardingPage() {
 
                             <div className="flex gap-4">
                                 <button onClick={prevStep} className="px-4 py-2 border-2 border-slate-100 dark:border-white/5 rounded-lg font-black text-xs uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-all">Atrás</button>
-                                <button onClick={nextStep} className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-xl shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-3">Continuar <ArrowRight size={18} /></button>
+                                <button onClick={nextStep} className="flex-1 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-xl shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-3">Continuar <ArrowRight size={18} /></button>
                             </div>
                         </motion.div>
                     )}
@@ -153,14 +153,14 @@ export default function OnboardingPage() {
                             <div className="space-y-4">
                                 <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-all", notificationsOn ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-400")}><Bell size={24} /></div>
+                                        <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-all", notificationsOn ? "bg-[hsl(var(--primary))] text-white" : "bg-slate-200 text-slate-400")}><Bell size={24} /></div>
                                         <div>
                                             <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">Notificaciones</h4>
                                             <p className="text-xs text-slate-500">Alertas de tareas y eventos.</p>
                                         </div>
                                     </div>
-                                    <div onClick={() => setNotificationsOn(!notificationsOn)} className={clsx("h-7 w-12 rounded-full relative cursor-pointer transition-colors", notificationsOn ? "bg-blue-600" : "bg-slate-300 dark:bg-white/10")}>
-                                        <motion.div animate={{ x: notificationsOn ? 20 : 4 }} className="absolute top-1 size-5 bg-white rounded-full shadow-sm" />
+                                    <div onClick={() => setNotificationsOn(!notificationsOn)} className={clsx("h-7 w-12 rounded-full relative cursor-pointer transition-colors", notificationsOn ? "bg-[hsl(var(--primary))]" : "bg-slate-300 dark:bg-white/10")}>
+                                        <motion.div animate={{ x: notificationsOn ? 20 : 4 }} className="absolute top-1 size-5 bg-[hsl(var(--bg-primary))] rounded-full shadow-sm" />
                                     </div>
                                 </div>
 
@@ -174,7 +174,7 @@ export default function OnboardingPage() {
                                 <button onClick={prevStep} className="px-4 py-2 border-2 border-slate-100 dark:border-white/5 rounded-lg font-black text-xs uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-all">Atrás</button>
                                 <button 
                                     onClick={() => router.push('/plataforma/academy')}
-                                    className="flex-1 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black text-sm uppercase tracking-wide shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    className="flex-1 py-2 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg font-black text-sm uppercase tracking-wide shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
                                 >
                                     ¡Listo para empezar! <CheckCircle2 size={18} />
                                 </button>
@@ -192,8 +192,8 @@ export default function OnboardingPage() {
 
 function FeatureItem({ icon: Icon, title, desc }: any) {
     return (
-        <div className="flex items-start gap-3 p-3 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 group transition-all hover:border-blue-500/30 hover:shadow-lg">
-            <div className="size-7 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+        <div className="flex items-start gap-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 group transition-all hover:border-blue-500/30 hover:shadow-lg">
+            <div className="size-7 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all shadow-sm">
                 <Icon size={20} />
             </div>
             <div>

@@ -108,7 +108,7 @@ export default function StudentSchedule() {
                 watchers={['Equipo Horarios', 'Optimus Brain']}
                 primaryAction={{ label: icsGenerating ? 'Generando...' : 'Exportar .ics', icon: Download, onClick: exportCalendar }}
             />
-            <div className="rounded-md border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden">
+            <div className="rounded-md border border-slate-200 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl overflow-hidden">
             <div className="flex gap-4 pb-4 overflow-x-auto hide-scrollbar p-4 border-b border-slate-100 dark:border-white/5">
                 {DAYS.map((day, index) => (
                     <button

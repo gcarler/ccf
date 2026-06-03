@@ -123,14 +123,14 @@ export default function CourseViewPage() {
             title: course.title,
             onBack: () => router.push('/plataforma/academy'),
             content: (
-                <div className="flex flex-col h-full bg-white dark:bg-transparent">
+                <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-transparent">
                     <div className="p-4 space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="font-semibold text-slate-400 uppercase tracking-wide">Tu Avance</h3>
-                            <span className="font-semibold text-blue-600 dark:text-blue-400">{completionRate}%</span>
+                            <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{completionRate}%</span>
                         </div>
                         <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${completionRate}%` }} className="h-full bg-blue-600 shadow-sm" />
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${completionRate}%` }} className="h-full bg-[hsl(var(--primary))] shadow-sm" />
                         </div>
                     </div>
 
@@ -160,7 +160,7 @@ export default function CourseViewPage() {
                                                 isCompleted
                                                     ? "bg-emerald-500 border-emerald-500 text-white"
                                                     : isActive
-                                                        ? "bg-blue-600 border-blue-600 text-white"
+                                                        ? "bg-[hsl(var(--primary))] border-blue-600 text-white"
                                                         : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-400"
                                             )}
                                         >
@@ -183,7 +183,7 @@ export default function CourseViewPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden">
                 <WorkspaceToolbar breadcrumbs={[{ label: 'Cargando curso...', icon: GraduationCap }]} />
                 <div className="flex-1 flex">
                     <aside className="w-80 lg:w-96 border-r border-slate-100 dark:border-white/5 p-4 space-y-4"><Skeleton className="h-4 w-1/2" /><Skeleton className="h-8 w-full rounded-lg" /><Skeleton className="h-8 w-full rounded-lg" /></aside>
@@ -196,7 +196,7 @@ export default function CourseViewPage() {
     if (!course) return <div className="p-3 text-center font-semibold uppercase text-slate-400 tracking-wide">Curso no encontrado.</div>;
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden font-display no-scrollbar">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden font-display no-scrollbar">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Academia', icon: GraduationCap }, { label: course.title, icon: BookOpen }]}
                 viewType={viewType}
@@ -204,21 +204,21 @@ export default function CourseViewPage() {
                 availableViews={['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <Tooltip content="Compartir curso"><button className="p-2 text-slate-400 hover:text-blue-600 transition-colors"><Share2 size={18} /></button></Tooltip>
-                        <Tooltip content="Ayuda"><button className="p-2 text-slate-400 hover:text-blue-600 transition-colors"><HelpCircle size={18} /></button></Tooltip>
+                        <Tooltip content="Compartir curso"><button className="p-2 text-slate-400 hover:text-[hsl(var(--primary))] transition-colors"><Share2 size={18} /></button></Tooltip>
+                        <Tooltip content="Ayuda"><button className="p-2 text-slate-400 hover:text-[hsl(var(--primary))] transition-colors"><HelpCircle size={18} /></button></Tooltip>
                         <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-2" />
                         <button onClick={() => router.push('/plataforma/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-md text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 transition-all active:scale-95">Salir</button>
                     </div>
                 }
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin bg-white dark:bg-[#1e1f21] relative no-scrollbar">
+            <main className="flex-1 overflow-y-auto scrollbar-thin bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] relative no-scrollbar">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f003_0%,_transparent_50%)] pointer-events-none" />
 
                 {viewType === 'list' && (
  <section className="w-full p-4 lg:p-4 space-y-4">
                         {course.lessons.map((lesson) => (
-                            <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-md border border-slate-200 dark:border-white/10 p-4 text-left bg-white dark:bg-white/5 hover:border-blue-300 transition-all">
+                            <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-md border border-slate-200 dark:border-white/10 p-4 text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:border-blue-300 transition-all">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Lección {lesson.order_index}</p>
@@ -271,7 +271,7 @@ export default function CourseViewPage() {
                                     <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-500">{status}</h3>
                                     <div className="space-y-3">
                                         {lessons.map((lesson) => (
-                                            <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-lg bg-white dark:bg-black/20 p-4 text-left shadow-sm">
+                                            <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-black/20 p-4 text-left shadow-sm">
                                                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{lesson.title}</p>
                                                 <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">{lesson.duration_minutes} min</p>
                                             </button>
@@ -350,12 +350,12 @@ export default function CourseViewPage() {
                             )}
                             {activeLesson?.content_type === 'pdf' && (
                                 <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-slate-50 dark:bg-black space-y-3">
-                                    <FileText size={64} className="text-red-500" />
+                                    <FileText size={64} className="text-[hsl(var(--destructive))]" />
                                     <div>
                                         <h3 className="text-base font-bold text-slate-800 dark:text-white">Documento PDF Adjunto</h3>
                                         <p className="text-slate-500 text-sm mt-2">Lee el documento para completar esta lección.</p>
                                     </div>
-                                    <a href={activeLesson.media_url || "#"} target="_blank" rel="noreferrer" className="px-4 py-1.5 bg-blue-600 text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-blue-700 transition-colors">
+                                    <a href={activeLesson.media_url || "#"} target="_blank" rel="noreferrer" className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-[hsl(var(--primary))] transition-colors">
                                         Abrir Documento
                                     </a>
                                 </div>
@@ -378,7 +378,7 @@ export default function CourseViewPage() {
                             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
                                 <div className="space-y-3 max-w-2xl">
                                     <div className="flex items-center gap-3">
-                                        <span className="font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-lg uppercase tracking-wide">Lección {activeLesson?.order_index}</span>
+                                        <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-lg uppercase tracking-wide">Lección {activeLesson?.order_index}</span>
                                         <div className="size-1 rounded-full bg-slate-300" />
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{activeLesson?.duration_minutes} Minutos de contenido</span>
                                     </div>
@@ -387,7 +387,7 @@ export default function CourseViewPage() {
                                     </h2>
                                 </div>
                                 <div className="flex items-center gap-3 shrink-0">
-                                    <button className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg text-slate-400 hover:text-blue-600 transition-all border border-slate-100 dark:border-white/5"><MoreHorizontal size={20} /></button>
+                                    <button className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] transition-all border border-slate-100 dark:border-white/5"><MoreHorizontal size={20} /></button>
                                     <button
                                         onClick={handleLessonComplete}
                                         disabled={activeLesson?.is_completed}
@@ -395,7 +395,7 @@ export default function CourseViewPage() {
                                             "px-3 py-2 rounded-lg font-black text-[11px] uppercase tracking-wide transition-all active:scale-95 flex items-center gap-3 shadow-xl",
                                             activeLesson?.is_completed
                                                 ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 cursor-not-allowed"
-                                                : "bg-blue-600 text-white shadow-blue-500/20 hover:scale-[1.02]"
+                                                : "bg-[hsl(var(--primary))] text-white shadow-blue-500/20 hover:scale-[1.02]"
                                         )}
                                     >
                                         {activeLesson?.is_completed ? 'Lección Completada' : 'Finalizar Lección'} <CheckCircle2 size={18} />
@@ -413,7 +413,7 @@ export default function CourseViewPage() {
 
                             <section className="p-4 rounded-lg bg-gradient-to-br from-slate-900 to-[#1e1f21] border border-white/5 text-white flex flex-col md:flex-row items-center justify-between gap-4 group">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-2xl group-hover:scale-110 transition-transform">
+                                    <div className="size-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-[hsl(var(--primary))] shadow-2xl group-hover:scale-110 transition-transform">
                                         <Award size={32} />
                                     </div>
                                     <div>
@@ -423,7 +423,7 @@ export default function CourseViewPage() {
                                 </div>
                                 <div className="flex -space-x-3">
                                     {[1, 2, 3].map((item) => <div key={item} className="size-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">JD</div>)}
-                                    <div className="size-8 rounded-full border-2 border-slate-900 bg-blue-600 flex items-center justify-center font-semibold text-white">+12</div>
+                                    <div className="size-8 rounded-full border-2 border-slate-900 bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white">+12</div>
                                 </div>
                             </section>
                         </div>

@@ -33,11 +33,11 @@ const SECTION_TYPES = [
 ];
 
 const SECTION_TYPE_COLORS: Record<string, string> = {
-  hero:              "bg-blue-600",
+  hero:              "bg-[hsl(var(--primary))]",
   video_hero:        "bg-indigo-600",
   rich_text:         "bg-slate-500",
   rich_text_columns: "bg-slate-600",
-  cards:             "bg-blue-600",
+  cards:             "bg-[hsl(var(--primary))]",
   cta_banner:        "bg-emerald-600",
   gallery:           "bg-pink-500",
   faq:               "bg-amber-500",
@@ -45,12 +45,12 @@ const SECTION_TYPE_COLORS: Record<string, string> = {
   testimonials:      "bg-rose-500",
   stats:             "bg-teal-600",
   team:              "bg-orange-500",
-  countdown:         "bg-red-600",
+  countdown:         "bg-[hsl(var(--destructive))]",
   pricing:           "bg-sky-600",
   image_text:        "bg-violet-600",
   timeline:          "bg-lime-600",
   icon_grid:         "bg-yellow-600",
-  newsletter:        "bg-blue-500",
+  newsletter:        "bg-[hsl(var(--primary))]",
   popup_banner:      "bg-fuchsia-500",
   button:            "bg-indigo-500",
   toc:               "bg-zinc-500",
@@ -58,8 +58,8 @@ const SECTION_TYPE_COLORS: Record<string, string> = {
   collapsible:       "bg-purple-500",
   social_links:      "bg-sky-500",
   spacer:            "bg-stone-400",
-  calendar:          "bg-blue-400",
-  map:               "bg-green-500",
+  calendar:          "bg-[hsl(var(--primary))]",
+  map:               "bg-[hsl(var(--secondary))]",
   document_upload:   "bg-amber-600",
   content_blocks:    "bg-pink-400",
   accordion:         "bg-teal-500",
@@ -245,7 +245,7 @@ function SectionPreview({ section }: { section: CmsSection }) {
         <TypeBadge />
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white leading-tight">{title || "Título hero"}</h3>
         <p className="text-sm text-slate-500 line-clamp-2">{body || "Subtítulo o descripción principal"}</p>
-        {ctaLabel && <span className="inline-block mt-1 px-3 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-semibold uppercase">{ctaLabel}</span>}
+        {ctaLabel && <span className="inline-block mt-1 px-3 py-1 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase">{ctaLabel}</span>}
         {section.type === "video_hero" && <p className="text-[9px] text-slate-400 font-bold uppercase">🎬 Video de fondo configurado</p>}
       </div>
     );
@@ -344,7 +344,7 @@ function SectionPreview({ section }: { section: CmsSection }) {
         <div className="flex gap-3">
           {["DD", "HH", "MM", "SS"].map(u => (
             <div key={u} className="text-center">
-              <div className="size-10 rounded-md bg-red-600 flex items-center justify-center text-white font-semibold text-sm">00</div>
+              <div className="size-10 rounded-md bg-[hsl(var(--destructive))] flex items-center justify-center text-white font-semibold text-sm">00</div>
               <p className="text-[8px] text-slate-400 mt-0.5 font-bold uppercase">{u}</p>
             </div>
           ))}
@@ -464,10 +464,10 @@ function MediaPicker({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm p-4 flex items-center justify-center" onClick={onClose}>
-      <div className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-lg bg-white dark:bg-[#111418] border border-slate-200 dark:border-white/10 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <div className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#111418] border border-slate-200 dark:border-white/10 shadow-2xl" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-3 py-1.5">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300 flex items-center justify-center">
+            <div className="size-10 rounded-md bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300 flex items-center justify-center">
               <ImageIcon size={18} />
             </div>
             <div>
@@ -490,7 +490,7 @@ function MediaPicker({
               className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500"
             />
           </div>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50">
             <Upload size={14} />
             {uploading ? "Subiendo..." : "Subir imagen"}
             <input type="file" accept="image/*" className="hidden" onChange={uploadImage} disabled={uploading} />
@@ -513,12 +513,12 @@ function MediaPicker({
                   <button
                     key={item.id}
                     onClick={() => onSelect(item)}
-                    className={`group text-left rounded-lg border overflow-hidden bg-white dark:bg-white/[0.03] transition-all ${isSelected ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-200 dark:border-white/10 hover:border-blue-300"}`}
+                    className={`group text-left rounded-lg border overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] transition-all ${isSelected ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-200 dark:border-white/10 hover:border-blue-300"}`}
                   >
                     <div className="relative aspect-video bg-slate-100 dark:bg-white/5">
                       <img src={item.url} alt={item.alt_text || item.filename || ""} className="h-full w-full object-cover" />
                       {isSelected && (
-                        <span className="absolute right-2 top-2 size-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg">
+                        <span className="absolute right-2 top-2 size-7 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shadow-lg">
                           <Check size={15} />
                         </span>
                       )}
@@ -850,7 +850,7 @@ export default function CmsBuilderPage() {
 
   return (
     <div className="space-y-3 p-3">
-      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-3 flex items-center justify-between">
+      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3 flex items-center justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2 Builder</p>
           <h1 className="mt-2 text-lg font-semibold">Constructor visual multisitio</h1>
@@ -861,7 +861,7 @@ export default function CmsBuilderPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-        <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
+        <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
           <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sitio</label>
           <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
             {sites.length === 0 && <option value="faro">faro</option>}
@@ -909,7 +909,7 @@ export default function CmsBuilderPage() {
           </div>
         </aside>
 
-        <section className="lg:col-span-6 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-4">
+        <section className="lg:col-span-6 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Canvas · {activeSlug ? `/${activeSlug}` : "Selecciona página"}</h2>
             <div className="flex items-center gap-2">
@@ -991,7 +991,7 @@ export default function CmsBuilderPage() {
           </div>
         </section>
 
-        <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-4">
+        <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4">
           <div className="space-y-2">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Estado página</p>
             <p className="text-sm font-bold">{activePage?.title || "Sin página"}</p>
@@ -1038,7 +1038,7 @@ export default function CmsBuilderPage() {
                   setMediaPickerOpen(true);
                 }}
                 disabled={!canEdit}
-                className="w-full rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <ImageIcon size={13} /> Elegir imagen SEO
               </button>
@@ -1070,7 +1070,7 @@ export default function CmsBuilderPage() {
                 window.open(`/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(activeSlug)}`, "_blank");
               }}
               disabled={!activeSlug}
-              className="w-full rounded-lg border border-blue-200 text-blue-600 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
+              className="w-full rounded-lg border border-blue-200 text-[hsl(var(--primary))] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
             >
               <Eye size={11} /> Vista previa borrador
             </button>
@@ -1151,7 +1151,7 @@ export default function CmsBuilderPage() {
                         setMediaPickerTarget("section");
                         setMediaPickerOpen(true);
                       }}
-                      className="w-full rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2"
+                      className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2"
                     >
                       <ImageIcon size={13} /> Elegir de media
                     </button>
@@ -1501,7 +1501,7 @@ export default function CmsBuilderPage() {
                       {safeString(activeSection.props_json?.image_url) && (
                         <img src={safeString(activeSection.props_json?.image_url)} alt="" className="w-full h-24 object-cover rounded-md" />
                       )}
-                      <button type="button" onClick={() => { setMediaPickerTarget("section"); setMediaPickerOpen(true); }} className="w-full rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2">
+                      <button type="button" onClick={() => { setMediaPickerTarget("section"); setMediaPickerOpen(true); }} className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2">
                         <ImageIcon size={13} /> Elegir imagen
                       </button>
                       <input value={safeString(activeSection.props_json?.image_url)} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_url: e.target.value }; updateSectionPropsLocal(nextProps); }} onBlur={(e) => saveSectionField("image_url", e.target.value)} placeholder="URL manual" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" />

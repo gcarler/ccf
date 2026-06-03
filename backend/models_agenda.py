@@ -114,5 +114,6 @@ class ReservaRecurso(Base):
 
     # NOTE: Para evitar colisiones en PostgreSQL, ejecutar como DBA:
     # ALTER TABLE agenda_reserva_recursos ADD CONSTRAINT sin_colisiones_fisicas
-    # EXCLUDE USING gist (recurso_id WITH =, tsrange(bloqueo_inicio, bloqueo_fin) WITH &&);
+    # EXCLUDE USING gist (recurso_id WITH =, tstzrange(bloqueo_inicio, bloqueo_fin) WITH &&)
+    # WHERE (bloqueo_inicio IS NOT NULL AND bloqueo_fin IS NOT NULL);
     # Requiere: CREATE EXTENSION IF NOT EXISTS btree_gist;

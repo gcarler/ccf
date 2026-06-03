@@ -8,8 +8,8 @@ import clsx from 'clsx';
 export interface StatusOption {
     label: string;
     value: string;
-    color: string; // Tailwind color class like 'bg-blue-500'
-    text: string;  // Tailwind text class like 'text-blue-600'
+    color: string; // Tailwind color class like 'bg-[hsl(var(--primary))]'
+    text: string;  // Tailwind text class like 'text-[hsl(var(--primary))]'
     bg: string;    // Tailwind light bg class like 'bg-blue-50'
 }
 
@@ -67,7 +67,7 @@ export default function StatusPicker({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.95 }}
                         transition={{ duration: 0.1 }}
-                        className="absolute left-0 top-full mt-1 w-40 bg-white dark:bg-[#2a2b2d] rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-[100] overflow-hidden"
+                        className="absolute left-0 top-full mt-1 w-40 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-[100] overflow-hidden"
                     >
                         <div className="p-1">
                             {options.map((option) => (
@@ -89,7 +89,7 @@ export default function StatusPicker({
                                         <div className={clsx("w-2 h-2 rounded-full", option.color)} />
                                         {option.label}
                                     </div>
-                                    {currentValue === option.value && <Check size={12} className="text-blue-500" />}
+                                    {currentValue === option.value && <Check size={12} className="text-[hsl(var(--primary))]" />}
                                 </button>
                             ))}
                         </div>

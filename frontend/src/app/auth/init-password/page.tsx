@@ -57,7 +57,7 @@ function InitPasswordContent() {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-white dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl p-8 max-w-md text-center"
+                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl p-8 max-w-md text-center"
                 >
                     <CheckCircle2 className="mx-auto mb-4 text-emerald-500" size={48} />
                     <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">¡Contraseña Configurada!</h2>
@@ -72,7 +72,7 @@ function InitPasswordContent() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+                className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
             >
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5">
@@ -82,7 +82,7 @@ function InitPasswordContent() {
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {error && (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-[12px] text-red-600 dark:text-red-400">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-[12px] text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
                             <XCircle size={14} />
                             {error}
                         </div>
@@ -98,7 +98,7 @@ function InitPasswordContent() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Mínimo 8 caracteres"
-                                className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#0f1116] border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                                className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                                 required
                                 minLength={8}
                             />
@@ -121,7 +121,7 @@ function InitPasswordContent() {
                             value={confirm}
                             onChange={(e) => setConfirm(e.target.value)}
                             placeholder="Repite la contraseña"
-                            className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#0f1116] border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                            className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                             required
                         />
                     </div>

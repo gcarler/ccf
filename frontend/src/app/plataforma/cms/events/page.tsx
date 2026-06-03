@@ -102,7 +102,7 @@ export default function CmsEventsPage() {
         primaryAction={{ label: saving ? "Guardando..." : "Guardar agenda", icon: Save, onClick: save }}
       />
 
-      <section className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-3 space-y-5">
+      <section className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div>

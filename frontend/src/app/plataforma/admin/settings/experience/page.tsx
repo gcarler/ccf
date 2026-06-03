@@ -27,7 +27,7 @@ import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import clsx from 'clsx';
 
 const FEATURE_CARDS = [
-    { id: 'gantt', label: 'Vista de Gantt', desc: 'Habilita el cronograma interactivo en proyectos.', icon: GanttChart, color: 'text-blue-500' },
+    { id: 'gantt', label: 'Vista de Gantt', desc: 'Habilita el cronograma interactivo en proyectos.', icon: GanttChart, color: 'text-[hsl(var(--primary))]' },
     { id: 'ai_coach', label: 'Optimus Brain Coach', desc: 'Asistente de IA para academia y CRM.', icon: Bot, color: 'text-sky-500' },
     { id: 'call_center', label: 'Call Center Pastoral', icon: Smartphone, desc: 'Gestión de llamadas y mensajes masivos.', color: 'text-amber-500' },
     { id: 'prayer_wall', label: 'Muro de Intercesión', icon: Heart, desc: 'Registro público de peticiones de oración.', color: 'text-rose-500' },
@@ -120,9 +120,9 @@ export default function WorkspaceExperienceManager() {
     const renderList = () => (
         <div className="space-y-4">
             {featureRows.map((feature) => (
-                <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3 hover:border-blue-300 transition-all">
+                <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3 hover:border-blue-300 transition-all">
                     <div className="flex items-center gap-3">
-                        <div className={clsx("size-7 rounded-lg flex items-center justify-center", feature.enabled ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400")}>
+                        <div className={clsx("size-7 rounded-lg flex items-center justify-center", feature.enabled ? "bg-[hsl(var(--primary))] text-white" : "bg-slate-100 text-slate-400")}>
                             <feature.icon size={24} />
                         </div>
                         <div>
@@ -137,7 +137,7 @@ export default function WorkspaceExperienceManager() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/5">
             <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
@@ -169,7 +169,7 @@ export default function WorkspaceExperienceManager() {
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((feature) => (
-                            <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4 hover:border-blue-300 transition-all">
+                            <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4 hover:border-blue-300 transition-all">
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{feature.label}</p>
                                 <p className="mt-2 text-[10px] font-bold text-slate-400">{feature.desc}</p>
                             </button>
@@ -181,7 +181,7 @@ export default function WorkspaceExperienceManager() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Ajustes', icon: Settings }, { label: 'Experiencia de Usuario', icon: Sparkles }]}
                 viewType={viewType}
@@ -192,7 +192,7 @@ export default function WorkspaceExperienceManager() {
                         <button onClick={() => router.back()} className="px-4 py-2 font-semibold text-slate-500 uppercase tracking-wide hover:text-slate-800">Cancelar</button>
                         <button 
                             onClick={handleSave} disabled={isSaving}
-                            className="flex items-center gap-2 px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
+                            className="flex items-center gap-2 px-3 py-2 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
                         >
                             {isSaving ? <RotateCcw className="animate-spin" size={14} /> : <Save size={14} />} Guardar Workspace
                         </button>
@@ -211,7 +211,7 @@ export default function WorkspaceExperienceManager() {
                             <Zap size={14} /> Workspace Experience Manager v3.0
                         </div>
                         <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter leading-none">
-                            El cerebro de tu <span className="text-blue-600 italic">interfaz.</span>
+                            El cerebro de tu <span className="text-[hsl(var(--primary))] italic">interfaz.</span>
                         </h1>
                         <p className="text-xl text-slate-500 dark:text-slate-400 font-medium max-w-2xl leading-relaxed">
                             Activa funcionalidades de alto nivel, personaliza el motor visual y define el flujo de herramientas para todo tu equipo.
@@ -249,13 +249,13 @@ export default function WorkspaceExperienceManager() {
                                         className={clsx(
                                             "p-4 rounded-lg border-2 transition-all cursor-pointer group relative overflow-hidden",
                                             isEnabled 
-                                                ? "bg-white dark:bg-white/5 border-blue-600 shadow-2xl shadow-blue-500/10 scale-[1.02]" 
+                                                ? "bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-blue-600 shadow-2xl shadow-blue-500/10 scale-[1.02]" 
                                                 : "bg-slate-50 dark:bg-black/20 border-transparent grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
                                         )}
                                     >
-                                        {isEnabled && <div className="absolute top-3 right-6 size-2 rounded-full bg-blue-600 shadow-[0_0_10px_#2563eb]" />}
+                                        {isEnabled && <div className="absolute top-3 right-6 size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_10px_#2563eb]" />}
                                         <div className="space-y-3">
-                                            <div className={clsx("size-7 rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12", isEnabled ? "bg-blue-600 text-white" : "bg-white dark:bg-white/10 text-slate-400")}>
+                                            <div className={clsx("size-7 rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12", isEnabled ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-slate-400")}>
                                                 <feature.icon size={24} />
                                             </div>
                                             <div>
@@ -282,7 +282,7 @@ export default function WorkspaceExperienceManager() {
                                     <h4 className="text-lg font-bold tracking-tight">Personalización de Marca</h4>
                                     <p className="text-slate-400 text-sm font-medium leading-relaxed italic">&ldquo;Configura el ADN visual de la plataforma para que refleje la identidad de Centro Cristiano de Fe.&rdquo;</p>
                                     <div className="flex gap-4">
-                                        <div className="size-10 rounded-full bg-blue-600 cursor-pointer border-2 border-white ring-4 ring-blue-600/20 shadow-xl" />
+                                        <div className="size-10 rounded-full bg-[hsl(var(--primary))] cursor-pointer border-2 border-white ring-4 ring-blue-600/20 shadow-xl" />
                                         <div className="size-10 rounded-full bg-sky-600 cursor-pointer hover:scale-110 transition-all" />
                                         <div className="size-10 rounded-full bg-emerald-600 cursor-pointer hover:scale-110 transition-all" />
                                         <div className="size-10 rounded-full bg-rose-600 cursor-pointer hover:scale-110 transition-all" />

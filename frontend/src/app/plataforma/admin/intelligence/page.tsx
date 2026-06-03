@@ -188,10 +188,10 @@ export default function IntelligenceConsole() {
                         
                         <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-4">
-                                <div className="size-7 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20"><Bot size={28} /></div>
+                                <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shadow-lg shadow-blue-500/20"><Bot size={28} /></div>
                                 <div>
                                     <h3 className="text-lg font-bold tracking-tight leading-none mb-1 uppercase">Consultar Base de Conocimientos</h3>
-                                    <p className="font-semibold text-blue-400 uppercase tracking-wide">Query el Cerebro Central de CCF</p>
+                                    <p className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide">Query el Cerebro Central de CCF</p>
                                 </div>
                             </div>
 
@@ -203,7 +203,7 @@ export default function IntelligenceConsole() {
                                 />
                                 <button 
                                     onClick={handleAskOptimus} disabled={isAsking}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 size-7 bg-blue-600 hover:bg-blue-500 rounded-md flex items-center justify-center transition-all active:scale-90"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 size-7 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] rounded-md flex items-center justify-center transition-all active:scale-90"
                                 >
                                     {isAsking ? <Activity size={20} className="animate-spin" /> : <Send size={20} />}
                                 </button>
@@ -235,7 +235,7 @@ export default function IntelligenceConsole() {
                             <button
                                 onClick={() => void handleAcknowledgeAll()}
                                 disabled={acknowledgingAll || insights.every((insight) => insight.acknowledged)}
-                                className="font-semibold text-blue-600 uppercase tracking-wide hover:underline disabled:opacity-40 disabled:no-underline"
+                                className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide hover:underline disabled:opacity-40 disabled:no-underline"
                             >
                                 {acknowledgingAll ? 'Procesando...' : 'Reconocer Todo'}
                             </button>
@@ -247,12 +247,12 @@ export default function IntelligenceConsole() {
                         )}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {insights.map((insight) => (
-                                <div key={insight.id} className="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity"><Zap size={48} className="text-blue-600" /></div>
+                                <div key={insight.id} className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity"><Zap size={48} className="text-[hsl(var(--primary))]" /></div>
                                     <div className="relative z-10 space-y-4">
                                         <div className="flex justify-between items-start">
-                                            <div className="size-10 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-blue-600"><BrainCircuit size={20} /></div>
-                                            {!insight.acknowledged && <div className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-[8px] font-semibold uppercase tracking-wide">NUEVO</div>}
+                                            <div className="size-10 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-[hsl(var(--primary))]"><BrainCircuit size={20} /></div>
+                                            {!insight.acknowledged && <div className="px-2 py-0.5 bg-blue-100 text-[hsl(var(--primary))] rounded text-[8px] font-semibold uppercase tracking-wide">NUEVO</div>}
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 uppercase tracking-tight">{insight.title}</h4>
@@ -262,7 +262,7 @@ export default function IntelligenceConsole() {
                                             <button
                                                 onClick={() => void handleAcknowledgeInsight(insight.id)}
                                                 disabled={acknowledgingId === insight.id}
-                                                className="flex items-center gap-2 font-semibold text-blue-600 uppercase tracking-wide group-hover:gap-3 transition-all disabled:opacity-40"
+                                                className="flex items-center gap-2 font-semibold text-[hsl(var(--primary))] uppercase tracking-wide group-hover:gap-3 transition-all disabled:opacity-40"
                                             >
                                                 {acknowledgingId === insight.id ? 'Procesando...' : 'Reconocer'} <ChevronRight size={14} />
                                             </button>
@@ -274,7 +274,7 @@ export default function IntelligenceConsole() {
                             ))}
                         </div>
                         {!loading && insights.length === 0 && (
-                            <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 text-sm font-semibold text-slate-500">
+                            <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 text-sm font-semibold text-slate-500">
                                 No hay insights disponibles.
                             </div>
                         )}
@@ -283,14 +283,14 @@ export default function IntelligenceConsole() {
 
                 {/* Sidebar: Agents Status & Tasks */}
                 <aside className="lg:col-span-4 space-y-3">
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div>
                             <div className="flex items-center justify-between mb-3">
                                 <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Estado de la Red</h4>
                                 <BarChart3 size={18} className="text-slate-300" />
                             </div>
                             <div className="space-y-3">
-                                <AgentState label="Optimus Analysis" load={65} status="Online" color="bg-blue-500" />
+                                <AgentState label="Optimus Analysis" load={65} status="Online" color="bg-[hsl(var(--primary))]" />
                                 <AgentState label="Crawler Doctrinal" load={12} status="Idle" color="bg-slate-400" />
                                 <AgentState label="Messenger Bot" load={94} status="Busy" color="bg-amber-500" />
                             </div>
@@ -302,7 +302,7 @@ export default function IntelligenceConsole() {
                                 {tasks.map((task) => (
                                     <div key={task.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
-                                            <div className={clsx("size-3 rounded-full animate-pulse", task.status === 'running' ? 'bg-blue-500' : 'bg-slate-300')} />
+                                            <div className={clsx("size-3 rounded-full animate-pulse", task.status === 'running' ? 'bg-[hsl(var(--primary))]' : 'bg-slate-300')} />
                                             <div>
                                                 <p className="font-semibold text-slate-800 dark:text-white uppercase leading-none mb-1">{task.title}</p>
                                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{task.status}</p>
@@ -340,7 +340,7 @@ export default function IntelligenceConsole() {
                                     <button
                                         onClick={() => void handleCreateTask()}
                                         disabled={creatingTask || !newTaskTitle.trim()}
-                                        className="flex-1 rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-40"
+                                        className="flex-1 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-40"
                                     >
                                         {creatingTask ? 'Guardando...' : 'Crear'}
                                     </button>
@@ -355,7 +355,7 @@ export default function IntelligenceConsole() {
                         ) : (
                             <button
                                 onClick={() => setShowTaskComposer(true)}
-                                className="w-full py-2 bg-slate-900 dark:bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl transition-all active:scale-95"
+                                className="w-full py-2 bg-slate-900 dark:bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl transition-all active:scale-95"
                             >
                                 Asignar Tarea Manual
                             </button>
@@ -363,14 +363,14 @@ export default function IntelligenceConsole() {
                     </section>
 
                     <section className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
-                        <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400 mb-4">
+                        <div className="flex items-center gap-3 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] mb-4">
                             <Activity size={18} />
                             <h5 className="text-[11px] font-semibold uppercase tracking-wide">Uptime del Cerebro</h5>
                         </div>
                         <div className="h-2 w-full bg-blue-200 dark:bg-white/10 rounded-full overflow-hidden mb-2">
-                            <div className="h-full bg-blue-600 w-[99.9%]" />
+                            <div className="h-full bg-[hsl(var(--primary))] w-[99.9%]" />
                         </div>
-                        <p className="font-semibold text-blue-500 uppercase tracking-wide text-right">99.98% Anual</p>
+                        <p className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide text-right">99.98% Anual</p>
                     </section>
                 </aside>
             </div>
@@ -380,7 +380,7 @@ export default function IntelligenceConsole() {
 
 function StatusCard({ label, value, status, icon: Icon, color }: any) {
     const colors: any = {
-        blue: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
+        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20',
         purple: 'text-sky-600 bg-sky-50 dark:bg-sky-900/20',
         amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20'
     };
@@ -388,7 +388,7 @@ function StatusCard({ label, value, status, icon: Icon, color }: any) {
         ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600'
         : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
     return (
-        <div className="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all relative overflow-hidden">
+        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all relative overflow-hidden">
             <div className="flex justify-between items-start">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
                     <Icon size={28} />

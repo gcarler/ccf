@@ -48,14 +48,14 @@ export default function Footer() {
                     {/* Brand */}
                     <div className="md:col-span-1 space-y-2">
                         <div className="flex items-center gap-2 text-white">
-                            <Church size={16} className="text-blue-400" />
+                            <Church size={16} className="text-[hsl(var(--primary))]" />
                             <span className="text-xs font-semibold uppercase tracking-wide">CCF Ministerio</span>
                         </div>
                         <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
                             Plataforma de inteligencia ministerial para la formación teológica, gestión pastoral y colaboración de equipos.
                         </p>
                         <div className="flex items-center gap-1 text-[10px] text-slate-500">
-                            <Heart size={10} className="text-blue-400" />
+                            <Heart size={10} className="text-[hsl(var(--primary))]" />
                             Hecho con fe
                         </div>
                     </div>

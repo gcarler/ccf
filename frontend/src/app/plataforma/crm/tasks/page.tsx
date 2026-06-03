@@ -49,7 +49,7 @@ interface ConsolidationTask {
 const STATUS_COLUMNS = [
     { key: 'urgent', label: 'Urgente', icon: Flame, color: 'rose', bg: 'bg-rose-50 dark:bg-rose-900/10', border: 'border-rose-200 dark:border-rose-800/30', dot: 'bg-rose-500' },
     { key: 'pending', label: 'Pendiente', icon: Circle, color: 'slate', bg: 'bg-slate-50 dark:bg-white/[0.02]', border: 'border-slate-200 dark:border-white/10', dot: 'bg-slate-400' },
-    { key: 'in_progress', label: 'En Seguimiento', icon: Clock, color: 'blue', bg: 'bg-blue-50 dark:bg-blue-900/10', border: 'border-blue-200 dark:border-blue-800/30', dot: 'bg-blue-500' },
+    { key: 'in_progress', label: 'En Seguimiento', icon: Clock, color: 'blue', bg: 'bg-blue-50 dark:bg-blue-900/10', border: 'border-blue-200 dark:border-blue-800/30', dot: 'bg-[hsl(var(--primary))]' },
     { key: 'done', label: 'Completada', icon: CheckCircle2, color: 'emerald', bg: 'bg-emerald-50 dark:bg-emerald-900/10', border: 'border-emerald-200 dark:border-emerald-800/30', dot: 'bg-emerald-500' },
 ];
 
@@ -71,7 +71,7 @@ function TaskCard({ task, onStatusChange }: { task: ConsolidationTask; onStatusC
             exit={{ opacity: 0, y: -12 }}
             whileHover={{ y: -2 }}
             onClick={() => window.location.href = `/crm/tasks/${task.id}`}
-            className="p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+            className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group"
         >
             <div className="flex items-start gap-3">
                 <button
@@ -228,7 +228,7 @@ export default function CrmTasksPage() {
             rightActions={
                 <button
                     onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Tarea
                 </button>
@@ -266,11 +266,11 @@ export default function CrmTasksPage() {
                                                 <span className={`text-[11px] font-bold uppercase tracking-wide text-${col.color}-600 dark:text-${col.color}-400`}>
                                                     {col.label}
                                                 </span>
-                                                <span className="text-[10px] font-bold text-slate-400 bg-white dark:bg-white/5 rounded-full px-2 py-0.5 border border-slate-200 dark:border-white/10">
+                                                <span className="text-[10px] font-bold text-slate-400 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-full px-2 py-0.5 border border-slate-200 dark:border-white/10">
                                                     {colTasks.length}
                                                 </span>
                                             </div>
-                                            <button onClick={() => setIsCreateOpen(true)} className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-white/5 transition-all">
+                                            <button onClick={() => setIsCreateOpen(true)} className="p-1.5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all">
                                                 <Plus size={14} />
                                             </button>
                                         </div>
@@ -310,7 +310,7 @@ export default function CrmTasksPage() {
                             <div className="py-1.5 flex flex-col items-center gap-4">
                                 <CheckSquare size={48} strokeWidth={1} className="text-slate-200" />
                                 <p className="text-slate-400 font-bold uppercase text-sm">Sin tareas registradas</p>
-                                <button onClick={() => setIsCreateOpen(true)} className="px-4 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20">
+                                <button onClick={() => setIsCreateOpen(true)} className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20">
                                     Crear primera tarea
                                 </button>
                             </div>
@@ -318,7 +318,7 @@ export default function CrmTasksPage() {
                             <div
                                 key={task.id}
                                 onClick={() => router.push(`/plataforma/crm/tasks/${task.id}`)}
-                                className="flex items-center gap-4 p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group"
+                                className="flex items-center gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group"
                             >
                                 <button
                                     onClick={e => { e.stopPropagation(); updateTaskStatus(task.id, task.status === 'done' ? 'pending' : 'done'); }}
@@ -395,7 +395,7 @@ export default function CrmTasksPage() {
                         {dueBuckets.length === 0 ? (
                             <div className="py-1.5 text-center text-slate-400 font-bold uppercase text-sm">Sin tareas con fecha</div>
                         ) : dueBuckets.map(([isoDate, bucket]) => (
-                            <div key={isoDate} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                            <div key={isoDate} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                 <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{new Date(`${isoDate}T00:00:00`).toLocaleDateString()}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {bucket.map(task => (
@@ -412,7 +412,7 @@ export default function CrmTasksPage() {
 
                 {viewType === 'gantt' && (
                     <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4">
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Timeline de avance</p>
                             {tasks.map(task => (
                                 <div key={task.id} className="space-y-1">
@@ -421,7 +421,7 @@ export default function CrmTasksPage() {
                                         <span className="font-bold text-slate-400">{STATUS_PROGRESS[task.status] ?? 0}%</span>
                                     </div>
                                     <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
-                                        <div className="h-full bg-blue-600" style={{ width: `${STATUS_PROGRESS[task.status] ?? 0}%` }} />
+                                        <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${STATUS_PROGRESS[task.status] ?? 0}%` }} />
                                     </div>
                                 </div>
                             ))}
@@ -432,7 +432,7 @@ export default function CrmTasksPage() {
 
                 {viewType === 'wiki' && (
                     <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4">
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Wiki de tareas de consolidación</p>
                             <textarea
                                 value={wikiNotes}
@@ -484,7 +484,7 @@ export default function CrmTasksPage() {
                                 { label: 'Vence', val: selectedTask.due_date ? new Date(selectedTask.due_date).toLocaleDateString() : '—' },
                                 { label: 'Creada', val: new Date(selectedTask.created_at).toLocaleDateString() },
                             ].map(item => (
-                                <div key={item.label} className="p-3 bg-white dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/5">
+                                <div key={item.label} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/5">
                                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">{item.label}</p>
                                     <p className="text-sm font-bold text-slate-800 dark:text-white">{item.val}</p>
                                 </div>
@@ -529,7 +529,7 @@ export default function CrmTasksPage() {
                             form="create-task-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Crear Tarea

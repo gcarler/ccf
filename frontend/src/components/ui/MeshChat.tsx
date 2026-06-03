@@ -95,10 +95,10 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                         initial={{ opacity: 0, y: 100, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 100, scale: 0.95 }}
-                        className="fixed bottom-6 right-6 w-full max-w-[440px] h-[600px] bg-white dark:bg-[#15171c] rounded-lg shadow-2xl border border-slate-100 dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
+                        className="fixed bottom-6 right-6 w-full max-w-[440px] h-[600px] bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg shadow-2xl border border-slate-100 dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
                     >
                         {/* Header */}
-                        <header className="p-3 border-b border-slate-50 dark:border-white/5 flex items-center justify-between bg-white dark:bg-white/5 shrink-0">
+                        <header className="p-3 border-b border-slate-50 dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-white/5 shrink-0">
                             <div className="flex items-center gap-4">
                                 <div className="size-7 rounded-lg bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 relative">
                                     <Bot size={24} />
@@ -131,7 +131,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                 >
                                     <div className={clsx(
                                         "size-8 rounded-md flex items-center justify-center shrink-0 shadow-sm",
-                                        msg.role === 'bot' ? "bg-sky-50 dark:bg-sky-900/20 text-sky-600" : "bg-blue-600 text-white"
+                                        msg.role === 'bot' ? "bg-sky-50 dark:bg-sky-900/20 text-sky-600" : "bg-[hsl(var(--primary))] text-white"
                                     )}>
                                         {msg.role === 'bot' ? <Sparkles size={16} /> : <User size={16} />}
                                     </div>
@@ -143,7 +143,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                             "p-4 rounded-lg text-[13px] font-medium leading-relaxed shadow-sm",
                                             msg.role === 'bot' 
                                                 ? "bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-white/5" 
-                                                : "bg-blue-600 text-white"
+                                                : "bg-[hsl(var(--primary))] text-white"
                                         )}>
                                             {msg.content}
                                         </div>
@@ -184,7 +184,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     placeholder="Preguntar a Optimus..."
-                                    className="w-full h-8 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg pl-6 pr-14 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500/50 transition-all shadow-inner"
+                                    className="w-full h-8 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg pl-6 pr-14 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500/50 transition-all shadow-inner"
                                 />
                                 <button 
                                     type="submit"

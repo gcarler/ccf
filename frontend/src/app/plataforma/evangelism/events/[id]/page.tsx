@@ -98,9 +98,9 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                         const m = members.find((x) => x.id === id);
                         if (!m) return null;
                         return (
-                            <div key={id} className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-bold">
+                            <div key={id} className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-blue-300 rounded-lg text-sm font-bold">
                                 {m.nombre_completo}
-                                <button type="button" aria-label={`Quitar ${m.nombre_completo}`} onClick={() => handleRemove(id)} className="hover:text-red-500"><X size={14}/></button>
+                                <button type="button" aria-label={`Quitar ${m.nombre_completo}`} onClick={() => handleRemove(id)} className="hover:text-[hsl(var(--destructive))]"><X size={14}/></button>
                             </div>
                         );
                     })}
@@ -113,7 +113,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                             return m ? m.nombre_completo : 'Cargando...';
                         })()}
                     </span>
-                    <button type="button" aria-label="Quitar selección" onClick={() => typeof value === 'string' && handleRemove(value)} className="text-blue-400 hover:text-red-500"><X size={16}/></button>
+                    <button type="button" aria-label="Quitar selección" onClick={() => typeof value === 'string' && handleRemove(value)} className="text-[hsl(var(--primary))] hover:text-[hsl(var(--destructive))]"><X size={16}/></button>
                 </div>
             ) : null}
 
@@ -131,7 +131,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                         />
                     </div>
                     {open && search && (
-                        <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                        <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl max-h-60 overflow-y-auto">
                             {filtered.map((m: Member) => (
                                 <button
                                     key={m.id}
@@ -360,7 +360,7 @@ export default function EventDetailPage() {
                                 <span
                                     className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${
                                         activeTab === 'session'
-                                            ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
+                                            ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300"
                                             : "bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300"
                                     }`}
                                 >
@@ -374,15 +374,15 @@ export default function EventDetailPage() {
                             <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
                                 <button 
                                     onClick={() => setActiveTab('details')}
-                                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'details' ? "bg-white dark:bg-[#252528] text-blue-600 shadow-sm" : "text-slate-500")}
+                                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'details' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-slate-500")}
                                 >Detalles Generales</button>
                                 <button 
                                     onClick={() => setActiveTab('session')}
-                                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'session' ? "bg-white dark:bg-[#252528] text-blue-600 shadow-sm" : "text-slate-500")}
+                                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'session' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-slate-500")}
                                 >Configurar Sesion</button>
                                 <button 
                                     onClick={() => setActiveTab('analytics')}
-                                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'analytics' ? "bg-white dark:bg-[#252528] text-blue-600 shadow-sm" : "text-slate-500")}
+                                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'analytics' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-slate-500")}
                                 >Analitica</button>
                             </div>
                         </div>
@@ -399,7 +399,7 @@ export default function EventDetailPage() {
                             <div className="space-y-3">
                                 <DSCard>
                                     <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Acciones</h3>
-                                    <button onClick={() => router.push('/plataforma/evangelism/events')} className="w-full py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-md font-bold flex items-center justify-center gap-2">
+                                    <button onClick={() => router.push('/plataforma/evangelism/events')} className="w-full py-1.5 bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] rounded-md font-bold flex items-center justify-center gap-2">
                                         <ArrowLeft size={16}/> Volver a Eventos
                                     </button>
                                 </DSCard>
@@ -422,20 +422,20 @@ export default function EventDetailPage() {
                                         </div>
                                         <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center">
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Tendencia de Crecimiento</p>
-                                            <h3 className={`text-xl font-bold ${analytics.kpis.trend_percentage > 0 ? 'text-emerald-500' : analytics.kpis.trend_percentage < 0 ? 'text-red-500' : 'text-slate-500'}`}>
+                                            <h3 className={`text-xl font-bold ${analytics.kpis.trend_percentage > 0 ? 'text-emerald-500' : analytics.kpis.trend_percentage < 0 ? 'text-[hsl(var(--destructive))]' : 'text-slate-500'}`}>
                                                 {analytics.kpis.trend_percentage > 0 ? '+' : ''}{analytics.kpis.trend_percentage}%
                                             </h3>
                                             <p className="text-xs font-medium text-slate-500 mt-1">Respecto al mes anterior</p>
                                         </div>
                                         <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center">
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Mes Pico (Récord)</p>
-                                            <h3 className="text-xl font-bold text-blue-500">{analytics.kpis.peak_month.avg}</h3>
+                                            <h3 className="text-xl font-bold text-[hsl(var(--primary))]">{analytics.kpis.peak_month.avg}</h3>
                                             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mt-1">{analytics.kpis.peak_month.month}</p>
                                         </div>
                                     </div>
                                     
                                     {/* Gráfico de Barras CSS */}
-                                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm">
+                                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm">
                                         <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Asistencia Promedio por Mes</h3>
                                         
                                         {analytics.monthly_data.length === 0 ? (
@@ -453,7 +453,7 @@ export default function EventDetailPage() {
                                                                 {d.avg_attendance} asis.
                                                             </div>
                                                             <div 
-                                                                className="w-full bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-500 dark:hover:bg-blue-500 rounded-t-lg transition-all duration-500" 
+                                                                className="w-full bg-blue-100 dark:bg-blue-900/40 hover:bg-[hsl(var(--primary))] dark:hover:bg-[hsl(var(--primary))] rounded-t-lg transition-all duration-500" 
                                                                 style={{ height: `${heightPct}%` }}
                                                             ></div>
                                                             <div className="mt-2 text-[9px] font-semibold uppercase tracking-wide text-slate-400 rotate-[-45deg] origin-top-left translate-y-2 translate-x-2">
@@ -473,7 +473,7 @@ export default function EventDetailPage() {
                     {activeTab === 'session' && (
                         <div className="space-y-3">
                             {/* Toolbar de Sesion */}
-                            <div className="flex flex-col md:flex-row gap-4 items-end bg-white dark:bg-white/5 p-4 rounded-md border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="flex flex-col md:flex-row gap-4 items-end bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 rounded-md border border-slate-100 dark:border-white/5 shadow-sm">
                                 <div className="flex-1 w-full">
                                     <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2 block">Fecha de la Sesion</label>
                                     <div className="relative">
@@ -496,7 +496,7 @@ export default function EventDetailPage() {
                                     <button 
                                         onClick={saveSession}
                                         disabled={savingSession || !sessionDate}
-                                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/30 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-60 disabled:hover:scale-100"
+                                        className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/30 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-60 disabled:hover:scale-100"
                                     >
                                         <Save size={16}/> {savingSession ? 'Guardando...' : 'Guardar Agenda'}
                                     </button>
@@ -508,9 +508,9 @@ export default function EventDetailPage() {
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     {/* AGENDA PANNEL */}
-                                    <div className="bg-white dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/5 p-4 shadow-sm">
+                                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/5 p-4 shadow-sm">
                                         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-800 dark:text-white mb-3 flex items-center gap-2">
-                                            <Mic className="text-blue-600" size={18}/> Agenda de la Reunion
+                                            <Mic className="text-[hsl(var(--primary))]" size={18}/> Agenda de la Reunion
                                         </h3>
                                         <div className="space-y-3">
                                             <MemberSelect 
@@ -539,7 +539,7 @@ export default function EventDetailPage() {
 
                                     {/* ATTENDANCE PANNEL */}
                                     <div className="space-y-3">
-                                        <div className="bg-white dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/5 p-4 shadow-sm">
+                                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/5 p-4 shadow-sm">
                                             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-800 dark:text-white mb-3 flex items-center gap-2">
                                                 <Users className="text-emerald-500" size={18}/> Reporte de Asistencia
                                             </h3>
@@ -558,7 +558,7 @@ export default function EventDetailPage() {
                                                 {sessionData?.metrics && Object.entries(sessionData.metrics).map(([key, val]) => (
                                                     <div key={key} className="flex items-center justify-between p-3 rounded-md bg-slate-50 dark:bg-white/5">
                                                         <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{key}</span>
-                                                        <span className="text-sm font-semibold text-blue-600 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-lg">{val}</span>
+                                                        <span className="text-sm font-semibold text-[hsl(var(--primary))] bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-lg">{val}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -594,7 +594,7 @@ export default function EventDetailPage() {
                                                             <p className="text-sm text-slate-400">Sin registros de asistentes.</p>
                                                         ) : (
                                                             sessionData!.attendees.map((att) => (
-                                                                <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
+                                                                <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
                                                                     <div className="min-w-0">
                                                                         <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{att.name}</p>
                                                                         <p className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{att.role}</p>
@@ -618,7 +618,7 @@ export default function EventDetailPage() {
                                                             <p className="text-sm text-slate-400">No hay ausentes en esta sesión.</p>
                                                         ) : (
                                                             sessionData!.absentees.map((att) => (
-                                                                <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
+                                                                <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
                                                                     <div className="min-w-0">
                                                                         <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{att.name}</p>
                                                                         <p className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{att.role}</p>
@@ -650,7 +650,7 @@ export default function EventDetailPage() {
                     <button type="button" disabled={savingVisitor} onClick={() => setIsVisitorModalOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
                         Cancelar
                     </button>
-                    <button type="button" onClick={handleAddVisitor} disabled={savingVisitor || !visitorForm.first_name || !visitorForm.last_name} className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all disabled:opacity-60">
+                    <button type="button" onClick={handleAddVisitor} disabled={savingVisitor || !visitorForm.first_name || !visitorForm.last_name} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/30 hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-60">
                         <CheckCircle2 size={16} /> {savingVisitor ? 'Guardando...' : 'Guardar Asistencia'}
                     </button>
                 </>

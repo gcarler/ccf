@@ -17,7 +17,7 @@ import Skeleton from '@/components/ui/Skeleton';
 
 const CHURCH_ROLES = [
     { value: 'LIDER', label: 'Líder', color: 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' },
-    { value: 'SERVIDOR', label: 'Servidor', color: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' },
+    { value: 'SERVIDOR', label: 'Servidor', color: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]' },
     { value: 'MIEMBRO_BAUTIZADO', label: 'Miembro Bautizado', color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' },
     { value: 'SIMPATIZANTE', label: 'Simpatizante', color: 'bg-slate-50 text-slate-600 dark:bg-white/5 dark:text-slate-400' },
     { value: 'VISITANTE_SERVICIO', label: 'Visitante (Servicio)', color: 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400' },
@@ -237,7 +237,7 @@ export default function IdentityManagementPage() {
                 breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Gestión de Identidad', icon: Users }]}
                 onSearch={setSearch}
                 rightActions={
-                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700">
+                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-[hsl(var(--primary))]">
                         <UserPlus size={14} /> Nuevo Usuario
                     </button>
                 }
@@ -260,11 +260,11 @@ export default function IdentityManagementPage() {
                         <StatCard icon={UserCheck} label="Usuarios Activos" value={users.filter(u => u.is_active).length} color="text-emerald-500" bg="bg-emerald-50 dark:bg-emerald-500/10" />
                         <StatCard icon={AlertTriangle} label="Usuarios Inactivos" value={users.filter(u => !u.is_active).length} color="text-slate-400" bg="bg-slate-50 dark:bg-white/5" />
                         <StatCard icon={Crown} label="Con Rol de Iglesia" value={users.filter(u => u.role !== 'estudiante').length} color="text-amber-500" bg="bg-amber-50 dark:bg-amber-500/10" />
-                        <StatCard icon={Users} label="Total Usuarios" value={users.length} color="text-blue-500" bg="bg-blue-50 dark:bg-blue-500/10" />
+                        <StatCard icon={Users} label="Total Usuarios" value={users.length} color="text-[hsl(var(--primary))]" bg="bg-blue-50 dark:bg-blue-500/10" />
                     </div>
 
                     {/* Users Table */}
-                    <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden">
                         {loading ? (
                             <div className="p-4 space-y-3">
                                 {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
@@ -321,7 +321,7 @@ export default function IdentityManagementPage() {
                                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleSelectUser(user); }}
-                                                        className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md transition-all text-slate-400 hover:text-blue-500"
+                                                        className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md transition-all text-slate-400 hover:text-[hsl(var(--primary))]"
                                                     >
                                                         <Eye size={16} />
                                                     </button>
@@ -347,7 +347,7 @@ export default function IdentityManagementPage() {
                         <button className="px-3 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors" onClick={() => setIsDrawerOpen(false)}>Cancelar</button>
                         <button
                             disabled={saving || profileLoading}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleSaveProfile}
                         >
                             {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
@@ -407,7 +407,7 @@ export default function IdentityManagementPage() {
                                         )}
                                     >
                                         <span className={clsx("px-2 py-0.5 rounded text-[10px] font-semibold uppercase", r.color)}>{r.label}</span>
-                                        {churchRole === r.value && <UserCheck size={14} className="text-blue-500" />}
+                                        {churchRole === r.value && <UserCheck size={14} className="text-[hsl(var(--primary))]" />}
                                     </button>
                                 ))}
                             </div>
@@ -453,7 +453,7 @@ export default function IdentityManagementPage() {
                                     >
                                         <span className="text-xs font-semibold">{m}</span>
                                         {ministries.includes(m) && (
-                                            ministries.indexOf(m) === 0 ? <Crown size={14} className="text-amber-500" /> : <UserCheck size={14} className="text-blue-500" />
+                                            ministries.indexOf(m) === 0 ? <Crown size={14} className="text-amber-500" /> : <UserCheck size={14} className="text-[hsl(var(--primary))]" />
                                         )}
                                     </button>
                                 ))}
@@ -476,7 +476,7 @@ export default function IdentityManagementPage() {
                         {/* Roles de Plataforma */}
                         <section>
                             <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2 mb-3">
-                                <Briefcase size={14} className="text-blue-500" /> Roles de Plataforma
+                                <Briefcase size={14} className="text-[hsl(var(--primary))]" /> Roles de Plataforma
                             </h4>
                             <div className="grid grid-cols-2 gap-1.5">
                                 {PLATFORM_ROLES.map(r => (
@@ -491,7 +491,7 @@ export default function IdentityManagementPage() {
                                         )}
                                     >
                                         <span className="text-[10px] font-semibold uppercase">{r}</span>
-                                        {platformRoles.includes(r) && <UserCheck size={12} className="text-blue-500 ml-auto" />}
+                                        {platformRoles.includes(r) && <UserCheck size={12} className="text-[hsl(var(--primary))] ml-auto" />}
                                     </button>
                                 ))}
                             </div>
@@ -541,7 +541,7 @@ export default function IdentityManagementPage() {
                         <button className="px-3 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors" onClick={() => setIsCreateOpen(false)}>Cancelar</button>
                         <button
                             disabled={saving}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleCreateUser}
                         >
                             {saving ? <Loader2 className="animate-spin" size={14} /> : <UserPlus size={14} />}
@@ -595,7 +595,7 @@ export default function IdentityManagementPage() {
                                     )}
                                 >
                                     <span className="text-[10px] font-semibold uppercase">{r}</span>
-                                    {newRole === r && <UserCheck size={12} className="text-blue-500 ml-auto" />}
+                                    {newRole === r && <UserCheck size={12} className="text-[hsl(var(--primary))] ml-auto" />}
                                 </button>
                             ))}
                         </div>
@@ -608,7 +608,7 @@ export default function IdentityManagementPage() {
 
 function StatCard({ icon: Icon, label, value, color, bg }: any) {
     return (
-        <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 p-4 flex items-center gap-3">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 p-4 flex items-center gap-3">
             <div className={clsx("size-10 rounded-lg flex items-center justify-center", bg)}>
                 <Icon size={20} className={color} />
             </div>

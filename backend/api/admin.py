@@ -217,6 +217,9 @@ def set_user_permissions(
         for perm_key in expand_module_permissions(module, level):
             resolved_perms[perm_key] = level
 
+    # profile:manage is always preserved
+    resolved_perms["profile:manage"] = "allow"
+
     # Upsert UserPermission row
     override = (
         db.query(models.UserPermission)

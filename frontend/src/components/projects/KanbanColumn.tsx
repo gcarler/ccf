@@ -75,7 +75,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                 </div>
                 <button
                     onClick={handleStartAdd}
-                    className="size-6 rounded-md flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-500 transition-all"
+                    className="size-6 rounded-md flex items-center justify-center text-slate-400 hover:text-white hover:bg-[hsl(var(--primary))] transition-all"
                     title="Nuevo"
                 >
                     <Plus size={13} />
@@ -126,7 +126,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
                             transition={{ duration: 0.15 }}
-                            className="bg-white dark:bg-[#25262b] rounded-md border border-blue-300 dark:border-blue-500/40 shadow-md p-3 flex flex-col gap-2"
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#25262b] rounded-md border border-blue-300 dark:border-blue-500/40 shadow-md p-3 flex flex-col gap-2"
                         >
                             <input
                                 ref={inputRef}
@@ -144,7 +144,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                                 <button
                                     onClick={handleSave}
                                     disabled={saving || !title.trim()}
-                                    className="flex-1 py-1.5 bg-blue-600 text-white text-[11px] font-bold rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors"
+                                    className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white text-[11px] font-bold rounded-lg hover:bg-[hsl(var(--primary))] disabled:opacity-40 transition-colors"
                                 >
                                     {saving ? 'Guardando…' : 'Guardar'}
                                 </button>
@@ -164,7 +164,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
             {!isAdding && (
                 <button
                     onClick={handleStartAdd}
-                    className="w-full flex items-center gap-2 py-2 px-3 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-white/5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 transition-all text-[12px] font-bold"
+                    className="w-full flex items-center gap-2 py-2 px-3 text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 transition-all text-[12px] font-bold"
                 >
                     <Plus size={13} /> Nuevo
                 </button>

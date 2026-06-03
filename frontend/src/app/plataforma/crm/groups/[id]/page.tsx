@@ -81,11 +81,11 @@ export default function GroupDetailPage() {
                         </h1>
                         <div className="flex items-center gap-4 text-sm font-bold text-slate-500">
                             <span className="flex items-center gap-2">
-                                <Calendar size={18} className="text-blue-600" />
+                                <Calendar size={18} className="text-[hsl(var(--primary))]" />
                                 {group.zone || "Zona no definida"}
                             </span>
                             <span className="flex items-center gap-2">
-                                <MapPin size={18} className="text-blue-600" />
+                                <MapPin size={18} className="text-[hsl(var(--primary))]" />
                                 {group.address || "Sin direccion"}
                             </span>
                         </div>
@@ -97,7 +97,7 @@ export default function GroupDetailPage() {
                         <DSCard>
                             <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Liderazgo</h3>
                             <div className="flex items-center gap-4">
-                                <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                     <Shield size={24} />
                                 </div>
                                 <div>
@@ -111,7 +111,7 @@ export default function GroupDetailPage() {
                             <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Estadisticas del Grupo</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                                    <Users size={20} className="text-blue-600 mb-2" />
+                                    <Users size={20} className="text-[hsl(var(--primary))] mb-2" />
                                     <p className="text-lg font-bold">{group.members_count ?? 0}</p>
                                     <p className="text-[9px] font-bold text-slate-400 uppercase">Miembros Frecuentes</p>
                                 </div>
@@ -126,7 +126,7 @@ export default function GroupDetailPage() {
 
                     <aside className="space-y-3">
                         <div className="p-4 bg-slate-900 rounded-md text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-blue-400">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
                                 <History size={14} /> Linea de Tiempo
                             </div>
                             <div className="space-y-3">

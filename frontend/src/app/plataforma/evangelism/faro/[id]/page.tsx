@@ -134,7 +134,7 @@ export default function FaroDetailPage() {
             title: 'Grupos en Casa',
             replaceAll: true,
             content: (
-                <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21]">
+                <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
                     <div className="px-3 pt-4 pb-3 border-b border-slate-100 dark:border-white/5">
                         <button onClick={() => router.back()} className="flex items-center gap-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors mb-3 text-[10px] font-semibold uppercase tracking-wide">
                             <ArrowLeft size={14} /> Volver a Faros
@@ -184,17 +184,17 @@ export default function FaroDetailPage() {
                                 >
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className={`text-xs font-bold ${isActive ? 'text-blue-700 dark:text-blue-400' : 'text-slate-800 dark:text-white'}`}>
+                                            <p className={`text-xs font-bold ${isActive ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' : 'text-slate-800 dark:text-white'}`}>
                                                 {s.topic ? s.topic : new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}
                                             </p>
                                             {s.topic && <p className="text-[10px] font-medium text-slate-400 mt-0.5">{new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}</p>}
                                             {s.season_name && !s.topic && <p className="text-[10px] font-medium text-slate-400 mt-0.5">{s.season_name}</p>}
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className={`px-2 py-0.5 rounded-lg font-semibold ${isActive ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+                                            <span className={`px-2 py-0.5 rounded-lg font-semibold ${isActive ? 'bg-blue-100 dark:bg-blue-900/50 text-[hsl(var(--primary))] dark:text-blue-300' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
                                                 {s.attendance_count}
                                             </span>
-                                            <ChevronRight size={14} className={isActive ? 'text-blue-500' : 'text-slate-300'} />
+                                            <ChevronRight size={14} className={isActive ? 'text-[hsl(var(--primary))]' : 'text-slate-300'} />
                                         </div>
                                     </div>
                                 </button>
@@ -370,7 +370,7 @@ export default function FaroDetailPage() {
 
     if (loading) return (
         <EvangelismShell breadcrumbs={[{ label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home }, { label: '...', icon: Home }]}>
-            <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-blue-500" size={40} /></div>
+            <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-[hsl(var(--primary))]" size={40} /></div>
         </EvangelismShell>
     );
 
@@ -409,15 +409,15 @@ export default function FaroDetailPage() {
                             </div>
                         </div>
                         <div className="flex gap-3 shrink-0">
-                            <div className="text-center px-3 py-1.5 bg-white dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 shadow-sm">
+                            <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 shadow-sm">
                                 <p className="text-base font-bold text-slate-900 dark:text-white">{house.total_sessions}</p>
                                 <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mt-0.5">Sesiones</p>
                             </div>
-                            <div className="text-center px-3 py-1.5 bg-white dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 shadow-sm">
+                            <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 shadow-sm">
                                 <p className="text-base font-bold text-slate-900 dark:text-white">{house.total_attendance}</p>
                                 <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mt-0.5">Asistentes</p>
                             </div>
-                            <div className="text-center px-3 py-1.5 bg-white dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 shadow-sm">
+                            <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 shadow-sm">
                                 <p className="text-base font-bold text-slate-900 dark:text-white">{avgAttendance}</p>
                                 <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mt-0.5">Promedio</p>
                             </div>
@@ -447,7 +447,7 @@ export default function FaroDetailPage() {
                                     </div>
                                     <button
                                         onClick={() => setShowAddAttendee(true)}
-                                        className="flex items-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20"
+                                        className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20"
                                     >
                                         <UserPlus size={14} /> AÃ±adir Asistentes
                                     </button>
@@ -455,15 +455,15 @@ export default function FaroDetailPage() {
 
                                 {/* Stat strip */}
                                 <div className="flex gap-4">
-                                    <div className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
-                                        <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{loadingAtt ? 'â€”' : attendance?.total ?? 0}</p>
+                                    <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
+                                        <p className="text-lg font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{loadingAtt ? 'â€”' : attendance?.total ?? 0}</p>
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mt-1">Presentes</p>
                                     </div>
-                                    <div className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
+                                    <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
                                         <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{house.capacity ?? 'â€”'}</p>
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mt-1">Capacidad</p>
                                     </div>
-                                    <div className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
+                                    <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
                                         <p className="text-lg font-bold text-emerald-600 dark:emerald-400">
                                             {house.capacity && attendance ? `${Math.round(attendance.total / house.capacity * 100)}%` : 'â€”'}
                                         </p>
@@ -471,7 +471,7 @@ export default function FaroDetailPage() {
                                     </div>
                                 </div>
 
-                                <div className="bg-white dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/5 p-4 shadow-sm space-y-2">
+                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/5 p-4 shadow-sm space-y-2">
                                     <div className="flex items-center justify-between gap-4">
                                         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-800 dark:text-white flex items-center gap-2">
                                             <BarChart3 className="text-indigo-500" size={18} /> Monitoreo de la casa
@@ -551,7 +551,7 @@ export default function FaroDetailPage() {
 
                                     <div className="flex items-center justify-between gap-4">
                                         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-800 dark:text-white flex items-center gap-2">
-                                            <Activity className="text-blue-500" size={18} /> Reporte semanal
+                                            <Activity className="text-[hsl(var(--primary))]" size={18} /> Reporte semanal
                                         </h3>
                                         <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                             {reportMembers.length} miembros
@@ -674,7 +674,7 @@ export default function FaroDetailPage() {
                                                                             absence_reason_detail: checked ? null : item.absence_reason_detail || '',
                                                                         } : item));
                                                                     }}
-                                                                    className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                                    className="size-4 rounded border-slate-300 text-[hsl(var(--primary))] focus:ring-blue-500"
                                                                 />
                                                                 {attended ? 'Presente' : 'Ausente'}
                                                             </label>
@@ -687,7 +687,7 @@ export default function FaroDetailPage() {
                                                                     <select
                                                                         value={row.absence_reason || 'other'}
                                                                         onChange={(e) => setReportMembers(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason: e.target.value as AttendanceReason } : item))}
-                                                                        className="w-full bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg py-2.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                                                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg py-2.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
                                                                     >
                                                                         {reasonOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                                                                     </select>
@@ -697,7 +697,7 @@ export default function FaroDetailPage() {
                                                                     <input
                                                                         value={row.absence_reason_detail || ''}
                                                                         onChange={(e) => setReportMembers(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason_detail: e.target.value } : item))}
-                                                                        className="w-full bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg py-2.5 px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
+                                                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg py-2.5 px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
                                                                         placeholder="Especifica el motivo"
                                                                     />
                                                                 </div>
@@ -730,7 +730,7 @@ export default function FaroDetailPage() {
 
                                 {/* Attendee list */}
                                 {loadingAtt ? (
-                                    <div className="flex items-center justify-center py-1.5"><Loader2 className="animate-spin text-blue-500" size={24} /></div>
+                                    <div className="flex items-center justify-center py-1.5"><Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} /></div>
                                 ) : !attendance || attendance.attendees.length === 0 ? (
                                     <div className="py-1.5 text-center bg-slate-50 dark:bg-white/5 rounded-lg text-slate-400">
                                         <Users size={32} className="mx-auto mb-3 opacity-30" />
@@ -738,12 +738,12 @@ export default function FaroDetailPage() {
                                         <p className="text-xs mt-1">Usa el botÃ³n &ldquo;AÃ±adir Asistentes&rdquo; para marcar presentes</p>
                                     </div>
                                 ) : (
-                                    <div className="bg-white dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
+                                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
                                         <div className="px-4 py-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                                             <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex items-center gap-2">
                                                 <CheckCircle2 size={14} className="text-emerald-500" /> Lista de Asistencia
                                             </h3>
-                                            <span className="text-xs font-semibold text-blue-600 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-lg">{attendance.total} personas</span>
+                                            <span className="text-xs font-semibold text-[hsl(var(--primary))] bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-lg">{attendance.total} personas</span>
                                         </div>
                                         <div className="divide-y divide-slate-50 dark:divide-white/5">
                                             {attendance.attendees.map((a) => (
@@ -769,7 +769,7 @@ export default function FaroDetailPage() {
 
             {/* ADD ATTENDEES INLINE SECTION */}
             {showAddAttendee && (
-                <div className="mx-8 mb-3 bg-white dark:bg-[#1e1f21] border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
+                <div className="mx-8 mb-3 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
                     <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-white/5">
                         <div>
                             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Registrar Asistentes</h3>
@@ -790,7 +790,7 @@ export default function FaroDetailPage() {
                                 <button
                                     onClick={handleSaveAttendance}
                                     disabled={saving || selectedIds.size === 0}
-                                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
                                     {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
                                     {saving ? 'Guardando...' : `Guardar ${selectedIds.size > 0 ? `(${selectedIds.size})` : ''}`}
@@ -820,7 +820,7 @@ export default function FaroDetailPage() {
                                     </button>
                                 </div>
                                 {selectedIds.size > 0 && (
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400 ml-1">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] ml-1">
                                         {selectedIds.size} seleccionado{selectedIds.size > 1 ? 's' : ''}
                                     </p>
                                 )}
@@ -847,7 +847,7 @@ export default function FaroDetailPage() {
                                 </div>
                                 <div className="flex gap-3 pt-4">
                                     <button onClick={() => setIsCreatingMember(false)} className="flex-1 py-1.5 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-white rounded-lg text-sm font-bold hover:bg-slate-200 transition-all">Cancelar</button>
-                                    <button onClick={handleCreateMember} disabled={creatingMember || !newMemberForm.first_name || !newMemberForm.last_name} className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                                    <button onClick={handleCreateMember} disabled={creatingMember || !newMemberForm.first_name || !newMemberForm.last_name} className="flex-1 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                                         {creatingMember ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Crear
                                     </button>
                                 </div>
@@ -868,7 +868,7 @@ export default function FaroDetailPage() {
                                             })}
                                             className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-500/30' : 'hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent'}`}
                                         >
-                                            <div className={`size-9 rounded-md flex items-center justify-center text-sm font-semibold shrink-0 ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'}`}>
+                                            <div className={`size-9 rounded-md flex items-center justify-center text-sm font-semibold shrink-0 ${isSelected ? 'bg-[hsl(var(--primary))] text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'}`}>
                                                 {isSelected ? <CheckCircle2 size={16} /> : (m.nombre_completo?.charAt(0) || '')}
                                             </div>
                                             <div className="flex-1 min-w-0">

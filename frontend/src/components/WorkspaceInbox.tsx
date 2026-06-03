@@ -73,12 +73,12 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 400 }}
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                        className="fixed top-0 right-0 h-screen w-full max-w-[480px] bg-white dark:bg-[#1e1f21] shadow-[-20px_0_60px_rgba(0,0,0,0.1)] border-l border-slate-200 dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
+                        className="fixed top-0 right-0 h-screen w-full max-w-[480px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[-20px_0_60px_rgba(0,0,0,0.1)] border-l border-slate-200 dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
                     >
                         {/* Header */}
                         <header className="h-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-3 bg-slate-50/50 dark:bg-white/5 shrink-0">
                             <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-md bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
                                     <Inbox size={18} />
                                 </div>
                                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 tracking-tight">Inbox</h3>
@@ -113,7 +113,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                                 <input 
                                     type="text" placeholder="Buscar en notificaciones..." 
-                                    className="w-full h-9 bg-slate-100 dark:bg-black/20 border-transparent rounded-md pl-10 pr-4 text-[12px] font-medium focus:bg-white dark:focus:bg-black/40 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                                    className="w-full h-9 bg-slate-100 dark:bg-black/20 border-transparent rounded-md pl-10 pr-4 text-[12px] font-medium focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-black/40 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
                                 />
                             </div>
                             <div className="flex gap-1">
@@ -159,7 +159,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                                 <div className={clsx(
                                                     "size-10 rounded-lg flex items-center justify-center shadow-sm",
                                                     notif.notif_type === 'mention' ? "bg-sky-100 dark:bg-sky-900/30 text-sky-600" :
-                                                    notif.notif_type === 'task' ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600" :
+                                                    notif.notif_type === 'task' ? "bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))]" :
                                                     "bg-slate-100 dark:bg-white/10 text-slate-500"
                                                 )}>
                                                     {notif.notif_type === 'mention' ? <User size={20} /> : 
@@ -175,12 +175,12 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                                 
                                                 {/* Inline Actions */}
                                                 <div className="pt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleClear(notif.id); }} className="px-3 py-1.5 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200 hover:bg-slate-50 transition-all">Archivar</button>
-                                                    <button className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Ver</button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleClear(notif.id); }} className="px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200 hover:bg-slate-50 transition-all">Archivar</button>
+                                                    <button className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Ver</button>
                                                 </div>
                                             </div>
                                             {!notif.is_read && (
-                                                <div className="absolute right-4 top-3 size-2 bg-blue-600 rounded-full" />
+                                                <div className="absolute right-4 top-3 size-2 bg-[hsl(var(--primary))] rounded-full" />
                                             )}
                                         </motion.div>
                                     ))}
@@ -190,7 +190,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
 
                         {/* Multi-action footer */}
                         <footer className="p-4 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex justify-center">
-                            <button className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 hover:text-blue-500 transition-colors">
+                            <button className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 hover:text-[hsl(var(--primary))] transition-colors">
                                 <Archive size={14} /> Ver archivo de notificaciones
                             </button>
                         </footer>
@@ -218,7 +218,7 @@ function Tab({ active, label, count, onClick }: any) {
             onClick={onClick}
             className={clsx(
                 "px-4 py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide transition-all flex items-center gap-2",
-                active ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600"
+                active ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20" : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600"
             )}
         >
             {label}

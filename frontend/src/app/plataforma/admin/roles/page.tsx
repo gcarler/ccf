@@ -173,11 +173,11 @@ export default function RolesPage() {
                             <div 
                                 key={role.role_id}
                                 onClick={() => openEditDrawer(role)}
-                                className="bg-white rounded-lg p-3 border border-slate-100 shadow-xl shadow-slate-200/20 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group"
+                                className="bg-[hsl(var(--bg-primary))] rounded-lg p-3 border border-slate-100 shadow-xl shadow-slate-200/20 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group"
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
+                                        <div className="w-10 h-10 rounded-md bg-blue-50 text-[hsl(var(--primary))] flex items-center justify-center">
                                             <Shield size={20} />
                                         </div>
                                         <h3 className="font-bold text-slate-800">{role.name}</h3>
@@ -229,13 +229,13 @@ export default function RolesPage() {
                             value={editingRole.name || ''}
                             onChange={e => setEditingRole({...editingRole, name: e.target.value})}
                             placeholder="Ej. Secretaria CRM"
-                            className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold text-slate-800 transition-all"
+                            className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold text-slate-800 transition-all"
                         />
                     </div>
 
                     <div className="space-y-3">
                         <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                            <Shield size={16} className="text-blue-500" />
+                            <Shield size={16} className="text-[hsl(var(--primary))]" />
                             <h4 className="text-sm font-bold text-slate-800">Matriz de Permisos</h4>
                         </div>
 
@@ -251,9 +251,9 @@ export default function RolesPage() {
                                                 <div 
                                                     key={p} 
                                                     onClick={() => togglePermission(p)}
-                                                    className={`flex items-start gap-4 p-4 rounded-md cursor-pointer border transition-all ${isActive ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}
+                                                    className={`flex items-start gap-4 p-4 rounded-md cursor-pointer border transition-all ${isActive ? 'bg-blue-50 border-blue-200' : 'bg-[hsl(var(--bg-primary))] border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}
                                                 >
-                                                    <div className={`mt-0.5 shrink-0 w-5 h-5 rounded flex items-center justify-center transition-all ${isActive ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-transparent border border-slate-200'}`}>
+                                                    <div className={`mt-0.5 shrink-0 w-5 h-5 rounded flex items-center justify-center transition-all ${isActive ? 'bg-[hsl(var(--primary))] text-white shadow-md' : 'bg-slate-100 text-transparent border border-slate-200'}`}>
                                                         <Check size={12} strokeWidth={4} />
                                                     </div>
                                                     <div>

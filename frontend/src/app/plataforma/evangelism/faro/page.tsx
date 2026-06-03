@@ -199,9 +199,9 @@ export default function FaroPage() {
                                         <button
                                             key={h.id}
                                             onClick={() => router.push(`/evangelism/faro/${h.id}`)}
-                                            className="text-left bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:border-blue-500/30 transition-all group"
+                                            className="text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:border-blue-500/30 transition-all group"
                                         >
-                                            <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                            <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                                 <Home size={24} />
                                             </div>
                                             <p className="text-lg font-bold text-slate-900 dark:text-white">{h.name}</p>
@@ -228,7 +228,7 @@ export default function FaroPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {seasons.map(s => (
                                             <div key={s.id} className={clsx(
-                                                "bg-white dark:bg-white/5 rounded-lg border p-3 shadow-sm transition-all",
+                                                "bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border p-3 shadow-sm transition-all",
                                                 s.status === 'Activa' ? 'border-blue-400/50 shadow-blue-500/10' : 'border-slate-100 dark:border-white/5'
                                             )}>
                                                 <div className="flex items-start justify-between mb-4">
@@ -238,7 +238,7 @@ export default function FaroPage() {
                                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">{s.name}</h3>
                                                 <p className="text-sm text-slate-500 font-bold mb-3">{s.start_date} → {s.end_date}</p>
                                                 {s.status === 'Activa' && (
-                                                    <button onClick={() => handleCloseSeason(s.id)} className="w-full py-2 bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
+                                                    <button onClick={() => handleCloseSeason(s.id)} className="w-full py-2 bg-red-50 text-[hsl(var(--destructive))] dark:bg-red-500/10 dark:text-[hsl(var(--destructive))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
                                                         Finalizar Temporada
                                                     </button>
                                                 )}
@@ -271,13 +271,13 @@ export default function FaroPage() {
                                                         <tr key={row.grupo_id} onClick={() => router.push(`/evangelism/faro/${row.grupo_id}`)} className="group hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors cursor-pointer">
                                                             <td className="px-4 py-2">
                                                                 <div className="flex items-center gap-4">
-                                                                    <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Home size={18} /></div>
-                                                                    <span className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{house?.name || `Grupo #${row.grupo_id}`}</span>
+                                                                    <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Home size={18} /></div>
+                                                                    <span className="text-base font-bold text-slate-900 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">{house?.name || `Grupo #${row.grupo_id}`}</span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-4 py-2 text-center text-sm font-bold text-slate-600 dark:text-slate-400">{row.total_sessions}</td>
                                                             <td className="px-4 py-2 text-center">
-                                                                <span className="px-4 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-md text-sm font-semibold">{row.total_attendance}</span>
+                                                                <span className="px-4 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-md text-sm font-semibold">{row.total_attendance}</span>
                                                             </td>
                                                             <td className="px-4 py-2 text-center text-sm font-bold text-slate-600 dark:text-slate-400">{row.avg}</td>
                                                         </tr>
@@ -303,7 +303,7 @@ export default function FaroPage() {
                         <button disabled={savingSeason} onClick={() => setShowNewSeason(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
                             Cancelar
                         </button>
-                        <button onClick={handleCreateSeason} disabled={savingSeason || !isSeasonFormValid} className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-60">
+                        <button onClick={handleCreateSeason} disabled={savingSeason || !isSeasonFormValid} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60">
                             {savingSeason ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Crear
                         </button>
                     </>
@@ -349,8 +349,8 @@ export default function FaroPage() {
             >
                 <div className="space-y-3 mt-4">
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-900/30">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-400 dark:text-blue-300 mb-1">Temporada Activa</p>
-                        <p className="text-sm font-bold text-blue-700 dark:text-blue-400">{activeSeason?.name}</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-blue-300 mb-1">Temporada Activa</p>
+                        <p className="text-sm font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{activeSeason?.name}</p>
                     </div>
                     
                     <div className="space-y-1.5">
@@ -361,7 +361,7 @@ export default function FaroPage() {
                             {houses.map(h => <option key={h.id} value={h.id}>{h.name} {h.leader_name ? `· Líder: ${h.leader_name}` : ''}</option>)}
                         </select>
                         {sessionForm.grupo_id === 'all' && (
-                            <p className="text-[10px] text-blue-500 font-bold mt-1">Se creará una sesión idéntica para todas las casas activas simultáneamente.</p>
+                            <p className="text-[10px] text-[hsl(var(--primary))] font-bold mt-1">Se creará una sesión idéntica para todas las casas activas simultáneamente.</p>
                         )}
                     </div>
                     

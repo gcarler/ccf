@@ -281,17 +281,17 @@ export default function WhiteboardSessionPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5">
-                            {saveStatus === "saving" ? <Loader2 size={12} className="animate-spin text-blue-500" /> : <Cloud size={12} className="text-emerald-500" />}
+                        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5">
+                            {saveStatus === "saving" ? <Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" /> : <Cloud size={12} className="text-emerald-500" />}
                             {saveStatus === "saving" ? "Guardando" : saveStatus === "saved" ? "Guardado" : "Local"}
                         </div>
-                        <button onClick={copyShareLink} className="p-2 text-slate-400 transition-all hover:text-blue-600" title="Copiar enlace">
+                        <button onClick={copyShareLink} className="p-2 text-slate-400 transition-all hover:text-[hsl(var(--primary))]" title="Copiar enlace">
                             <Share2 size={18} />
                         </button>
-                        <button onClick={exportCanvas} className="p-2 text-slate-400 transition-all hover:text-blue-600" title="Exportar JSON">
+                        <button onClick={exportCanvas} className="p-2 text-slate-400 transition-all hover:text-[hsl(var(--primary))]" title="Exportar JSON">
                             <Download size={18} />
                         </button>
-                        <button onClick={saveNow} className="flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
+                        <button onClick={saveNow} className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
                             <Save size={14} /> Guardar
                         </button>
                     </div>
@@ -312,16 +312,16 @@ export default function WhiteboardSessionPage() {
 
                 <main
                     className={clsx(
-                        "flex-1 overflow-auto bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:32px_32px] p-4 pl-24 dark:bg-[#0f1114] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]",
+                        "flex-1 overflow-auto bg-[hsl(var(--bg-primary))] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:32px_32px] p-4 pl-24 dark:bg-[#0f1114] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]",
                         tool === "select" ? "cursor-default" : "cursor-crosshair"
                     )}
                 >
-                    <div className="inline-block overflow-hidden rounded-lg border-8 border-white bg-white shadow-[0_48px_96px_-32px_rgba(15,23,42,0.35)] dark:border-[#1e1f21]">
+                    <div className="inline-block overflow-hidden rounded-lg border-8 border-white bg-[hsl(var(--bg-primary))] shadow-[0_48px_96px_-32px_rgba(15,23,42,0.35)] dark:border-[#1e1f21]">
                         <canvas ref={canvasRef} />
                     </div>
                 </main>
 
-                <aside className="w-80 shrink-0 space-y-3 overflow-y-auto border-l border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#111418]">
+                <aside className="w-80 shrink-0 space-y-3 overflow-y-auto border-l border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[#111418]">
                     <section className="space-y-2">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Objetivo</p>
                         <h1 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h1>
@@ -418,7 +418,7 @@ function ToolbarButton({
             className={clsx(
                 "group relative flex size-10 items-center justify-center rounded-md transition-all",
                 active
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                    ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
                     : tone === "danger"
                         ? "text-rose-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
                         : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"

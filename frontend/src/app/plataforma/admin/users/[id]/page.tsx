@@ -164,7 +164,7 @@ export default function UserDetailPage() {
                                 disabled={isSubmitting}
                                 className={`px-3 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all shadow-sm border ${
                                     user.is_active 
-                                    ? 'bg-white dark:bg-white/5 border-rose-200 dark:border-rose-500/30 text-rose-600 hover:bg-rose-50' 
+                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-rose-200 dark:border-rose-500/30 text-rose-600 hover:bg-rose-50' 
                                     : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-600 hover:bg-emerald-100'
                                 }`}
                             >
@@ -180,7 +180,7 @@ export default function UserDetailPage() {
                     {/* Left Column - Main Info */}
                     <div className="lg:col-span-8 space-y-3">
                         {/* Profile Header */}
-                        <div className="p-4 bg-white dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none flex flex-col md:flex-row items-center gap-3 relative overflow-hidden">
+                        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none flex flex-col md:flex-row items-center gap-3 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-48 bg-gradient-to-bl from-blue-500/10 to-transparent pointer-events-none rounded-bl-full" />
                             
                             <div className="size-10 rounded-full bg-slate-50 dark:bg-black/20 flex items-center justify-center border-4 border-white dark:border-[#15171c] shadow-xl relative z-10">
@@ -203,19 +203,19 @@ export default function UserDetailPage() {
                         {/* Account Details */}
                         <DSCard>
                             <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3 flex items-center gap-2">
-                                <Shield size={14} className="text-blue-500"/> Detalles de la Cuenta
+                                <Shield size={14} className="text-[hsl(var(--primary))]"/> Detalles de la Cuenta
                             </h3>
                             <div className="space-y-4">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-500/20 text-blue-600 flex items-center justify-center"><Shield size={18} /></div>
+                                        <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] flex items-center justify-center"><Shield size={18} /></div>
                                         <div>
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Rol Asignado (Permisos Granulares)</p>
                                             {isEditingRole ? (
                                                 <select 
                                                     value={editRoleId || ''} 
                                                     onChange={e => setEditRoleId(e.target.value ? parseInt(e.target.value) : null)}
-                                                    className="bg-white dark:bg-[#0b0d11] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-w-[200px]"
+                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-w-[200px]"
                                                 >
                                                     <option value="">Rol Legacy ({user.role})</option>
                                                     {roles.map(r => (
@@ -231,18 +231,18 @@ export default function UserDetailPage() {
                                     </div>
                                     {isEditingRole ? (
                                         <div className="flex items-center gap-2">
-                                            <button onClick={() => setIsEditingRole(false)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors bg-white dark:bg-white/5 rounded-lg shadow-sm"><X size={16}/></button>
-                                            <button onClick={saveRole} disabled={isSubmitting} className="p-2 text-white bg-blue-600 hover:bg-blue-500 transition-colors rounded-lg shadow-md"><Check size={16}/></button>
+                                            <button onClick={() => setIsEditingRole(false)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg shadow-sm"><X size={16}/></button>
+                                            <button onClick={saveRole} disabled={isSubmitting} className="p-2 text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] transition-colors rounded-lg shadow-md"><Check size={16}/></button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setIsEditingRole(true)} className="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-blue-50 hover:text-blue-600 transition-colors shadow-sm">
+                                        <button onClick={() => setIsEditingRole(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-blue-50 hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
                                             Cambiar Rol
                                         </button>
                                     )}
                                 </div>
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-500/20 text-blue-600 flex items-center justify-center"><Mail size={18} /></div>
+                                        <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] flex items-center justify-center"><Mail size={18} /></div>
                                         <div>
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Correo Electrónico</p>
                                             {isEditingEmail ? (
@@ -250,7 +250,7 @@ export default function UserDetailPage() {
                                                     type="email" 
                                                     value={editEmail} 
                                                     onChange={e => setEditEmail(e.target.value)}
-                                                    className="bg-white dark:bg-[#0b0d11] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                                     autoFocus
                                                 />
                                             ) : (
@@ -260,11 +260,11 @@ export default function UserDetailPage() {
                                     </div>
                                     {isEditingEmail ? (
                                         <div className="flex items-center gap-2">
-                                            <button onClick={() => setIsEditingEmail(false)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors bg-white dark:bg-white/5 rounded-lg shadow-sm"><X size={16}/></button>
-                                            <button onClick={saveEmail} disabled={isSubmitting} className="p-2 text-white bg-blue-600 hover:bg-blue-500 transition-colors rounded-lg shadow-md"><Check size={16}/></button>
+                                            <button onClick={() => setIsEditingEmail(false)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg shadow-sm"><X size={16}/></button>
+                                            <button onClick={saveEmail} disabled={isSubmitting} className="p-2 text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] transition-colors rounded-lg shadow-md"><Check size={16}/></button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setIsEditingEmail(true)} className="px-4 py-2 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-blue-50 hover:text-blue-600 transition-colors shadow-sm">
+                                        <button onClick={() => setIsEditingEmail(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-blue-50 hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
                                             Cambiar Email
                                         </button>
                                     )}
@@ -281,7 +281,7 @@ export default function UserDetailPage() {
                             </h3>
                             <button 
                                 onClick={() => setPasswordModalOpen(true)}
-                                className="w-full py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                className="w-full py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 <Lock size={16} /> Resetear Password
                             </button>

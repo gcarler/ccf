@@ -59,9 +59,9 @@ export default function TeamPage() {
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-                                    <Users size={14} className="text-blue-600" />
+                                    <Users size={14} className="text-[hsl(var(--primary))]" />
                                 </div>
-                                <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">Recursos Humanos</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Recursos Humanos</span>
                             </div>
                             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
                                 Equipo del Proyecto
@@ -72,14 +72,14 @@ export default function TeamPage() {
                         </div>
                         <div className="flex items-center gap-3">
                             {!loading && team.length > 0 && (
-                                <div className="px-4 py-2 bg-white dark:bg-[#1a1b1e] rounded-md border border-slate-200 dark:border-white/[0.06] shadow-sm text-center">
+                                <div className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-md border border-slate-200 dark:border-white/[0.06] shadow-sm text-center">
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Cap. Prom.</p>
-                                    <p className="text-sm font-semibold text-blue-600">
+                                    <p className="text-sm font-semibold text-[hsl(var(--primary))]">
                                         {Math.round(team.reduce((a, m) => a + m.capacity_percent, 0) / team.length)}%
                                     </p>
                                 </div>
                             )}
-                            <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                            <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                                 <UserPlus size={13} /> Invitar
                             </button>
                         </div>
@@ -107,7 +107,7 @@ export default function TeamPage() {
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: idx * 0.05 }}
                                         onClick={() => handleSelect(member)}
-                                        className="group relative bg-white dark:bg-[#1a1b1e] rounded-lg border border-slate-200/70 dark:border-white/[0.06] p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all cursor-pointer overflow-hidden active:scale-[0.99]"
+                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-lg border border-slate-200/70 dark:border-white/[0.06] p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all cursor-pointer overflow-hidden active:scale-[0.99]"
                                     >
                                         {/* Status bar */}
                                         <div className={clsx(
@@ -118,7 +118,7 @@ export default function TeamPage() {
 
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="size-8 rounded-md bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm font-bold text-xs">
+                                                <div className="size-8 rounded-md bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all shadow-sm font-bold text-xs">
                                                     {member.name.substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
@@ -148,19 +148,19 @@ export default function TeamPage() {
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide">
                                                 <span className="text-slate-400">Saturación</span>
-                                                <span className={isOverloaded ? "text-rose-500" : "text-blue-600"}>{member.capacity_percent}%</span>
+                                                <span className={isOverloaded ? "text-rose-500" : "text-[hsl(var(--primary))]"}>{member.capacity_percent}%</span>
                                             </div>
                                             <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                                                 <motion.div
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${member.capacity_percent}%` }}
                                                     transition={{ duration: 0.8, delay: idx * 0.05 + 0.3 }}
-                                                    className={clsx("h-full rounded-full", isOverloaded ? "bg-rose-500" : "bg-blue-600")}
+                                                    className={clsx("h-full rounded-full", isOverloaded ? "bg-rose-500" : "bg-[hsl(var(--primary))]")}
                                                 />
                                             </div>
                                         </div>
 
-                                        <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-semibold uppercase text-blue-600 tracking-wide">
+                                        <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-semibold uppercase text-[hsl(var(--primary))] tracking-wide">
                                             Ver detalle <ChevronRight size={11} />
                                         </div>
                                     </motion.div>
@@ -176,7 +176,7 @@ export default function TeamPage() {
                 <RightPanel title="Perfil de Carga" width={360}>
                     <div className="p-3 space-y-3">
                         <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20">
+                            <div className="size-10 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20">
                                 {selectedMember.name.substring(0, 2).toUpperCase()}
                             </div>
                             <div>
@@ -190,9 +190,9 @@ export default function TeamPage() {
 
                         <div className="grid grid-cols-2 gap-3">
                             {[
-                                { label: 'Tareas Activas', value: selectedMember.open, color: 'text-blue-600' },
+                                { label: 'Tareas Activas', value: selectedMember.open, color: 'text-[hsl(var(--primary))]' },
                                 { label: 'Criticas Hoy', value: selectedMember.critical, color: 'text-rose-500' },
-                                { label: 'Saturacion', value: `${selectedMember.capacity_percent}%`, color: selectedMember.capacity_percent > 80 ? 'text-rose-500' : 'text-blue-600' },
+                                { label: 'Saturacion', value: `${selectedMember.capacity_percent}%`, color: selectedMember.capacity_percent > 80 ? 'text-rose-500' : 'text-[hsl(var(--primary))]' },
                                 { label: 'Estado', value: selectedMember.load_status === 'disponible' ? 'Disponible' : 'Ocupado', color: 'text-emerald-500' },
                             ].map(item => (
                                 <div key={item.label} className="bg-slate-50 dark:bg-white/5 rounded-md p-2 border border-slate-100 dark:border-white/5">

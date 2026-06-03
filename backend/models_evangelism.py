@@ -381,6 +381,7 @@ class Asistencia(Base):
     detalle_excusa = Column(String(255), nullable=True)
     es_primera_vez = Column(Boolean, default=False)
     requiere_seguimiento = Column(Boolean, default=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # English aliases for legacy support
     session_id = synonym("sesion_id")

@@ -87,7 +87,7 @@ export default function AdminMaintenancePage() {
     const renderList = () => (
         <div className="space-y-4">
             {visibleTasks.map((row, index) => (
-                <div key={row.id || index} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div key={row.id || index} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
                         <div className={clsx("size-7 rounded-lg flex items-center justify-center", row.priority === 'Alta' ? "bg-rose-50 text-rose-500" : "bg-amber-50 text-amber-500")}>
                             <AlertCircle size={24} />
@@ -104,7 +104,7 @@ export default function AdminMaintenancePage() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/5">
             <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
@@ -138,7 +138,7 @@ export default function AdminMaintenancePage() {
                     </div>
                     <div className="space-y-4">
                         {group.items.map((row, index) => (
-                            <div key={row.id || index} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-3">
+                            <div key={row.id || index} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-3">
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{row.item}</p>
                                 <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{row.task}</p>
                             </div>
@@ -150,7 +150,7 @@ export default function AdminMaintenancePage() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <style jsx global>{`
                 .aura-tech {
                     position: relative;
@@ -209,7 +209,7 @@ export default function AdminMaintenancePage() {
 
                         <motion.button 
                             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                            className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-black text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-all shadow-2xl shadow-amber-500/20 flex items-center gap-3 group"
+                            className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-[hsl(var(--text-primary))] text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-all shadow-2xl shadow-amber-500/20 flex items-center gap-3 group"
                         >
                             <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" /> Programar Revisión
                         </motion.button>
@@ -231,7 +231,7 @@ export default function AdminMaintenancePage() {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                         {/* Task List Cinematic */}
                         <div className="lg:col-span-8 space-y-3">
-                            <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden shadow-sm shadow-slate-200/50">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden shadow-sm shadow-slate-200/50">
                                 <div className="p-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between">
                                     <h3 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
                                         <History size={16} className="text-amber-500" /> Tareas de Seguimiento Técnico
@@ -271,7 +271,7 @@ export default function AdminMaintenancePage() {
                                                     </div>
                                                     <div className={clsx("text-[9px] font-semibold uppercase tracking-wide", row.priority === 'Alta' ? 'text-rose-500' : 'text-slate-400')}>Prioridad {row.priority}</div>
                                                 </div>
-                                                <button className="size-7 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg flex items-center justify-center text-slate-300 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-500">
+                                                <button className="size-7 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg flex items-center justify-center text-slate-300 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-500">
                                                     <CheckCircle2 size={20} />
                                                 </button>
                                             </div>
@@ -290,7 +290,7 @@ export default function AdminMaintenancePage() {
                         <div className="lg:col-span-4 space-y-3">
                             <motion.div 
                                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-                                className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-sm space-y-3 aura-tech"
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-sm space-y-3 aura-tech"
                             >
                                 <h3 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
                                     <ShieldCheck size={16} className="text-amber-500" /> Salud de Activos

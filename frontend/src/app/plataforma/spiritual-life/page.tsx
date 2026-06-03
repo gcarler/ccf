@@ -23,9 +23,9 @@ interface AcademyProgress {
 const MILESTONE_DEFS = [
     { key: 'Decision_Fe',      label: 'Decisión de Fe',         icon: Zap,    color: 'text-amber-500',  bg: 'bg-amber-50 dark:bg-amber-900/20',  border: 'border-amber-200 dark:border-amber-500/20' },
     { key: 'Bautismo_Aguas',   label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-cyan-600',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',    border: 'border-cyan-200 dark:border-cyan-500/20' },
-    { key: 'Bautismo_Espiritu',label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20',border: 'border-blue-200 dark:border-blue-500/20' },
+    { key: 'Bautismo_Espiritu',label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20',border: 'border-blue-200 dark:border-blue-500/20' },
     { key: 'Miembro_Oficial',  label: 'Membresía Oficial',      icon: Shield, color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20',border: 'border-emerald-200 dark:border-emerald-500/20' },
-    { key: 'Liderazgo',        label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-blue-600',   bg: 'bg-blue-50 dark:bg-blue-900/20',    border: 'border-blue-200 dark:border-blue-500/20' },
+    { key: 'Liderazgo',        label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20',    border: 'border-blue-200 dark:border-blue-500/20' },
 ];
 
 // ── Discipleship steps
@@ -119,7 +119,7 @@ export default function SpiritualLifePage() {
                         <Link href="/spiritual-life/timeline">
                             <motion.button
                                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                                className="flex items-center gap-2 px-3 py-2.5 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/25"
+                                className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/25"
                             >
                                 <Calendar size={14} /> Ver Línea de Tiempo
                             </motion.button>
@@ -130,13 +130,13 @@ export default function SpiritualLifePage() {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         {[
                             { label: 'Hitos Espirituales', value: `${milestones.length}/${MILESTONE_DEFS.length}`, icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-                            { label: 'Progreso Espiritual', value: `${progressPct}%`, icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+                            { label: 'Progreso Espiritual', value: `${progressPct}%`, icon: TrendingUp, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
                             { label: 'Cursos en Academia', value: `${academyProgress?.completed_courses ?? '–'}/${academyProgress?.total_courses ?? '–'}`, icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-                            { label: 'Nivel de Discipulado', value: `${discipuladoDone}/5`, icon: Star, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+                            { label: 'Nivel de Discipulado', value: `${discipuladoDone}/5`, icon: Star, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
                         ].map((kpi, i) => (
                             <motion.div key={i}
                                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-                                className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg p-3 shadow-sm hover:shadow-md transition-all"
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg p-3 shadow-sm hover:shadow-md transition-all"
                             >
                                 <div className={clsx("size-9 rounded-md flex items-center justify-center mb-3", kpi.bg)}>
                                     <kpi.icon size={17} className={kpi.color} />
@@ -154,12 +154,12 @@ export default function SpiritualLifePage() {
                         <div className="lg:col-span-2 space-y-4">
                             <div className="flex items-center justify-between mb-1">
                                 <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Hitos Espirituales</h2>
-                                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
+                                <span className="text-[10px] font-bold text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
                                     {milestones.length} alcanzados
                                 </span>
                             </div>
 
-                            <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg overflow-hidden shadow-sm">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg overflow-hidden shadow-sm">
                                 {MILESTONE_DEFS.map((m, i) => {
                                     const reached = milestones.includes(m.key);
                                     const isNext = !reached && m.key === nextMilestone?.key;
@@ -181,7 +181,7 @@ export default function SpiritualLifePage() {
                                                 <div className="flex items-center gap-2">
                                                     <p className="text-[13px] font-bold text-slate-800 dark:text-white truncate">{m.label}</p>
                                                     {isNext && (
-                                                        <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-[9px] font-semibold uppercase tracking-wide rounded-full">
+                                                        <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide rounded-full">
                                                             Siguiente
                                                         </span>
                                                     )}
@@ -192,7 +192,7 @@ export default function SpiritualLifePage() {
                                             {reached ? (
                                                 <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
                                             ) : isNext ? (
-                                                <Circle size={18} className="text-blue-400 shrink-0 animate-pulse" />
+                                                <Circle size={18} className="text-[hsl(var(--primary))] shrink-0 animate-pulse" />
                                             ) : (
                                                 <Lock size={15} className="text-slate-300 dark:text-slate-600 shrink-0" />
                                             )}
@@ -202,10 +202,10 @@ export default function SpiritualLifePage() {
                             </div>
 
                             {/* Spiritual progress bar */}
-                            <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg p-3 shadow-sm">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg p-3 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Progreso espiritual</span>
-                                    <span className="font-semibold text-blue-600">{progressPct}%</span>
+                                    <span className="font-semibold text-[hsl(var(--primary))]">{progressPct}%</span>
                                 </div>
                                 <div className="h-2.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                                     <motion.div
@@ -228,7 +228,7 @@ export default function SpiritualLifePage() {
                         <div className="space-y-4">
 
                             {/* Discipleship path */}
-                            <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg overflow-hidden shadow-sm">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg overflow-hidden shadow-sm">
                                 <div className="px-3 py-1.5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                                     <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Ruta de Discipulado</h3>
                                     <span className="font-semibold text-slate-400">{discipuladoDone}/5</span>
@@ -262,9 +262,9 @@ export default function SpiritualLifePage() {
                             {/* Quick links */}
                             <div className="space-y-2">
                                 <Link href="/spiritual-life/timeline">
-                                    <div className="flex items-center gap-3 p-4 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/15 transition-all cursor-pointer group">
+                                    <div className="flex items-center gap-3 p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/15 transition-all cursor-pointer group">
                                         <div className="size-9 rounded-md bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
-                                            <Calendar size={16} className="text-blue-600" />
+                                            <Calendar size={16} className="text-[hsl(var(--primary))]" />
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-[13px] font-bold text-slate-800 dark:text-white">Línea de Tiempo</p>
@@ -275,7 +275,7 @@ export default function SpiritualLifePage() {
                                 </Link>
 
                                 <Link href="/spiritual-life/certificates">
-                                    <div className="flex items-center gap-3 p-4 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/15 transition-all cursor-pointer group">
+                                    <div className="flex items-center gap-3 p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/15 transition-all cursor-pointer group">
                                         <div className="size-9 rounded-md bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center">
                                             <Award size={16} className="text-cyan-600" />
                                         </div>

@@ -64,7 +64,7 @@ export default function ProjectsMorePage() {
     });
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Mas', icon: MoreHorizontal }]}
                 viewType={viewType}
@@ -75,7 +75,7 @@ export default function ProjectsMorePage() {
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((idx) => <Skeleton key={idx} className="h-32 rounded-lg" />)}</div>
                 ) : viewType === 'list' ? (
-                    <div className="space-y-3">{summary.map((row) => <article key={row.project_status} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5"><h3 className="font-bold uppercase">{row.project_status}</h3><p className="text-sm text-slate-500 mt-1">{row.total_projects} proyectos · {row.total_tasks} tareas · {row.completed_tasks} completadas</p></article>)}</div>
+                    <div className="space-y-3">{summary.map((row) => <article key={row.project_status} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5"><h3 className="font-bold uppercase">{row.project_status}</h3><p className="text-sm text-slate-500 mt-1">{row.total_projects} proyectos · {row.total_tasks} tareas · {row.completed_tasks} completadas</p></article>)}</div>
                 ) : viewType === 'table' ? (
                     <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Estado</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Proyectos</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Tareas</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{summary.map((row) => <tr key={row.project_status}><td className="px-3 py-2 text-sm font-medium">{row.project_status}</td><td className="px-3 py-2 text-[11px] text-slate-500">{row.total_projects}</td><td className="px-3 py-2 text-[11px] text-slate-500">{row.total_tasks}</td></tr>)}</tbody></table></div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
@@ -107,7 +107,7 @@ export default function ProjectsMorePage() {
 
 function MetricCard({ label, value }: { label: string; value: number }) {
     return (
-        <article className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+        <article className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
             <p className="text-xl font-bold text-slate-800 dark:text-white mt-1">{value}</p>
         </article>

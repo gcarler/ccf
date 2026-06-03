@@ -44,7 +44,7 @@ export default function WorkspaceDrawer({
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 h-screen w-full max-w-[600px] lg:max-w-[800px] bg-white dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
+                        className="fixed top-0 right-0 h-screen w-full max-w-[600px] lg:max-w-[800px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
                         >
                         {/* Drawer Header */}
                         <header className="h-14 flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-white/10 shrink-0 bg-slate-50/50 dark:bg-white/5">

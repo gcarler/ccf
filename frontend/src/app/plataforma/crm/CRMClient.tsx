@@ -317,8 +317,8 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                     <h3 className="text-[12px] font-semibold uppercase tracking-wide text-slate-800 dark:text-white">Ficha de Consolidación</h3>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button className="p-2.5 text-slate-400 hover:text-blue-600 transition-all"><MessageCircle size={18} /></button>
-                    <button className="p-2.5 text-slate-400 hover:text-blue-600 transition-all"><MoreHorizontal size={18} /></button>
+                    <button className="p-2.5 text-slate-400 hover:text-[hsl(var(--primary))] transition-all"><MessageCircle size={18} /></button>
+                    <button className="p-2.5 text-slate-400 hover:text-[hsl(var(--primary))] transition-all"><MoreHorizontal size={18} /></button>
                 </div>
             </header>
 
@@ -330,18 +330,18 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                     </div>
                     <div>
                         <h2 className="text-xl font-bold tracking-tight leading-none mb-2">{member.nombre_completo}</h2>
-                        <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-blue-600 text-[10px] font-semibold uppercase tracking-wide">{member.church_role || 'Miembro Activo'}</span>
+                        <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide">{member.church_role || 'Miembro Activo'}</span>
                     </div>
                 </div>
 
                 {/* Optimus Brain Action */}
                 <div className="relative group cursor-pointer" onClick={handleAiAnalysis}>
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-md blur opacity-10 group-hover:opacity-30 transition-opacity" />
-                    <div className="relative p-4 bg-white dark:bg-[#1e1f21] rounded-md border border-blue-500/20 shadow-sm flex flex-col items-center text-center gap-3">
+                    <div className="relative p-4 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] rounded-md border border-blue-500/20 shadow-sm flex flex-col items-center text-center gap-3">
                         {isAnalyzing ? (
-                            <Loader2 className="size-8 text-blue-600 animate-spin" />
+                            <Loader2 className="size-8 text-[hsl(var(--primary))] animate-spin" />
                         ) : (
-                            <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
+                            <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[hsl(var(--primary))]">
                                 <Sparkles size={24} />
                             </div>
                         )}
@@ -370,7 +370,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
                         <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 block mb-2">Salud Espiritual</span>
-                        <div className="text-xl font-bold text-blue-600">{Math.round((member.spiritual_health || 0.8) * 100)}%</div>
+                        <div className="text-xl font-bold text-[hsl(var(--primary))]">{Math.round((member.spiritual_health || 0.8) * 100)}%</div>
                     </div>
                     <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
                         <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 block mb-2">Academia</span>
@@ -403,10 +403,10 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                             </div>
                         ) : (
                             <>
-                                <div className="rounded-lg border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
+                                <div className="rounded-lg border border-slate-100 dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                     <div className="flex items-center justify-between mb-3">
                                         <h5 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Cargos actuales</h5>
-                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">{consolidationProfile?.positions?.filter(p => p.is_active).length ?? 0}</span>
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{consolidationProfile?.positions?.filter(p => p.is_active).length ?? 0}</span>
                                     </div>
                                     <div className="space-y-2">
                                         {consolidationProfile?.positions?.length ? (
@@ -429,10 +429,10 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                                     </div>
                                 </div>
 
-                                <div className="rounded-lg border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
+                                <div className="rounded-lg border border-slate-100 dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                     <div className="flex items-center justify-between mb-3">
                                         <h5 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Casos de consolidación</h5>
-                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">{consolidationProfile?.cases?.length ?? 0}</span>
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{consolidationProfile?.cases?.length ?? 0}</span>
                                     </div>
                                     <div className="space-y-2">
                                         {consolidationProfile?.cases?.length ? (
@@ -478,7 +478,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                             </div>
                         ) : attendanceHistory?.history?.length ? (
                             attendanceHistory.history.slice(0, 6).map((row) => (
-                                <div key={`${row.event_id}-${row.session_date}`} className="rounded-lg border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
+                                <div key={`${row.event_id}-${row.session_date}`} className="rounded-lg border border-slate-100 dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{row.event_name || 'Evento'}</p>
@@ -501,9 +501,9 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                 </section>
             </div>
             
-            <footer className="p-4 border-t border-slate-100 dark:border-white/5 flex gap-4 bg-white dark:bg-[#1e1f21] shrink-0">
+            <footer className="p-4 border-t border-slate-100 dark:border-white/5 flex gap-4 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] shrink-0">
                 <button className="flex-1 py-2 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-100 transition-all">Editar Perfil</button>
-                <button className="px-3 py-2 bg-blue-600 text-white rounded-lg shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all"><ArrowUpRight size={20} /></button>
+                <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all"><ArrowUpRight size={20} /></button>
             </footer>
         </div>
     );
@@ -511,7 +511,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
 
 function ContactItem({ icon: Icon, value }: any) {
     return (
-        <div className="flex items-center gap-4 p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
+        <div className="flex items-center gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
             <div className="p-2 bg-slate-50 dark:bg-white/5 rounded-lg text-slate-400"><Icon size={16} /></div>
             <span className="text-sm font-bold text-slate-600 dark:text-slate-300 truncate">{value}</span>
         </div>

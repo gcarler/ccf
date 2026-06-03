@@ -45,7 +45,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
     };
 
     return (
-        <div className="flex h-[700px] bg-white dark:bg-[#0b0d11] rounded-lg border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
+        <div className="flex h-[700px] bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] rounded-lg border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
             <aside className="w-80 border-r border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] flex flex-col">
                 <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-4">
                     <div className="size-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
@@ -58,7 +58,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                 </div>
 
                 <div className="p-4 space-y-2 flex-1 overflow-y-auto">
-                    <div className="p-4 bg-white dark:bg-white/5 border border-indigo-100 dark:border-indigo-500/20 rounded-lg shadow-sm">
+                    <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-indigo-100 dark:border-indigo-500/20 rounded-lg shadow-sm">
                         <div className="flex items-center gap-3 text-indigo-600 mb-1">
                             <FileText size={16} />
                             <span className="text-[11px] font-semibold uppercase tracking-wide">General</span>
@@ -84,7 +84,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                 </div>
             </aside>
 
-            <main className="flex-1 flex flex-col bg-white dark:bg-[#0b0d11]">
+            <main className="flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11]">
                 <header className="px-4 py-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <ShieldCheck size={18} className="text-indigo-600" />

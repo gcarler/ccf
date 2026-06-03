@@ -102,7 +102,7 @@ export default function CourseManagementPage() {
                     <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">Acceso Restringido</h2>
                     <p className="text-slate-500 max-w-sm font-medium">Esta consola de gestion esta reservada para personal autorizado. Contacta a coordinacion academica.</p>
                 </div>
-                <button onClick={() => router.back()} className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold uppercase tracking-wide text-[10px] shadow-2xl transition-all active:scale-95">Volver a puerto</button>
+                <button onClick={() => router.back()} className="px-3 py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg font-semibold uppercase tracking-wide text-[10px] shadow-2xl transition-all active:scale-95">Volver a puerto</button>
             </div>
         );
     }
@@ -130,7 +130,7 @@ export default function CourseManagementPage() {
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 leftActions={
-                    <button onClick={() => router.back()} className="p-2.5 hover:bg-white dark:hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shadow-sm">
+                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shadow-sm">
                         <ArrowLeft size={18} className="text-slate-500" />
                     </button>
                 }
@@ -140,13 +140,13 @@ export default function CourseManagementPage() {
                 {viewType === 'list' && (
                     <div className="space-y-4">
                         {filteredStudents.map((student) => (
-                            <article key={student.id} className="rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+                            <article key={student.id} className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
                                         <h3 className="font-bold text-slate-900 dark:text-white">{student.username}</h3>
                                         <p className="mt-1 text-sm text-slate-500">{student.email}</p>
                                     </div>
-                                    <span className="text-sm font-semibold text-blue-600">{Math.round(student.progress)}%</span>
+                                    <span className="text-sm font-semibold text-[hsl(var(--primary))]">{Math.round(student.progress)}%</span>
                                 </div>
                             </article>
                         ))}
@@ -154,7 +154,7 @@ export default function CourseManagementPage() {
                 )}
 
                 {viewType === 'table' && (
-                    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                    <div className="overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr><th className="px-4 py-1.5">Estudiante</th><th className="px-4 py-1.5">Correo</th><th className="px-4 py-1.5">Progreso</th><th className="px-4 py-1.5">Nota</th></tr>
@@ -183,7 +183,7 @@ export default function CourseManagementPage() {
 
                         <div className="space-y-3 relative z-10">
                             <div className="flex items-center gap-3">
-                                <div className="px-3 py-1.5 bg-blue-600 text-white rounded-full text-[9px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20">
+                                <div className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-full text-[9px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20">
                                     {course?.modality === 'formal' ? 'Ruta Ministerial' : 'Capacitacion'}
                                 </div>
                                 <div className="px-3 py-1.5 bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-semibold uppercase tracking-wide">
@@ -195,17 +195,17 @@ export default function CourseManagementPage() {
                                     {course ? course.title : (loading ? 'Sincronizando...' : 'Datos del Curso (No Disponible)')}
                                 </h1>
                                 <div className="flex items-center gap-4 text-slate-500 font-bold text-sm">
-                                    <span className="flex items-center gap-2"><Users size={16} className="text-blue-500" /> {course?.students_count ?? 0} Alumnos</span>
-                                    <span className="flex items-center gap-2"><Clock size={16} className="text-blue-500" /> {course?.cohort_name || 'Cohorte 2026-I'}</span>
+                                    <span className="flex items-center gap-2"><Users size={16} className="text-[hsl(var(--primary))]" /> {course?.students_count ?? 0} Alumnos</span>
+                                    <span className="flex items-center gap-2"><Clock size={16} className="text-[hsl(var(--primary))]" /> {course?.cohort_name || 'Cohorte 2026-I'}</span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-4 relative z-10">
-                            <button className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-2xl">
+                            <button className="px-3 py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-2xl">
                                 Registrar Asistencia
                             </button>
-                            <button className="size-8 bg-white dark:bg-[#1c1f26] text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg flex items-center justify-center hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-lg">
+                            <button className="size-8 bg-[hsl(var(--bg-primary))] dark:bg-[#1c1f26] text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg flex items-center justify-center hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-lg">
                                 <Settings size={22} />
                             </button>
                         </div>
@@ -223,7 +223,7 @@ export default function CourseManagementPage() {
                                 className={clsx(
                                     "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide transition-all",
                                     activeTab === tab.id
-                                        ? "bg-white dark:bg-[#1c1f26] text-blue-600 shadow-xl shadow-slate-200/50 dark:shadow-none"
+                                        ? "bg-[hsl(var(--bg-primary))] dark:bg-[#1c1f26] text-[hsl(var(--primary))] shadow-xl shadow-slate-200/50 dark:shadow-none"
                                         : "text-slate-400 hover:text-slate-600"
                                 )}
                             >
@@ -241,17 +241,17 @@ export default function CourseManagementPage() {
                             >
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4">
                                     <div className="relative flex-1 max-w-xl group">
-                                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[hsl(var(--primary))] transition-colors" size={18} />
                                         <input
                                             type="text"
                                             placeholder="Filtrar por nombre, ID o correo..."
                                             value={search}
                                             onChange={(e) => setSearch(e.target.value)}
-                                            className="w-full bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg pl-14 pr-6 py-1.5 text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+                                            className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg pl-14 pr-6 py-1.5 text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
                                         />
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <button className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all">
+                                        <button className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all">
                                             <FileText size={16} /> Exportar Acta
                                         </button>
                                     </div>
@@ -264,7 +264,7 @@ export default function CourseManagementPage() {
                                         ))
                                     ) : filteredStudents.length > 0 ? (
                                         filteredStudents.map(student => (
-                                            <div key={student.id} className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all duration-500 group relative overflow-hidden">
+                                            <div key={student.id} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all duration-500 group relative overflow-hidden">
                                                 <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
                                                     <Users size={80} />
                                                 </div>
@@ -296,7 +296,7 @@ export default function CourseManagementPage() {
                                                             <span className="font-semibold text-slate-700 dark:text-slate-300">{student.progress}%</span>
                                                         </div>
                                                         <div className="h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden p-0.5">
-                                                            <div className="h-full bg-blue-500 rounded-full shadow-lg shadow-blue-500/20" style={{ width: `${student.progress}%` }} />
+                                                            <div className="h-full bg-[hsl(var(--primary))] rounded-full shadow-lg shadow-blue-500/20" style={{ width: `${student.progress}%` }} />
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
@@ -307,7 +307,7 @@ export default function CourseManagementPage() {
                                                     </div>
                                                 </div>
 
-                                                <button className="w-full mt-3 py-1.5 bg-slate-50 dark:bg-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-500 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-xl group-hover:shadow-blue-500/20 transition-all">Perfil Academico</button>
+                                                <button className="w-full mt-3 py-1.5 bg-slate-50 dark:bg-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-500 group-hover:bg-[hsl(var(--primary))] group-hover:text-white group-hover:shadow-xl group-hover:shadow-blue-500/20 transition-all">Perfil Academico</button>
                                             </div>
                                         ))
                                     ) : (
@@ -328,16 +328,16 @@ export default function CourseManagementPage() {
                         {activeTab === 'attendance' && (
                             <motion.div
                                 key="attendance" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-                                className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-4 lg:p-4 text-center space-y-4 shadow-2xl shadow-slate-200/50 dark:shadow-none"
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-4 lg:p-4 text-center space-y-4 shadow-2xl shadow-slate-200/50 dark:shadow-none"
                             >
-                                <div className="size-10 bg-blue-50 dark:bg-blue-500/10 rounded-lg flex items-center justify-center mx-auto text-blue-600 shadow-inner">
+                                <div className="size-10 bg-blue-50 dark:bg-blue-500/10 rounded-lg flex items-center justify-center mx-auto text-[hsl(var(--primary))] shadow-inner">
                                     <Calendar size={56} strokeWidth={1.5} />
                                 </div>
                                 <div className="max-w-xl mx-auto space-y-3">
                                     <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">Control de Asistencia</h3>
                                     <p className="text-slate-500 text-sm font-medium leading-relaxed">Inicia el registro para la sesion de hoy. Recuerda que el 75% de asistencia es requisito para la certificacion formal.</p>
                                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                                        <button className="w-full sm:w-auto px-3 py-1.5 bg-blue-600 text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all">
+                                        <button className="w-full sm:w-auto px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all">
                                             Iniciar Sesion Hoy
                                         </button>
                                         <button className="w-full sm:w-auto px-3 py-1.5 bg-transparent border-2 border-slate-100 dark:border-white/5 text-slate-500 rounded-lg font-black text-xs uppercase tracking-wide hover:bg-slate-50 transition-all">
@@ -351,7 +351,7 @@ export default function CourseManagementPage() {
                         {activeTab === 'content' && (
                              <motion.div
                                 key="content" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-                                className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-4 lg:p-4 text-center space-y-4"
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-4 lg:p-4 text-center space-y-4"
                             >
                                 <div className="size-10 bg-sky-50 dark:bg-sky-500/10 rounded-lg flex items-center justify-center mx-auto text-sky-600 shadow-inner">
                                     <BookOpen size={56} strokeWidth={1.5} />

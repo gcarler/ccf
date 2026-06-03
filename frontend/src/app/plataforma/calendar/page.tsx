@@ -45,11 +45,11 @@ interface CalEvent {
 const EVENT_TYPE_META: Record<CalEvent['type'], { label: string; chip: string }> = {
     task: {
         label: 'Tarea',
-        chip: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+        chip: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300',
     },
     agenda_event: {
         label: 'Agenda simple',
-        chip: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300',
+        chip: 'bg-red-50 text-[hsl(var(--destructive))] dark:bg-red-500/10 dark:text-red-300',
     },
     evangelism_event: {
         label: 'Evangelismo',
@@ -276,7 +276,7 @@ export default function PlanificadorPage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Planificador">
-            <div className="flex h-full bg-white dark:bg-[#1e1f21] font-display overflow-hidden">
+            <div className="flex h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] font-display overflow-hidden">
 
                 {/* ── MAIN CALENDAR ─────────────────────────────────────────────── */}
                 <div className="flex-1 flex flex-col overflow-hidden">
@@ -293,7 +293,7 @@ export default function PlanificadorPage() {
                             </button>
                             <button
                                 onClick={() => setCurrentDate(new Date())}
-                                className="px-3 py-1 rounded-lg text-[11px] font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 transition-colors"
+                                className="px-3 py-1 rounded-lg text-[11px] font-bold text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 transition-colors"
                             >
                                 Hoy
                             </button>
@@ -368,7 +368,7 @@ export default function PlanificadorPage() {
                                             initial={{ opacity: 0, y: -4 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -4 }}
-                                            className="absolute right-0 top-full mt-1.5 w-32 bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md shadow-xl overflow-hidden z-50"
+                                            className="absolute right-0 top-full mt-1.5 w-32 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md shadow-xl overflow-hidden z-50"
                                         >
                                             {(['semana', 'mes', 'dia'] as ViewMode[]).map(v => (
                                                 <button key={v}
@@ -376,7 +376,7 @@ export default function PlanificadorPage() {
                                                     className={clsx(
                                                         'w-full text-left px-3 py-2 text-[12px] font-medium transition-colors',
                                                         viewMode === v
-                                                            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600'
+                                                            ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]'
                                                             : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                                                     )}>
                                                     {v === 'semana' ? 'Semana' : v === 'mes' ? 'Mes' : 'Día'}
@@ -389,7 +389,7 @@ export default function PlanificadorPage() {
 
                             <button 
                                 onClick={() => openModal('event')}
-                                className="flex items-center gap-1.5 px-3 py-1.5 ml-1 rounded-lg text-[11px] font-bold bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+                                className="flex items-center gap-1.5 px-3 py-1.5 ml-1 rounded-lg text-[11px] font-bold bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
                             >
                                 <Plus size={13} /> Evento
                             </button>
@@ -415,7 +415,7 @@ export default function PlanificadorPage() {
                                         <span className={clsx(
                                             'size-8 flex items-center justify-center rounded-full text-sm font-bold mt-0.5 transition-colors',
                                             isToday(day)
-                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                                                ? 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/30'
                                                 : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
                                         )}>
                                             {format(day, 'd')}
@@ -503,8 +503,8 @@ export default function PlanificadorPage() {
                                                     {today && (
                                                         <div className="absolute left-0 right-0 z-10 pointer-events-none" style={{ top: nowLine }}>
                                                             <div className="relative flex items-center">
-                                                                <div className="size-2.5 rounded-full bg-red-500 shadow-sm shadow-red-400 -ml-1.5 shrink-0" />
-                                                                <div className="flex-1 h-px bg-red-500 opacity-70" />
+                                                                <div className="size-2.5 rounded-full bg-[hsl(var(--destructive))] shadow-sm shadow-red-400 -ml-1.5 shrink-0" />
+                                                                <div className="flex-1 h-px bg-[hsl(var(--destructive))] opacity-70" />
                                                             </div>
                                                         </div>
                                                     )}
@@ -579,8 +579,8 @@ export default function PlanificadorPage() {
                                             {isToday(currentDate) && (
                                                 <div className="absolute left-0 right-0 z-10 pointer-events-none" style={{ top: nowLine }}>
                                                     <div className="flex items-center">
-                                                        <div className="size-2.5 rounded-full bg-red-500 -ml-1.5 shrink-0" />
-                                                        <div className="flex-1 h-px bg-red-500" />
+                                                        <div className="size-2.5 rounded-full bg-[hsl(var(--destructive))] -ml-1.5 shrink-0" />
+                                                        <div className="flex-1 h-px bg-[hsl(var(--destructive))]" />
                                                     </div>
                                                 </div>
                                             )}
@@ -617,7 +617,7 @@ export default function PlanificadorPage() {
                                 placeholder="Busca eventos, compañeros de equipo, comandos..."
                                 className="flex-1 text-[12px] bg-transparent outline-none text-slate-600 dark:text-slate-300 placeholder:text-slate-300 dark:placeholder:text-slate-600"
                             />
-                            <div className="size-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+                            <div className="size-5 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center shrink-0">
                                 <span className="font-semibold">✦</span>
                             </div>
                         </div>
@@ -650,7 +650,7 @@ export default function PlanificadorPage() {
                                 </div>
                                 <div className="grid grid-cols-3 gap-2">
                                     {CALENDAR_EVENT_TYPES.map((eventType) => (
-                                        <div key={eventType} className="rounded-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-2 text-center">
+                                        <div key={eventType} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-2 text-center">
                                             <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{EVENT_TYPE_META[eventType].label}</p>
                                             <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
                                                 {todayVisibleEvents.filter((event) => event.type === eventType).length}
@@ -661,13 +661,13 @@ export default function PlanificadorPage() {
                                 <div className="grid grid-cols-3 gap-2">
                                     <button
                                         onClick={() => setActiveTypes([...CALENDAR_EVENT_TYPES])}
-                                        className="rounded-md border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500 transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                                        className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500 transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                                     >
                                         Limpiar filtros
                                     </button>
                                     <button
                                         onClick={() => router.push('/plataforma/agenda/events')}
-                                        className="rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-blue-700"
+                                        className="rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))]"
                                     >
                                         Agenda simple
                                     </button>
@@ -680,7 +680,7 @@ export default function PlanificadorPage() {
                                         </button>
                                     )}
                                 </div>
-                                <div className="flex items-center justify-between rounded-md border border-dashed border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                                <div className="flex items-center justify-between rounded-md border border-dashed border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
                                     <span>Estado de filtros</span>
                                     <span className={clsx(
                                         "rounded-full px-2 py-1",
@@ -703,7 +703,7 @@ export default function PlanificadorPage() {
                                     <button
                                         key={event.id}
                                         onClick={() => handleEventClick(event)}
-                                        className="flex w-full items-start gap-2 rounded-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-500/30 transition-all"
+                                        className="flex w-full items-start gap-2 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-500/30 transition-all"
                                     >
                                         <span
                                             className="mt-0.5 size-2.5 rounded-full shrink-0"
@@ -789,7 +789,7 @@ export default function PlanificadorPage() {
                                         <div key={t.id}
                                             className="flex items-center gap-2 px-1.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer group"
                                         >
-                                            <Circle size={13} className="text-slate-300 shrink-0 group-hover:text-blue-400 transition-colors" />
+                                            <Circle size={13} className="text-slate-300 shrink-0 group-hover:text-[hsl(var(--primary))] transition-colors" />
                                             <span className="text-[11px] text-slate-600 dark:text-slate-300 truncate">{t.title}</span>
                                         </div>
                                     ))}
@@ -807,7 +807,7 @@ export default function PlanificadorPage() {
                                         className={clsx(
                                             "flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-all",
                                             activeTypes.includes(eventType)
-                                                ? "bg-white dark:bg-white/5"
+                                                ? "bg-[hsl(var(--bg-primary))] dark:bg-white/5"
                                                 : "opacity-50 hover:opacity-80"
                                         )}
                                     >
@@ -888,7 +888,7 @@ function MonthView({
                             <span className={clsx(
                                 'inline-flex size-6 items-center justify-center rounded-full text-[11px] font-bold transition-all',
                                 isToday(day)
-                                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-400'
+                                    ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-blue-400'
                                     : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white'
                             )}>
                                 {format(day, 'd')}

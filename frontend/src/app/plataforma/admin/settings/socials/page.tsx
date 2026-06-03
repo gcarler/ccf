@@ -34,7 +34,7 @@ interface SocialChannel {
 }
 
 const PLATFORMS = [
-    { id: 'facebook', icon: Facebook, label: 'Facebook', color: 'text-blue-600', aura: 'rgba(37, 99, 235, 0.1)' },
+    { id: 'facebook', icon: Facebook, label: 'Facebook', color: 'text-[hsl(var(--primary))]', aura: 'rgba(37, 99, 235, 0.1)' },
     { id: 'instagram', icon: Instagram, label: 'Instagram', color: 'text-pink-600', aura: 'rgba(219, 39, 119, 0.1)' },
     { id: 'youtube', icon: Youtube, label: 'YouTube', color: 'text-rose-600', aura: 'rgba(225, 29, 72, 0.1)' },
     { id: 'whatsapp', icon: MessageCircle, label: 'WhatsApp', color: 'text-emerald-600', aura: 'rgba(16, 185, 129, 0.1)' },
@@ -116,7 +116,7 @@ export default function SocialMediaSettings() {
     const renderList = () => (
         <div className="space-y-4">
             {platformRows.map((row) => (
-                <div key={row.id} className="social-aura bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 rounded-lg flex items-center justify-between gap-3" style={{ '--aura-color': row.aura } as any}>
+                <div key={row.id} className="social-aura bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 rounded-lg flex items-center justify-between gap-3" style={{ '--aura-color': row.aura } as any}>
                     <div className="flex items-center gap-3 min-w-0">
                         <div className={clsx("size-7 rounded-lg flex items-center justify-center bg-slate-50 dark:bg-black/20", row.color)}>
                             <row.icon size={24} />
@@ -133,7 +133,7 @@ export default function SocialMediaSettings() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/5">
             <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
@@ -165,7 +165,7 @@ export default function SocialMediaSettings() {
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((row) => (
-                            <div key={row.id} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4">
+                            <div key={row.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4">
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{row.label}</p>
                                 <p className="mt-2 text-[10px] font-bold text-slate-400 truncate">{row.channel?.url || 'Sin enlace'}</p>
                             </div>
@@ -177,7 +177,7 @@ export default function SocialMediaSettings() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0a0f16] font-display overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] font-display overflow-hidden">
             <style jsx global>{`
                 .social-aura {
                     position: relative;
@@ -205,7 +205,7 @@ export default function SocialMediaSettings() {
                 rightActions={
                     <button 
                         onClick={handleSave} disabled={isSaving}
-                        className="flex items-center gap-3 px-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
+                        className="flex items-center gap-3 px-4 py-3 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
                     >
                         {isSaving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Guardar Redes
                     </button>
@@ -221,12 +221,12 @@ export default function SocialMediaSettings() {
                     <header className="space-y-4">
                         <motion.div 
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
+                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
                         >
                             <Sparkles size={12} className="animate-pulse" /> Ecosistema Digital CCF
                         </motion.div>
                         <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
-                            Tu voz en la <br/> <span className="text-blue-600 italic">nube global.</span>
+                            Tu voz en la <br/> <span className="text-[hsl(var(--primary))] italic">nube global.</span>
                         </h1>
                         <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-xl">
                             Configura los puntos de contacto digitales para que tu congregación esté siempre conectada con el mensaje.
@@ -263,7 +263,7 @@ export default function SocialMediaSettings() {
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: i * 0.05 }}
-                                            className="social-aura bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 group hover:shadow-2xl transition-all duration-500"
+                                            className="social-aura bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 group hover:shadow-2xl transition-all duration-500"
                                             style={{ '--aura-color': platform.aura } as any}
                                         >
                                             <div className="flex items-center gap-3 flex-1">
@@ -276,7 +276,7 @@ export default function SocialMediaSettings() {
                                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-none">Perfil de la Congregación</p>
                                                     </div>
                                                     <div className="relative group/input">
-                                                        <Link2 className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" size={18} />
+                                                        <Link2 className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-[hsl(var(--primary))] transition-colors" size={18} />
                                                         <input 
                                                             defaultValue={channel?.url || ''}
                                                             className="w-full pl-14 pr-6 py-1.5 bg-slate-50 dark:bg-black/40 border border-transparent focus:border-blue-500 rounded-lg text-xs font-bold outline-none transition-all placeholder:text-slate-300"
@@ -285,7 +285,7 @@ export default function SocialMediaSettings() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button className="px-4 h-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:shadow-xl hover:shadow-blue-500/20 transition-all transform active:scale-95 shrink-0 flex items-center gap-2">
+                                            <button className="px-4 h-8 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-[hsl(var(--primary))] hover:text-white hover:border-blue-600 hover:shadow-xl hover:shadow-blue-500/20 transition-all transform active:scale-95 shrink-0 flex items-center gap-2">
                                                 Validar Enlace <ExternalLink size={14} />
                                             </button>
                                         </motion.div>
@@ -320,7 +320,7 @@ export default function SocialMediaSettings() {
                                         className="flex-1 px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-sm font-bold outline-none focus:border-rose-500 transition-all"
                                         placeholder="rtmp://servidor.iglesia.com/live"
                                     />
-                                    <button className="px-4 py-2 bg-white text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:translate-y-[-4px] active:scale-95 transition-all">Sincronizar Señal</button>
+                                    <button className="px-4 py-2 bg-[hsl(var(--bg-primary))] text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:translate-y-[-4px] active:scale-95 transition-all">Sincronizar Señal</button>
                                 </div>
                             </div>
                         </div>

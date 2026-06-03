@@ -41,8 +41,8 @@ interface MyEnrollmentsProps {
 import { Award, FileText, ArrowRight, Play, BookOpen, ChevronRight, X as CloseIcon, Loader2, School, Paperclip, Upload, File, Clock } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { useMeshSocket } from "@/hooks/useMeshSocket";
-import CertificateModal from "./CertificateModal";
-import AssessmentModal from "./academy/AssessmentModal";
+import CertificateDrawer from "./CertificateDrawer";
+import AssessmentDrawer from "./academy/AssessmentDrawer";
 import EmptyState from "@/components/ui/EmptyState";
 
 interface Lesson {
@@ -278,7 +278,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                         <div className="p-3 bg-slate-900 border border-white/5 rounded-lg flex flex-col items-center justify-center text-center gap-4">
                           <div className="p-4 bg-emerald-500/10 rounded-full text-emerald-500"><FileText size={24} /></div>
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-relaxed">Sube tu trabajo en PDF o Word para ser calificado.</p>
-                          <label className="w-full py-3 bg-white text-slate-900 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-100 transition-all cursor-pointer text-center">
+                          <label className="w-full py-3 bg-[hsl(var(--bg-primary))] text-slate-900 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-100 transition-all cursor-pointer text-center">
                             <input
                               type="file"
                               className="hidden"
@@ -330,7 +330,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
             const progressOffset = progressCircumference - (progressCircumference * item.progress_percent) / 100;
 
             return (
-              <article key={item.id} className="bg-white dark:bg-black/20 border border-[#e8eaed] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 group hover:border-indigo-500/30 transition-all hover:shadow-xl hover:shadow-indigo-500/5 cursor-pointer" onClick={() => openLessons(item)}>
+              <article key={item.id} className="bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[#e8eaed] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 group hover:border-indigo-500/30 transition-all hover:shadow-xl hover:shadow-indigo-500/5 cursor-pointer" onClick={() => openLessons(item)}>
                 <div className="flex gap-4 items-center relative">
                   <div className="relative flex size-7 shrink-0 items-center justify-center">
                     <svg className="absolute inset-0 size-7 -rotate-90" viewBox="0 0 100 100">
@@ -388,7 +388,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
       )}
 
       {activeAssessment && (
-        <AssessmentModal
+        <AssessmentDrawer
           assessmentId={activeAssessment.id}
           enrollmentId={activeAssessment.enrollmentId}
           token={token}
@@ -398,7 +398,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
       )}
 
       {selectedCertificate && (
-        <CertificateModal
+        <CertificateDrawer
           certificate={selectedCertificate.cert}
           enrollment={selectedCertificate.enrollment}
           userName={userId ? "Estudiante" : "Estudiante"}

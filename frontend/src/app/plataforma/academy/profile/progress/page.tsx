@@ -136,7 +136,7 @@ export default function StudentProgressPage() {
                     />
                 )}
                 {viewType === 'table' && (
-                    <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                    <div className="overflow-hidden rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr><th className="px-4 py-2">Curso</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2">Progreso</th><th className="px-4 py-2">Nota</th></tr>
@@ -157,13 +157,13 @@ export default function StudentProgressPage() {
                 {viewType === 'list' && (
                     <div className="space-y-2">
                         {progress.map((course) => (
-                            <article key={course.id} className="rounded-md border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                            <article key={course.id} className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
                                         <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{course.title}</h3>
                                         <p className="mt-2 text-sm text-slate-500">{course.lessons_completed}/{course.total_lessons} lecciones</p>
                                     </div>
-                                    <span className="text-sm font-semibold text-blue-600">{course.progress_percent}%</span>
+                                    <span className="text-sm font-semibold text-[hsl(var(--primary))]">{course.progress_percent}%</span>
                                 </div>
                             </article>
                         ))}
@@ -197,7 +197,7 @@ export default function StudentProgressPage() {
                             <div className="grid grid-cols-2 gap-4 lg:w-[400px]">
                                 <HeaderStat label="Promedio" value={stats.average_grade.toFixed(1)} icon={Star} color="text-amber-400" bg="bg-amber-400/20" />
                                 <HeaderStat label="Certificados" value={stats.certificates} icon={Award} color="text-emerald-400" bg="bg-emerald-400/20" />
-                                <HeaderStat label="Pendientes" value={stats.total_courses - stats.completed_courses} icon={BookOpen} color="text-blue-400" bg="bg-blue-400/20" />
+                                <HeaderStat label="Pendientes" value={stats.total_courses - stats.completed_courses} icon={BookOpen} color="text-[hsl(var(--primary))]" bg="bg-blue-400/20" />
                                 <HeaderStat label="Logros" value={stats.completed_courses} icon={CheckCircle2} color="text-sky-400" bg="bg-sky-400/20" />
                             </div>
                         </div>
@@ -211,7 +211,7 @@ export default function StudentProgressPage() {
                                 <p className="text-slate-500 font-medium">Desglose de notas y asistencia de tus inscripciones.</p>
                             </div>
                             <div className="flex gap-2">
-                                <button className="p-3 bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg shadow-sm"><Search size={18} className="text-slate-400" /></button>
+                                <button className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg shadow-sm"><Search size={18} className="text-slate-400" /></button>
                             </div>
                         </div>
 
@@ -224,13 +224,13 @@ export default function StudentProgressPage() {
                                 progress.map(course => (
                                     <div 
                                         key={course.id} 
-                                        className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
+                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
                                     >
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-center gap-3">
                                                 <span className={clsx(
                                                     "px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide",
-                                                    course.status === 'completed' ? "bg-emerald-500/10 text-emerald-500" : "bg-blue-500/10 text-blue-500"
+                                                    course.status === 'completed' ? "bg-emerald-500/10 text-emerald-500" : "bg-blue-500/10 text-[hsl(var(--primary))]"
                                                 )}>
                                                     {course.status === 'completed' ? 'Completado' : 'En Curso'}
                                                 </span>
@@ -238,7 +238,7 @@ export default function StudentProgressPage() {
                                                     <BookOpen size={12} /> {course.lessons_completed} / {course.total_lessons} Lecciones
                                                 </span>
                                             </div>
-                                            <h3 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors leading-none tracking-tight">{course.title}</h3>
+                                            <h3 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors leading-none tracking-tight">{course.title}</h3>
                                             <div className="flex items-center gap-4">
                                                 <div className="flex items-center gap-2 text-slate-500">
                                                     <Clock size={14} strokeWidth={2.5} />
@@ -280,7 +280,7 @@ export default function StudentProgressPage() {
                                                 </div>
                                                 <button 
                                                     onClick={() => router.push(`/academy/course/${course.id}`)}
-                                                    className="size-7 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-slate-900/10"
+                                                    className="size-7 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-slate-900/10"
                                                 >
                                                     <ArrowRight size={24} strokeWidth={3} />
                                                 </button>
@@ -289,14 +289,14 @@ export default function StudentProgressPage() {
                                     </div>
                                 ))
                             ) : (
-                                <div className="bg-white dark:bg-[#15171c] rounded-lg p-4 text-center space-y-3 border border-slate-100 dark:border-white/5 shadow-inner">
+                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg p-4 text-center space-y-3 border border-slate-100 dark:border-white/5 shadow-inner">
                                     <div className="size-10 bg-slate-100 dark:bg-white/5 rounded-md flex items-center justify-center mx-auto text-slate-300">
                                         <BookOpen size={48} />
                                     </div>
                                     <div className="max-w-md mx-auto space-y-4">
                                         <h3 className="text-lg font-bold text-slate-800 dark:text-white">Aún no tienes progreso registrado</h3>
                                         <p className="text-slate-500 font-medium">Inscríbete en un curso de nuestro catálogo para comenzar tu formación espiritual hoy mismo.</p>
-                                        <button onClick={() => router.push('/plataforma/academy')} className="mt-3 px-3 py-2 bg-blue-600 text-white rounded-md font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
+                                        <button onClick={() => router.push('/plataforma/academy')} className="mt-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
                                     </div>
                                 </div>
                             )}

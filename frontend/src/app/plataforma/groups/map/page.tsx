@@ -75,22 +75,22 @@ export default function GroupsMapPage() {
 
             <main className="flex-1 space-y-3 overflow-y-auto p-4 lg:p-4">
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Total casas</p>
                         <p className="mt-2 text-xl font-bold text-slate-800 dark:text-slate-100">{groups.length}</p>
                     </article>
-                    <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Con coordenadas</p>
                         <p className="mt-2 text-xl font-bold text-emerald-600">{geolocated.length}</p>
                     </article>
-                    <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sin coordenadas</p>
                         <p className="mt-2 text-xl font-bold text-amber-500">{Math.max(0, groups.length - geolocated.length)}</p>
                     </article>
                 </section>
 
                 {loading && (
-                    <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-300">
+                    <div className="rounded-md border border-dashed border-slate-300 bg-[hsl(var(--bg-primary))] p-4 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-300">
                         Cargando ubicaciones...
                     </div>
                 )}
@@ -109,7 +109,7 @@ export default function GroupsMapPage() {
                 )}
 
                 {!loading && !error && geolocated.length === 0 && (
-                    <div className="rounded-md border-2 border-dashed border-slate-200 bg-white p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
+                    <div className="rounded-md border-2 border-dashed border-slate-200 bg-[hsl(var(--bg-primary))] p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
                         <MapPin size={40} className="mx-auto text-slate-300" />
                         <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
                             No hay casas con coordenadas registradas
@@ -124,7 +124,7 @@ export default function GroupsMapPage() {
                             return (
                                 <article
                                     key={group.id}
-                                    className="rounded-md border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
+                                    className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
                                 >
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
@@ -133,7 +133,7 @@ export default function GroupsMapPage() {
                                             </h2>
                                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{group.address || "Direccion pendiente"}</p>
                                         </div>
-                                        <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
+                                        <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-500/15 dark:text-blue-300">
                                             {group.zone || "Zona sin definir"}
                                         </span>
                                     </div>

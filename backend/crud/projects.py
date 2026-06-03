@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from backend.models_shared import _utcnow
 from backend import models, schemas
@@ -33,7 +33,10 @@ def create_project(db: Session, project: schemas.ProjectCreate, owner_persona_id
 
 
 def get_projects(db: Session, skip: int = 0, limit: int = 100, sede_id=None, status_filter=None):
-    q = db.query(models.Project).filter(models.Project.deleted_at.is_(None))
+    q = db.query(models.Project).options(
+        selectinload(models.Project.owner),
+        selectinload(models.Project.tasks),
+    ).filter(models.Project.deleted_at.is_(None))
     if sede_id is not None:
         q = q.filter(models.Project.sede_id == sede_id)
     if status_filter:
@@ -129,7 +132,7 @@ def get_project_phases(db: Session, project_id):
 
 
 def set_project_phases(db: Session, project_id, phases: list[dict]) -> list[models.ProjectPhase]:
-    db.query(models.ProjectPhase).filter(models.ProjectPhase.project_id == project_id).delete()
+    db.query(models.ProjectPhase).filter(models.ProjectPhase.project_id == project_id).update({models.ProjectPhase.deleted_at: datetime.now(timezone.utc)}, synchronize_session=False)
     created = []
     for i, p in enumerate(phases):
         phase = models.ProjectPhase(
@@ -432,7 +435,10 @@ def update_inbox_state(db: Session, user_id: int, item_id: str, is_read: bool) -
 # ── Portfolio & Workload ───────────────────────────────
 
 def get_portfolio_summary(db: Session, sede_id=None):
-    q = db.query(models.Project).filter(models.Project.deleted_at.is_(None))
+    q = db.query(models.Project).options(
+        selectinload(models.Project.owner),
+        selectinload(models.Project.tasks),
+    ).filter(models.Project.deleted_at.is_(None))
     if sede_id is not None:
         q = q.filter(models.Project.sede_id == sede_id)
     projects = q.all()

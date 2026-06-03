@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models
 from backend.auth import get_current_user
 from backend.core.database import get_db
 from backend.services.knowledge_graph import build_graph_snapshot
+from backend.crud.crm import get_user_sede_id
 
 router = APIRouter(prefix="/graph", tags=["graph"])
 
@@ -19,13 +20,17 @@ def graph_snapshot(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """Return a lightweight knowledge graph view combining academy, CRM and assets data."""
+    """Return a lightweight knowledge graph view combining academy, CRM and assets data.
+    
+    Axioma 3: filtra por sede_id del usuario autenticado.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
     safe_limit = max(1, min(limit, 500))
     safe_offset = max(offset, 0)
     type_list = [item.strip() for item in (types or "").split(",") if item.strip()]
 
     expanded_limit = min(safe_limit + safe_offset, 1500)
-    snapshot = build_graph_snapshot(db, limit=expanded_limit, types=type_list)
+    snapshot = build_graph_snapshot(db, limit=expanded_limit, types=type_list, sede_id=user_sede)
 
     nodes = snapshot.get("nodes", [])
     total_nodes = len(nodes)
@@ -60,12 +65,16 @@ def graph_connections(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    """Axioma 3: filtra por sede_id del usuario autenticado."""
+    user_sede = get_user_sede_id(db, current_user.id)
     safe_limit = max(1, min(limit, 500))
-    snapshot = build_graph_snapshot(db, limit=1500)
+    snapshot = build_graph_snapshot(db, limit=1500, sede_id=user_sede)
     nodes = snapshot.get("nodes", [])
     edges = snapshot.get("edges", [])
 
     node = next((item for item in nodes if item.get("id") == node_id), None)
+    if not node:
+        raise HTTPException(status_code=404, detail="Node not found")
     outgoing = [edge for edge in edges if edge.get("from") == node_id][:safe_limit]
     incoming = [edge for edge in edges if edge.get("to") == node_id][:safe_limit]
 

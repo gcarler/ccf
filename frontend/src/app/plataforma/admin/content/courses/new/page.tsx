@@ -75,12 +75,12 @@ export default function NewCoursePage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 pb-4">
                 {/* Main Form Area */}
                 <div className="lg:col-span-8 space-y-3">
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
                         <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-blue-600/5 rounded-full blur-[100px]" />
                         
                         <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-3">
-                                <FileText size={20} className="text-blue-600" />
+                                <FileText size={20} className="text-[hsl(var(--primary))]" />
                                 <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Información General</h3>
                             </div>
 
@@ -114,9 +114,9 @@ export default function NewCoursePage() {
                         </div>
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center gap-3">
-                            <Target size={20} className="text-blue-600" />
+                            <Target size={20} className="text-[hsl(var(--primary))]" />
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Configuración Académica</h3>
                         </div>
 
@@ -154,8 +154,8 @@ export default function NewCoursePage() {
                     <section className="p-4 bg-slate-900 rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/20 rounded-full blur-3xl" />
                         <div className="relative z-10 space-y-3">
-                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-blue-400">Previsualización</h4>
-                            <div className="aspect-video rounded-lg bg-white/5 border border-white/10 flex flex-col items-center justify-center gap-4 text-slate-500 hover:text-blue-400 transition-all cursor-pointer group">
+                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Previsualización</h4>
+                            <div className="aspect-video rounded-lg bg-white/5 border border-white/10 flex flex-col items-center justify-center gap-4 text-slate-500 hover:text-[hsl(var(--primary))] transition-all cursor-pointer group">
                                 <ImageIcon size={40} strokeWidth={1} className="group-hover:scale-110 transition-transform" />
                                 <span className="text-[9px] font-semibold uppercase">Subir Miniatura</span>
                             </div>
@@ -164,13 +164,13 @@ export default function NewCoursePage() {
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mt-1">{formData.code || 'ID-XXX'} • {formData.modality}</p>
                             </div>
                             <div className="flex gap-3">
-                                <div className="px-3 py-1.5 bg-blue-600 rounded-md text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2"><Zap size={12} fill="currentColor" /> {formData.xp_per_lesson} XP</div>
+                                <div className="px-3 py-1.5 bg-[hsl(var(--primary))] rounded-md text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2"><Zap size={12} fill="currentColor" /> {formData.xp_per_lesson} XP</div>
                                 <div className="px-3 py-1.5 bg-white/10 rounded-md text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2"><Award size={12} /> Graduable</div>
                             </div>
                         </div>
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between">
                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Resumen de Metas</h4>
                             <Settings size={18} className="text-slate-300" />

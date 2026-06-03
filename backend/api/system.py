@@ -67,7 +67,7 @@ def get_global_calendar(
 ):
     events = []
     sede_id = get_user_sede_id(db, current_user.id)
-    agenda_events = db.query(models.AgendaEvent).filter(models.AgendaEvent.sede_id == sede_id).all()
+    agenda_events = db.query(models.AgendaEvent).all()
     for event in agenda_events:
         events.append(
             {

@@ -43,8 +43,8 @@ const TYPE_ICON: Record<RouteNode['type'], React.ElementType> = {
 
 const TYPE_COLOR: Record<RouteNode['type'], string> = {
     workspace: 'text-slate-400',
-    portfolio: 'text-blue-500',
-    project:   'text-blue-500',
+    portfolio: 'text-[hsl(var(--primary))]',
+    project:   'text-[hsl(var(--primary))]',
     section:   'text-amber-500',
     task:      'text-emerald-500',
 };
@@ -78,7 +78,7 @@ function TreeNode({
                 className={clsx(
                     'group relative flex items-center gap-1.5 py-1.5 px-2 rounded-lg cursor-pointer transition-all select-none',
                     isActive
-                        ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                        ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-800 dark:hover:text-slate-200',
                 )}
                 style={{ paddingLeft: depth * 16 + 8 }}
@@ -114,7 +114,7 @@ function TreeNode({
 
                 {/* Active indicator */}
                 {isActive && (
-                    <span className="font-semibold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded">
+                    <span className="font-semibold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded">
                         actual
                     </span>
                 )}
@@ -180,7 +180,7 @@ export default function TaskRouteTree({
                                 <div className={clsx(
                                     'flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px]',
                                     isLast
-                                        ? 'font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10'
+                                        ? 'font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10'
                                         : 'font-medium text-slate-500 dark:text-slate-400'
                                 )}>
                                     <CrumbIcon size={11} className={TYPE_COLOR[crumb.type]} />

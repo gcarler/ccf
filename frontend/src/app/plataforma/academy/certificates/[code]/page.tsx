@@ -35,19 +35,19 @@ export default function PublicCertificatePage() {
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#1e1f21]">
-            <Loader2 className="animate-spin text-blue-500" size={40} />
+            <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={40} />
         </div>
     );
 
     if (error || !certificate) return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#1e1f21] p-4">
-            <div className="max-w-md w-full text-center space-y-3 p-3 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/5 shadow-xl">
+            <div className="max-w-md w-full text-center space-y-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/5 shadow-xl">
                 <ShieldAlert size={64} className="text-rose-500 mx-auto" />
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">Certificado No Valido</h2>
                 <p className="text-slate-500 dark:text-slate-400">El codigo de certificado proporcionado no existe en nuestros registros oficiales.</p>
                 <button
                     onClick={() => window.location.href = '/'}
-                    className="w-full py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide"
+                    className="w-full py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide"
                 >
                     Volver al Inicio
                 </button>

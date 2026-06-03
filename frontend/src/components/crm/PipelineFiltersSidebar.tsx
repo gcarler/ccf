@@ -27,10 +27,10 @@ interface PipelineFiltersSidebarProps {
 
 export default function PipelineFiltersSidebar({ stats, search, onSearchChange }: PipelineFiltersSidebarProps) {
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0f1113]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113]">
             {/* Header Cinematic */}
             <div className="p-4 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
-                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-blue-600 dark:text-white">
+                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-[hsl(var(--primary))] dark:text-white">
                     <Target size={160} />
                 </div>
                 
@@ -41,7 +41,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                     <div>
                         <h2 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-[-0.04em] leading-tight">
                             Pipeline<br/>
-                            <span className="text-blue-600">Consolidación</span>
+                            <span className="text-[hsl(var(--primary))]">Consolidación</span>
                         </h2>
                     </div>
                 </div>
@@ -67,18 +67,18 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
             <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                        <Filter size={14} className="text-blue-600" /> Segmentación
+                        <Filter size={14} className="text-[hsl(var(--primary))]" /> Segmentación
                     </h3>
                     <div className="space-y-2">
                         {[
-                            { id: 'all', label: 'Todos los Prospectos', icon: Users, count: stats.total, color: 'text-blue-600', bg: 'bg-blue-500/5' },
+                            { id: 'all', label: 'Todos los Prospectos', icon: Users, count: stats.total, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-500/5' },
                             { id: 'new', label: 'Registros Nuevos', icon: UserPlus, count: stats.new, color: 'text-amber-600', bg: 'bg-amber-500/5' },
                             { id: 'consolidated', label: 'Casos de Éxito', icon: CheckCircle2, count: stats.consolidated, color: 'text-emerald-600', bg: 'bg-emerald-500/5' },
                         ].map((s) => (
                             <motion.button 
                                 key={s.id}
                                 whileHover={{ x: 4 }}
-                                className="w-full flex items-center gap-4 p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-md hover:bg-white dark:hover:bg-white/[0.05] hover:border-blue-500/20 transition-all group"
+                                className="w-full flex items-center gap-4 p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-md hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/[0.05] hover:border-blue-500/20 transition-all group"
                             >
                                 <div className={clsx("size-8 rounded-lg flex items-center justify-center transition-all group-hover:scale-110", s.bg, s.color)}>
                                     <s.icon size={16} />
@@ -92,10 +92,10 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
 
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                        <Search size={14} className="text-blue-600" /> Búsqueda Quick-Scan
+                        <Search size={14} className="text-[hsl(var(--primary))]" /> Búsqueda Quick-Scan
                     </h3>
                     <div className="relative group">
-                        <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                        <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[hsl(var(--primary))] transition-colors" />
                         <input
                             value={search}
                             onChange={e => onSearchChange(e.target.value)}

@@ -42,10 +42,10 @@ function AuthCallbackContent() {
     }, []); // Run once on mount; avoid dependency on mutable objects
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--bg-muted))]">
             <div className="text-center">
                 <Loader2 className="animate-spin mx-auto mb-4 text-ccf-blue-dark" size={32} />
-                <p className="text-gray-600 font-medium">{status}</p>
+                <p className="text-[hsl(var(--text-primary))] font-medium">{status}</p>
             </div>
         </div>
     );
@@ -54,7 +54,7 @@ function AuthCallbackContent() {
 export default function AuthCallbackPage() {
     return (
         <Suspense fallback={
-            <div className="flex min-h-screen items-center justify-center bg-gray-50">
+            <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--bg-muted))]">
                 <Loader2 className="animate-spin mx-auto mb-4 text-ccf-blue-dark" size={32} />
             </div>
         }>

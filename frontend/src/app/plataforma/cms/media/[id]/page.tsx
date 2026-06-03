@@ -127,7 +127,7 @@ export default function CmsMediaDetailPage() {
                         <button onClick={toggleArchiveItem} className={`p-2 rounded-md transition-all ${item.status === 'archived' ? 'text-emerald-600 hover:bg-emerald-500/10' : 'text-amber-600 hover:bg-amber-500/10'}`}>
                             {item.status === 'archived' ? <RotateCcw size={20} /> : <Archive size={20} />}
                         </button>
-                        <button onClick={saveMetadata} disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50">
+                        <button onClick={saveMetadata} disabled={saving} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50">
                             <Save size={14} /> {saving ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
                     </div>
@@ -168,10 +168,10 @@ export default function CmsMediaDetailPage() {
                         </div>
 
                         <div className="flex gap-4">
-                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
                                 <Download size={14} /> Descargar Original
                             </button>
-                            <button onClick={copyUrl} className="flex-1 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+                            <button onClick={copyUrl} className="flex-1 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
                                 <Link2 size={14} /> Copiar URL
                             </button>
                         </div>
@@ -232,7 +232,7 @@ export default function CmsMediaDetailPage() {
                                     {tagsText.split(',').map((tag: string) => tag.trim()).filter(Boolean).map((tag: string) => (
                                         <DSBadge key={tag} tone="blue" label={`#${tag}`} />
                                     ))}
-                                    <button className="size-6 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 hover:border-blue-500 hover:text-blue-500 transition-all">
+                                    <button className="size-6 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 hover:border-blue-500 hover:text-[hsl(var(--primary))] transition-all">
                                         <Plus size={12} />
                                     </button>
                                 </div>

@@ -186,6 +186,7 @@ class CounselingTicket(Base):
         index=True,
     )
     pastor_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
+    pastor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     subject = Column(String(200), nullable=False)
     notes = Column(Text, nullable=True)
     status = Column(String(50), default="open", index=True)  # open, in_progress, resolved
@@ -637,6 +638,7 @@ class CrmTask(Base):
         index=True,
     )
     assignee_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
+    assignee_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(20), default="pending")
     priority = Column(String(20), default="medium")
@@ -708,6 +710,7 @@ class CommunicationLog(Base):
     campaign_name = Column(String(120), nullable=True, index=True)
     content = Column(Text, nullable=False)
     leader_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
+    leader_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     outcome = Column(String(50), default="sent", index=True)
     external_id = Column(String(120), nullable=True, index=True)
     is_read = Column(Boolean, default=False, index=True)

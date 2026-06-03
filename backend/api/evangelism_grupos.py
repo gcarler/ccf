@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
 from backend import crud, models, schemas
+from backend.models import SesionGrupo, GrupoEvangelismo, Asistencia
 from backend.api.evangelism_shared import (expected_group_rows,
                                            member_payload, utc_now)
 from backend.auth import (get_current_user, normalize_role, require_active_user,
@@ -55,8 +56,8 @@ def list_cell_groups(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    from backend.models import CellGroup
-    q = db.query(CellGroup)
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transition
+    q = db.query(GrupoEvangelismo)
     if estrategia_id:
         q = q.filter(GrupoEvangelismo.evangelism_strategy_id == estrategia_id)
     if sede_id is not None:
@@ -95,7 +96,7 @@ def list_my_cell_groups(
     if not persona:
         return []
     return (
-        db.query(models.GrupoEvangelismo)
+        db.query(GrupoEvangelismo)
         .filter(
             (models.GrupoEvangelismo.lider_persona_id == persona.id)
             | (models.GrupoEvangelismo.asistente_persona_id == persona.id)
@@ -112,7 +113,7 @@ def get_faro_assignment_summary(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    q = db.query(models.GrupoEvangelismo).order_by(models.GrupoEvangelismo.nombre.asc())
+    q = db.query(GrupoEvangelismo).order_by(models.GrupoEvangelismo.nombre.asc())
     if sede_id is not None:
         q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
     houses = q.all()
@@ -202,8 +203,8 @@ def get_cell_group(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    from backend.models import CellGroup, CellGroupMember, CellGroupSession, CellGroupAttendance
-    house = db.query(CellGroup).filter(CellGroup.id == grupo_id).first()
+    from backend.models_evangelism import GrupoEvangelismo, ParticipanteGrupo, SesionGrupo, Asistencia
+    house = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.id == grupo_id).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house):
@@ -212,9 +213,9 @@ def get_cell_group(
         )
 
     base_rows = (
-        db.query(CellGroupMember, models.Persona)
-        .join(models.Persona, models.Persona.id == CellGroupMember.persona_id)
-        .filter(CellGroupMember.cell_group_id == grupo_id)
+        db.query(models.ParticipanteGrupo, models.Persona)
+        .join(models.Persona, models.Persona.id == models.ParticipanteGrupo.persona_id)
+        .filter(models.ParticipanteGrupo.grupo_id == grupo_id)
         .order_by(models.Persona.nombre_completo.asc())
         .all()
     )
@@ -231,9 +232,9 @@ def get_cell_group(
     base_attendee_ids = [item["persona_id"] for item in base_attendees]
 
     sessions = (
-        db.query(CellGroupSession)
-        .filter(CellGroupSession.cell_group_id == grupo_id)
-        .order_by(CellGroupSession.session_date.desc())
+        db.query(SesionGrupo)
+        .filter(models.SesionGrupo.grupo_id == grupo_id)
+        .order_by(models.SesionGrupo.fecha_sesion.desc())
         .limit(20)
         .all()
     )
@@ -248,8 +249,8 @@ def get_cell_group(
 
         session_ids = [session.id for session in sessions]
         attendance_rows = (
-            db.query(CellGroupAttendance)
-            .filter(CellGroupAttendance.session_id.in_(session_ids))
+            db.query(Asistencia)
+            .filter(models.Asistencia.sesion_id.in_(session_ids))
             .all()
         )
         for row in attendance_rows:
@@ -266,11 +267,11 @@ def get_cell_group(
                 )
         attendance_counts = (
             db.query(
-                CellGroupAttendance.session_id,
-                sqlfunc.count(CellGroupAttendance.id).label("cnt"),
+                models.Asistencia.sesion_id,
+                sqlfunc.count(models.Asistencia.id).label("cnt"),
             )
-            .filter(CellGroupAttendance.session_id.in_(session_ids))
-            .group_by(CellGroupAttendance.session_id)
+            .filter(models.Asistencia.sesion_id.in_(session_ids))
+            .group_by(models.Asistencia.sesion_id)
             .all()
         )
         attendance_map = {row.session_id: row.cnt for row in attendance_counts}
@@ -280,7 +281,7 @@ def get_cell_group(
     sessions_data = [
         {
             "id": session.id,
-            "grupo_id": session.cell_group_id,
+            "grupo_id": session.grupo_id,
             "session_date": session.session_date.isoformat(),
             "status": session.status,
             "attendance_count": attendance_map.get(session.id, 0),
@@ -470,8 +471,8 @@ def update_cell_group(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    from backend.models import CellGroup
-    house_db = db.query(CellGroup).filter(CellGroup.id == grupo_id).first()
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transition
+    house_db = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
     if not house_db:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house_db):
@@ -502,8 +503,8 @@ def delete_cell_group(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Desactiva un grupo de evangelismo (soft-delete)."""
-    from backend.models import CellGroup
-    house = db.query(CellGroup).filter(CellGroup.id == grupo_id).first()
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transition
+    house = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.id == grupo_id).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     house.activo = False
@@ -599,7 +600,7 @@ def list_faro_sessions(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    query = db.query(models.SesionGrupo).options(
+    query = db.query(SesionGrupo).options(
         joinedload(models.SesionGrupo.grupo),
     )
     if season_id:
@@ -629,7 +630,7 @@ def list_faro_sessions(
     return [
         {
             "id": session.id,
-            "cell_group_id": session.cell_group_id,
+            "cell_group_id": session.grupo_id,
             "cell_group_name": (
                 session.cell_group.name if session.cell_group else None
             ),
@@ -669,7 +670,7 @@ def list_my_pending_faro_sessions(
         return []
 
     sessions = (
-        db.query(models.SesionGrupo)
+        db.query(SesionGrupo)
         .options(
             joinedload(models.SesionGrupo.grupo),
             joinedload(models.SesionGrupo.season),
@@ -700,7 +701,7 @@ def list_my_pending_faro_sessions(
 
     for session in sessions:
         attendance_count = att_counts.get(session.id, 0)
-        expected_count = len(expected_group_rows(db, session.cell_group_id))
+        expected_count = len(expected_group_rows(db, session.grupo_id))
         needs_report = (
             session.status in {"Programada", "Pendiente", "No reportada"}
             or attendance_count == 0
@@ -711,7 +712,7 @@ def list_my_pending_faro_sessions(
         items.append(
             {
                 "session_id": session.id,
-                "cell_group_id": session.cell_group_id,
+                "cell_group_id": session.grupo_id,
                 "cell_group_name": (
                     session.cell_group.name if session.cell_group else None
                 ),
@@ -785,7 +786,7 @@ def create_faro_session(
     houses_to_process = []
     if str(cell_group_id).lower() == "all":
         houses = (
-            db.query(models.GrupoEvangelismo)
+            db.query(GrupoEvangelismo)
             .filter(models.GrupoEvangelismo.activo.is_(True))
             .all()
         )
@@ -796,7 +797,7 @@ def create_faro_session(
     created_sessions = []
     for h_id in houses_to_process:
         existing = (
-            db.query(models.SesionGrupo)
+            db.query(SesionGrupo)
             .filter(
                 models.SesionGrupo.grupo_id == h_id,
                 models.SesionGrupo.season_id == season_id,
@@ -845,15 +846,15 @@ def get_faro_session_attendance(
     current_user: models.User = Depends(get_current_user),
 ):
     session = (
-        db.query(models.SesionGrupo)
+        db.query(SesionGrupo)
         .filter(models.SesionGrupo.id == session_id)
         .first()
     )
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     house = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.id == session.cell_group_id)
+        db.query(GrupoEvangelismo)
+        .filter(models.GrupoEvangelismo.id == session.grupo_id)
         .first()
     )
     if not house:
@@ -864,13 +865,13 @@ def get_faro_session_attendance(
         )
 
     attendances = (
-        db.query(models.Asistencia)
+        db.query(Asistencia)
         .filter(models.Asistencia.sesion_id == session_id)
         .options(joinedload(models.Asistencia.persona))
         .all()
     )
 
-    expected_rows = expected_group_rows(db, session.cell_group_id)
+    expected_rows = expected_group_rows(db, session.grupo_id)
     attendance_map = {attendance.persona_id: attendance for attendance in attendances}
     present = []
     absent = []
@@ -902,7 +903,7 @@ def get_faro_session_attendance(
     return {
         "session_id": session_id,
         "session_date": session.session_date.isoformat(),
-        "cell_group_id": session.cell_group_id,
+        "cell_group_id": session.grupo_id,
         "status": session.status,
         "topic": session.topic,
         "offering_amount": (
@@ -936,15 +937,15 @@ def add_faro_attendance(
     attendees = payload.get("attendees")
 
     session = (
-        db.query(models.SesionGrupo)
+        db.query(SesionGrupo)
         .filter(models.SesionGrupo.id == session_id)
         .first()
     )
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     house = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.id == session.cell_group_id)
+        db.query(GrupoEvangelismo)
+        .filter(models.GrupoEvangelismo.id == session.grupo_id)
         .first()
     )
     if not house:
@@ -994,7 +995,7 @@ def add_faro_attendance(
                 )
 
             row = (
-                db.query(models.Asistencia)
+                db.query(Asistencia)
                 .filter(
                     models.Asistencia.sesion_id == session_id,
                     models.Asistencia.persona_id == member_id,
@@ -1008,7 +1009,7 @@ def add_faro_attendance(
                 row.scanned_at = utc_now() if attended else row.scanned_at
             else:
                 db.add(
-                    models.Asistencia(
+                    Asistencia(
                         session_id=session_id,
                         persona_id=member_id,
                         attended=attended,
@@ -1030,7 +1031,7 @@ def add_faro_attendance(
                 except ValueError:
                     raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {member_id}")
             exists = (
-                db.query(models.Asistencia)
+                db.query(Asistencia)
                 .filter(
                     models.Asistencia.sesion_id == session_id,
                     models.Asistencia.persona_id == member_id,
@@ -1039,7 +1040,7 @@ def add_faro_attendance(
             )
             if not exists:
                 db.add(
-                    models.Asistencia(
+                    Asistencia(
                         session_id=session_id, persona_id=member_id, attended=True
                     )
                 )
@@ -1172,14 +1173,14 @@ def get_macro_despliegue(
         season_name = season.name if season else f"Temporada {season_id}"
 
     # 2. Get all active houses
-    q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.activo.is_(True))
+    q = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.activo.is_(True))
     if sede_id is not None:
         q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
     houses = q.order_by(models.GrupoEvangelismo.nombre.asc()).all()
 
     # 3. Get all sessions for the season
     sessions = (
-        db.query(models.SesionGrupo)
+        db.query(SesionGrupo)
         .filter(models.SesionGrupo.season_id == season_id)
         .all()
     )
@@ -1260,7 +1261,7 @@ def register_faro_visitor(
 ):
     """Register a new guest from a Faro session report as a Persona + CRM lead."""
     # Verificar que usuario es líder/asistente del grupo
-    house = db.query(models.GrupoEvangelismo).filter(
+    house = db.query(GrupoEvangelismo).filter(
         models.GrupoEvangelismo.id == visitor.cell_group_id
     ).first()
     if not house:
@@ -1325,20 +1326,20 @@ def list_sessions(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """List sessions, optionally filtered by strategy, house or sede."""
-    from backend.models import CellGroupSession, CellGroup
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transitionSession, GrupoEvangelismo
 
-    q = db.query(CellGroupSession)
+    q = db.query(SesionGrupo)
     if strategy_id:
-        q = q.join(CellGroup, CellGroup.id == CellGroupSession.cell_group_id).filter(
+        q = q.join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id).filter(
             GrupoEvangelismo.evangelism_strategy_id == strategy_id
         )
     if house_id:
-        q = q.filter(CellGroupSession.cell_group_id == house_id)
+        q = q.filter(models.SesionGrupo.grupo_id == house_id)
     if sede_id is not None:
-        q = q.join(CellGroup, CellGroup.id == CellGroupSession.cell_group_id).filter(
+        q = q.join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id).filter(
             GrupoEvangelismo.sede_id == sede_id
         )
-    rows = q.order_by(CellGroupSession.session_date.desc()).all()
+    rows = q.order_by(models.SesionGrupo.fecha_sesion.desc()).all()
     return [
         {
             "id": s.id,
@@ -1360,7 +1361,7 @@ def create_session(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Create a new session."""
-    from backend.models import CellGroupSession as SessionModel
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transitionSession as SessionModel
     
     cell_group_id = data.grupo_id
     if not cell_group_id:
@@ -1384,7 +1385,7 @@ def create_session(
     db.refresh(db_session)
     return {
         "id": db_session.id,
-        "grupo_id": db_session.cell_group_id,
+        "grupo_id": db_session.grupo_id,
         "session_date": db_session.session_date.isoformat() if db_session.session_date else None,
         "status": db_session.status or "Realizada",
         "topic": db_session.topic,
@@ -1400,26 +1401,26 @@ def get_session_detail(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Get session with attendance records including member names."""
-    from backend.models import CellGroupSession, CellGroupAttendance, CellGroupMember
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transitionSession, Asistencia, GrupoEvangelismoMember
     from backend.models_personas import Persona
 
     session = (
-        db.query(CellGroupSession)
-        .options(joinedload(CellGroupSession.cell_group))
-        .filter(CellGroupSession.id == session_id)
+        db.query(SesionGrupo)
+        .options(joinedload(models.SesionGrupo.grupo))
+        .filter(models.SesionGrupo.id == session_id)
         .first()
     )
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    attendance_rows = db.query(CellGroupAttendance).filter(
-        CellGroupAttendance.session_id == session_id
+    attendance_rows = db.query(Asistencia).filter(
+        models.Asistencia.sesion_id == session_id
     ).all()
 
     # Build persona name lookup for this session's cell_group
     persona_map: dict[str, str] = {}
-    house_members = db.query(CellGroupMember).filter(
-        CellGroupMember.cell_group_id == session.cell_group_id
+    house_members = db.query(ParticipanteGrupo).filter(
+        models.ParticipanteGrupo.grupo_id == session.grupo_id
     ).all()
     for hm in house_members:
         p = db.query(Persona).filter(Persona.id == hm.persona_id).first()
@@ -1443,7 +1444,7 @@ def get_session_detail(
     return {
         "session": {
             "id": session.id,
-            "cell_group_id": session.cell_group_id,
+            "cell_group_id": session.grupo_id,
             "session_date": session.session_date.isoformat() if session.session_date else None,
             "topic": session.topic,
             "offering_amount": float(session.offering_amount) if session.offering_amount else None,
@@ -1467,7 +1468,7 @@ def update_session(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Update session."""
-    from backend.models import CellGroupSession as SessionModel
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transitionSession as SessionModel
     
     db_session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
     if not db_session:
@@ -1490,9 +1491,9 @@ def delete_session(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Cancela una sesión (soft-delete: marca como CANCELADA)."""
-    from backend.models import CellGroupSession
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transitionSession
 
-    db_session = db.query(CellGroupSession).filter(CellGroupSession.id == session_id).first()
+    db_session = db.query(SesionGrupo).filter(models.SesionGrupo.id == session_id).first()
     if not db_session:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -1504,7 +1505,7 @@ def delete_session(
 
 # ── Attendance ──
 
-@router.post("/sessions/{session_id}/attendance", response_model=List[dict])
+@router.post("/sessions/{session_id}/attendance", response_model=dict)
 def submit_attendance(
     session_id: int,
     attendance_data: List[schemas.AsistenciaGrupoCreate],
@@ -1512,25 +1513,22 @@ def submit_attendance(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Submit attendance for a session. Checks automation triggers."""
-    from backend.models import CellGroupAttendance, CellGroupSession
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transitionAttendance, SesionGrupo
     
-    session = db.query(CellGroupSession).filter(CellGroupSession.id == session_id).first()
+    session = db.query(SesionGrupo).filter(models.SesionGrupo.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
-    # Delete existing attendance for this session
-    db.query(CellGroupAttendance).filter(
-        CellGroupAttendance.session_id == session_id
-    ).delete()
+    # Soft-delete existing attendance for this session
+    db.query(Asistencia).filter(
+        models.Asistencia.sesion_id == session_id
+    ).update({models.Asistencia.deleted_at: utc_now()}, synchronize_session=False)
     
     submitted = []
     for att in attendance_data:
         # Map schema fields (status/notes) to model fields
-        is_attended = att.status in ("present", "first_time")
-        absence_reason = None
         absence_reason_detail = None
         if att.status == "absent":
-            absence_reason = att.notes if att.notes else "sin_especificar"
             absence_reason_detail = att.notes
 
         # Mapear estado nuevo (EstadoAsistenciaEnum)
@@ -1540,14 +1538,15 @@ def submit_attendance(
         elif att.status == "first_time":
             nuevo_estado = "primera_vez"
 
-        db_att = CellGroupAttendance(
+        import uuid as _uuid
+        persona_uuid = att.persona_id
+        if isinstance(persona_uuid, str):
+            persona_uuid = _uuid.UUID(persona_uuid)
+
+        db_att = Asistencia(
             session_id=session_id,
-            persona_id=att.persona_id,
-            attended=is_attended,
-            absence_reason=absence_reason,
-            absence_reason_detail=absence_reason_detail,
-            status=att.status,
-            notes=att.notes,
+            persona_id=persona_uuid,
+            detalle_excusa=absence_reason_detail,
             estado=nuevo_estado,
             es_primera_vez=(att.status == "first_time"),
         )
@@ -1566,35 +1565,95 @@ def submit_attendance(
     _check_absence_trigger(db, session_id)
     _check_first_time_lead_trigger(db, session_id)
     
-    return submitted
+    # ── CRM Bridge: first-time / seguimiento ──
+    from backend.services.evangelism_crm_bridge import crear_caso_desde_asistencia
+    from backend.models_personas import Persona
+    
+    evento = None
+    for att in submitted:
+        if att.es_primera_vez or att.requiere_seguimiento:
+            persona = db.query(Persona).filter(Persona.id == att.persona_id).first()
+            if not persona:
+                continue
+            grupo = session.grupo
+            if not grupo:
+                continue
+            sede_id = grupo.sede_id
+            if not sede_id:
+                continue
+            caso = crear_caso_desde_asistencia(db, att, persona, grupo, session, sede_id)
+            if caso:
+                estrategia = grupo.estrategia
+                tags_nuevos = [
+                    f"VISITANTE_ESTRATEGIA_{estrategia.id}" if estrategia else "VISITANTE_ESTRATEGIA_NONE",
+                    f"GRUPO_{grupo.nombre}",
+                    f"SESION_{session.fecha_sesion.date().isoformat()}" if session.fecha_sesion else f"SESION_{session.id}",
+                ]
+                persona.tags = list(set((persona.tags or []) + tags_nuevos))
+                if estrategia:
+                    persona.origen_estrategia_id = estrategia.id
+                persona.origen_grupo_id = grupo.id
+                persona.origen_fecha = _datetime.now(_timezone.utc)
+                persona.spiritual_status = "VISITANTE_EVANGELISMO"
+                db.commit()
+                db.refresh(persona)
+                db.refresh(caso)
+                
+                evento = {
+                    "origen_modulo": "EVANGELISMO",
+                    "grupo_id": str(grupo.id),
+                    "sesion_id": str(session.id),
+                    "visitante_kernel": {
+                        "persona_id": str(persona.id),
+                        "nombre": f"{persona.first_name} {persona.last_name}",
+                        "rol_iglesia": persona.spiritual_status,
+                        "tags_aplicados": persona.tags,
+                    },
+                    "crm_consolidacion": {
+                        "caso_id": str(caso.id),
+                        "pipeline": "NUEVOS_VISITANTES",
+                        "etapa_inicial": caso.etapa_actual.nombre if caso.etapa_actual else "NUEVO_CONTACTO",
+                        "SLA_limite_horas": 48,
+                        "sla_deadline": caso.sla_vencimiento_contacto.isoformat() if caso.sla_vencimiento_contacto else None,
+                    },
+                }
+                break
+    
+    return {
+        "evento_integracion": evento,
+        "metadata": {
+            "engine": "Mesh CCF",
+            "trazabilidad": "AUTOMATIC_EVENT_TRIGGER_SUCCESS",
+        },
+    }
 
 
 def _check_absence_trigger(db: Session, session_id: int):
     """If a member has 3 consecutive absences, create N2 task in Consolidation."""
     from backend.models import (
-        CellGroupAttendance,
-        CellGroupSession,
-        CellGroup,
+        Asistencia,
+        SesionGrupo,
+        GrupoEvangelismo,
     )
     from backend.models_personas import Persona
     
-    session = db.query(CellGroupSession).filter(
-        CellGroupSession.id == session_id
+    session = db.query(SesionGrupo).filter(
+        models.SesionGrupo.id == session_id
     ).first()
     if not session:
         return
     
-    house = db.query(CellGroup).filter(
-        CellGroup.id == session.cell_group_id
+    house = db.query(GrupoEvangelismo).filter(
+        models.GrupoEvangelismo.id == session.grupo_id
     ).first()
     if not house:
         return
     
     # Get last 3 sessions for this house
     recent_sessions = (
-        db.query(CellGroupSession)
-        .filter(CellGroupSession.cell_group_id == house.id)
-        .order_by(CellGroupSession.session_date.desc())
+        db.query(SesionGrupo)
+        .filter(models.SesionGrupo.grupo_id == house.id)
+        .order_by(models.SesionGrupo.fecha_sesion.desc())
         .limit(3)
         .all()
     )
@@ -1608,11 +1667,11 @@ def _check_absence_trigger(db: Session, session_id: int):
         absent_count = 0
         for s in recent_sessions:
             att = (
-                db.query(CellGroupAttendance)
+                db.query(Asistencia)
                 .filter(
-                    CellGroupAttendance.session_id == s.id,
-                    CellGroupAttendance.persona_id == member_id,
-                    CellGroupAttendance.status == "absent",
+                    models.Asistencia.sesion_id == s.id,
+                    models.Asistencia.persona_id == member_id,
+                    models.Asistencia.estado == "absent",
                 )
                 .first()
             )
@@ -1640,14 +1699,14 @@ def _check_absence_trigger(db: Session, session_id: int):
 
 def _check_first_time_lead_trigger(db: Session, session_id: int):
     """If a first_time attendee is recorded, mark as LEAD_NUEVO in CRM."""
-    from backend.models import CellGroupAttendance
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transitionAttendance
     from backend.models_personas import Persona
     
     first_timers = (
-        db.query(CellGroupAttendance)
+        db.query(Asistencia)
         .filter(
-            CellGroupAttendance.session_id == session_id,
-            CellGroupAttendance.status == "first_time",
+            models.Asistencia.sesion_id == session_id,
+            models.Asistencia.estado == "first_time",
         )
         .all()
     )
@@ -1673,15 +1732,15 @@ def get_strategy_metrics(
 ):
     """Weekly metrics for a strategy: attendance, absences, first-timers, groups."""
     from backend.models import (
-        CellGroupSession,
-        CellGroupAttendance,
-        CellGroup,
+        SesionGrupo,
+        Asistencia,
+        GrupoEvangelismo,
     )
     from datetime import timedelta
     
     # Get all houses for this strategy
     strategy_ref = str(strategy_id)
-    houses = db.query(CellGroup).filter(
+    houses = db.query(GrupoEvangelismo).filter(
         GrupoEvangelismo.evangelism_strategy_id == strategy_ref
     ).all()
     house_ids = [h.id for h in houses]
@@ -1702,12 +1761,12 @@ def get_strategy_metrics(
     cutoff = _datetime.now(_timezone.utc) - timedelta(weeks=weeks)
 
     sessions = (
-        db.query(CellGroupSession)
+        db.query(SesionGrupo)
         .filter(
-            CellGroupSession.cell_group_id.in_(house_ids),
-            CellGroupSession.session_date >= cutoff.date(),
+            models.SesionGrupo.grupo_id.in_(house_ids),
+            models.SesionGrupo.fecha_sesion >= cutoff.date(),
         )
-        .order_by(CellGroupSession.session_date)
+        .order_by(models.SesionGrupo.fecha_sesion)
         .all()
     )
 
@@ -1728,8 +1787,8 @@ def get_strategy_metrics(
 
     # Single query: load ALL attendance for all sessions at once
     all_attendance = (
-        db.query(CellGroupAttendance)
-        .filter(CellGroupAttendance.session_id.in_(session_ids))
+        db.query(Asistencia)
+        .filter(models.Asistencia.sesion_id.in_(session_ids))
         .all()
     )
 
@@ -1822,10 +1881,10 @@ def create_seguimiento(
 ):
     """Crea un registro de seguimiento para una asistencia."""
     from backend.crud.evangelism import create_seguimiento
-    from backend.models import CellGroupAttendance
+    from backend.models_evangelism import GrupoEvangelismo as GrupoEvangelismoCompat  # v2 transitionAttendance
 
-    asistencia = db.query(CellGroupAttendance).filter(
-        CellGroupAttendance.id == asistencia_id
+    asistencia = db.query(Asistencia).filter(
+        models.Asistencia.id == asistencia_id
     ).first()
     if not asistencia:
         raise HTTPException(status_code=404, detail="Asistencia no encontrada")

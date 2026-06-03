@@ -79,22 +79,22 @@ export default function GroupsHistoryPage() {
 
             <main className="flex-1 space-y-3 overflow-y-auto p-4 lg:p-4">
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Total registros</p>
                         <p className="mt-2 text-xl font-bold text-slate-800 dark:text-slate-100">{groups.length}</p>
                     </article>
-                    <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Meses con actividad</p>
                         <p className="mt-2 text-xl font-bold text-indigo-600">{timeline.length}</p>
                     </article>
-                    <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Con lider asignado</p>
                         <p className="mt-2 text-xl font-bold text-emerald-600">{groups.filter((item) => !!item.leader_name).length}</p>
                     </article>
                 </section>
 
                 {loading && (
-                    <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-300">
+                    <div className="rounded-md border border-dashed border-slate-300 bg-[hsl(var(--bg-primary))] p-4 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-300">
                         Cargando historial...
                     </div>
                 )}
@@ -113,7 +113,7 @@ export default function GroupsHistoryPage() {
                 )}
 
                 {!loading && !error && timeline.length === 0 && (
-                    <div className="rounded-md border-2 border-dashed border-slate-200 bg-white p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
+                    <div className="rounded-md border-2 border-dashed border-slate-200 bg-[hsl(var(--bg-primary))] p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
                         <CalendarClock size={40} className="mx-auto text-slate-300" />
                         <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">No hay eventos historicos disponibles</p>
                     </div>
@@ -122,7 +122,7 @@ export default function GroupsHistoryPage() {
                 {!loading && !error && timeline.length > 0 && (
                     <section className="space-y-3">
                         {timeline.map((month) => (
-                            <article key={month.key} className="rounded-md border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                            <article key={month.key} className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
                                 <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{month.monthLabel}</h2>
                                 <div className="mt-3 space-y-4">
                                     {month.items.map((item) => (

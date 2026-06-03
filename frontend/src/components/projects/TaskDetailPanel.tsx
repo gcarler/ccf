@@ -20,8 +20,8 @@ const LABEL_COLORS = [
     { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-300/50 dark:border-orange-500/30', dot: 'bg-orange-500' },
     { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-700 dark:text-amber-300',  border: 'border-amber-300/50 dark:border-amber-500/30',  dot: 'bg-amber-500' },
     { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300/50 dark:border-emerald-500/30', dot: 'bg-emerald-500' },
-    { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-700 dark:text-blue-300',   border: 'border-blue-300/50 dark:border-blue-500/30',   dot: 'bg-blue-500' },
-    { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-300/50 dark:border-blue-500/30', dot: 'bg-blue-500' },
+    { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-[hsl(var(--primary))] dark:text-blue-300',   border: 'border-blue-300/50 dark:border-blue-500/30',   dot: 'bg-[hsl(var(--primary))]' },
+    { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-[hsl(var(--primary))] dark:text-blue-300', border: 'border-blue-300/50 dark:border-blue-500/30', dot: 'bg-[hsl(var(--primary))]' },
     { bg: 'bg-pink-100 dark:bg-pink-900/30',   text: 'text-pink-700 dark:text-pink-300',   border: 'border-pink-300/50 dark:border-pink-500/30',   dot: 'bg-pink-500' },
     { bg: 'bg-slate-100 dark:bg-slate-800/60', text: 'text-slate-600 dark:text-slate-300', border: 'border-slate-300/50 dark:border-slate-600/30', dot: 'bg-slate-400' },
 ];
@@ -66,7 +66,7 @@ interface TaskDetailPanelProps {
 // ─────────────────────────────────────────────────────────────────
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
     todo:        { label: 'Pendiente',   color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800/60',      icon: Circle },
-    in_progress: { label: 'En Progreso', color: 'text-blue-600',    bg: 'bg-blue-50 dark:bg-blue-500/10',         icon: Loader2 },
+    in_progress: { label: 'En Progreso', color: 'text-[hsl(var(--primary))]',    bg: 'bg-blue-50 dark:bg-blue-500/10',         icon: Loader2 },
     done:        { label: 'Completada',  color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10',   icon: CheckCircle2 },
     blocked:     { label: 'Bloqueada',   color: 'text-rose-600',    bg: 'bg-rose-50 dark:bg-rose-500/10',         icon: X },
 };
@@ -74,7 +74,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string; ico
 const PRIORITY_MAP: Record<string, { label: string; color: string; dot: string }> = {
     urgent: { label: 'Urgente', color: 'text-rose-600',   dot: 'bg-rose-500' },
     high:   { label: 'Alta',    color: 'text-orange-600', dot: 'bg-orange-500' },
-    normal: { label: 'Normal',  color: 'text-blue-600',   dot: 'bg-blue-500' },
+    normal: { label: 'Normal',  color: 'text-[hsl(var(--primary))]',   dot: 'bg-[hsl(var(--primary))]' },
     low:    { label: 'Baja',    color: 'text-slate-400',  dot: 'bg-slate-400' },
 };
 
@@ -198,7 +198,7 @@ function ActivityItem({
                 {/* Add child button */}
                 <button
                     onClick={() => { onAddChild(activity.id); setExpanded(true); }}
-                    className="size-4 rounded flex items-center justify-center text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                    className="size-4 rounded flex items-center justify-center text-slate-300 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-all"
                     title="Añadir sub-actividad"
                 >
                     <Plus size={10} strokeWidth={2.5} />
@@ -695,7 +695,7 @@ export default function TaskDetailPanel({
                 exit={{ x: width, opacity: 0 }}
                 transition={{ type: 'spring', damping: 32, stiffness: 300 }}
                 style={{ width, minWidth: MIN_WIDTH }}
-                className="relative h-full flex flex-col bg-white dark:bg-[#18191c] border-l border-slate-100 dark:border-white/[0.07] shadow-[-16px_0_48px_rgba(0,0,0,0.08)] dark:shadow-[-16px_0_48px_rgba(0,0,0,0.35)] overflow-hidden"
+                className="relative h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#18191c] border-l border-slate-100 dark:border-white/[0.07] shadow-[-16px_0_48px_rgba(0,0,0,0.08)] dark:shadow-[-16px_0_48px_rgba(0,0,0,0.35)] overflow-hidden"
             >
                 {/* ── RESIZE HANDLE ──────────────────────────────── */}
                 <div
@@ -730,7 +730,7 @@ export default function TaskDetailPanel({
                             <button
                                 onClick={onVerRutaClick}
                                 title="Ver ruta jerárquica"
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all border border-blue-200/50 dark:border-blue-500/20"
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all border border-blue-200/50 dark:border-blue-500/20"
                             >
                                 <GitBranch size={11} />
                                 Ver Ruta
@@ -824,7 +824,7 @@ export default function TaskDetailPanel({
                         }}
                     />
                     {saving && (
-                        <p className="pb-3 text-[10px] font-bold uppercase tracking-wide text-blue-500">
+                        <p className="pb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
                             Guardando cambios...
                         </p>
                     )}
@@ -903,7 +903,7 @@ export default function TaskDetailPanel({
                                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                                 exit={{ opacity: 0, scale: 0.95, y: -4 }}
                                                 transition={{ duration: 0.12 }}
-                                                className="absolute top-full left-0 mt-1.5 z-50 w-56 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-2xl p-3 space-y-2"
+                                                className="absolute top-full left-0 mt-1.5 z-50 w-56 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-2xl p-3 space-y-2"
                                             >
                                                 <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Nueva etiqueta</p>
                                                 <div className="flex gap-1.5">
@@ -922,7 +922,7 @@ export default function TaskDetailPanel({
                                                     <button
                                                         onClick={handleAddLabel}
                                                         disabled={!newLabelInput.trim()}
-                                                        className="px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold hover:bg-blue-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        className="px-2.5 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                                     >
                                                         <Check size={11} strokeWidth={3} />
                                                     </button>
@@ -1000,7 +1000,7 @@ export default function TaskDetailPanel({
                                                 {attachment.file_size ? `${Math.max(1, Math.round(attachment.file_size / 1024))} KB` : 'Archivo adjunto'}
                                             </p>
                                         </div>
-                                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
                                             Abrir
                                         </span>
                                     </a>
@@ -1063,13 +1063,13 @@ export default function TaskDetailPanel({
                                                 handleUpdateSupply(supply, { quantity });
                                             }
                                         }}
-                                        className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                                        className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
                                     />
                                     <select
                                         value={supply.status}
                                         disabled={savingSupplyId === supply.id}
                                         onChange={(event) => handleUpdateSupply(supply, { status: event.target.value })}
-                                        className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                                        className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
                                     >
                                         <option value="pending">Pendiente</option>
                                         <option value="ready">Listo</option>
@@ -1085,19 +1085,19 @@ export default function TaskDetailPanel({
                                 onChange={(event) => setNewSupplyName(event.target.value)}
                                 onKeyDown={(event) => event.key === 'Enter' && handleAddSupply()}
                                 placeholder="Nuevo insumo"
-                                className="min-w-0 rounded-md border border-slate-200 bg-white px-3 py-2 text-[12px] font-medium outline-none dark:border-white/10 dark:bg-white/5"
+                                className="min-w-0 rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-[12px] font-medium outline-none dark:border-white/10 dark:bg-white/5"
                             />
                             <input
                                 type="number"
                                 min={1}
                                 value={newSupplyQuantity}
                                 onChange={(event) => setNewSupplyQuantity(Math.max(1, Number(event.target.value) || 1))}
-                                className="rounded-md border border-slate-200 bg-white px-2 py-2 text-[12px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                                className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-2 text-[12px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
                             />
                             <button
                                 onClick={handleAddSupply}
                                 disabled={creatingSupply || !newSupplyName.trim()}
-                                className="rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"
+                                className="rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"
                             >
                                 {creatingSupply ? '...' : 'Agregar'}
                             </button>
@@ -1143,7 +1143,7 @@ export default function TaskDetailPanel({
                             {newActivityTitle.trim() && (
                                 <button
                                     onClick={handleAddTopLevel}
-                                    className="px-2 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-bold hover:bg-blue-700 transition-all"
+                                    className="px-2 py-1 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold hover:bg-[hsl(var(--primary))] transition-all"
                                 >
                                     + Añadir
                                 </button>
@@ -1192,7 +1192,7 @@ export default function TaskDetailPanel({
 
                         {/* Comment input */}
                         <div className="flex items-end gap-2">
-                            <div className="size-6 rounded-full bg-blue-600 flex items-center justify-center font-semibold text-white shrink-0">
+                            <div className="size-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white shrink-0">
                                 T
                             </div>
                             <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07] focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400/40 transition-all">
@@ -1208,7 +1208,7 @@ export default function TaskDetailPanel({
                                     <button
                                         onClick={handleSendComment}
                                         disabled={sendingComment}
-                                        className="text-blue-500 hover:text-blue-700 transition-colors"
+                                        className="text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
                                     >
                                         {sendingComment
                                             ? <Loader2 size={14} className="animate-spin" />
@@ -1221,7 +1221,7 @@ export default function TaskDetailPanel({
 
                         {/* Comment type selector */}
                         <div className="flex items-center gap-2 mt-2 pl-8">
-                            <button className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold text-blue-600 bg-blue-50 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20">
+                            <button className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20">
                                 <MessageSquare size={9} /> Comentario
                                 <ChevronDown size={9} />
                             </button>

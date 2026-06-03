@@ -43,7 +43,7 @@ export default function ProjectsWelcomePage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Welcome', icon: Hash }]}
                 viewType={viewType}
@@ -54,7 +54,7 @@ export default function ProjectsWelcomePage() {
                 {viewType === 'list' && (
                     <div className="max-w-3xl space-y-3">
                         {quickStarts.map((item) => (
-                            <article key={item.title} className="rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+                            <article key={item.title} className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
                                 <h3 className="font-bold text-slate-900 dark:text-white">{item.title}</h3>
                                 <p className="mt-1 text-sm text-slate-500">{item.description}</p>
                             </article>
@@ -62,7 +62,7 @@ export default function ProjectsWelcomePage() {
                     </div>
                 )}
                 {viewType === 'table' && (
-                    <div className="max-w-4xl overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                    <div className="max-w-4xl overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-bold uppercase tracking-wide text-slate-400">
                                 <tr><th className="px-3 py-2">Recurso</th><th className="px-3 py-2">Descripción</th></tr>
@@ -80,13 +80,13 @@ export default function ProjectsWelcomePage() {
                 )}
                 {viewType === 'grid' && (
                 <section className="max-w-3xl rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-transparent">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">Workspace de proyectos</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">Workspace de proyectos</p>
                     <h1 className="text-lg font-bold text-slate-800 dark:text-white mt-2 tracking-tight">Bienvenido al espacio de coordinacion</h1>
                     <p className="text-slate-500 mt-2">Desde aqui puedes crear proyectos, mover tareas en Kanban y monitorear respuestas del equipo en un solo flujo.</p>
                     <button
                         onClick={handleCreate}
                         disabled={creating}
-                        className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-bold uppercase tracking-wide disabled:opacity-60"
+                        className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide disabled:opacity-60"
                     >
                         <Plus size={16} /> {creating ? 'Creando...' : 'Crear primer proyecto'}
                     </button>

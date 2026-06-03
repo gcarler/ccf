@@ -142,7 +142,7 @@ function CommandCenterHome({ user, token }: any) {
                             Este es tu centro de comando. Resumen de actividad reciente.
                         </p>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold uppercase tracking-wide">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-[10px] font-bold uppercase tracking-wide">
                         <Sparkles size={12} /> MESH OS v2.1
                     </div>
                 </motion.header>
@@ -150,10 +150,10 @@ function CommandCenterHome({ user, token }: any) {
                 {/* 2. Key Metrics */}
                 <motion.section variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     {loading ? (
-                        [1,2,3,4].map(i => <div key={i} className="h-28 bg-white dark:bg-[#252528] rounded-lg border border-slate-100 dark:border-white/5 animate-pulse" />)
+                        [1,2,3,4].map(i => <div key={i} className="h-28 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-100 dark:border-white/5 animate-pulse" />)
                     ) : (
                         (stats?.cards || []).map((card: any, idx: number) => (
-                            <div key={idx} className="group relative bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]">
+                            <div key={idx} className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]">
                                 <div className={clsx(
                                     "absolute top-0 left-0 right-0 h-[3px]",
                                     idx === 0 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" :
@@ -194,19 +194,19 @@ function CommandCenterHome({ user, token }: any) {
                         <motion.div variants={itemVariants} className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                                    <Target size={16} className="text-blue-500" /> Foco de Hoy
+                                    <Target size={16} className="text-[hsl(var(--primary))]" /> Foco de Hoy
                                 </h2>
-                                <Link href="/plataforma/projects" className="text-[10px] font-bold uppercase tracking-wide text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
+                                <Link href="/plataforma/projects" className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-1">
                                     Ver Agenda <ChevronRight size={12} />
                                 </Link>
                             </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {loading ? (
-                                    [1,2].map(i => <div key={i} className="h-32 bg-white dark:bg-[#252528] rounded-lg border border-slate-100 dark:border-white/5 animate-pulse" />)
+                                    [1,2].map(i => <div key={i} className="h-32 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-100 dark:border-white/5 animate-pulse" />)
                                 ) : tasks.length > 0 ? (
                                     tasks.map((task) => (
-                                        <div key={task.id} className="p-3 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-lg shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all group cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.99]">
+                                        <div key={task.id} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-lg shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all group cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.99]">
                                             <div className="space-y-2.5">
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded flex text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 max-w-fit">
@@ -218,7 +218,7 @@ function CommandCenterHome({ user, token }: any) {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-200 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                                                <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-200 leading-snug group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
                                                     {task.title}
                                                 </h3>
                                             </div>
@@ -227,14 +227,14 @@ function CommandCenterHome({ user, token }: any) {
                                                     <Clock size={12} />
                                                     <span className="text-[11px] font-medium">Vence pronto</span>
                                                 </div>
-                                                <div className="size-6 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 flex items-center justify-center font-semibold">
+                                                <div className="size-6 rounded bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] flex items-center justify-center font-semibold">
                                                     {user?.username ? user.username.substring(0, 2).toUpperCase() : 'ME'}
                                                 </div>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="col-span-full py-1.5 text-center bg-white dark:bg-[#252528] border border-dashed border-slate-200 dark:border-white/10 rounded-lg">
+                                    <div className="col-span-full py-1.5 text-center bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-dashed border-slate-200 dark:border-white/10 rounded-lg">
                                         <div className="size-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center mx-auto mb-3">
                                             <CheckCircle2 size={16} className="text-emerald-500" />
                                         </div>
@@ -246,10 +246,10 @@ function CommandCenterHome({ user, token }: any) {
                         </motion.div>
 
                         {/* Academy Progress Banner */}
-                        <motion.div variants={itemVariants} className="p-4 rounded-lg bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 shadow-sm relative overflow-hidden flex flex-col sm:flex-row items-center gap-3">
-                            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />
+                        <motion.div variants={itemVariants} className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 shadow-sm relative overflow-hidden flex flex-col sm:flex-row items-center gap-3">
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-[hsl(var(--primary))]" />
                             <div className="flex-1 space-y-3">
-                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 rounded text-[10px] font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 rounded text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
                                     <BookOpen size={12} /> Academia
                                 </div>
                                 <div>
@@ -262,13 +262,13 @@ function CommandCenterHome({ user, token }: any) {
                                             initial={{ width: 0 }}
                                             animate={{ width: '65%' }}
                                             transition={{ duration: 1, delay: 0.2 }}
-                                            className="h-full bg-blue-500 rounded-full"
+                                            className="h-full bg-[hsl(var(--primary))] rounded-full"
                                         />
                                     </div>
                                     <span className="font-semibold text-slate-600 dark:text-slate-300">65%</span>
                                 </div>
                             </div>
-                            <Link href="/plataforma/academy" className="shrink-0 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-bold hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition-all flex items-center gap-2">
+                            <Link href="/plataforma/academy" className="shrink-0 px-4 py-2 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg text-[11px] font-bold hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition-all flex items-center gap-2">
                                 Continuar <PlayCircle size={14} />
                             </Link>
                         </motion.div>
@@ -278,7 +278,7 @@ function CommandCenterHome({ user, token }: any) {
                     <div className="space-y-3">
 
                         {/* MESH AI Widget */}
-                        <motion.div variants={itemVariants} className="p-4 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-lg shadow-sm">
+                        <motion.div variants={itemVariants} className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-lg shadow-sm">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                     <Bot size={16} className="text-violet-500" /> MESH AI
@@ -309,13 +309,13 @@ function CommandCenterHome({ user, token }: any) {
                         </motion.div>
 
                         {/* Recent Activity */}
-                        <motion.div variants={itemVariants} className="p-4 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-lg shadow-sm">
+                        <motion.div variants={itemVariants} className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-lg shadow-sm">
                             <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
                                 <Activity size={12} /> Actividad Reciente
                             </h3>
                             <div className="space-y-4">
                                 <ActivityItem icon={CheckCircle2} title="Lección Finalizada" desc="Completaste 'La Naturaleza de Dios'." time="2h" color="text-emerald-500" bg="bg-emerald-50 dark:bg-emerald-500/10" />
-                                <ActivityItem icon={MessageSquare} title="Comentario en Tarea" desc="El líder respondió a tu reporte." time="5h" color="text-blue-500" bg="bg-blue-50 dark:bg-blue-500/10" />
+                                <ActivityItem icon={MessageSquare} title="Comentario en Tarea" desc="El líder respondió a tu reporte." time="5h" color="text-[hsl(var(--primary))]" bg="bg-blue-50 dark:bg-blue-500/10" />
                                 <ActivityItem icon={Star} title="Nueva Insignia" desc="Alcanzaste 1,000 XP." time="Ayer" color="text-amber-500" bg="bg-amber-50 dark:bg-amber-500/10" />
                             </div>
                         </motion.div>

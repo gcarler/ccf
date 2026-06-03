@@ -19,13 +19,13 @@ const LABEL = "block text-[10px] font-semibold uppercase tracking-wide text-slat
 
 function StatCard({ label, value, tone }: { label: string; value: string; tone: string }) {
     const colors: Record<string, string> = {
-        blue: "text-blue-600 bg-blue-50 dark:bg-blue-500/10",
+        blue: "text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10",
         emerald: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10",
         amber: "text-amber-600 bg-amber-50 dark:bg-amber-500/10",
         violet: "text-violet-600 bg-violet-50 dark:bg-violet-500/10",
     };
     return (
-        <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
             <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-2">{label}</p>
             <p className={clsx("text-lg font-bold tracking-tight", colors[tone]?.split(" ")[0])}>{value}</p>
         </div>
@@ -166,7 +166,7 @@ export default function DonationsManagementPage() {
                 rightActions={
                     <button
                         onClick={openCreate}
-                        className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
                     >
                         <Plus size={14} /> Registrar Manual
                     </button>
@@ -187,19 +187,19 @@ export default function DonationsManagementPage() {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                             <input value={query} onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Buscar por donante o tipo..."
-                                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md py-2.5 pl-11 pr-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all" />
+                                className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md py-2.5 pl-11 pr-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all" />
                         </div>
                         <div className="flex items-center gap-2">
-                            <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 transition-all">
+                            <button className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 transition-all">
                                 <Filter size={13} /> Filtrar
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 transition-all">
+                            <button className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 transition-all">
                                 <Download size={13} /> Exportar
                             </button>
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 border-b border-slate-100 dark:border-white/5">
@@ -235,7 +235,7 @@ export default function DonationsManagementPage() {
                                                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                                                             className="flex items-center gap-1">
                                                             <button onClick={() => openEdit(d)}
-                                                                className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
+                                                                className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-[hsl(var(--primary))] hover:text-white transition-all">
                                                                 <PencilLine size={14} />
                                                             </button>
                                                             {deleteId === d.id ? (
@@ -279,7 +279,7 @@ export default function DonationsManagementPage() {
                             initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: "100%", opacity: 0 }}
                             transition={{ type: "spring", damping: 26, stiffness: 260 }}
-                            className="fixed top-0 right-0 h-screen z-[100] w-full max-w-md bg-white dark:bg-[#15171c] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
+                            className="fixed top-0 right-0 h-screen z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
                             <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5 flex-shrink-0">
                                 <div>
                                     <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
@@ -330,7 +330,7 @@ export default function DonationsManagementPage() {
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 py-3 rounded-md bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-50 transition-all">
+                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all">
                                     {saving ? "Guardando..." : "Guardar"}
                                 </button>
                             </div>

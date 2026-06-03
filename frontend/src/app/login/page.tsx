@@ -128,7 +128,7 @@ export default function LoginPage() {
                     <p className="text-ccf-blue-light text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
                         Comunidad <br /> Cristiana
                     </p>
-                    <div className="w-16 h-1.5 bg-white mt-3 rounded-full" />
+                    <div className="w-16 h-1.5 bg-[hsl(var(--bg-primary))] mt-3 rounded-full" />
                 </motion.div>
 
                 {/* Bottom motto */}
@@ -159,7 +159,7 @@ export default function LoginPage() {
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="flex-1 bg-white flex flex-col justify-center px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen"
+                className="flex-1 bg-[hsl(var(--bg-primary))] flex flex-col justify-center px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen"
             >
                 <div className="w-full max-w-[420px] mx-auto">
 
@@ -173,7 +173,7 @@ export default function LoginPage() {
                         <h2 className="text-[clamp(2rem,4vw,2.75rem)] font-extrabold text-ccf-blue-dark tracking-[-0.02em] leading-none m-0 mb-4">
                             Bienvenido
                         </h2>
-                        <p className="text-gray-400 font-bold uppercase tracking-wide text-[10px] m-0">
+                        <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px] m-0">
                             Acceso a la plataforma digital
                         </p>
                     </motion.div>
@@ -231,7 +231,7 @@ export default function LoginPage() {
 
                         {/* Email */}
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3 ml-2">
+                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
                                 Email
                             </label>
                             <input
@@ -247,7 +247,7 @@ export default function LoginPage() {
                         {/* Password */}
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
                             <div className="flex justify-between items-center mb-3 mx-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
                                     Contraseña
                                 </label>
                                 <Link href="/auth/forgot" className="text-[9px] text-ccf-blue-light font-bold uppercase tracking-wider no-underline">
@@ -267,7 +267,7 @@ export default function LoginPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300 bg-transparent border-none cursor-pointer p-0 flex"
+                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] bg-transparent border-none cursor-pointer p-0 flex"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -316,7 +316,7 @@ export default function LoginPage() {
                             <div className="w-full border-t-2 border-gray-100" />
                         </div>
                         <div className="relative flex justify-center">
-                            <span className="bg-white px-4 text-[9px] font-bold uppercase tracking-wide text-gray-300">
+                            <span className="bg-[hsl(var(--bg-primary))] px-4 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 O bien
                             </span>
                         </div>
@@ -347,7 +347,7 @@ export default function LoginPage() {
                         transition={{ delay: 0.95 }}
                         className="text-center"
                     >
-                        <p className="text-gray-400 text-[10px] font-bold tracking-wider uppercase mb-2.5">
+                        <p className="text-[hsl(var(--text-secondary))] text-[10px] font-bold tracking-wider uppercase mb-2.5">
                             ¿No tienes una cuenta ministerial?
                         </p>
                         <Link

@@ -72,8 +72,8 @@ function AlertBadge({ rules, metrics }: { rules: AlertRule[]; metrics: Record<st
 
     return (
         <div className="flex items-center gap-1.5 px-2 py-1 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-md">
-            <AlertTriangle size={12} className="text-red-500" />
-            <span className="text-[10px] font-bold text-red-600 dark:text-red-400">
+            <AlertTriangle size={12} className="text-[hsl(var(--destructive))]" />
+            <span className="text-[10px] font-bold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
                 {activeAlerts.length} alerta{activeAlerts.length > 1 ? 's' : ''}
             </span>
         </div>
@@ -109,7 +109,7 @@ function AlertConfigModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white dark:bg-[#1a1b1e] rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-lg p-5 space-y-4"
+            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-lg p-5 space-y-4"
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
@@ -138,7 +138,7 @@ function AlertConfigModal({
                                 </span>
                             </div>
                             <button onClick={() => setLocalRules(prev => prev.filter(x => x.id !== r.id))}
-                                className="text-[9px] text-red-400 hover:text-red-500 font-bold">Eliminar</button>
+                                className="text-[9px] text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] font-bold">Eliminar</button>
                         </div>
                     ))}
                 </div>
@@ -273,7 +273,7 @@ export default function EmbeddedDashboard({
     });
 
     const containerClass = compact
-        ? 'bg-white dark:bg-[#16171a] border border-slate-200 dark:border-white/5 rounded-lg p-3'
+        ? 'bg-[hsl(var(--bg-primary))] dark:bg-[#16171a] border border-slate-200 dark:border-white/5 rounded-lg p-3'
         : 'space-y-4';
 
     // ── Render ──
@@ -332,7 +332,7 @@ export default function EmbeddedDashboard({
                             <label className="text-[9px] font-semibold uppercase text-slate-400">{f.label}:</label>
                             <select value={filters[f.key] ?? f.default ?? ''}
                                 onChange={e => setFilters(prev => ({...prev, [f.key]: e.target.value}))}
-                                className="text-[10px] font-medium bg-white dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-md px-1.5 py-0.5 text-slate-700 dark:text-slate-200">
+                                className="text-[10px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-md px-1.5 py-0.5 text-slate-700 dark:text-slate-200">
                                 {(f.options || []).map((o: any) => (
                                     <option key={o.value} value={o.value}>{o.label}</option>
                                 ))}
@@ -464,7 +464,7 @@ data.ausentes_detalle.slice(0, 10).map((r: TableRow) => (
                                             <span className="font-medium text-slate-600 w-28 truncate">{r.columns.persona || ''}</span>
                                             <span className="text-slate-400 w-20 truncate">{r.columns.grupo || ''}</span>
                                             <span className="text-slate-400 w-16">{r.columns.fecha || ''}</span>
-                                            <span className="text-red-400 ml-auto text-[9px]">{r.columns.excusa || ''}</span>
+                                            <span className="text-[hsl(var(--destructive))] ml-auto text-[9px]">{r.columns.excusa || ''}</span>
                                         </div>
                                     ))}
                                 </div>

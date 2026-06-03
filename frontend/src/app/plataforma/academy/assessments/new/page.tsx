@@ -107,7 +107,7 @@ export default function NewAssessmentPage() {
                         </button>
                         <button
                             onClick={handleSave}
-                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2"
+                            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2"
                         >
                             <Save size={14} /> Guardar Evaluacion
                         </button>
@@ -158,7 +158,7 @@ export default function NewAssessmentPage() {
                             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Preguntas ({questions.length})</h3>
                             <button
                                 onClick={addQuestion}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all"
+                                className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all"
                             >
                                 <Plus size={14} /> Agregar Pregunta
                             </button>
@@ -191,7 +191,7 @@ export default function NewAssessmentPage() {
                                                         className={clsx(
                                                             "px-3 py-1.5 rounded-lg text-[9px] font-semibold uppercase tracking-wide transition-all",
                                                             q.type === t
-                                                                ? "bg-white dark:bg-white/10 text-blue-600 shadow-sm"
+                                                                ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-sm"
                                                                 : "text-slate-400 hover:text-slate-600"
                                                         )}
                                                     >
@@ -207,7 +207,7 @@ export default function NewAssessmentPage() {
                                                     type="number"
                                                     value={q.points}
                                                     onChange={(e) => updateQuestion(q.id, { points: Number(e.target.value) })}
-                                                    className="w-10 bg-transparent text-xs font-semibold text-blue-600 outline-none"
+                                                    className="w-10 bg-transparent text-xs font-semibold text-[hsl(var(--primary))] outline-none"
                                                 />
                                             </div>
                                             <button
@@ -242,7 +242,7 @@ export default function NewAssessmentPage() {
                                                                 'size-8 rounded-lg flex items-center justify-center border-2 transition-all shrink-0',
                                                                 q.correct_option === optIndex
                                                                     ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                                                                    : 'border-slate-200 dark:border-white/10 text-transparent bg-white dark:bg-white/5'
+                                                                    : 'border-slate-200 dark:border-white/10 text-transparent bg-[hsl(var(--bg-primary))] dark:bg-white/5'
                                                             )}
                                                         >
                                                             <CheckCircle2 size={16} />
@@ -280,7 +280,7 @@ export default function NewAssessmentPage() {
                                                         onClick={() => {
                                                             updateQuestion(q.id, { options: [...q.options, ''] });
                                                         }}
-                                                        className="text-[10px] font-semibold uppercase tracking-wide text-blue-500 mt-2 hover:underline text-left flex items-center gap-2"
+                                                        className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-2 hover:underline text-left flex items-center gap-2"
                                                     >
                                                         <Plus size={12} /> Agregar opcion
                                                     </button>

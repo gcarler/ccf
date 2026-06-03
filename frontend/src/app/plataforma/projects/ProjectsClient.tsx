@@ -227,7 +227,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:scale-105 ${
                             showCreateForm
                                 ? 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'
-                                : 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                : 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20'
                         }`}
                     >
                         <Plus size={14} />
@@ -238,7 +238,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3">
                 {showCreateForm && (
-                    <div className="bg-white dark:bg-white/5 rounded-lg p-4 border border-slate-200 dark:border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-4 border border-slate-200 dark:border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                         <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Nuevo Proyecto</h3>
                         <input
                             value={newProjectTitle}
@@ -255,7 +255,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                             <button
                                 onClick={handleCreateProject}
                                 disabled={isCreating || !newProjectTitle.trim()}
-                                className="px-3 py-1.5 bg-blue-600 disabled:bg-blue-400 text-white rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all"
+                                className="px-3 py-1.5 bg-[hsl(var(--primary))] disabled:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all"
                             >
                                 {isCreating ? 'Creando...' : 'Crear Proyecto'}
                             </button>
@@ -324,7 +324,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         ) : viewType === 'list' ? (
                             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-4">
                                 {filtered.map((project) => (
-                                    <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}`)} className="w-full rounded-md border border-slate-200 bg-white p-4 text-left transition-all duration-300 hover:border-blue-300 active:scale-[0.99] dark:border-white/10 dark:bg-[#252528] hover:dark:bg-[#2A2B2E]">
+                                    <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}`)} className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-blue-300 active:scale-[0.99] dark:border-white/10 dark:bg-[#252528] hover:dark:bg-[#2A2B2E]">
                                         <div className="flex items-center justify-between gap-4">
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{project.title}</p>
@@ -391,7 +391,7 @@ function ProjectCard({ project, index }: { project: ProjectRecord; index: number
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04, duration: 0.3 }}
             onClick={() => router.push(`/plataforma/projects/${project.id}`)}
-            className="group relative bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]"
+            className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]"
             style={{ '--card-color': color } as React.CSSProperties}
         >
             {/* Color accent bar top */}
@@ -430,8 +430,8 @@ function ProjectCard({ project, index }: { project: ProjectRecord; index: number
                             {completed} completadas
                         </span>
                         {inProgress > 0 && (
-                            <span className="flex items-center gap-1 text-blue-500">
-                                <span className="size-1.5 rounded-full bg-blue-500 inline-block" />
+                            <span className="flex items-center gap-1 text-[hsl(var(--primary))]">
+                                <span className="size-1.5 rounded-full bg-[hsl(var(--primary))] inline-block" />
                                 {inProgress} en curso
                             </span>
                         )}

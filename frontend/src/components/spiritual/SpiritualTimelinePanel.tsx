@@ -19,9 +19,9 @@ interface Milestone {
 const MILESTONE_DEFS: Record<string, { label: string; icon: any; color: string; bg: string; border: string }> = {
     Decision_Fe:       { label: 'Decisión de Fe',        icon: Zap,    color: 'text-amber-600',  bg: 'bg-amber-50 dark:bg-amber-900/20',    border: 'border-amber-200 dark:border-amber-500/20' },
     Bautismo_Aguas:    { label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-cyan-600',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',      border: 'border-cyan-200 dark:border-cyan-500/20'   },
-    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20',  border: 'border-blue-200 dark:border-blue-500/20'},
+    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20',  border: 'border-blue-200 dark:border-blue-500/20'},
     Miembro_Oficial:   { label: 'Membresía Oficial',      icon: Shield, color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-500/20'},
-    Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-blue-600',   bg: 'bg-blue-50 dark:bg-blue-900/20',      border: 'border-blue-200 dark:border-blue-500/20'  },
+    Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20',      border: 'border-blue-200 dark:border-blue-500/20'  },
 };
 
 export default function SpiritualTimelinePanel() {
@@ -40,7 +40,7 @@ export default function SpiritualTimelinePanel() {
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center h-40 gap-3">
-                <Loader2 className="animate-spin text-blue-600" size={24} />
+                <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} />
                 <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Cargando cronograma...</p>
             </div>
         );
@@ -51,7 +51,7 @@ export default function SpiritualTimelinePanel() {
             <div className="relative">
                 {/* Vertical line with glow */}
                 <div className="absolute left-[21px] top-3 bottom-6 w-[2px] bg-slate-200 dark:bg-white/[0.04]">
-                    <div className="absolute inset-0 bg-blue-500 blur-[2px] opacity-20" />
+                    <div className="absolute inset-0 bg-[hsl(var(--primary))] blur-[2px] opacity-20" />
                 </div>
 
                 <div className="space-y-3">
@@ -84,7 +84,7 @@ export default function SpiritualTimelinePanel() {
                                     <Icon size={18} className={clsx('transition-all', def.color)} />
                                 </div>
 
-                                <div className="flex-1 bg-white dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05] rounded-lg p-3 shadow-sm group-hover:shadow-xl group-hover:shadow-blue-500/[0.03] transition-all group-hover:border-blue-500/20">
+                                <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05] rounded-lg p-3 shadow-sm group-hover:shadow-xl group-hover:shadow-blue-500/[0.03] transition-all group-hover:border-blue-500/20">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
                                             <p className="font-semibold text-slate-900 dark:text-white leading-tight uppercase tracking-tight">{def.label}</p>
@@ -94,7 +94,7 @@ export default function SpiritualTimelinePanel() {
                                             <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 opacity-60">
                                                 {new Date(m.event_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                                             </span>
-                                            <Zap size={10} className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <Zap size={10} className="text-[hsl(var(--primary))] opacity-0 group-hover:opacity-100 transition-opacity" />
                                         </div>
                                     </div>
                                 </div>

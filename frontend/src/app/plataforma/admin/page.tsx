@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
           <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden items-center justify-center space-y-3">
               <div className="relative">
                   <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
-                  <Shield className="w-8 h-8 animate-pulse text-blue-600 relative z-10" />
+                  <Shield className="w-8 h-8 animate-pulse text-[hsl(var(--primary))] relative z-10" />
               </div>
               <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Verificando Sistemas...</p>
           </div>
@@ -82,7 +82,7 @@ export default function AdminDashboardPage() {
             breadcrumbs={[{ label: 'Ecosistema', icon: Globe }, { label: 'Gestión Central', icon: Shield }]}
             viewType={viewType} setViewType={setViewType} availableViews={['grid']}
             rightActions={
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-md hover:scale-105 active:scale-95 transition-all">
+                <button className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-md hover:scale-105 active:scale-95 transition-all">
                     Reporte Global <ArrowUpRight size={10} strokeWidth={3} />
                 </button>
             }
@@ -110,7 +110,7 @@ export default function AdminDashboardPage() {
                             <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-lg text-[9px] font-bold uppercase tracking-wide text-blue-100 border border-white/20">
                                 <Globe size={10} /> Tesorería Consolidada <span className="text-white/20">|</span> 2026
                             </div>
-                            <button className="px-3 py-1 bg-white/10 hover:bg-white text-white hover:text-[#001b48] rounded-lg font-bold text-[9px] uppercase tracking-wide transition-all">
+                            <button className="px-3 py-1 bg-white/10 hover:bg-[hsl(var(--bg-primary))] text-white hover:text-[#001b48] rounded-lg font-bold text-[9px] uppercase tracking-wide transition-all">
                                 Desglosar
                             </button>
                         </div>
@@ -128,7 +128,7 @@ export default function AdminDashboardPage() {
                             </div>
                         </div>
                     </div>
-                    <KpiCard title="Miembros" value="1,240" trend="+42 nuevas" icon={Users} color="text-blue-500" />
+                    <KpiCard title="Miembros" value="1,240" trend="+42 nuevas" icon={Users} color="text-[hsl(var(--primary))]" />
                     <KpiCard title="Asistencia" value="85%" trend="Óptimo" icon={Calendar} color="text-emerald-500" />
                 </motion.section>
 
@@ -143,7 +143,7 @@ export default function AdminDashboardPage() {
                             </h2>
                             <div className="flex items-center gap-3">
                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{agentTasks.length} Activos</span>
-                                <button className="p-1.5 hover:bg-white dark:hover:bg-white/5 rounded-lg transition-all text-slate-400 bg-slate-50 dark:bg-black/20"><Filter size={10} /></button>
+                                <button className="p-1.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg transition-all text-slate-400 bg-slate-50 dark:bg-black/20"><Filter size={10} /></button>
                             </div>
                         </motion.div>
 
@@ -158,7 +158,7 @@ export default function AdminDashboardPage() {
                                     index={100}
                                 />
                             )}
-                            <button className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-md flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all font-bold uppercase text-[10px] tracking-wide mt-2 group">
+                            <button className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-md flex items-center justify-center gap-2 text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all font-bold uppercase text-[10px] tracking-wide mt-2 group">
                                 <Plus size={10} className="group-hover:scale-125 transition-transform" /> Iniciar Nueva Operación
                             </button>
                         </motion.div>
@@ -168,7 +168,7 @@ export default function AdminDashboardPage() {
                     <aside className="lg:col-span-4 space-y-3">
 
                         {/* Optimus Neural Widget */}
-                        <motion.div variants={itemVariants} className="p-4 rounded-lg bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
+                        <motion.div variants={itemVariants} className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
                                 <Bot size={10} className="text-sky-600" />
                             </div>
@@ -208,12 +208,12 @@ export default function AdminDashboardPage() {
                         </motion.div>
 
                         {/* Recent Activity Log */}
-                        <motion.div variants={itemVariants} className="space-y-3 bg-white dark:bg-[#15171c] p-4 rounded-lg border border-slate-100 dark:border-white/5 shadow-sm">
+                        <motion.div variants={itemVariants} className="space-y-3 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] p-4 rounded-lg border border-slate-100 dark:border-white/5 shadow-sm">
                             <h3 className="text-[9px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1.5 mb-3">
                                 <History size={10} /> Actividad del Staff
                             </h3>
                             <div className="space-y-3 relative before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-white/5">
-                                <LogItem icon={Zap} title="Migración DB completada" user="Alex L." time="10m" color="text-blue-500" bg="bg-blue-50 dark:bg-blue-500/10" />
+                                <LogItem icon={Zap} title="Migración DB completada" user="Alex L." time="10m" color="text-[hsl(var(--primary))]" bg="bg-blue-50 dark:bg-blue-500/10" />
                                 <LogItem icon={CheckCircle2} title="Aprobación Curso Teología" user="Pedro M." time="1h" color="text-emerald-500" bg="bg-emerald-50 dark:bg-emerald-500/10" />
                                 <LogItem icon={AlertTriangle} title="Fallo en Pasarela Resuelto" user="System" time="3h" color="text-rose-500" bg="bg-rose-50 dark:bg-rose-500/10" />
                             </div>
@@ -230,7 +230,7 @@ export default function AdminDashboardPage() {
             actions={
                 <>
                     <button className="px-3 py-2 text-[10px] font-bold text-slate-500 hover:text-slate-700 transition-colors" onClick={() => setIsDrawerOpen(false)}>Descartar</button>
-                    <button className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-md active:scale-95 transition-all">Ejecutar Acción</button>
+                    <button className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-md active:scale-95 transition-all">Ejecutar Acción</button>
                 </>
             }
         >
@@ -246,7 +246,7 @@ export default function AdminDashboardPage() {
                     </div>
                 </section>
                 <section className="space-y-3">
-                    <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1.5"><FileText size={10} className="text-blue-500"/> Descripción Técnica</h4>
+                    <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1.5"><FileText size={10} className="text-[hsl(var(--primary))]"/> Descripción Técnica</h4>
                     <div className="p-4 bg-slate-50 dark:bg-[#15171c] rounded-md text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium shadow-inner">
                         {selectedTask?.description || selectedTask?.payload || 'Cargando detalles de la operación...'}
                     </div>
@@ -259,7 +259,7 @@ export default function AdminDashboardPage() {
 
 function KpiCard({ title, value, trend, icon: Icon, color }: any) {
     return (
-        <div className="p-4 bg-white dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-slate-100 dark:from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full pointer-events-none" />
             <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={clsx("size-10 rounded-md flex items-center justify-center bg-slate-50 dark:bg-black/20 shadow-inner group-hover:scale-105 transition-transform", color)}>
@@ -286,7 +286,7 @@ function AdminTaskRow({ task, onOpen, index }: any) {
             initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.03, type: 'spring', stiffness: 300, damping: 24 }}
             onClick={() => onOpen(task)}
             className={clsx(
-                "p-2.5 rounded-md bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/40 hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
+                "p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/40 hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
                 task.is_special && "border-l-2 border-l-amber-400"
             )}
         >
@@ -298,13 +298,13 @@ function AdminTaskRow({ task, onOpen, index }: any) {
                     {task.priority === 'high' ? <Shield size={10} strokeWidth={2.5} /> : <CheckSquare size={10} strokeWidth={2.5} />}
                 </div>
                 <div className="min-w-0 pr-2">
-                    <h4 className="text-[12px] font-bold text-slate-800 dark:text-white tracking-tight truncate group-hover:text-blue-600 transition-colors leading-tight">{task.title}</h4>
+                    <h4 className="text-[12px] font-bold text-slate-800 dark:text-white tracking-tight truncate group-hover:text-[hsl(var(--primary))] transition-colors leading-tight">{task.title}</h4>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate font-medium mt-0.5 leading-tight">{task.description || 'Haz clic para intervenir'}</p>
                 </div>
             </div>
             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 rounded-lg">
-                <span className="text-[8px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide hidden sm:inline">Revisar</span>
-                <ChevronRight size={10} className="text-blue-600 dark:text-blue-400" strokeWidth={3} />
+                <span className="text-[8px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide hidden sm:inline">Revisar</span>
+                <ChevronRight size={10} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" strokeWidth={3} />
             </div>
             <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
         </motion.div>

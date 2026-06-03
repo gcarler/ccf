@@ -22,8 +22,8 @@ import { NotificationKind, formatNotificationTime } from '@/lib/notifications';
 type InboxFilter = 'all' | 'unread' | 'mention' | 'task' | 'ai';
 
 const TYPE_CONFIG: Record<NotificationKind, { icon: React.ElementType; color: string; bg: string }> = {
-    mention: { icon: AtSign, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    comment: { icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    mention: { icon: AtSign, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    comment: { icon: MessageSquare, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
     task: { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
     system: { icon: Bell, color: 'text-slate-500', bg: 'bg-slate-100 dark:bg-white/5' },
     ai: { icon: Bot, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
@@ -78,7 +78,7 @@ export default function InboxPage() {
     const unreadCount = notifications.filter((notification) => !notification.read).length;
 
     return (
-        <div className="h-full flex flex-col bg-white dark:bg-[#1E1F21] overflow-hidden font-display">
+        <div className="h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] overflow-hidden font-display">
             <div className="h-8 border-b border-slate-100 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-slate-50/50 dark:bg-[#1E1F21]">
                 <h1 className="text-[11px] font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300 flex items-center gap-2">
                     <Bell size={13} />
@@ -98,7 +98,7 @@ export default function InboxPage() {
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Buscar..."
-                        className="pl-8 pr-3 py-1.5 text-[11px] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 w-48 transition-all"
+                        className="pl-8 pr-3 py-1.5 text-[11px] bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 w-48 transition-all"
                     />
                 </div>
 
@@ -110,7 +110,7 @@ export default function InboxPage() {
                             className={clsx(
                                 'px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors',
                                 filter === item
-                                    ? 'bg-blue-600 text-white'
+                                    ? 'bg-[hsl(var(--primary))] text-white'
                                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
                             )}
                         >
@@ -121,7 +121,7 @@ export default function InboxPage() {
 
                 <button
                     onClick={() => void refresh()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-slate-500 hover:text-[hsl(var(--primary))] dark:text-slate-400 dark:hover:text-[hsl(var(--primary))] transition-colors"
                 >
                     <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
                     Actualizar
@@ -130,7 +130,7 @@ export default function InboxPage() {
                 {unreadCount > 0 && (
                     <button
                         onClick={() => void markAllRead()}
-                        className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-slate-500 hover:text-[hsl(var(--primary))] dark:text-slate-400 dark:hover:text-[hsl(var(--primary))] transition-colors"
                     >
                         <Check size={12} />
                         Marcar todo como leido
@@ -187,7 +187,7 @@ export default function InboxPage() {
                                         onClick={() => void markRead(notification.id)}
                                     >
                                         {!notification.read && (
-                                            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-blue-500" />
+                                            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-[hsl(var(--primary))]" />
                                         )}
 
                                         <div className={clsx('size-9 rounded-md flex items-center justify-center shrink-0 mt-0.5', config.bg)}>

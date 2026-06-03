@@ -149,7 +149,7 @@ function MultiSelectCell({ value, onChange, editing, options }: any) {
               const next = isActive ? values.filter((v: string) => v !== o.value) : [...values, o.value];
               onChange?.(next);
             }}
-            className={clsx("px-2 py-0.5 rounded text-xs font-medium transition-all", isActive ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" : "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400")}
+            className={clsx("px-2 py-0.5 rounded text-xs font-medium transition-all", isActive ? "bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300" : "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400")}
           >
             {o.label}
           </button>
@@ -177,7 +177,7 @@ function CheckboxCell({ value, onChange, editing }: any) {
   return (
     <button
       onClick={() => onChange?.(!value)}
-      className={clsx("w-4 h-4 rounded border transition-all flex items-center justify-center", value ? "bg-blue-500 border-blue-500" : "border-slate-300 dark:border-slate-600")}
+      className={clsx("w-4 h-4 rounded border transition-all flex items-center justify-center", value ? "bg-[hsl(var(--primary))] border-blue-500" : "border-slate-300 dark:border-slate-600")}
     >
       {value && <span className="text-white text-xs">✓</span>}
     </button>
@@ -204,14 +204,14 @@ function PhoneCell({ value, onChange, editing }: any) {
 }
 
 function EmailCell({ value, onChange, editing }: any) {
-  if (!editing) return value ? <a href={`mailto:${value}`} className="text-blue-500 hover:underline truncate">{value}</a> : <span className="text-slate-300 dark:text-slate-600">Empty</span>;
+  if (!editing) return value ? <a href={`mailto:${value}`} className="text-[hsl(var(--primary))] hover:underline truncate">{value}</a> : <span className="text-slate-300 dark:text-slate-600">Empty</span>;
   return (
     <input autoFocus type="email" defaultValue={value || ""} onBlur={(e) => onChange?.(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") onChange?.(e.currentTarget.value); }} className="w-full bg-transparent outline-none text-sm" />
   );
 }
 
 function URLCell({ value, onChange, editing }: any) {
-  if (!editing) return value ? <a href={value} target="_blank" rel="noopener" className="text-blue-500 hover:underline truncate">{value}</a> : <span className="text-slate-300 dark:text-slate-600">Empty</span>;
+  if (!editing) return value ? <a href={value} target="_blank" rel="noopener" className="text-[hsl(var(--primary))] hover:underline truncate">{value}</a> : <span className="text-slate-300 dark:text-slate-600">Empty</span>;
   return (
     <input autoFocus type="url" defaultValue={value || ""} onBlur={(e) => onChange?.(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") onChange?.(e.currentTarget.value); }} className="w-full bg-transparent outline-none text-sm" />
   );
@@ -219,7 +219,7 @@ function URLCell({ value, onChange, editing }: any) {
 
 function ProgressCell({ value, onChange, editing }: any) {
   const pct = Math.min(100, Math.max(0, Number(value) || 0));
-  const color = pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500";
+  const color = pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]";
   if (!editing) return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
@@ -493,7 +493,7 @@ export default function AirTable<T extends Record<string, any>>({
 
   // ── Render ──
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-[#1a1b1e] rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
       {/* ── Toolbar ── */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-black/20">
         <div className="relative flex-1 max-w-sm">
@@ -502,7 +502,7 @@ export default function AirTable<T extends Record<string, any>>({
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             placeholder="Buscar en toda la tabla..."
-            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1 pl-9 pr-3 text-xs outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1 pl-9 pr-3 text-xs outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
@@ -516,7 +516,7 @@ export default function AirTable<T extends Record<string, any>>({
         <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
 
         {enableGrouping && (
-          <button onClick={() => setGrouping(prev => prev.length ? [] : [table.getAllColumns()[2]?.id || ""])} className={clsx("px-2 py-1 rounded text-xs font-medium", grouping.length ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500")}>
+          <button onClick={() => setGrouping(prev => prev.length ? [] : [table.getAllColumns()[2]?.id || ""])} className={clsx("px-2 py-1 rounded text-xs font-medium", grouping.length ? "bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500")}>
             Agrupar
           </button>
         )}
@@ -526,13 +526,13 @@ export default function AirTable<T extends Record<string, any>>({
         </button>
 
         {onAddRow && (
-          <button onClick={() => { const newRow = onAddRow(); }} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-blue-500 text-white hover:bg-blue-600">
+          <button onClick={() => { const newRow = onAddRow(); }} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]">
             <Plus size={12} /> Fila
           </button>
         )}
 
         {selectedCount > 0 && onDeleteRows && (
-          <button onClick={() => { onDeleteRows(Object.keys(selectedRows).filter(k => selectedRows[k])); setSelectedRows({}); }} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-red-500 text-white hover:bg-red-600">
+          <button onClick={() => { onDeleteRows(Object.keys(selectedRows).filter(k => selectedRows[k])); setSelectedRows({}); }} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-[hsl(var(--destructive))] text-white hover:bg-[hsl(var(--destructive))]">
             <Trash2 size={12} /> Eliminar ({selectedCount})
           </button>
         )}
@@ -543,7 +543,7 @@ export default function AirTable<T extends Record<string, any>>({
           <Download size={12} /> CSV
         </button>
 
-        <button onClick={() => setIsFocused(!isFocused)} className={clsx("p-1.5 rounded", isFocused ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500")} title="Navegación por teclado">
+        <button onClick={() => setIsFocused(!isFocused)} className={clsx("p-1.5 rounded", isFocused ? "bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500")} title="Navegación por teclado">
           <Keyboard size={14} />
         </button>
 
@@ -560,7 +560,7 @@ export default function AirTable<T extends Record<string, any>>({
       {/* ── Column Config Popover ── */}
       <AnimatePresence>
         {showColumnConfig && (
-          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="absolute right-4 top-14 z-50 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl p-3 w-56">
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="absolute right-4 top-14 z-50 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl p-3 w-56">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Columnas</span>
               <button onClick={() => setShowColumnConfig(false)}><X size={12} className="text-slate-400" /></button>
@@ -624,7 +624,7 @@ export default function AirTable<T extends Record<string, any>>({
                     return (
                       <td
                         key={cell.id}
-                        className={clsx("px-2 py-1 text-sm", isFrozen && "sticky left-0 z-[5] bg-white dark:bg-[#1a1b1e] shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]")}
+                        className={clsx("px-2 py-1 text-sm", isFrozen && "sticky left-0 z-[5] bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]")}
                         style={{ width: cell.column.getSize(), minWidth: cell.column.getSize(), ...(isFrozen ? { left: `${frozenWidth}px` } : {}) }}
                         onClick={() => { if (cell.column.id !== "__select") setEditingCell({ rowId: row.id, colId: cell.column.id }); }}
                       >

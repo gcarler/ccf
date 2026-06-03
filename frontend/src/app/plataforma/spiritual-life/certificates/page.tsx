@@ -78,7 +78,7 @@ export default function DigitalCertificatesPage() {
                                     initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.07 }}
-                                    className="group bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-3 hover:border-cyan-300 dark:hover:border-cyan-500/30 hover:shadow-lg transition-all relative overflow-hidden"
+                                    className="group bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-3 hover:border-cyan-300 dark:hover:border-cyan-500/30 hover:shadow-lg transition-all relative overflow-hidden"
                                 >
                                     {/* Decorative watermark */}
                                     <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-all duration-700">
@@ -94,7 +94,7 @@ export default function DigitalCertificatesPage() {
                                                 "text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full border",
                                                 isSacramento
                                                     ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 border-cyan-200 dark:border-cyan-500/20"
-                                                    : "bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-200 dark:border-blue-500/20"
+                                                    : "bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] border-blue-200 dark:border-blue-500/20"
                                             )}>
                                                 {cert.certificate_type ?? 'Academia'}
                                             </span>
@@ -114,7 +114,7 @@ export default function DigitalCertificatesPage() {
                                                 {cert.certificate_code}
                                             </code>
                                             <div className="flex items-center gap-2">
-                                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg active:scale-95 transition-all shadow-sm shadow-blue-500/20">
+                                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg active:scale-95 transition-all shadow-sm shadow-blue-500/20">
                                                     <Download size={12} /> PDF
                                                 </button>
                                                 <button className="p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 rounded-lg transition-all">
@@ -130,7 +130,7 @@ export default function DigitalCertificatesPage() {
                 )}
 
                 {/* Verification Banner */}
-                <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-3 flex flex-col md:flex-row items-center gap-4 shadow-sm">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-3 flex flex-col md:flex-row items-center gap-4 shadow-sm">
                     <div className="size-10 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 shrink-0">
                         <ShieldCheck size={20} />
                     </div>

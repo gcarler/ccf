@@ -24,7 +24,7 @@ export default function DashboardEmbed({
     const displayLabel = label || moduleLabels[module] || module;
 
     return (
-        <div className="bg-white dark:bg-[#16171a] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#16171a] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden">
             <button
                 onClick={() => setOpen(!open)}
                 className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"

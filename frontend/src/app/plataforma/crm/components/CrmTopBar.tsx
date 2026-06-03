@@ -11,7 +11,7 @@ interface CrmTopBarProps {
 
 export default function CrmTopBar({ title, view, onViewChange }: CrmTopBarProps) {
     return (
-        <header className="h-[48px] border-b border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] flex items-center justify-between px-4 sticky top-0 z-40">
+        <header className="h-[48px] border-b border-slate-200 dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-[#111418] flex items-center justify-between px-4 sticky top-0 z-40">
             {/* Left: Breadcrumbs & View Switcher */}
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-[12px] font-medium text-slate-500">
@@ -52,7 +52,7 @@ export default function CrmTopBar({ title, view, onViewChange }: CrmTopBarProps)
                         placeholder="Buscar... Ctrl K"
                         className="w-full bg-slate-100/50 dark:bg-white/5 border border-transparent focus:border-cu-purple/30 rounded-lg pl-9 pr-4 py-1.5 text-xs transition-all outline-none placeholder:text-slate-400"
                     />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-[10px] text-slate-400 font-bold shadow-sm">
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-[10px] text-slate-400 font-bold shadow-sm">
                         /
                     </div>
                 </div>

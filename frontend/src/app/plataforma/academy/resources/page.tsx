@@ -78,7 +78,7 @@ export default function ResourcesLibrary() {
                 watchers={['Equipo Recursos', 'Optimus Brain']}
                 primaryAction={{ label: showFavorites ? 'Ver todos' : 'Favoritos', icon: Star, onClick: () => setShowFavorites((prev) => !prev) }}
             />
-            <div className="relative group mb-3 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4">
+            <div className="relative group mb-3 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <Search className="text-slate-500 group-focus-within:text-primary" size={20} />
                 </div>
@@ -140,7 +140,7 @@ export default function ResourcesLibrary() {
                 </section>
             )}
 
-            <section className="py-2 flex flex-col gap-3 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4">
+            <section className="py-2 flex flex-col gap-3 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4">
                  <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">{filteredResources.length} recursos encontrados</h2>
                  {filteredResources.map((resource) => (
                      <ResourceRow key={resource.id} resource={resource} isFavorite={favorites.includes(resource.id)} onToggleFavorite={toggleFavorite} />
@@ -170,13 +170,13 @@ function ResourceRow({ resource, isFavorite, onToggleFavorite }: { resource: Res
             <div className="flex items-center gap-3">
                 <button
                     onClick={() => onToggleFavorite(resource.id)}
-                    className={`size-8 rounded-full border ${isFavorite ? 'border-amber-400 text-amber-400 bg-amber-50' : 'border-slate-200 dark:border-white/10 text-slate-400 bg-white dark:bg-white/10'} hover:scale-105 transition-transform`}
+                    className={`size-8 rounded-full border ${isFavorite ? 'border-amber-400 text-amber-400 bg-amber-50' : 'border-slate-200 dark:border-white/10 text-slate-400 bg-[hsl(var(--bg-primary))] dark:bg-white/10'} hover:scale-105 transition-transform`}
                 >
                     <Star size={18} fill={isFavorite ? 'currentColor' : 'none'} />
                 </button>
                 <a
                     href={resource.href}
-                    className="shrink-0 size-9 rounded-full bg-white dark:bg-white/10 flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:border-primary/40 transition-colors text-slate-400 hover:text-white"
+                    className="shrink-0 size-9 rounded-full bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:border-primary/40 transition-colors text-slate-400 hover:text-white"
                 >
                     <Download size={20} />
                 </a>

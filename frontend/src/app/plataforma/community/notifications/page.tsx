@@ -19,7 +19,7 @@ const TYPE_ICON: Record<NotificationKind, React.ReactNode> = {
 
 const TYPE_COLOR: Record<NotificationKind, string> = {
     mention: 'text-indigo-500 bg-indigo-500/10',
-    comment: 'text-blue-500 bg-blue-500/10',
+    comment: 'text-[hsl(var(--primary))] bg-blue-500/10',
     task: 'text-emerald-500 bg-emerald-500/10',
     system: 'text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]',
     ai: 'text-violet-500 bg-violet-500/10',

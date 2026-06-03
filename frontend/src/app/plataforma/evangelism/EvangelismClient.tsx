@@ -146,7 +146,7 @@ export default function EvangelismClient() {
                     <div className="pb-16 flex-1">
                         {/* ── TABLE VIEW ─────────────────────────────── */}
                         {viewType === 'table' && (
-                            <div className="overflow-x-auto border border-slate-200 dark:border-white/[0.06] rounded-lg bg-white dark:bg-[#1e1f21]">
+                            <div className="overflow-x-auto border border-slate-200 dark:border-white/[0.06] rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/10">
@@ -173,7 +173,7 @@ export default function EvangelismClient() {
                                                     {strategy.codigo ? strategy.codigo : `#${strategy.id}`}
                                                 </td>
                                                 <td className="px-3 py-1.5">
-                                                    <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                                    <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">
                                                         {strategy.name}
                                                     </div>
                                                     {strategy.description && (
@@ -246,11 +246,11 @@ export default function EvangelismClient() {
                                                         animate={{ opacity: 1, scale: 1 }}
                                                         transition={{ duration: 0.2 }}
                                                         onClick={() => handleSelectStrategy(strategy)}
-                                                        className="group relative bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99] border-t-4"
+                                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99] border-t-4"
                                                         style={{ borderTopColor: statusColors[strategy.status] }}
                                                     >
                                                         <div className="flex items-start justify-between gap-4">
-                                                            <h4 className="text-[13px] font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                                            <h4 className="text-[13px] font-bold text-slate-900 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">
                                                                 {strategy.name}
                                                             </h4>
                                                             <span className="font-semibold text-slate-400 shrink-0">
@@ -301,7 +301,7 @@ export default function EvangelismClient() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.03 }}
                                         onClick={() => handleSelectStrategy(strategy)}
-                                        className="group bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer flex items-center justify-between gap-3"
+                                        className="group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer flex items-center justify-between gap-3"
                                     >
                                         <div className="flex items-start gap-4 flex-1 min-w-0">
                                             <div 
@@ -312,7 +312,7 @@ export default function EvangelismClient() {
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-3">
-                                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">
                                                         {strategy.name}
                                                     </h3>
                                                     <span className="font-semibold bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded">

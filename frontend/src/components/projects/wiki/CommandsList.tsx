@@ -46,7 +46,7 @@ export const CommandsList = forwardRef((props: any, ref) => {
     }));
 
     return (
-        <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl overflow-hidden p-1.5 min-w-[240px] animate-in fade-in zoom-in-95 duration-100 font-display">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl overflow-hidden p-1.5 min-w-[240px] animate-in fade-in zoom-in-95 duration-100 font-display">
             <div className="px-2 py-1.5 mb-1">
                 <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Comandos Rápidos</span>
             </div>
@@ -58,7 +58,7 @@ export const CommandsList = forwardRef((props: any, ref) => {
                         className={clsx(
                             "w-full flex items-center gap-3 px-2 py-2 rounded-md transition-all text-left",
                             index === selectedIndex
-                                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                                ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
                                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
                         )}
                     >

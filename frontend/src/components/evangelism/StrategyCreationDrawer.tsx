@@ -151,7 +151,7 @@ export default function StrategyCreationDrawer({
                     <button
                         onClick={handleSubmit(onSubmit)}
                         disabled={isSubmitting || !watch('name').trim()}
-                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
+                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
                     >
                         {isSubmitting ? (
                             <>
@@ -186,7 +186,7 @@ export default function StrategyCreationDrawer({
                                 onClick={() => setValue('typology', t.id)}
                                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-bold transition-all flex-1 justify-center ${
                                     typology === t.id
-                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
                                         : 'bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
                                 }`}
                             >
@@ -211,7 +211,7 @@ export default function StrategyCreationDrawer({
                                     onClick={() => setValue('recurrence', r)}
                                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex-1 justify-center ${
                                         watch('recurrence') === r
-                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-blue-200 dark:border-blue-800'
                                             : 'bg-slate-50 dark:bg-white/5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
                                     }`}
                                 >
@@ -261,7 +261,7 @@ export default function StrategyCreationDrawer({
                                 <button
                                     type="button"
                                     onClick={() => append({ name: '', type: 'preparacion', start_date: '', end_date: '' })}
-                                    className="text-[11px] font-bold text-blue-500 hover:text-blue-600"
+                                    className="text-[11px] font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
                                 >
                                     + Agregar Fase
                                 </button>
@@ -290,7 +290,7 @@ export default function StrategyCreationDrawer({
                                     <button
                                         type="button"
                                         onClick={() => remove(i)}
-                                        className="p-1.5 text-slate-400 hover:text-red-500 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        className="p-1.5 text-slate-400 hover:text-[hsl(var(--destructive))] rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                     >
                                         <X size={14} />
                                     </button>
@@ -327,7 +327,7 @@ export default function StrategyCreationDrawer({
                                 onClick={() => setValue('strategyType', opt)}
                                 className={`px-3 py-2 rounded-lg text-[11px] font-bold transition-all text-left ${
                                     watch('strategyType') === opt
-                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
                                         : 'bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
                                 }`}
                             >

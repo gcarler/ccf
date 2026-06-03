@@ -200,7 +200,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
                   value={mediaSearch}
                   onChange={(event) => setMediaSearch(event.target.value)}
                   placeholder="Buscar archivo..."
-                  className="mb-3 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20"
+                  className="mb-3 w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20"
                 />
                 {compatibleMedia.length === 0 ? (
                   <p className="rounded-md bg-slate-50 px-3 py-3 text-xs font-medium text-slate-500">
@@ -216,7 +216,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
                         className={`flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-all ${
                           activeMediaUrl === item.url
                             ? "border-primary bg-primary/10 text-primary"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-primary/40"
+                            : "border-slate-200 bg-[hsl(var(--bg-primary))] text-slate-600 hover:border-primary/40"
                         }`}
                       >
                         {mediaType === "image" ? <ImageIcon size={14} /> : mediaType === "video" ? <PlayCircle size={14} /> : <Headphones size={14} />}
@@ -233,7 +233,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary py-1.5 font-bold text-white transition-colors hover:bg-blue-600 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary py-1.5 font-bold text-white transition-colors hover:bg-[hsl(var(--primary))] disabled:opacity-50"
         >
           {isSubmitting ? "Enviando..." : <><Send size={18} /> Publicar testimonio</>}
         </button>

@@ -111,9 +111,9 @@ export default function LeadDetailPage() {
                             <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Historial de Interacciones</h3>
                             <div className="space-y-3">
                                 {history.map(item => (
-                                    <div key={item.id} className="p-4 rounded-lg bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                    <div key={item.id} className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                         <div className="flex items-center gap-4">
-                                            <div className="size-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                            <div className="size-8 rounded-full bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                                 <Clock size={14} />
                                             </div>
                                             <div>
@@ -139,7 +139,7 @@ export default function LeadDetailPage() {
                                 
                                 <div className="h-px bg-slate-100 dark:bg-white/5" />
                                 
-                                <button className="w-full py-1.5 bg-blue-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                                <button className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
                                     Mover a Siguiente Etapa
                                 </button>
                             </div>

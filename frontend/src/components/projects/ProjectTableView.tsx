@@ -10,7 +10,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
     completed:   { label: 'Completado',  cls: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
-    in_progress: { label: 'En progreso', cls: 'bg-blue-50 border-blue-100 text-blue-600' },
+    in_progress: { label: 'En progreso', cls: 'bg-blue-50 border-blue-100 text-[hsl(var(--primary))]' },
     blocked:     { label: 'Bloqueado',   cls: 'bg-rose-50 border-rose-100 text-rose-600' },
     todo:        { label: 'Pendiente',   cls: 'bg-amber-50 border-amber-100 text-amber-700' },
 };
@@ -19,7 +19,7 @@ const PRIORITY_MAP: Record<string, { label: string; cls: string }> = {
     urgent: { label: 'Urgente', cls: 'text-rose-600' },
     high:   { label: 'Alta',    cls: 'text-orange-500' },
     medium: { label: 'Media',   cls: 'text-amber-500' },
-    normal: { label: 'Normal',  cls: 'text-blue-500' },
+    normal: { label: 'Normal',  cls: 'text-[hsl(var(--primary))]' },
     low:    { label: 'Baja',    cls: 'text-slate-400' },
 };
 

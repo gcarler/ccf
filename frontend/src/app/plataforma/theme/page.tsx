@@ -42,7 +42,7 @@ export default function ThemePage() {
             </header>
 
             <main className="mx-auto max-w-4xl space-y-3 px-3 py-1.5">
-                <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-[#1a1d27]">
+                <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/5 dark:bg-[#1a1d27]">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Modo actual</p>
@@ -50,13 +50,13 @@ export default function ThemePage() {
                                 {theme === "night" ? "Modo noche" : "Modo dia"}
                             </p>
                         </div>
-                        <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300">
                             <SunMoon size={12} /> Personalizacion activa
                         </span>
                     </div>
                 </section>
 
-                <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/5 dark:bg-[#1a1d27]">
+                <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/5 dark:bg-[#1a1d27]">
                     <PaletteSelector />
                 </section>
             </main>

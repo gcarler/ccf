@@ -95,7 +95,7 @@ export default function AdminInventoryPage() {
     })), [filteredAssets]);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <style jsx global>{`
                 .aura-industrial {
                     position: relative;
@@ -153,7 +153,7 @@ export default function AdminInventoryPage() {
                 rightActions={
                     <div className="flex items-center gap-2">
                         <button className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-[1.25rem] text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 transition-all"><QrCode size={14} /> Escanear QR</button>
-                        <button className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-[1.25rem] text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all"><Plus size={14} /> Nuevo Activo</button>
+                        <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-[1.25rem] text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all"><Plus size={14} /> Nuevo Activo</button>
                     </div>
                 }
             />
@@ -183,7 +183,7 @@ export default function AdminInventoryPage() {
                     </AnimatePresence>
 
                     {/* Industrial Asset List */}
-                    <div className="bg-white dark:bg-[#1e1f21] rounded-lg border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm">
                         {loading ? (
                             <div className="p-4 space-y-4">
                                 {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
@@ -211,12 +211,12 @@ export default function AdminInventoryPage() {
                                             >
                                                 <td className="px-4 py-2">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner">
+                                                        <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-500 shadow-inner">
                                                             <Box size={24} />
                                                         </div>
                                                         <div>
                                                             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-none mb-1">{asset.name}</div>
-                                                            <div className="font-semibold text-blue-500 uppercase tracking-wide">ID: {asset.serial_number || 'INTERNO-00'+asset.id}</div>
+                                                            <div className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide">ID: {asset.serial_number || 'INTERNO-00'+asset.id}</div>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -244,7 +244,7 @@ export default function AdminInventoryPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-2 text-right">
-                                                    <button className="p-2.5 bg-slate-50 dark:bg-white/5 text-slate-400 rounded-md group-hover:bg-blue-50 group-hover:text-blue-600 transition-all transform group-hover:translate-x-1 shadow-sm">
+                                                    <button className="p-2.5 bg-slate-50 dark:bg-white/5 text-slate-400 rounded-md group-hover:bg-blue-50 group-hover:text-[hsl(var(--primary))] transition-all transform group-hover:translate-x-1 shadow-sm">
                                                         <ChevronRight size={18} />
                                                     </button>
                                                 </td>
@@ -269,7 +269,7 @@ export default function AdminInventoryPage() {
                             <div className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2 xl:grid-cols-3">
                                 {filteredAssets.map((asset) => (
                                     <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/[0.03]">
-                                        <Box className="mb-4 text-blue-500" size={24} />
+                                        <Box className="mb-4 text-[hsl(var(--primary))]" size={24} />
                                         <p className="text-sm font-semibold text-slate-900 dark:text-white">{asset.name}</p>
                                         <p className="mt-1 text-xs font-semibold text-slate-400">{asset.serial_number || `INTERNO-${asset.id}`}</p>
                                     </button>
@@ -285,7 +285,7 @@ export default function AdminInventoryPage() {
                                         </div>
                                         <div className="space-y-2">
                                             {column.items.map((asset) => (
-                                                <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="w-full rounded-md border border-slate-200 bg-white p-3 text-left dark:border-white/10 dark:bg-white/5">
+                                                <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 text-left dark:border-white/10 dark:bg-white/5">
                                                     <p className="text-xs font-semibold text-slate-900 dark:text-white">{asset.name}</p>
                                                     <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{asset.category || 'Activo'}</p>
                                                 </button>
@@ -310,7 +310,7 @@ export default function AdminInventoryPage() {
                 isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
                 title={selectedAsset?.name || 'Ficha Técnica'}
                 subtitle={`ACTIVO REF-${selectedAsset?.id || '000'}`}
-                actions={<><button className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-blue-600 hover:bg-blue-50 rounded-md transition-all">Editar</button><button className="px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl">Programar Revisión</button></>}
+                actions={<><button className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-blue-50 rounded-md transition-all">Editar</button><button className="px-3 py-2 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl">Programar Revisión</button></>}
             >
                 <div className="space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
                     {/* Status Shimmer Card */}
@@ -337,7 +337,7 @@ export default function AdminInventoryPage() {
                     {/* Technical Specs Stacked Glass */}
                     <div className="space-y-3">
                         <h4 className="font-semibold text-slate-400 uppercase tracking-wide px-2 flex items-center gap-3">
-                            <Cog size={16} className="text-blue-500" /> Especificaciones de Fábrica
+                            <Cog size={16} className="text-[hsl(var(--primary))]" /> Especificaciones de Fábrica
                         </h4>
                         <div className="grid grid-cols-2 gap-4">
                             <SpecItem label="Marca / Fabricante" value={selectedAsset?.brand || 'No especificado'} icon={Zap} />
@@ -351,15 +351,15 @@ export default function AdminInventoryPage() {
                     <div className="space-y-3 pt-6 border-t border-slate-100 dark:border-white/5">
                         <div className="flex items-center justify-between px-2">
                             <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                                <History size={16} className="text-blue-500" /> Registro de Mantenimiento
+                                <History size={16} className="text-[hsl(var(--primary))]" /> Registro de Mantenimiento
                             </h4>
-                            <button className="text-[10px] font-semibold uppercase text-blue-600 hover:underline">Ver todo</button>
+                            <button className="text-[10px] font-semibold uppercase text-[hsl(var(--primary))] hover:underline">Ver todo</button>
                         </div>
                         <div className="space-y-4">
                             {[1, 2].map(i => (
-                                <div key={i} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 flex items-center justify-between group/log hover:bg-white hover:shadow-sm transition-all">
+                                <div key={i} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 flex items-center justify-between group/log hover:bg-[hsl(var(--bg-primary))] hover:shadow-sm transition-all">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-10 rounded-md bg-white dark:bg-white/10 flex items-center justify-center text-slate-400 border border-slate-100 dark:border-white/10 shadow-sm"><Wrench size={18} /></div>
+                                        <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-slate-400 border border-slate-100 dark:border-white/10 shadow-sm"><Wrench size={18} /></div>
                                         <div>
                                             <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-tight">Revisión Preventiva {i}</p>
                                             <p className="text-[10px] font-bold text-slate-400">12 de Feb, 2026</p>
@@ -379,7 +379,7 @@ export default function AdminInventoryPage() {
 function InventoryStat({ title, value, icon: Icon, color = "text-slate-800", auraColor }: any) {
     return (
         <div 
-            className="aura-industrial p-4 rounded-lg bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="aura-industrial p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-700"><Icon size={56} /></div>
@@ -399,8 +399,8 @@ function InventoryStat({ title, value, icon: Icon, color = "text-slate-800", aur
 
 function SpecItem({ label, value, icon: Icon }: any) {
     return (
-        <div className="p-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg transition-all hover:bg-white hover:shadow-sm group/spec">
-            <div className="flex items-center gap-2 mb-2"><Icon size={14} className="text-slate-400 group-hover/spec:text-blue-500 transition-colors" /><span className="font-semibold text-slate-400 uppercase tracking-wide">{label}</span></div>
+        <div className="p-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg transition-all hover:bg-[hsl(var(--bg-primary))] hover:shadow-sm group/spec">
+            <div className="flex items-center gap-2 mb-2"><Icon size={14} className="text-slate-400 group-hover/spec:text-[hsl(var(--primary))] transition-colors" /><span className="font-semibold text-slate-400 uppercase tracking-wide">{label}</span></div>
             <p className="font-semibold text-slate-800 dark:text-white uppercase tracking-tight">{value}</p>
         </div>
     );

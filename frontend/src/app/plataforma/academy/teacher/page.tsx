@@ -136,7 +136,7 @@ export default function TeacherWorkspace() {
                             <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-1" />
                             <button 
                                 onClick={loadData}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors text-slate-400 hover:text-blue-500"
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors text-slate-400 hover:text-[hsl(var(--primary))]"
                             >
                                 <Loader2 size={16} className={clsx(loading && 'animate-spin')} />
                             </button>
@@ -163,7 +163,7 @@ export default function TeacherWorkspace() {
                     )}
 
                     {viewType === 'wiki' && (
-                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-3">
+                        <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">Guía de Evaluación y Rúbricas</h3>
                                 <DSBadge tone="blue" label="Privado Docentes" />
@@ -193,7 +193,7 @@ export default function TeacherWorkspace() {
                                                 className={clsx(
                                                     "px-4 py-2 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
                                                     viewMode === m 
-                                                        ? "bg-white dark:bg-white/10 text-blue-600 shadow-lg shadow-blue-500/5" 
+                                                        ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-blue-500/5" 
                                                         : "text-slate-400 hover:text-slate-600"
                                                 )}
                                             >
@@ -217,23 +217,23 @@ export default function TeacherWorkspace() {
                                             </div>
                                         )}
                                         {courses.map(course => (
-                                            <div key={course.id} className="p-3 rounded-lg border-2 border-slate-50 dark:border-white/5 bg-white dark:bg-white/5 group hover:border-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                                            <div key={course.id} className="p-3 rounded-lg border-2 border-slate-50 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 group hover:border-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/5">
                                                 <div className="flex justify-between items-start mb-3">
-                                                    <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-blue-600">{course.code}</span>
+                                                    <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{course.code}</span>
                                                     <DSBadge tone="emerald" label={course.modality} />
                                                 </div>
                                                 <h4 className="text-xl font-bold text-slate-800 dark:text-white mb-4 tracking-tight leading-none">{course.title}</h4>
                                                 <div className="flex items-center gap-4 mb-3">
                                                     <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-wide">
-                                                        <Users size={14} className="text-blue-500" /> {course.students_count || 0} Alumnos
+                                                        <Users size={14} className="text-[hsl(var(--primary))]" /> {course.students_count || 0} Alumnos
                                                     </div>
                                                     <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-wide">
-                                                        <BookOpen size={14} className="text-blue-500" /> {course.lessons_count || 0} Lecciones
+                                                        <BookOpen size={14} className="text-[hsl(var(--primary))]" /> {course.lessons_count || 0} Lecciones
                                                     </div>
                                                 </div>
                                                 <button 
                                                     onClick={() => router.push(`/academy/courses/${course.id}/manage`)}
-                                                    className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-lg"
+                                                    className="w-full py-3 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-lg"
                                                 >
                                                     Gestionar Programa
                                                 </button>
@@ -274,7 +274,7 @@ export default function TeacherWorkspace() {
                                                     <a
                                                         href={submission.file_url}
                                                         target="_blank"
-                                                        className="inline-flex items-center gap-2 px-3 py-2.5 rounded-md border-2 border-slate-100 dark:border-white/5 text-[10px] font-semibold uppercase tracking-wide hover:bg-white dark:hover:bg-white/5 transition-all active:scale-95"
+                                                        className="inline-flex items-center gap-2 px-3 py-2.5 rounded-md border-2 border-slate-100 dark:border-white/5 text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all active:scale-95"
                                                         rel="noreferrer"
                                                     >
                                                         <FileText size={14} /> Abrir

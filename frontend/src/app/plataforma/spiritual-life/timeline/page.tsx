@@ -21,9 +21,9 @@ interface Milestone {
 const MILESTONE_DEFS: Record<string, { label: string; icon: any; color: string; bg: string; border: string }> = {
     Decision_Fe:       { label: 'Decisión de Fe',        icon: Zap,    color: 'text-amber-600',  bg: 'bg-amber-50 dark:bg-amber-900/20',    border: 'border-amber-200 dark:border-amber-500/20' },
     Bautismo_Aguas:    { label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-cyan-600',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',      border: 'border-cyan-200 dark:border-cyan-500/20'   },
-    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20',  border: 'border-blue-200 dark:border-blue-500/20'},
+    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20',  border: 'border-blue-200 dark:border-blue-500/20'},
     Miembro_Oficial:   { label: 'Membresía Oficial',      icon: Shield, color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-500/20'},
-    Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-blue-600',   bg: 'bg-blue-50 dark:bg-blue-900/20',      border: 'border-blue-200 dark:border-blue-500/20'  },
+    Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20',      border: 'border-blue-200 dark:border-blue-500/20'  },
 };
 
 export default function SpiritualTimelinePage() {
@@ -48,9 +48,9 @@ export default function SpiritualTimelinePage() {
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-                                <Calendar size={14} className="text-blue-600" />
+                                <Calendar size={14} className="text-[hsl(var(--primary))]" />
                             </div>
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">Línea de Tiempo</span>
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Línea de Tiempo</span>
                         </div>
                         <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
                             Mi Ruta de Victoria
@@ -59,7 +59,7 @@ export default function SpiritualTimelinePage() {
                             Cada hito de tu caminar con Cristo, registrado y celebrado.
                         </p>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                         <Plus size={13} /> Registrar Hito
                     </button>
                 </div>
@@ -107,7 +107,7 @@ export default function SpiritualTimelinePage() {
                                         </div>
 
                                         {/* Card */}
-                                        <div className="flex-1 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-4 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/15 transition-all">
+                                        <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-4 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/15 transition-all">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
                                                     <p className="text-[13px] font-bold text-slate-800 dark:text-white">{def.label}</p>
@@ -131,7 +131,7 @@ export default function SpiritualTimelinePage() {
                 {!loading && (
                     <section>
                         <h2 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Próximos Hitos</h2>
-                        <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-white/5">
+                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-white/5">
                             {Object.entries(MILESTONE_DEFS)
                                 .filter(([key]) => !milestones.some(m => m.type === key))
                                 .map(([key, def]) => {

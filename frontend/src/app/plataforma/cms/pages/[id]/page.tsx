@@ -78,7 +78,7 @@ export default function CmsPageDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full items-center justify-center gap-3 bg-white dark:bg-[#0d0e11]">
+      <div className="flex flex-col h-full items-center justify-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[#0d0e11]">
         <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center animate-pulse">
           <Layout size={28} strokeWidth={1} className="text-slate-400" />
         </div>
@@ -93,7 +93,7 @@ export default function CmsPageDetailPage() {
   const status = STATUS_STYLES[page?.status ?? "draft"] ?? STATUS_STYLES["draft"];
 
   return (
-    <div className="flex flex-col h-full items-center justify-center bg-white dark:bg-[#0d0e11] p-4">
+    <div className="flex flex-col h-full items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-[#0d0e11] p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -157,7 +157,7 @@ export default function CmsPageDetailPage() {
                   cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4"
                   strokeDasharray={`${2 * Math.PI * 24}`}
                   strokeDashoffset={`${2 * Math.PI * 24 * (countdown / 3)}`}
-                  className="text-blue-600 transition-all duration-1000"
+                  className="text-[hsl(var(--primary))] transition-all duration-1000"
                   strokeLinecap="round"
                 />
               </svg>
@@ -170,7 +170,7 @@ export default function CmsPageDetailPage() {
           {/* CTA button */}
           <button
             onClick={handleGoNow}
-            className="w-full flex items-center justify-center gap-3 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+            className="w-full flex items-center justify-center gap-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
           >
             <PenTool size={16} />
             Abrir en el Builder ahora

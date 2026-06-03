@@ -77,7 +77,7 @@ export default function TalentSearchPage() {
                                     </div>
                                 </div>
                             </div>
-                            <button className="p-3 bg-white/5 group-hover:bg-amber-500 group-hover:text-black rounded-lg transition-all">
+                            <button className="p-3 bg-white/5 group-hover:bg-amber-500 group-hover:text-[hsl(var(--text-primary))] rounded-lg transition-all">
                                 <ChevronRight size={20} />
                             </button>
                         </div>

@@ -68,7 +68,7 @@ export default function UserSelect({
                 {selected ? (
                     <>
                         <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                            <UserIcon size={12} className="text-blue-600 dark:text-blue-400" />
+                            <UserIcon size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" />
                         </div>
                         <div className="min-w-0 flex-1">
                             <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
@@ -87,7 +87,7 @@ export default function UserSelect({
             </button>
 
             {open && (
-                <div className="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E1F21] shadow-xl max-h-72 overflow-hidden">
+                <div className="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-xl max-h-72 overflow-hidden">
                     <div className="p-2 border-b border-slate-100 dark:border-white/5">
                         <div className="flex items-center gap-2 rounded-md bg-slate-100 dark:bg-white/5 px-2 py-1.5">
                             <Search size={12} className="text-slate-400 shrink-0" />
@@ -113,7 +113,7 @@ export default function UserSelect({
                                 <UserIcon size={12} className="text-slate-400" />
                             </div>
                             Sin asignar
-                            {value === null && <Check size={12} className="ml-auto text-blue-500" />}
+                            {value === null && <Check size={12} className="ml-auto text-[hsl(var(--primary))]" />}
                         </button>
                         {filtered.map((user) => (
                             <button
@@ -127,7 +127,7 @@ export default function UserSelect({
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left"
                             >
                                 <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                                    <UserIcon size={12} className="text-blue-600 dark:text-blue-400" />
+                                    <UserIcon size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
@@ -136,7 +136,7 @@ export default function UserSelect({
                                     <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
                                 </div>
                                 {user.id === value && (
-                                    <Check size={12} className="ml-auto shrink-0 text-blue-500" />
+                                    <Check size={12} className="ml-auto shrink-0 text-[hsl(var(--primary))]" />
                                 )}
                             </button>
                         ))}

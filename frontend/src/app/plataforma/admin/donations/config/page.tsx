@@ -151,7 +151,7 @@ export default function DonationConfig() {
     const renderList = () => (
         <div className="space-y-4">
             {categories.map((cat) => (
-                <div key={cat.id} className="config-aura p-3 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between gap-3" style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}>
+                <div key={cat.id} className="config-aura p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between gap-3" style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}>
                     <div>
                         <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{cat.name}</h3>
                         <p className="mt-1 text-[10px] text-slate-400 font-bold uppercase tracking-wide">{cat.description || 'Fondo ministerial'}</p>
@@ -163,7 +163,7 @@ export default function DonationConfig() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/5">
             <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
@@ -195,7 +195,7 @@ export default function DonationConfig() {
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((cat) => (
-                            <div key={cat.id} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4">
+                            <div key={cat.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4">
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{cat.name}</p>
                                 <p className="mt-2 text-[10px] font-bold text-slate-400">{cat.description || 'Fondo ministerial'}</p>
                             </div>
@@ -209,7 +209,7 @@ export default function DonationConfig() {
 
     return (
 
-        <div className="flex flex-col h-full bg-white dark:bg-[#0a0f16] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] overflow-hidden animate-fade-in font-display">
 
             <style jsx global>{`
 
@@ -258,7 +258,7 @@ export default function DonationConfig() {
                 availableViews={DONATION_CONFIG_VIEWS}
                 rightActions={
 
-                    <button className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
 
                         <Zap size={16} /> Aplicar Protocolo
 
@@ -288,7 +288,7 @@ export default function DonationConfig() {
 
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
 
-                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
+                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
 
                         >
 
@@ -298,7 +298,7 @@ export default function DonationConfig() {
 
                         <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
 
-                            Estructura de <br/> <span className="text-blue-600 italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Recaudación Pro.</span>
+                            Estructura de <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Recaudación Pro.</span>
 
                         </h1>
 
@@ -355,7 +355,7 @@ export default function DonationConfig() {
 
                                 "relative w-20 h-10 rounded-full transition-all duration-500 z-10 shrink-0",
 
-                                titheEnabled ? 'bg-blue-600 shadow-[0_0_30px_rgba(37,99,235,0.6)]' : 'bg-slate-800 border border-white/10'
+                                titheEnabled ? 'bg-[hsl(var(--primary))] shadow-[0_0_30px_rgba(37,99,235,0.6)]' : 'bg-slate-800 border border-white/10'
 
                             )}
 
@@ -365,7 +365,7 @@ export default function DonationConfig() {
 
                                 animate={{ x: titheEnabled ? 44 : 4 }}
 
-                                className="absolute top-1.5 size-7 bg-white rounded-full shadow-2xl flex items-center justify-center text-blue-600"
+                                className="absolute top-1.5 size-7 bg-[hsl(var(--bg-primary))] rounded-full shadow-2xl flex items-center justify-center text-[hsl(var(--primary))]"
 
                             >
 
@@ -387,7 +387,7 @@ export default function DonationConfig() {
 
                             <div className="flex items-center gap-3 px-4">
 
-                                <CreditCard size={18} className="text-blue-600" />
+                                <CreditCard size={18} className="text-[hsl(var(--primary))]" />
 
                                 <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 leading-none">Canales Autorizados</h2>
 
@@ -415,13 +415,13 @@ export default function DonationConfig() {
 
                                 <div className="flex items-center gap-3">
 
-                                    <Layout size={18} className="text-blue-600" />
+                                    <Layout size={18} className="text-[hsl(var(--primary))]" />
 
                                     <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Fondos y Destinos</h2>
 
                                 </div>
 
-                                <button className="font-semibold text-blue-600 uppercase tracking-wide flex items-center gap-2 hover:scale-105 transition-transform"><Plus size={16} /> Crear Fondo</button>
+                                <button className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide flex items-center gap-2 hover:scale-105 transition-transform"><Plus size={16} /> Crear Fondo</button>
 
                             </div>
 
@@ -443,7 +443,7 @@ export default function DonationConfig() {
 
                                             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
 
-                                            className="config-aura group p-3 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-2xl transition-all duration-500"
+                                            className="config-aura group p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-2xl transition-all duration-500"
 
                                             style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}
 
@@ -457,7 +457,7 @@ export default function DonationConfig() {
 
                                                     cat.color === 'amber' ? 'text-amber-500 bg-amber-500' :
 
-                                                    cat.color === 'rose' ? 'text-rose-500 bg-rose-500' : 'text-blue-500 bg-blue-500'
+                                                    cat.color === 'rose' ? 'text-rose-500 bg-rose-500' : 'text-[hsl(var(--primary))] bg-[hsl(var(--primary))]'
 
                                                 )} />
 
@@ -473,7 +473,7 @@ export default function DonationConfig() {
 
                                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
 
-                                                <button className="p-3 bg-slate-50 dark:bg-white/10 rounded-md text-slate-400 hover:text-blue-600 transition-all shadow-sm"><Edit3 size={16} /></button>
+                                                <button className="p-3 bg-slate-50 dark:bg-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-all shadow-sm"><Edit3 size={16} /></button>
 
                                             </div>
 
@@ -520,13 +520,13 @@ export default function DonationConfig() {
 
                             <div className="space-y-3 text-center lg:text-left">
 
-                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-slate-500 shadow-sm">
+                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-slate-500 shadow-sm">
 
                                     <Zap size={14} className="text-amber-500" fill="currentColor" /> Automatización de Flujo
 
                                 </div>
 
-                                <h3 className="text-xl lg:text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Certificación de <br/> <span className="text-blue-600 italic">Generosidad.</span></h3>
+                                <h3 className="text-xl lg:text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Certificación de <br/> <span className="text-[hsl(var(--primary))] italic">Generosidad.</span></h3>
 
                                 <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-md leading-relaxed">
 
@@ -538,9 +538,9 @@ export default function DonationConfig() {
 
                             <div className="flex flex-col sm:flex-row gap-4 shrink-0 w-full lg:w-auto">
 
-                                <button className="flex-1 px-4 py-2 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center gap-3"><Palette size={18} /> Estilo Documental</button>
+                                <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center gap-3"><Palette size={18} /> Estilo Documental</button>
 
-                                <button className="flex-1 px-4 py-2 bg-slate-900 dark:bg-blue-600 text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-blue-500/20"><Mail size={18} /> Validar Email</button>
+                                <button className="flex-1 px-4 py-2 bg-slate-900 dark:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-blue-500/20"><Mail size={18} /> Validar Email</button>
 
                             </div>
 
@@ -565,7 +565,7 @@ function PaymentMethodItem({ icon: Icon, label, active }: any) {
 
     return (
 
-        <div className="flex items-center justify-between p-4 group hover:bg-white dark:hover:bg-white/5 transition-all duration-500 cursor-pointer">
+        <div className="flex items-center justify-between p-4 group hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all duration-500 cursor-pointer">
 
             <div className="flex items-center gap-3">
 
@@ -573,7 +573,7 @@ function PaymentMethodItem({ icon: Icon, label, active }: any) {
 
                     "size-7 rounded-lg flex items-center justify-center transition-all shadow-inner",
 
-                    active ? "bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]" : "bg-white dark:bg-white/5 text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-white/10"
+                    active ? "bg-[hsl(var(--primary))] text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]" : "bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-white/10"
 
                 )}>
 

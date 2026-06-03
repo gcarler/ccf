@@ -63,7 +63,7 @@ export default function AcademyTeachersPage() {
                 rightActions={
                     <button
                         onClick={() => router.push("/academy/teacher")}
-                        className="rounded-lg bg-blue-600 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20"
+                        className="rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20"
                     >
                         Panel docente
                     </button>
@@ -77,10 +77,10 @@ export default function AcademyTeachersPage() {
                     <Metric icon={Users} label="Estudiantes activos" value={teachers.reduce((sum, row) => sum + (row.active_students ?? 0), 0)} />
                 </section>
 
-                <section className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
+                <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] shadow-sm dark:border-white/10 dark:bg-white/5">
                     <header className="flex flex-col gap-4 border-b border-slate-100 p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Equipo academico</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Equipo academico</p>
                             <h1 className="text-lg font-bold text-slate-900 dark:text-white">Facilitadores</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
@@ -98,11 +98,11 @@ export default function AcademyTeachersPage() {
                         {filtered.map((teacher) => (
                             <article
                                 key={teacher.id}
-                                className="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 p-3 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+                                className="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 p-3 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
                                 onClick={() => router.push(`/academy/teacher?teacher=${teacher.id}`)}
                             >
                                 <div className="mb-3 flex items-center gap-3">
-                                    <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600 text-sm font-semibold text-white">
+                                    <div className="flex size-8 items-center justify-center rounded-lg bg-[hsl(var(--primary))] text-sm font-semibold text-white">
                                         {(teacher.full_name || teacher.name || "F").slice(0, 2).toUpperCase()}
                                     </div>
                                     <div>
@@ -136,8 +136,8 @@ export default function AcademyTeachersPage() {
 
 function Metric({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
     return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10">
+        <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10">
                 <Icon size={20} />
             </div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>

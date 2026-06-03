@@ -7,13 +7,11 @@ from sqlalchemy.orm import Session
 from backend import models
 
 
-def _course_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
-    courses = (
-        db.query(models.Course)
-        .order_by(models.Course.created_at.desc())
-        .limit(limit)
-        .all()
-    )
+def _course_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    q = db.query(models.Course).order_by(models.Course.created_at.desc())
+    if sede_id is not None:
+        q = q.filter(models.Course.sede_id == sede_id)
+    courses = q.limit(limit).all()
     nodes: List[Dict[str, Any]] = []
     for course in courses:
         nodes.append(
@@ -32,13 +30,11 @@ def _course_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
     return nodes
 
 
-def _person_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
-    persons = (
-        db.query(models.Persona)
-        .order_by(models.Persona.created_at.desc())
-        .limit(limit)
-        .all()
-    )
+def _person_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    q = db.query(models.Persona).order_by(models.Persona.created_at.desc())
+    if sede_id is not None:
+        q = q.filter(models.Persona.sede_id == sede_id)
+    persons = q.limit(limit).all()
     nodes: List[Dict[str, Any]] = []
     for person in persons:
         nodes.append(
@@ -56,8 +52,11 @@ def _person_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
     return nodes
 
 
-def _asset_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
-    assets = db.query(models.AssetItem).limit(limit).all()
+def _asset_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    q = db.query(models.AssetItem)
+    if sede_id is not None:
+        q = q.filter(models.AssetItem.sede_id == sede_id)
+    assets = q.limit(limit).all()
     nodes: List[Dict[str, Any]] = []
     for asset in assets:
         nodes.append(
@@ -75,8 +74,11 @@ def _asset_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
     return nodes
 
 
-def _fund_nodes(db: Session) -> List[Dict[str, Any]]:
-    funds = db.query(models.Fund).limit(10).all()
+def _fund_nodes(db: Session, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    q = db.query(models.Fund)
+    if sede_id is not None:
+        q = q.filter(models.Fund.sede_id == sede_id)
+    funds = q.limit(10).all()
     nodes: List[Dict[str, Any]] = []
     for fund in funds:
         is_public = cast(bool, getattr(fund, "is_public", False))
@@ -95,8 +97,11 @@ def _fund_nodes(db: Session) -> List[Dict[str, Any]]:
     return nodes
 
 
-def _family_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
-    families = db.query(models.Family).limit(limit).all()
+def _family_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    q = db.query(models.Family)
+    if sede_id is not None:
+        q = q.join(models.Persona, models.Persona.family_id == models.Family.id).filter(models.Persona.sede_id == sede_id)
+    families = q.limit(limit).all()
     return [
         {
             "id": f"family-{family.family_id}",
@@ -108,13 +113,11 @@ def _family_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
     ]
 
 
-def _project_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
-    projects = (
-        db.query(models.Project)
-        .order_by(models.Project.created_at.desc())
-        .limit(limit)
-        .all()
-    )
+def _project_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    q = db.query(models.Project).order_by(models.Project.created_at.desc())
+    if sede_id is not None:
+        q = q.filter(models.Project.sede_id == sede_id)
+    projects = q.limit(limit).all()
     nodes: List[Dict[str, Any]] = []
     for project in projects:
         nodes.append(
@@ -133,7 +136,8 @@ def _project_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
 
 
 def build_graph_snapshot(
-    db: Session, limit: int = 50, types: Optional[Iterable[str]] = None
+    db: Session, limit: int = 50, types: Optional[Iterable[str]] = None,
+    sede_id: Optional[int] = None,
 ) -> Dict[str, Any]:
     nodes: List[Dict[str, Any]] = []
     edges: List[Dict[str, Any]] = []
@@ -142,12 +146,12 @@ def build_graph_snapshot(
     type_filter = {t.strip() for t in types or [] if t.strip()}
 
     resolvers: Dict[str, Any] = {
-        "course": lambda: _course_nodes(db, limit // 2),
-        "person": lambda: _person_nodes(db, limit),
-        "asset": lambda: _asset_nodes(db, limit // 2),
-        "fund": lambda: _fund_nodes(db),
-        "family": lambda: _family_nodes(db, limit // 3),
-        "project": lambda: _project_nodes(db, limit // 2),
+        "course": lambda: _course_nodes(db, limit // 2, sede_id=sede_id),
+        "person": lambda: _person_nodes(db, limit, sede_id=sede_id),
+        "asset": lambda: _asset_nodes(db, limit // 2, sede_id=sede_id),
+        "fund": lambda: _fund_nodes(db, sede_id=sede_id),
+        "family": lambda: _family_nodes(db, limit // 3, sede_id=sede_id),
+        "project": lambda: _project_nodes(db, limit // 2, sede_id=sede_id),
     }
 
     for node_type, resolver in resolvers.items():

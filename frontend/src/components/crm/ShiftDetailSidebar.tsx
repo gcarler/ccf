@@ -31,7 +31,7 @@ const iconMap: Record<string, any> = {
 };
 
 const colorMap: Record<string, string> = {
-    'Alabanza': 'bg-blue-600',
+    'Alabanza': 'bg-[hsl(var(--primary))]',
     'Generación G': 'bg-sky-600',
     'Hospitalidad': 'bg-amber-500',
     'Oración': 'bg-indigo-600',
@@ -46,10 +46,10 @@ interface ShiftDetailSidebarProps {
 
 export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSidebarProps) {
     const Icon = iconMap[shift.team_name] || Heart;
-    const bgColor = colorMap[shift.team_name] || 'bg-blue-600';
+    const bgColor = colorMap[shift.team_name] || 'bg-[hsl(var(--primary))]';
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0f1113]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113]">
             {/* Header */}
             <div className={clsx("p-4 shrink-0 relative overflow-hidden text-white rounded-t-lg border-b border-white/[0.04]", bgColor)}>
                 <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
@@ -90,7 +90,7 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                        <Calendar size={14} className="text-blue-600 dark:text-blue-400" /> Información Temporal
+                        <Calendar size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /> Información Temporal
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="p-3 bg-slate-50 dark:bg-white/[0.03] rounded-md border border-slate-100 dark:border-white/[0.05] shadow-sm">
@@ -108,16 +108,16 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
 
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                        <MapPin size={14} className="text-blue-600 dark:text-blue-400" /> Ubicación
+                        <MapPin size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /> Ubicación
                     </h3>
                     <div className="p-4 bg-slate-900 dark:bg-white/[0.03] rounded-md relative overflow-hidden group">
                         <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent group-hover:scale-110 transition-transform duration-1000" />
                         <div className="relative z-10 flex items-center justify-between">
                             <div className="space-y-0.5">
                                 <p className="text-sm font-bold text-white uppercase tracking-tight">Auditorio Principal</p>
-                                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wide">Campus Central CCF</p>
+                                <p className="text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide">Campus Central CCF</p>
                             </div>
-                            <div className="p-2.5 bg-white/10 rounded-lg text-blue-400 backdrop-blur-md">
+                            <div className="p-2.5 bg-white/10 rounded-lg text-[hsl(var(--primary))] backdrop-blur-md">
                                 <MapPin size={18} />
                             </div>
                         </div>
@@ -126,11 +126,11 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
 
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                        <Users size={14} className="text-blue-600 dark:text-blue-400" /> Equipo Confirmado
+                        <Users size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /> Equipo Confirmado
                     </h3>
                     <div className="space-y-2.5">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-md hover:bg-slate-50 dark:hover:bg-white/[0.05] hover:border-blue-500/20 transition-all group">
+                            <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-md hover:bg-slate-50 dark:hover:bg-white/[0.05] hover:border-blue-500/20 transition-all group">
                                 <div className="flex items-center gap-4">
                                     <div className="size-8 rounded-lg bg-gradient-to-tr from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-[11px] font-bold text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
                                         V{i}
@@ -149,7 +149,7 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
                 </section>
 
                 <div className="pt-4">
-                    <button className="w-full py-2 bg-slate-900 dark:bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-2xl shadow-blue-500/25 flex items-center justify-center gap-3 group transition-all active:scale-95">
+                    <button className="w-full py-2 bg-slate-900 dark:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-2xl shadow-blue-500/25 flex items-center justify-center gap-3 group transition-all active:scale-95">
                         Registrar Asistencia <ChevronRight size={18} className="group-hover:translate-x-1.5 transition-all" />
                     </button>
                 </div>

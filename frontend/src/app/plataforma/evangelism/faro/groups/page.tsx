@@ -447,7 +447,7 @@ function FaroGroupsContent() {
                     setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
                   }
                 }}
-                className="w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-600 transition-all group"
+                className="w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-600 transition-all group"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -461,12 +461,12 @@ function FaroGroupsContent() {
                     ) : (
                       <span className="text-amber-500 font-semibold">Sin líder</span>
                     )}
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-[hsl(var(--secondary))] bg-green-50 dark:text-[hsl(var(--secondary))] dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
                       {h.status}
                     </span>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors shrink-0" />
+                <ChevronRight size={16} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors shrink-0" />
               </button>
             ))}
           </div>
@@ -498,14 +498,14 @@ function FaroGroupsContent() {
                     setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
                   }
                 }}
-                className="text-left w-full bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 p-4 hover:border-blue-300 dark:hover:border-blue-600 transition-all hover:shadow-md space-y-3"
+                className="text-left w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 p-4 hover:border-blue-300 dark:hover:border-blue-600 transition-all hover:shadow-md space-y-3"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{h.name}</p>
                     {h.code && <p className="text-[10px] font-mono text-slate-400">{h.code}</p>}
                   </div>
-                  <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
+                  <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-[hsl(var(--secondary))] bg-green-50 dark:text-[hsl(var(--secondary))] dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
                     {h.status}
                   </span>
                 </div>
@@ -567,11 +567,11 @@ function FaroGroupsContent() {
                           setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
                         }
                       }}
-                      className="text-left w-full bg-white dark:bg-white/10 rounded-lg border border-slate-200 dark:border-white/5 p-3 hover:border-blue-300 dark:hover:border-blue-500 transition-all space-y-2"
+                      className="text-left w-full bg-[hsl(var(--bg-primary))] dark:bg-white/10 rounded-lg border border-slate-200 dark:border-white/5 p-3 hover:border-blue-300 dark:hover:border-blue-500 transition-all space-y-2"
                     >
                       <div className="flex items-start justify-between gap-1">
                         <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{h.name}</p>
-                        <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold ${h.status === 'Activo' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
+                        <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold ${h.status === 'Activo' ? 'text-[hsl(var(--secondary))] bg-green-50 dark:text-[hsl(var(--secondary))] dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
                           {h.status}
                         </span>
                       </div>
@@ -642,14 +642,14 @@ function FaroGroupsContent() {
                     <td className="px-4 py-2.5 text-center text-slate-500">{h.capacity || '—'}</td>
                     <td className="px-4 py-2.5 text-center text-slate-500">{h.day_of_week || '—'}</td>
                     <td className="px-4 py-2.5 text-center">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-[hsl(var(--secondary))] bg-green-50 dark:text-[hsl(var(--secondary))] dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
                         {h.status}
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-right">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteHouse(h); }}
-                        className="p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                        className="p-1 rounded text-slate-300 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                         title="Eliminar"
                       >
                         <Trash2 size={13} />
@@ -685,7 +685,7 @@ function FaroGroupsContent() {
                   setSelectedMemberIds(new Set());
                   setFormData({ capacity: 15, status: 'Activo' });
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg size-7 flex items-center justify-center transition-all shadow-sm active:scale-95"
+                className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg size-7 flex items-center justify-center transition-all shadow-sm active:scale-95"
               >
                 <Plus size={14} />
               </button>
@@ -753,7 +753,7 @@ function FaroGroupsContent() {
                       className="flex-1 text-left min-w-0"
                     >
                       <p
-                        className={`text-xs font-bold truncate leading-tight ${isActive ? 'text-blue-700 dark:text-blue-400' : 'text-slate-800 dark:text-white'}`}
+                        className={`text-xs font-bold truncate leading-tight ${isActive ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' : 'text-slate-800 dark:text-white'}`}
                       >
                         {h.name}
                       </p>
@@ -762,7 +762,7 @@ function FaroGroupsContent() {
                           {h.zone || 'Sin zona'}
                         </p>
                         {h.leader_id && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 shrink-0">
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100/50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] shrink-0">
                             {getMemberName(h.leader_id).split(' ')[0]}
                           </span>
                         )}
@@ -770,7 +770,7 @@ function FaroGroupsContent() {
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDeleteHouse(h); }}
-                      className="shrink-0 p-1 rounded text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                      className="shrink-0 p-1 rounded text-slate-300 dark:text-slate-600 hover:text-[hsl(var(--destructive))] dark:hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                       title="Eliminar grupo"
                     >
                       <Trash2 size={13} />
@@ -814,7 +814,7 @@ function FaroGroupsContent() {
       <div className="flex h-full p-4 lg:p-4 bg-slate-50/50 dark:bg-[#252528]/50">
         {/* Detail/Edit Panel */}
         {showPanel ? (
-          <div className="flex-1 bg-white dark:bg-[#252528] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
+          <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="px-3 py-2 border-b border-slate-100/80 dark:border-white/5 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-white/[0.02]">
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 {isCreating ? 'Nuevo Grupo' : MODE_CONFIG[mode].title}
@@ -823,7 +823,7 @@ function FaroGroupsContent() {
                 {!isCreating && selectedHouse && (
                   <button
                     onClick={() => router.push(`/plataforma/evangelism/faro/sessions/${selectedHouse.id}`)}
-                    className="size-8 rounded-lg bg-green-50 dark:bg-green-500/10 flex items-center justify-center text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
+                    className="size-8 rounded-lg bg-green-50 dark:bg-green-500/10 flex items-center justify-center text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))] hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
                     title="Reportar sesión"
                   >
                     <Calendar size={15} />
@@ -832,7 +832,7 @@ function FaroGroupsContent() {
                 {!isCreating && selectedHouse && (
                   <button
                     onClick={() => handleDeleteHouse(selectedHouse)}
-                    className="size-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+                    className="size-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-[hsl(var(--destructive))] hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
                     title="Eliminar grupo"
                   >
                     <Trash2 size={15} />
@@ -937,7 +937,7 @@ function FaroGroupsContent() {
                 {/* Roles */}
                 <div>
                   <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                    <Users size={12} className="text-blue-500" /> Roles del
+                    <Users size={12} className="text-[hsl(var(--primary))]" /> Roles del
                     Grupo
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -979,7 +979,7 @@ function FaroGroupsContent() {
                 {/* Logística */}
                 <div>
                   <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                    <Calendar size={12} className="text-blue-500" /> Logística
+                    <Calendar size={12} className="text-[hsl(var(--primary))]" /> Logística
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="col-span-2">
@@ -1065,7 +1065,7 @@ function FaroGroupsContent() {
                     <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 border-t border-slate-100 dark:border-white/5 pt-8 mt-4">
                       <div>
                         <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-2">
-                          <Users size={12} className="text-blue-500" /> Miembros actuales ({selectedMemberIds.size})
+                          <Users size={12} className="text-[hsl(var(--primary))]" /> Miembros actuales ({selectedMemberIds.size})
                         </h3>
                         <p className="text-xs text-slate-500">
                           Estos son los miembros actualmente asignados al grupo.
@@ -1077,7 +1077,7 @@ function FaroGroupsContent() {
                         className={`px-4 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-colors flex items-center gap-2 ${
                           isAddingMembers 
                             ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20' 
-                            : 'bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400'
+                            : 'bg-blue-50 text-[hsl(var(--primary))] hover:bg-blue-100 dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]'
                         }`}
                       >
                         <UserPlus size={14} /> {isAddingMembers ? 'Ocultar catálogo' : 'Añadir miembros'}
@@ -1128,7 +1128,7 @@ function FaroGroupsContent() {
                       </div>
                       <a
                         href={`/evangelism/faro/${selectedHouse.id}`}
-                        className="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2 shrink-0"
+                        className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2 shrink-0"
                       >
                         <Calendar size={14} /> Registrar Asistencia
                       </a>
@@ -1176,7 +1176,7 @@ function FaroGroupsContent() {
                             return (
                               <label
                                 key={member.id}
-                                className="flex items-start gap-3 rounded-lg border px-4 py-1.5 cursor-pointer transition-all bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-blue-300/40"
+                                className="flex items-start gap-3 rounded-lg border px-4 py-1.5 cursor-pointer transition-all bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-blue-300/40"
                               >
                                 <input
                                   type="checkbox"
@@ -1230,7 +1230,7 @@ function FaroGroupsContent() {
                 type="submit"
                 form="faro-form"
                 disabled={saving}
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
               >
                 {saving ? (
                   <Activity className="animate-spin" size={13} />
@@ -1242,7 +1242,7 @@ function FaroGroupsContent() {
             </div>
             </>
         ) : (
-          <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e1f21]">
+          <div className="flex-1 overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
             {mode === 'members' && summary ? (
               <div className="p-4 space-y-3">
                 <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-1.5">
@@ -1257,14 +1257,14 @@ function FaroGroupsContent() {
 
                 <div className="space-y-3">
                   {summary.unassigned_members.length === 0 ? (
-                    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-1.5 text-center text-slate-400">
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-4 py-1.5 text-center text-slate-400">
                       No hay miembros sin grupo asignado.
                     </div>
                   ) : (
                     summary.unassigned_members.map(member => (
                       <div
                         key={member.id}
-                        className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4"
+                        className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4"
                       >
                         <div className="flex flex-col md:flex-row md:items-center gap-3">
                           <div className="min-w-0 flex-1">
@@ -1296,7 +1296,7 @@ function FaroGroupsContent() {
                           <button
                             onClick={() => handleQuickAssignMember(member.id)}
                             disabled={saving}
-                            className="px-4 py-2.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                            className="px-4 py-2.5 rounded-md bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-[11px] font-semibold uppercase tracking-wide disabled:opacity-50"
                           >
                             Asignar
                           </button>

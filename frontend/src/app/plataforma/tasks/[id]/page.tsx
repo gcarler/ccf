@@ -76,10 +76,10 @@ export default function TaskDetailPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <button className="p-2 text-slate-400 hover:text-blue-600 transition-all">
+                        <button className="p-2 text-slate-400 hover:text-[hsl(var(--primary))] transition-all">
                             <MoreVertical size={20} />
                         </button>
-                        <button className="px-3 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
                             Finalizar Tarea
                         </button>
                     </div>
@@ -108,7 +108,7 @@ export default function TaskDetailPage() {
 
                         <section className="space-y-4">
                             <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Actividad y Comentarios</h3>
-                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center py-1.5">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center py-1.5">
                                 <MessageSquare size={32} className="mx-auto text-slate-200 mb-4" />
                                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">No hay comentarios aún</p>
                             </div>
@@ -121,7 +121,7 @@ export default function TaskDetailPage() {
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Responsable</span>
                                     <div className="flex items-center gap-2">
-                                        <div className="size-6 rounded-full bg-blue-500 flex items-center justify-center font-semibold text-white">
+                                        <div className="size-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white">
                                             {task.assignee?.charAt(0)}
                                         </div>
                                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{task.assignee}</span>
@@ -152,7 +152,7 @@ export default function TaskDetailPage() {
                             </div>
                         </DSCard>
 
-                        <div className="p-3 bg-blue-600 rounded-lg text-white space-y-4">
+                        <div className="p-3 bg-[hsl(var(--primary))] rounded-lg text-white space-y-4">
                             <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide">
                                 <Sparkles size={14} /> AI Context
                             </div>

@@ -46,9 +46,9 @@ export class ModuleErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-[400px] flex items-center justify-center bg-slate-50 dark:bg-[#0f1117]">
-          <div className="max-w-md w-full p-6 bg-white dark:bg-[#1e1f21] border border-red-200 dark:border-red-900/30 rounded-xl shadow-lg">
+          <div className="max-w-md w-full p-6 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-red-200 dark:border-red-900/30 rounded-xl shadow-lg">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20 text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
                 <AlertTriangle size={20} />
               </div>
               <div>
@@ -74,7 +74,7 @@ export class ModuleErrorBoundary extends Component<Props, State> {
             <div className="flex gap-2">
               <button
                 onClick={this.handleReset}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors"
               >
                 <RefreshCw size={14} /> Reintentar
               </button>

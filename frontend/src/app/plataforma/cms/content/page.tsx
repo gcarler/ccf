@@ -193,7 +193,7 @@ function RichTextEditor({ value, onChange }: { value: string; onChange: (value: 
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0f1318]">
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-[#0f1318]">
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-2 dark:border-white/10">
         <button type="button" onClick={() => runCommand("bold")} className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
           <Bold size={13} />
@@ -256,14 +256,14 @@ function EditableNode({
           <button
             type="button"
             onClick={() => setValue([...value, cloneTemplate(template)])}
-            className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900"
+            className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900"
           >
             <Plus size={12} /> Agregar
           </button>
         </div>
         <div className="space-y-3">
           {value.map((_, index) => (
-            <div key={index} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#0f1318]">
+            <div key={index} className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#0f1318]">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Elemento {index + 1}</p>
                 <button type="button" onClick={() => onChange(removeAtPath(root, [...path, index]))} className="text-rose-500">
@@ -280,7 +280,7 @@ function EditableNode({
 
   if (isRecord(value)) {
     return (
-      <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#111418]">
+      <div className="space-y-4 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#111418]">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formatLabel(label)}</p>
           <p className="text-[11px] text-slate-400">{Object.keys(value).length} campos</p>
@@ -298,7 +298,7 @@ function EditableNode({
 
   if (typeof value === "boolean") {
     return (
-      <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#0f1318]">
+      <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#0f1318]">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formatLabel(fieldKey)}</span>
         <input type="checkbox" checked={value} onChange={event => setValue(event.target.checked)} className="size-4" />
       </label>
@@ -313,14 +313,14 @@ function EditableNode({
           type="number"
           value={value}
           onChange={event => setValue(Number(event.target.value))}
-          className="w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm outline-none dark:border-white/10 dark:bg-[#0f1318]"
+          className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm outline-none dark:border-white/10 dark:bg-[#0f1318]"
         />
       </label>
     );
   }
 
   const stringValue = String(value ?? "");
-  const className = "w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-[#0f1318]";
+  const className = "w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-[#0f1318]";
   return (
     <label className="block space-y-2">
       <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formatLabel(fieldKey)}</span>
@@ -520,7 +520,7 @@ export default function CmsContentPage() {
       />
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[320px_1fr_300px]">
-        <aside className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#111418]">
+        <aside className="space-y-4 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#111418]">
           <div>
             <p className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Bloques FARO</p>
             <div className="space-y-2">
@@ -576,7 +576,7 @@ export default function CmsContentPage() {
           )}
         </aside>
 
-        <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#111418]">
+        <section className="space-y-5 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[#111418]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-1">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Llave</p>
@@ -688,7 +688,7 @@ export default function CmsContentPage() {
           </div>
         </section>
 
-        <aside className={`rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#111418] ${showMedia ? "block" : "hidden xl:block"}`}>
+        <aside className={`rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#111418] ${showMedia ? "block" : "hidden xl:block"}`}>
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Media</p>
@@ -720,7 +720,7 @@ export default function CmsContentPage() {
                   <button
                     type="button"
                     onClick={() => copyMediaUrl(item)}
-                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900"
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900"
                   >
                     <Copy size={12} /> {copiedMediaId === item.id ? "Copiado" : "Copiar URL"}
                   </button>

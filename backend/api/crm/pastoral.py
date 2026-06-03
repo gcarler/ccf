@@ -22,13 +22,13 @@ router = APIRouter(tags=["CRM"])
 logger = logging.getLogger(__name__)
 
 
-def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]) -> models.CasoCRM:
+def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]):
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
     case = (
-        db.query(models.CasoCRM)
+        db.query(models.ConsolidationCase)
         .filter(
-            models.CasoCRM.id == case_uuid,
-            models.CasoCRM.deleted_at.is_(None),
+            models.ConsolidationCase.id == case_uuid,
+            models.ConsolidationCase.deleted_at.is_(None),
         )
         .first()
     )
@@ -72,7 +72,7 @@ def create_consolidation_case(
         data["assigned_pastor_id"] = uuid.UUID(str(data["assigned_pastor_id"]))
     if data.get("assigned_leader_id"):
         data["assigned_leader_id"] = uuid.UUID(str(data["assigned_leader_id"]))
-    row = models.CasoCRM(**data)
+    row = models.ConsolidationCase(**data)
     row.sede_id = persona.sede_id
     db.add(row)
     db.commit()
@@ -547,7 +547,7 @@ def list_crm_tasks(
     """Lista todas las tareas CRM con filtro opcional por asignado."""
     q = db.query(models.CrmTask)
     if assignee_id:
-        q = q.filter(models.CrmTask.assignee_id == assignee_id)
+        q = q.filter(models.CrmTask.assignee_user_id == assignee_id)
     tasks = q.order_by(models.CrmTask.created_at.desc()).all()
     return [_serialize_task(t) for t in tasks]
 
@@ -577,7 +577,7 @@ def create_crm_task(
         description=payload.get("description"),
         category=payload.get("category") or "Pastoral",
         persona_id=payload.get("persona_id"),
-        assignee_id=payload.get("assignee_id") or current_user.id,
+        assignee_user_id=payload.get("assignee_id") or current_user.id,
         due_date=due_date,
         status=payload.get("status") or "pending",
         priority=payload.get("priority") or "medium",
@@ -595,7 +595,7 @@ def list_my_crm_tasks(
 ):
     tasks = (
         db.query(models.CrmTask)
-        .filter(models.CrmTask.assignee_id == current_user.id)
+        .filter(models.CrmTask.assignee_user_id == current_user.id)
         .order_by(models.CrmTask.created_at.desc())
         .all()
     )
@@ -616,7 +616,7 @@ def get_crm_task_detail(
         "pastor",
         "coordinador",
     }
-    if not is_staff and task.assignee_id != current_user.id:
+    if not is_staff and task.assignee_user_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado para ver esta tarea")
     return _serialize_task(task)
 
@@ -670,7 +670,7 @@ def delete_crm_task(
     )
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    db.delete(task)
+    task.deleted_at = utc_now()
     db.commit()
     return None
 
@@ -1171,7 +1171,7 @@ def delete_crm_role(
     db.query(models.Persona).filter(models.Persona.church_role == role.name).update(
         {"church_role": fallback.name}
     )
-    db.delete(role)
+    role.deleted_at = utc_now()
     db.commit()
     return {
         "success": True,
@@ -1566,7 +1566,7 @@ def delete_volunteer(
     # Cancelar turnos futuros del voluntario (datos satélite, no Persona)
     db.query(models.VolunteerShift).filter(
         models.VolunteerShift.persona_id == persona_id
-    ).delete()
+    ).update({models.VolunteerShift.deleted_at: utc_now()}, synchronize_session=False)
     # Soft-delete de la Persona
     persona.estado_vital = "INACTIVO"
     from datetime import date

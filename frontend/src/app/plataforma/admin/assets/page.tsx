@@ -115,13 +115,13 @@ export default function AssetLibrary() {
                     <StorageStat label="Uso Total" count={`${stats.total.count} archivos`} size={stats.total.size} icon={HardDrive} color="slate" />
                 </section>
 
-                <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
+                <section className="space-y-3 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
                         <div className="flex items-center gap-3">
                             <h3 className="text-xl font-semibold uppercase tracking-wide">Explorador de Medios</h3>
                             <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-1.5 dark:border-white/5 dark:bg-white/10">
-                                <button onClick={() => setViewMode("grid")} className={clsx("rounded-md p-2.5", viewMode === "grid" ? "bg-white text-blue-600 shadow-md dark:bg-blue-600 dark:text-white" : "text-slate-400")}><LayoutGrid size={20} /></button>
-                                <button onClick={() => setViewMode("list")} className={clsx("rounded-md p-2.5", viewMode === "list" ? "bg-white text-blue-600 shadow-md dark:bg-blue-600 dark:text-white" : "text-slate-400")}><ListIcon size={20} /></button>
+                                <button onClick={() => setViewMode("grid")} className={clsx("rounded-md p-2.5", viewMode === "grid" ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] shadow-md dark:bg-[hsl(var(--primary))] dark:text-white" : "text-slate-400")}><LayoutGrid size={20} /></button>
+                                <button onClick={() => setViewMode("list")} className={clsx("rounded-md p-2.5", viewMode === "list" ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] shadow-md dark:bg-[hsl(var(--primary))] dark:text-white" : "text-slate-400")}><ListIcon size={20} /></button>
                             </div>
                         </div>
                         <div className="relative">
@@ -155,29 +155,29 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
         return (
             <div className="flex items-center justify-between rounded-lg border border-transparent p-3 transition-all hover:border-blue-500/20 hover:bg-slate-50 dark:hover:bg-blue-600/5">
                 <div className="flex items-center gap-3">
-                    <div className="flex size-7 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm dark:bg-white/10"><Icon size={24} /></div>
+                    <div className="flex size-7 items-center justify-center rounded-lg bg-[hsl(var(--bg-primary))] text-slate-400 shadow-sm dark:bg-white/10"><Icon size={24} /></div>
                     <div>
                         <p className="text-sm font-semibold uppercase text-slate-800 dark:text-white">{asset.filename}</p>
                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{formatBytes(asset.sizeBytes)} | {date} | {asset.type}</p>
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <a href={asset.url} download className="rounded-md bg-white p-2.5 text-slate-400 shadow-sm hover:text-blue-600 dark:bg-white/10"><Download size={18} /></a>
-                    <button onClick={onDelete} className="rounded-md bg-white p-2.5 text-slate-400 shadow-sm hover:text-rose-600 dark:bg-white/10"><Trash2 size={18} /></button>
+                    <a href={asset.url} download className="rounded-md bg-[hsl(var(--bg-primary))] p-2.5 text-slate-400 shadow-sm hover:text-[hsl(var(--primary))] dark:bg-white/10"><Download size={18} /></a>
+                    <button onClick={onDelete} className="rounded-md bg-[hsl(var(--bg-primary))] p-2.5 text-slate-400 shadow-sm hover:text-rose-600 dark:bg-white/10"><Trash2 size={18} /></button>
                 </div>
             </div>
         );
     }
     return (
         <div className="group relative flex flex-col items-center rounded-lg border border-slate-100 bg-slate-50 p-3 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-blue-500/30 hover:shadow-xl dark:border-white/5 dark:bg-white/5">
-            <div className="mb-3 flex aspect-square w-full items-center justify-center rounded-lg bg-white text-slate-200 shadow-inner transition-all group-hover:text-blue-500 dark:bg-white/5">
+            <div className="mb-3 flex aspect-square w-full items-center justify-center rounded-lg bg-[hsl(var(--bg-primary))] text-slate-200 shadow-inner transition-all group-hover:text-[hsl(var(--primary))] dark:bg-white/5">
                 <Icon size={64} strokeWidth={1} />
             </div>
             <h4 className="w-full truncate px-2 text-[13px] font-semibold uppercase text-slate-800 dark:text-white">{asset.filename}</h4>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{formatBytes(asset.sizeBytes)} | {date}</p>
             <div className="absolute right-4 top-4 flex flex-col gap-2 opacity-0 transition-all group-hover:opacity-100">
-                <a href={asset.url} download className="rounded-lg bg-white p-3 text-slate-400 shadow-xl hover:text-blue-600 dark:bg-slate-800"><Download size={18} /></a>
-                <button onClick={onDelete} className="rounded-lg bg-white p-3 text-slate-400 shadow-xl hover:text-rose-600 dark:bg-slate-800"><Trash2 size={18} /></button>
+                <a href={asset.url} download className="rounded-lg bg-[hsl(var(--bg-primary))] p-3 text-slate-400 shadow-xl hover:text-[hsl(var(--primary))] dark:bg-slate-800"><Download size={18} /></a>
+                <button onClick={onDelete} className="rounded-lg bg-[hsl(var(--bg-primary))] p-3 text-slate-400 shadow-xl hover:text-rose-600 dark:bg-slate-800"><Trash2 size={18} /></button>
             </div>
         </div>
     );
@@ -185,13 +185,13 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
 
 function StorageStat({ label, count, size, icon: Icon, color }: any) {
     const colors: Record<string, string> = {
-        blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/20",
+        blue: "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/20",
         cyan: "bg-cyan-50 text-cyan-600 dark:bg-cyan-900/20",
         emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20",
         slate: "bg-slate-50 text-slate-600 dark:bg-slate-900/20",
     };
     return (
-        <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+        <div className="space-y-3 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
             <div className={clsx("flex size-7 items-center justify-center rounded-lg", colors[color])}><Icon size={28} /></div>
             <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>

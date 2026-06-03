@@ -62,7 +62,7 @@ export default function CmsSitesPage() {
 
   return (
     <div className="space-y-3 p-3">
-      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-3 flex items-center justify-between">
+      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3 flex items-center justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2</p>
           <h1 className="mt-2 text-lg font-semibold">Gestión de sitios</h1>
@@ -73,7 +73,7 @@ export default function CmsSitesPage() {
       </div>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
           {!canManage && (
             <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
               Tu rol puede consultar sitios, pero no crear ni activar/desactivar.
@@ -86,7 +86,7 @@ export default function CmsSitesPage() {
           <button onClick={create} disabled={!canManage} className="w-full rounded-md bg-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"><Plus size={13} /> Crear sitio</button>
         </div>
 
-        <div className="lg:col-span-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
+        <div className="lg:col-span-2 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sitios registrados</p>
           {loading ? (
             <p className="text-sm text-slate-500">Cargando sitios...</p>

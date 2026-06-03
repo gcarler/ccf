@@ -82,7 +82,7 @@ export default function ProjectsTasksPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Mis tareas', icon: CheckCircle2 }]}
                 viewType={viewType}
@@ -98,7 +98,7 @@ export default function ProjectsTasksPage() {
                         className={clsx(
                             'px-3 py-1 rounded-full text-[10px] uppercase tracking-wide font-black border',
                             status === value
-                                ? 'bg-blue-600 text-white border-blue-600'
+                                ? 'bg-[hsl(var(--primary))] text-white border-blue-600'
                                 : 'border-slate-200 dark:border-white/10 text-slate-500'
                         )}
                     >
@@ -136,7 +136,7 @@ export default function ProjectsTasksPage() {
                 ) : viewType === 'grid' ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                         {filtered.map((task) => (
-                            <article key={task.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                            <article key={task.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
                                 <h3 className="font-bold text-slate-800 dark:text-white">{task.title}</h3>
                                 <p className="text-xs text-slate-500 uppercase tracking-wide mt-1">{task.status} · {task.priority}</p>
                             </article>
@@ -151,7 +151,7 @@ export default function ProjectsTasksPage() {
                                     <span className="text-[10px] font-bold text-slate-400">{group.rows.length}</span>
                                 </div>
                                 <div className="space-y-2">
-                                    {group.rows.map((task) => <div key={task.id} className="rounded-md bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm font-medium">{task.title}</div>)}
+                                    {group.rows.map((task) => <div key={task.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm font-medium">{task.title}</div>)}
                                 </div>
                             </section>
                         ))}
@@ -165,7 +165,7 @@ export default function ProjectsTasksPage() {
                 ) : (
                     <div className="space-y-3">
                         {filtered.map((task) => (
-                            <article key={task.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                            <article key={task.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-3">
                                     <div>
                                         <h3 className="font-bold text-slate-800 dark:text-white">{task.title}</h3>
@@ -173,7 +173,7 @@ export default function ProjectsTasksPage() {
                                     </div>
                                     <button
                                         onClick={() => moveForward(task)}
-                                        className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] uppercase tracking-wide font-black"
+                                        className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] uppercase tracking-wide font-black"
                                     >
                                         Siguiente estado
                                     </button>

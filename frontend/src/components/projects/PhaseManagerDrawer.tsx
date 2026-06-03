@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import type { PhaseDef } from './ProjectKanbanBoard';
+import { RightPanel } from '@/components/ui/RightPanel';
 
 interface Props {
     projectId: number;
@@ -21,7 +22,7 @@ const COLOR_PRESETS = [
     '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316',
 ];
 
-export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props) {
+export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Props) {
     const { token } = useAuth();
     const { addToast } = useToast();
     const [items, setItems] = useState<PhaseDef[]>(() => phases.map((p, i) => ({ ...p, order_index: i })));
@@ -99,18 +100,8 @@ export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border border-slate-200 dark:border-white/10">
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-white/5 shrink-0">
-                    <h2 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wide">
-                        Gestionar Fases
-                    </h2>
-                    <button onClick={onClose} className="size-7 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center text-slate-400 transition-all">
-                        <X size={14} />
-                    </button>
-                </div>
-
+        <RightPanel open={true} onClose={onClose} title="Gestionar Fases" width={480}>
+            <div className="flex flex-col h-full">
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-2">
                     {items.map((phase, i) => (
@@ -159,7 +150,7 @@ export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props
                             {/* Delete */}
                             <button
                                 onClick={() => handleRemove(i)}
-                                className="size-7 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                                className="size-7 rounded-lg flex items-center justify-center text-slate-300 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all shrink-0"
                             >
                                 <Trash2 size={12} />
                             </button>
@@ -169,7 +160,7 @@ export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props
                     {/* Add phase */}
                     <button
                         onClick={handleAdd}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed border-slate-200 dark:border-white/10 text-slate-400 hover:text-blue-500 hover:border-blue-500/30 transition-all text-[11px] font-semibold uppercase tracking-wide"
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed border-slate-200 dark:border-white/10 text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all text-[11px] font-semibold uppercase tracking-wide"
                     >
                         <Plus size={14} /> Agregar Fase
                     </button>
@@ -186,7 +177,7 @@ export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 flex items-center gap-2 hover:bg-blue-700 active:scale-95 disabled:opacity-50 transition-all"
+                        className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 flex items-center gap-2 hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-50 transition-all"
                     >
                         {saving ? (
                             <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -197,6 +188,6 @@ export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props
                     </button>
                 </div>
             </div>
-        </div>
+        </RightPanel>
     );
 }

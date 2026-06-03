@@ -30,7 +30,7 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
     });
 
     return (
-        <div className="flex-1 overflow-auto bg-white dark:bg-[#1e1f21]">
+        <div className="flex-1 overflow-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
             <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead className="sticky top-0 bg-slate-50 dark:bg-black/20 z-10 shadow-sm">
                     {table.getHeaderGroups().map((headerGroup) => (
@@ -53,8 +53,8 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
                                             {canSort && (
                                                 <div className="flex-shrink-0 text-slate-300">
                                                     {{
-                                                        asc: <ArrowUp size={11} className="text-blue-500" />,
-                                                        desc: <ArrowDown size={11} className="text-blue-500" />,
+                                                        asc: <ArrowUp size={11} className="text-[hsl(var(--primary))]" />,
+                                                        desc: <ArrowDown size={11} className="text-[hsl(var(--primary))]" />,
                                                     }[isSorted as string] ?? <ArrowUpDown size={11} className="opacity-0 group-hover:opacity-100" />}
                                                 </div>
                                             )}

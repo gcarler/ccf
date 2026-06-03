@@ -20,7 +20,7 @@ function AvatarNameRenderer({ data }: any) {
     const initials = data?.nombre_completo?.charAt(0) ?? '';
     return (
         <div className="flex items-center gap-2.5 h-full">
-            <div className="size-7 rounded-md bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/20 text-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
+            <div className="size-7 rounded-md bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/20 text-[hsl(var(--primary))] flex items-center justify-center font-bold text-xs flex-shrink-0">
                 {initials}
             </div>
             <div>
@@ -34,7 +34,7 @@ function AvatarNameRenderer({ data }: any) {
 function RoleRenderer({ value }: any) {
     const isLeader = String(value ?? '').toLowerCase().includes('líder') || String(value ?? '').toLowerCase().includes('lider');
     return (
-        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30'}`}>
+        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/30'}`}>
             {value || 'Miembro'}
         </span>
     );

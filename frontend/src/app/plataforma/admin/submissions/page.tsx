@@ -130,7 +130,7 @@ export default function SubmissionsPage() {
                                                     type="number" 
                                                     value={grade}
                                                     onChange={(e) => setGrade(Number(e.target.value))}
-                                                    className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none font-bold text-slate-900 dark:text-white transition-all shadow-sm"
+                                                    className="w-full px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none font-bold text-slate-900 dark:text-white transition-all shadow-sm"
                                                 />
                                             </div>
                                             <div>
@@ -139,7 +139,7 @@ export default function SubmissionsPage() {
                                                     value={feedback}
                                                     onChange={(e) => setFeedback(e.target.value)}
                                                     placeholder="Buen trabajo..."
-                                                    className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none text-sm h-24 resize-none text-slate-900 dark:text-white transition-all shadow-sm"
+                                                    className="w-full px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none text-sm h-24 resize-none text-slate-900 dark:text-white transition-all shadow-sm"
                                                 />
                                             </div>
                                             <div className="flex gap-2 pt-2">
@@ -151,7 +151,7 @@ export default function SubmissionsPage() {
                                                 </button>
                                                 <button 
                                                     onClick={() => setGradingId(null)}
-                                                    className="px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-500 rounded-md text-xs font-bold hover:text-slate-700 dark:hover:text-white transition-all active:scale-95 shadow-sm"
+                                                    className="px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-500 rounded-md text-xs font-bold hover:text-slate-700 dark:hover:text-white transition-all active:scale-95 shadow-sm"
                                                 >
                                                     <X size={16} />
                                                 </button>
@@ -205,7 +205,7 @@ export default function SubmissionsPage() {
                     ))
                 ) : (
                     <div className="bg-slate-50 dark:bg-slate-900/30 border border-dashed border-slate-200 dark:border-white/10 rounded-lg py-1.5 text-center flex flex-col items-center">
-                        <div className="size-8 bg-white dark:bg-slate-800 rounded-full shadow-sm flex items-center justify-center text-slate-300 mb-3 border border-slate-100 dark:border-white/5">
+                        <div className="size-8 bg-[hsl(var(--bg-primary))] dark:bg-slate-800 rounded-full shadow-sm flex items-center justify-center text-slate-300 mb-3 border border-slate-100 dark:border-white/5">
                             <FileText size={40} />
                         </div>
                         <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200 mb-2">Todo al día</h3>

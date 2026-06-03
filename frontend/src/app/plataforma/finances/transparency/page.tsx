@@ -34,13 +34,13 @@ export default function TransparencyPage() {
     }, []);
 
     const stats = data ? [
-        { label: 'Biblias Entregadas',  value: data.biblias_entregadas.toLocaleString('es-CO'), icon: Zap,    color: 'text-blue-500' },
+        { label: 'Biblias Entregadas',  value: data.biblias_entregadas.toLocaleString('es-CO'), icon: Zap,    color: 'text-[hsl(var(--primary))]' },
         { label: 'Raciones de Comida',  value: data.raciones_comida.toLocaleString('es-CO') + '+', icon: Heart, color: 'text-rose-500' },
-        { label: 'Misiones Rurales',    value: String(data.misiones_rurales), icon: Globe, color: 'text-blue-500' },
+        { label: 'Misiones Rurales',    value: String(data.misiones_rurales), icon: Globe, color: 'text-[hsl(var(--primary))]' },
     ] : [
-        { label: 'Biblias Entregadas', value: '—', icon: Zap,   color: 'text-blue-500' },
+        { label: 'Biblias Entregadas', value: '—', icon: Zap,   color: 'text-[hsl(var(--primary))]' },
         { label: 'Raciones de Comida', value: '—', icon: Heart, color: 'text-rose-500' },
-        { label: 'Misiones Rurales',   value: '—', icon: Globe, color: 'text-blue-500' },
+        { label: 'Misiones Rurales',   value: '—', icon: Globe, color: 'text-[hsl(var(--primary))]' },
     ];
 
     const sidebarSections = [
@@ -99,7 +99,7 @@ export default function TransparencyPage() {
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {stats.map((stat, i) => (
-                            <div key={i} className="bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 p-4 rounded-lg text-center space-y-4 group hover:border-emerald-500/30 transition-all shadow-sm">
+                            <div key={i} className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 p-4 rounded-lg text-center space-y-4 group hover:border-emerald-500/30 transition-all shadow-sm">
                                 <div className={`w-16 h-8 mx-auto bg-slate-50 dark:bg-white/5 rounded-lg flex items-center justify-center ${stat.color} group-hover:scale-110 transition-transform`}>
                                     <stat.icon size={32} />
                                 </div>
@@ -111,7 +111,7 @@ export default function TransparencyPage() {
                         ))}
                     </div>
 
-                    <div className="bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden shadow-sm">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden shadow-sm">
                         <div className="grid grid-cols-1 lg:grid-cols-2">
                             <div className="p-4 space-y-3">
                                 <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight uppercase italic">

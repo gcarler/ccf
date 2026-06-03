@@ -57,7 +57,7 @@ def set_persona_activity_status(
             action="persona_deactivated",
             resource_type="persona",
             resource_id=str(persona_id),
-            metadata_json={"reason": "Estado vital cambiado a INACTIVO", "changed_by": changed_by_id},
+            metadata_json={"reason": "Estado vital cambiado a INACTIVO", "changed_by": str(changed_by_persona_id) if changed_by_persona_id else None},
         ))
 
     db.commit()
@@ -202,7 +202,7 @@ def set_persona_church_role(
 
     if current:
         current.church_role = church_role
-        current.assigned_by_persona_id = changed_by_id
+        current.assigned_by_persona_id = changed_by_persona_id
         if notes:
             current.notes = notes
         row = current
@@ -212,7 +212,7 @@ def set_persona_church_role(
         db.add(row)
 
     db.add(PersonaRoleHistory(persona_id=pid, from_role=old_role, to_role=church_role,
-                               reason=reason, changed_by_persona_id=changed_by_id))
+                               reason=reason, changed_by_persona_id=changed_by_persona_id))
     db.commit()
     db.refresh(row)
     return {"id": row.id, "church_role": _enum_val(row.church_role),
@@ -235,7 +235,7 @@ def get_church_role_history(db: Session, persona_id: str, limit: int = 50) -> Li
             "from_role": _enum_val(r.from_role) if r.from_role else None,
             "to_role": _enum_val(r.to_role),
             "reason": r.reason,
-            "changed_by": r.changed_by,
+            "changed_by": str(r.changed_by_persona_id) if r.changed_by_persona_id else None,
             "changed_at": r.changed_at,
         }
         for r in rows
@@ -470,7 +470,7 @@ def set_user_activity_status(db: Session, user_id: int, status: str, changed_by_
     user.is_active = (status == "ACTIVO")
     pid = _persona_id_for_user(db, user_id)
     if pid:
-        set_persona_activity_status(db, pid, status, changed_by_id)
+        set_persona_activity_status(db, pid, status, changed_by_persona_id)
     db.commit()
     db.refresh(user)
     return user
@@ -618,7 +618,7 @@ def get_church_role_history(db: Session, persona_or_user_id, limit: int = 50) ->
             "from_role": _enum_val(r.from_role) if r.from_role else None,
             "to_role": _enum_val(r.to_role),
             "reason": r.reason,
-            "changed_by": r.changed_by,
+            "changed_by": str(r.changed_by_persona_id) if r.changed_by_persona_id else None,
             "changed_at": r.changed_at,
         }
         for r in rows

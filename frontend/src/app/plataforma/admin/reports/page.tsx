@@ -80,7 +80,7 @@ export default function AdvancedBIReports() {
                         className={clsx(
                             "flex items-center gap-3 px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all active:scale-95",
                             activeTab === tab.id 
-                                ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xl shadow-blue-500/10" 
+                                ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-xl shadow-blue-500/10" 
                                 : "text-slate-500 hover:bg-white/50 dark:hover:bg-white/5"
                         )}
                     >
@@ -99,7 +99,7 @@ export default function AdvancedBIReports() {
                         <div className="relative z-10 flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-3 mb-4">
-                                    <div className="px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2">
+                                    <div className="px-3 py-1 bg-blue-500/20 text-[hsl(var(--primary))] border border-blue-500/30 rounded-full text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2">
                                         <Layers size={12} /> Perspectiva de {activeTab}
                                     </div>
                                     <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wide">Actulizado hace 2 min</span>
@@ -123,10 +123,10 @@ export default function AdvancedBIReports() {
                                         style={{ height: `${h}%` }} 
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative",
-                                            i === 8 ? "bg-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.5)]" : "bg-white/10 opacity-30 group-hover/bar:opacity-60"
+                                            i === 8 ? "bg-[hsl(var(--primary))] shadow-[0_0_30px_rgba(59,130,246,0.5)]" : "bg-white/10 opacity-30 group-hover/bar:opacity-60"
                                         )}
                                     >
-                                        {i === 8 && <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-slate-900 px-3 py-1.5 rounded-lg font-semibold shadow-xl whitespace-nowrap">Pico de Actividad</div>}
+                                        {i === 8 && <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[hsl(var(--bg-primary))] text-slate-900 px-3 py-1.5 rounded-lg font-semibold shadow-xl whitespace-nowrap">Pico de Actividad</div>}
                                     </div>
                                     <span className="font-semibold text-slate-500 uppercase">{['E','F','M','A','M','J','J','A','S','O','N','D'][i]}</span>
                                 </div>
@@ -136,7 +136,7 @@ export default function AdvancedBIReports() {
 
                     {/* Secondary Metrics Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
+                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
                             <div className="flex justify-between items-center">
                                 <div className="size-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
                                     <Users size={24} />
@@ -165,7 +165,7 @@ export default function AdvancedBIReports() {
                             </div>
                         </div>
 
-                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
+                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
                             <div className="flex justify-between items-center">
                                 <div className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
                                     <Target size={24} />
@@ -187,16 +187,16 @@ export default function AdvancedBIReports() {
 
                 {/* Sidebar BI Tools */}
                 <aside className="lg:col-span-4 space-y-3">
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-2xl space-y-3">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-2xl space-y-3">
                         <div className="flex items-center gap-3">
-                            <BrainCircuit size={20} className="text-blue-600" />
+                            <BrainCircuit size={20} className="text-[hsl(var(--primary))]" />
                             <h4 className="text-lg font-semibold uppercase tracking-wide tracking-tighter">Acciones BI</h4>
                         </div>
                         
                         <div className="space-y-4">
                             <button className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-transparent hover:border-blue-500/30 transition-all group">
                                 <div className="flex items-center gap-4 text-left">
-                                    <div className="size-10 rounded-md bg-white dark:bg-white/10 flex items-center justify-center text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
+                                    <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
                                         <Calendar size={18} />
                                     </div>
                                     <div>
@@ -209,7 +209,7 @@ export default function AdvancedBIReports() {
 
                             <button className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-transparent hover:border-blue-500/30 transition-all group">
                                 <div className="flex items-center gap-4 text-left">
-                                    <div className="size-10 rounded-md bg-white dark:bg-white/10 flex items-center justify-center text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
+                                    <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
                                         <BookOpen size={18} />
                                     </div>
                                     <div>
@@ -240,7 +240,7 @@ export default function AdvancedBIReports() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <div className="size-2 rounded-full bg-blue-500" />
+                                        <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
                                         <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Educativo</span>
                                     </div>
                                     <span className="font-semibold text-slate-900 dark:text-white">65%</span>
@@ -255,7 +255,7 @@ export default function AdvancedBIReports() {
                             </div>
                         </div>
 
-                        <button className="w-full py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                        <button className="w-full py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                             Generar PDF Inteligente
                         </button>
                     </div>

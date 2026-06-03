@@ -39,8 +39,8 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
 };
 
 const EVENT_TYPE_COLOR: Record<string, string> = {
-    PERMANENT: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
-    MONTHLY:   'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
+    PERMANENT: 'bg-blue-100 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',
+    MONTHLY:   'bg-blue-100 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',
     ANNUAL:    'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
     ONCE:      'bg-rose-100 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400',
     SPECIAL:   'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400',
@@ -776,16 +776,16 @@ export default function EventsPage() {
                         <div 
                             key={ev.id} 
                             onClick={() => router.push(`/evangelism/events/${ev.id}`)}
-                            className="p-4 rounded-md border border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10 transition-all group flex flex-col justify-between cursor-pointer"
+                            className="p-4 rounded-md border border-slate-100 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10 transition-all group flex flex-col justify-between cursor-pointer"
                         >
                             <div>
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex gap-2 items-center">
-                                        <div className="w-12 h-8 rounded-lg bg-gradient-to-tr from-blue-50 to-indigo-50 text-blue-600 flex items-center justify-center">
+                                        <div className="w-12 h-8 rounded-lg bg-gradient-to-tr from-blue-50 to-indigo-50 text-[hsl(var(--primary))] flex items-center justify-center">
                                             <Calendar size={20} />
                                         </div>
                                         {ev.status === 'CANCELLED' && (
-                                            <span className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide rounded-full bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400" title={ev.cancellation_reason}>
+                                            <span className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide rounded-full bg-red-100 dark:bg-red-900/20 text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]" title={ev.cancellation_reason}>
                                                 Cancelado
                                             </span>
                                         )}
@@ -794,7 +794,7 @@ export default function EventsPage() {
                                         {EVENT_TYPE_LABEL[ev.event_type] ?? ev.event_type}
                                     </span>
                                 </div>
-                                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2 truncate group-hover:text-blue-600 transition-colors uppercase italic pr-4">
+                                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2 truncate group-hover:text-[hsl(var(--primary))] transition-colors uppercase italic pr-4">
                                     {ev.name}
                                 </h3>
                                 <p className="text-sm font-medium text-slate-500 line-clamp-2">{ev.description || 'Evento comunitario de CCF.'}</p>
@@ -802,7 +802,7 @@ export default function EventsPage() {
                                     <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-slate-100 dark:bg-white/10 text-slate-500">
                                         {getTargetRoleLabel(ev)}
                                     </span>
-                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300">
+                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-blue-300">
                                         Universo: {attendanceStat.expected}
                                     </span>
                                     <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-300">
@@ -811,10 +811,10 @@ export default function EventsPage() {
                                 </div>
                             </div>
                             <div className="mt-3 flex items-center justify-between gap-2">
-                                <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="size-8 flex items-center justify-center bg-slate-50 dark:bg-white/5 hover:bg-blue-600 text-slate-400 hover:text-white rounded-md transition-all shrink-0" title="Generar QR">
+                                <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="size-8 flex items-center justify-center bg-slate-50 dark:bg-white/5 hover:bg-[hsl(var(--primary))] text-slate-400 hover:text-white rounded-md transition-all shrink-0" title="Generar QR">
                                     <QrCode size={16} />
                                 </button>
-                                <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="flex-1 py-1.5 bg-slate-50 dark:bg-white/5 group-hover:bg-blue-600 text-slate-500 group-hover:text-white rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all">
+                                <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="flex-1 py-1.5 bg-slate-50 dark:bg-white/5 group-hover:bg-[hsl(var(--primary))] text-slate-500 group-hover:text-white rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all">
                                     Panel de Asistencia
                                 </button>
                                 <div className="relative shrink-0" onClick={e => e.stopPropagation()}>
@@ -825,16 +825,16 @@ export default function EventsPage() {
                                         <MoreVertical size={16} />
                                     </button>
                                     {menuOpenId === ev.id && (
-                                        <div className="absolute right-0 bottom-12 z-50 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl overflow-hidden w-40 animate-in fade-in slide-in-from-bottom-2">
+                                        <div className="absolute right-0 bottom-12 z-50 bg-[hsl(var(--bg-primary))] dark:bg-[#18181b] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl overflow-hidden w-40 animate-in fade-in slide-in-from-bottom-2">
                                             <button
                                                 onClick={() => { setEditingEvent({ ...ev, target_role_ids: getTargetRoleIds(ev) }); setMenuOpenId(null); }}
                                                 className="w-full flex items-center gap-3 px-4 py-1.5 text-sm font-bold text-slate-700 dark:text-white hover:bg-blue-50 dark:hover:bg-white/5 transition-all"
                                             >
-                                                <Pencil size={14} className="text-blue-500" /> Editar
+                                                <Pencil size={14} className="text-[hsl(var(--primary))]" /> Editar
                                             </button>
                                             <button
                                                 onClick={() => { setDeletingEventId(ev.id); setMenuOpenId(null); }}
-                                                className="w-full flex items-center gap-3 px-4 py-1.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all"
+                                                className="w-full flex items-center gap-3 px-4 py-1.5 text-sm font-bold text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/10 transition-all"
                                             >
                                                 <Trash2 size={14} /> Eliminar
                                             </button>
@@ -851,18 +851,18 @@ export default function EventsPage() {
 
             {/* LIST VIEW */}
             {viewType === 'list' && (
-                <div className="bg-white dark:bg-[#1e1f21] rounded-md border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-white/5">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-white/5">
                     {events.map(ev => {
                         const attendanceStat = getEventAttendanceStat(ev);
                         return (
                         <div key={ev.id} className="flex items-center gap-4 px-4 py-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
-                            <div className="w-9 h-9 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0">
+                            <div className="w-9 h-9 rounded-md bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
                                 <Calendar size={16} />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p 
                                     onClick={() => router.push(`/evangelism/events/${ev.id}`)}
-                                    className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate cursor-pointer hover:text-blue-600 transition-colors"
+                                    className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate cursor-pointer hover:text-[hsl(var(--primary))] transition-colors"
                                 >
                                     {ev.name}
                                 </p>
@@ -870,14 +870,14 @@ export default function EventsPage() {
                             </div>
                             <div className="flex gap-2 items-center">
                                 {ev.status === 'CANCELLED' && (
-                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400" title={ev.cancellation_reason}>
+                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-red-100 dark:bg-red-900/20 text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]" title={ev.cancellation_reason}>
                                         Cancelado
                                     </span>
                                 )}
                                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-slate-100 dark:bg-white/10 text-slate-500">
                                     {getTargetRoleLabel(ev)}
                                 </span>
-                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300">
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-blue-300">
                                     Universo: {attendanceStat.expected}
                                 </span>
                                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-300">
@@ -887,10 +887,10 @@ export default function EventsPage() {
                                     {EVENT_TYPE_LABEL[ev.event_type] ?? ev.event_type}
                                 </span>
                             </div>
-                            <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[10px] font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity mr-2">
+                            <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[10px] font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity mr-2">
                                 QR
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[10px] font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[10px] font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity">
                                 Asistencia
                             </button>
                         </div>
@@ -900,7 +900,7 @@ export default function EventsPage() {
             )}
 
             {viewType === 'table' && (
-                <div className="overflow-hidden rounded-md border border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] shadow-sm">
+                <div className="overflow-hidden rounded-md border border-slate-100 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-sm">
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 dark:bg-white/5">
                             <tr>
@@ -917,7 +917,7 @@ export default function EventsPage() {
                                 return (
                                     <tr key={event.id} className="border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                                         <td className="px-3 py-2">
-                                            <button onClick={() => router.push(`/evangelism/events/${event.id}`)} className="font-bold text-slate-800 dark:text-slate-100 hover:text-blue-600">
+                                            <button onClick={() => router.push(`/evangelism/events/${event.id}`)} className="font-bold text-slate-800 dark:text-slate-100 hover:text-[hsl(var(--primary))]">
                                                 {event.name}
                                             </button>
                                         </td>
@@ -938,7 +938,7 @@ export default function EventsPage() {
             {(viewType === 'board' || viewType === 'kanban') && (
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     {boardColumns.map((column) => (
-                        <section key={column.key} className="rounded-md border border-slate-100 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
+                        <section key={column.key} className="rounded-md border border-slate-100 bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
                             <header className="mb-4 flex items-center justify-between">
                                 <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{column.label}</h3>
                                 <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-500 dark:bg-white/10">
@@ -971,19 +971,19 @@ export default function EventsPage() {
             )}
 
             {viewType === 'calendar' && (
-                <div className="rounded-md border border-slate-100 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
+                <div className="rounded-md border border-slate-100 bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
                     <UniversalCalendarView events={calendarEvents} title="Calendario de eventos" />
                 </div>
             )}
 
             {viewType === 'gantt' && (
-                <div className="rounded-md border border-slate-100 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
+                <div className="rounded-md border border-slate-100 bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
                     <UniversalGanttView items={ganttItems} moduleName="Eventos" />
                 </div>
             )}
 
             {viewType === 'wiki' && (
-                <section className="rounded-md border border-slate-100 bg-white p-3 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
+                <section className="rounded-md border border-slate-100 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
                     <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Wiki de eventos</p>
                     <textarea
                         value={wikiNotes}
@@ -1010,7 +1010,7 @@ export default function EventsPage() {
                         form="create-event-form"
                         type="submit"
                         disabled={savingCreateEvent}
-                        className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:active:scale-100"
+                        className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:active:scale-100"
                     >
                         {savingCreateEvent ? 'Guardando...' : 'Guardar'} <Check size={14} />
                     </button>
@@ -1024,7 +1024,7 @@ export default function EventsPage() {
                         required
                         value={newEvent.name}
                         onChange={e => setNewEvent({ ...newEvent, name: e.target.value })}
-                        className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
+                        className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
                         placeholder="Ej: Servicio Dominical"
                     />
                 </div>
@@ -1035,7 +1035,7 @@ export default function EventsPage() {
                         required
                         value={newEvent.event_type}
                         onChange={e => setNewEvent({ ...newEvent, event_type: e.target.value })}
-                        className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
+                        className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
                     >
                         <option value="PERMANENT">Semanal / Rutinario</option>
                         <option value="MONTHLY">Mensual</option>
@@ -1059,7 +1059,7 @@ export default function EventsPage() {
                                 target_role_ids: e.target.value === 'ROLE' ? newEvent.target_role_ids : [],
                                 target_persona_ids: e.target.value === 'MANUAL' ? newEvent.target_persona_ids : [],
                             })}
-                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
                         >
                             <option value="ALL">Toda la iglesia</option>
                             <option value="ROLE">Uno o varios roles</option>
@@ -1076,7 +1076,7 @@ export default function EventsPage() {
                                 const selectedValues = Array.from(e.target.selectedOptions).map((option) => option.value);
                                 setNewEvent({ ...newEvent, target_role_ids: selectedValues, target_role_id: selectedValues[0] || '' });
                             }}
-                            className="min-h-[140px] w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white disabled:opacity-50"
+                            className="min-h-[140px] w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white disabled:opacity-50"
                         >
                             {roles.map((role) => (
                                 <option key={role.id} value={role.id}>{role.name}</option>
@@ -1095,14 +1095,14 @@ export default function EventsPage() {
                             <button
                                 type="button"
                                 onClick={addSuggestedAudiencePresets}
-                                className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-white/10"
+                                className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-white/10"
                             >
                                 Sugerencias
                             </button>
                             <button
                                 type="button"
                                 onClick={() => saveAudiencePreset(newEvent)}
-                                className="rounded-lg bg-blue-600 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-blue-700"
+                                className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))]"
                             >
                                 Guardar actual
                             </button>
@@ -1114,7 +1114,7 @@ export default function EventsPage() {
                                 Aun no hay plantillas guardadas
                             </div>
                         ) : audiencePresets.map((preset) => (
-                            <div key={preset.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-1.5">
+                            <div key={preset.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-4 py-1.5">
                                 <div className="min-w-0">
                                     <p className="truncate text-sm font-bold text-slate-800 dark:text-white">{preset.name}</p>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
@@ -1150,7 +1150,7 @@ export default function EventsPage() {
                     <div className="space-y-3">
                         <div className="flex items-center justify-between gap-3">
                             <label className="font-semibold text-slate-400 uppercase tracking-wide">Personas esperadas</label>
-                            <span className="rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
+                            <span className="rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-blue-300">
                                 {newEvent.target_persona_ids.length} seleccionadas
                             </span>
                         </div>
@@ -1158,7 +1158,7 @@ export default function EventsPage() {
                             value={createManualSearch}
                             onChange={e => setCreateManualSearch(e.target.value)}
                             placeholder="Buscar por nombre, correo o rol..."
-                            className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                            className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
                         />
                         <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-3">
                             {createManualMembers.map((member) => {
@@ -1176,14 +1176,14 @@ export default function EventsPage() {
                                         className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${
                                             isSelected
                                                 ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'
-                                                : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/5'
+                                                : 'border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5'
                                         }`}
                                     >
                                         <div>
                                             <p className="text-sm font-bold text-slate-800 dark:text-white">{member.nombre_completo}</p>
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{member.church_role || 'Sin rol'}</p>
                                         </div>
-                                        <span className={`text-[10px] font-semibold uppercase tracking-wide ${isSelected ? 'text-blue-600 dark:text-blue-300' : 'text-slate-400'}`}>
+                                        <span className={`text-[10px] font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] dark:text-blue-300' : 'text-slate-400'}`}>
                                             {isSelected ? 'Incluida' : 'Agregar'}
                                         </span>
                                     </button>
@@ -1204,7 +1204,7 @@ export default function EventsPage() {
                             required
                             value={newEvent.start_time}
                             onChange={e => setNewEvent({ ...newEvent, start_time: e.target.value })}
-                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -1214,7 +1214,7 @@ export default function EventsPage() {
                             required
                             value={newEvent.end_time}
                             onChange={e => setNewEvent({ ...newEvent, end_time: e.target.value })}
-                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
                         />
                     </div>
                 </div>
@@ -1225,7 +1225,7 @@ export default function EventsPage() {
                         <select
                             value={newEvent.day_of_week}
                             onChange={e => setNewEvent({ ...newEvent, day_of_week: e.target.value })}
-                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
                         >
                             {DAY_LABELS.map((d, i) => <option key={i} value={i}>{d}</option>)}
                         </select>
@@ -1239,7 +1239,7 @@ export default function EventsPage() {
                             type="date"
                             value={newEvent.fixed_date}
                             onChange={e => setNewEvent({ ...newEvent, fixed_date: e.target.value })}
-                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
                         />
                     </div>
                 )}
@@ -1250,7 +1250,7 @@ export default function EventsPage() {
                         <input
                             value={newEvent.month_day}
                             onChange={e => setNewEvent({ ...newEvent, month_day: e.target.value })}
-                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
                             placeholder="Ej: 15 de cada mes, o 24 Dic"
                         />
                     </div>
@@ -1262,7 +1262,7 @@ export default function EventsPage() {
                         value={newEvent.description}
                         onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
                         rows={3}
-                        className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white resize-none"
+                        className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white resize-none"
                         placeholder="Breve descripción del evento..."
                     />
                 </div>
@@ -1325,7 +1325,7 @@ export default function EventsPage() {
                             <button
                                 onClick={handleScanToken}
                                 disabled={isScanning || !scannerToken}
-                                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all"
+                                className="px-4 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all"
                             >
                                 {isScanning ? 'Validando...' : 'Validar'}
                             </button>
@@ -1370,7 +1370,7 @@ export default function EventsPage() {
                     <button
                         onClick={clearFilteredMembers}
                         disabled={filteredMembers.length === 0}
-                        className="px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300 transition-all hover:bg-slate-50 disabled:opacity-50"
+                        className="px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300 transition-all hover:bg-slate-50 disabled:opacity-50"
                     >
                         Limpiar filtrados
                     </button>
@@ -1389,15 +1389,15 @@ export default function EventsPage() {
 
                 {!attendanceLoading && (
                     <div className="flex flex-wrap gap-2">
-                        <span className="rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                        <span className="rounded-full border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
                             {selectedEvent?.target_audience === 'ROLE'
                                 ? `Universo: ${getTargetRoleLabel(selectedEvent)}`
                                 : 'Universo: toda la iglesia'}
                         </span>
-                        <span className="rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                        <span className="rounded-full border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
                             {attendanceRoleFilter === 'ALL' ? 'Todos los roles visibles' : attendanceRoleFilter}
                         </span>
-                        <span className="rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                        <span className="rounded-full border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
                             {attendanceStatusFilter === 'ALL' ? 'Vista completa' : attendanceStatusFilter === 'PENDING' ? 'Solo pendientes' : 'Solo presentes'}
                         </span>
                     </div>
@@ -1418,7 +1418,7 @@ export default function EventsPage() {
                         >
                             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors shrink-0 ${attendedMemberIds.includes(member.id)
                                 ? 'bg-emerald-500 border-emerald-500 text-white'
-                                : 'border-slate-300 dark:border-white/20 bg-white dark:bg-black/20'
+                                : 'border-slate-300 dark:border-white/20 bg-[hsl(var(--bg-primary))] dark:bg-black/20'
                             }`}>
                                 {attendedMemberIds.includes(member.id) && <Check size={12} strokeWidth={4} />}
                             </div>
@@ -1450,14 +1450,14 @@ export default function EventsPage() {
             actions={
                 <button
                     onClick={downloadQr}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                    className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                 >
                     <Download size={14} /> Descargar
                 </button>
             }
         >
             <div className="flex flex-col items-center justify-center space-y-3 py-1.5">
-                <div className="p-4 bg-white rounded-md shadow-xl border border-slate-100 dark:border-white/5 flex items-center justify-center">
+                <div className="p-4 bg-[hsl(var(--bg-primary))] rounded-md shadow-xl border border-slate-100 dark:border-white/5 flex items-center justify-center">
                     <QRCodeSVG 
                         id="event-qr-code"
                         value={typeof window !== 'undefined' ? `${window.location.origin}/public/register?event_id=${selectedEvent?.id}` : ''}
@@ -1469,7 +1469,7 @@ export default function EventsPage() {
                 <div className="text-center space-y-2">
                     <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Escanea para registrarte</p>
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Enlace de Registro</p>
-                    <a href={typeof window !== 'undefined' ? `${window.location.origin}/public/register?event_id=${selectedEvent?.id}` : '#'} target="_blank" rel="noreferrer" className="text-xs font-medium text-blue-500 hover:text-blue-600 transition-colors break-all bg-blue-50 dark:bg-blue-500/10 px-4 py-2 rounded-md inline-block mt-2">
+                    <a href={typeof window !== 'undefined' ? `${window.location.origin}/public/register?event_id=${selectedEvent?.id}` : '#'} target="_blank" rel="noreferrer" className="text-xs font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors break-all bg-blue-50 dark:bg-blue-500/10 px-4 py-2 rounded-md inline-block mt-2">
                         {typeof window !== 'undefined' ? `${window.location.origin}/public/register?event_id=${selectedEvent?.id}` : ''}
                     </a>
                 </div>
@@ -1487,18 +1487,18 @@ export default function EventsPage() {
                         <button disabled={deletingEventLoadingId === deletingEventId} onClick={() => setDeletingEventId(null)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
                             Cancelar
                         </button>
-                        <button onClick={() => deletingEventId && handleDeleteEvent(deletingEventId)} disabled={deletingEventLoadingId === deletingEventId} className="px-3 py-2 bg-red-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-red-500/20 hover:bg-red-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
+                        <button onClick={() => deletingEventId && handleDeleteEvent(deletingEventId)} disabled={deletingEventLoadingId === deletingEventId} className="px-3 py-2 bg-[hsl(var(--destructive))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-red-500/20 hover:bg-[hsl(var(--destructive))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
                             <Trash2 size={14} /> Eliminar
                         </button>
                     </>
                 }
             >
                 <div className="flex flex-col items-center text-center p-4 bg-red-50 dark:bg-red-900/10 rounded-md border border-red-100 dark:border-red-900/30">
-                    <div className="size-8 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">
+                    <div className="size-8 bg-red-100 dark:bg-red-900/40 text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] rounded-full flex items-center justify-center mb-4">
                         <Trash2 size={24} />
                     </div>
                     <p className="text-sm text-red-900 dark:text-red-200 font-bold mb-2">Se eliminará todo el historial</p>
-                    <p className="text-xs text-red-700 dark:text-red-300">Esta acción también borrará los registros de asistencia asociados. No podrás recuperar esta información.</p>
+                    <p className="text-xs text-[hsl(var(--destructive))] dark:text-red-300">Esta acción también borrará los registros de asistencia asociados. No podrás recuperar esta información.</p>
                 </div>
             </WorkspaceDrawer>
 
@@ -1513,7 +1513,7 @@ export default function EventsPage() {
                         <button disabled={!!editingEvent && updatingEventId === editingEvent.id} onClick={() => setEditingEvent(null)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
                             Cancelar
                         </button>
-                        <button disabled={!editingEvent || updatingEventId === editingEvent.id} onClick={() => editingEvent && handleUpdateEvent(editingEvent.id, { name: editingEvent.name, description: editingEvent.description, location: editingEvent.location, status: editingEvent.status, cancellation_reason: editingEvent.cancellation_reason, start_time: editingEvent.start_time, end_time: editingEvent.end_time, target_audience: editingEvent.target_audience || 'ALL', target_role_id: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids?.[0] || editingEvent.target_role_id) : null, target_role_ids: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [], target_persona_ids: (editingEvent.target_audience || 'ALL') === 'MANUAL' ? (editingEvent.target_persona_ids || []) : [] })} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
+                        <button disabled={!editingEvent || updatingEventId === editingEvent.id} onClick={() => editingEvent && handleUpdateEvent(editingEvent.id, { name: editingEvent.name, description: editingEvent.description, location: editingEvent.location, status: editingEvent.status, cancellation_reason: editingEvent.cancellation_reason, start_time: editingEvent.start_time, end_time: editingEvent.end_time, target_audience: editingEvent.target_audience || 'ALL', target_role_id: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids?.[0] || editingEvent.target_role_id) : null, target_role_ids: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [], target_persona_ids: (editingEvent.target_audience || 'ALL') === 'MANUAL' ? (editingEvent.target_persona_ids || []) : [] })} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
                             {editingEvent && updatingEventId === editingEvent.id ? 'Guardando...' : 'Guardar'} <Pencil size={14} />
                         </button>
                     </>
@@ -1523,14 +1523,14 @@ export default function EventsPage() {
                     <div className="space-y-3">
                         <div className="space-y-1.5">
                             <label className="font-semibold text-slate-400 uppercase tracking-wide">Nombre</label>
-                            <input type="text" value={editingEvent.name} onChange={e => setEditingEvent({...editingEvent, name: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
+                            <input type="text" value={editingEvent.name} onChange={e => setEditingEvent({...editingEvent, name: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="font-semibold text-slate-400 uppercase tracking-wide">Estado</label>
                             <select 
                                 value={editingEvent.status || 'SCHEDULED'} 
                                 onChange={e => setEditingEvent({...editingEvent, status: e.target.value})} 
-                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
                             >
                                 <option value="SCHEDULED">Programado</option>
                                 <option value="COMPLETED">Realizado</option>
@@ -1549,7 +1549,7 @@ export default function EventsPage() {
                                         target_role_ids: e.target.value === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [],
                                         target_persona_ids: e.target.value === 'MANUAL' ? (editingEvent.target_persona_ids || []) : [],
                                     })}
-                                    className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
+                                    className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
                                 >
                                     <option value="ALL">Toda la iglesia</option>
                                     <option value="ROLE">Uno o varios roles</option>
@@ -1566,7 +1566,7 @@ export default function EventsPage() {
                                         const selectedValues = Array.from(e.target.selectedOptions).map((option) => Number(option.value));
                                         setEditingEvent({ ...editingEvent, target_role_ids: selectedValues, target_role_id: selectedValues[0] || null });
                                     }}
-                                    className="min-h-[140px] w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white disabled:opacity-50"
+                                    className="min-h-[140px] w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white disabled:opacity-50"
                                 >
                                     {roles.map((role) => (
                                         <option key={role.id} value={role.id}>{role.name}</option>
@@ -1581,15 +1581,15 @@ export default function EventsPage() {
                                     <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Aplica o guarda universos reutilizables</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button type="button" onClick={addSuggestedAudiencePresets} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-white/10">Sugerencias</button>
-                                    <button type="button" onClick={() => saveAudiencePreset({ target_audience: editingEvent.target_audience || 'ALL', target_role_ids: editingEvent.target_role_ids || [], target_persona_ids: editingEvent.target_persona_ids || [] })} className="rounded-lg bg-blue-600 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-blue-700">Guardar actual</button>
+                                    <button type="button" onClick={addSuggestedAudiencePresets} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-white/10">Sugerencias</button>
+                                    <button type="button" onClick={() => saveAudiencePreset({ target_audience: editingEvent.target_audience || 'ALL', target_role_ids: editingEvent.target_role_ids || [], target_persona_ids: editingEvent.target_persona_ids || [] })} className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))]">Guardar actual</button>
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 {audiencePresets.length === 0 ? (
                                     <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 px-4 py-2 text-center text-sm text-slate-400">Aun no hay plantillas guardadas</div>
                                 ) : audiencePresets.map((preset) => (
-                                    <div key={preset.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-1.5">
+                                    <div key={preset.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-4 py-1.5">
                                         <div className="min-w-0">
                                             <p className="truncate text-sm font-bold text-slate-800 dark:text-white">{preset.name}</p>
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{preset.target_audience === 'ALL' ? 'Toda la iglesia' : preset.target_audience === 'ROLE' ? `${preset.target_role_ids.length} roles` : `${preset.target_persona_ids.length} personas`}</p>
@@ -1606,19 +1606,19 @@ export default function EventsPage() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between gap-3">
                                     <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Personas esperadas</label>
-                                    <span className="rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">{(editingEvent.target_persona_ids || []).length} seleccionadas</span>
+                                    <span className="rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-blue-300">{(editingEvent.target_persona_ids || []).length} seleccionadas</span>
                                 </div>
-                                <input value={editManualSearch} onChange={e => setEditManualSearch(e.target.value)} placeholder="Buscar por nombre, correo o rol..." className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
+                                <input value={editManualSearch} onChange={e => setEditManualSearch(e.target.value)} placeholder="Buscar por nombre, correo o rol..." className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                                 <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-3">
                                     {editManualMembers.map((member) => {
                                         const isSelected = (editingEvent.target_persona_ids || []).includes(member.id);
                                         return (
-                                            <button key={member.id} type="button" onClick={() => setEditingEvent({ ...editingEvent, target_persona_ids: isSelected ? (editingEvent.target_persona_ids || []).filter((value) => value !== member.id) : [...(editingEvent.target_persona_ids || []), member.id], })} className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${isSelected ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20' : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/5'}`}>
+                                            <button key={member.id} type="button" onClick={() => setEditingEvent({ ...editingEvent, target_persona_ids: isSelected ? (editingEvent.target_persona_ids || []).filter((value) => value !== member.id) : [...(editingEvent.target_persona_ids || []), member.id], })} className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${isSelected ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20' : 'border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5'}`}>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-800 dark:text-white">{member.nombre_completo}</p>
                                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{member.church_role || 'Sin rol'}</p>
                                                 </div>
-                                                <span className={`text-[10px] font-semibold uppercase tracking-wide ${isSelected ? 'text-blue-600 dark:text-blue-300' : 'text-slate-400'}`}>{isSelected ? 'Incluida' : 'Agregar'}</span>
+                                                <span className={`text-[10px] font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] dark:text-blue-300' : 'text-slate-400'}`}>{isSelected ? 'Incluida' : 'Agregar'}</span>
                                             </button>
                                         );
                                     })}
@@ -1628,26 +1628,26 @@ export default function EventsPage() {
                         )}
                         {editingEvent.status === 'CANCELLED' && (
                             <div className="animate-in fade-in slide-in-from-top-2 space-y-1.5">
-                                <label className="text-[10px] font-semibold uppercase tracking-wide text-red-400">Razón de Cancelación *</label>
-                                <textarea value={editingEvent.cancellation_reason || ''} onChange={e => setEditingEvent({...editingEvent, cancellation_reason: e.target.value})} rows={3} placeholder="¿Por qué no se realizó este evento?" className="w-full px-4 py-1.5 rounded-lg border border-red-200 dark:border-white/10 bg-red-50 dark:bg-black/20 focus:ring-2 focus:ring-red-500/20 outline-none font-bold text-sm text-red-900 dark:text-red-200 resize-none placeholder:text-red-300 dark:placeholder:text-red-700" />
+                                <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">Razón de Cancelación *</label>
+                                <textarea value={editingEvent.cancellation_reason || ''} onChange={e => setEditingEvent({...editingEvent, cancellation_reason: e.target.value})} rows={3} placeholder="¿Por qué no se realizó este evento?" className="w-full px-4 py-1.5 rounded-lg border border-red-200 dark:border-white/10 bg-red-50 dark:bg-black/20 focus:ring-2 focus:ring-red-500/20 outline-none font-bold text-sm text-red-900 dark:text-red-200 resize-none placeholder:text-red-300 dark:placeholder:text-[hsl(var(--destructive))]" />
                             </div>
                         )}
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Descripción</label>
-                            <textarea value={editingEvent.description || ''} onChange={e => setEditingEvent({...editingEvent, description: e.target.value})} rows={3} className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white resize-none" />
+                            <textarea value={editingEvent.description || ''} onChange={e => setEditingEvent({...editingEvent, description: e.target.value})} rows={3} className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white resize-none" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ubicación</label>
-                            <input type="text" value={editingEvent.location || ''} onChange={e => setEditingEvent({...editingEvent, location: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
+                            <input type="text" value={editingEvent.location || ''} onChange={e => setEditingEvent({...editingEvent, location: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Hora de Inicio</label>
-                                <input type="time" value={editingEvent.start_time || ''} onChange={e => setEditingEvent({...editingEvent, start_time: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
+                                <input type="time" value={editingEvent.start_time || ''} onChange={e => setEditingEvent({...editingEvent, start_time: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Hora de Finalización</label>
-                                <input type="time" value={editingEvent.end_time || ''} onChange={e => setEditingEvent({...editingEvent, end_time: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
+                                <input type="time" value={editingEvent.end_time || ''} onChange={e => setEditingEvent({...editingEvent, end_time: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                             </div>
                         </div>
                     </div>

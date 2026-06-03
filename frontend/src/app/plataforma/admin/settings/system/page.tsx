@@ -573,16 +573,16 @@ export default function SystemSettings() {
     const settingsSidebar = (
         <div className="flex flex-col h-full overflow-hidden">
             <div className="p-4 border-b border-slate-100 dark:border-white/5 space-y-4">
-                <div className="size-8 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-xl">
+                <div className="size-8 rounded-lg bg-slate-900 dark:bg-[hsl(var(--bg-primary))] flex items-center justify-center text-white dark:text-slate-900 shadow-xl">
                     <Zap size={32} />
                 </div>
                 <div>
                     <h3 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">Motor Core</h3>
-                    <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wide">Configuración Global</p>
+                    <p className="text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide">Configuración Global</p>
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                <button className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-white/5 shadow-md border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 font-bold text-xs"><div className="flex items-center gap-3"><Settings size={16} /> Sistema Base</div> <ChevronRight size={14} /></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-md border border-blue-500/20 rounded-lg text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs"><div className="flex items-center gap-3"><Settings size={16} /> Sistema Base</div> <ChevronRight size={14} /></button>
                 <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Shield size={16} /> Permisos y Roles</div></button>
                 <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Database size={16} /> Respaldos</div></button>
                 <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Activity size={16} /> Monitor de Salud</div></button>
@@ -632,11 +632,11 @@ export default function SystemSettings() {
                     </section>
 
                     {/* Feature Flags Grid */}
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
                         <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-blue-600/5 rounded-full blur-[100px]" />
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
-                                <Layers size={20} className="text-blue-600" />
+                                <Layers size={20} className="text-[hsl(var(--primary))]" />
                                 <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Feature Flags & Módulos</h3>
                             </div>
 
@@ -680,9 +680,9 @@ export default function SystemSettings() {
                     </section>
 
                     {/* Integrated Providers */}
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center gap-3">
-                            <Globe size={20} className="text-blue-600" />
+                            <Globe size={20} className="text-[hsl(var(--primary))]" />
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Pasarelas & Comunicaciones</h3>
                         </div>
 
@@ -693,7 +693,7 @@ export default function SystemSettings() {
                         </div>
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between gap-3">
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Rollout Segmentado</h3>
                             <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Roles y porcentaje</span>
@@ -728,7 +728,7 @@ export default function SystemSettings() {
                         />
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-5">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-5">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                                 <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Auditoría de Flags</h3>
@@ -743,7 +743,7 @@ export default function SystemSettings() {
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
-                                <button onClick={scanIncidents} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-blue-600 hover:bg-blue-50 dark:hover:bg-white/10">
+                                <button onClick={scanIncidents} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-white/10">
                                     {actionLoading === 'scan-incidents' ? 'Escaneando...' : 'Scan Incidents'}
                                 </button>
                                 <button onClick={() => downloadAudit('json')} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export JSON</button>
@@ -754,7 +754,7 @@ export default function SystemSettings() {
                             <select
                                 value={auditFilters.action}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, action: event.target.value }))}
-                                className="h-10 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200"
+                                className="h-10 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-3 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200"
                             >
                                 <option value="">Todas las acciones</option>
                                 <option value="update_flags">update_flags</option>
@@ -763,7 +763,7 @@ export default function SystemSettings() {
                             <select
                                 value={auditFilters.feature}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, feature: event.target.value }))}
-                                className="h-10 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200"
+                                className="h-10 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-3 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200"
                             >
                                 <option value="">Todas las features</option>
                                 {Object.keys(config?.features_enabled || {}).map((feature) => (
@@ -774,7 +774,7 @@ export default function SystemSettings() {
                                 value={auditFilters.actor}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, actor: event.target.value }))}
                                 placeholder="Filtrar actor (id usuario)"
-                                className="h-10 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-xs font-bold text-slate-600 dark:text-slate-200"
+                                className="h-10 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-3 text-xs font-bold text-slate-600 dark:text-slate-200"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -872,11 +872,11 @@ export default function SystemSettings() {
                         )}
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-5">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-5">
                         <div className="flex items-center justify-between gap-3">
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Incidentes de Flags</h3>
                             <div className="flex items-center gap-2">
-                                <select value={incidentStatsWindow} onChange={(event) => setIncidentStatsWindow(event.target.value as 'weekly' | 'monthly')} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
+                                <select value={incidentStatsWindow} onChange={(event) => setIncidentStatsWindow(event.target.value as 'weekly' | 'monthly')} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
                                     <option value="weekly">weekly</option>
                                     <option value="monthly">monthly</option>
                                 </select>
@@ -931,11 +931,11 @@ export default function SystemSettings() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 space-y-2">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Target MTTA (min)</p>
-                                <input type="number" min={1} max={10080} value={slaTargets.mtta} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mtta: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/30 px-3 text-xs font-bold" />
+                                <input type="number" min={1} max={10080} value={slaTargets.mtta} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mtta: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/30 px-3 text-xs font-bold" />
                             </div>
                             <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 space-y-2">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Target MTTR (min)</p>
-                                <input type="number" min={1} max={10080} value={slaTargets.mttr} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mttr: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/30 px-3 text-xs font-bold" />
+                                <input type="number" min={1} max={10080} value={slaTargets.mttr} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mttr: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/30 px-3 text-xs font-bold" />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -950,7 +950,7 @@ export default function SystemSettings() {
                                                 <span className="font-semibold text-slate-500">{row.date}</span>
                                                 <span className="text-slate-600">+{row.created}</span>
                                                 <span className="text-emerald-600">-{row.closed}</span>
-                                                <span className="text-blue-600">ack {row.acknowledged}</span>
+                                                <span className="text-[hsl(var(--primary))]">ack {row.acknowledged}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -984,13 +984,13 @@ export default function SystemSettings() {
                         <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Compliance Snapshot History</p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-                                <select value={compareSnapshotIds.from} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, from: event.target.value }))} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
+                                <select value={compareSnapshotIds.from} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, from: event.target.value }))} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
                                     <option value="">from snapshot</option>
                                     {complianceHistory.map((item) => (
                                         <option key={`from-${item.snapshot_id}`} value={item.snapshot_id}>{item.snapshot_id}</option>
                                     ))}
                                 </select>
-                                <select value={compareSnapshotIds.to} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, to: event.target.value }))} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
+                                <select value={compareSnapshotIds.to} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, to: event.target.value }))} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
                                     <option value="">to snapshot</option>
                                     {complianceHistory.map((item) => (
                                         <option key={`to-${item.snapshot_id}`} value={item.snapshot_id}>{item.snapshot_id}</option>
@@ -1001,7 +1001,7 @@ export default function SystemSettings() {
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 mb-3">
-                                <input type="number" min={1} max={3650} value={historyRetentionDays} onChange={(event) => setHistoryRetentionDays(Number(event.target.value) || 90)} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200" />
+                                <input type="number" min={1} max={3650} value={historyRetentionDays} onChange={(event) => setHistoryRetentionDays(Number(event.target.value) || 90)} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200" />
                                 <button onClick={cleanupComplianceHistory} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10">
                                     {actionLoading === 'cleanup-history' ? 'Cleaning...' : 'Cleanup History'}
                                 </button>
@@ -1087,7 +1087,7 @@ export default function SystemSettings() {
                                 <select
                                     value={compliancePolicy?.policy?.active_environment || 'production'}
                                     onChange={(event) => updateCompliancePolicy({ active_environment: event.target.value })}
-                                    className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200"
+                                    className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200"
                                 >
                                     <option value="development">development</option>
                                     <option value="staging">staging</option>
@@ -1116,14 +1116,14 @@ export default function SystemSettings() {
                             <div className="rounded-md border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 p-3 space-y-2">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Suppressions</p>
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                                    <select value={suppressionDraft.kind} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, kind: event.target.value }))} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
+                                    <select value={suppressionDraft.kind} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, kind: event.target.value }))} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
                                         <option value="severity">severity</option>
                                         <option value="feature">feature</option>
                                         <option value="metric_alert">metric_alert</option>
                                         <option value="all">all</option>
                                     </select>
-                                    <input value={suppressionDraft.value} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, value: event.target.value }))} placeholder="value" className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-bold" />
-                                    <input type="number" min={1} max={720} value={suppressionDraft.hours} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, hours: Number(event.target.value) || 24 }))} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-bold" />
+                                    <input value={suppressionDraft.value} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, value: event.target.value }))} placeholder="value" className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-[10px] font-bold" />
+                                    <input type="number" min={1} max={720} value={suppressionDraft.hours} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, hours: Number(event.target.value) || 24 }))} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-[10px] font-bold" />
                                     <button onClick={createSuppression} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-indigo-600">{actionLoading === 'create-suppression' ? 'Creating...' : 'Add'}</button>
                                 </div>
                                 {Array.isArray(compliancePolicy?.resolved?.suppressions) && compliancePolicy.resolved.suppressions.length > 0 ? (
@@ -1160,7 +1160,7 @@ export default function SystemSettings() {
                                                     'rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
                                                     incident.status === 'open' && 'bg-rose-50 text-rose-600',
                                                     incident.status === 'acknowledged' && 'bg-amber-50 text-amber-600',
-                                                    incident.status === 'silenced' && 'bg-blue-50 text-blue-600',
+                                                    incident.status === 'silenced' && 'bg-blue-50 text-[hsl(var(--primary))]',
                                                     incident.status === 'closed' && 'bg-emerald-50 text-emerald-600',
                                                 )}>{incident.status}</span>
                                             </div>
@@ -1169,10 +1169,10 @@ export default function SystemSettings() {
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">updated: {incident.updated_at ? new Date(incident.updated_at).toLocaleString() : 'n/a'}</p>
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             <button onClick={() => updateIncident(incident.id, 'acknowledge')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-600">Acknowledge</button>
-                                            <button onClick={() => updateIncident(incident.id, 'silence')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-blue-600">Silence 3h</button>
+                                            <button onClick={() => updateIncident(incident.id, 'silence')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Silence 3h</button>
                                             <button onClick={() => updateIncident(incident.id, 'reopen')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-amber-600">Reopen</button>
                                             <button onClick={() => updateIncident(incident.id, 'close')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Close</button>
-                                            <button onClick={() => addIncidentNote(incident.id)} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-blue-600">Add note</button>
+                                            <button onClick={() => addIncidentNote(incident.id)} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Add note</button>
                                         </div>
                                         {Array.isArray(incident.history) && incident.history.length > 0 ? (
                                             <div className="mt-3 rounded-md border border-slate-100 dark:border-white/10 bg-white/60 dark:bg-black/30 p-3">
@@ -1201,8 +1201,8 @@ export default function SystemSettings() {
                         <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/20 rounded-full blur-3xl" />
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
-                                <Lock size={20} className="text-blue-400" />
-                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-blue-400">Security Hardening</h4>
+                                <Lock size={20} className="text-[hsl(var(--primary))]" />
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Security Hardening</h4>
                             </div>
                             <div className="space-y-5">
                                 <SecurityCheck label="HSTS / SSL Enforcement" active />
@@ -1210,13 +1210,13 @@ export default function SystemSettings() {
                                 <SecurityCheck label="RBAC Policy v3.0" active />
                                 <SecurityCheck label="Data Encryption at Rest" active />
                             </div>
-                            <button className="w-full mt-3 py-2 bg-white text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:bg-slate-100 transition-all active:scale-95">
+                            <button className="w-full mt-3 py-2 bg-[hsl(var(--bg-primary))] text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:bg-slate-100 transition-all active:scale-95">
                                 Ver Registro de Amenazas
                             </button>
                         </div>
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between">
                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Estado del Cluster</h4>
                             <RefreshCw size={18} className="text-slate-300" />
@@ -1236,9 +1236,9 @@ export default function SystemSettings() {
 
 function HealthCard({ label, value, status, icon: Icon }: any) {
     return (
-        <div className="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all">
+        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all">
             <div className="flex justify-between items-start">
-                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Icon size={24} />
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
@@ -1263,9 +1263,9 @@ function FeatureToggle({ label, desc, active, onToggle, loading }: any) {
             </div>
             <button onClick={onToggle} disabled={loading} className="transition-all active:scale-90 disabled:opacity-60">
                 {loading ? (
-                    <Loader2 size={22} className="animate-spin text-blue-500" />
+                    <Loader2 size={22} className="animate-spin text-[hsl(var(--primary))]" />
                 ) : active ? (
-                    <ToggleRight size={32} className="text-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.2)]" />
+                    <ToggleRight size={32} className="text-[hsl(var(--primary))] shadow-[0_0_10px_rgba(37,99,235,0.2)]" />
                 ) : (
                     <ToggleLeft size={32} className="text-slate-300" />
                 )}
@@ -1300,10 +1300,10 @@ function ProviderRow({ icon: Icon, name, status, color, detail }: any) {
     const colors: any = {
         emerald: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20',
         amber: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
-        blue: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20'
+        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20'
     };
     return (
-        <div className="flex items-center justify-between p-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg group hover:border-blue-500/20 transition-all shadow-sm">
+        <div className="flex items-center justify-between p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg group hover:border-blue-500/20 transition-all shadow-sm">
             <div className="flex items-center gap-3">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", colors[color])}>
                     <Icon size={24} />
@@ -1336,7 +1336,7 @@ function ClusterNode({ label, status, load }: any) {
                 <div className={clsx("size-2 rounded-full", status === 'running' ? 'bg-emerald-500' : 'bg-slate-400')} />
                 <span className="font-semibold text-slate-700 dark:text-slate-200 uppercase">{label}</span>
             </div>
-            <span className="font-semibold text-blue-600 uppercase">{load}</span>
+            <span className="font-semibold text-[hsl(var(--primary))] uppercase">{load}</span>
         </div>
     );
 }
@@ -1357,7 +1357,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
         <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 space-y-4">
             <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">{label}</span>
-                <span className="font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded-full uppercase">{featureId}</span>
+                <span className="font-semibold bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] px-2 py-0.5 rounded-full uppercase">{featureId}</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -1365,7 +1365,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
                     <select
                         value={selectedRole}
                         onChange={(e) => onRoleChange(e.target.value)}
-                        className="w-full text-[11px] font-bold bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 outline-none"
+                        className="w-full text-[11px] font-bold bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 outline-none"
                     >
                         <option value="">Todos</option>
                         <option value="admin">Admin</option>
@@ -1385,7 +1385,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
             <button
                 onClick={() => onSave({ role: selectedRole, percent, usersAllow: rule?.users_allow || [], usersDeny: rule?.users_deny || [] })}
                 disabled={loading}
-                className="w-full py-3 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-blue-700 transition-all disabled:opacity-50"
+                className="w-full py-3 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-50"
             >
                 {loading ? 'Guardando...' : 'Aplicar Regla'}
             </button>

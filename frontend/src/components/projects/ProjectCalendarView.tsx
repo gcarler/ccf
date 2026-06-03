@@ -51,13 +51,13 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             {/* Calendar Header */}
             <div className="h-10 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-3 bg-slate-50/50 dark:bg-white/5 shrink-0">
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 bg-white dark:bg-black/20 p-0.5 rounded-md border border-slate-200 dark:border-white/10 shadow-sm">
+                    <div className="flex items-center gap-1 bg-[hsl(var(--bg-primary))] dark:bg-black/20 p-0.5 rounded-md border border-slate-200 dark:border-white/10 shadow-sm">
                         <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded text-slate-500 transition-all"><ChevronLeft size={14} /></button>
-                        <button onClick={() => setCurrentMonth(new Date())} className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors">Hoy</button>
+                        <button onClick={() => setCurrentMonth(new Date())} className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:text-[hsl(var(--primary))] transition-colors">Hoy</button>
                         <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded text-slate-500 transition-all"><ChevronRight size={14} /></button>
                     </div>
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-tighter">
@@ -65,13 +65,13 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                     </h3>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-blue-600 shadow-md">Mes</button>
+                    <button className="flex items-center gap-1.5 px-2 py-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] shadow-md">Mes</button>
                     <button className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-slate-400">Semana</button>
                 </div>
             </div>
 
             {/* Weekday Labels */}
-            <div className="grid grid-cols-7 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] z-10">
+            <div className="grid grid-cols-7 border-b border-slate-100 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] z-10">
                 {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
                     <div key={day} className="py-2 text-center font-semibold text-slate-400 uppercase tracking-wide">{day}</div>
                 ))}
@@ -88,7 +88,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                 <div 
                                     className={clsx(
                                         "min-h-12 p-1.5 border-r border-b border-slate-50 dark:border-white/5 transition-colors relative group cursor-pointer",
-                                        !isSameMonth(day, currentMonth) ? "bg-slate-50/50 dark:bg-black/10" : "bg-white dark:bg-[#1e1f21]",
+                                        !isSameMonth(day, currentMonth) ? "bg-slate-50/50 dark:bg-black/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]",
                                         isToday(day) && "bg-blue-50/20 dark:bg-blue-500/5",
                                         openPopoverDay === dayKey && "ring-2 ring-inset ring-blue-500/50"
                                     )}
@@ -96,7 +96,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                     <header className="flex justify-between items-center mb-2">
                                         <span className={clsx(
                                             "size-6 flex items-center justify-center font-semibold rounded-full transition-all",
-                                            isToday(day) ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"
+                                            isToday(day) ? "bg-[hsl(var(--primary))] text-white shadow-lg" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"
                                         )}>
                                             {format(day, 'd')}
                                         </span>
@@ -122,11 +122,11 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                                     "px-2 py-1 rounded-lg text-[10px] font-bold border cursor-pointer transition-all truncate shadow-sm",
                                                     task.status === 'COMPLETADA'
                                                         ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-                                                        : "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400"
+                                                        : "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"
                                                 )}
                                             >
                                                 <div className="flex items-center gap-1.5 truncate">
-                                                    {task.status === 'COMPLETADA' ? <CheckCircle2 size={10} /> : <div className="size-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]" />}
+                                                    {task.status === 'COMPLETADA' ? <CheckCircle2 size={10} /> : <div className="size-1.5 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_5px_rgba(59,130,246,0.5)]" />}
                                                     {task.title}
                                                 </div>
                                             </motion.div>
@@ -140,7 +140,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                     side="right" 
                                     align="start" 
                                     sideOffset={8}
-                                    className="z-[60] w-[340px] bg-white dark:bg-[#25262b] rounded-lg shadow-2xl shadow-black/10 dark:shadow-black/40 border border-slate-100 dark:border-white/10 p-3 font-display flex flex-col gap-3 animate-in fade-in zoom-in-95 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
+                                    className="z-[60] w-[340px] bg-[hsl(var(--bg-primary))] dark:bg-[#25262b] rounded-lg shadow-2xl shadow-black/10 dark:shadow-black/40 border border-slate-100 dark:border-white/10 p-3 font-display flex flex-col gap-3 animate-in fade-in zoom-in-95 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <div className="flex flex-col gap-1">
@@ -151,7 +151,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                             className="w-full text-base font-medium bg-transparent border-none outline-none placeholder:text-slate-400 text-slate-800 dark:text-white mb-2"
                                         />
                                         <div className="flex gap-2 text-[11px] font-bold uppercase tracking-wide">
-                                            <button className="flex-1 py-1 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 rounded-md border border-blue-100 dark:border-blue-500/20">Evento</button>
+                                            <button className="flex-1 py-1 bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))] rounded-md border border-blue-100 dark:border-blue-500/20">Evento</button>
                                             <button className="flex-1 py-1 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors">Tarea</button>
                                         </div>
                                     </div>
@@ -195,7 +195,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                         </button>
                                         <button
                                             onClick={() => setOpenPopoverDay(null)}
-                                            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 rounded-md transition-all active:scale-95"
+                                            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white shadow-md shadow-blue-500/20 rounded-md transition-all active:scale-95"
                                         >
                                             Guardar
                                         </button>

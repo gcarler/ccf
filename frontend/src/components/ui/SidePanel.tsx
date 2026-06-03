@@ -37,7 +37,7 @@ export default function SidePanel({
                     exit={{ x: "100%", opacity: 0 }}
                     transition={{ type: "spring", damping: 25, stiffness: 200 }}
                     className={clsx(
-                        "fixed top-0 right-0 h-screen z-[100] bg-white dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col",
+                        "fixed top-0 right-0 h-screen z-[100] bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col",
                         width
                     )}
                 >
@@ -81,7 +81,7 @@ export default function SidePanel({
                     {/* Content Area */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-3">
                         <header className="mb-3">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 mb-1">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-1">
                                 DETALLES DEL ÍTEM
                             </p>
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">

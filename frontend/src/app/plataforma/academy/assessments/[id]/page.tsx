@@ -88,12 +88,12 @@ export default function AssessmentPage() {
         }
     };
 
-    if (loading) return <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-blue-500" /></div>;
+    if (loading) return <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-[hsl(var(--primary))]" /></div>;
     if (!assessment) return <div className="p-3 text-center">Evaluacion no encontrada.</div>;
 
     if (result) {
         return (
-            <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden">
                 <WorkspaceToolbar
                     breadcrumbs={[
                         { label: 'Academia', icon: GraduationCap },
@@ -126,7 +126,7 @@ export default function AssessmentPage() {
                         <div className="space-y-3">
                             <button
                                 onClick={() => router.push('/plataforma/academy')}
-                                className="w-full py-1.5 bg-blue-600 text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                                className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
                             >
                                 Volver a la Academia
                             </button>
@@ -150,7 +150,7 @@ export default function AssessmentPage() {
     const answeredQuestionIds = new Set(answers.map((answer) => answer.question_id));
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap },
@@ -177,7 +177,7 @@ export default function AssessmentPage() {
                                     "w-full rounded-lg border p-4 text-left transition-all",
                                     currentStep === index
                                         ? "border-blue-500 bg-blue-50/70 dark:bg-blue-500/10"
-                                        : "border-slate-200 bg-white hover:border-blue-200 dark:border-white/10 dark:bg-white/5"
+                                        : "border-slate-200 bg-[hsl(var(--bg-primary))] hover:border-blue-200 dark:border-white/10 dark:bg-white/5"
                                 )}
                             >
                                 <div className="flex items-center justify-between gap-4">
@@ -200,7 +200,7 @@ export default function AssessmentPage() {
                 )}
 
                 {viewType === 'table' && (
- <div className="w-full overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+ <div className="w-full overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:bg-white/5">
                                 <tr>
@@ -219,7 +219,7 @@ export default function AssessmentPage() {
                                         <td className="px-4 py-1.5">
                                             <button
                                                 onClick={() => setCurrentStep(index)}
-                                                className="text-xs font-semibold uppercase tracking-wide text-blue-600"
+                                                className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]"
                                             >
                                                 {answeredQuestionIds.has(question.id) ? 'Revisar' : 'Responder'}
                                             </button>
@@ -237,7 +237,7 @@ export default function AssessmentPage() {
                     <div className="space-y-4">
                         <div className="flex justify-between items-end">
                             <div>
-                                <p className="font-semibold text-blue-500 uppercase tracking-wide mb-1">Pregunta {currentStep + 1} de {assessment.questions.length}</p>
+                                <p className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide mb-1">Pregunta {currentStep + 1} de {assessment.questions.length}</p>
                                 <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight leading-tight">
                                     {currentQuestion.question_text}
                                 </h3>
@@ -246,7 +246,7 @@ export default function AssessmentPage() {
                         </div>
                         <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                             <motion.div
-                                className="h-full bg-blue-600"
+                                className="h-full bg-[hsl(var(--primary))]"
                                 initial={{ width: 0 }}
                                 animate={{ width: `${((currentStep + 1) / assessment.questions.length) * 100}%` }}
                             />
@@ -271,15 +271,15 @@ export default function AssessmentPage() {
                                             className={clsx(
                                                 "w-full p-3 text-left rounded-lg border-2 transition-all group relative overflow-hidden",
                                                 answers.find(a => a.selected_option_id === option.id)
-                                                    ? "border-blue-600 bg-blue-600 text-white shadow-xl shadow-blue-500/20"
-                                                    : "border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-white dark:bg-white/5"
+                                                    ? "border-blue-600 bg-[hsl(var(--primary))] text-white shadow-xl shadow-blue-500/20"
+                                                    : "border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5"
                                             )}
                                         >
                                             <div className="flex items-center gap-4 relative z-10">
                                                 <div className={clsx(
                                                     "size-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
                                                     answers.find(a => a.selected_option_id === option.id)
-                                                        ? "border-white bg-white text-blue-600"
+                                                        ? "border-white bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))]"
                                                         : "border-slate-200 dark:border-white/10"
                                                 )}>
                                                     {answers.find(a => a.selected_option_id === option.id) && <CheckCircle2 size={16} />}
@@ -293,7 +293,7 @@ export default function AssessmentPage() {
                                         value={answers.find(a => a.question_id === currentQuestion.id)?.text_response || ''}
                                         onChange={(e) => handleAnswer(currentQuestion.id, { text_response: e.target.value })}
                                         placeholder="Escribe tu respuesta aqui..."
-                                        className="w-full bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 rounded-lg p-3 text-base font-medium outline-none focus:border-blue-500 transition-all min-h-[200px]"
+                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 rounded-lg p-3 text-base font-medium outline-none focus:border-blue-500 transition-all min-h-[200px]"
                                     />
                                 )}
                             </motion.div>
@@ -314,7 +314,7 @@ export default function AssessmentPage() {
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || answers.length < assessment.questions.length}
-                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
+                                className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
                             >
                                 {isSubmitting ? 'Enviando...' : 'Finalizar Evaluacion'}
                             </button>

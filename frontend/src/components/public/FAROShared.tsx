@@ -9,11 +9,11 @@ export function FAROHeader() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#1E1F21]/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-white/5">
             <div className="container mx-auto px-4 py-2 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2">
-                    <div className="bg-blue-600 p-1.5 rounded-md">
+                    <div className="bg-[hsl(var(--primary))] p-1.5 rounded-md">
                         <Church size={16} className="text-white" />
                     </div>
                     <span className="font-bold text-sm text-slate-900 dark:text-white">
-                        CCF <span className="text-blue-500">Platform</span>
+                        CCF <span className="text-[hsl(var(--primary))]">Platform</span>
                     </span>
                 </Link>
             </div>

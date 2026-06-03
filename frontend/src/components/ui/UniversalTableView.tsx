@@ -47,7 +47,7 @@ interface UniversalTableViewProps<T> {
 const STATUS_MAP: Record<string, { label: string; bg: string; text: string; dot: string }> = {
     todo:        { label: 'Pendiente',   bg: 'bg-amber-50 dark:bg-amber-900/20',   text: 'text-amber-700 dark:text-amber-400',   dot: 'bg-amber-400' },
     pending:     { label: 'Pendiente',   bg: 'bg-amber-50 dark:bg-amber-900/20',   text: 'text-amber-700 dark:text-amber-400',   dot: 'bg-amber-400' },
-    in_progress: { label: 'En Progreso', bg: 'bg-blue-50 dark:bg-blue-900/20',     text: 'text-blue-700 dark:text-blue-400',     dot: 'bg-blue-500'  },
+    in_progress: { label: 'En Progreso', bg: 'bg-blue-50 dark:bg-blue-900/20',     text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     dot: 'bg-[hsl(var(--primary))]'  },
     review:      { label: 'En Revisión', bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-700 dark:text-purple-400', dot: 'bg-purple-500' },
     done:        { label: 'Terminado',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',     text: 'text-cyan-700 dark:text-cyan-400',     dot: 'bg-cyan-500'  },
     completed:   { label: 'Completado',  bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' },
@@ -59,7 +59,7 @@ const PRIORITY_MAP: Record<string, { label: string; color: string; bg: string }>
     urgent: { label: 'Urgente', color: 'text-rose-600 dark:text-rose-400',   bg: 'bg-rose-50 dark:bg-rose-900/20'   },
     high:   { label: 'Alta',    color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/20' },
     medium: { label: 'Media',   color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20'  },
-    normal: { label: 'Normal',  color: 'text-blue-600 dark:text-blue-400',   bg: 'bg-blue-50 dark:bg-blue-900/20'   },
+    normal: { label: 'Normal',  color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20'   },
     low:    { label: 'Baja',    color: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800'    },
 };
 
@@ -99,7 +99,7 @@ function DateCellRenderer({ value }: any) {
 function UserCellRenderer({ value }: any) {
     return (
         <div className="flex items-center gap-2 h-full">
-            <div className="size-6 rounded-full bg-blue-100 dark:bg-white/10 flex items-center justify-center font-semibold text-blue-600 text-[10px] shrink-0">
+            <div className="size-6 rounded-full bg-blue-100 dark:bg-white/10 flex items-center justify-center font-semibold text-[hsl(var(--primary))] text-[10px] shrink-0">
                 {value ? String(value).charAt(0).toUpperCase() : <User size={11} className="text-slate-400" />}
             </div>
             <span className="text-[12px] text-slate-600 dark:text-slate-300 font-medium truncate">
@@ -123,7 +123,7 @@ function ProgressCellRenderer({ value }: any) {
     return (
         <div className="flex items-center gap-2 w-full">
             <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                <div className={clsx('h-full rounded-full', pct === 100 ? 'bg-emerald-500' : 'bg-blue-500')} style={{ width: `${pct}%` }} />
+                <div className={clsx('h-full rounded-full', pct === 100 ? 'bg-emerald-500' : 'bg-[hsl(var(--primary))]')} style={{ width: `${pct}%` }} />
             </div>
             <span className="font-semibold text-slate-400 tabular-nums text-[11px] w-8 text-right">{pct}%</span>
         </div>
@@ -272,7 +272,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                             gridRef.current?.api?.setGridOption('quickFilterText', e.target.value);
                         }}
                         placeholder="Buscar…"
-                        className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-1 focus:ring-indigo-400"
+                        className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200 dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-1 focus:ring-indigo-400"
                     />
                     {quickFilter && (
                         <button onClick={() => { setQuickFilter(''); gridRef.current?.api?.setGridOption('quickFilterText', ''); }}
@@ -287,13 +287,13 @@ export default function UniversalTableView<T extends { id: string | number }>({
                     <div className="relative" ref={colPanelRef}>
                         <button onClick={() => setShowColPanel(s => !s)}
                             className={clsx('flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors border',
-                                showColPanel ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 border-indigo-200 dark:border-indigo-700' : 'bg-white dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-slate-300')}>
+                                showColPanel ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 border-indigo-200 dark:border-indigo-700' : 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-slate-300')}>
                             <ColumnsIcon size={13} /> Columnas
                         </button>
                         <AnimatePresence>
                             {showColPanel && (
                                 <motion.div initial={{ opacity: 0, y: -4, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.97 }} transition={{ duration: 0.12 }}
-                                    className="absolute top-full right-0 mt-1 z-50 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl p-2">
+                                    className="absolute top-full right-0 mt-1 z-50 w-52 bg-[hsl(var(--bg-primary))] dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl p-2">
                                     <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400 px-1 pb-1.5">Columnas visibles</p>
                                     {visibleCols.map(col => {
                                         const key = String(col.key);
@@ -330,11 +330,11 @@ export default function UniversalTableView<T extends { id: string | number }>({
             {/* Grid */}
             <div className="flex-1 min-h-[200px] rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 relative">
                 {isLoading ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-slate-900 z-10">
+                    <div className="absolute inset-0 flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-slate-900 z-10">
                         <Loader2 size={20} className="animate-spin text-indigo-500" />
                     </div>
                 ) : data.length === 0 ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-slate-900 text-sm text-slate-400">
+                    <div className="absolute inset-0 flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-slate-900 text-sm text-slate-400">
                         {emptyMessage}
                     </div>
                 ) : (

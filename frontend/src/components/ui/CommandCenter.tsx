@@ -130,7 +130,7 @@ export function CommandCenter() {
                     >
                         <Command label="Command Menu" className="flex h-full w-full flex-col" shouldFilter={false}>
                             <div className="flex items-center border-b border-slate-100 dark:border-white/5 px-3 py-1.5">
-                                <Search className={clsx("mr-3 h-5 w-5 shrink-0 transition-colors", isSearching ? "text-blue-500 animate-pulse" : "text-slate-400")} />
+                                <Search className={clsx("mr-3 h-5 w-5 shrink-0 transition-colors", isSearching ? "text-[hsl(var(--primary))] animate-pulse" : "text-slate-400")} />
                                 <Command.Input
                                     value={search}
                                     onValueChange={setSearch}
@@ -156,7 +156,7 @@ export function CommandCenter() {
                                 )}
 
                                 {results.length > 0 && (
-                                    <Command.Group heading="Resultados de Inteligencia" className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-blue-600">
+                                    <Command.Group heading="Resultados de Inteligencia" className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                                         {results.map((item) => (
                                             <Item 
                                                 key={`${item.type}-${item.id}`} 
@@ -192,7 +192,7 @@ function Item({ icon: Icon, label, shortcut, description, onSelect }: { icon?: R
     return (
         <Command.Item
             onSelect={onSelect}
-            className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors hover:bg-blue-500 hover:text-white data-[selected='true']:bg-blue-600 data-[selected='true']:text-white group"
+            className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors hover:bg-[hsl(var(--primary))] hover:text-white data-[selected='true']:bg-[hsl(var(--primary))] data-[selected='true']:text-white group"
         >
             {Icon ? <Icon className="h-4 w-4 shrink-0 opacity-70 group-data-[selected='true']:opacity-100" /> : <span className="h-4 w-4" />}
             <div className="flex-1">
@@ -226,7 +226,7 @@ function ShortcutSheet({ onClose }: { onClose: () => void }) {
                 initial={{ opacity: 0, y: 12, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 12, scale: 0.98 }}
-                className="relative w-full max-w-lg rounded-lg border border-slate-200 bg-white p-3 shadow-2xl dark:border-white/10 dark:bg-[#1e1f21]"
+                className="relative w-full max-w-lg rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-2xl dark:border-white/10 dark:bg-[#1e1f21]"
             >
                 <div className="mb-5">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Atajos</p>
@@ -240,7 +240,7 @@ function ShortcutSheet({ onClose }: { onClose: () => void }) {
                     ].map(([shortcut, label]) => (
                         <div key={shortcut} className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-4 py-3 dark:bg-white/5">
                             <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{label}</span>
-                            <span className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-500 dark:border-white/10 dark:bg-black/20 dark:text-slate-300">
+                            <span className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-1 font-semibold text-slate-500 dark:border-white/10 dark:bg-black/20 dark:text-slate-300">
                                 {shortcut}
                             </span>
                         </div>

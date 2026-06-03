@@ -161,10 +161,10 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
     const handlePrint = () => window.print();
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0f1113]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113]">
             {/* Sidebar Header Cinematic */}
             <div className="p-4 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
-                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-blue-600 dark:text-white">
+                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-[hsl(var(--primary))] dark:text-white">
                     <ShieldCheck size={160} />
                 </div>
                 
@@ -172,12 +172,12 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                 <div className="flex justify-between items-start mb-3 relative z-10">
                     <button 
                         onClick={onClose} 
-                        className="p-2.5 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/5 active:scale-95"
+                        className="p-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/5 active:scale-95"
                     >
                         <CloseIcon size={20} />
                     </button>
                     <div className="flex gap-2.5">
-                        <button onClick={handlePrint} className="px-3 py-2.5 bg-white/60 dark:bg-white/5 backdrop-blur-md text-blue-700 dark:text-blue-300 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-blue-100/50 dark:border-white/10 flex items-center gap-2 shadow-sm hover:bg-blue-50 transition-all active:scale-95">
+                        <button onClick={handlePrint} className="px-3 py-2.5 bg-white/60 dark:bg-white/5 backdrop-blur-md text-[hsl(var(--primary))] dark:text-blue-300 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-blue-100/50 dark:border-white/10 flex items-center gap-2 shadow-sm hover:bg-blue-50 transition-all active:scale-95">
                             <Printer size={14} /> PDF
                         </button>
                         <button 
@@ -186,7 +186,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                 "px-3 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95 shadow-lg", 
                                 editMode 
                                     ? "bg-emerald-600 text-white shadow-emerald-500/20" 
-                                    : "bg-slate-900 dark:bg-blue-600 text-white shadow-blue-500/25"
+                                    : "bg-slate-900 dark:bg-[hsl(var(--primary))] text-white shadow-blue-500/25"
                             )}
                         >
                             {editMode ? <Check size={14}/> : <PencilLine size={14}/>} 
@@ -203,7 +203,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                         >
                             {selectedMember.nombre_completo?.charAt(0) ?? ''}
                         </motion.div>
-                        <div className="absolute -bottom-1 -right-1 size-9 rounded-lg bg-white dark:bg-[#0f1113] border-[3px] border-slate-50 dark:border-[#0f1113] flex items-center justify-center text-blue-600 shadow-xl overflow-hidden">
+                        <div className="absolute -bottom-1 -right-1 size-9 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] border-[3px] border-slate-50 dark:border-[#0f1113] flex items-center justify-center text-[hsl(var(--primary))] shadow-xl overflow-hidden">
                             <Zap size={15} fill="currentColor" className="animate-pulse" />
                         </div>
                     </div>
@@ -212,7 +212,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                             {selectedMember.nombre_completo}
                         </h2>
                         <div className="flex items-center gap-2.5">
-                            <span className="px-3 py-1 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 text-[9px] font-bold uppercase tracking-wider border border-blue-500/20">
+                            <span className="px-3 py-1 rounded-md bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 text-[9px] font-bold uppercase tracking-wider border border-blue-500/20">
                                 {selectedMember.role_in_family || 'Miembro'}
                             </span>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide opacity-60">
@@ -242,7 +242,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
             </div>
 
             {/* Sidebar Tabs */}
-            <div className="flex px-4 border-b border-slate-50 dark:border-white/[0.04] shrink-0 overflow-x-auto no-scrollbar bg-white dark:bg-transparent sticky top-0 z-30">
+            <div className="flex px-4 border-b border-slate-50 dark:border-white/[0.04] shrink-0 overflow-x-auto no-scrollbar bg-[hsl(var(--bg-primary))] dark:bg-transparent sticky top-0 z-30">
                 {[
                     { id: 'timeline', label: 'CV', icon: History },
                     { id: 'tasks', label: 'Tareas', icon: ListTodo },
@@ -255,7 +255,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                         onClick={() => setModalTab(tab.id as any)} 
                         className={clsx(
                             "px-3 py-2 text-[10px] font-bold uppercase tracking-wide border-b-2 transition-all flex items-center gap-2.5 shrink-0",
-                            modalTab === tab.id ? "border-blue-600 text-blue-600" : "border-transparent text-slate-400 hover:text-slate-800 dark:hover:text-white"
+                            modalTab === tab.id ? "border-blue-600 text-[hsl(var(--primary))]" : "border-transparent text-slate-400 hover:text-slate-800 dark:hover:text-white"
                         )}
                     >
                         <tab.icon size={12} className={modalTab === tab.id ? "animate-bounce" : ""} /> {tab.label}
@@ -269,9 +269,9 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                     {modalTab === 'timeline' && (
                         <motion.div key="timeline" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="space-y-4">
                             <div>
-                                <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide mb-3 flex items-center gap-3"><Award className="text-blue-600" size={16} /> Perfil Ministerial</h3>
+                                <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide mb-3 flex items-center gap-3"><Award className="text-[hsl(var(--primary))]" size={16} /> Perfil Ministerial</h3>
                                 <div className="space-y-4">
-                                    <div className={clsx("p-3 rounded-md border transition-all", editMode ? "bg-white border-blue-200 ring-4 ring-blue-50" : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5")}>
+                                    <div className={clsx("p-3 rounded-md border transition-all", editMode ? "bg-[hsl(var(--bg-primary))] border-blue-200 ring-4 ring-blue-50" : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5")}>
                                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-2">Talentos Detectados</p>
                                         {editMode ? (
                                             <textarea 
@@ -283,8 +283,8 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                             <p className="text-xs font-bold text-slate-700 dark:text-slate-300 italic">&quot;{selectedMember.talents || 'Pendiente por registrar'}&quot;</p>
                                         )}
                                     </div>
-                                    <div className={clsx("p-3 rounded-md border transition-all", editMode ? "bg-white border-indigo-200 ring-4 ring-indigo-50" : "bg-blue-50/30 dark:bg-indigo-900/10 border-blue-100 dark:border-indigo-900/30")}>
-                                        <p className="text-[9px] font-bold text-blue-400 uppercase tracking-wide mb-2">Dones Espirituales</p>
+                                    <div className={clsx("p-3 rounded-md border transition-all", editMode ? "bg-[hsl(var(--bg-primary))] border-indigo-200 ring-4 ring-indigo-50" : "bg-blue-50/30 dark:bg-indigo-900/10 border-blue-100 dark:border-indigo-900/30")}>
+                                        <p className="text-[9px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide mb-2">Dones Espirituales</p>
                                         {editMode ? (
                                             <textarea 
                                                 value={editedMember.spiritual_gifts || ''} 
@@ -299,9 +299,9 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                             </div>
                             
                             <div>
-                                <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide mb-3 flex items-center gap-3"><Clock className="text-blue-600" size={16} /> Línea de Tiempo</h3>
+                                <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide mb-3 flex items-center gap-3"><Clock className="text-[hsl(var(--primary))]" size={16} /> Línea de Tiempo</h3>
                                 {loadingHistory ? (
-                                    <div className="py-2 flex justify-center"><Loader2 className="animate-spin text-blue-600" /></div>
+                                    <div className="py-2 flex justify-center"><Loader2 className="animate-spin text-[hsl(var(--primary))]" /></div>
                                 ) : history.length > 0 ? (
                                     <div className="relative border-l-2 border-slate-100 dark:border-white/[0.04] ml-3 space-y-4 py-2">
                                         {history.map((event, idx) => (
@@ -324,7 +324,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                                         {event.type}
                                                     </span>
                                                 </div>
-                                                <div className="p-3 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-md group-hover:bg-white dark:group-hover:bg-white/[0.05] transition-all group-hover:shadow-xl group-hover:shadow-blue-500/5 group-hover:border-blue-500/20">
+                                                <div className="p-3 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-md group-hover:bg-[hsl(var(--bg-primary))] dark:group-hover:bg-white/[0.05] transition-all group-hover:shadow-xl group-hover:shadow-blue-500/5 group-hover:border-blue-500/20">
                                                     <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">
                                                         {event.title || event.name || event.event_name || 'Evento'}
                                                     </h4>
@@ -342,17 +342,17 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
 
                     {modalTab === 'tasks' && (
                         <motion.div key="tasks" initial={{opacity:0, scale:0.98}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.98}} className="space-y-3">
-                            <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-3"><ListTodo className="text-blue-600" size={16} /> Tareas de Seguimiento</h3>
-                            <button onClick={() => router.push('/plataforma/crm/tasks/assign')} className="w-full py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold uppercase tracking-wide border border-dashed border-blue-200 dark:border-blue-800 flex items-center justify-center gap-2">
+                            <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-3"><ListTodo className="text-[hsl(var(--primary))]" size={16} /> Tareas de Seguimiento</h3>
+                            <button onClick={() => router.push('/plataforma/crm/tasks/assign')} className="w-full py-2 bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-[10px] font-bold uppercase tracking-wide border border-dashed border-blue-200 dark:border-blue-800 flex items-center justify-center gap-2">
                                 <Plus size={14}/> Nueva Tarea
                             </button>
                             
                             {loadingTasks ? (
-                                <div className="py-2 flex justify-center"><Loader2 className="animate-spin text-blue-600" /></div>
+                                <div className="py-2 flex justify-center"><Loader2 className="animate-spin text-[hsl(var(--primary))]" /></div>
                             ) : tasks.length > 0 ? (
                                 <div className="space-y-3">
                                     {tasks.map(task => (
-                                        <div key={task.id} className="p-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-md flex items-center justify-between group transition-all hover:border-blue-500/30">
+                                        <div key={task.id} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-md flex items-center justify-between group transition-all hover:border-blue-500/30">
                                             <div className="flex items-center gap-4">
                                                 <button 
                                                     onClick={() => handleUpdateTaskStatus(task.id, task.status === 'done' ? 'todo' : 'done')}
@@ -408,9 +408,9 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
 
                     {modalTab === 'messages' && (
                         <motion.div key="messages" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="space-y-3">
-                            <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-3"><Mail className="text-blue-600" size={16} /> Mensajería Directa</h3>
+                            <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-3"><Mail className="text-[hsl(var(--primary))]" size={16} /> Mensajería Directa</h3>
                             <form onSubmit={handleSendMessage} className="bg-slate-50 dark:bg-black/20 p-4 rounded-md border border-slate-100 dark:border-white/10 space-y-2">
-                                <div className="flex p-1 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10">
+                                <div className="flex p-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10">
                                     {['WhatsApp', 'SMS', 'Email'].map(ch => (
                                         <button 
                                             key={ch} 
@@ -418,7 +418,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                             onClick={() => setMessageChannel(ch.toLowerCase())} 
                                             className={clsx(
                                                 "flex-1 py-2 rounded-md text-[9px] font-bold uppercase tracking-wide transition-all", 
-                                                messageChannel === ch.toLowerCase() ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
+                                                messageChannel === ch.toLowerCase() ? "bg-[hsl(var(--primary))] text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
                                             )}
                                         >
                                             {ch}
@@ -429,10 +429,10 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                     required 
                                     value={newMessageContent} 
                                     onChange={e => setNewMessageContent(e.target.value)} 
-                                    className="w-full p-3 rounded-md border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all min-h-12 dark:text-white" 
+                                    className="w-full p-3 rounded-md border border-slate-100 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-xs font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all min-h-12 dark:text-white" 
                                     placeholder={`Escribe mensaje para ${selectedMember.nombre_completo}...`}
                                 />
-                                <button type="submit" disabled={!newMessageContent} className="w-full py-2 bg-blue-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 group">
+                                <button type="submit" disabled={!newMessageContent} className="w-full py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 group">
                                     Enviar Ahora <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </form>
@@ -441,10 +441,10 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
 
                     {modalTab === 'profile' && (
                         <motion.div key="profile" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="space-y-3">
-                            <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-3"><ShieldCheck className="text-blue-600" size={16} /> Notas del Pastor</h3>
+                            <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-3"><ShieldCheck className="text-[hsl(var(--primary))]" size={16} /> Notas del Pastor</h3>
                             <div className="space-y-1.5">
                                 <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wide ml-2">Información Privada y de Seguimiento</label>
-                                <div className={clsx("p-4 rounded-md border transition-all min-h-[200px]", editMode ? "bg-white dark:bg-[#1e1f21] border-blue-200 ring-4 ring-blue-50" : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/10")}>
+                                <div className={clsx("p-4 rounded-md border transition-all min-h-[200px]", editMode ? "bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border-blue-200 ring-4 ring-blue-50" : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/10")}>
                                     {editMode ? (
                                         <textarea 
                                             value={editedMember.pastoral_notes || ''} 

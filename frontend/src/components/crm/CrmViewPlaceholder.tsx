@@ -64,7 +64,7 @@ export default function CrmViewPlaceholder({
   }
 
   return (
-    <div className="rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 text-center shadow-sm">
+    <div className="rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 text-center shadow-sm">
       <div className="mx-auto mb-3 flex size-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
         <Construction size={32} />
       </div>
@@ -91,7 +91,7 @@ function EmptyOperationalView({
   description: string;
 }) {
   return (
-    <div className="rounded-md border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 text-center shadow-sm">
+    <div className="rounded-md border border-dashed border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 text-center shadow-sm">
       <div className="mx-auto mb-3 flex size-8 items-center justify-center rounded-lg bg-slate-50 text-slate-500 dark:bg-white/5 dark:text-slate-300">
         <Icon size={32} />
       </div>

@@ -69,11 +69,11 @@ export default function WikiEditor({
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: 20, opacity: 0 }}
-                            className="bg-white dark:bg-[#1E1F21] border border-slate-200 dark:border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3"
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] border border-slate-200 dark:border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3"
                         >
                             {status === 'saving' && (
                                 <>
-                                    <Loader2 size={14} className="animate-spin text-blue-600" />
+                                    <Loader2 size={14} className="animate-spin text-[hsl(var(--primary))]" />
                                     <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Guardando...</span>
                                 </>
                             )}

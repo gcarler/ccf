@@ -114,7 +114,7 @@ export default function FinanceAdminPage() {
     })), [filteredTransactions]);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <style jsx global>{`
                 .aura-effect {
                     position: relative;
@@ -173,7 +173,7 @@ export default function FinanceAdminPage() {
                 rightActions={
                     <div className="flex items-center gap-2">
                         <button className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-md text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 transition-all active:scale-95"><Download size={14} /> Exportar</button>
-                        <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"><Plus size={14} /> Registrar Transacción</button>
+                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"><Plus size={14} /> Registrar Transacción</button>
                     </div>
                 }
             />
@@ -197,7 +197,7 @@ export default function FinanceAdminPage() {
                         ) : viewType === 'list' ? (
                             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
                                 {filteredTransactions.map((tx) => (
-                                    <button key={tx.id} onClick={() => handleOpenTx(tx)} className="flex w-full items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4 text-left dark:border-white/10 dark:bg-white/5">
+                                    <button key={tx.id} onClick={() => handleOpenTx(tx)} className="flex w-full items-center justify-between gap-4 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 text-left dark:border-white/10 dark:bg-white/5">
                                         <div>
                                             <p className="text-sm font-semibold text-slate-900 dark:text-white">{tx.description}</p>
                                             <p className="text-xs font-semibold text-slate-400">{tx.category}</p>
@@ -216,7 +216,7 @@ export default function FinanceAdminPage() {
                                         </div>
                                         <div className="space-y-2">
                                             {column.items.map((tx) => (
-                                                <button key={tx.id} onClick={() => handleOpenTx(tx)} className="w-full rounded-md border border-slate-200 bg-white p-3 text-left dark:border-white/10 dark:bg-white/5">
+                                                <button key={tx.id} onClick={() => handleOpenTx(tx)} className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 text-left dark:border-white/10 dark:bg-white/5">
                                                     <p className="text-xs font-semibold text-slate-900 dark:text-white">{tx.description}</p>
                                                     <p className="mt-1 text-[10px] font-semibold text-slate-400">${Number(tx.amount || 0).toLocaleString()} · {tx.category}</p>
                                                 </button>
@@ -248,7 +248,7 @@ export default function FinanceAdminPage() {
                                 key="table-view"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="h-full bg-white dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm"
+                                className="h-full bg-[hsl(var(--bg-primary))] dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm"
                             >
                                 <DataTable data={filteredTransactions} columns={columns} onRowClick={handleOpenTx} />
                             </motion.div>
@@ -278,7 +278,7 @@ export default function FinanceAdminPage() {
                                                     <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">Periodo Fiscal 2026</p>
                                                 </div>
                                                 <div className="flex gap-3">
-                                                    <div className="flex items-center gap-2"><div className="size-2 rounded-full bg-blue-500 shadow-[0_0_12px_#3b82f6]" /><span className="text-[9px] font-semibold uppercase text-slate-400 tracking-wide">Ingresos</span></div>
+                                                    <div className="flex items-center gap-2"><div className="size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_12px_#3b82f6]" /><span className="text-[9px] font-semibold uppercase text-slate-400 tracking-wide">Ingresos</span></div>
                                                     <div className="flex items-center gap-2"><div className="size-2 rounded-full bg-rose-500 shadow-[0_0_12px_#f43f5e]" /><span className="text-[9px] font-semibold uppercase text-slate-400 tracking-wide">Gastos</span></div>
                                                 </div>
                                             </div>
@@ -291,8 +291,8 @@ export default function FinanceAdminPage() {
                                                         transition={{ delay: i * 0.05 + 0.3 }}
                                                         className="flex-1 flex flex-col justify-end gap-2 group/bar cursor-pointer h-full"
                                                     >
-                                                        <div className="w-full bg-blue-500/20 rounded-t-xl relative group-hover/bar:bg-blue-500 group-hover/bar:shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all duration-300" style={{ height: `${h}%` }}>
-                                                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white text-slate-900 rounded-md font-semibold opacity-0 group-hover/bar:opacity-100 shadow-2xl transition-all scale-90 group-hover/bar:scale-100">${(h*100).toLocaleString()}</div>
+                                                        <div className="w-full bg-blue-500/20 rounded-t-xl relative group-hover/bar:bg-[hsl(var(--primary))] group-hover/bar:shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all duration-300" style={{ height: `${h}%` }}>
+                                                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] text-slate-900 rounded-md font-semibold opacity-0 group-hover/bar:opacity-100 shadow-2xl transition-all scale-90 group-hover/bar:scale-100">${(h*100).toLocaleString()}</div>
                                                         </div>
                                                         <div className="w-full bg-rose-500/20 rounded-t-xl group-hover/bar:bg-rose-500 transition-all duration-300" style={{ height: `${h/2.5}%` }} />
                                                     </motion.div>
@@ -305,15 +305,15 @@ export default function FinanceAdminPage() {
                                     </div>
 
                                     {/* Budget Allocation */}
-                                    <div className="lg:col-span-4 p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 shadow-sm space-y-3 animate-in fade-in slide-in-from-right-4 duration-700">
-                                        <h3 className="font-semibold text-slate-400 uppercase tracking-wide px-2 flex items-center gap-2"><PieChart size={16} className="text-blue-500" /> Distribución de Gasto</h3>
+                                    <div className="lg:col-span-4 p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 shadow-sm space-y-3 animate-in fade-in slide-in-from-right-4 duration-700">
+                                        <h3 className="font-semibold text-slate-400 uppercase tracking-wide px-2 flex items-center gap-2"><PieChart size={16} className="text-[hsl(var(--primary))]" /> Distribución de Gasto</h3>
                                         <div className="space-y-3 px-2">
-                                            <BudgetItem label="Mantenimiento Sede" percent={45} color="bg-blue-500" />
+                                            <BudgetItem label="Mantenimiento Sede" percent={45} color="bg-[hsl(var(--primary))]" />
                                             <BudgetItem label="Misiones Externas" percent={30} color="bg-emerald-500" />
                                             <BudgetItem label="Personal y Staff" percent={15} color="bg-amber-500" />
                                             <BudgetItem label="Otros Gastos" percent={10} color="bg-slate-400" />
                                         </div>
-                                        <button className="w-full py-2 mt-4 bg-slate-50 dark:bg-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all transform active:scale-95 shadow-sm">Ver Presupuestos 2026</button>
+                                        <button className="w-full py-2 mt-4 bg-slate-50 dark:bg-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:text-[hsl(var(--primary))] hover:bg-blue-50 transition-all transform active:scale-95 shadow-sm">Ver Presupuestos 2026</button>
                                     </div>
                                 </div>
                             </motion.div>
@@ -341,7 +341,7 @@ export default function FinanceAdminPage() {
                                             Optimus Brain ha analizado las últimas 450 transacciones y no ha detectado anomalías. El flujo de caja proyectado para el próximo mes cubre el 100% de los compromisos ministeriales con un excedente del 12% para fondo de reserva.
                                         </p>
                                         <div className="flex flex-wrap gap-4 pt-4">
-                                            <button className="px-4 py-2 bg-white text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-white/10 hover:translate-y-[-4px] active:scale-95 transition-all">Generar Auditoría Completa</button>
+                                            <button className="px-4 py-2 bg-[hsl(var(--bg-primary))] text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-white/10 hover:translate-y-[-4px] active:scale-95 transition-all">Generar Auditoría Completa</button>
                                             <button className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-lg font-black text-xs uppercase tracking-wide hover:bg-white/20 transition-all">Reporte de Misiones</button>
                                         </div>
                                     </div>
@@ -352,7 +352,7 @@ export default function FinanceAdminPage() {
                                 key="table" 
                                 initial={{ opacity: 0 }} 
                                 animate={{ opacity: 1 }} 
-                                className="h-full bg-white dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm"
+                                className="h-full bg-[hsl(var(--bg-primary))] dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm"
                             >
                                 <DataTable
                                     data={filteredTransactions}
@@ -369,7 +369,7 @@ export default function FinanceAdminPage() {
                 isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
                 title={selectedTx?.description || 'Detalle de Operación'}
                 subtitle={`${selectedTx?.type?.toUpperCase()} • REF-${selectedTx?.id}`}
-                actions={<><button className="px-4 py-2 text-[11px] font-bold text-rose-500 hover:bg-rose-50 rounded-md transition-all">Anular</button><button className="px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl">Descargar Recibo</button></>}
+                actions={<><button className="px-4 py-2 text-[11px] font-bold text-rose-500 hover:bg-rose-50 rounded-md transition-all">Anular</button><button className="px-3 py-2 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl">Descargar Recibo</button></>}
             >
                 <div className="space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
                     <section className="grid grid-cols-2 gap-4">
@@ -381,17 +381,17 @@ export default function FinanceAdminPage() {
 
                     <section className="space-y-4 pt-6 border-t border-slate-100 dark:border-white/5">
                         <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2"><Receipt size={14} /> Comprobante Digital</h4>
-                        <div className="aspect-[3/4] w-full max-w-[320px] mx-auto rounded-lg bg-slate-50 dark:bg-black/40 border-2 border-dashed border-slate-200 dark:border-white/5 flex flex-col items-center justify-center text-slate-400 space-y-4 group cursor-pointer hover:border-blue-500/50 hover:bg-white transition-all duration-500">
-                            <div className="p-3 bg-white dark:bg-white/5 rounded-lg shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                                <FileText size={56} strokeWidth={1} className="text-slate-300 group-hover:text-blue-500" />
+                        <div className="aspect-[3/4] w-full max-w-[320px] mx-auto rounded-lg bg-slate-50 dark:bg-black/40 border-2 border-dashed border-slate-200 dark:border-white/5 flex flex-col items-center justify-center text-slate-400 space-y-4 group cursor-pointer hover:border-blue-500/50 hover:bg-[hsl(var(--bg-primary))] transition-all duration-500">
+                            <div className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                                <FileText size={56} strokeWidth={1} className="text-slate-300 group-hover:text-[hsl(var(--primary))]" />
                             </div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide group-hover:text-blue-600 transition-colors">Ver Documento Escaneado</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide group-hover:text-[hsl(var(--primary))] transition-colors">Ver Documento Escaneado</p>
                         </div>
                     </section>
 
                     <section className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/30 flex items-center gap-3 shadow-sm relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12"><ShieldCheck size={80} /></div>
-                        <div className="size-7 rounded-lg bg-white dark:bg-white/10 flex items-center justify-center text-emerald-600 shadow-sm relative z-10"><ShieldCheck size={28} /></div>
+                        <div className="size-7 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-emerald-600 shadow-sm relative z-10"><ShieldCheck size={28} /></div>
                         <div className="relative z-10">
                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Transacción Verificada</h4>
                             <p className="text-xs text-emerald-600/70 font-bold">Conciliación bancaria completada automáticamente.</p>
@@ -405,8 +405,8 @@ export default function FinanceAdminPage() {
 
 function FinanceTab({ label, active, onClick }: any) {
     return (
-        <button onClick={onClick} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative overflow-hidden shrink-0", active ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-white/50")}>
-            {active && <motion.div layoutId="finance-tab" className="absolute bottom-0 left-0 w-full h-[2.5px] bg-blue-600" />}
+        <button onClick={onClick} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative overflow-hidden shrink-0", active ? "text-[hsl(var(--primary))] border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-white/50")}>
+            {active && <motion.div layoutId="finance-tab" className="absolute bottom-0 left-0 w-full h-[2.5px] bg-[hsl(var(--primary))]" />}
             {label}
         </button>
     );
@@ -415,7 +415,7 @@ function FinanceTab({ label, active, onClick }: any) {
 function SummaryCard({ title, value, trend, icon: Icon, color, auraColor }: any) {
     return (
         <div 
-            className="aura-effect p-4 rounded-lg bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="aura-effect p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-700"><Icon size={64} /></div>
@@ -435,7 +435,7 @@ function BudgetItem({ label, percent, color }: any) {
         <div className="space-y-3 group/item">
             <div className="flex justify-between items-center text-[11px] font-semibold uppercase tracking-tight">
                 <span className="text-slate-500 dark:text-slate-400 group-hover/item:text-slate-800 transition-colors">{label}</span>
-                <span className="text-slate-400 group-hover/item:text-blue-600 transition-colors">{percent}%</span>
+                <span className="text-slate-400 group-hover/item:text-[hsl(var(--primary))] transition-colors">{percent}%</span>
             </div>
             <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
                 <motion.div 
@@ -451,7 +451,7 @@ function BudgetItem({ label, percent, color }: any) {
 
 function DrawerStat({ label, value, icon: Icon }: any) {
     return (
-        <div className="p-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg transition-all hover:bg-white hover:shadow-sm">
+        <div className="p-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg transition-all hover:bg-[hsl(var(--bg-primary))] hover:shadow-sm">
             <div className="flex items-center gap-2 mb-1.5"><Icon size={14} className="text-slate-400" /><span className="font-semibold text-slate-400 uppercase tracking-wide">{label}</span></div>
             <p className="text-sm font-semibold text-slate-800 dark:text-white capitalize tracking-tight">{value}</p>
         </div>

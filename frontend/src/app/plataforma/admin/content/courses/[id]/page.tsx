@@ -61,7 +61,7 @@ export default function AdminCourseContentPage() {
                         <button className="px-4 py-2 text-slate-500 text-[10px] font-semibold uppercase tracking-wide hover:text-slate-700 transition-all">
                             Vista Previa
                         </button>
-                        <button className="px-3 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
+                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
                             <Save size={14} /> Publicar Cambios
                         </button>
                     </div>
@@ -84,16 +84,16 @@ export default function AdminCourseContentPage() {
                         <section className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Lecciones y Módulos ({lessons.length})</h3>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all">
+                                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all">
                                     <Plus size={14} /> Nueva Lección
                                 </button>
                             </div>
 
                             <div className="space-y-3">
                                 {lessons.map((lesson, idx) => (
-                                    <div key={lesson.id} className="group bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer">
+                                    <div key={lesson.id} className="group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer">
                                         <div className="flex items-center gap-4">
-                                            <span className="text-xs font-semibold text-slate-300 group-hover:text-blue-500 transition-colors">
+                                            <span className="text-xs font-semibold text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors">
                                                 {String(idx + 1).padStart(2, '0')}
                                             </span>
                                             <div>
@@ -101,7 +101,7 @@ export default function AdminCourseContentPage() {
                                                 <p className="font-semibold">{lesson.modality || 'Video + PDF'}</p>
                                             </div>
                                         </div>
-                                        <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-all" />
+                                        <ChevronRight size={16} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-all" />
                                     </div>
                                 ))}
 
@@ -135,13 +135,13 @@ export default function AdminCourseContentPage() {
                         </DSCard>
 
                         <div className="bg-slate-900 rounded-lg p-4 text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-blue-400">
+                            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                                 <History size={14} /> Control de Versiones
                             </div>
                             <p className="text-[11px] font-medium opacity-70">
                                 Última edición por Admin_CCF hace 1 hora.
                             </p>
-                            <button className="text-[9px] font-semibold uppercase tracking-wide text-blue-400 hover:text-blue-300">
+                            <button className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:text-blue-300">
                                 Ver historial completo
                             </button>
                         </div>

@@ -53,8 +53,8 @@ interface MediaItem {
 const EMOTION_CONFIG: Record<string, { color: string; bg: string; border: string; emoji: string }> = {
   "Sanidad":       { color: "text-rose-600",    bg: "bg-rose-50 dark:bg-rose-900/20",    border: "border-rose-200 dark:border-rose-700/30",    emoji: "💊" },
   "Provisión":     { color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", border: "border-emerald-200 dark:border-emerald-700/30", emoji: "🙌" },
-  "Restauración":  { color: "text-blue-600",    bg: "bg-blue-50 dark:bg-blue-900/20",    border: "border-blue-200 dark:border-blue-700/30",    emoji: "✨" },
-  "Fe":            { color: "text-blue-600",  bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-blue-200 dark:border-blue-700/30", emoji: "🙏" },
+  "Restauración":  { color: "text-[hsl(var(--primary))]",    bg: "bg-blue-50 dark:bg-blue-900/20",    border: "border-blue-200 dark:border-blue-700/30",    emoji: "✨" },
+  "Fe":            { color: "text-[hsl(var(--primary))]",  bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-blue-200 dark:border-blue-700/30", emoji: "🙏" },
 };
 const defaultEmotion = { color: "text-slate-500", bg: "bg-slate-50 dark:bg-white/5", border: "border-slate-200 dark:border-white/10", emoji: "💬" };
 
@@ -84,7 +84,7 @@ function getInitials(id: number): string {
 
 function getAvatarColor(id: number): string {
   const colors = [
-    "bg-blue-600", "bg-blue-600", "bg-emerald-600", "bg-rose-600",
+    "bg-[hsl(var(--primary))]", "bg-[hsl(var(--primary))]", "bg-emerald-600", "bg-rose-600",
     "bg-amber-600", "bg-cyan-600", "bg-pink-600", "bg-teal-600"
   ];
   return colors[id % colors.length];
@@ -296,7 +296,7 @@ export default function CmsTestimonialsPage() {
       {filtered.map(t => {
         const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
         return (
-          <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-rose-300 transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
+          <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-rose-300 transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
             <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-[11px] font-semibold shrink-0", getAvatarColor(t.author_id))}>{getInitials(t.author_id)}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -351,7 +351,7 @@ export default function CmsTestimonialsPage() {
           </div>
           <div className="space-y-3">
             {group.items.map(t => (
-              <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-lg p-4 hover:border-rose-300 transition-all", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
+              <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-lg p-4 hover:border-rose-300 transition-all", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Miembro #{t.author_id} · {t.emotion || "Testimonio"}</p>
                 <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-3">{t.content}</p>
               </button>
@@ -363,7 +363,7 @@ export default function CmsTestimonialsPage() {
   );
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-[#0d0e11] overflow-hidden">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0d0e11] overflow-hidden">
       {/* ── Header toolbar ── */}
       <header className="shrink-0 border-b border-slate-100 dark:border-white/5 px-3 py-1.5 flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -378,7 +378,7 @@ export default function CmsTestimonialsPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar..."
-            className="pl-8 pr-4 py-2 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm outline-none w-48 focus:ring-2 focus:ring-rose-500/20"
+            className="pl-8 pr-4 py-2 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm outline-none w-48 focus:ring-2 focus:ring-rose-500/20"
           />
         </div>
         <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={TESTIMONIAL_VIEWS} />
@@ -505,7 +505,7 @@ export default function CmsTestimonialsPage() {
                       "group relative rounded-lg border p-3 flex flex-col gap-4 cursor-pointer transition-all",
                       isSelected
                         ? `${cfg.bg} ${cfg.border} ring-2 ring-current`
-                        : "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:shadow-lg"
+                        : "bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:shadow-lg"
                     )}
                   >
                     {/* Status badge */}
@@ -645,7 +645,7 @@ export default function CmsTestimonialsPage() {
                     value={selected.content}
                     onChange={event => setSelected(prev => prev ? { ...prev, content: event.target.value } : prev)}
                     rows={5}
-                    className="w-full resize-none text-sm text-slate-700 dark:text-slate-200 leading-relaxed bg-white dark:bg-white/5 rounded-lg p-4 border border-slate-200 dark:border-white/10 outline-none focus:ring-2 focus:ring-rose-500/20"
+                    className="w-full resize-none text-sm text-slate-700 dark:text-slate-200 leading-relaxed bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-4 border border-slate-200 dark:border-white/10 outline-none focus:ring-2 focus:ring-rose-500/20"
                   />
                 </div>
 
@@ -673,7 +673,7 @@ export default function CmsTestimonialsPage() {
 
                 {(selected.media_type || "text") !== "text" && (
                   <div className="space-y-2">
-                    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
                       <div className="mb-2 flex items-center justify-between gap-3">
                         <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Seleccionar desde media</p>
                         <Link href="/cms/media" className="text-[9px] font-semibold uppercase tracking-wide text-rose-500 hover:underline">
@@ -732,10 +732,10 @@ export default function CmsTestimonialsPage() {
                         });
                       }}
                       placeholder="Pega URL desde /cms/media"
-                      className="w-full text-xs bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
+                      className="w-full text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
                     />
                     {getTestimonialMediaUrl(selected) && (
-                      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
+                      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 overflow-hidden">
                         {selected.media_type === "image" ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={getTestimonialMediaUrl(selected)} alt="" className="w-full max-h-48 object-cover" />
@@ -753,7 +753,7 @@ export default function CmsTestimonialsPage() {
                   </div>
                 )}
 
-                <label className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                <label className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Mostrar en inicio</span>
                   <input
                     type="checkbox"
@@ -768,7 +768,7 @@ export default function CmsTestimonialsPage() {
                   <input
                     value={selected.emotion || ""}
                     onChange={event => setSelected(prev => prev ? { ...prev, emotion: event.target.value } : prev)}
-                    className="w-full text-xs bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
+                    className="w-full text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
                   />
                 </div>
 
@@ -789,7 +789,7 @@ export default function CmsTestimonialsPage() {
                 <button
                   onClick={saveSelected}
                   disabled={processing === selected.id}
-                  className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all active:scale-95 disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-slate-900 text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900 transition-all active:scale-95 disabled:opacity-60"
                 >
                   <Save size={16} /> Guardar cambios
                 </button>

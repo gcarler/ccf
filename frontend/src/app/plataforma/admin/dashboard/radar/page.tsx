@@ -99,7 +99,7 @@ export default function PastorRadarPage() {
                 <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 text-blue-500 rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit border border-blue-500/20"
+                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit border border-blue-500/20"
                 >
                     <Shield size={12} className="animate-pulse" /> Inteligencia Ministerial Optimus v3.9
                 </motion.div>
@@ -122,7 +122,7 @@ export default function PastorRadarPage() {
 
             {loading ? (
                 <div className="py-1.5 flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="animate-spin text-blue-600" size={64} strokeWidth={1.5} />
+                    <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={64} strokeWidth={1.5} />
                     <p className="font-semibold text-slate-400 uppercase tracking-wide animate-pulse">Iniciando Red Neuronal...</p>
                 </div>
             ) : error ? (
@@ -149,16 +149,16 @@ export default function PastorRadarPage() {
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="lg:col-span-7 bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-xl space-y-3 group"
+                        className="lg:col-span-7 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-xl space-y-3 group"
                     >
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
                                 <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
-                                    <BarChart3 className="text-blue-600" /> Crecimiento Orgánico
+                                    <BarChart3 className="text-[hsl(var(--primary))]" /> Crecimiento Orgánico
                                 </h2>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Métricas consolidadas semestrales</p>
                             </div>
-                            <span className="font-semibold text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full tracking-wide border border-blue-100 uppercase">Live BI</span>
+                            <span className="font-semibold text-[hsl(var(--primary))] bg-blue-50 px-4 py-1.5 rounded-full tracking-wide border border-blue-100 uppercase">Live BI</span>
                         </div>
                         
                         <div className="h-48 flex items-end justify-between gap-4 pt-10 px-4">
@@ -193,7 +193,7 @@ export default function PastorRadarPage() {
                             <Target className="text-indigo-500" /> Metas Trimestrales
                         </h2>
                         <div className="space-y-3">
-                            <GoalItem label="Bautismos Meta" target={50} current={data?.bautismos_este_anio || 0} color="bg-blue-500" />
+                            <GoalItem label="Bautismos Meta" target={50} current={data?.bautismos_este_anio || 0} color="bg-[hsl(var(--primary))]" />
                             <GoalItem label="Nuevos Miembros" target={200} current={35} color="bg-emerald-500" />
                             <GoalItem label="Estudiantes Liderazgo" target={80} current={12} color="bg-amber-500" />
                         </div>
@@ -217,14 +217,14 @@ export default function PastorRadarPage() {
 
 function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
     const colorMap: any = {
-        blue: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-100',
+        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20 border-blue-100',
         cyan: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/20 border-cyan-100',
         emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100',
         amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100'
     };
     return (
         <div 
-            className="radar-aura p-4 bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="radar-aura p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-700"><Icon size={64} /></div>
@@ -249,7 +249,7 @@ function GoalItem({ label, target, current, color }: any) {
     return (
         <div className="space-y-3 group/goal">
             <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
-                <span className="text-slate-500 dark:text-slate-400 group-hover/goal:text-blue-500 transition-colors">{label}</span>
+                <span className="text-slate-500 dark:text-slate-400 group-hover/goal:text-[hsl(var(--primary))] transition-colors">{label}</span>
                 <span className="text-slate-900 dark:text-white">{current} / {target}</span>
             </div>
             <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">

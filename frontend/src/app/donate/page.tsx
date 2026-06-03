@@ -100,7 +100,7 @@ export default function DonatePage() {
     if (completed) {
         const isApproved = paymentStatus === 'approved' || !paymentStatus;
         return (
-            <div className="min-h-screen bg-white dark:bg-[#1e1f21] flex items-center justify-center p-3">
+            <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] flex items-center justify-center p-3">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                     className="max-w-md w-full text-center space-y-3 p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 shadow-2xl"
@@ -125,10 +125,10 @@ export default function DonatePage() {
                         </div>
                         <div className="text-right">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Categoría</p>
-                            <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{type}</p>
+                            <p className="text-sm font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{type}</p>
                         </div>
                     </div>
-                    <Link href="/" className="block w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-bold text-sm uppercase tracking-wide active:scale-95 transition-all shadow-xl">
+                    <Link href="/" className="block w-full py-2 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg font-bold text-sm uppercase tracking-wide active:scale-95 transition-all shadow-xl">
                         Volver al Inicio
                     </Link>
                 </motion.div>
@@ -137,18 +137,18 @@ export default function DonatePage() {
     }
 
     return (
-        <div className="min-h-screen bg-white dark:bg-[#1e1f21] relative overflow-hidden flex flex-col items-center">
+        <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] relative overflow-hidden flex flex-col items-center">
             {/* Decorative backgrounds */}
             <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-blue-600 to-indigo-900 opacity-10 dark:opacity-20 pointer-events-none" />
-            <div className="absolute top-[-10%] right-[-10%] size-96 bg-blue-500 rounded-full blur-[120px] opacity-10 animate-pulse" />
+            <div className="absolute top-[-10%] right-[-10%] size-96 bg-[hsl(var(--primary))] rounded-full blur-[120px] opacity-10 animate-pulse" />
 
             <header className="w-full max-w-5xl px-3 pt-12 flex items-center justify-between relative z-10">
-                <Link href="/" className="size-7 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all shadow-sm">
+                <Link href="/" className="size-7 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-[hsl(var(--primary))] transition-all shadow-sm">
                     <ChevronLeft size={24} />
                 </Link>
                 <div className="flex flex-col items-center">
                     <h1 className="text-sm font-bold uppercase tracking-wide text-slate-400">Generosidad</h1>
-                    <div className="h-1 w-8 bg-blue-600 rounded-full mt-1" />
+                    <div className="h-1 w-8 bg-[hsl(var(--primary))] rounded-full mt-1" />
                 </div>
                 <div className="size-7" />
             </header>
@@ -156,11 +156,11 @@ export default function DonatePage() {
             <main className="w-full max-w-5xl px-3 py-1.5 grid grid-cols-1 lg:grid-cols-2 gap-3 relative z-10 items-start">
                 {/* Left Side: Inspiration */}
                 <div className="space-y-3 pt-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[10px] font-bold uppercase tracking-wide">
                         <HandHeart size={14} /> Tu siembra tiene propósito
                     </div>
                     <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter leading-[0.9]">
-                        Honramos a Dios <br /> con nuestra <br /> <span className="text-blue-600">generosidad.</span>
+                        Honramos a Dios <br /> con nuestra <br /> <span className="text-[hsl(var(--primary))]">generosidad.</span>
                     </h2>
                     <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-md leading-relaxed">
                         Cada ofrenda y diezmo fortalece la misión de transformar vidas y comunidades a través del evangelio.
@@ -173,7 +173,7 @@ export default function DonatePage() {
                 </div>
 
                 {/* Right Side: Action Card */}
-                <div className="bg-white dark:bg-[#1e1f21] rounded-lg border border-slate-100 dark:border-white/5 p-4 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] dark:shadow-black/50 space-y-3">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-slate-100 dark:border-white/5 p-4 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] dark:shadow-black/50 space-y-3">
                     {/* Amount Selector */}
                     <div className="space-y-3">
                         <div className="text-center">
@@ -198,7 +198,7 @@ export default function DonatePage() {
                                     className={clsx(
                                         "py-1.5 rounded-lg font-bold text-sm transition-all",
                                         amount === val && !isCustom 
-                                            ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105" 
+                                            ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/30 scale-105" 
                                             : "bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100"
                                     )}
                                 >
@@ -210,7 +210,7 @@ export default function DonatePage() {
                             onClick={() => setIsCustom(true)}
                             className={clsx(
                                 "w-full py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wide transition-all border-2",
-                                isCustom ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 text-blue-600" : "border-transparent bg-slate-50 dark:bg-white/5 text-slate-400"
+                                isCustom ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 text-[hsl(var(--primary))]" : "border-transparent bg-slate-50 dark:bg-white/5 text-slate-400"
                             )}
                         >
                             Otra cantidad personalizada
@@ -230,7 +230,7 @@ export default function DonatePage() {
                     <button
                         onClick={handleMercadoPago}
                         disabled={mpLoading || !amount || parseFloat(amount) <= 0}
-                        className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm uppercase tracking-wide shadow-xl shadow-blue-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-blue-700"
+                        className="w-full py-2.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-sm uppercase tracking-wide shadow-xl shadow-blue-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[hsl(var(--primary))]"
                     >
                         {mpLoading ? (
                             <><Loader2 size={18} className="animate-spin" /> Conectando...</>
@@ -245,7 +245,7 @@ export default function DonatePage() {
                             <div className="w-full border-t border-slate-100 dark:border-white/5" />
                         </div>
                         <div className="relative flex justify-center">
-                            <span className="bg-white dark:bg-[#1e1f21] px-3 text-[9px] font-bold uppercase tracking-wide text-slate-300">
+                            <span className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] px-3 text-[9px] font-bold uppercase tracking-wide text-slate-300">
                                 O registra manualmente
                             </span>
                         </div>
@@ -272,7 +272,7 @@ export default function DonatePage() {
 function BenefitCard({ icon: Icon, title, desc }: any) {
     return (
         <div className="flex items-start gap-4 group">
-            <div className="size-10 rounded-md bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-110 transition-transform shadow-sm">
+            <div className="size-10 rounded-md bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-[hsl(var(--primary))] shrink-0 group-hover:scale-110 transition-transform shadow-sm">
                 <Icon size={20} />
             </div>
             <div>
@@ -296,11 +296,11 @@ function TypeOption({ active, onClick, icon: Icon, label }: any) {
         >
             <div className={clsx(
                 "size-10 rounded-md flex items-center justify-center transition-all",
-                active ? "bg-blue-600 text-white shadow-lg" : "bg-slate-50 dark:bg-white/5 text-slate-400"
+                active ? "bg-[hsl(var(--primary))] text-white shadow-lg" : "bg-slate-50 dark:bg-white/5 text-slate-400"
             )}>
                 <Icon size={20} />
             </div>
-            <span className={clsx("text-[10px] font-bold uppercase tracking-wide", active ? "text-blue-600 dark:text-white" : "text-slate-500")}>{label}</span>
+            <span className={clsx("text-[10px] font-bold uppercase tracking-wide", active ? "text-[hsl(var(--primary))] dark:text-white" : "text-slate-500")}>{label}</span>
         </button>
     );
 }

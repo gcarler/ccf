@@ -105,7 +105,7 @@ class TestEstadoVital:
 
     def test_set_user_inactive(self, db_session, test_user):
         from backend.crud.kernel import set_user_activity_status
-        result = set_user_activity_status(db_session, test_user.id, "INACTIVO", changed_by_id=1)
+        result = set_user_activity_status(db_session, test_user.id, "INACTIVO", changed_by_persona_id=None)
         assert result is not None
         assert result.is_active is False
         # Verify cannot receive assignments after deactivation
@@ -114,7 +114,7 @@ class TestEstadoVital:
 
     def test_set_user_back_to_active(self, db_session, inactive_user):
         from backend.crud.kernel import set_user_activity_status
-        result = set_user_activity_status(db_session, inactive_user.id, "ACTIVO", changed_by_id=1)
+        result = set_user_activity_status(db_session, inactive_user.id, "ACTIVO", changed_by_persona_id=None)
         assert result is not None
         assert result.is_active is True
 
@@ -179,7 +179,7 @@ class TestDimensionBRolesIglesia:
         from backend.crud.kernel import set_user_church_role, get_user_church_role, get_church_role_history
         result = set_user_church_role(
             db_session, test_user.id, ChurchRole.VISITANTE_ONLINE,
-            changed_by_id=1, reason="Primera visita por web"
+            changed_by_persona_id=None, reason="Primera visita por web"
         )
         assert result is not None
         assert result["church_role"] == "VISITANTE_ONLINE"
@@ -190,8 +190,8 @@ class TestDimensionBRolesIglesia:
 
     def test_church_role_history(self, db_session, test_user):
         from backend.crud.kernel import set_user_church_role, get_church_role_history
-        set_user_church_role(db_session, test_user.id, ChurchRole.VISITANTE_ONLINE, changed_by_id=1)
-        set_user_church_role(db_session, test_user.id, ChurchRole.SIMPATIZANTE, changed_by_id=1, reason="Asistió 3 semanas")
+        set_user_church_role(db_session, test_user.id, ChurchRole.VISITANTE_ONLINE, changed_by_persona_id=None)
+        set_user_church_role(db_session, test_user.id, ChurchRole.SIMPATIZANTE, changed_by_persona_id=None, reason="Asistió 3 semanas")
 
         history = get_church_role_history(db_session, test_user.id)
         assert len(history) == 2
@@ -200,8 +200,8 @@ class TestDimensionBRolesIglesia:
 
     def test_update_existing_church_role(self, db_session, test_user):
         from backend.crud.kernel import set_user_church_role, get_user_church_role, get_church_role_history
-        set_user_church_role(db_session, test_user.id, ChurchRole.VISITANTE_ONLINE, changed_by_id=1)
-        set_user_church_role(db_session, test_user.id, ChurchRole.MIEMBRO_BAUTIZADO, changed_by_id=1)
+        set_user_church_role(db_session, test_user.id, ChurchRole.VISITANTE_ONLINE, changed_by_persona_id=None)
+        set_user_church_role(db_session, test_user.id, ChurchRole.MIEMBRO_BAUTIZADO, changed_by_persona_id=None)
 
         role = get_user_church_role(db_session, test_user.id)
         assert role["church_role"] == "MIEMBRO_BAUTIZADO"
@@ -224,7 +224,7 @@ class TestDimensionCRolesPlataforma:
     def test_assign_platform_role(self, db_session, test_user, platform_roles):
         from backend.crud.kernel import assign_platform_role, get_user_platform_roles
         result = assign_platform_role(
-            db_session, test_user.id, "GESTOR", assigned_by_id=1
+            db_session, test_user.id, "GESTOR", assigned_by_persona_id=None
         )
         assert result is not None
         assert result["role"] == "GESTOR"
@@ -234,13 +234,13 @@ class TestDimensionCRolesPlataforma:
 
     def test_assign_duplicate_platform_role_fails(self, db_session, test_user, platform_roles):
         from backend.crud.kernel import assign_platform_role
-        assign_platform_role(db_session, test_user.id, "LECTOR", assigned_by_id=1)
-        result = assign_platform_role(db_session, test_user.id, "LECTOR", assigned_by_id=1)
+        assign_platform_role(db_session, test_user.id, "LECTOR", assigned_by_persona_id=None)
+        result = assign_platform_role(db_session, test_user.id, "LECTOR", assigned_by_persona_id=None)
         assert result is None
 
     def test_revoke_platform_role(self, db_session, test_user, platform_roles):
         from backend.crud.kernel import assign_platform_role, revoke_platform_role, get_user_platform_roles
-        assign_platform_role(db_session, test_user.id, "EDITOR", assigned_by_id=1)
+        assign_platform_role(db_session, test_user.id, "EDITOR", assigned_by_persona_id=None)
         assert revoke_platform_role(db_session, test_user.id, "EDITOR") is True
 
         roles = get_user_platform_roles(db_session, test_user.id)
@@ -248,7 +248,7 @@ class TestDimensionCRolesPlataforma:
 
     def test_effective_permissions_single_role(self, db_session, test_user, platform_roles):
         from backend.crud.kernel import assign_platform_role, get_user_effective_permissions
-        assign_platform_role(db_session, test_user.id, "LECTOR", assigned_by_id=1)
+        assign_platform_role(db_session, test_user.id, "LECTOR", assigned_by_persona_id=None)
 
         perms = get_user_effective_permissions(db_session, test_user.id)
         assert "crm" in perms
@@ -256,8 +256,8 @@ class TestDimensionCRolesPlataforma:
 
     def test_effective_permissions_multiple_roles(self, db_session, test_user, platform_roles):
         from backend.crud.kernel import assign_platform_role, get_user_effective_permissions
-        assign_platform_role(db_session, test_user.id, "LECTOR", assigned_by_id=1)
-        assign_platform_role(db_session, test_user.id, "EDITOR", assigned_by_id=1)
+        assign_platform_role(db_session, test_user.id, "LECTOR", assigned_by_persona_id=None)
+        assign_platform_role(db_session, test_user.id, "EDITOR", assigned_by_persona_id=None)
 
         perms = get_user_effective_permissions(db_session, test_user.id)
         # LECTOR + EDITOR = read + update on cms, projects
@@ -266,7 +266,7 @@ class TestDimensionCRolesPlataforma:
 
     def test_admin_wildcard_permissions(self, db_session, test_user, platform_roles):
         from backend.crud.kernel import assign_platform_role, get_user_effective_permissions
-        assign_platform_role(db_session, test_user.id, "ADMINISTRADOR", assigned_by_id=1)
+        assign_platform_role(db_session, test_user.id, "ADMINISTRADOR", assigned_by_persona_id=None)
 
         perms = get_user_effective_permissions(db_session, test_user.id)
         assert "*" in perms
@@ -283,7 +283,7 @@ class TestKernelRBAC:
         from backend.core.kernel_rbac import has_permission
         from backend.crud.kernel import assign_platform_role
 
-        assign_platform_role(db_session, inactive_user.id, "ADMINISTRADOR", assigned_by_id=1)
+        assign_platform_role(db_session, inactive_user.id, "ADMINISTRADOR", assigned_by_persona_id=None)
         # Even with admin role, inactive users have no permissions
         assert has_permission(db_session, inactive_user, "system:config") is False
 
@@ -291,7 +291,7 @@ class TestKernelRBAC:
         from backend.core.kernel_rbac import has_permission
         from backend.crud.kernel import assign_platform_role
 
-        assign_platform_role(db_session, test_user.id, "GESTOR", assigned_by_id=1)
+        assign_platform_role(db_session, test_user.id, "GESTOR", assigned_by_persona_id=None)
         assert has_permission(db_session, test_user, "crm:read") is True
         assert has_permission(db_session, test_user, "crm:edit") is True
         assert has_permission(db_session, test_user, "crm:manage") is True
@@ -300,7 +300,7 @@ class TestKernelRBAC:
         from backend.core.kernel_rbac import has_permission
         from backend.crud.kernel import assign_platform_role
 
-        assign_platform_role(db_session, test_user.id, "GESTOR", assigned_by_id=1)
+        assign_platform_role(db_session, test_user.id, "GESTOR", assigned_by_persona_id=None)
         # GESTOR has crm:manage, which should imply crm:read
         assert has_permission(db_session, test_user, "crm:read") is True
         assert has_permission(db_session, test_user, "crm:edit") is True
@@ -316,8 +316,8 @@ class TestKernelProfile:
         from backend.models_kernel import MinistryOffice, ChurchRole
 
         add_user_ministry(db_session, test_user.id, MinistryOffice.PASTOR, is_primary=True)
-        set_user_church_role(db_session, test_user.id, ChurchRole.LIDER, changed_by_id=1)
-        assign_platform_role(db_session, test_user.id, "GESTOR", assigned_by_id=1)
+        set_user_church_role(db_session, test_user.id, ChurchRole.LIDER, changed_by_persona_id=None)
+        assign_platform_role(db_session, test_user.id, "GESTOR", assigned_by_persona_id=None)
 
         profile = get_kernel_profile(db_session, test_user.id)
         assert profile is not None

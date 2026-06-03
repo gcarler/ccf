@@ -40,7 +40,7 @@ export default function GroupsPage() {
                     { label: 'Dashboard', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
+                    <button className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
                         <Plus size={14} /> Nueva Casa
                     </button>
                 }
@@ -58,7 +58,7 @@ export default function GroupsPage() {
                         <DSCard key={group.id}>
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                    <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                         <Home size={24} />
                                     </div>
                                     <div>

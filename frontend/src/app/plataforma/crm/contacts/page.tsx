@@ -26,7 +26,7 @@ const STAGE_PROGRESS: Record<string, number> = { new: 20, call: 40, visit: 60, d
 
 function getStatusStyles(stage: string) {
     switch (stage) {
-        case 'new':          return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+        case 'new':          return 'bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20';
         case 'call':         return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
         case 'visit':        return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
         case 'discipleship': return 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20';
@@ -36,7 +36,7 @@ function getStatusStyles(stage: string) {
 }
 function getStatusDot(stage: string) {
     switch (stage) {
-        case 'new':          return 'bg-blue-500';
+        case 'new':          return 'bg-[hsl(var(--primary))]';
         case 'call':         return 'bg-amber-500';
         case 'visit':        return 'bg-sky-500';
         case 'discipleship': return 'bg-indigo-500';
@@ -149,7 +149,7 @@ export default function ContactsPage() {
             rightActions={
                 <button
                     onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nuevo Contacto
                 </button>
@@ -171,7 +171,7 @@ export default function ContactsPage() {
                     <div className="flex gap-2 overflow-x-auto pb-1">
                         <button
                             onClick={() => setActiveFilter('all')}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-[hsl(var(--primary))] text-white border-blue-600' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
                         >
                             Todos ({leads.length})
                         </button>
@@ -179,7 +179,7 @@ export default function ContactsPage() {
                             <button
                                 key={s}
                                 onClick={() => setActiveFilter(s)}
-                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
+                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-[hsl(var(--primary))] text-white border-blue-600' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
                             >
                                 {STAGE_LABELS[s]} ({leads.filter(l => l.stage === s).length})
                             </button>
@@ -200,7 +200,7 @@ export default function ContactsPage() {
                             <p className="text-slate-400 text-sm max-w-[200px]">Agrega un nuevo contacto o ajusta los filtros.</p>
                             <button
                                 onClick={() => setIsCreateOpen(true)}
-                                className="px-4 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
+                                className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
                             >
                                 Agregar Contacto
                             </button>
@@ -209,18 +209,18 @@ export default function ContactsPage() {
                         <div
                             key={lead.id}
                             onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)}
-                            className="bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-md p-3 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
+                            className="bg-[hsl(var(--surface-1))] dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-md p-3 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex gap-4">
                                     <div className="relative">
-                                        <div className="size-8 rounded-lg bg-blue-500/10 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-white font-bold text-sm uppercase group-hover:border-blue-400 transition-colors">
+                                        <div className="size-8 rounded-lg bg-blue-500/10 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-[hsl(var(--primary))] dark:text-white font-bold text-sm uppercase group-hover:border-blue-400 transition-colors">
                                             {lead.nombre_completo?.charAt(0) || ''}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || ''}
                                         </div>
                                         <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[#1e1f21] ${getStatusDot(lead.stage)}`} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-800 dark:text-white text-base tracking-tight group-hover:text-blue-600 transition-colors">
+                                        <h3 className="font-bold text-slate-800 dark:text-white text-base tracking-tight group-hover:text-[hsl(var(--primary))] transition-colors">
                                             {lead.nombre_completo || ''}
                                         </h3>
                                         <p className="text-[11px] text-slate-400 font-medium">
@@ -235,7 +235,7 @@ export default function ContactsPage() {
                             <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
                                 <button
                                     onClick={e => { e.stopPropagation(); router.push('/plataforma/crm/pipeline'); }}
-                                    className="text-blue-600 text-[10px] font-bold uppercase tracking-wide flex items-center gap-2 hover:text-blue-700 transition-colors"
+                                    className="text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-wide flex items-center gap-2 hover:text-[hsl(var(--primary))] transition-colors"
                                 >
                                     <div className="size-5 rounded-lg bg-blue-600/10 flex items-center justify-center">
                                         <Link2 size={11} />
@@ -254,7 +254,7 @@ export default function ContactsPage() {
                                     )}
                                     <button
                                         onClick={e => { e.stopPropagation(); }}
-                                        className="size-9 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all border border-blue-500/20"
+                                        className="size-9 rounded-md bg-blue-500/10 text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-white transition-all border border-blue-500/20"
                                     >
                                         <MessageSquare size={15} />
                                     </button>
@@ -271,7 +271,7 @@ export default function ContactsPage() {
                                     </div>
                                     <div className="space-y-2">
                                         {(groupedByStage[stage] ?? []).map(lead => (
-                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
                                                 <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || ''}</p>
                                                 <p className="text-[10px] text-slate-400">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
                                             </button>
@@ -291,7 +291,7 @@ export default function ContactsPage() {
                                     Sin actividad para mostrar
                                 </div>
                             ) : groupedByDate.map(([dateKey, payload]) => (
-                                <div key={dateKey} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                <div key={dateKey} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                     <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{payload.label}</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {payload.items.map(lead => (
@@ -305,7 +305,7 @@ export default function ContactsPage() {
                             ))}
                         </div>
                     ) : viewType === 'gantt' ? (
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500"><BarChart3 size={12} /> Progreso por contacto</div>
                             {filtered.map(lead => (
                                 <div key={lead.id} className="space-y-1">
@@ -314,7 +314,7 @@ export default function ContactsPage() {
                                         <span className="font-bold text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
                                     </div>
                                     <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
-                                        <div className="h-full bg-blue-600" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
+                                        <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
                                     </div>
                                 </div>
                             ))}
@@ -344,7 +344,7 @@ export default function ContactsPage() {
                             </table>
                         </div>
                     ) : viewType === 'wiki' ? (
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500"><BookOpen size={12} /> Wiki de contactos</div>
                             <textarea
                                 value={wikiNotes}
@@ -374,7 +374,7 @@ export default function ContactsPage() {
                             form="create-contact-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar

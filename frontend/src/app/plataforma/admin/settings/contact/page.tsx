@@ -15,8 +15,8 @@ const INITIAL_CONTACTS = [
 const TYPE_ICON: Record<string, any> = { phone: Phone, whatsapp: Phone, email: Mail, address: MapPin };
 const TYPE_COLOR: Record<string, string> = {
     phone: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10',
-    whatsapp: 'text-green-500 bg-green-50 dark:bg-green-500/10',
-    email: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10',
+    whatsapp: 'text-[hsl(var(--secondary))] bg-green-50 dark:bg-green-500/10',
+    email: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10',
     address: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10',
 };
 
@@ -105,7 +105,7 @@ export default function AdminSettingsContactPage() {
                                             onClick={() => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, active: !x.active } : x))}
                                             className={`w-10 h-5 rounded-full transition-all ${c.active ? 'bg-primary' : 'bg-white/10'} relative`}
                                         >
-                                            <div className={`absolute top-0.5 size-4 rounded-full bg-white transition-all ${c.active ? 'left-5' : 'left-0.5'}`} />
+                                            <div className={`absolute top-0.5 size-4 rounded-full bg-[hsl(var(--bg-primary))] transition-all ${c.active ? 'left-5' : 'left-0.5'}`} />
                                         </button>
                                         {editing && (
                                             <button onClick={() => setContacts(prev => prev.filter(x => x.id !== c.id))}

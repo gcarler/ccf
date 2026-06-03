@@ -55,10 +55,10 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
     const currentStage = stages.find(s => s.value === lead.stage);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0f1113]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113]">
             {/* Header Cinematic */}
             <div className="p-4 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
-                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-blue-600 dark:text-white">
+                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-[hsl(var(--primary))] dark:text-white">
                     <User size={160} />
                 </div>
 
@@ -70,7 +70,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                         >
                             {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? ''}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? ''}
                         </motion.div>
-                        <div className="absolute -bottom-1 -right-1 size-8 rounded-lg bg-white dark:bg-[#0f1113] border-[3px] border-slate-50 dark:border-[#0f1113] flex items-center justify-center text-blue-600 shadow-xl overflow-hidden">
+                        <div className="absolute -bottom-1 -right-1 size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] border-[3px] border-slate-50 dark:border-[#0f1113] flex items-center justify-center text-[hsl(var(--primary))] shadow-xl overflow-hidden">
                             <Zap size={12} fill="currentColor" className="animate-pulse" />
                         </div>
                     </div>
@@ -91,13 +91,13 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
 
                 <div className="p-4 bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm rounded-md border border-slate-100 dark:border-white/[0.05] shadow-sm mt-3 relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-500/10 rounded-md text-blue-600"><Smartphone size={16} /></div>
+                        <div className="p-2.5 bg-blue-500/10 rounded-md text-[hsl(var(--primary))]"><Smartphone size={16} /></div>
                         <div>
                             <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">WhatsApp Disponible</p>
                         </div>
                     </div>
-                    <button className="p-2.5 bg-blue-600 text-white rounded-md shadow-lg shadow-blue-500/20 active:scale-90 transition-all">
+                    <button className="p-2.5 bg-[hsl(var(--primary))] text-white rounded-md shadow-lg shadow-blue-500/20 active:scale-90 transition-all">
                         <Phone size={14} />
                     </button>
                 </div>
@@ -107,21 +107,21 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
             <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                        <Zap size={14} className="text-blue-600" /> Acciones de Consolidación
+                        <Zap size={14} className="text-[hsl(var(--primary))]" /> Acciones de Consolidación
                     </h3>
                     <div className="space-y-2">
                         <button
                             onClick={() => onViewFullProfile(lead.id)}
-                            className="w-full flex items-center gap-4 p-3 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 group"
+                            className="w-full flex items-center gap-4 p-3 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-[hsl(var(--primary))] transition-all shadow-xl shadow-blue-500/20 active:scale-95 group"
                         >
                             <ExternalLink size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> 
                             Ver Expediente Completo
                         </button>
                         <div className="grid grid-cols-2 gap-2">
-                            <button className="flex items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-lg text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-white/[0.05] transition-all">
+                            <button className="flex items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-lg text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/[0.05] transition-all">
                                 <MessageCircle size={14} className="text-emerald-500" /> WhatsApp
                             </button>
-                            <button className="flex items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-lg text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-white/[0.05] transition-all">
+                            <button className="flex items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-lg text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/[0.05] transition-all">
                                 <FileText size={14} className="text-sky-500" /> Notas
                             </button>
                         </div>
@@ -130,7 +130,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
 
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                        <History size={14} className="text-blue-600" /> Modificar Etapa
+                        <History size={14} className="text-[hsl(var(--primary))]" /> Modificar Etapa
                     </h3>
                     <div className="grid grid-cols-1 gap-1.5 focus-within:ring-2 focus-within:ring-blue-500/10 p-1.5 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/[0.05]">
                         {stages.map(s => (
@@ -141,7 +141,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                                     "w-full flex items-center gap-3 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all group",
                                     lead.stage === s.value
                                         ? `${s.bg} ${s.text} shadow-sm border border-current/20`
-                                        : 'bg-transparent text-slate-500 hover:bg-white dark:hover:bg-white/5'
+                                        : 'bg-transparent text-slate-500 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5'
                                 )}
                             >
                                 <div className={clsx("size-1.5 rounded-full", s.color)} />
@@ -156,7 +156,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
 
                 <section className="space-y-3 pb-12">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                        <History size={14} className="text-blue-600" /> Historial de Actividad
+                        <History size={14} className="text-[hsl(var(--primary))]" /> Historial de Actividad
                     </h3>
                     
                     <div className="relative pl-4 space-y-3 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-slate-100 dark:before:bg-white/5">
@@ -170,7 +170,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                                         transition={{ delay: idx * 0.05 }}
                                         className="relative"
                                     >
-                                        <div className="absolute -left-[21px] top-0 size-[13px] rounded-full bg-white dark:bg-[#0f1113] border-2 border-blue-500 shadow-sm z-10" />
+                                        <div className="absolute -left-[21px] top-0 size-[13px] rounded-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] border-2 border-blue-500 shadow-sm z-10" />
                                         
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
@@ -187,7 +187,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                                             <div className="p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] text-[11px] leading-relaxed">
                                                 <p className="text-slate-600 dark:text-slate-400 font-medium">
                                                     {log.metadata?.stage ? (
-                                                        <>Se movió a <span className="font-bold text-blue-600 dark:text-blue-400">{STAGE_LABEL[log.metadata.stage] || log.metadata.stage}</span></>
+                                                        <>Se movió a <span className="font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{STAGE_LABEL[log.metadata.stage] || log.metadata.stage}</span></>
                                                     ) : (
                                                         'Actualización de datos generales'
                                                     )}

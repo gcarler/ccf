@@ -71,7 +71,7 @@ export default function CourseCoordinationPage() {
     if (!course) return (
         <div className="flex flex-col items-center justify-center h-full p-3 text-center space-y-4">
             <h2 className="text-lg font-bold text-rose-500 uppercase">Programa no encontrado</h2>
-            <button onClick={() => router.back()} className="text-sm font-semibold text-blue-600 uppercase tracking-wide flex items-center gap-2">
+            <button onClick={() => router.back()} className="text-sm font-semibold text-[hsl(var(--primary))] uppercase tracking-wide flex items-center gap-2">
                 <ArrowLeft size={14} /> Volver a Coordinación
             </button>
         </div>
@@ -89,7 +89,7 @@ export default function CourseCoordinationPage() {
                     <div className="flex items-center gap-3">
                         <button 
                             onClick={() => router.push(`/academy/courses/${id}/manage`)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"
                         >
                             Gestionar Cohorte
                         </button>
@@ -105,7 +105,7 @@ export default function CourseCoordinationPage() {
                             {course.title}
                         </h1>
                         <p className="text-slate-500 font-bold uppercase tracking-wide text-xs flex items-center gap-2">
-                            <span className="text-blue-600">{course.code}</span> • {course.cohort_name || 'Sin cohorte activa'}
+                            <span className="text-[hsl(var(--primary))]">{course.code}</span> • {course.cohort_name || 'Sin cohorte activa'}
                         </p>
                     </div>
                 </header>
@@ -124,7 +124,7 @@ export default function CourseCoordinationPage() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-8 rounded-md bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                        <div className="size-8 rounded-md bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                             <Calendar size={20} />
                                         </div>
                                         <div>
@@ -166,15 +166,15 @@ export default function CourseCoordinationPage() {
                         <DSCard>
                             <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Acciones de Control</h3>
                             <div className="space-y-3">
-                                <button className="w-full flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-blue-600 hover:text-white transition-all group text-left">
+                                <button className="w-full flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-[hsl(var(--primary))] hover:text-white transition-all group text-left">
                                     <span className="text-[10px] font-semibold uppercase tracking-wide">Ver Reporte de Asistencia</span>
                                     <ChevronRight size={14} className="text-slate-400 group-hover:text-white" />
                                 </button>
-                                <button className="w-full flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-blue-600 hover:text-white transition-all group text-left">
+                                <button className="w-full flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-[hsl(var(--primary))] hover:text-white transition-all group text-left">
                                     <span className="text-[10px] font-semibold uppercase tracking-wide">Auditar Evaluaciones</span>
                                     <ChevronRight size={14} className="text-slate-400 group-hover:text-white" />
                                 </button>
-                                <button className="w-full flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-blue-600 hover:text-white transition-all group text-left">
+                                <button className="w-full flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-[hsl(var(--primary))] hover:text-white transition-all group text-left">
                                     <span className="text-[10px] font-semibold uppercase tracking-wide">Lista de Espera</span>
                                     <ChevronRight size={14} className="text-slate-400 group-hover:text-white" />
                                 </button>

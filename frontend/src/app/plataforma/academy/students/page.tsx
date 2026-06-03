@@ -81,10 +81,10 @@ export default function AcademyStudentsPage() {
                     <Metric icon={BarChart3} label="Progreso prom." value={`${Math.round(students.reduce((sum, row) => sum + (row.progress ?? 0), 0) / Math.max(students.length, 1))}%`} />
                 </section>
 
-                <section className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
+                <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] shadow-sm dark:border-white/10 dark:bg-white/5">
                     <header className="flex flex-col gap-4 border-b border-slate-100 p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Directorio academico</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Directorio academico</p>
                             <h1 className="text-lg font-bold text-slate-900 dark:text-white">Estudiantes</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
@@ -103,7 +103,7 @@ export default function AcademyStudentsPage() {
                             <div className="space-y-1">
                                 {filtered.map(s => (
                                     <div key={s.id} onClick={() => router.push(`/academy/profile?student=${s.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all">
-                                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400 font-bold text-xs">
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs">
                                             {(s.full_name || s.name || 'E')[0]}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -121,7 +121,7 @@ export default function AcademyStudentsPage() {
                         ) : viewType === 'grid' ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3">
                                 {filtered.map(s => (
-                                    <div key={s.id} onClick={() => router.push(`/academy/profile?student=${s.id}`)} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1b1e] p-4 hover:shadow-md cursor-pointer transition-all">
+                                    <div key={s.id} onClick={() => router.push(`/academy/profile?student=${s.id}`)} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md cursor-pointer transition-all">
                                         <h3 className="text-sm font-bold text-slate-900 dark:text-white">{s.full_name || s.name || "Estudiante"}</h3>
                                         <p className="text-xs text-slate-400 mt-1">{s.email || 'Sin correo'}</p>
                                         <div className="flex items-center justify-between mt-3">
@@ -189,8 +189,8 @@ export default function AcademyStudentsPage() {
 
 function Metric({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
     return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10">
+        <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10">
                 <Icon size={20} />
             </div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>

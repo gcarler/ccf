@@ -176,7 +176,7 @@ export default function MyCardPage() {
 
                 {/* QR Code Container */}
                 <div className="flex-1 flex flex-col items-center justify-center relative z-10">
-                    <div className="p-4 bg-white rounded-md shadow-2xl relative group-hover:rotate-1 transition-transform duration-500">
+                    <div className="p-4 bg-[hsl(var(--surface-1))] rounded-md shadow-2xl relative group-hover:rotate-1 transition-transform duration-500">
                         <QRCodeSVG
                             value={member.qr_token}
                             size={140}
@@ -219,7 +219,7 @@ export default function MyCardPage() {
                     <Download size={18} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
                     <span className="text-[10px] font-bold uppercase tracking-wide">Descargar</span>
                 </button>
-                <button className="col-span-2 flex items-center justify-center gap-3 bg-white text-slate-900 p-3 rounded-md font-bold uppercase tracking-wide text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
+                <button className="col-span-2 flex items-center justify-center gap-3 bg-[hsl(var(--surface-1))] text-slate-900 p-3 rounded-md font-bold uppercase tracking-wide text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
                     <Sparkles size={20} className="text-amber-500" /> Añadir a Google Wallet
                 </button>
             </div>

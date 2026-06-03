@@ -61,7 +61,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             onClick={onClick}
             className={clsx(
                 "group relative p-4 mb-3 rounded-lg transition-all cursor-grab active:cursor-grabbing",
-                "bg-white dark:bg-[#1e1f21] border border-slate-200/50 dark:border-white/5",
+                "bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200/50 dark:border-white/5",
                 "hover:border-blue-500/30 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]",
                 "hover:-translate-y-1 active:scale-[0.98]",
                 isDragging && "opacity-0",
@@ -117,10 +117,10 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                 
                 <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex items-center justify-between gap-2">
-                        <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors">
                             {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                         </h4>
-                        <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                        <ChevronRight size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] group-hover:translate-x-1 transition-all" />
                     </div>
                     <p className="text-[11px] text-slate-400 font-bold flex items-center gap-1 mt-1">
                         <Phone size={10} strokeWidth={3} />
@@ -133,7 +133,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
                 <button 
                     onClick={(e) => { e.stopPropagation(); window.open(`tel:${lead.phone}`); }}
-                    className="size-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                    className="size-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-white transition-all shadow-sm"
                 >
                     <Phone size={12} />
                 </button>
@@ -170,13 +170,13 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                         </div>
                     )}
                     {lead.notes && (
-                        <div className="size-1.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" title="Tiene notas" />
+                        <div className="size-1.5 rounded-full bg-[hsl(var(--primary))] animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" title="Tiene notas" />
                     )}
                 </div>
             </div>
 
             {/* Interaction Indicator */}
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-all -ml-0.5" />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-[hsl(var(--primary))] opacity-0 group-hover:opacity-100 transition-all -ml-0.5" />
         </div>
     );
 }

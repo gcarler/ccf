@@ -30,7 +30,7 @@ def _create_log(
         campaign_name=campaign_name,
         recipient_phone=recipient_phone,
         content=content,
-        leader_id=leader_id,
+        leader_user_id=leader_id,
         outcome=outcome,
         external_id=external_id or f"{channel[:2].upper()}-{uuid.uuid4().hex[:12]}",
     )

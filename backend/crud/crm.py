@@ -5,7 +5,7 @@ import uuid
 from typing import List, Optional
 
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from backend import models, schemas
 from backend.core.security import decrypt_data, encrypt_data
@@ -118,7 +118,10 @@ def search_personas(
     sort_by: str | None = None,
     sort_dir: str = "asc",
 ):
-    query = db.query(models.Persona)
+    query = db.query(models.Persona).options(
+        selectinload(models.Persona.family),
+        selectinload(models.Persona.positions),
+    )
     # Axioma 3 — Multi-Tenant: filtrar por sede obligatoriamente
     if sede_id is not None:
         query = query.filter(models.Persona.sede_id == sede_id)
@@ -145,13 +148,13 @@ def search_personas(
 
 
 def get_persona(db: Session, persona_id: str) -> Optional[models.Persona]:
-    return db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    return db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
 
 
 def update_persona(
     db: Session, persona_id: str, payload: schemas.PersonaUpdate
 ) -> Optional[models.Persona]:
-    row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    row = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
     if not row:
         return None
     
@@ -230,7 +233,7 @@ def _compute_days_in_state(db: Session, persona_id, state_name: str) -> int | No
 
 
 def delete_persona(db: Session, persona_id: str) -> bool:
-    row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    row = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
     if not row:
         return False
     # Soft-delete: nunca eliminar físicamente una Persona.
@@ -295,7 +298,10 @@ def search_members(
     sort_by: str | None = None,
     sort_dir: str = "asc",
 ):
-    query = db.query(models.Persona)
+    query = db.query(models.Persona).options(
+        selectinload(models.Persona.family),
+        selectinload(models.Persona.positions),
+    )
     # Axioma 3 — Multi-Tenant: filtrar por sede obligatoriamente
     if sede_id is not None:
         query = query.filter(models.Persona.sede_id == sede_id)
@@ -354,7 +360,10 @@ def search_members_paginated(
     sort_dir: str = "asc",
 ) -> dict:
     """Returns { items: [...], total: N } for server-side AG Grid pagination."""
-    query = db.query(models.Persona)
+    query = db.query(models.Persona).options(
+        selectinload(models.Persona.family),
+        selectinload(models.Persona.positions),
+    )
     # Axioma 3 — Multi-Tenant: filtrar por sede obligatoriamente
     if sede_id is not None:
         query = query.filter(models.Persona.sede_id == sede_id)
@@ -403,7 +412,7 @@ def get_personas(db: Session, search: str | None = None, role: str | None = None
 
 
 def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate):
-    row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    row = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
     if not row:
         return None
     # Capturar valores anteriores para el trigger de embudo
@@ -696,7 +705,7 @@ def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpda
     if payload.base_attendees_with_roles is not None:
         db.query(models.CellGroupMember).filter(
             models.CellGroupMember.cell_group_id == house_id
-        ).delete()
+        ).update({models.CellGroupMember.deleted_at: _utcnow()}, synchronize_session=False)
         for item in payload.base_attendees_with_roles:
             db.add(models.CellGroupMember(
                 cell_group_id=house_id, persona_id=uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id, role=item.role
@@ -705,7 +714,7 @@ def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpda
     elif payload.base_attendee_ids is not None:
         db.query(models.CellGroupMember).filter(
             models.CellGroupMember.cell_group_id == house_id
-        ).delete()
+        ).update({models.CellGroupMember.deleted_at: _utcnow()}, synchronize_session=False)
         for persona_id in payload.base_attendee_ids:
             db.add(models.CellGroupMember(
                 cell_group_id=house_id, persona_id=uuid.UUID(str(persona_id)) if isinstance(persona_id, str) else persona_id, role="miembro"
@@ -751,7 +760,7 @@ def create_family(db: Session, name: str):
 
 
 def get_persona_timeline(db: Session, persona_id: str):
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
     if not persona:
         return []
 
@@ -860,7 +869,10 @@ def get_persona_timeline(db: Session, persona_id: str):
 
 
 def create_communication_log(db: Session, payload: schemas.CommunicationLogCreate):
-    row = models.CommunicationLog(**payload.model_dump())
+    data = payload.model_dump()
+    if data.get("leader_id") is not None:
+        data["leader_user_id"] = data.pop("leader_id")
+    row = models.CommunicationLog(**data)
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -1100,11 +1112,11 @@ def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
 
 
 def get_persona(db: Session, persona_id: str) -> Optional[models.Persona]:
-    return db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    return db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
 
 
 def delete_persona(db: Session, persona_id: str) -> bool:
-    row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    row = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
     if not row:
         return False
     # Soft-delete: nunca eliminar físicamente una Persona.

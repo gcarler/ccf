@@ -93,7 +93,7 @@ export default function ProjectsCommentsPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Comentarios asignados', icon: MessageCircle }]}
                 viewType={viewType}
@@ -107,7 +107,7 @@ export default function ProjectsCommentsPage() {
                         <select
                             value={projectId}
                             onChange={(event) => setProjectId(Number(event.target.value))}
-                            className="md:col-span-1 rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
+                            className="md:col-span-1 rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-black/20"
                         >
                             {projects.map((project) => (
                                 <option key={project.id} value={project.id}>{project.title}</option>
@@ -117,12 +117,12 @@ export default function ProjectsCommentsPage() {
                             value={content}
                             onChange={(event) => setContent(event.target.value)}
                             placeholder="Escribe un comentario para el proyecto..."
-                            className="md:col-span-2 rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
+                            className="md:col-span-2 rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-black/20"
                         />
                         <button
                             onClick={handleSubmit}
                             disabled={saving || !projectId || !content.trim()}
-                            className="md:col-span-1 rounded-md bg-blue-600 text-white text-[11px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                            className="md:col-span-1 rounded-md bg-[hsl(var(--primary))] text-white text-[11px] font-semibold uppercase tracking-wide disabled:opacity-50"
                         >
                             {saving ? 'Guardando...' : 'Publicar'}
                         </button>
@@ -134,11 +134,11 @@ export default function ProjectsCommentsPage() {
                 ) : comments.length === 0 ? (
                     <div className="rounded-lg border border-slate-200 dark:border-white/10 p-4 text-center text-slate-500">Sin comentarios pendientes.</div>
                 ) : viewType === 'table' ? (
-                    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Autor</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Comentario</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Estado</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{comments.map((item) => <tr key={item.id}><td className="px-3 py-2 text-sm font-medium">{item.author_name}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{item.content}</td><td className="px-3 py-2"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase", item.is_resolved ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600")}>{item.is_resolved ? 'Resuelto' : 'Pendiente'}</span></td></tr>)}</tbody></table></div>
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Autor</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Comentario</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Estado</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{comments.map((item) => <tr key={item.id}><td className="px-3 py-2 text-sm font-medium">{item.author_name}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{item.content}</td><td className="px-3 py-2"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase", item.is_resolved ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-[hsl(var(--primary))]")}>{item.is_resolved ? 'Resuelto' : 'Pendiente'}</span></td></tr>)}</tbody></table></div>
                 ) : viewType === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{comments.map((item) => <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5"><p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">{item.author_name}</p><p className="text-sm mt-1">{item.content}</p></article>)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{comments.map((item) => <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5"><p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">{item.author_name}</p><p className="text-sm mt-1">{item.content}</p></article>)}</div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{[false, true].map((resolved) => <section key={String(resolved)} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{resolved ? 'Resueltos' : 'Pendientes'}</span><span className="text-[10px] font-bold text-slate-400">{comments.filter((item) => item.is_resolved === resolved).length}</span></div><div className="space-y-2">{comments.filter((item) => item.is_resolved === resolved).map((item) => <div key={item.id} className="rounded-md bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm">{item.content}</div>)}</div></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{[false, true].map((resolved) => <section key={String(resolved)} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{resolved ? 'Resueltos' : 'Pendientes'}</span><span className="text-[10px] font-bold text-slate-400">{comments.filter((item) => item.is_resolved === resolved).length}</span></div><div className="space-y-2">{comments.filter((item) => item.is_resolved === resolved).map((item) => <div key={item.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm">{item.content}</div>)}</div></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario de comentarios" />
                 ) : viewType === 'gantt' ? (
@@ -151,9 +151,9 @@ export default function ProjectsCommentsPage() {
                             const project = projects.find((p) => p.id === Number(pid));
                             return (
                                 <section key={pid} className="space-y-2">
-                                    <h3 className="text-xs font-bold uppercase tracking-wide text-blue-600">{project?.title || `Proyecto #${pid}`}</h3>
+                                    <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{project?.title || `Proyecto #${pid}`}</h3>
                                     {rows.map((item) => (
-                                        <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                                        <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
                                             <p className="font-semibold text-slate-500 uppercase tracking-wide">{item.author_name}</p>
                                             <p className="text-sm text-slate-700 dark:text-slate-200 mt-2">{item.content}</p>
                                             <div className="mt-3 flex items-center justify-between">
@@ -161,7 +161,7 @@ export default function ProjectsCommentsPage() {
                                                 <button
                                                     onClick={() => resolveComment(item)}
                                                     disabled={item.is_resolved}
-                                                    className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                                                    className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
                                                 >
                                                     {item.is_resolved ? 'Resuelto' : 'Resolver'}
                                                 </button>

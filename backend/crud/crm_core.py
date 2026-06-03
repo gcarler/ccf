@@ -1,12 +1,14 @@
 """CRM Core 2.0 — CRUD functions."""
 from datetime import datetime, timezone
 from typing import Optional, List
+import uuid
 
 from sqlalchemy.orm import Session
 
 from backend.models_crm_core import (
     PipelineCRM, EtapaPipeline, PlantillaMensaje,
     CasoCRM, InteraccionCRM, TareaCRM,
+    TipoPipelineEnum,
 )
 from backend.schemas.crm_core import (
     PipelineCRMCreate, EtapaPipelineCreate, PlantillaMensajeCreate,
@@ -209,3 +211,38 @@ def complete_tarea(db: Session, tarea_id: int) -> Optional[TareaCRM]:
     db.commit()
     db.refresh(obj)
     return obj
+
+
+def seed_pipeline_nuevos_visitantes(db: Session, sede_id: uuid.UUID) -> PipelineCRM:
+    """Idempotente: crea pipeline NUEVOS_VISITANTES con etapa inicial si no existe."""
+    pipeline = (
+        db.query(PipelineCRM)
+        .filter(
+            PipelineCRM.sede_id == sede_id,
+            PipelineCRM.tipo == TipoPipelineEnum.NUEVOS_VISITANTES,
+            PipelineCRM.activo == True,
+        )
+        .first()
+    )
+    if pipeline:
+        return pipeline
+
+    pipeline = PipelineCRM(
+        sede_id=sede_id,
+        nombre="Nuevos Visitantes",
+        tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+        activo=True,
+    )
+    db.add(pipeline)
+    db.flush()
+
+    etapa = EtapaPipeline(
+        pipeline_id=pipeline.id,
+        nombre="Nuevo Contacto",
+        orden=1,
+        requiere_accion=True,
+    )
+    db.add(etapa)
+    db.commit()
+    db.refresh(pipeline)
+    return pipeline

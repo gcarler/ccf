@@ -36,7 +36,7 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="max-w-2xl space-y-3">
                         <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 bg-blue-600 rounded-full text-[10px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/40">Misión Proactiva</span>
+                            <span className="px-2 py-1 bg-[hsl(var(--primary))] rounded-full text-[10px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/40">Misión Proactiva</span>
                             <div className="size-2 rounded-full bg-emerald-400 animate-ping" />
                             <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">Sincronizado en tiempo real</span>
                         </div>
@@ -60,7 +60,7 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
                                 ></motion.circle>
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <Zap className={clsx("size-8", dbProgress > 50 ? "text-yellow-400" : "text-blue-400")} fill="currentColor" />
+                                <Zap className={clsx("size-8", dbProgress > 50 ? "text-yellow-400" : "text-[hsl(var(--primary))]")} fill="currentColor" />
                             </div>
                         </div>
                         <div>
@@ -76,7 +76,7 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
 
             {/* 2. Analítica de Impacto (NUEVA SECCIÓN DE CALIDAD) */}
             <section className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <AnalyticCard title="Velocidad" value="4.2" detail="Tareas/Día" icon={TrendingUp} color="text-blue-500" />
+                <AnalyticCard title="Velocidad" value="4.2" detail="Tareas/Día" icon={TrendingUp} color="text-[hsl(var(--primary))]" />
                 <AnalyticCard title="Retraso" value="0" detail="Días de lag" icon={Clock} color="text-emerald-500" />
                 <AnalyticCard title="Hitos" value={`${milestones.filter(m => m.is_completed).length}/${milestones.length}`} detail="Metas logradas" icon={Trophy} color="text-yellow-500" />
                 <AnalyticCard title="Riesgo" value="Bajo" detail="Sin bloqueos" icon={AlertCircle} color="text-slate-400" />
@@ -86,12 +86,12 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-2">
-                        <BarChart3 className="text-blue-600" size={16} /> Hitos Estratégicos
+                        <BarChart3 className="text-[hsl(var(--primary))]" size={16} /> Hitos Estratégicos
                     </h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {milestones.map((m) => (
-                        <div key={m.id} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 hover:shadow-2xl transition-all group relative overflow-hidden">
+                        <div key={m.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 hover:shadow-2xl transition-all group relative overflow-hidden">
                             <div className="flex items-start justify-between mb-3">
                                 <div className={clsx("size-10 rounded-md flex items-center justify-center shadow-lg", m.is_completed ? "bg-emerald-500 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-400")}>
                                     {m.is_completed ? <CheckCircle2 size={18} /> : <Calendar size={18} />}
@@ -110,7 +110,7 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
             {/* 4. Grid de Nodos Operativos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 <NodeCard title="Nodo de Nutrición" icon={Share2} color="bg-orange-500" tasks={nutritionTasks} />
-                <NodeCard title="Nodo Digital" icon={Globe} color="bg-blue-600" tasks={webTasks} />
+                <NodeCard title="Nodo Digital" icon={Globe} color="bg-[hsl(var(--primary))]" tasks={webTasks} />
             </div>
         </div>
     );
@@ -118,7 +118,7 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
 
 function AnalyticCard({ title, value, detail, icon: Icon, color }: any) {
     return (
-        <div className="p-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg shadow-sm hover:shadow-xl transition-all">
+        <div className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg shadow-sm hover:shadow-xl transition-all">
             <div className="flex items-center gap-2 mb-2">
                 <div className={clsx("p-1.5 rounded-md bg-slate-50 dark:bg-white/5", color)}>
                     <Icon size={14} />
@@ -133,7 +133,7 @@ function AnalyticCard({ title, value, detail, icon: Icon, color }: any) {
 
 function NodeCard({ title, icon: Icon, color, tasks }: any) {
     return (
-        <div className="p-3 rounded-lg bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-2xl transition-all group">
+        <div className="p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-2xl transition-all group">
             <div className="flex items-center gap-3 mb-3">
                 <div className={clsx("size-10 rounded-md flex items-center justify-center text-white shadow-xl transition-transform group-hover:scale-110", color)}>
                     <Icon size={18} />
@@ -146,7 +146,7 @@ function NodeCard({ title, icon: Icon, color, tasks }: any) {
             <div className="space-y-2">
                 {tasks.slice(0, 4).map((t: any) => (
                     <div key={t.id} className="flex items-center gap-3 p-2 rounded-md bg-slate-50 dark:bg-black/20 border border-transparent hover:border-slate-200 transition-all cursor-pointer">
-                        <div className={clsx("size-2.5 rounded-full shadow-sm", t.status === 'completed' ? "bg-emerald-500" : "bg-blue-500")} />
+                        <div className={clsx("size-2.5 rounded-full shadow-sm", t.status === 'completed' ? "bg-emerald-500" : "bg-[hsl(var(--primary))]")} />
                         <span className="text-[13px] font-bold text-slate-700 dark:text-slate-300 truncate flex-1 leading-none">{t.title.split('] ')[1] || t.title}</span>
                         <ArrowUpRight size={14} className="text-slate-300" />
                     </div>

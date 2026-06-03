@@ -90,7 +90,7 @@ export default function AdminUsersPage() {
                 breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Gestión de Accesos', icon: Users }]}
                 onSearch={setSearchTerm}
                 rightActions={
-                    <button className="flex items-center gap-2 px-3 py-2.5 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                         <UserPlus size={14} /> Nuevo Acceso
                     </button>
                 }
@@ -108,7 +108,7 @@ export default function AdminUsersPage() {
                     </motion.div>
 
                     {/* Users Table */}
-                    <motion.div variants={itemVariants} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden relative">
+                    <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden relative">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
@@ -137,7 +137,7 @@ export default function AdminUsersPage() {
                                                         {user.username.substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors">{user.username}</p>
+                                                        <p className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">{user.username}</p>
                                                         <p className="text-[11px] font-medium text-slate-400">{user.email}</p>
                                                     </div>
                                                 </div>
@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
                                                 <span className={clsx(
                                                     "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-wide",
                                                     user.role === 'admin' ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400" :
-                                                    user.role === 'pastor' ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" :
+                                                    user.role === 'pastor' ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]" :
                                                     "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400"
                                                 )}>
                                                     <Shield size={10} /> {user.role}
@@ -166,7 +166,7 @@ export default function AdminUsersPage() {
                                             </td>
                                             <td className="px-4 py-2 text-right">
                                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleUpdateUser(user.id, { is_active: !user.is_active }); }} className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-md transition-all text-slate-400">
+                                                    <button onClick={(e) => { e.stopPropagation(); handleUpdateUser(user.id, { is_active: !user.is_active }); }} className="p-2 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 rounded-md transition-all text-slate-400">
                                                         {user.is_active ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
                                                     </button>
                                                     <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md transition-all text-slate-400 hover:text-rose-500">
@@ -191,14 +191,14 @@ export default function AdminUsersPage() {
                 actions={
                     <>
                         <button className="px-3 py-2.5 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors" onClick={() => setIsDrawerOpen(false)}>Cancelar</button>
-                        <button className="px-3 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">Confirmar Cambios</button>
+                        <button className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">Confirmar Cambios</button>
                     </>
                 }
             >
                 {selectedUser && (
                     <div className="space-y-3 p-2 animate-fade-in">
                         <section className="space-y-4">
-                            <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2"><Shield size={14} className="text-blue-500" /> Cambio de Rango Ministerial</h4>
+                            <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2"><Shield size={14} className="text-[hsl(var(--primary))]" /> Cambio de Rango Ministerial</h4>
                             <div className="grid grid-cols-1 gap-2">
                                 {['admin', 'pastor', 'docente', 'lider', 'estudiante'].map((role) => (
                                     <button 
@@ -207,7 +207,7 @@ export default function AdminUsersPage() {
                                         className={clsx(
                                             "flex items-center justify-between p-3 rounded-lg border-2 transition-all group",
                                             selectedUser.role === role 
-                                                ? "bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-500/20" 
+                                                ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-xl shadow-blue-500/20" 
                                                 : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:border-blue-500/30"
                                         )}
                                     >
@@ -219,7 +219,7 @@ export default function AdminUsersPage() {
                         </section>
 
                         <section className="space-y-4">
-                            <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2"><Key size={14} className="text-blue-500" /> Seguridad de Cuenta</h4>
+                            <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2"><Key size={14} className="text-[hsl(var(--primary))]" /> Seguridad de Cuenta</h4>
                             <button className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition-all flex items-center justify-center gap-3">
                                 <Zap size={16} className="text-amber-500" /> Resetear Contraseña (Forzar)
                             </button>

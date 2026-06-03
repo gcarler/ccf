@@ -63,7 +63,8 @@ class Lesson(Base):
 class LessonProgress(Base):
     __tablename__ = "lesson_progress"
     id = Column(Integer, primary_key=True, index=True)
-    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False, index=True)
     progress_percent = Column(Numeric(5, 2), default=0)
     last_position_seconds = Column(Integer, default=0)
@@ -179,7 +180,8 @@ class FormalActa(Base):
     __tablename__ = "formal_actas"
     id = Column(Integer, primary_key=True, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
-    closed_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
+    closed_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    closed_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     status = Column(String(20), default="closed")  # closed, archived
     min_grade_required = Column(Numeric(5, 2), default=70)
     min_attendance_required = Column(Numeric(5, 2), default=75)
@@ -289,7 +291,8 @@ class Enrollment(Base):
     __tablename__ = "enrollments"
     __table_args__ = (UniqueConstraint("persona_id", "course_id", name="uq_persona_course"),)
     id = Column(Integer, primary_key=True, index=True)
-    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
     status = Column(String(20), default="active")  # active, completed, dropped
     progress_percent = Column(Float, default=0)
@@ -315,6 +318,7 @@ class AcademyActivityLog(Base):
     )  # enrollment, completion, drop, certificate
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=True)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     modality = Column(String(20), nullable=True)  # formal, no_formal
     value = Column(Numeric(10, 2), default=1.0)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)

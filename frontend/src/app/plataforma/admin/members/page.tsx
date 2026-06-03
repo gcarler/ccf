@@ -32,7 +32,7 @@ const MEMBER_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'c
 
 const ROLE_OPTIONS: StatusOption[] = [
     { label: 'ADMIN', value: 'admin', color: 'bg-rose-500', text: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-900/20' },
-    { label: 'STAFF', value: 'staff', color: 'bg-blue-500', text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    { label: 'STAFF', value: 'staff', color: 'bg-[hsl(var(--primary))]', text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
     { label: 'PASTOR', value: 'pastor', color: 'bg-sky-500', text: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-900/20' },
     { label: 'MIEMBRO', value: 'estudiante', color: 'bg-slate-400', text: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-white/5' },
 ];
@@ -167,12 +167,12 @@ export default function AdminMembersPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in">
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Gestión Central', icon: Shield }, { label: 'Usuarios y Roles', icon: Users }]}
                 viewType={viewType} setViewType={setViewType} availableViews={MEMBER_VIEWS} onSearch={setSearch}
                 rightActions={
-                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                         <UserPlus size={14} /> Añadir Usuario
                     </button>
                 }
@@ -201,7 +201,7 @@ export default function AdminMembersPage() {
                     <div className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2 xl:grid-cols-4">
                         {filtered.map((member) => (
                             <button key={member.id} onClick={() => handleOpenMember(member)} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-left dark:border-white/10 dark:bg-white/[0.03]">
-                                <div className="mb-4 flex size-7 items-center justify-center rounded-md bg-blue-600 text-sm font-semibold text-white">{member.username?.slice(0, 2).toUpperCase()}</div>
+                                <div className="mb-4 flex size-7 items-center justify-center rounded-md bg-[hsl(var(--primary))] text-sm font-semibold text-white">{member.username?.slice(0, 2).toUpperCase()}</div>
                                 <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{member.username}</p>
                                 <p className="truncate text-xs font-semibold text-slate-400">{member.email}</p>
                             </button>
@@ -217,7 +217,7 @@ export default function AdminMembersPage() {
                                 </div>
                                 <div className="space-y-2">
                                     {column.items.map((member) => (
-                                        <button key={member.id} onClick={() => handleOpenMember(member)} className="w-full rounded-md border border-slate-200 bg-white p-3 text-left dark:border-white/10 dark:bg-white/5">
+                                        <button key={member.id} onClick={() => handleOpenMember(member)} className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 text-left dark:border-white/10 dark:bg-white/5">
                                             <p className="text-xs font-semibold text-slate-900 dark:text-white">{member.username}</p>
                                             <p className="mt-1 truncate text-[10px] font-semibold text-slate-400">{member.email}</p>
                                         </button>
@@ -239,7 +239,7 @@ export default function AdminMembersPage() {
                 isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
                 title={selectedMember?.username || 'Detalles de Usuario'}
                 subtitle="Configuración Técnica de Cuenta"
-                actions={<><button className="px-4 py-2 text-[11px] font-bold text-rose-500">Bloquear Cuenta</button><button className="px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-bold shadow-lg">Guardar Cambios</button></>}
+                actions={<><button className="px-4 py-2 text-[11px] font-bold text-rose-500">Bloquear Cuenta</button><button className="px-3 py-2 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg text-[11px] font-bold shadow-lg">Guardar Cambios</button></>}
             >
                 <div className="space-y-3 animate-fade-in">
                     <section className="flex items-center gap-3">
@@ -261,13 +261,13 @@ export default function AdminMembersPage() {
 
                     <section className="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="size-7 rounded-lg bg-white dark:bg-white/10 flex items-center justify-center text-blue-600 shadow-sm"><Fingerprint size={24} /></div>
+                            <div className="size-7 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--primary))] shadow-sm"><Fingerprint size={24} /></div>
                             <div>
-                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">Seguridad Biométrica / 2FA</h4>
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Seguridad Biométrica / 2FA</h4>
                                 <p className="text-xs text-slate-500">Forzar autenticación de dos factores.</p>
                             </div>
                         </div>
-                        <div className="h-6 w-11 bg-slate-200 dark:bg-white/10 rounded-full relative cursor-pointer"><div className="absolute left-1 top-1 size-4 bg-white rounded-full" /></div>
+                        <div className="h-6 w-11 bg-slate-200 dark:bg-white/10 rounded-full relative cursor-pointer"><div className="absolute left-1 top-1 size-4 bg-[hsl(var(--bg-primary))] rounded-full" /></div>
                     </section>
                 </div>
             </WorkspaceDrawer>
@@ -280,7 +280,7 @@ export default function AdminMembersPage() {
                 actions={
                     <>
                         <button onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500">Cancelar</button>
-                        <button onClick={handleCreateMember} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold shadow-lg">Crear usuario</button>
+                        <button onClick={handleCreateMember} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold shadow-lg">Crear usuario</button>
                     </>
                 }
             >
@@ -301,7 +301,7 @@ function AdminStat({ label, value, icon: Icon }: any) {
     return (
         <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg group hover:border-blue-500/20 transition-all">
             <div className="flex items-center gap-2 mb-2">
-                <Icon size={14} className="text-slate-400 group-hover:text-blue-500" />
+                <Icon size={14} className="text-slate-400 group-hover:text-[hsl(var(--primary))]" />
                 <span className="font-semibold text-slate-400 uppercase tracking-wide">{label}</span>
             </div>
             <p className="font-semibold text-slate-800 dark:text-white capitalize">{value}</p>

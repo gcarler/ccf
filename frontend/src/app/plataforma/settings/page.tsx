@@ -45,7 +45,7 @@ const SETTINGS_GROUPS = [
 ];
 
 const COLOR_MAP: Record<string, string> = {
-    blue: "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    blue: "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]",
     purple: "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400",
     emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
 };
@@ -87,7 +87,7 @@ export default function SettingsPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 flex items-center gap-3 shadow-sm"
+                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 flex items-center gap-3 shadow-sm"
                 >
                     <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-500/20 shrink-0">
                         {(user as any)?.name?.[0] ?? 'A'}
@@ -99,13 +99,13 @@ export default function SettingsPage() {
                         <p className="text-[11px] text-slate-400 font-medium truncate">
                             {(user as any)?.email ?? 'usuario@ccf.com'}
                         </p>
-                        <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-semibold uppercase tracking-wide">
+                        <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide">
                             <Shield size={9} /> Admin
                         </span>
                     </div>
                     <button
                         onClick={() => router.push('/plataforma/account')}
-                        className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 hover:text-blue-600 border border-slate-200 dark:border-white/10 rounded-md hover:border-blue-500/50 transition-all"
+                        className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 hover:text-[hsl(var(--primary))] border border-slate-200 dark:border-white/10 rounded-md hover:border-blue-500/50 transition-all"
                     >
                         Editar
                     </button>
@@ -116,7 +116,7 @@ export default function SettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm"
+                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm"
                 >
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Tema Visual</p>
                     <div className="grid grid-cols-3 gap-3">
@@ -131,13 +131,13 @@ export default function SettingsPage() {
                                 className={clsx(
                                     "flex flex-col items-center gap-2 py-1.5 rounded-md border-2 transition-all text-[11px] font-semibold uppercase tracking-wide",
                                     theme === t.id
-                                        ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600"
+                                        ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]"
                                         : "border-slate-200 dark:border-white/5 text-slate-500 hover:border-slate-300 dark:hover:border-white/10"
                                 )}
                             >
                                 <t.icon size={18} />
                                 {t.label}
-                                {theme === t.id && <Check size={10} className="text-blue-500" />}
+                                {theme === t.id && <Check size={10} className="text-[hsl(var(--primary))]" />}
                             </button>
                         ))}
                     </div>
@@ -154,7 +154,7 @@ export default function SettingsPage() {
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3 ml-1">
                             {group.title}
                         </p>
-                        <div className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
+                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
                             {group.items.map((item, ii) => (
                                 <button
                                     key={ii}
@@ -180,7 +180,7 @@ export default function SettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="bg-white dark:bg-[#1a1d27] rounded-lg border border-rose-100 dark:border-rose-500/10 p-3 shadow-sm space-y-3"
+                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-rose-100 dark:border-rose-500/10 p-3 shadow-sm space-y-3"
                 >
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-400 mb-4">Zona de Peligro</p>
                     <button

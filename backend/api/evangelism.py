@@ -547,7 +547,7 @@ async def send_crm_message(
                         campaign_name=campaign_name,
                         recipient_phone=persona.phone,
                         content=content,
-                        leader_id=current_user.id,
+                        leader_user_id=current_user.id,
                         outcome="failed",
                         external_id=campaign_id,
                     )
@@ -1156,7 +1156,7 @@ def read_evangelism_strategies(
     for s in strategies:
         obj = EvangelismStrategy.model_validate(s)
         obj.group_count = db.query(GrupoEvangelismo).filter(
-            GrupoEvangelismo.estrategia_id == s.id
+            GrupoEvangelismo.estrategia_id == str(s.id)
         ).count()
         result.append(obj)
     return result
@@ -1168,14 +1168,14 @@ def read_strategy(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    from backend.models_crm import EvangelismStrategy as StrategyModel
+    from backend.models_evangelism import EstrategiaEvangelismo as StrategyModel
     from backend.models_evangelism import GrupoEvangelismo
     db_obj = db.query(StrategyModel).filter(StrategyModel.id == strategy_id).first()
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
     result.group_count = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.estrategia_id == strategy_id
+        GrupoEvangelismo.estrategia_id == str(strategy_id)
     ).count()
     return result
 
@@ -1221,65 +1221,45 @@ def update_strategy(
 
 @router.post("/strategies/{strategy_id}/generate-sessions", response_model=dict)
 def generate_strategy_sessions(
-    strategy_id: int,
+    strategy_id: str,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     """Genera sesiones automáticas para todos los grupos de una estrategia según su recurrencia."""
-    from datetime import timedelta
-    from backend.models_crm import EvangelismStrategy as StratModel
-    from backend.models_evangelism import GrupoEvangelismo, SesionGrupo
+    from backend.models_evangelism import EstrategiaEvangelismo as StratModel
+    from backend.models_evangelism import GrupoEvangelismo
+    from backend.services.evangelism_projection import proyectar_sesiones
 
     strat = db.query(StratModel).filter(StratModel.id == strategy_id).first()
     if not strat:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
-    if not strat.recurrence or not strat.start_date or not strat.end_date:
-        raise HTTPException(status_code=400, detail="La estrategia necesita: recurrence, start_date, end_date")
+    if not strat.frecuencia or not strat.fecha_inicio or not strat.fecha_fin:
+        raise HTTPException(status_code=400, detail="La estrategia necesita: frecuencia, fecha_inicio, fecha_fin")
 
-    # Calcular intervalo
-    RECURRENCE_DAYS = {
-        "SEMANAL": 7, "QUINCENAL": 14, "MENSUAL": 30,
-        "BIMENSUAL": 60, "TRIMESTRAL": 90, "SEMESTRAL": 180, "ANUAL": 365,
-    }
-    interval = RECURRENCE_DAYS.get(strat.recurrence.upper())
-    if not interval:
-        raise HTTPException(status_code=400, detail=f"Recurrencia no soportada: {strat.recurrence}")
-
-    # Generar fechas
-    current = strat.start_date
-    dates = []
-    while current <= strat.end_date:
-        dates.append(current)
-        current = current + timedelta(days=interval)
-
-    # Obtener grupos de esta estrategia
     groups = db.query(GrupoEvangelismo).filter(
-        (GrupoEvangelismo.evangelism_strategy_id == strategy_id) |
-        (GrupoEvangelismo.estrategia_id == func.cast(strategy_id, String))
+        GrupoEvangelismo.estrategia_id == strategy_id
     ).all()
 
-    created = 0
-    for group in groups:
-        for session_date in dates:
-            existing = db.query(SesionGrupo).filter(
-                SesionGrupo.grupo_id == group.id,
-                SesionGrupo.fecha_sesion == session_date,
-            ).first()
-            if not existing:
-                db.add(SesionGrupo(
-                    grupo_id=group.id,
-                    fecha_sesion=session_date,
-                    estado="Programada",
-                ))
-                created += 1
+    try:
+        created = proyectar_sesiones(
+            db=db,
+            estrategia_id=strategy_id,
+            sede_id=strat.sede_id,
+            fecha_inicio=strat.fecha_inicio,
+            fecha_fin=strat.fecha_fin,
+            frecuencia=strat.frecuencia,
+            grupos_ids=[g.id for g in groups],
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    db.commit()
+    sessions_per_group = created // len(groups) if groups else 0
     return {
-        "strategy": strat.name,
-        "recurrence": strat.recurrence,
-        "start": str(strat.start_date),
-        "end": str(strat.end_date),
-        "sessions_per_group": len(dates),
+        "strategy": strat.nombre,
+        "recurrence": strat.frecuencia,
+        "start": str(strat.fecha_inicio),
+        "end": str(strat.fecha_fin),
+        "sessions_per_group": sessions_per_group,
         "groups": len(groups),
         "total_sessions_created": created,
     }
@@ -1294,7 +1274,7 @@ def list_strategy_roles(
     """Lista los roles personalizados de una estrategia."""
     from backend.crud.evangelism import get_roles_personalizados
     strategy = db.query(models.EstrategiaEvangelismo).filter(
-        models.EvangelismStrategy.id == strategy_id
+        models.EstrategiaEvangelismo.id == strategy_id
     ).first()
     if not strategy or not strategy.codigo:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada o sin código")
@@ -1311,7 +1291,7 @@ def create_strategy_role(
     """Crea un rol personalizado para una estrategia."""
     from backend.crud.evangelism import create_rol_personalizado
     strategy = db.query(models.EstrategiaEvangelismo).filter(
-        models.EvangelismStrategy.id == strategy_id
+        models.EstrategiaEvangelismo.id == strategy_id
     ).first()
     if not strategy or not strategy.codigo:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada o sin código")

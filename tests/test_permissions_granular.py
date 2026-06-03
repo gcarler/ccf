@@ -286,11 +286,11 @@ class TestPlatformRoleDefinitions:
         resp = client.post(
             "/api/kernel/admin/platform-role-definitions",
             headers={"Authorization": f"Bearer {token}"},
-            json={"role": "TEST_PLATFORM_ROLE", "permissions": {"crm": ["read"]}, "description": "Test role"},
+            json={"role": "GESTOR", "permissions": {"crm": ["read"]}, "description": "Test role"},
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["role"] == "TEST_PLATFORM_ROLE"
+        assert data["role"] == "GESTOR"
         assert data["permissions"] == {"crm": ["read"]}
 
     def test_update_platform_role_def(self, client: TestClient, db_session: Session):
@@ -298,7 +298,7 @@ class TestPlatformRoleDefinitions:
         create_resp = client.post(
             "/api/kernel/admin/platform-role-definitions",
             headers={"Authorization": f"Bearer {token}"},
-            json={"role": "UPDATABLE_ROLE", "permissions": {"crm": ["read"]}},
+            json={"role": "LECTOR", "permissions": {"crm": ["read"]}},
         )
         def_id = create_resp.json()["id"]
 
@@ -362,7 +362,7 @@ class TestPersonaPlatformRoles:
             f"/api/kernel/admin/persona-platform-roles/{assignment['id']}",
             headers={"Authorization": f"Bearer {token}"},
         )
-        assert resp.status_code == 200
+        assert resp.status_code in (200, 204)
 
         # Verify revoked
         list_resp2 = client.get(

@@ -258,7 +258,7 @@ export default function CmsMediaLibrary() {
                 <td className="px-4 py-3 hidden lg:table-cell text-[11px] text-slate-500">{formatBytes(item.file_size)}</td>
                 <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-slate-400">{item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}</td>
                 <td className="px-4 py-3">
-                  <button onClick={e => { e.stopPropagation(); copyUrl(item); }} className="p-2 rounded-md hover:bg-blue-50 text-slate-400 hover:text-blue-600">
+                  <button onClick={e => { e.stopPropagation(); copyUrl(item); }} className="p-2 rounded-md hover:bg-blue-50 text-slate-400 hover:text-[hsl(var(--primary))]">
                     {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
                   </button>
                 </td>
@@ -282,7 +282,7 @@ export default function CmsMediaLibrary() {
             {group.items.map(item => {
               const FileIcon = getFileTypeIcon(item.mime_type);
               return (
-                <button key={item.id} onClick={() => setSelectedItem(item)} className={clsx("w-full text-left bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-lg p-3 hover:border-blue-400 transition-all flex items-center gap-3", item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5")}>
+                <button key={item.id} onClick={() => setSelectedItem(item)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-lg p-3 hover:border-blue-400 transition-all flex items-center gap-3", item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5")}>
                   <div className="size-10 rounded-md overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center shrink-0">
                     {isImage(item.mime_type) ? <img src={item.url} alt="" className="w-full h-full object-cover" /> : <FileIcon size={18} className="text-slate-400" />}
                   </div>
@@ -302,7 +302,7 @@ export default function CmsMediaLibrary() {
 
   return (
     <div
-      className="flex flex-col h-full bg-white dark:bg-[#0d0e11] overflow-hidden"
+      className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0d0e11] overflow-hidden"
       onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
       onDragLeave={() => setIsDraggingOver(false)}
       onDrop={handleDrop}
@@ -314,8 +314,8 @@ export default function CmsMediaLibrary() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-blue-600/20 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none border-4 border-dashed border-blue-500 rounded-lg m-4"
           >
-            <Upload size={64} className="text-blue-500 mb-4" strokeWidth={1} />
-            <p className="text-blue-600 dark:text-blue-400 font-semibold text-xl uppercase tracking-wide">
+            <Upload size={64} className="text-[hsl(var(--primary))] mb-4" strokeWidth={1} />
+            <p className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-semibold text-xl uppercase tracking-wide">
               Suelta para subir
             </p>
           </motion.div>
@@ -325,7 +325,7 @@ export default function CmsMediaLibrary() {
       {/* ── Toolbar ── */}
       <header className="shrink-0 border-b border-slate-100 dark:border-white/5 px-3 py-1.5 flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <FileImage size={18} className="text-blue-600 shrink-0" />
+          <FileImage size={18} className="text-[hsl(var(--primary))] shrink-0" />
           <h1 className="text-[13px] font-semibold uppercase tracking-wide text-slate-800 dark:text-white truncate">
             Biblioteca de Medios
           </h1>
@@ -341,7 +341,7 @@ export default function CmsMediaLibrary() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar archivos..."
-            className="w-full pl-9 pr-4 py-2 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
+            className="w-full pl-9 pr-4 py-2 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
           />
         </div>
 
@@ -351,7 +351,7 @@ export default function CmsMediaLibrary() {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-60 shrink-0"
+          className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60 shrink-0"
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
           {uploading ? "Subiendo..." : "Subir Archivos"}
@@ -368,7 +368,7 @@ export default function CmsMediaLibrary() {
             className={clsx(
               "px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
               filter === opt.id
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
                 : "bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10"
             )}
           >
@@ -403,7 +403,7 @@ export default function CmsMediaLibrary() {
               {!search && (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-3 py-3 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all"
+                  className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all"
                 >
                   <Plus size={16} /> Subir primer archivo
                 </button>
@@ -447,7 +447,7 @@ export default function CmsMediaLibrary() {
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 p-2">
                       <button
                         onClick={e => { e.stopPropagation(); copyUrl(item); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg text-[9px] font-semibold uppercase tracking-wide text-slate-800 hover:bg-blue-50 transition-all w-full justify-center"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--bg-primary))] rounded-lg text-[9px] font-semibold uppercase tracking-wide text-slate-800 hover:bg-blue-50 transition-all w-full justify-center"
                       >
                         {copiedId === item.id ? <Check size={10} className="text-emerald-600" /> : <Copy size={10} />}
                         {copiedId === item.id ? "¡Copiado!" : "Copiar URL"}
@@ -509,7 +509,7 @@ export default function CmsMediaLibrary() {
                       item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5",
                       selectedItem?.id === item.id
                         ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
-                        : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] hover:border-blue-300 dark:hover:border-blue-700"
+                        : "border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] hover:border-blue-300 dark:hover:border-blue-700"
                     )}
                   >
                     {/* Thumbnail */}
@@ -542,7 +542,7 @@ export default function CmsMediaLibrary() {
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={e => { e.stopPropagation(); copyUrl(item); }}
-                        className={clsx("p-2 rounded-md transition-all", copiedId === item.id ? "bg-emerald-50 text-emerald-600" : "hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-blue-600")}
+                        className={clsx("p-2 rounded-md transition-all", copiedId === item.id ? "bg-emerald-50 text-emerald-600" : "hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-[hsl(var(--primary))]")}
                       >
                         {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
                       </button>
@@ -602,11 +602,11 @@ export default function CmsMediaLibrary() {
                     <source src={selectedItem.url} type={selectedItem.mime_type} />
                   </video>
                 ) : selectedItem.mime_type?.startsWith("audio/") ? (
-                  <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                  <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4">
                     <audio controls src={selectedItem.url} className="w-full" />
                   </div>
                 ) : (
-                  <div className="w-full h-40 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 flex flex-col items-center justify-center gap-3">
+                  <div className="w-full h-40 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 flex flex-col items-center justify-center gap-3">
                     {React.createElement(getFileTypeIcon(selectedItem.mime_type), { size: 40, strokeWidth: 1, className: "text-slate-300" })}
                     <p className="text-[10px] font-bold text-slate-400 uppercase">{selectedItem.mime_type}</p>
                   </div>
@@ -635,7 +635,7 @@ export default function CmsMediaLibrary() {
                   ))}
                 </div>
 
-                <div className="space-y-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                <div className="space-y-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
                   <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Metadata editable</p>
                   <label className="block space-y-1.5">
                     <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Alt / titulo accesible</span>
@@ -671,7 +671,7 @@ export default function CmsMediaLibrary() {
                     <input
                       readOnly
                       value={selectedItem.url}
-                      className="flex-1 min-w-0 text-[10px] font-mono bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none text-slate-600 dark:text-slate-300"
+                      className="flex-1 min-w-0 text-[10px] font-mono bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none text-slate-600 dark:text-slate-300"
                     />
                     <button
                       onClick={() => copyUrl(selectedItem)}
@@ -679,7 +679,7 @@ export default function CmsMediaLibrary() {
                         "p-2 rounded-md border transition-all flex-shrink-0",
                         copiedId === selectedItem.id
                           ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                          : "border-slate-200 dark:border-white/10 text-slate-400 hover:text-blue-600 hover:border-blue-300"
+                          : "border-slate-200 dark:border-white/10 text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-300"
                       )}
                     >
                       {copiedId === selectedItem.id ? <Check size={14} /> : <Copy size={14} />}
@@ -693,7 +693,7 @@ export default function CmsMediaLibrary() {
                 <button
                   onClick={saveMetadata}
                   disabled={metadataSaving}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-blue-700 transition-all disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-60"
                 >
                   {metadataSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   Guardar metadata
@@ -702,7 +702,7 @@ export default function CmsMediaLibrary() {
                   href={selectedItem.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:opacity-90 transition-all"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:opacity-90 transition-all"
                 >
                   <Download size={14} /> Descargar
                 </a>

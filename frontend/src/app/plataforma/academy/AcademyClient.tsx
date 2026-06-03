@@ -47,7 +47,7 @@ export default function AcademyClient() {
                     { label: 'Dashboard Inteligente', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button onClick={() => router.push('/plataforma/academy/curriculum')} className="px-4 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                    <button onClick={() => router.push('/plataforma/academy/curriculum')} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
                         Ver Malla Curricular
                     </button>
                 }
@@ -76,7 +76,7 @@ export default function AcademyClient() {
                                     <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Tendencia de Crecimiento</h3>
                                     <p className="text-xl font-bold text-white italic">Inscripciones Mensuales</p>
                                 </div>
-                                <div className="size-10 rounded-md bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                <div className="size-10 rounded-md bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                     <TrendingUp size={20} />
                                 </div>
                             </div>
@@ -92,7 +92,7 @@ export default function AcademyClient() {
                                 {dashboard?.top_courses.map((course: any, idx: number) => (
                                     <div key={idx} className="flex items-center justify-between group">
                                         <div className="flex items-center gap-3">
-                                            <div className="size-2 rounded-full bg-blue-500" />
+                                            <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
                                             <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">{course.title}</span>
                                         </div>
                                         <span className="font-semibold text-slate-500">{course.count} Est.</span>

@@ -148,7 +148,7 @@ def update_activity_status(
         raise HTTPException(status_code=400,
                             detail=f"Estado inválido: {payload.status}. Debe ser ACTIVO o INACTIVO")
     persona = kernel_crud.set_persona_activity_status(
-        db, persona_id, payload.status, changed_by_id=current_user.id
+        db, persona_id, payload.status, changed_by_persona_id=None
     )
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
@@ -239,7 +239,7 @@ def update_church_role(persona_id: str, payload: ChurchRoleUpdate,
                             detail=f"Rol inválido: {payload.church_role}. Válidos: {valid_roles}")
     result = kernel_crud.set_persona_church_role(
         db, persona_id=persona_id, church_role=payload.church_role,
-        changed_by_id=current_user.id, reason=payload.reason, notes=payload.notes,
+        changed_by_persona_id=None, reason=payload.reason, notes=payload.notes,
     )
     if not result:
         raise HTTPException(status_code=400, detail="No se pudo actualizar el rol")
@@ -310,8 +310,8 @@ def assign_platform_role(persona_id: str, payload: PlatformRoleAssign,
                          current_user=Depends(require_kernel_permission("system:config"))):
     from backend.crud import kernel as kernel_crud
     result = kernel_crud.assign_platform_role(
-        db, persona_id=persona_id, platform_role=payload.platform_role,
-        assigned_by_id=current_user.id, expires_at=payload.expires_at, notes=payload.notes,
+        db, persona_id, payload.platform_role,
+        assigned_by_persona_id=None, expires_at=payload.expires_at, notes=payload.notes,
     )
     if not result:
         raise HTTPException(status_code=400,

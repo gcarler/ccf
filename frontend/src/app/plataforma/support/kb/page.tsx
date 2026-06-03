@@ -7,7 +7,7 @@ import clsx from 'clsx';
 
 const CATEGORIES = [
     { id: 'getting-started', label: 'Primeros Pasos', icon: Zap, color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10', count: 12 },
-    { id: 'crm', label: 'CRM Pastoral', icon: Users, color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10', count: 18 },
+    { id: 'crm', label: 'CRM Pastoral', icon: Users, color: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10', count: 18 },
     { id: 'academy', label: 'Academia CCF', icon: BookOpen, color: 'text-sky-500 bg-sky-50 dark:bg-sky-500/10', count: 9 },
     { id: 'projects', label: 'Proyectos', icon: Layout, color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10', count: 7 },
     { id: 'finances', label: 'Finanzas', icon: TrendingUp, color: 'text-rose-500 bg-rose-50 dark:bg-rose-500/10', count: 5 },
@@ -41,7 +41,7 @@ export default function SupportKBPage() {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar artículos, guías, tutoriales..."
-                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white shadow-2xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-400/40 font-medium"
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-[hsl(var(--bg-primary))] shadow-2xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-400/40 font-medium"
                         />
                     </div>
                 </div>
@@ -64,7 +64,7 @@ export default function SupportKBPage() {
                                         "flex items-center gap-4 p-3 rounded-lg border transition-all text-left shadow-sm group",
                                         selectedCat === cat.id
                                             ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
-                                            : "border-slate-200/60 dark:border-white/5 bg-white dark:bg-[#1a1d27] hover:shadow-md"
+                                            : "border-slate-200/60 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] hover:shadow-md"
                                     )}
                                 >
                                     <div className={clsx("size-6 rounded-md flex items-center justify-center shrink-0", cat.color)}>
@@ -85,7 +85,7 @@ export default function SupportKBPage() {
                             <Star size={14} className="text-amber-500" />
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Artículos más Populares</p>
                         </div>
-                        <div className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
+                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
                             {POPULAR_ARTICLES.map((article, i) => (
                                 <motion.div
                                     key={article.id}
@@ -98,7 +98,7 @@ export default function SupportKBPage() {
                                         {i + 1}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 truncate group-hover:text-blue-600 transition-colors">
+                                        <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                                             {article.title}
                                         </p>
                                         <div className="flex items-center gap-3 mt-0.5">
@@ -108,7 +108,7 @@ export default function SupportKBPage() {
                                             <span className="text-[10px] text-emerald-500 font-bold">{article.helpful}% útil</span>
                                         </div>
                                     </div>
-                                    <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 transition-colors shrink-0" />
+                                    <ChevronRight size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors shrink-0" />
                                 </motion.div>
                             ))}
                         </div>

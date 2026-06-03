@@ -37,7 +37,7 @@ function ProgressBar({ value, max }: { value: number; max?: number }) {
                 <span>{pct}%</span>
             </div>
             <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-600 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                <div className="h-full bg-[hsl(var(--primary))] rounded-full transition-all" style={{ width: `${pct}%` }} />
             </div>
         </div>
     );
@@ -144,7 +144,7 @@ export default function FundsPage() {
                 ]}
                 rightActions={
                     <button onClick={openCreate}
-                        className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                         <Plus size={14} /> Nuevo Fondo
                     </button>
                 }
@@ -154,11 +154,11 @@ export default function FundsPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {[
-                        { label: "Total de Fondos", value: String(funds.length), color: "text-blue-600" },
+                        { label: "Total de Fondos", value: String(funds.length), color: "text-[hsl(var(--primary))]" },
                         { label: "Balance Total", value: `$${totalBalance.toLocaleString()}`, color: "text-emerald-600" },
                         { label: "Fondos Públicos", value: String(publicCount), color: "text-violet-600" },
                     ].map((s) => (
-                        <div key={s.label} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
+                        <div key={s.label} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
                             <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-2">{s.label}</p>
                             <p className={clsx("text-lg font-bold tracking-tight", s.color)}>{s.value}</p>
                         </div>
@@ -169,18 +169,18 @@ export default function FundsPage() {
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {[...Array(3)].map((_, i) => (
-                            <div key={i} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm animate-pulse h-36" />
+                            <div key={i} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm animate-pulse h-36" />
                         ))}
                     </div>
                 ) : funds.length === 0 ? (
-                    <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-4 text-center shadow-sm">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-4 text-center shadow-sm">
                         <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-                            <Wallet className="text-blue-600" size={28} />
+                            <Wallet className="text-[hsl(var(--primary))]" size={28} />
                         </div>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sin fondos registrados</p>
                         <p className="text-xs text-slate-300 mt-1">Crea el primer fondo ministerial</p>
                         <button onClick={openCreate}
-                            className="mt-5 px-3 py-2.5 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
+                            className="mt-5 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all">
                             Crear Fondo
                         </button>
                     </div>
@@ -188,14 +188,14 @@ export default function FundsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {funds.map((f) => (
                             <motion.div key={f.id} layout
-                                className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm group hover:shadow-md hover:border-blue-200 dark:hover:border-blue-500/20 transition-all">
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm group hover:shadow-md hover:border-blue-200 dark:hover:border-blue-500/20 transition-all">
                                 <div className="flex items-start justify-between gap-3 mb-3">
-                                    <div className="size-10 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 flex-shrink-0">
+                                    <div className="size-10 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0">
                                         <Wallet size={18} />
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => openEdit(f)}
-                                            className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
+                                            className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-[hsl(var(--primary))] hover:text-white transition-all">
                                             <PencilLine size={13} />
                                         </button>
                                         <button onClick={() => setDeleteTarget(f)}
@@ -244,7 +244,7 @@ export default function FundsPage() {
                             initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: "100%", opacity: 0 }}
                             transition={{ type: "spring", damping: 26, stiffness: 260 }}
-                            className="fixed top-0 right-0 h-screen z-[100] w-full max-w-md bg-white dark:bg-[#15171c] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
+                            className="fixed top-0 right-0 h-screen z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
                             <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5 flex-shrink-0">
                                 <div>
                                     <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
@@ -300,7 +300,7 @@ export default function FundsPage() {
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 py-3 rounded-md bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                                     <Save size={14} /> {saving ? "Guardando..." : "Guardar"}
                                 </button>
                             </div>
@@ -315,7 +315,7 @@ export default function FundsPage() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-white dark:bg-[#15171c] rounded-lg p-4 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-white/10">
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg p-4 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-white/10">
                             <div className="size-7 rounded-lg bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-600 mb-5">
                                 <Trash2 size={24} />
                             </div>

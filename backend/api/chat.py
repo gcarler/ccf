@@ -27,11 +27,17 @@ def search_chat_users(
         require_module_access("messaging", "read")
     ),
 ):
-    """Search users to start a conversation with (excludes self)."""
+    """Search users to start a conversation with (excludes self).
+    
+    Axioma 3: filtra por sede_id del usuario autenticado.
+    """
+    from backend.crud.crm import get_user_sede_id
+    user_sede = get_user_sede_id(db, current_user.id)
+    
     # Escape LIKE wildcards to prevent unintended pattern matching
     safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     pattern = f"%{safe_q}%"
-    users = (
+    query = (
         db.query(models.User)
         .filter(
             models.User.id != current_user.id,
@@ -39,10 +45,10 @@ def search_chat_users(
             (models.User.username.ilike(pattern))
             | (models.User.email.ilike(pattern)),
         )
-        .order_by(models.User.username)
-        .limit(limit)
-        .all()
     )
+    if user_sede is not None:
+        query = query.filter(models.User.sede_id == user_sede)
+    users = query.order_by(models.User.username).limit(limit).all()
     return [
         {
             "id": u.id,

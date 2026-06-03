@@ -80,10 +80,10 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                     <div className={clsx(
                         "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer",
                         isActive
-                            ? "bg-blue-600/10 dark:bg-white/10 text-blue-600 dark:text-white shadow-inner"
+                            ? "bg-blue-600/10 dark:bg-white/10 text-[hsl(var(--primary))] dark:text-white shadow-inner"
                             : "text-slate-400 dark:text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-300"
                     )}>
-                        <Icon size={19} className={clsx(isActive && "text-blue-500")} />
+                        <Icon size={19} className={clsx(isActive && "text-[hsl(var(--primary))]")} />
                         {badge && (
                             <span className="absolute -top-0.5 -right-0.5 size-4 rounded-full bg-rose-500 text-white font-semibold flex items-center justify-center border-2 border-white dark:border-black">
                                 {badge}
@@ -96,11 +96,11 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     };
 
     return (
-        <aside className="w-16 h-full bg-white dark:bg-black border-r border-slate-100 dark:border-white/5 rounded-lg flex flex-col items-center py-2 gap-1 shadow-2xl relative overflow-hidden">
+        <aside className="w-16 h-full bg-[hsl(var(--bg-primary))] dark:bg-black border-r border-slate-100 dark:border-white/5 rounded-lg flex flex-col items-center py-2 gap-1 shadow-2xl relative overflow-hidden">
             {/* Global Add Button */}
             <button
                 onClick={() => openModal('task')}
-                className="size-10 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-blue-500/40 group relative mb-4"
+                className="size-10 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-blue-500/40 group relative mb-4"
             >
                 <Plus size={20} />
                 <div className="absolute left-14 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-[100]">

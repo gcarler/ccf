@@ -98,7 +98,7 @@ export default function MessagingDetailPage() {
                                 {campaign.channel === "whatsapp" ? (
                                     <MessageSquare size={18} className="text-emerald-500" />
                                 ) : (
-                                    <Mail size={18} className="text-blue-500" />
+                                    <Mail size={18} className="text-[hsl(var(--primary))]" />
                                 )}
                                 {String(campaign.channel || "whatsapp").toUpperCase()}
                             </span>

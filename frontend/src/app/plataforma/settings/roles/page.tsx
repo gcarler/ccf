@@ -99,7 +99,7 @@ export default function RolesSettingsPage() {
                         </div>
                         <button 
                             onClick={() => setIsEditing({ id: 0, name: '', color: 'text-slate-600 bg-slate-100', is_leadership: false })}
-                            className="px-3 py-3 bg-blue-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2"
+                            className="px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2"
                         >
                             <Plus size={16}/> Nuevo Rol
                         </button>
@@ -123,10 +123,10 @@ export default function RolesSettingsPage() {
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                            <button onClick={() => setIsEditing(role)} className="p-2 text-slate-400 hover:text-blue-600 bg-slate-50 dark:bg-white/5 rounded-md">
+                                            <button onClick={() => setIsEditing(role)} className="p-2 text-slate-400 hover:text-[hsl(var(--primary))] bg-slate-50 dark:bg-white/5 rounded-md">
                                                 <Edit2 size={16}/>
                                             </button>
-                                            <button onClick={() => setIsDeleting(role)} className="p-2 text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-white/5 rounded-md">
+                                            <button onClick={() => setIsDeleting(role)} className="p-2 text-slate-400 hover:text-[hsl(var(--destructive))] bg-slate-50 dark:bg-white/5 rounded-md">
                                                 <Trash2 size={16}/>
                                             </button>
                                         </div>
@@ -150,7 +150,7 @@ export default function RolesSettingsPage() {
                         <button type="button" onClick={() => setIsEditing(null)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
                             Cancelar
                         </button>
-                        <button type="button" onClick={handleSave as any} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/30 hover:bg-blue-700 active:scale-95 transition-all">
+                        <button type="button" onClick={handleSave as any} className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/30 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                             <Save size={16}/> Guardar
                         </button>
                     </>
@@ -170,7 +170,7 @@ export default function RolesSettingsPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3 mt-4">
-                            <input type="checkbox" id="is_leadership" checked={isEditing.is_leadership} onChange={e => setIsEditing({...isEditing, is_leadership: e.target.checked})} className="size-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                            <input type="checkbox" id="is_leadership" checked={isEditing.is_leadership} onChange={e => setIsEditing({...isEditing, is_leadership: e.target.checked})} className="size-5 rounded border-slate-300 text-[hsl(var(--primary))] focus:ring-blue-500" />
                             <label htmlFor="is_leadership" className="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                                 Pertenece al Liderazgo <span className="block text-[10px] text-slate-400 font-medium">Sus asistencias se agruparán en &ldquo;Liderazgo&rdquo;</span>
                             </label>
@@ -190,7 +190,7 @@ export default function RolesSettingsPage() {
                         <button type="button" onClick={() => setIsDeleting(null)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
                             Cancelar
                         </button>
-                        <button type="button" onClick={handleDelete as any} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-red-500/30 hover:bg-red-700 active:scale-95 transition-all">
+                        <button type="button" onClick={handleDelete as any} className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--destructive))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-red-500/30 hover:bg-[hsl(var(--destructive))] active:scale-95 transition-all">
                             <Trash2 size={16}/> Confirmar Eliminación
                         </button>
                     </>
@@ -198,7 +198,7 @@ export default function RolesSettingsPage() {
             >
                 {isDeleting && (
                     <div className="space-y-3 mt-4">
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-red-600 p-4 rounded-md text-sm font-bold">
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-[hsl(var(--destructive))] p-4 rounded-md text-sm font-bold">
                             Estás a punto de eliminar el rol &ldquo;{isDeleting.name}&rdquo;.
                             Es obligatorio transferir a las personas que actualmente tienen este rol hacia otro distinto.
                         </div>

@@ -6,7 +6,7 @@ import uuid
 from typing import Optional
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session, contains_eager, joinedload
+from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
 from backend import models, schemas
 from backend.content_defaults import PAGE_CONTENT_DEFAULTS
@@ -23,7 +23,10 @@ def get_courses(
     published_only: bool = True,
     sede_id: str | None = None,
 ):
-    query = db.query(models.Course)
+    query = db.query(models.Course).options(
+        selectinload(models.Course.lessons),
+        selectinload(models.Course.enrollments),
+    )
     if sede_id:
         query = query.filter(models.Course.sede_id == sede_id)
     if modality:
@@ -111,7 +114,10 @@ def get_enrollment(db: Session, enrollment_id: int):
 def get_enrollments_by_user(db: Session, user_id: int):
     return (
         db.query(models.Enrollment)
-        .options(joinedload(models.Enrollment.course))
+        .options(
+            joinedload(models.Enrollment.course),
+            selectinload(models.Enrollment.persona),
+        )
         .filter(models.Enrollment.user_id == user_id)
         .all()
     )

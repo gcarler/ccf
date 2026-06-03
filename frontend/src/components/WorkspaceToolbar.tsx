@@ -53,7 +53,7 @@ export default function WorkspaceToolbar({
     onAddOption
 }: WorkspaceToolbarProps) {
     return (
-        <div className="h-10 bg-white dark:bg-[#1e1f21] border-b border-[#e8eaed] dark:border-white/[0.06] flex items-center justify-between px-2 sticky top-0 z-50 transition-colors duration-300">
+        <div className="h-10 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border-b border-[#e8eaed] dark:border-white/[0.06] flex items-center justify-between px-2 sticky top-0 z-50 transition-colors duration-300">
             {/* Left: leftActions + Breadcrumbs + View Switcher */}
             <div className="flex items-center gap-2 overflow-hidden">
                 {leftActions && <>{leftActions}<div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-0.5 shrink-0" /></>}
@@ -70,7 +70,7 @@ export default function WorkspaceToolbar({
                                 animate={{ opacity: 1, x: 0 }}
                                 className="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md cursor-pointer group transition-all"
                             >
-                                {bc.icon && <bc.icon size={13} className="text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />}
+                                {bc.icon && <bc.icon size={13} className="text-slate-400 group-hover:text-[hsl(var(--primary))] transition-colors shrink-0" />}
                                 <span className={`text-xs font-semibold tracking-tight truncate ${idx === breadcrumbs.length - 1 ? 'text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}`}>
                                     {bc.label}
                                 </span>
@@ -102,12 +102,12 @@ export default function WorkspaceToolbar({
             {/* Right: Search, Filter, Actions */}
             <div className="flex items-center gap-1.5">
                 <div className="relative hidden md:block group">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-blue-500 transition-colors" size={13} />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-[hsl(var(--primary))] transition-colors" size={13} />
                     <input
                         type="text"
                         placeholder="Buscar en esta vista..."
                         onChange={(e) => onSearch?.(e.target.value)}
-                        className="h-8 w-44 lg:w-56 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/[0.06] rounded-md pl-8 pr-3 text-xs font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:ring-1 focus:ring-blue-500/30 focus:bg-white dark:focus:bg-[#252528] focus:w-64 outline-none transition-all duration-200"
+                        className="h-8 w-44 lg:w-56 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/[0.06] rounded-md pl-8 pr-3 text-xs font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:ring-1 focus:ring-blue-500/30 focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-[#252528] focus:w-64 outline-none transition-all duration-200"
                     />
                 </div>
 
@@ -143,7 +143,7 @@ function ToolbarButton({ icon: Icon, onClick, tooltip, active }: { icon: any, on
                 onClick={onClick}
                 className={`p-1 rounded-md transition-all ${
                     active
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+                    ? 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]'
                     : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
             >

@@ -41,7 +41,7 @@ export default function CommunityListRow({
         <div
             onClick={onClick}
             className={clsx(
-                'grid grid-cols-[32px_minmax(0,2.4fr)_1.4fr_1.1fr_0.9fr_1fr_0.9fr] items-center gap-4 px-3 py-1.5 border-t border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] bg-white transition-colors',
+                'grid grid-cols-[32px_minmax(0,2.4fr)_1.4fr_1.1fr_0.9fr_1fr_0.9fr] items-center gap-4 px-3 py-1.5 border-t border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] transition-colors',
                 onClick ? 'hover:bg-[hsl(var(--surface-2))] cursor-pointer' : '',
                 className
             )}

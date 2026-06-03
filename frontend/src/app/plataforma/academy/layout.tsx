@@ -76,7 +76,7 @@ export default function AcademyLayout({ children }: { children: React.ReactNode 
                 sidebarSections={SIDEBAR_SECTIONS}
                 allowedPermissions={['academy:read', 'academy:study', 'academy:edit', 'academy:manage']}
             >
-                <div className="bg-white dark:bg-[#1e1f21] h-full overflow-hidden">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] h-full overflow-hidden">
                     {children}
                 </div>
             </WorkspaceLayout>

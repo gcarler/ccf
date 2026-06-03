@@ -72,7 +72,7 @@ export default function ProjectsResponsesPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Respuestas', icon: Inbox }]}
                 viewType={viewType}
@@ -88,9 +88,9 @@ export default function ProjectsResponsesPage() {
                 ) : viewType === 'table' ? (
                     <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Respuesta</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Proyecto</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Tipo</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{unread.map((item) => <tr key={item.id}><td className="px-3 py-2 text-sm font-medium">{item.task_title || 'Actualización'}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{item.project}</td><td className="px-3 py-2 text-[11px] text-slate-500">{item.type}</td></tr>)}</tbody></table></div>
                 ) : viewType === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{unread.map((item) => <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/60 dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">{item.project}</p><h3 className="text-sm font-bold mt-1">{item.task_title || 'Actualización'}</h3><p className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-3">{item.content}</p></article>)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{unread.map((item) => <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/60 dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{item.project}</p><h3 className="text-sm font-bold mt-1">{item.task_title || 'Actualización'}</h3><p className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-3">{item.content}</p></article>)}</div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{grouped.map((group) => <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{group.label}</span><span className="text-[10px] font-bold text-slate-400">{group.rows.length}</span></div><div className="space-y-2">{group.rows.map((item) => <div key={item.id} className={clsx("rounded-md border p-2 bg-white dark:bg-white/5", item.type === 'mention' ? "border-amber-200" : "border-slate-100 dark:border-white/5")}><p className="text-sm font-medium">{item.task_title || item.project}</p></div>)}</div></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{grouped.map((group) => <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{group.label}</span><span className="text-[10px] font-bold text-slate-400">{group.rows.length}</span></div><div className="space-y-2">{group.rows.map((item) => <div key={item.id} className={clsx("rounded-md border p-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5", item.type === 'mention' ? "border-amber-200" : "border-slate-100 dark:border-white/5")}><p className="text-sm font-medium">{item.task_title || item.project}</p></div>)}</div></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario de respuestas" />
                 ) : viewType === 'gantt' ? (
@@ -101,7 +101,7 @@ export default function ProjectsResponsesPage() {
                     <div className="space-y-3">
                         {unread.map((item) => (
                             <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/60 dark:bg-white/5">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">{item.project}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{item.project}</p>
                                 <h3 className="text-sm font-bold text-slate-800 dark:text-white mt-1">{item.task_title || 'Actualizacion'}</h3>
                                 <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{item.content}</p>
                                 <div className="mt-3 flex items-center gap-2">
@@ -114,7 +114,7 @@ export default function ProjectsResponsesPage() {
                                     <button
                                         onClick={() => resolveItem(item)}
                                         disabled={resolvingId === item.id}
-                                        className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                                        className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
                                     >
                                         {resolvingId === item.id ? 'Resolviendo...' : 'Resolver'}
                                     </button>

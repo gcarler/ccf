@@ -31,7 +31,7 @@ export default function SupportTutorialsPage() {
 
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
-            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-white dark:bg-[#1a1d27]">
+            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
                 <FileText size={16} className="text-sky-500" />
                 <h1 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex-1">Tutoriales de la Plataforma</h1>
                 <div className="relative">
@@ -43,7 +43,7 @@ export default function SupportTutorialsPage() {
             </header>
 
             {/* Level filter */}
-            <div className="flex items-center gap-2 px-3 py-3 border-b border-slate-200/60 dark:border-white/5 bg-white dark:bg-[#1a1d27] shrink-0">
+            <div className="flex items-center gap-2 px-3 py-3 border-b border-slate-200/60 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] shrink-0">
                 <Filter size={12} className="text-slate-400" />
                 {['all', 'Básico', 'Intermedio', 'Avanzado'].map(level => (
                     <button key={level} onClick={() => setSelectedLevel(level)}
@@ -63,7 +63,7 @@ export default function SupportTutorialsPage() {
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
-                            className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group"
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group"
                         >
                             {/* Thumbnail */}
                             <div className={`h-36 bg-gradient-to-br ${t.thumbnail} flex items-center justify-center relative`}>

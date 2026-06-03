@@ -24,8 +24,8 @@ export function DSCommandEntry({
       className={clsx(
         "flex items-center gap-2 rounded-md border px-2.5 py-1.5 transition-all",
         active
-          ? "border-blue-500/40 bg-blue-600 text-white shadow-sm"
-          : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50",
+          ? "border-blue-500/40 bg-[hsl(var(--primary))] text-white shadow-sm"
+          : "border-slate-200 bg-[hsl(var(--bg-primary))] text-slate-700 hover:border-blue-300 hover:bg-blue-50",
       )}
     >
       <div

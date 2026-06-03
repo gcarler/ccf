@@ -159,7 +159,7 @@ export default function PrayerRequestForm() {
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer shrink-0">
                             <input type="checkbox" className="sr-only peer" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} />
-                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[hsl(var(--primary))] border border-[hsl(var(--border))]"></div>
+                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[hsl(var(--bg-primary))] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[hsl(var(--primary))] border border-[hsl(var(--border))]"></div>
                         </label>
                     </div>
 
@@ -175,7 +175,7 @@ export default function PrayerRequestForm() {
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer shrink-0">
                             <input type="checkbox" className="sr-only peer" checked={isConfidential} onChange={() => setIsConfidential(!isConfidential)} />
-                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500 border border-[hsl(var(--border))]"></div>
+                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[hsl(var(--bg-primary))] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500 border border-[hsl(var(--border))]"></div>
                         </label>
                     </div>
                 </section>

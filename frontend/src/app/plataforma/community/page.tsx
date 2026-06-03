@@ -605,7 +605,7 @@ export default function CommunityHubPage() {
                         const Icon = columnIcons[column.id];
                         return (
                             <div key={column.id} className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
-                                <div className="bg-white dark:bg-slate-900/80 border border-[hsl(var(--border))] rounded-md p-4 shadow-xl flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
+                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-slate-900/80 border border-[hsl(var(--border))] rounded-md p-4 shadow-xl flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-center gap-3">
                                             <div className={`size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center ${column.accent}`}>
@@ -720,7 +720,7 @@ export default function CommunityHubPage() {
                         </button>
                     </div>
 
-                    <div className="rounded-lg border border-[hsl(var(--border))] overflow-hidden bg-white">
+                    <div className="rounded-lg border border-[hsl(var(--border))] overflow-hidden bg-[hsl(var(--bg-primary))]">
                         <div className={`${listGridClass} text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] px-4 py-1.5`}>
                             <div className="text-center">#</div>
                             {listColumnHeaders.map((header) => (
@@ -756,7 +756,7 @@ export default function CommunityHubPage() {
                     <p className="text-[12px] text-[hsl(var(--text-secondary))]">{item.columnTitle} · {item.stage}</p>
                     <div className="flex justify-between items-center text-[11px] text-[hsl(var(--text-secondary))]">
                         <span>{item.owner}</span>
-                        <span className="px-2 py-1 rounded-full bg-white text-[10px] font-semibold">{item.priority}</span>
+                        <span className="px-2 py-1 rounded-full bg-[hsl(var(--bg-primary))] text-[10px] font-semibold">{item.priority}</span>
                     </div>
                 </div>
             ))}
@@ -915,7 +915,7 @@ export default function CommunityHubPage() {
                                 <Share2 size={14} /> Compartir acceso
                             </button>
                             {shareOpen && (
-                                <div className="absolute right-0 z-10 mt-3 w-72 rounded-lg border border-[hsl(var(--border))] bg-white dark:bg-slate-900/90 shadow-xl p-4 space-y-4">
+                                <div className="absolute right-0 z-10 mt-3 w-72 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:bg-slate-900/90 shadow-xl p-4 space-y-4">
                                     <div className="flex items-center justify-between text-[11px] font-semibold text-[hsl(var(--text-primary))]">
                                         <span>Compartir tablero</span>
                                         <button type="button" onClick={() => setShareOpen(false)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]">
@@ -1025,7 +1025,7 @@ export default function CommunityHubPage() {
                                         className="h-8 w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 text-sm text-[hsl(var(--text-primary))]"
                                     >
                                         {columns.map((column) => (
-                                            <option key={column.id} value={column.id} className="text-black">
+                                            <option key={column.id} value={column.id} className="text-[hsl(var(--text-primary))]">
                                                 {column.title}
                                             </option>
                                         ))}
@@ -1075,7 +1075,7 @@ export default function CommunityHubPage() {
                                         className="h-8 w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 text-sm text-[hsl(var(--text-primary))]"
                                     >
                                         {priorityOptions.map((priority) => (
-                                            <option key={priority} value={priority} className="text-black">
+                                            <option key={priority} value={priority} className="text-[hsl(var(--text-primary))]">
                                                 {priority}
                                             </option>
                                         ))}
@@ -1089,7 +1089,7 @@ export default function CommunityHubPage() {
                                         className="h-8 w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 text-sm text-[hsl(var(--text-primary))]"
                                     >
                                         {statusOptions.map((status) => (
-                                            <option key={status} value={status} className="text-black">
+                                            <option key={status} value={status} className="text-[hsl(var(--text-primary))]">
                                                 {status}
                                             </option>
                                         ))}

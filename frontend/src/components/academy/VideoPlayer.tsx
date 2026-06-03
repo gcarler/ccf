@@ -71,7 +71,7 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
                 {/* Progress Bar */}
                 <div className="relative h-1.5 w-full bg-white/20 rounded-full cursor-pointer overflow-hidden">
                     <div
-                        className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-100"
+                        className="absolute top-0 left-0 h-full bg-[hsl(var(--primary))] transition-all duration-100"
                         style={{ width: `${progress}%` }}
                     />
                 </div>
@@ -103,7 +103,7 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
                     onClick={togglePlay}
                     className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] cursor-pointer"
                 >
-                    <div className="size-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-2xl shadow-blue-500/40 animate-pulse">
+                    <div className="size-10 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shadow-2xl shadow-blue-500/40 animate-pulse">
                         <Play size={32} fill="currentColor" className="ml-1" />
                     </div>
                 </div>

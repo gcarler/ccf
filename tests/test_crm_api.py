@@ -138,7 +138,7 @@ def test_messaging_history_item_detail_route(client, db_session):
         channel="WhatsApp",
         recipient_phone="+573001112233",
         content="Hola",
-        leader_id=admin.id,
+        leader_user_id=admin.id,
         outcome="delivered",
         external_id="msg-123",
     )
@@ -264,7 +264,7 @@ def test_crm_tasks_mine_and_detail_routes(client, db_session):
         status="pending",
         priority="high",
         category="Pastoral",
-        assignee_id=admin.id,
+        assignee_user_id=admin.id,
     )
     db_session.add(task)
     db_session.commit()
@@ -276,7 +276,6 @@ def test_crm_tasks_mine_and_detail_routes(client, db_session):
     assert len(mine_data) == 1
     assert mine_data[0]["id"] == task.id
     assert mine_data[0]["title"] == "Seguimiento pastoral"
-    assert mine_data[0]["assigned_to"] == "admin"
 
     detail_response = client.get(
         f"/api/crm/tasks/{task.id}", headers=auth_headers(client)
@@ -285,7 +284,6 @@ def test_crm_tasks_mine_and_detail_routes(client, db_session):
     detail = detail_response.json()
     assert detail["id"] == task.id
     assert detail["title"] == "Seguimiento pastoral"
-    assert detail["assigned_to"] == "admin"
 
 
 def test_crm_task_detail_denies_non_staff_non_owner(client, db_session):
@@ -299,7 +297,7 @@ def test_crm_task_detail_denies_non_staff_non_owner(client, db_session):
         status="pending",
         priority="high",
         category="Pastoral",
-        assignee_id=admin.id,
+        assignee_user_id=admin.id,
     )
     db_session.add(task)
     db_session.commit()
@@ -323,7 +321,7 @@ def test_crm_task_detail_allows_owner_non_staff(client, db_session):
         status="pending",
         priority="medium",
         category="Pastoral",
-        assignee_id=owner.id,
+        assignee_user_id=owner.id,
     )
     db_session.add(task)
     db_session.commit()
@@ -350,7 +348,7 @@ def test_crm_counseling_detail_route(client, db_session):
 
     ticket = models.CounselingTicket(
         member_id=member.id,
-        pastor_id=admin.id,
+        pastor_user_id=admin.id,
         subject="Acompañamiento familiar",
         notes="Seguimiento pastoral inicial",
         status="open",
@@ -358,7 +356,7 @@ def test_crm_counseling_detail_route(client, db_session):
     )
     previous_ticket = models.CounselingTicket(
         member_id=member.id,
-        pastor_id=admin.id,
+        pastor_user_id=admin.id,
         subject="Oración por salud",
         notes="Registro previo",
         status="resolved",

@@ -79,7 +79,7 @@ export default function WikiHomePage() {
         <WorkspaceLayout sidebarTitle="Wiki" sidebarSections={sidebarSections}>
             <div className="flex flex-col h-full bg-[#F8F9FB] dark:bg-[#1E1F21]">
             {/* TOOLBAR */}
-            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-white dark:bg-[#1E1F21]">
+            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21]">
                 <div className="flex items-center gap-2 flex-1">
                     <BookOpen size={16} className="text-indigo-600" />
                     <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -121,7 +121,7 @@ export default function WikiHomePage() {
                             onSubmit={handleCreateDoc}
                             className="px-3 py-1.5 flex items-center gap-4"
                         >
-                            <div className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                            <div className="size-8 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center shrink-0">
                                 <Zap size={16} />
                             </div>
                             <input 
@@ -129,7 +129,7 @@ export default function WikiHomePage() {
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
                                 placeholder="Nombre del documento (Enter para crear...)"
-                                className="flex-1 bg-transparent border-none text-sm font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 focus:ring-0"
+                                className="flex-1 bg-transparent border-none text-sm font-bold text-blue-900 dark:text-blue-200 placeholder:text-[hsl(var(--primary))] focus:ring-0"
                             />
                         </form>
                     </motion.div>
@@ -148,7 +148,7 @@ export default function WikiHomePage() {
                         {loading ? (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="h-48 bg-white dark:bg-[#252528] rounded-lg animate-pulse border border-slate-200/70 dark:border-white/5" />
+                                    <div key={i} className="h-48 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg animate-pulse border border-slate-200/70 dark:border-white/5" />
                                 ))}
                             </div>
                         ) : (
@@ -161,7 +161,7 @@ export default function WikiHomePage() {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.05 }}
-                                        className="group relative bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
+                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
                                     >
                                         {/* Acento de color top */}
                                         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-600 to-indigo-600" />
@@ -207,7 +207,7 @@ export default function WikiHomePage() {
                     {/* Empty State */}
                     {!loading && docs.length === 0 && (
                         <div className="py-1.5 flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                            <div className="size-8 rounded-lg bg-white dark:bg-white/5 flex items-center justify-center text-slate-300 shadow-xl">
+                            <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 flex items-center justify-center text-slate-300 shadow-xl">
                                 <BookOpen size={40} />
                             </div>
                             <div className="max-w-sm">

@@ -93,7 +93,7 @@ export default function NewAnnouncementPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 pb-4">
                 {/* Editor Content */}
                 <div className="lg:col-span-8 space-y-3">
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
                         <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-blue-600/5 rounded-full blur-3xl" />
                         
                         <div className="relative z-10 space-y-3">
@@ -119,9 +119,9 @@ export default function NewAnnouncementPage() {
 
                     {/* AI Copywriting Suggestion */}
                     <section className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-4 border border-blue-100 dark:border-blue-500/20 flex gap-3 items-start group">
-                        <div className="size-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20 transition-transform group-hover:scale-110"><Bot size={24} className="text-white" /></div>
+                        <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20 transition-transform group-hover:scale-110"><Bot size={24} className="text-white" /></div>
                         <div className="space-y-2">
-                            <h4 className="font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide flex items-center gap-2"><Sparkles size={14} /> Optimus Copy Helper</h4>
+                            <h4 className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide flex items-center gap-2"><Sparkles size={14} /> Optimus Copy Helper</h4>
                             <p className="text-sm text-slate-600 dark:text-slate-300 font-medium italic leading-relaxed">
                                 &ldquo;Tu anuncio tiene un tono formal excelente. Sugiero añadir una invitación a la acción (Call to Action) al final para aumentar la participación en un 20%.&rdquo;
                             </p>
@@ -131,7 +131,7 @@ export default function NewAnnouncementPage() {
 
                 {/* Settings Sidebar */}
                 <aside className="lg:col-span-4 space-y-3">
-                    <section className="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl space-y-3">
+                    <section className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl space-y-3">
                         <h3 className="font-semibold text-slate-400 uppercase tracking-wide">Ajustes de Publicación</h3>
                         
                         <div className="space-y-3">
@@ -161,15 +161,15 @@ export default function NewAnnouncementPage() {
                                 onClick={() => setFormData({ ...formData, is_featured: !formData.is_featured })}
                                 className={`w-full flex items-center justify-between p-4 rounded-lg transition-all ${
                                     formData.is_featured
-                                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300'
+                                        ? 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300'
                                         : 'bg-slate-50 dark:bg-black/10 text-slate-500 dark:text-slate-300'
                                 }`}
                             >
                                 <span className="text-[11px] font-bold uppercase">Destacar anuncio</span>
-                                <span className={`size-5 rounded-full ${formData.is_featured ? 'bg-blue-600' : 'bg-slate-300 dark:bg-white/20'}`} />
+                                <span className={`size-5 rounded-full ${formData.is_featured ? 'bg-[hsl(var(--primary))]' : 'bg-slate-300 dark:bg-white/20'}`} />
                             </button>
 
-                            <button className="w-full py-1.5 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg text-slate-400 hover:text-blue-600 transition-all flex flex-col items-center gap-2">
+                            <button className="w-full py-1.5 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] transition-all flex flex-col items-center gap-2">
                                 <ImageIcon size={24} />
                                 <span className="text-[9px] font-semibold uppercase">Añadir Imagen de Portada</span>
                             </button>
@@ -180,7 +180,7 @@ export default function NewAnnouncementPage() {
                         <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/20 rounded-full blur-3xl" />
                         <div className="relative z-10 flex flex-col gap-3">
                             <div className="flex items-center gap-3">
-                                <Eye size={20} className="text-blue-400" />
+                                <Eye size={20} className="text-[hsl(var(--primary))]" />
                                 <h4 className="text-[11px] font-semibold uppercase tracking-wide">Vista Previa Móvil</h4>
                             </div>
                             <div className="aspect-[9/16] w-full rounded-lg bg-white/5 border border-white/10 p-3 space-y-4">

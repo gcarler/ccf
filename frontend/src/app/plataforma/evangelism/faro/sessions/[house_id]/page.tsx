@@ -171,7 +171,7 @@ export default function SessionReportPage() {
     };
 
     const ROLE_STYLES: Record<string, { bg: string; text: string; border: string; icon: typeof User }> = {
-        'Líder': { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800', icon: Shield },
+        'Líder': { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]', border: 'border-blue-200 dark:border-blue-800', icon: Shield },
         'Asistente del Líder': { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-400', border: 'border-indigo-200 dark:border-indigo-800', icon: User },
         'Anfitrión': { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800', icon: Home },
         'Asistente': { bg: 'bg-slate-50 dark:bg-white/5', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-200 dark:border-white/10', icon: Users },
@@ -188,7 +188,7 @@ export default function SessionReportPage() {
             <div className="flex flex-col items-center justify-center py-16 text-center">
                 <AlertCircle size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
                 <h2 className="text-lg font-bold text-slate-700 dark:text-slate-300">Grupo no encontrado</h2>
-                <button onClick={() => router.push('/plataforma/evangelism/faro/groups')} className="mt-4 px-4 h-9 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">Volver</button>
+                <button onClick={() => router.push('/plataforma/evangelism/faro/groups')} className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">Volver</button>
             </div>
         </EvangelismShell>
     );
@@ -208,21 +208,21 @@ export default function SessionReportPage() {
                 </div>
 
                 {/* Date */}
-                <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
                     <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-2"><Calendar size={12} /> Fecha</label>
                     <input type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} className="w-full md:w-auto px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none" />
                 </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-2">
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-green-600 dark:text-green-400">{stats.present}</p><p className="text-[10px] font-semibold text-green-700 dark:text-green-500">Presentes</p></div>
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-red-500 dark:text-red-400">{stats.absent}</p><p className="text-[10px] font-semibold text-red-600 dark:text-red-500">Ausentes</p></div>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-blue-600 dark:text-blue-400">{stats.firstTime}</p><p className="text-[10px] font-semibold text-blue-700 dark:text-blue-500">Nuevos</p></div>
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]">{stats.present}</p><p className="text-[10px] font-semibold text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]">Presentes</p></div>
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">{stats.absent}</p><p className="text-[10px] font-semibold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">Ausentes</p></div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{stats.firstTime}</p><p className="text-[10px] font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">Nuevos</p></div>
                     <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center"><p className="text-lg font-bold text-slate-700 dark:text-slate-300">{stats.total}</p><p className="text-[10px] font-semibold text-slate-500">Total</p></div>
                 </div>
 
                 {/* Attendance */}
-                <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                         <h2 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5"><Users size={12} /> Asistencia ({people.length})</h2>
                         <div className="relative">
@@ -245,9 +245,9 @@ export default function SessionReportPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
-                                        <button onClick={() => updateStatus(person.persona_id, 'present')} className={`p-1.5 rounded-lg transition-all ${person.status === 'present' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Presente"><CheckCircle2 size={16} /></button>
-                                        <button onClick={() => updateStatus(person.persona_id, 'absent')} className={`p-1.5 rounded-lg transition-all ${person.status === 'absent' ? 'bg-red-100 dark:bg-red-900/30 text-red-500' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Ausente"><XCircle size={16} /></button>
-                                        <button onClick={() => updateStatus(person.persona_id, 'first_time')} className={`p-1.5 rounded-lg transition-all ${person.status === 'first_time' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Primera vez"><UserPlus size={16} /></button>
+                                        <button onClick={() => updateStatus(person.persona_id, 'present')} className={`p-1.5 rounded-lg transition-all ${person.status === 'present' ? 'bg-green-100 dark:bg-green-900/30 text-[hsl(var(--secondary))]' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Presente"><CheckCircle2 size={16} /></button>
+                                        <button onClick={() => updateStatus(person.persona_id, 'absent')} className={`p-1.5 rounded-lg transition-all ${person.status === 'absent' ? 'bg-red-100 dark:bg-red-900/30 text-[hsl(var(--destructive))]' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Ausente"><XCircle size={16} /></button>
+                                        <button onClick={() => updateStatus(person.persona_id, 'first_time')} className={`p-1.5 rounded-lg transition-all ${person.status === 'first_time' ? 'bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))]' : 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5'}`} title="Primera vez"><UserPlus size={16} /></button>
                                     </div>
                                 </div>
                             );
@@ -256,19 +256,19 @@ export default function SessionReportPage() {
                 </div>
 
                 {/* New Guests */}
-                <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                         <h2 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5"><UserPlus size={12} /> Invitados nuevos ({newGuests.length})</h2>
-                        <button onClick={addGuest} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-bold hover:bg-blue-700"><Plus size={11} /> Agregar</button>
+                        <button onClick={addGuest} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold hover:bg-[hsl(var(--primary))]"><Plus size={11} /> Agregar</button>
                     </div>
                     <AnimatePresence>
                         {newGuests.map((g, i) => (
                             <motion.div key={i} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="px-4 py-3 border-b border-slate-100 dark:border-white/5 last:border-b-0 bg-blue-50/50 dark:bg-blue-900/10">
                                 <div className="flex items-center gap-2">
-                                    <input type="text" value={g.firstName} onChange={e => updateGuest(i, 'firstName', e.target.value)} placeholder="Nombre" className="flex-1 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-800 bg-white dark:bg-[#1e1f21] text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none" />
-                                    <input type="text" value={g.lastName} onChange={e => updateGuest(i, 'lastName', e.target.value)} placeholder="Apellido" className="flex-1 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-800 bg-white dark:bg-[#1e1f21] text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none" />
-                                    <input type="text" value={g.phone} onChange={e => updateGuest(i, 'phone', e.target.value)} placeholder="Teléfono" className="flex-1 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-800 bg-white dark:bg-[#1e1f21] text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none" />
-                                    <button onClick={() => removeGuest(i)} className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"><XCircle size={16} /></button>
+                                    <input type="text" value={g.firstName} onChange={e => updateGuest(i, 'firstName', e.target.value)} placeholder="Nombre" className="flex-1 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-800 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none" />
+                                    <input type="text" value={g.lastName} onChange={e => updateGuest(i, 'lastName', e.target.value)} placeholder="Apellido" className="flex-1 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-800 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none" />
+                                    <input type="text" value={g.phone} onChange={e => updateGuest(i, 'phone', e.target.value)} placeholder="Teléfono" className="flex-1 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-800 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none" />
+                                    <button onClick={() => removeGuest(i)} className="p-2 rounded-lg text-slate-400 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10"><XCircle size={16} /></button>
                                 </div>
                             </motion.div>
                         ))}
@@ -277,7 +277,7 @@ export default function SessionReportPage() {
                 </div>
 
                 {/* Session Details */}
-                <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-4">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-4">
                     <h2 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5"><FileText size={12} /> Detalles</h2>
                     <div>
                         <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Tema</label>
@@ -299,7 +299,7 @@ export default function SessionReportPage() {
                 {/* Submit */}
                 <div className="flex items-center justify-end gap-3 pb-4">
                     <button onClick={() => router.push('/plataforma/evangelism/faro/groups')} className="px-4 h-9 rounded-lg border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5">Cancelar</button>
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSubmit} disabled={saving} className="inline-flex items-center gap-2 px-6 h-10 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 disabled:opacity-60 shadow-sm">
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSubmit} disabled={saving} className="inline-flex items-center gap-2 px-6 h-10 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold hover:bg-[hsl(var(--primary))] disabled:opacity-60 shadow-sm">
                         {saving ? <><Clock size={16} className="animate-spin" /> Guardando...</> : <><Save size={16} /> Guardar Reporte</>}
                     </motion.button>
                 </div>

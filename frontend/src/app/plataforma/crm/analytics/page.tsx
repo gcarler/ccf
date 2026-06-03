@@ -149,10 +149,10 @@ export default function CrmAnalyticsPage() {
             onViewChange={setViewType}
             rightActions={
                 <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all">
+                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all">
                         <Download size={13} /> Exportar PDF
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                         <Share2 size={13} /> Compartir
                     </button>
                 </div>
@@ -195,7 +195,7 @@ export default function CrmAnalyticsPage() {
                         </motion.section>
 
                         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
-                            <motion.section variants={itemVariants} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#15171c] p-3 shadow-sm">
+                            <motion.section variants={itemVariants} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-3 shadow-sm">
                                 <div className="mb-4 flex items-center justify-between gap-4">
                                     <div>
                                         <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
@@ -235,16 +235,16 @@ export default function CrmAnalyticsPage() {
                                     </div>
                                     <div className="h-2 overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
                                         <div
-                                            className="h-full rounded-full bg-blue-600 transition-all"
+                                            className="h-full rounded-full bg-[hsl(var(--primary))] transition-all"
                                             style={{ width: `${Math.min(activeRate, 100)}%` }}
                                         />
                                     </div>
                                 </div>
                             </motion.section>
 
-                            <motion.aside variants={itemVariants} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#15171c] p-3 shadow-sm">
+                            <motion.aside variants={itemVariants} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-3 shadow-sm">
                                 <div className="mb-4 flex items-center gap-2">
-                                    <Activity size={15} className="text-blue-600" />
+                                    <Activity size={15} className="text-[hsl(var(--primary))]" />
                                     <h2 className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                                         Pipeline
                                     </h2>
@@ -274,7 +274,7 @@ function ListView({ rows }: { rows: KpiRow[] }) {
     return (
         <div className="space-y-2">
             {rows.map((row) => (
-                <div key={row.label} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                <div key={row.label} className="flex items-center justify-between rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
                     <div>
                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{row.label}</p>
                         <p className="text-base font-bold text-slate-800 dark:text-slate-100">{row.value}</p>
@@ -288,7 +288,7 @@ function ListView({ rows }: { rows: KpiRow[] }) {
 
 function TableView({ rows }: { rows: KpiRow[] }) {
     return (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/5">
             <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
@@ -325,7 +325,7 @@ function BoardView({ rows }: { rows: KpiRow[] }) {
                     <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{column.title}</p>
                     <div className="space-y-2">
                         {column.items.map((item) => (
-                            <div key={item.label} className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+                            <div key={item.label} className="rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/5">
                                 <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{item.label}</p>
                                 <p className="mt-1 text-[10px] text-slate-400">{item.value}</p>
                                 <div className="mt-2"><Badge tone={item.tone}>{item.context}</Badge></div>
@@ -357,7 +357,7 @@ function CalendarView({ analytics }: { analytics: CrmAnalyticsSummary | null }) 
 
 function GanttView({ rows }: { rows: FunnelRow[] }) {
     return (
-        <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="space-y-3 rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Distribucion del pipeline</p>
             {rows.length === 0 ? (
                 <p className="text-sm font-medium text-slate-400">No hay datos disponibles.</p>
@@ -368,7 +368,7 @@ function GanttView({ rows }: { rows: FunnelRow[] }) {
                         <span className="font-bold text-slate-400">{row.value}</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
-                        <div className="h-full rounded-full bg-blue-600" style={{ width: `${row.percent}%` }} />
+                        <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${row.percent}%` }} />
                     </div>
                 </div>
             ))}
@@ -384,7 +384,7 @@ function WikiView({
     onChange: (value: string) => void;
 }) {
     return (
-        <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="space-y-3 rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Wiki analitica CRM</p>
             <textarea
                 value={wikiNotes}
@@ -400,7 +400,7 @@ function AnalyticsKpi({ row }: { row: KpiRow }) {
     return (
         <motion.div
             variants={{ hidden: { opacity: 0, scale: 0.98 }, show: { opacity: 1, scale: 1 } }}
-            className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#15171c]"
+            className="rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-[#15171c]"
         >
             <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{row.label}</p>
@@ -421,8 +421,8 @@ function SummaryTile({
     value: string;
 }) {
     return (
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-            <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-blue-50 text-blue-600 dark:bg-blue-500/10">
+        <div className="rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
+            <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10">
                 <Icon size={16} />
             </div>
             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
@@ -439,7 +439,7 @@ function FunnelStep({ row }: { row: FunnelRow }) {
                 <span>{row.value}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
-                <div className="h-full rounded-full bg-blue-600" style={{ width: `${row.percent}%` }} />
+                <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${row.percent}%` }} />
             </div>
         </div>
     );

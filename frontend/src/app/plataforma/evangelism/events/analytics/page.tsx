@@ -72,9 +72,9 @@ export default function GlobalEventAnalyticsPage() {
  <div className="p-4 lg:p-3 space-y-3 w-full">
                 
                 {/* FILTROS */}
-                <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center">
                     <div className="flex items-center gap-3 text-slate-800 dark:text-white font-semibold uppercase tracking-wide text-xs">
-                        <Filter size={18} className="text-blue-500" /> Filtros Activos
+                        <Filter size={18} className="text-[hsl(var(--primary))]" /> Filtros Activos
                     </div>
                     <div className="h-10 w-px bg-slate-200 dark:bg-white/10 hidden md:block"></div>
                     
@@ -113,8 +113,8 @@ export default function GlobalEventAnalyticsPage() {
                     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
                         {/* KPIs */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col justify-between">
-                                <div className="size-9 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col justify-between">
+                                <div className="size-9 rounded-lg bg-blue-500/10 text-[hsl(var(--primary))] flex items-center justify-center mb-3">
                                     <Users size={24} />
                                 </div>
                                 <div>
@@ -123,7 +123,7 @@ export default function GlobalEventAnalyticsPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col justify-between">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col justify-between">
                                 <div className="size-9 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-3">
                                     <TrendingUp size={24} />
                                 </div>
@@ -133,7 +133,7 @@ export default function GlobalEventAnalyticsPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col justify-between">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col justify-between">
                                 <div className="size-9 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
                                     <Award size={24} />
                                 </div>
@@ -144,9 +144,9 @@ export default function GlobalEventAnalyticsPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md p-4 shadow-sm flex flex-col justify-between relative overflow-hidden group">
-                                <div className={`absolute top-0 inset-x-0 h-1 ${data.kpis.trend_percentage >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                                <div className={`size-9 rounded-lg flex items-center justify-center mb-3 ${data.kpis.trend_percentage >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md p-4 shadow-sm flex flex-col justify-between relative overflow-hidden group">
+                                <div className={`absolute top-0 inset-x-0 h-1 ${data.kpis.trend_percentage >= 0 ? 'bg-emerald-500' : 'bg-[hsl(var(--destructive))]'}`}></div>
+                                <div className={`size-9 rounded-lg flex items-center justify-center mb-3 ${data.kpis.trend_percentage >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-[hsl(var(--destructive))]'}`}>
                                     <TrendingUp size={24} className={data.kpis.trend_percentage < 0 ? 'rotate-180' : ''} />
                                 </div>
                                 <div>
@@ -162,7 +162,7 @@ export default function GlobalEventAnalyticsPage() {
                         </div>
 
                         {/* GRÁFICO MOTOR CSS */}
-                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm">
+                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm">
                             <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3 flex items-center gap-2">
                                 <BarChart3 size={16} /> Tendencia en el Tiempo
                             </h3>
@@ -180,7 +180,7 @@ export default function GlobalEventAnalyticsPage() {
                                             <div key={d.key} className="flex-1 min-w-[60px] max-w-[100px] flex flex-col items-center justify-end group relative h-full">
                                                 {/* Tooltip */}
                                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4 bg-slate-800 text-white text-[10px] font-bold px-3 py-2 rounded-md whitespace-nowrap z-10 flex flex-col items-center shadow-xl">
-                                                    <span className="text-blue-400 mb-1">{d.label}</span>
+                                                    <span className="text-[hsl(var(--primary))] mb-1">{d.label}</span>
                                                     <span>{d.total} Asistentes</span>
                                                     <span className="text-slate-400 text-[8px]">{d.sessions} sesiones</span>
                                                 </div>

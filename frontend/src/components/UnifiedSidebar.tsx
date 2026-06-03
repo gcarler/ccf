@@ -143,7 +143,7 @@ export default function UnifiedSidebar({
             <div className="absolute right-0 translate-x-1/2 top-3 z-[60]">
                 <button 
                     onClick={toggleSidebar}
-                    className="w-6 h-6 rounded-full bg-white dark:bg-[#2a2b2d] border border-slate-200 dark:border-white/10 shadow-sm flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all active:scale-95"
+                    className="w-6 h-6 rounded-full bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-slate-200 dark:border-white/10 shadow-sm flex items-center justify-center text-slate-500 hover:text-[hsl(var(--primary))] transition-all active:scale-95"
                 >
                     {isMini ? <ChevronRight size={12} strokeWidth={3} /> : <div className="flex -space-x-1"><ChevronLeft size={12} strokeWidth={3}/><ChevronRight size={12} strokeWidth={3}/></div>}
                 </button>
@@ -152,10 +152,10 @@ export default function UnifiedSidebar({
             {/* Sidebar Header (Logo) */}
             <div className="h-12 flex items-center px-3 shrink-0">
                 <div className="flex items-center gap-3 w-full">
-                    <div className="w-8 h-8 rounded-md bg-slate-900 dark:bg-white flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-md bg-slate-900 dark:bg-[hsl(var(--bg-primary))] flex items-center justify-center shrink-0">
                         {/* Abstract circle logo matching the mock */}
                         <div className="w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 relative">
-                            <div className="absolute top-[-2px] right-[-2px] w-1.5 h-1.5 bg-white dark:bg-slate-900" />
+                            <div className="absolute top-[-2px] right-[-2px] w-1.5 h-1.5 bg-[hsl(var(--bg-primary))] dark:bg-slate-900" />
                         </div>
                     </div>
                     {!isMini && (

@@ -59,7 +59,7 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 const STAGE_COLORS: Record<string, string> = {
-    new: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+    new: 'bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20',
     call: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
     visit: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
     discipleship: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
@@ -175,8 +175,8 @@ export default function NewsletterLeadsPage() {
                         className={clsx(
                             "flex items-center gap-2 px-3 py-2 rounded-md text-[11px] font-bold uppercase tracking-wide transition-all",
                             showFilters
-                                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                                : "bg-white dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10"
+                                ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
+                                : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10"
                         )}
                     >
                         <Filter size={14} /> Filtros
@@ -197,12 +197,12 @@ export default function NewsletterLeadsPage() {
                 {summary && (
                     <div className="grid grid-cols-4 gap-3 px-4 pt-4 pb-2">
                         {[
-                            { label: 'Total leads', value: summary.total, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+                            { label: 'Total leads', value: summary.total, icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                             { label: 'Con email', value: summary.withEmail, icon: Mail, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
                             { label: 'Nuevos', value: summary.newCount, icon: Tag, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
                             { label: 'Landings', value: summary.landingPages, icon: Globe, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-500/10' },
                         ].map((stat, i) => (
-                            <div key={i} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                            <div key={i} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3">
                                 <div className="flex items-center gap-2 mb-1">
                                     <div className={`size-6 rounded-md ${stat.bg} flex items-center justify-center ${stat.color}`}>
                                         <stat.icon size={14} />
@@ -225,7 +225,7 @@ export default function NewsletterLeadsPage() {
                                     type="date"
                                     value={dateFrom}
                                     onChange={e => { setPage(1); setDateFrom(e.target.value); }}
-                                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
+                                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -263,7 +263,7 @@ export default function NewsletterLeadsPage() {
                             <div
                                 key={lead.case_id}
                                 onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
-                                className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-md"
+                                className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-md"
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-3">
@@ -356,7 +356,7 @@ export default function NewsletterLeadsPage() {
                                     grouped[date].push(lead);
                                 }
                                 return Object.entries(grouped).sort((a, b) => b[0].localeCompare(a[0])).map(([dateKey, items]) => (
-                                    <div key={dateKey} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                    <div key={dateKey} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                         <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">
                                             {dateKey === 'unknown' ? 'Sin fecha' : new Date(dateKey + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}
                                             <span className="ml-2 text-slate-400">({items.length})</span>
@@ -380,7 +380,7 @@ export default function NewsletterLeadsPage() {
                             })()}
                         </div>
                     ) : viewType === 'wiki' ? (
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">
                                 <BookOpen size={12} /> Wiki de leads de newsletter
                             </div>

@@ -139,7 +139,7 @@ function MentorAssignmentDrawer({
                                         className={clsx(
                                             "p-4 rounded-lg border-2 transition-all flex items-center gap-4",
                                             !m.available ? "opacity-50 cursor-not-allowed border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20" :
-                                            selected === m.id ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 cursor-pointer" : "border-slate-100 dark:border-white/5 bg-white dark:bg-[#15171c] hover:border-indigo-200 cursor-pointer"
+                                            selected === m.id ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 cursor-pointer" : "border-slate-100 dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] hover:border-indigo-200 cursor-pointer"
                                         )}
                                     >
                                         <div className="size-9 rounded-full bg-slate-100 dark:bg-white/10 flex flex-col items-center justify-center font-bold text-slate-400">
@@ -298,7 +298,7 @@ function InfoGrid({ items }: { items: { label: string; value: string | React.Rea
                 <div key={i} className="space-y-1">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{item.label}</p>
                     <p className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                        {item.icon && <item.icon size={16} className="text-blue-500 shrink-0" />}
+                        {item.icon && <item.icon size={16} className="text-[hsl(var(--primary))] shrink-0" />}
                         {item.value || '—'}
                     </p>
                 </div>
@@ -336,10 +336,10 @@ export default function MemberDetailPage() {
     const [loadingDonations, setLoadingDonations] = useState(false);
 
     useEffect(() => {
+        const abortCtrl = new AbortController();
         const fetchMember = async () => {
             try {
-                await new Promise(r => setTimeout(r, 500));
-                const data = await apiFetch<any>(`/crm/personas/${id}`, { token });
+                const data = await apiFetch<any>(`/crm/personas/${id}`, { token, signal: abortCtrl.signal });
                 const m = {
                     ...data,
                     first_name: data.first_name ?? '',
@@ -398,16 +398,26 @@ export default function MemberDetailPage() {
                 setMember(m);
                 setEditMember({ ...m });
             } catch {
-                setMember(null);
+                if (!abortCtrl.signal.aborted) {
+                    setMember(null);
+                }
             } finally {
-                setLoading(false);
+                if (!abortCtrl.signal.aborted) {
+                    setLoading(false);
+                }
             }
         };
         fetchMember();
         // Load departments for display
-        apiFetch<any[]>('/crm/colombian-departments', { token })
+        apiFetch<any[]>('/crm/colombian-departments', { token, signal: abortCtrl.signal })
             .then(setDepartments)
-            .catch((err) => { console.error('[MemberDetailPage] Failed to load departments:', err); toast.error('Error al cargar departamentos'); });
+            .catch((err) => {
+                if (!abortCtrl.signal.aborted) {
+                    console.error('[MemberDetailPage] Failed to load departments:', err);
+                    toast.error('Error al cargar departamentos');
+                }
+            });
+        return () => abortCtrl.abort();
     }, [id, token]);
 
     // Load cities for edit drawer cascade
@@ -492,7 +502,7 @@ export default function MemberDetailPage() {
     if (loading) return (
         <div className="h-full flex flex-col items-center justify-center space-y-4">
             <div className="size-9 rounded-lg bg-blue-600/10 flex items-center justify-center">
-                <Activity size={24} className="text-blue-600 animate-spin" />
+                <Activity size={24} className="text-[hsl(var(--primary))] animate-spin" />
             </div>
             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Accediendo al Expediente...</p>
         </div>
@@ -505,7 +515,7 @@ export default function MemberDetailPage() {
                 <p className="text-base font-bold text-slate-600 dark:text-slate-300">Miembro no encontrado</p>
                 <p className="text-sm text-slate-400 mt-1">El expediente #{id} no existe o no tienes acceso.</p>
             </div>
-            <button onClick={() => router.push('/plataforma/crm/personas')} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all">
+            <button onClick={() => router.push('/plataforma/crm/personas')} className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-sm hover:bg-[hsl(var(--primary))] transition-all">
                 <ArrowLeft size={16} /> Volver a Miembros
             </button>
         </div>
@@ -531,9 +541,9 @@ export default function MemberDetailPage() {
             ]}
             rightActions={
                 <div className="flex gap-2">
-                    <button title="Editar" onClick={() => setIsEditOpen(true)} className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
-                    <button title="Compartir" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
-                    <button title="Más acciones" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
+                    <button title="Editar" onClick={() => setIsEditOpen(true)} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
+                    <button title="Compartir" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
+                    <button title="Más acciones" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
                 </div>
             }
         >
@@ -542,7 +552,7 @@ export default function MemberDetailPage() {
             {/* ── 1. Profile Hero ── */}
             <motion.section
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                className="relative bg-white dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 p-3 lg:p-4 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden group"
+                className="relative bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 p-3 lg:p-4 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden group"
             >
                 <div className="absolute top-0 right-0 w-[500px] h-full bg-gradient-to-l from-blue-600/5 to-transparent pointer-events-none" />
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-3">
@@ -551,22 +561,22 @@ export default function MemberDetailPage() {
                         <div className="size-10 lg:size-10 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xl font-bold shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
                             {initials}
                         </div>
-                        <div className="absolute -bottom-3 -right-3 size-9 bg-white dark:bg-[#15171c] rounded-lg flex items-center justify-center shadow-xl border border-slate-50 dark:border-white/10">
-                            <ShieldCheck size={24} className="text-blue-600" />
+                        <div className="absolute -bottom-3 -right-3 size-9 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg flex items-center justify-center shadow-xl border border-slate-50 dark:border-white/10">
+                            <ShieldCheck size={24} className="text-[hsl(var(--primary))]" />
                         </div>
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 space-y-2">
                         <div className="space-y-2">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 rounded-full text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide border border-blue-100 dark:border-blue-500/20">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 rounded-full text-[10px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide border border-blue-100 dark:border-blue-500/20">
                                 ID: #{member.id} <span className="text-slate-300">•</span> {member.status}
                             </div>
                             <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter">{fullName}</h1>
                             <p className="text-sm text-slate-500 font-semibold">{member.church_role}</p>
                         </div>
                         <div className="flex flex-wrap gap-3 items-center">
-                            {member.email !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Mail size={16} className="text-blue-500" /> {member.email}</span>}
+                            {member.email !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Mail size={16} className="text-[hsl(var(--primary))]" /> {member.email}</span>}
                             {member.phone !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Phone size={16} className="text-emerald-500" /> {member.phone}</span>}
                             {member.address !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><MapPin size={16} className="text-rose-500" /> {member.address}</span>}
                         </div>
@@ -575,7 +585,7 @@ export default function MemberDetailPage() {
                     {/* Quick Stats */}
                     <div className="flex flex-row lg:flex-col gap-3 shrink-0">
                         <QuickStat label="Puntos MESH" value={member.xp} icon={Star} color="text-amber-500" />
-                        <QuickStat label="Nivel" value={member.level} icon={Zap} color="text-blue-500" />
+                        <QuickStat label="Nivel" value={member.level} icon={Zap} color="text-[hsl(var(--primary))]" />
                         <QuickStat label="Grupo" value={member.house} icon={Heart} color="text-rose-500" />
                     </div>
                 </div>
@@ -591,12 +601,12 @@ export default function MemberDetailPage() {
                             onClick={() => setActiveTab(tabId)}
                             className={clsx(
                                 "flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all relative whitespace-nowrap shrink-0",
-                                active ? "text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                active ? "text-[hsl(var(--primary))]" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             )}
                         >
                             <Icon size={14} />
                             {label}
-                            {active && <motion.div layoutId="member-tab-indicator" className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600 rounded-t-full shadow-[0_0_8px_rgba(37,99,235,0.5)]" />}
+                            {active && <motion.div layoutId="member-tab-indicator" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[hsl(var(--primary))] rounded-t-full shadow-[0_0_8px_rgba(37,99,235,0.5)]" />}
                         </button>
                     );
                 })}
@@ -616,7 +626,7 @@ export default function MemberDetailPage() {
                     {activeTab === 'overview' && <>
                         <div className="lg:col-span-8 space-y-3">
                             {/* Perfil de Consolidación */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Perfil de Consolidación</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Ingreso', value: formatDate(member.joinedAt), icon: Calendar },
@@ -633,7 +643,7 @@ export default function MemberDetailPage() {
                             </div>
 
                             {/* Datos Personales */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Datos Personales</h3>
                                 <InfoGrid items={[
                                     { label: 'Tipo de ID', value: member.id_type },
@@ -649,7 +659,7 @@ export default function MemberDetailPage() {
 
                             {/* Contacto y Ubicación */}
                             {(member.landline_phone || member.address || member.city) && (
-                                <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Contacto y Ubicación</h3>
                                     <InfoGrid items={[
                                         { label: 'Teléfono Fijo', value: member.landline_phone },
@@ -665,7 +675,7 @@ export default function MemberDetailPage() {
 
                             {/* Educación y Profesión */}
                             {(member.profession || member.education_level) && (
-                                <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Educación y Profesión</h3>
                                     <InfoGrid items={[
                                         { label: 'Nivel Educativo', value: member.education_level },
@@ -678,7 +688,7 @@ export default function MemberDetailPage() {
 
                             {/* Médico */}
                             {(member.blood_type || member.medical_notes) && (
-                                <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Información Médica</h3>
                                     <InfoGrid items={[
                                         { label: 'Tipo de Sangre', value: member.blood_type },
@@ -688,10 +698,10 @@ export default function MemberDetailPage() {
                             )}
 
                             {/* Núcleo Familiar */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Núcleo Familiar</h3>
-                                    <button className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-wide hover:text-blue-700 transition-all">
+                                    <button className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-all">
                                         <Plus size={12} /> Añadir
                                     </button>
                                 </div>
@@ -700,7 +710,7 @@ export default function MemberDetailPage() {
                                         {member.family.map((f: any) => (
                                             <div key={f.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all cursor-pointer">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-9 rounded-md bg-white dark:bg-[#15171c] flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/10">
+                                                    <div className="size-9 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/10">
                                                         <User size={16} className="text-slate-400" />
                                                     </div>
                                                     <div>
@@ -742,7 +752,7 @@ export default function MemberDetailPage() {
                                             });
                                             setMentorDrawerOpen(true);
                                         }}
-                                        className="w-full py-1.5 bg-white text-indigo-900 rounded-lg font-bold text-[10px] uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all"
+                                        className="w-full py-1.5 bg-[hsl(var(--surface-1))] text-indigo-900 rounded-lg font-bold text-[10px] uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all"
                                     >
                                         Asignar Mentoría
                                     </button>
@@ -750,10 +760,10 @@ export default function MemberDetailPage() {
                             </div>
 
                             {/* Indicadores de Salud */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-md p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-2">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-2">
                                 <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Indicadores de Salud</h3>
                                 <HealthIndicator label="Asistencia Mensual" value={85} color="bg-emerald-500" />
-                                <HealthIndicator label="Progreso Academia" value={65} color="bg-blue-500" />
+                                <HealthIndicator label="Progreso Academia" value={65} color="bg-[hsl(var(--primary))]" />
                                 <HealthIndicator label="Compromiso Voluntario" value={92} color="bg-amber-500" />
                             </div>
                         </div>
@@ -762,7 +772,7 @@ export default function MemberDetailPage() {
                     {/* ── VIDA ESPIRITUAL ── */}
                     {activeTab === 'spiritual' && <>
                         <div className="lg:col-span-8 space-y-3">
-                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Datos Espirituales</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Bautismo', value: formatDate(member.baptism_date), icon: CheckCircle2 },
@@ -808,7 +818,7 @@ export default function MemberDetailPage() {
                                             });
                                             setMentorDrawerOpen(true);
                                         }}
-                                        className="w-full py-1.5 bg-white text-rose-700 rounded-lg font-bold text-[10px] uppercase tracking-wide hover:scale-105 transition-all"
+                                        className="w-full py-1.5 bg-[hsl(var(--surface-1))] text-rose-700 rounded-lg font-bold text-[10px] uppercase tracking-wide hover:scale-105 transition-all"
                                     >
                                         Asignar Pastor
                                     </button>
@@ -820,10 +830,10 @@ export default function MemberDetailPage() {
                     {/* ── ACADEMIA ── */}
                     {activeTab === 'academy' && <>
                         <div className="lg:col-span-12">
-                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Progreso Académico</h3>
-                                    <a href="/plataforma/academy" className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-wide hover:text-blue-700 transition-all">
+                                    <a href="/plataforma/academy" className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-all">
                                         Ver Academia <ExternalLink size={12} />
                                     </a>
                                 </div>
@@ -832,7 +842,7 @@ export default function MemberDetailPage() {
                                     title="Sin cursos registrados"
                                     description={`${fullName} aún no está inscrito en ningún curso de la Academia CCF.`}
                                     action={
-                                        <a href="/plataforma/academy" className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all mt-2">
+                                        <a href="/plataforma/academy" className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-sm hover:bg-[hsl(var(--primary))] transition-all mt-2">
                                             <BookOpen size={16} /> Explorar Cursos
                                         </a>
                                     }
@@ -848,10 +858,10 @@ export default function MemberDetailPage() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {[
                                     { label: 'Total Diezmos', value: donations.filter(d => d.donation_type === 'diezmo').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-emerald-500', icon: TrendingUp },
-                                    { label: 'Total Ofrendas', value: donations.filter(d => d.donation_type === 'ofrenda').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-blue-500', icon: DollarSign },
+                                    { label: 'Total Ofrendas', value: donations.filter(d => d.donation_type === 'ofrenda').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-[hsl(var(--primary))]', icon: DollarSign },
                                     { label: 'Total Registrado', value: donations.reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-indigo-500', icon: Award },
                                 ].map((stat, i) => (
-                                    <div key={i} className="bg-white dark:bg-[#15171c] rounded-md p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                    <div key={i} className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                         <div className={clsx('size-8 rounded-md flex items-center justify-center text-white', stat.color)}>
                                             <stat.icon size={18} />
                                         </div>
@@ -862,7 +872,7 @@ export default function MemberDetailPage() {
                             </div>
 
                             {/* Transactions */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">Historial de Siembras</h3>
                                 {loadingDonations ? (
                                     <div className="py-2 text-center text-slate-400 text-sm">Cargando...</div>
@@ -897,7 +907,7 @@ export default function MemberDetailPage() {
                     {/* ── HISTORIAL ── */}
                     {activeTab === 'history' && <>
                         <div className="lg:col-span-12">
-                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">Línea de Tiempo Pastoral</h3>
                                 {loadingHistory ? (
                                     <div className="py-2 text-center text-slate-400 text-sm">Cargando historial...</div>
@@ -906,8 +916,8 @@ export default function MemberDetailPage() {
                                         <div className="absolute left-5 top-0 bottom-0 w-px bg-slate-100 dark:bg-white/5" />
                                         {history.map((event: any, i: number) => (
                                             <div key={i} className="flex gap-4 pl-12 pb-8 relative">
-                                                <div className="absolute left-0 top-1 size-8 rounded-md bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/10 flex items-center justify-center shadow-sm z-10">
-                                                    <MessageSquare size={16} className="text-blue-500" />
+                                                <div className="absolute left-0 top-1 size-8 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] border border-slate-100 dark:border-white/10 flex items-center justify-center shadow-sm z-10">
+                                                    <MessageSquare size={16} className="text-[hsl(var(--primary))]" />
                                                 </div>
                                                 <div className="flex-1 bg-slate-50 dark:bg-white/5 rounded-lg p-3">
                                                     <div className="flex items-center justify-between mb-2">
@@ -925,7 +935,7 @@ export default function MemberDetailPage() {
                                         title="Sin historial registrado"
                                         description={`No se han registrado eventos pastorales para ${fullName} aún.`}
                                         action={
-                                            <button className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 dark:bg-white text-white dark:text-slate-800 rounded-lg font-bold text-sm hover:opacity-90 transition-all mt-2">
+                                            <button className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-800 rounded-lg font-bold text-sm hover:opacity-90 transition-all mt-2">
                                                 <Plus size={16} /> Registrar Evento
                                             </button>
                                         }
@@ -957,7 +967,7 @@ export default function MemberDetailPage() {
                 actions={
                     <>
                         <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700">Cancelar</button>
-                        <button type="button" onClick={handleSaveMember} disabled={isEditSaving} className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-60">
+                        <button type="button" onClick={handleSaveMember} disabled={isEditSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
                             {isEditSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Guardar
                         </button>

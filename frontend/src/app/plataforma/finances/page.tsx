@@ -58,7 +58,7 @@ function StatCard({ label, value, sub, icon: Icon, colorClass, trend }: any) {
         <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative p-3 rounded-lg bg-white dark:bg-[#1e2025] border border-slate-100 dark:border-white/[0.06] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group"
+            className="relative p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-100 dark:border-white/[0.06] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group"
         >
             <div className={`absolute -top-4 -right-4 size-8 rounded-full blur-2xl opacity-30 group-hover:opacity-50 transition-opacity ${colorClass.split(' ')[0]}`} />
             <div className={clsx('inline-flex items-center justify-center size-10 rounded-md mb-4 relative z-10', colorClass)}>
@@ -129,23 +129,23 @@ export default function FinancesPage() {
                         <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase">
                             Centro Financiero
                         </h1>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 mt-0.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-0.5">
                             Gestión de Recursos Ministeriales
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-0.5 text-[10px] font-semibold">
+                        <div className="flex items-center gap-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-0.5 text-[10px] font-semibold">
                             {(['Semana', 'Mes', 'Año']).map((p) => (
                                 <button key={p} className={clsx(
                                     'px-2 py-1 rounded-md transition-colors',
-                                    p === 'Mes' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
+                                    p === 'Mes' ? 'bg-[hsl(var(--primary))] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
                                 )}>{p}</button>
                             ))}
                         </div>
-                        <button className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
+                        <button className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
                             <Download size={12} /> Exportar
                         </button>
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-[10px] font-semibold shadow-sm hover:bg-blue-700 active:scale-95 transition-all">
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold shadow-sm hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                             <Plus size={12} /> Registro
                         </button>
                     </div>
@@ -184,7 +184,7 @@ export default function FinancesPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 relative z-10">
                         {/* Transaction List */}
-                        <div className="lg:col-span-2 bg-white dark:bg-[#1a1b1e] rounded-lg border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden">
+                        <div className="lg:col-span-2 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-lg border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden">
                             {/* Table header */}
                             <div className="px-3 py-1.5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between gap-4">
                                 <h2 className="font-semibold text-slate-800 dark:text-white">Movimientos</h2>
@@ -207,7 +207,7 @@ export default function FinancesPage() {
                                                 className={clsx(
                                                     'px-3 py-1.5 transition-colors',
                                                     filter === f
-                                                        ? 'bg-blue-600 text-white'
+                                                        ? 'bg-[hsl(var(--primary))] text-white'
                                                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                                                 )}
                                             >
@@ -262,7 +262,7 @@ export default function FinancesPage() {
                         {/* Right: Breakdown */}
                         <div className="space-y-4">
                             {/* Category breakdown */}
-                            <div className="bg-white dark:bg-[#1a1b1e] rounded-lg border border-slate-100 dark:border-white/5 shadow-sm p-3">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-lg border border-slate-100 dark:border-white/5 shadow-sm p-3">
                                 <h3 className="font-semibold text-slate-800 dark:text-white uppercase tracking-wide mb-5">Fuentes de Ingreso</h3>
                                 <div className="space-y-4">
                                     {/* Categorías calculadas dinámicamente */}
@@ -270,7 +270,7 @@ export default function FinancesPage() {
                                         const cats: Record<string, number> = {};
                                         transactions.forEach(t => { cats[t.category] = (cats[t.category] || 0) + t.amount; });
                                         const total = Object.values(cats).reduce((s, v) => s + v, 0) || 1;
-                                        const COLORS = ['bg-blue-500', 'bg-indigo-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500'];
+                                        const COLORS = ['bg-[hsl(var(--primary))]', 'bg-indigo-500', 'bg-[hsl(var(--primary))]', 'bg-emerald-500', 'bg-amber-500'];
                                         return Object.entries(cats).slice(0, 5).map(([label, amount], i) => {
                                             const pct = Math.round((amount / total) * 100);
                                             return (
@@ -298,12 +298,12 @@ export default function FinancesPage() {
                             {/* Transparency banner */}
                             <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg p-3 text-white relative overflow-hidden">
                                 <div className="absolute top-0 right-0 size-10 bg-blue-500/20 rounded-full blur-2xl" />
-                                <Landmark size={24} className="text-blue-400 mb-3 relative z-10" />
+                                <Landmark size={24} className="text-[hsl(var(--primary))] mb-3 relative z-10" />
                                 <h3 className="font-semibold relative z-10 mb-1">Informe de Transparencia</h3>
                                 <p className="text-[11px] text-slate-400 relative z-10 mb-4 leading-relaxed">
                                     Reportes auditados disponibles para la congregación.
                                 </p>
-                                <button className="flex items-center gap-2 font-semibold text-blue-400 hover:text-blue-300 transition-colors relative z-10">
+                                <button className="flex items-center gap-2 font-semibold text-[hsl(var(--primary))] hover:text-blue-300 transition-colors relative z-10">
                                     Ver informes <ChevronRight size={13} />
                                 </button>
                             </div>

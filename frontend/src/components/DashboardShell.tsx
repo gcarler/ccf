@@ -124,7 +124,7 @@ function FilterBar({
                     <select
                         value={activeFilters[f.key] ?? f.default ?? ''}
                         onChange={(e) => onFilterChange(f.key, e.target.value)}
-                        className="text-[11px] font-medium bg-white dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-md px-2 py-1 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                        className="text-[11px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-md px-2 py-1 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                     >
                         {(f.options || []).map((opt) => (
                             <option key={opt.value} value={opt.value}>

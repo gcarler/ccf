@@ -80,7 +80,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
     }
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0f1113]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113]">
             {/* Header Cinematic */}
             <div className="p-4 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
                 <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-sky-600 dark:text-white">
@@ -90,7 +90,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                 <div className="flex justify-between items-start mb-3 relative z-10">
                     <button 
                         onClick={onClose} 
-                        className="p-2.5 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/5 active:scale-95"
+                        className="p-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/5 active:scale-95"
                     >
                         <CloseIcon size={20} />
                     </button>
@@ -99,7 +99,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                             "px-3 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg",
                             session.status === 'Realizada' ? "bg-emerald-600 text-white shadow-emerald-500/20" : "bg-amber-500 text-white shadow-amber-500/20"
                         )}>
-                            <div className="size-1.5 rounded-full bg-white animate-pulse" />
+                            <div className="size-1.5 rounded-full bg-[hsl(var(--bg-primary))] animate-pulse" />
                             {session.status}
                         </span>
                     </div>
@@ -137,7 +137,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
             </div>
 
             {/* Tabs */}
-            <div className="flex px-4 border-b border-slate-50 dark:border-white/[0.04] shrink-0 bg-white dark:bg-transparent overflow-x-auto no-scrollbar sticky top-0 z-30">
+            <div className="flex px-4 border-b border-slate-50 dark:border-white/[0.04] shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-transparent overflow-x-auto no-scrollbar sticky top-0 z-30">
                 {[
                     { id: 'details', label: 'Expediente', icon: BookOpen },
                     { id: 'timeline', label: 'Historial', icon: History },
@@ -192,7 +192,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                                 className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-md z-10 flex flex-col items-center justify-center gap-4 border-2 border-dashed border-slate-200 dark:border-white/10 cursor-pointer"
                                                 onClick={() => setShowNotes(true)}
                                             >
-                                                <div className="size-9 rounded-lg bg-white dark:bg-white/10 flex items-center justify-center text-slate-400 shadow-xl group-hover:scale-110 transition-transform">
+                                                <div className="size-9 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-slate-400 shadow-xl group-hover:scale-110 transition-transform">
                                                     <Lock size={20} />
                                                 </div>
                                                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Sesión Encriptada</p>

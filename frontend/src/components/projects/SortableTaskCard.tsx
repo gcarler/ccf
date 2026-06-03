@@ -14,9 +14,9 @@ interface Props {
 }
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    urgent: { label: 'Urgente', color: 'text-red-500',    bg: 'bg-red-50 dark:bg-red-900/20'    },
+    urgent: { label: 'Urgente', color: 'text-[hsl(var(--destructive))]',    bg: 'bg-red-50 dark:bg-red-900/20'    },
     high:   { label: 'Alta',    color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-    normal: { label: 'Normal',  color: 'text-blue-500',   bg: 'bg-blue-50 dark:bg-blue-900/20'  },
+    normal: { label: 'Normal',  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20'  },
     low:    { label: 'Baja',    color: 'text-slate-400',  bg: 'bg-slate-50 dark:bg-white/5'     },
 };
 
@@ -57,7 +57,7 @@ export function SortableTaskCard({ task, onOpen }: Props) {
             style={style}
             onClick={() => onOpen(task)}
             className={clsx(
-                'bg-white dark:bg-[#25262b] rounded-md shadow-sm border cursor-pointer',
+                'bg-[hsl(var(--bg-primary))] dark:bg-[#25262b] rounded-md shadow-sm border cursor-pointer',
                 'hover:shadow-md hover:border-blue-400/50 dark:hover:border-blue-500/40',
                 'transition-all duration-150 group/card relative overflow-hidden',
                 isDragging
@@ -92,7 +92,7 @@ export function SortableTaskCard({ task, onOpen }: Props) {
                             <span className={clsx(
                                 'flex items-center gap-1 text-[10px] font-bold rounded-full px-2 py-0.5',
                                 isOverdue
-                                    ? 'text-red-600 bg-red-50 dark:bg-red-900/30'
+                                    ? 'text-[hsl(var(--destructive))] bg-red-50 dark:bg-red-900/30'
                                     : isDueToday
                                     ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/30'
                                     : 'text-slate-500 bg-slate-100 dark:bg-white/8'

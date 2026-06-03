@@ -57,7 +57,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
             {/* Column Header */}
             <div className="flex items-center justify-between px-4 py-1.5 mb-2 group/header">
                 <div className="flex items-center gap-3">
-                    <div className={clsx("size-5 rounded-full flex items-center justify-center bg-white dark:bg-black/20 shadow-sm border border-slate-200 dark:border-white/10")}>
+                    <div className={clsx("size-5 rounded-full flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/20 shadow-sm border border-slate-200 dark:border-white/10")}>
                         <div className={clsx("size-1.5 rounded-full animate-pulse", stage.dot || stage.color)} />
                     </div>
                     <div className="flex flex-col">
@@ -73,11 +73,11 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                 <div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-all">
                     <button 
                         onClick={onNewLead}
-                        className="size-7 rounded-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:border-blue-500/30 hover:shadow-lg transition-all"
+                        className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:shadow-lg transition-all"
                     >
                         <UserPlus size={12} />
                     </button>
-                    <button className="size-7 rounded-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">
+                    <button className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">
                         <MoreHorizontal size={12} />
                     </button>
                 </div>
@@ -127,7 +127,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                                 ? "border-blue-500/50 bg-blue-500/5 scale-[0.98]" 
                                 : "border-slate-200 dark:border-white/5"
                         )}>
-                            <div className="p-4 rounded-lg bg-white dark:bg-white/5 shadow-sm border border-slate-100 dark:border-white/5">
+                            <div className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-sm border border-slate-100 dark:border-white/5">
                                 {stage.emptyIcon ? <stage.emptyIcon size={24} className="text-slate-300" /> : <UserPlus size={24} className="text-slate-300" />}
                             </div>
                             <div className="text-center">
@@ -137,7 +137,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                                 {!isOver && (
                                     <button 
                                         onClick={onNewLead}
-                                        className="mt-3 text-[10px] font-bold text-blue-500 hover:text-blue-600 underline"
+                                        className="mt-3 text-[10px] font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] underline"
                                     >
                                         Registrar uno ahora
                                     </button>
@@ -150,7 +150,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                 {/* Footer Add Button */}
                 <button
                     onClick={onNewLead}
-                    className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-400 hover:text-blue-500 hover:border-blue-500/30 hover:bg-white dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
+                    className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
                 >
                     <div className="size-5 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
                         <UserPlus size={10} />

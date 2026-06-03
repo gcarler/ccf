@@ -30,7 +30,7 @@ export default function FamilyNucleusPage() {
                     </p>
                 </div>
 
-                <button className="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 text-black text-xs font-semibold uppercase tracking-wide rounded-lg transition-all shadow-[0_0_20px_rgba(244,63,94,0.3)] flex items-center gap-2">
+                <button className="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 text-[hsl(var(--text-primary))] text-xs font-semibold uppercase tracking-wide rounded-lg transition-all shadow-[0_0_20px_rgba(244,63,94,0.3)] flex items-center gap-2">
                     <UserPlus size={16} /> Vincular Familiar
                 </button>
             </div>
@@ -57,7 +57,7 @@ export default function FamilyNucleusPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {[
-                                    { name: 'Ricardo Gomez', role: 'Padre / Cabeza', status: 'Activo', icon: Smile, color: 'text-blue-400' },
+                                    { name: 'Ricardo Gomez', role: 'Padre / Cabeza', status: 'Activo', icon: Smile, color: 'text-[hsl(var(--primary))]' },
                                     { name: 'Maria Sanchez', role: 'Madre', status: 'Activo', icon: Heart, color: 'text-rose-400' },
                                     { name: 'Samuel Gomez', role: 'Hijo', status: 'Estudiante', icon: Baby, color: 'text-amber-400' },
                                     { name: 'Lucia Gomez', role: 'Hija', status: 'Estudiante', icon: Star, color: 'text-sky-400' },
@@ -137,7 +137,7 @@ export default function FamilyNucleusPage() {
                                 { title: 'Escuela de Padres', date: 'Sábado 10:00' },
                             ].map((ev, i) => (
                                 <div key={i} className="flex items-center gap-4 group">
-                                    <div className="w-10 h-10 bg-white/5 rounded-md flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-black transition-all">
+                                    <div className="w-10 h-10 bg-white/5 rounded-md flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-[hsl(var(--text-primary))] transition-all">
                                         <Star size={16} />
                                     </div>
                                     <div>

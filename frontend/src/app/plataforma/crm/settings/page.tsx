@@ -165,7 +165,7 @@ export default function CrmSettingsPage() {
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-blue-600 px-4 py-1.5 rounded-lg text-[11px] font-bold tracking-wide text-white hover:bg-blue-700 transition-all uppercase shadow-xl shadow-blue-500/20 disabled:opacity-50 active:scale-95"
+                    className="flex items-center gap-2 bg-[hsl(var(--primary))] px-4 py-1.5 rounded-lg text-[11px] font-bold tracking-wide text-white hover:bg-[hsl(var(--primary))] transition-all uppercase shadow-xl shadow-blue-500/20 disabled:opacity-50 active:scale-95"
                 >
                     {isSaving ? <SpinnerIcon className="animate-spin" size={14} /> : <Save size={14} />}
                     {isSaving ? 'Sincronizando...' : 'Guardar Cambios'}
@@ -201,7 +201,7 @@ export default function CrmSettingsPage() {
                     <motion.div variants={itemVariants} initial="hidden" animate="show" className="lg:col-span-3">
                         <AnimatePresence mode="wait">
                             {activeSection === 'general' && (
-                                <motion.div key="general" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
+                                <motion.div key="general" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
                                     <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
                                         <h3 className="text-sm font-bold text-slate-800 dark:text-white">Parámetros de Identidad</h3>
                                         <p className="text-[12px] text-slate-500 font-medium">Define cómo se identifica tu ministerio en reportes y correos.</p>
@@ -223,7 +223,7 @@ export default function CrmSettingsPage() {
                             )}
 
                             {activeSection === 'integrations' && (
-                                <motion.div key="integrations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
+                                <motion.div key="integrations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
                                     <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
                                         <h3 className="text-sm font-bold text-slate-800 dark:text-white">Pasarelas de Conexión</h3>
                                         <p className="text-[12px] text-slate-500 font-medium">Habilita canales oficiales para mensajería y automatizaciones.</p>
@@ -236,7 +236,7 @@ export default function CrmSettingsPage() {
                                             active={config.enableWhatsApp} onToggle={(v: boolean) => setConfig({...config, enableWhatsApp: v})}
                                         />
                                         <ToggleSetting 
-                                            icon={Smartphone} color="text-blue-500 bg-blue-50 dark:bg-blue-500/10" title="Notificaciones SMS (Twilio)" 
+                                            icon={Smartphone} color="text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10" title="Notificaciones SMS (Twilio)" 
                                             desc="Para alertas urgentes cuando no hay internet."
                                             active={config.enableSMS} onToggle={(v: boolean) => setConfig({...config, enableSMS: v})}
                                         />
@@ -255,7 +255,7 @@ export default function CrmSettingsPage() {
 
                             {activeSection === 'security' && (
                                 <motion.div key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3">
-                                    <div className="bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm space-y-3">
+                                    <div className="bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm space-y-3">
                                         <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
                                             <h3 className="text-sm font-bold text-slate-800 dark:text-white">Políticas de Seguridad</h3>
                                             <p className="text-[12px] text-slate-500 font-medium">Controla la infraestructura y salvaguardia de datos.</p>
@@ -263,7 +263,7 @@ export default function CrmSettingsPage() {
 
                                         <div className="flex items-center justify-between p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
                                             <div className="flex items-start gap-4">
-                                                <Database size={18} className="text-blue-600 dark:text-blue-400 mt-0.5" />
+                                                <Database size={18} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] mt-0.5" />
                                                 <div>
                                                     <h4 className="text-xs font-bold text-slate-800 dark:text-white">Respaldo Automático Base de Datos</h4>
                                                     <p className="text-[12px] text-slate-500 mt-0.5">MESH encripta y guarda un backup cada 24h.</p>
@@ -289,7 +289,7 @@ export default function CrmSettingsPage() {
                             )}
 
                             {activeSection === 'notifications' && (
-                                <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
+                                <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
                                     <div className="flex flex-col items-center justify-center p-4 text-center text-slate-500">
                                         <Bell size={32} className="mb-4 opacity-50 text-slate-400" />
                                         <h4 className="text-xs font-bold mb-1 text-slate-700 dark:text-slate-300">Sin notificaciones configuradas</h4>
@@ -299,7 +299,7 @@ export default function CrmSettingsPage() {
                             )}
 
                             {activeSection === 'consolidation' && (
-                                <motion.div key="consolidation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
+                                <motion.div key="consolidation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
                                     <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
                                         <h3 className="text-sm font-bold text-slate-800 dark:text-white">Cargos de Consolidación</h3>
                                         <p className="text-[12px] text-slate-500 font-medium">Define los roles nativos que operan el seguimiento de personas.</p>
@@ -337,7 +337,7 @@ export default function CrmSettingsPage() {
                                                     type="checkbox"
                                                     checked={positionForm.is_active}
                                                     onChange={(e) => setPositionForm({ ...positionForm, is_active: e.target.checked })}
-                                                    className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                    className="size-4 rounded border-slate-300 text-[hsl(var(--primary))] focus:ring-blue-500"
                                                 />
                                                 Activo
                                             </label>
@@ -345,7 +345,7 @@ export default function CrmSettingsPage() {
                                                 type="button"
                                                 onClick={handleSavePosition}
                                                 disabled={isCreatingPosition || !positionForm.name.trim()}
-                                                className="inline-flex items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white hover:bg-blue-700 transition-all disabled:opacity-50"
+                                                className="inline-flex items-center justify-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-50"
                                             >
                                                 {isCreatingPosition ? <SpinnerIcon className="animate-spin" size={14} /> : <Plus size={14} />}
                                                 {editingPositionId ? 'Guardar cambios' : 'Crear cargo'}
@@ -363,7 +363,7 @@ export default function CrmSettingsPage() {
                                             {isLoadingPositions ? (
                                                 <div className="space-y-3">
                                                     {[...Array(3)].map((_, i) => (
-                                                        <div key={i} className="h-8 rounded-md bg-white dark:bg-black/20 border border-slate-100 dark:border-white/10 animate-pulse" />
+                                                        <div key={i} className="h-8 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-slate-100 dark:border-white/10 animate-pulse" />
                                                     ))}
                                                 </div>
                                             ) : positions.length === 0 ? (
@@ -373,7 +373,7 @@ export default function CrmSettingsPage() {
                                             ) : (
                                                 <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
                                                     {positions.map((position) => (
-                                                        <div key={position.id} className="flex items-start justify-between gap-4 rounded-md bg-white dark:bg-[#111317] border border-slate-100 dark:border-white/10 p-4">
+                                                        <div key={position.id} className="flex items-start justify-between gap-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#111317] border border-slate-100 dark:border-white/10 p-4">
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-2">
                                                                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{position.name}</p>
@@ -422,7 +422,7 @@ function SettingsNavButton({ active, onClick, icon: Icon, label }: any) {
             )}
         >
             <div className="flex items-center gap-3">
-                <Icon size={14} className={clsx("transition-colors", active ? "text-blue-600 dark:text-blue-400" : "text-slate-400 group-hover:text-slate-500")} />
+                <Icon size={14} className={clsx("transition-colors", active ? "text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" : "text-slate-400 group-hover:text-slate-500")} />
                 <span className="text-xs">{label}</span>
             </div>
         </button>
@@ -460,12 +460,12 @@ function ToggleSetting({ icon: Icon, color, title, desc, active, onToggle }: any
                 onClick={() => onToggle(!active)}
                 className={clsx(
                     "relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 outline-none",
-                    active ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-600"
+                    active ? "bg-[hsl(var(--primary))]" : "bg-slate-300 dark:bg-slate-600"
                 )}
             >
                 <motion.div 
                     animate={{ x: active ? 18 : 2 }}
-                    className="size-4 rounded-full bg-white shadow-sm"
+                    className="size-4 rounded-full bg-[hsl(var(--surface-1))] shadow-sm"
                 />
             </button>
         </div>

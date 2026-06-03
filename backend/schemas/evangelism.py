@@ -10,7 +10,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, computed_field
 
 from backend.schemas._common import orm_config
 
@@ -268,27 +268,33 @@ class RegistroSeguimientoResponse(BaseModel):
     responsable_id: Optional[str] = None
     created_at: datetime
 
-    # Back-compat: propiedades computadas para frontend legacy
+    # Back-compat: campos computados para frontend legacy (Pydantic v2 compatible)
+    @computed_field
     @property
     def completado(self) -> bool:
         return self.estado_completado
 
+    @computed_field
     @property
     def notas(self) -> Optional[str]:
         return self.observaciones
 
+    @computed_field
     @property
     def fecha_realizada(self) -> Optional[datetime]:
         return self.fecha_seguimiento
 
+    @computed_field
     @property
     def fecha_programada(self) -> Optional[datetime]:
         return self.fecha_seguimiento
 
+    @computed_field
     @property
     def realizado_por_persona_id(self) -> Optional[str]:
         return self.responsable_id
 
+    @computed_field
     @property
     def resultado(self) -> Optional[str]:
         return None  # columna no existe en modelo, retorna None

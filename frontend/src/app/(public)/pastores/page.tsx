@@ -40,7 +40,7 @@ export default function PastoresIndexPage() {
     return (
         <main className="pt-24 pb-4">
             <div className="max-w-7xl mx-auto px-3 md:px-6 lg:px-8 xl:px-12 mb-20 text-center relative z-10 py-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 text-xs font-semibold uppercase tracking-wide mb-3 border border-blue-200 dark:border-blue-500/20">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 text-xs font-semibold uppercase tracking-wide mb-3 border border-blue-200 dark:border-blue-500/20">
                     <Heart size={14} /> Conoce a nuestro equipo
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">
@@ -55,7 +55,7 @@ export default function PastoresIndexPage() {
                         <Link
                             href={`/pastores/${pastor.id}`}
                             key={pastor.id}
-                            className="group relative bg-white dark:bg-[#13161c] rounded-lg overflow-hidden border border-slate-200 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-2 transition-all duration-500 flex flex-col"
+                            className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#13161c] rounded-lg overflow-hidden border border-slate-200 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-2 transition-all duration-500 flex flex-col"
                             style={{ animationDelay: `${idx * 100}ms` }}
                         >
                             <div className="relative h-48 w-full bg-slate-100 dark:bg-black overflow-hidden">
@@ -78,7 +78,7 @@ export default function PastoresIndexPage() {
                                     {pastor.shortStory}
                                 </p>
 
-                                <div className="flex items-center justify-between text-blue-600 dark:text-blue-400 font-bold text-sm group-hover:text-indigo-600 transition-colors">
+                                <div className="flex items-center justify-between text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-sm group-hover:text-indigo-600 transition-colors">
                                     <span>Leer testimonio</span>
                                     <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20 transition-colors">
                                         <ChevronRight size={16} />

@@ -46,7 +46,7 @@ export default function AdminTreasuryPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <StatCard label="Saldo Total" value={`$${totalBalance.toLocaleString()}`} icon={TrendingUp} color="text-primary" bg="bg-primary/10" />
                 <StatCard label="Fondos Activos" value={funds.length} icon={PieChart} color="text-emerald-500" bg="bg-emerald-500/10" />
-                <StatCard label="Transacciones" value={transactions.length} icon={Calendar} color="text-blue-500" bg="bg-blue-500/10" />
+                <StatCard label="Transacciones" value={transactions.length} icon={Calendar} color="text-[hsl(var(--primary))]" bg="bg-blue-500/10" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">

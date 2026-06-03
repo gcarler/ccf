@@ -276,7 +276,7 @@ class ProjectCommentUpdate(BaseModel):
 class ProjectCommentItem(ProjectCommentBase):
     id: int
     project_id: UUIDStr
-    author_id: UUIDStr
+    author_id: Optional[UUIDStr] = None
     author_name: str
     is_resolved: bool = False
     created_at: datetime

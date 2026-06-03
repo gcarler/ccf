@@ -130,7 +130,7 @@ class ProjectComment(Base):
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="SET NULL"), nullable=True)
-    author_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     content = Column(Text, nullable=False)
     is_resolved = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
@@ -147,6 +147,7 @@ class ProjectPhase(Base):
     slug = Column(String(20), nullable=False)
     color = Column(String(20), default="#94a3b8")
     order_index = Column(Integer, default=0)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     project = relationship(
         "Project",

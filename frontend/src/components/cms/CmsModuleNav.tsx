@@ -51,7 +51,7 @@ export function CmsModuleNav() {
     }) ?? availableTabs[0];
 
   return (
-    <nav className="shrink-0 border-b border-slate-100 bg-white dark:border-white/[0.05] dark:bg-[#141517]">
+    <nav className="shrink-0 border-b border-slate-100 bg-[hsl(var(--bg-primary))] dark:border-white/[0.05] dark:bg-[#141517]">
       <div className="flex items-center gap-1.5 px-4 pt-2.5">
         <Globe size={8} className="text-slate-400" />
         <span className="text-[11px] text-slate-400">Sitio web</span>
@@ -74,7 +74,7 @@ export function CmsModuleNav() {
                 className={clsx(
                   "flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[12px] font-medium transition-colors whitespace-nowrap",
                   isActive
-                    ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                    ? "border-blue-500 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"
                     : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100",
                 )}
               >

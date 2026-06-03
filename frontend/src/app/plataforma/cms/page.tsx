@@ -286,7 +286,7 @@ export default function CmsHomePage() {
           {metricCards.map((metric) => {
             const Icon = metric.icon;
             return (
-              <div key={metric.label} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+              <div key={metric.label} className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[#111418]">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{metric.label}</p>
                   <Icon size={15} className="text-slate-400" />
@@ -300,7 +300,7 @@ export default function CmsHomePage() {
         </section>
 
         <section className="grid grid-cols-1 gap-3 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Control de calidad</p>
@@ -346,13 +346,13 @@ export default function CmsHomePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Acceso</p>
                 <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">Rol editorial</h2>
               </div>
-              <ShieldCheck className="h-5 w-5 text-blue-600" />
+              <ShieldCheck className="h-5 w-5 text-[hsl(var(--primary))]" />
             </div>
             <p className="mt-3 text-sm leading-relaxed text-slate-500">
               {canManage
@@ -366,7 +366,7 @@ export default function CmsHomePage() {
               {quickLinks.map(({ label, href, description, icon: Icon }) => (
                 <Link key={href} href={href} className="rounded-lg border border-slate-200 p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50">
                   <div className="flex items-center gap-2">
-                    <Icon size={15} className="text-blue-600" />
+                    <Icon size={15} className="text-[hsl(var(--primary))]" />
                     <p className="text-sm font-bold text-slate-900 dark:text-white">{label}</p>
                   </div>
                   <p className="mt-1 text-xs text-slate-500">{description}</p>
@@ -382,14 +382,14 @@ export default function CmsHomePage() {
         </section>
 
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Testimonios recientes</h2>
                 <p className="mt-1 text-sm text-slate-500">Ultimas historias recibidas para revision y publicacion.</p>
               </div>
               {canEdit && (
-                <Link href="/cms/testimonials" className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 hover:border-blue-300 hover:text-blue-600 dark:border-white/10 dark:text-slate-300">
+                <Link href="/cms/testimonials" className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-slate-300">
                   Ver todo
                 </Link>
               )}
@@ -406,7 +406,7 @@ export default function CmsHomePage() {
                 recentTestimonials.map((testimony) => (
                   <div key={testimony.id} className="rounded-lg border border-slate-200 p-4 dark:border-white/10">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-bold uppercase tracking-wide text-blue-600">{testimony.emotion || "Sin categoria"}</p>
+                      <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{testimony.emotion || "Sin categoria"}</p>
                       <span className={testimony.is_approved ? "rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}>
                         {testimony.is_approved ? "Aprobado" : "Pendiente"}
                       </span>
@@ -419,7 +419,7 @@ export default function CmsHomePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Ruta de gestion</h2>
@@ -439,7 +439,7 @@ export default function CmsHomePage() {
                   href={step.href}
                   className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-xs font-semibold text-white dark:bg-white dark:text-slate-900">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-xs font-semibold text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900">
                     {index + 1}
                   </span>
                   <span>

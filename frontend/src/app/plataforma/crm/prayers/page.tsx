@@ -32,7 +32,7 @@ import CrmShell from '@/components/crm/CrmShell';
 const PRAYER_STATUS_OPTIONS: StatusOption[] = [
     { label: 'ACTIVA', value: 'active', color: 'bg-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' },
     { label: 'CONTESTADA', value: 'answered', color: 'bg-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'EN PROCESO', value: 'praying', color: 'bg-blue-500', text: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'EN PROCESO', value: 'praying', color: 'bg-[hsl(var(--primary))]', text: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50' },
 ];
 
 const CATEGORIES = ['Salud', 'Familia', 'Trabajo', 'Espiritual', 'Finanzas', 'Otra'];
@@ -248,7 +248,7 @@ export default function PrayerSupportCenter() {
                     </div>
                 </section>
 
-                <div className="flex-1 flex flex-col bg-white dark:bg-black/20 rounded-t-lg border-t border-slate-100 dark:border-white/5 overflow-hidden">
+                <div className="flex-1 flex flex-col bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-t-lg border-t border-slate-100 dark:border-white/5 overflow-hidden">
                     <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                         <h3 className="text-[12px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
                             <div className="size-2 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]" />
@@ -270,7 +270,7 @@ export default function PrayerSupportCenter() {
                     ) : viewType === 'list' || viewType === 'grid' ? (
                         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                             {filtered.map(req => (
-                                <button key={req.id} onClick={() => handleOpenRequest(req)} className="text-left rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 hover:border-rose-300 dark:hover:border-rose-700 transition-all">
+                                <button key={req.id} onClick={() => handleOpenRequest(req)} className="text-left rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 hover:border-rose-300 dark:hover:border-rose-700 transition-all">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{req.name}</p>
@@ -293,7 +293,7 @@ export default function PrayerSupportCenter() {
                                     </div>
                                     <div className="space-y-2">
                                         {col.items.map(req => (
-                                            <button key={req.id} onClick={() => handleOpenRequest(req)} className="w-full text-left rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                                            <button key={req.id} onClick={() => handleOpenRequest(req)} className="w-full text-left rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3">
                                                 <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{req.name}</p>
                                                 <p className="text-[10px] text-slate-400 line-clamp-2">{req.request}</p>
                                             </button>
@@ -307,7 +307,7 @@ export default function PrayerSupportCenter() {
                             {groupedByDate.length === 0 ? (
                                 <div className="py-2 text-center text-slate-400 text-sm">Sin actividad</div>
                             ) : groupedByDate.map(([key, payload]) => (
-                                <div key={key} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                <div key={key} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                     <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{payload.label}</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {payload.items.map(req => (
@@ -322,7 +322,7 @@ export default function PrayerSupportCenter() {
                         </div>
                     ) : viewType === 'gantt' ? (
                         <div className="p-4">
-                            <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                            <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Avance de intercesión</p>
                                 {filtered.map(req => (
                                     <div key={req.id} className="space-y-1">
@@ -339,7 +339,7 @@ export default function PrayerSupportCenter() {
                         </div>
                     ) : viewType === 'wiki' ? (
                         <div className="p-4">
-                            <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                            <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Wiki de intercesión</p>
                                 <textarea
                                     value={wikiNotes}
@@ -382,19 +382,19 @@ export default function PrayerSupportCenter() {
                     </section>
 
                     <section className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-1">Impacto</p>
                             <p className="text-sm font-bold text-slate-800 dark:text-white uppercase">{selectedRequest?.is_urgent ? 'ALTA PRIORIDAD' : 'Normal'}</p>
                         </div>
-                        <div className="p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-1">Recibido</p>
                             <p className="text-sm font-bold text-slate-800 dark:text-white uppercase">{selectedRequest?.time}</p>
                         </div>
-                        <div className="p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-1">Estado</p>
                             <p className="text-sm font-bold text-slate-800 dark:text-white uppercase">{selectedRequest?.status}</p>
                         </div>
-                        <div className="p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-1">Categoría</p>
                             <p className="text-sm font-bold text-slate-800 dark:text-white uppercase">{selectedRequest?.category}</p>
                         </div>

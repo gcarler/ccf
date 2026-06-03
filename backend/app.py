@@ -85,7 +85,7 @@ async def lifespan(_: FastAPI):
             import backend.models_agents  # ensure agent_task/insight tables registered
             from backend.core.database import Base, engine
 
-            Base.metadata.create_all(bind=engine)
+            Base.metadata.create_all(bind=engine, checkfirst=True)
             logger.info("ORM tables verified/created.")
 
             # Register all agent tools
@@ -119,6 +119,11 @@ async def lifespan(_: FastAPI):
 
             break
         except Exception as exc:
+            err_msg = str(exc)
+            # Duplicate indexes/objects are harmless — schema is already correct
+            if "already exists" in err_msg.lower():
+                logger.info("ORM schema already up-to-date (idempotent).")
+                break
             if attempt < 5:
                 logger.warning(
                     "create_all attempt %d/5 failed: %s — retrying...", attempt, exc

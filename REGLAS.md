@@ -482,5 +482,128 @@ Antes de cada commit o PR, verificar CADA UNO de estos puntos:
 
 ---
 
+## 🔄 Migraciones Realizadas v3.0 (2026-06-02) — Plan de Batalla CCF COMPLETADO
+
+### ✅ Seguridad Crítica (Fase 0)
+- **8 hard deletes eliminados** → soft deletes en endpoints transaccionales:
+  - `api/crm/pastoral.py`: `delete_crm_task()`, `delete_crm_role()`, `delete_volunteer()`
+  - `api/evangelism_events.py`: `sync_event_assignments()`
+  - `api/evangelism_grupos.py`: `submit_attendance()`
+  - `crud/projects.py`: `set_project_phases()`
+  - `crud/crm.py`: `update_cell_group()` (2 deletes)
+  - `api/auth.py`: `delete_ministerial_user()`
+- **Filtrado `sede_id`** agregado a `chat.py`, `graph.py`, `agents.py`
+- **`build_graph_snapshot()`** actualizado con `sede_id` en 6 resolvers de nodos
+
+### ✅ Base de Datos (Fase 1)
+- **5 migraciones Alembic** creadas y encadenadas (`alembic/versions/20260602_*`):
+  1. **`add_missing_idx`**: 12 índices B-Tree en FKs sin índice (academy, tareas, documentos)
+  2. **`add_soft_delete`**: `deleted_at` + partial index `ix_*_active` en 12 tablas críticas
+  3. **`add_sede_id`**: `sede_id UUID REFERENCES sedes(id)` en 5 tablas operativas
+  4. **`rename_legacy`**: Renombrado condicional de tablas legacy (solo si vacías o post-migración)
+  5. **`add_gist`**: Constraint `EXCLUDE USING gist` para doble-booking en `agenda_reserva_recursos`
+- Todas las migraciones son **idempotentes** con helpers `_col_exists`, `_index_exists`, `_table_exists`, `_constraint_exists`
+
+### ✅ Backend Performance (Fase 2)
+- **`selectinload()`** agregado a CRUDs principales:
+  - `crud/academy.py`: `get_courses()` → `lessons`, `enrollments`; `get_enrollments()` → `persona`
+  - `crud/crm.py`: `get_personas()`, `get_personas_list()`, `get_personas_paginated()` → `family`, `positions`
+  - `crud/projects.py`: `get_projects()`, `get_portfolio_summary()` → `owner`, `tasks`
+- **Preservado** filtrado `sede_id` existente en todas las queries
+
+### ✅ Frontend Modernización (Fase 3)
+- **4 Modales convertidos a Drawers**:
+  - `UniversalCreationModal` → `UniversalCreationDrawer`
+  - `AssessmentModal` → `AssessmentDrawer`
+  - `CertificateModal` → `CertificateDrawer`
+  - `PhaseManagerModal` → `PhaseManagerDrawer`
+- **Colores hardcodeados** migrados a tokens semánticos HSL (`primary`, `secondary`, `accent`, `destructive`, `text-primary`, `text-secondary`, `bg-primary`, `bg-secondary`, `bg-muted`, `border-primary`)
+- **Delay artificial eliminado** en `members/[id]/page.tsx` + `AbortController` agregado para cancelación de requests
+- **`apiFetch()`** actualizado con soporte `signal: AbortSignal`
+
+### ✅ Tests y Estabilidad (Fase 4)
+- **~78 tests convertidos de ERROR → PASSED/FUNCTIONAL** (migraciones corregidas)
+- **Tests auth_v3**: 9/11 pasan (antes 0/13 ejecutables)
+- **`app.py`** robustecido: `Base.metadata.create_all()` maneja `DuplicateTable` gracefully
+- **Correcciones de migraciones**:
+  - `CREATE INDEX CONCURRENTLY` → `CREATE INDEX` (compatible con transacciones)
+  - IDs de revisión truncados a ≤32 chars (`varchar(32)` de Alembic)
+  - `tsrange` → `tstzrange` (timestamptz compatible)
+  - `btree_gist` extension verificada antes de constraint GIST
+- **~78 tests rescatados** de ERROR → PASSED/FUNCTIONAL (migraciones corregidas)
+- **Tests auth_v3**: 9/11 pasan (antes 0/13 ejecutables)
+- **Agent-7 fix**: 16 tests pre-existentes arreglados:
+  - CRM Counseling: `pastor_id` UUID → integer fallback
+  - Faro attendance: imports faltantes `SesionGrupo`, `GrupoEvangelismo`, `Asistencia`
+  - CRM Domain: string UUID → `uuid.UUID()` en `get_persona`, `update_persona`, `delete_persona`
+  - Governance: columna `actor_user_id` agregada a `AdminAuditLog`
+  - Projects: `deleted_at` agregado a `ProjectPhase`; `_to_uuid(task_id)` en attachments
+- **Agent-8**: 43 tests nuevos para 8 APIs sin cobertura (25 passed, 18 xfail documentando bugs)
+- **Resultado final suite completa**: **216 passed, 0 failed, 1 skipped, 18 xfailed** (antes: 77 passed, 36 failed, 110 errors)
+- Archivos modificados por fixes: `backend/api/evangelism_grupos.py`, `backend/crud/crm.py`, `backend/crud/audit.py`, `backend/core/audit.py`, `backend/models_governance.py`, `backend/models_projects.py`, `backend/api/projects.py`
+
+### ✅ Datos Legacy→v2 (Agent-9)
+- **Script de migración** creado: `scripts/migrate_legacy_to_v2.py` (579 líneas)
+  - Migra 9 tablas: `projects`, `courses`, `enrollments`, `users`, `roles`, `consolidation_cases`, `cell_groups`, `cell_group_sessions`, `agenda_events`
+  - Idempotente con `legacy_id_mapping` (UUID PK, tabla auxiliar)
+  - Modo `--dry-run` para previsualizar sin escribir
+  - Manejo de errores por registro (continúa ante fallos individuales)
+  - Reporte final con totales/migrados/fallidos por tabla
+  - Adaptaciones reales: `crm_celulas`/`crm_sesiones` → `grupos_evangelismo`/`sesiones_grupo`
+  - `users`→`auth_users` respeta FK `personas.id` vinculada
+- **README** creado: `scripts/README_MIGRACION.md` (162 líneas)
+
+### ✅ Frontend Completado (Agent-10)
+- **Tokens CSS semánticos** agregados a `globals.css`: `--destructive`, `--secondary`, `--bg-muted`, `--border-primary`
+- **2,805 colores hardcodeados** reemplazados en **275 archivos** según tabla de mapeo:
+  - `text-gray-*` → `text-[hsl(var(--text-primary/text-secondary))]`
+  - `bg-gray-*` / `bg-white` → `bg-[hsl(var(--bg-primary/bg-muted))]`
+  - `text-blue-*` / `bg-blue-*` → `[hsl(var(--primary))]`
+  - `text-red-*` / `bg-red-*` → `[hsl(var(--destructive))]`
+  - `text-green-*` / `bg-green-*` → `[hsl(var(--secondary))]`
+  - `border-gray-*` → `border-[hsl(var(--border-primary))]`
+- **Build exitoso**: `npm run build` sin errores de compilación
+- **38 errores TypeScript pre-existentes** (no introducidos por cambios)
+
+### ✅ Flujo Hilaridad — Evangelismo → CRM (Agent-11)
+- **Motor de Proyección Temporal** (`backend/services/evangelism_projection.py`)
+  - Genera `N` sesiones `PENDIENTE` automáticamente desde EstrategiaEvangelismo (fecha_inicio + fecha_fin + frecuencia)
+  - Soporta: Semanal, Quincenal, Mensual, Bimensual, Trimestral, Semestral, Anual
+- **Bridge Automático** (`backend/services/evangelism_crm_bridge.py`)
+  - Trigger reactivo: después de insertar `Asistencia` con `es_primera_vez=True` o `requiere_seguimiento=True`
+  - Crea `CasoCRM` en pipeline `NUEVOS_VISITANTES` con SLA 48h
+  - Sella origen: `origen_estrategia_id`, `origen_grupo_id`, `origen_fecha`
+  - Inyecta tags dinámicos: `["VISITANTE_ESTRATEGIA_X", "GRUPO_Y", "SESION_Z"]`
+  - Setea `spiritual_status = "VISITANTE_EVANGELISMO"`
+  - Respuesta JSON unificada con `evento_integracion` + `metadata`
+- **Endpoint modificado** (`backend/api/evangelism_grupos.py`)
+  - `submit_attendance()` invoca el bridge automáticamente
+  - Registro de visitante crea persona en Kernel + marca `origen_*`
+- **Seed pipeline** (`backend/crud/crm_core.py`)
+  - `seed_pipeline_nuevos_visitantes(db, sede_id)` idempotente
+- **Tests** (`tests/test_evangelism_crm_bridge.py` — 8 tests pasan)
+- **Resultado suite**: **224 passed** (antes 216)
+
+### ✅ Arquitectura y CI/CD (Fase 5)
+- **Pipeline GitHub Actions** creada (`.github/workflows/ci.yml`):
+  - Quality gate backend: Ruff, Bandit, mypy, pytest con coverage ≥70%
+  - Quality gate frontend: ESLint, TypeScript, build
+  - Verificación de migraciones: upgrade/downgrade/upgrade
+  - Deploy condicional a staging (develop) y producción (main)
+- **Pre-commit hooks** configurados (`.pre-commit-config.yaml`):
+  - Trailing whitespace, EOF, YAML/JSON validation
+  - Ruff lint + format
+  - Bandit security scan
+  - pytest smoke tests + reglas tests
+- **Runbook de Producción** creado (`docs/RUNBOOK_PRODUCCION.md`)
+  - Arquitectura del sistema, procedimiento de deploy blue-green
+  - Rollback (rápido y completo), monitoreo, alertas
+  - Escalamiento P1-P4, procedimientos de emergencia
+  - Mantenimiento programado (diario/semanal/mensual/trimestral)
+- **Análisis Hilaridad** documentado (`analytics/ANALISIS_HILARIDAD_CCF_v1.md`)
+  - 506 líneas de análisis punto-a-punto (BD → Backend → Frontend → Tests)
+
+---
+
 > **"El código que escribes hoy es la plataforma que administrarás mañana. Cada atajo que tomas ahora es una deuda que pagarás con intereses en producción."**
 > — Arquitectura CCF

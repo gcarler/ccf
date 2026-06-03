@@ -20,10 +20,10 @@ function SortableMemberCard({ member, onClick }: MemberCardProps) {
         <div
             ref={setNodeRef} style={style} {...attributes} {...listeners}
             onClick={() => onClick(member)}
-            className="p-4 bg-white dark:bg-[#1e1f21] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-grab active:cursor-grabbing group"
+            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-grab active:cursor-grabbing group"
         >
             <div className="flex items-start gap-3">
-                <div className="size-8 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">
+                <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">
                     {member.name.substring(0, 1)}
                 </div>
                 <div className="flex-1 min-w-0">

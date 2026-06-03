@@ -26,7 +26,7 @@ interface UniversalGanttViewProps {
 }
 
 const COLORS = {
-    blue: 'bg-blue-500 shadow-blue-500/20',
+    blue: 'bg-[hsl(var(--primary))] shadow-blue-500/20',
     purple: 'bg-sky-500 shadow-sky-500/20',
     emerald: 'bg-emerald-500 shadow-emerald-500/20',
     amber: 'bg-amber-500 shadow-amber-500/20',
@@ -71,12 +71,12 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0b0d11] rounded-lg border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] rounded-lg border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
             
             {/* ─── Header de Controles ─── */}
             <div className="px-3 py-1.5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-white dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/10 p-1 shadow-sm">
+                    <div className="flex bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/10 p-1 shadow-sm">
                         <button 
                             onClick={() => setZoom('day')}
                             className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'day' ? "bg-slate-900 text-white dark:bg-white/10" : "text-slate-400 hover:text-slate-600")}
@@ -92,19 +92,19 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                     </div>
                     <div className="h-6 w-px bg-slate-200 dark:bg-white/10" />
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-2">
-                        <Layout size={14} className="text-blue-500" /> {moduleName}
+                        <Layout size={14} className="text-[hsl(var(--primary))]" /> {moduleName}
                     </p>
                 </div>
 
                 <div className="flex items-center gap-2">
                     <div className="flex gap-1.5 mr-4">
-                        <button onClick={() => scroll('left')} className="p-2.5 rounded-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-blue-600 transition-all shadow-sm"><ChevronLeft size={16} /></button>
-                        <button onClick={() => scroll('right')} className="p-2.5 rounded-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-blue-600 transition-all shadow-sm"><ChevronRight size={16} /></button>
+                        <button onClick={() => scroll('left')} className="p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={16} /></button>
+                        <button onClick={() => scroll('right')} className="p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={16} /></button>
                     </div>
                     {onOptimize && (
                         <button
                             onClick={onOptimize}
-                            className="px-3 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide flex items-center gap-2 shadow-xl shadow-blue-500/10 hover:scale-105 transition-all"
+                            className="px-3 py-2.5 bg-slate-900 dark:bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide flex items-center gap-2 shadow-xl shadow-blue-500/10 hover:scale-105 transition-all"
                         >
                             <Zap size={14} /> Optimus Brain
                         </button>
@@ -121,11 +121,11 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                 >
                     <div className="min-w-max h-full flex flex-col">
                         {/* Days scale */}
-                        <div className="flex border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0b0d11] sticky top-0 z-20">
+                        <div className="flex border-b border-slate-100 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] sticky top-0 z-20">
                             {days.map((day, i) => (
                                 <div key={i} className={clsx(
                                     "w-[160px] p-3 flex flex-col gap-1 border-r border-slate-100 dark:border-white/5",
-                                    day.toDateString() === today.toDateString() ? "bg-blue-50/50 dark:bg-blue-500/5 text-blue-600" : "text-slate-500"
+                                    day.toDateString() === today.toDateString() ? "bg-blue-50/50 dark:bg-blue-500/5 text-[hsl(var(--primary))]" : "text-slate-500"
                                 )}>
                                     <span className="text-[10px] font-semibold uppercase tracking-tighter opacity-60">
                                         {day.toLocaleDateString('es-ES', { weekday: 'long' })}
@@ -184,7 +184,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                                                         <div className="flex items-center gap-3 text-white/90">
                                                             <span className="font-semibold">{item.progress}%</span>
                                                             <div className="size-6 rounded-full border-2 border-white/20 flex items-center justify-center">
-                                                                <div className="size-1.5 rounded-full bg-white animate-pulse" />
+                                                                <div className="size-1.5 rounded-full bg-[hsl(var(--bg-primary))] animate-pulse" />
                                                             </div>
                                                         </div>
                                                     )}
@@ -203,7 +203,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
             <div className="px-4 py-1.5 border-t border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] flex items-center justify-between">
                 <div className="flex gap-3">
                     <div className="flex items-center gap-2">
-                        <div className="size-2 rounded-full bg-blue-500" />
+                        <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
                         <span className="font-semibold text-slate-400 uppercase tracking-wide">En Curso</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -215,7 +215,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                         <span className="font-semibold text-emerald-500 uppercase tracking-wide">Ejecución Exitosa</span>
                     </div>
                 </div>
-                <button className="flex items-center gap-2 font-semibold text-slate-400 uppercase tracking-wide hover:text-blue-600 transition-colors">
+                <button className="flex items-center gap-2 font-semibold text-slate-400 uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-colors">
                     <Info size={14} /> Protocolo de Visualización
                 </button>
             </div>

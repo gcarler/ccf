@@ -41,7 +41,7 @@ export default function StudentGrades() {
             <section className="relative overflow-hidden rounded-lg bg-primary p-4 text-white shadow-2xl shadow-primary/30 border border-white/10">
                 <div className="relative flex flex-wrap gap-4 justify-between items-center">
                     <div>
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-white px-3 py-1.5 rounded-lg shadow-sm">
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-[hsl(var(--bg-primary))] px-3 py-1.5 rounded-lg shadow-sm">
                             Resumen del {new Date().getFullYear()}
                         </span>
                         <h2 className="text-xl font-bold tracking-tight leading-none mt-3">Progreso Academico</h2>
@@ -56,7 +56,7 @@ export default function StudentGrades() {
                 </div>
             </section>
 
-            <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] shadow-xl p-4 space-y-3">
+            <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl p-4 space-y-3">
                 {loading ? (
                     <div className="px-4 py-1.5 text-center text-slate-400 text-sm font-semibold uppercase tracking-wide">
                         Cargando materias...

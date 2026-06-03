@@ -50,7 +50,7 @@ export default function StudentCurriculum() {
                 primaryAction={{ label: 'Editar plan', icon: LinkIcon, onClick: () => router.push('/plataforma/academy/coordination') }}
                 secondaryAction={{ label: 'Ver cronograma', icon: Calendar, onClick: () => router.push('/plataforma/academy/schedule') }}
             />
-            <div className="rounded-md border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden">
+            <div className="rounded-md border border-slate-200 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl overflow-hidden">
                 <div className="flex overflow-x-auto hide-scrollbar gap-3 p-4 border-b border-slate-100 dark:border-white/5">
                     {filters.map((filter) => (
                         <CommunityToolbarChip
@@ -109,7 +109,7 @@ export default function StudentCurriculum() {
                                     </h3>
                                     <p className="text-xs text-slate-500 font-medium">{enrollment.course.modality === 'formal' ? 'Programa formal' : 'Taller no formal'}</p>
                                 </div>
-                                <div className="w-20 h-20 rounded-lg border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center bg-white dark:bg-black/20">
+                                <div className="w-20 h-20 rounded-lg border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/20">
                                     <p className="text-slate-900 dark:text-white text-sm font-semibold">{Math.round(enrollment.progress_percent)}%</p>
                                     <p className="text-[9px] text-slate-500 uppercase tracking-wide">Progreso</p>
                                 </div>
@@ -129,8 +129,8 @@ export default function StudentCurriculum() {
 
 function SummaryCard({ label, value, tone }: { label: string; value: string | number; tone: 'blue' | 'violet' | 'emerald' }) {
     const colors: Record<'blue' | 'violet' | 'emerald', string> = {
-        blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10',
-        violet: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10',
+        blue: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10',
+        violet: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10',
         emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10',
     };
     return (

@@ -133,7 +133,7 @@ export default function ConsolidationPipelinePage() {
                 const initials = `${initial1}${initial2}`.toUpperCase();
                 return (
                     <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20 shrink-0">
+                        <div className="size-9 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20 shrink-0">
                             {initials}
                         </div>
                         <div>
@@ -187,7 +187,7 @@ export default function ConsolidationPipelinePage() {
             cell: ({ row }) => (
                 <button
                     onClick={(e) => { e.stopPropagation(); handleLeadSelect(row.original); }}
-                    className="p-1.5 rounded-lg text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all"
+                    className="p-1.5 rounded-lg text-slate-300 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all"
                 >
                     <ArrowRight size={14} />
                 </button>
@@ -333,17 +333,17 @@ export default function ConsolidationPipelinePage() {
                                                 <div
                                                     key={lead.id}
                                                     onClick={() => handleLeadSelect(lead)}
-                                                    className="p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer group"
+                                                    className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-3 mb-3">
-                                                        <div className="size-8 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20">
+                                                        <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20">
                                                             {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? '' /* LEGACY: removed first_name fallback */}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? '' /* LEGACY: removed last_name fallback */}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <p className="font-bold text-slate-800 dark:text-white text-sm truncate">{lead.nombre_completo || ''}</p>
                                                             <p className="text-[10px] text-slate-400">{lead.telefono ?? lead.phone}</p>
                                                         </div>
-                                                        <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 transition-all" />
+                                                        <ChevronRight size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-all" />
                                                     </div>
                                                     <div className="flex items-center justify-between">
                                                         {stage ? (
@@ -365,7 +365,7 @@ export default function ConsolidationPipelinePage() {
                                     {groupedByDate.length === 0 ? (
                                         <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-3 text-center text-slate-400">Sin actividad de pipeline</div>
                                     ) : groupedByDate.map(([key, payload]) => (
-                                        <div key={key} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                        <div key={key} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                             <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{payload.label}</p>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 {payload.items.map((lead: any) => (
@@ -380,7 +380,7 @@ export default function ConsolidationPipelinePage() {
                                 </motion.div>
                             ) : viewType === 'gantt' ? (
                                 <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto">
-                                    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                                    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Evolucion de prospectos</p>
                                         {filteredLeads.map((lead: any) => (
                                             <div key={lead.id} className="space-y-1">
@@ -389,7 +389,7 @@ export default function ConsolidationPipelinePage() {
                                                     <span className="font-bold text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
                                                 </div>
                                                 <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
-                                                    <div className="h-full bg-blue-600" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
+                                                    <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
                                                 </div>
                                             </div>
                                         ))}
@@ -402,14 +402,14 @@ export default function ConsolidationPipelinePage() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3 italic uppercase">
-                                                <FileText className="text-blue-600" size={28} />
+                                                <FileText className="text-[hsl(var(--primary))]" size={28} />
                                                 Manual de Consolidación
                                             </h2>
                                             <p className="text-slate-500 font-medium text-sm mt-1">Playbooks pastorales y acuerdos de nivel de servicio (SLA)</p>
                                         </div>
                                         <div className="px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-700/30 flex items-center gap-2">
-                                            <Sparkles size={16} className="text-blue-600" />
-                                            <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Guía de Consolidación IA</span>
+                                            <Sparkles size={16} className="text-[hsl(var(--primary))]" />
+                                            <span className="text-[10px] font-bold text-[hsl(var(--primary))] dark:text-blue-300 uppercase tracking-wide">Guía de Consolidación IA</span>
                                         </div>
                                     </div>
 
@@ -418,10 +418,10 @@ export default function ConsolidationPipelinePage() {
                                         <div className="lg:col-span-2 space-y-3">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {[
-                                                    { title: 'Primer Encuentro', icon: Users, desc: 'Contactar en menos de 24h. Usar tono cálido y empático.', color: 'text-blue-500 bg-blue-50' },
+                                                    { title: 'Primer Encuentro', icon: Users, desc: 'Contactar en menos de 24h. Usar tono cálido y empático.', color: 'text-[hsl(var(--primary))] bg-blue-50' },
                                                     { title: 'Cierre de Etapa', icon: Target, desc: 'Validar disposición al bautismo o membresía activa.', color: 'text-emerald-500 bg-emerald-50' }
                                                 ].map((card, i) => (
-                                                    <div key={i} className="p-4 rounded-md bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all group">
+                                                    <div key={i} className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all group">
                                                         <div className={clsx("size-8 rounded-md flex items-center justify-center mb-4 transition-transform group-hover:scale-110", card.color.split(' ')[1])}>
                                                             <card.icon className={card.color.split(' ')[0]} size={20} />
                                                         </div>
@@ -433,7 +433,7 @@ export default function ConsolidationPipelinePage() {
 
                                             {/* Notes Area with Premium Styling */}
                                             <div className="p-1 rounded-md bg-gradient-to-br from-blue-500/10 via-transparent to-indigo-500/10">
-                                                <div className="p-4 rounded-lg bg-white dark:bg-[#1e1f21] border border-white/20 shadow-2xl space-y-4">
+                                                <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-white/20 shadow-2xl space-y-4">
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block pl-1">Notas Dinámicas de Proceso</label>
                                                     <textarea
                                                         value={wikiNotes}
@@ -451,7 +451,7 @@ export default function ConsolidationPipelinePage() {
                                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                                     <Clock size={80} />
                                                 </div>
-                                                <h4 className="font-bold text-[10px] tracking-wide uppercase text-blue-400 mb-4 relative z-10">Tiempos de Respuesta (SLA)</h4>
+                                                <h4 className="font-bold text-[10px] tracking-wide uppercase text-[hsl(var(--primary))] mb-4 relative z-10">Tiempos de Respuesta (SLA)</h4>
                                                 <div className="space-y-4 relative z-10">
                                                     {[
                                                         { label: 'Nuevo → Llamado', time: '24 Horas', progress: 100 },
@@ -464,18 +464,18 @@ export default function ConsolidationPipelinePage() {
                                                                 <span>{item.time}</span>
                                                             </div>
                                                             <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                                                                <div className="h-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" style={{ width: `${item.progress}%` }} />
+                                                                <div className="h-full bg-[hsl(var(--primary))] shadow-[0_0_8px_rgba(59,130,246,0.5)]" style={{ width: `${item.progress}%` }} />
                                                             </div>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
 
-                                            <div className="p-4 rounded-md bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10">
+                                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/10">
                                                 <h4 className="font-bold text-[10px] tracking-wide uppercase text-slate-500 mb-4">Ayuda de Sistema</h4>
                                                 <div className="space-y-3">
                                                     <div className="flex items-center gap-3 text-xs font-bold text-slate-600 dark:text-slate-300">
-                                                        <div className="size-2 rounded-full bg-blue-500" />
+                                                        <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
                                                         Arrastra para mover etapas
                                                     </div>
                                                     <div className="flex items-center gap-3 text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -488,7 +488,7 @@ export default function ConsolidationPipelinePage() {
                                     </div>
                                 </motion.div>
                             ) : viewType === 'table' || viewType === 'list' ? (
-                                <motion.div key="list" className="flex-1 overflow-y-auto bg-white dark:bg-[#1e1f21]">
+                                <motion.div key="list" className="flex-1 overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21]">
                                     <DataTable
                                         data={filteredLeads}
                                         columns={columns}
@@ -520,7 +520,7 @@ export default function ConsolidationPipelinePage() {
                             form="new-lead-form"
                             type="submit"
                             disabled={isSavingLead}
-                            className="px-3 py-2.5 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/25 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
+                            className="px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/25 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
                         >
                             {isSavingLead ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
                             Registrar Prospecto
@@ -532,7 +532,7 @@ export default function ConsolidationPipelinePage() {
                     {/* Nombre / Apellido */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Nombre <span className="text-blue-500">*</span></label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Nombre <span className="text-[hsl(var(--primary))]">*</span></label>
                             <input
                                 required
                                 value={newLeadForm.first_name}
@@ -542,7 +542,7 @@ export default function ConsolidationPipelinePage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Apellido <span className="text-blue-500">*</span></label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Apellido <span className="text-[hsl(var(--primary))]">*</span></label>
                             <input
                                 required
                                 value={newLeadForm.last_name}
@@ -555,7 +555,7 @@ export default function ConsolidationPipelinePage() {
 
                     {/* Teléfono */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Teléfono / WhatsApp <span className="text-blue-500">*</span></label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Teléfono / WhatsApp <span className="text-[hsl(var(--primary))]">*</span></label>
                         <div className="relative">
                             <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
@@ -607,12 +607,12 @@ export default function ConsolidationPipelinePage() {
                     {/* Preview chip */}
                     {(newLeadForm.first_name || newLeadForm.last_name) && (
                         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-700/30 flex items-center gap-3">
-                            <div className="size-8 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow">
+                            <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow">
                                 {newLeadForm.nombre_completo?.charAt(0) ?? newLeadForm.first_name?.[0] ?? ''}{newLeadForm.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? newLeadForm.last_name?.[0] ?? ''}
                             </div>
                             <div>
                                 <p className="text-sm font-bold text-blue-800 dark:text-blue-300">{newLeadForm.nombre_completo || `${newLeadForm.first_name ?? ''} ${newLeadForm.last_name ?? ''}`.trim()}</p>
-                                <p className="text-[9px] text-blue-500 uppercase tracking-wide font-bold">Vista previa del prospecto</p>
+                                <p className="text-[9px] text-[hsl(var(--primary))] uppercase tracking-wide font-bold">Vista previa del prospecto</p>
                             </div>
                         </div>
                     )}

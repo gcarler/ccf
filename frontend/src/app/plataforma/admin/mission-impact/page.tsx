@@ -100,9 +100,9 @@ export default function AdminMissionImpactPage() {
     const renderList = () => (
         <div className="space-y-4">
             {IMPACT_ITEMS.map((item) => (
-                <div key={item.id} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div key={item.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+                        <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center">
                             <MapPin size={24} />
                         </div>
                         <div>
@@ -110,14 +110,14 @@ export default function AdminMissionImpactPage() {
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{item.place} · {item.date}</p>
                         </div>
                     </div>
-                    <div className="text-sm font-semibold text-blue-600 italic">{item.metric}</div>
+                    <div className="text-sm font-semibold text-[hsl(var(--primary))] italic">{item.metric}</div>
                 </div>
             ))}
         </div>
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/5">
             <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
@@ -132,8 +132,8 @@ export default function AdminMissionImpactPage() {
                         <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
                             <td className="px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{item.title}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-slate-500">{item.place}</td>
-                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-blue-600 font-bold">{item.metric}</td>
-                            <td className="px-3 py-1.5"><span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[9px] font-semibold uppercase">{item.status}</span></td>
+                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-[hsl(var(--primary))] font-bold">{item.metric}</td>
+                            <td className="px-3 py-1.5"><span className="px-2 py-0.5 rounded-full bg-blue-50 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase">{item.status}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -151,10 +151,10 @@ export default function AdminMissionImpactPage() {
                     </div>
                     <div className="space-y-4">
                         {group.items.map((item) => (
-                            <div key={item.id} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-3">
+                            <div key={item.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-3">
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</p>
                                 <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{item.place}</p>
-                                <p className="mt-4 text-xs font-semibold text-blue-600 italic">{item.metric}</p>
+                                <p className="mt-4 text-xs font-semibold text-[hsl(var(--primary))] italic">{item.metric}</p>
                             </div>
                         ))}
                     </div>
@@ -164,7 +164,7 @@ export default function AdminMissionImpactPage() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0a0f16] font-display overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] font-display overflow-hidden">
             <style jsx global>{`
                 .impact-aura {
                     position: relative;
@@ -190,7 +190,7 @@ export default function AdminMissionImpactPage() {
                 setViewType={setViewType}
                 availableViews={MISSION_VIEWS}
                 rightActions={
-                    <button className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                         <Plus size={14} /> Registrar Hito
                     </button>
                 }
@@ -206,12 +206,12 @@ export default function AdminMissionImpactPage() {
                         <div className="space-y-4">
                             <motion.div 
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
                             >
                                 <Sparkles size={12} className="animate-pulse" /> Expansión del Reino 2026
                             </motion.div>
                             <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none uppercase italic">
-                                Alcance <br/> <span className="text-blue-600">Misionero.</span>
+                                Alcance <br/> <span className="text-[hsl(var(--primary))]">Misionero.</span>
                             </h1>
                             <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-xl leading-relaxed">
                                 Monitoreo de impacto espiritual y social con métricas operativas reales y bitácoras editoriales de misión.
@@ -241,12 +241,12 @@ export default function AdminMissionImpactPage() {
                             </section>
 
                             {/* Activity Log Cinematic */}
-                            <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700">
+                            <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700">
                                 <div className="p-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 flex items-center justify-between">
                                     <h3 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                                        <History size={16} className="text-blue-600" /> Bitácora de Impacto Real
+                                        <History size={16} className="text-[hsl(var(--primary))]" /> Bitácora de Impacto Real
                                     </h3>
-                                    <span className="font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-wide border border-blue-100">Hitos editoriales</span>
+                                    <span className="font-semibold text-[hsl(var(--primary))] bg-blue-50 px-3 py-1 rounded-full uppercase tracking-wide border border-blue-100">Hitos editoriales</span>
                                 </div>
                                 <div className="divide-y divide-slate-50 dark:divide-white/5">
                                     {[
@@ -259,7 +259,7 @@ export default function AdminMissionImpactPage() {
                                             className="p-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner">
+                                                <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-400 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-500 shadow-inner">
                                                     <MapPin size={28} />
                                                 </div>
                                                 <div>
@@ -270,7 +270,7 @@ export default function AdminMissionImpactPage() {
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-sm font-semibold text-blue-600 italic tracking-tight">{item.metric}</p>
+                                                <p className="text-sm font-semibold text-[hsl(var(--primary))] italic tracking-tight">{item.metric}</p>
                                                 <p className="font-semibold text-slate-400 uppercase tracking-wide mt-1">Métrica de Impacto</p>
                                             </div>
                                         </motion.div>
@@ -288,11 +288,11 @@ export default function AdminMissionImpactPage() {
                                 <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-blue-600/20 rounded-full blur-3xl group-hover:bg-blue-600/30 transition-all duration-1000" />
                                 
                                 <h3 className="text-xl font-bold tracking-tight uppercase italic flex items-center gap-3 relative z-10">
-                                    <TrendingUp size={20} className="text-blue-400" /> Metas Globales
+                                    <TrendingUp size={20} className="text-[hsl(var(--primary))]" /> Metas Globales
                                 </h3>
                                 
                                 <div className="space-y-3 relative z-10">
-                                    <GoalProgress label="Miembros registrados" current={stats.members} target={1000} color="bg-blue-500" />
+                                    <GoalProgress label="Miembros registrados" current={stats.members} target={1000} color="bg-[hsl(var(--primary))]" />
                                     <GoalProgress label="Impacto Social" current={12000} target={20000} color="bg-indigo-500" />
                                     <GoalProgress label="Nuevas Sedes" current={3} target={5} color="bg-emerald-500" />
                                 </div>
@@ -307,12 +307,12 @@ export default function AdminMissionImpactPage() {
                                 </div>
                             </motion.div>
 
-                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-lg shadow-sm space-y-3">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-lg shadow-sm space-y-3">
                                 <h3 className="text-xs font-semibold uppercase tracking-wide dark:text-white">Acciones de Misión</h3>
                                 <button className="w-full py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-600 dark:text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all border border-slate-200 dark:border-white/10 flex items-center justify-center gap-3 active:scale-95">
                                     <FileText size={16} /> Generar Reporte PDF
                                 </button>
-                                <button className="w-full py-1.5 bg-white dark:bg-transparent text-blue-600 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all border border-blue-100 dark:border-blue-900/30 flex items-center justify-center gap-3 hover:bg-blue-50">
+                                <button className="w-full py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-transparent text-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all border border-blue-100 dark:border-blue-900/30 flex items-center justify-center gap-3 hover:bg-blue-50">
                                     <ArrowUpRight size={16} /> Compartir Avance
                                 </button>
                             </div>
@@ -327,11 +327,11 @@ export default function AdminMissionImpactPage() {
 
 function ImpactStat({ label, value, icon: Icon, color }: any) {
     const colors: any = {
-        blue: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800',
+        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800',
         rose: 'text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-800'
     };
     return (
-        <div className="impact-aura bg-white dark:bg-[#1e1f21] p-4 rounded-lg border border-slate-100 dark:border-white/5 flex items-center gap-3 shadow-sm hover:shadow-2xl transition-all duration-500 group overflow-hidden">
+        <div className="impact-aura bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] p-4 rounded-lg border border-slate-100 dark:border-white/5 flex items-center gap-3 shadow-sm hover:shadow-2xl transition-all duration-500 group overflow-hidden">
             <div className={clsx("size-8 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12 duration-500 shadow-inner border", colors[color])}>
                 <Icon size={40} strokeWidth={1.5} />
             </div>
@@ -348,7 +348,7 @@ function GoalProgress({ label, current, target, color }: any) {
     return (
         <div className="space-y-3 group/goal">
             <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
-                <span className="text-slate-400 group-hover/goal:text-blue-400 transition-colors">{label}</span>
+                <span className="text-slate-400 group-hover/goal:text-[hsl(var(--primary))] transition-colors">{label}</span>
                 <span className="text-white">{Math.round(pct)}%</span>
             </div>
             <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden shadow-inner">

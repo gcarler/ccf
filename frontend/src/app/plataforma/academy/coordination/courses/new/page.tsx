@@ -81,7 +81,7 @@ export default function NewCoursePage() {
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 leftActions={
-                    <button onClick={() => router.back()} className="p-2.5 hover:bg-white dark:hover:bg-white/5 rounded-md transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shadow-sm">
+                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-md transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shadow-sm">
                         <ArrowLeft size={18} className="text-slate-500" />
                     </button>
                 }
@@ -97,7 +97,7 @@ export default function NewCoursePage() {
                             ['Duración', `${formData.duration_hours} horas`],
                             ['Certificación', formData.certificate_type],
                         ].map(([label, value]) => (
-                            <article key={label} className="rounded-md border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                            <article key={label} className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/5">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
                                 <h3 className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">{value}</h3>
                             </article>
@@ -106,7 +106,7 @@ export default function NewCoursePage() {
                 )}
 
                 {viewType === 'table' && (
- <div className="w-full overflow-hidden rounded-md border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+ <div className="w-full overflow-hidden rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr><th className="px-4 py-2">Campo</th><th className="px-4 py-2">Valor actual</th></tr>
@@ -136,7 +136,7 @@ export default function NewCoursePage() {
  className="w-full space-y-3"
                 >
                     <header className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-blue-600">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                             <Plus size={14} strokeWidth={3} /> Laboratorio de Contenido
                         </div>
                         <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">Diseña un <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">Nuevo Futuro.</span></h1>
@@ -145,8 +145,8 @@ export default function NewCoursePage() {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Basic Info */}
-                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-slate-200/20 dark:shadow-none space-y-4 group transition-all hover:border-blue-500/20">
-                            <div className="flex items-center gap-4 text-blue-600">
+                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-slate-200/20 dark:shadow-none space-y-4 group transition-all hover:border-blue-500/20">
+                            <div className="flex items-center gap-4 text-[hsl(var(--primary))]">
                                 <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shadow-inner">
                                     <FileText size={24} strokeWidth={2.5} />
                                 </div>
@@ -182,7 +182,7 @@ export default function NewCoursePage() {
                         </motion.div>
 
                         {/* Configuration */}
-                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-slate-200/20 dark:shadow-none space-y-4 group transition-all hover:border-sky-500/20">
+                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-slate-200/20 dark:shadow-none space-y-4 group transition-all hover:border-sky-500/20">
                             <div className="flex items-center gap-4 text-sky-600">
                                 <div className="size-9 rounded-lg bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center shadow-inner">
                                     <Clock size={24} strokeWidth={2.5} />
@@ -255,7 +255,7 @@ export default function NewCoursePage() {
                             </button>
                             <button 
                                 type="submit" disabled={loading}
-                                className="w-full sm:w-auto px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-md font-black text-xs uppercase tracking-wide shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 disabled:cursor-wait group"
+                                className="w-full sm:w-auto px-4 py-2 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-md font-black text-xs uppercase tracking-wide shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 disabled:cursor-wait group"
                             >
                                 {loading ? 'Sincronizando...' : 'Lanzar Programa'}
                                 <Save size={20} className={clsx(!loading && "group-hover:translate-y-[-2px] transition-transform")} />

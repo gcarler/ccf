@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
-function InfoRow({ icon: Icon, label, value, color = 'text-blue-600' }: { icon: any; label: string; value?: string; color?: string }) {
+function InfoRow({ icon: Icon, label, value, color = 'text-[hsl(var(--primary))]' }: { icon: any; label: string; value?: string; color?: string }) {
     if (!value) return null;
     return (
         <div className="flex items-center gap-4">
@@ -31,7 +31,7 @@ function InfoRow({ icon: Icon, label, value, color = 'text-blue-600' }: { icon: 
 
 function Badge({ label, color = 'blue' }: { label: string; color?: string }) {
     const styles: Record<string, string> = {
-        blue:   'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200/50 dark:border-blue-500/20',
+        blue:   'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50 dark:border-blue-500/20',
         violet: 'bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-200/50 dark:border-violet-500/20',
         emerald:'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50 dark:border-emerald-500/20',
         rose:   'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-500/20',
@@ -72,7 +72,7 @@ export default function MemberDetailPage() {
         return (
             <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] items-center justify-center gap-3">
                 <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
-                    <User className="text-blue-600 animate-pulse" size={24} />
+                    <User className="text-[hsl(var(--primary))] animate-pulse" size={24} />
                 </div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 animate-pulse">Cargando expediente...</p>
             </div>
@@ -94,7 +94,7 @@ export default function MemberDetailPage() {
                 rightActions={
                     <button
                         onClick={() => setSidebarOpen(true)}
-                        className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                         <PencilLine size={14} /> Editar Expediente
                     </button>
                 }
@@ -105,8 +105,8 @@ export default function MemberDetailPage() {
  className="w-full space-y-3">
 
                     {/* Hero */}
-                    <header className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm flex flex-col md:flex-row md:items-center gap-3 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-3 opacity-[0.03] pointer-events-none text-blue-600">
+                    <header className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm flex flex-col md:flex-row md:items-center gap-3 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-3 opacity-[0.03] pointer-events-none text-[hsl(var(--primary))]">
                             <User size={180} />
                         </div>
                         <motion.div whileHover={{ scale: 1.04 }}
@@ -133,7 +133,7 @@ export default function MemberDetailPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         {/* Contacto */}
                         <div className="lg:col-span-2 space-y-3">
-                            <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm space-y-5">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm space-y-5">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Canales de Comunicación</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <InfoRow icon={Phone} label="Teléfono Móvil" value={member.phone} />
@@ -148,11 +148,11 @@ export default function MemberDetailPage() {
                                 {[
                                     { label: 'Salud Esp.', value: member.spiritual_health ? `${Math.round(member.spiritual_health * 100)}%` : '—', icon: Heart, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
                                     { label: 'Progreso', value: member.academy_progress ? `${Math.round(member.academy_progress)}%` : '—', icon: GraduationCap, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
-                                    { label: 'Familia', value: member.family_id ? `#${member.family_id}` : '—', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+                                    { label: 'Familia', value: member.family_id ? `#${member.family_id}` : '—', icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                                 ].map(s => {
                                     const Icon = s.icon;
                                     return (
-                                        <div key={s.label} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-4 shadow-sm flex flex-col gap-3">
+                                        <div key={s.label} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-4 shadow-sm flex flex-col gap-3">
                                             <div className={clsx("size-9 rounded-md flex items-center justify-center", s.bg, s.color)}>
                                                 <Icon size={16} />
                                             </div>
@@ -168,12 +168,12 @@ export default function MemberDetailPage() {
 
                         {/* Info ministerial */}
                         <aside className="space-y-3">
-                            <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm space-y-5">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm space-y-5">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Posición Ministerial</p>
                                 <div className="space-y-4">
                                     {member.ministry_id && (
                                         <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-black/20 rounded-md">
-                                            <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600"><Briefcase size={15} /></div>
+                                            <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]"><Briefcase size={15} /></div>
                                             <div>
                                                 <p className="text-[9px] text-slate-400 font-semibold uppercase">Ministerio</p>
                                                 <p className="text-xs font-semibold text-slate-800 dark:text-white">#{member.ministry_id}</p>
@@ -194,13 +194,13 @@ export default function MemberDetailPage() {
 
                             {/* Notas pastorales (preview) */}
                             {member.pastoral_notes && (
-                                <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
+                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Notas Pastorales</p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed italic line-clamp-4">
                                         &ldquo;{member.pastoral_notes}&rdquo;
                                     </p>
                                     <button onClick={() => setSidebarOpen(true)}
-                                        className="mt-3 font-semibold text-blue-600 uppercase tracking-wide hover:underline">
+                                        className="mt-3 font-semibold text-[hsl(var(--primary))] uppercase tracking-wide hover:underline">
                                         Ver completo →
                                     </button>
                                 </div>

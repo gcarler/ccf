@@ -118,12 +118,12 @@ function NavRow({
             <div className={clsx(
                 'relative flex items-center gap-1.5 px-2 py-1.5 mx-1.5 rounded-md transition-all duration-150 group cursor-pointer',
                 isActive
-                    ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                    ? 'bg-blue-600/10 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-white'
             )}>
                 {/* Active indicator bar */}
                 {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-3.5 bg-blue-600 rounded-full -ml-1.5" />
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-3.5 bg-[hsl(var(--primary))] rounded-full -ml-1.5" />
                 )}
                 {item.color ? (
                     <span
@@ -135,7 +135,7 @@ function NavRow({
                 ) : (
                     <Icon size={14} className={clsx(
                         'shrink-0 transition-colors',
-                        isActive ? 'text-blue-500' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                        isActive ? 'text-[hsl(var(--primary))]' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                     )} />
                 )}
                 {!isMini && (
@@ -148,7 +148,7 @@ function NavRow({
                             <span className={clsx(
                                 'px-1 py-px rounded text-[9px] font-bold leading-none shrink-0',
                                 isActive
-                                    ? 'bg-blue-200 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                                    ? 'bg-blue-200 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-blue-300'
                                     : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
                             )}>
                                 {item.count}
@@ -156,7 +156,7 @@ function NavRow({
                         )}
                         <ChevronRight size={10} className={clsx(
                             'shrink-0 transition-all duration-150',
-                            isActive ? 'opacity-80 text-blue-500' : 'opacity-0 group-hover:opacity-100 text-slate-400 translate-x-1 group-hover:translate-x-0'
+                            isActive ? 'opacity-80 text-[hsl(var(--primary))]' : 'opacity-0 group-hover:opacity-100 text-slate-400 translate-x-1 group-hover:translate-x-0'
                         )} />
                     </>
                 )}
@@ -215,7 +215,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
     }, [pathname, sections]);
 
     return (
-        <aside className="h-full flex flex-col bg-white dark:bg-[#0f1113] transition-colors duration-500 ease-in-out relative overflow-hidden">
+        <aside className="h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] transition-colors duration-500 ease-in-out relative overflow-hidden">
             <div className="shrink-0 border-b border-slate-100 dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[#0f1113]/80 backdrop-blur-xl">
                 {/* 1. Breadcrumbs (Opcional pero recomendado para contexto) */}
                 {!isMini && (
@@ -224,7 +224,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                             onClick={() => resetSidebarStack()}
                             className={clsx(
                                 "text-[9px] font-semibold uppercase tracking-wide transition-all cursor-pointer",
-                                isDrillDown ? "text-slate-400 hover:text-blue-500" : "text-blue-600"
+                                isDrillDown ? "text-slate-400 hover:text-[hsl(var(--primary))]" : "text-[hsl(var(--primary))]"
                             )}
                         >
                             {title}
@@ -256,7 +256,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                                         if (currentPanel?.onBack) currentPanel.onBack();
                                         popSidebarPanel();
                                     }}
-                                    className="p-1 -ml-1 rounded-md bg-slate-50 dark:bg-white/5 text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-white/10 transition-all flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5 active:scale-90"
+                                    className="p-1 -ml-1 rounded-md bg-slate-50 dark:bg-white/5 text-slate-500 hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5 active:scale-90"
                                 >
                                     <ChevronLeft size={14} strokeWidth={2.5} />
                                 </motion.button>
@@ -346,7 +346,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                     <Tooltip content={isCollapsed ? 'Expandir panel' : 'Contraer panel'} side="right">
                         <button
                             onClick={onToggle}
-                            className="p-2 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all duration-200 shrink-0"
+                            className="p-2 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all duration-200 shrink-0"
                             aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
                         >
                             {isCollapsed

@@ -169,23 +169,23 @@ export default function AgentsPage() {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+        <div className="min-h-screen bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
-                        <BrainCircuit className="w-8 h-8 text-blue-600" />
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        <BrainCircuit className="w-8 h-8 text-[hsl(var(--primary))]" />
+                        <h1 className="text-3xl font-bold text-[hsl(var(--text-primary))] dark:text-white">
                             Sistema Multiagente CCF
                         </h1>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                         Optimus Neural MESH — Agentes inteligentes para gestión ministerial
                     </p>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex gap-2 mb-6 border-b border-[hsl(var(--border-primary))] dark:border-gray-700">
                     {[
                         { id: 'agents', label: 'Agentes', icon: Bot },
                         { id: 'tools', label: 'Herramientas', icon: Zap },
@@ -197,8 +197,8 @@ export default function AgentsPage() {
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition-colors ${
                                 activeTab === tab.id
-                                    ? 'bg-white dark:bg-gray-800 border-b-2 border-blue-600 text-blue-600 font-medium'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border-b-2 border-blue-600 text-[hsl(var(--primary))] font-medium'
+                                    : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white'
                             }`}
                         >
                             <tab.icon className="w-4 h-4" />
@@ -212,18 +212,18 @@ export default function AgentsPage() {
                     <div>
                         <div className="flex justify-between items-center mb-4">
                             <div className="relative flex-1 max-w-md">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--text-secondary))]" />
                                 <input
                                     type="text"
                                     placeholder="Buscar agentes..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                                    className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-[hsl(var(--bg-primary))] dark:border-gray-700 dark:text-white"
                                 />
                             </div>
                             <button
                                 onClick={fetchData}
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] rounded-lg hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-gray-700"
                             >
                                 <RefreshCw className="w-4 h-4" />
                                 Actualizar
@@ -231,40 +231,40 @@ export default function AgentsPage() {
                         </div>
 
                         {loading ? (
-                            <div className="text-center py-12 text-gray-500">Cargando agentes...</div>
+                            <div className="text-center py-12 text-[hsl(var(--text-primary))]">Cargando agentes...</div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {filteredAgents.map(agent => (
                                     <div
                                         key={agent.id}
-                                        className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700"
+                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-gray-700"
                                     >
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                                agent.is_active ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                                                agent.is_active ? 'bg-green-100 text-[hsl(var(--secondary))]' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'
                                             }`}>
                                                 <Bot className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <h3 className="font-medium text-gray-900 dark:text-white">
+                                                <h3 className="font-medium text-[hsl(var(--text-primary))] dark:text-white">
                                                     {agent.nombre_completo || `${agent.first_name ?? ''} ${agent.last_name ?? ''}`.trim()}
                                                 </h3>
-                                                <p className="text-sm text-gray-500">{agent.code}</p>
+                                                <p className="text-sm text-[hsl(var(--text-primary))]">{agent.code}</p>
                                             </div>
                                         </div>
                                         <div className="space-y-1 text-sm">
                                             {agent.email && (
-                                                <p className="text-gray-600 dark:text-gray-400">{agent.email}</p>
+                                                <p className="text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{agent.email}</p>
                                             )}
                                             <div className="flex items-center gap-2">
-                                                <Shield className="w-4 h-4 text-blue-500" />
-                                                <span className="text-gray-700 dark:text-gray-300">
+                                                <Shield className="w-4 h-4 text-[hsl(var(--primary))]" />
+                                                <span className="text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                     {STAGE_LABELS[agent.spiritual_stage] || agent.spiritual_stage}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Activity className={`w-4 h-4 ${agent.is_active ? 'text-green-500' : 'text-gray-400'}`} />
-                                                <span className={agent.is_active ? 'text-green-600' : 'text-gray-400'}>
+                                                <Activity className={`w-4 h-4 ${agent.is_active ? 'text-[hsl(var(--secondary))]' : 'text-[hsl(var(--text-secondary))]'}`} />
+                                                <span className={agent.is_active ? 'text-[hsl(var(--secondary))]' : 'text-[hsl(var(--text-secondary))]'}>
                                                     {agent.is_active ? 'Activo' : 'Inactivo'}
                                                 </span>
                                             </div>
@@ -280,12 +280,12 @@ export default function AgentsPage() {
                 {activeTab === 'tools' && (
                     <div>
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                            <h2 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                                 Herramientas Registradas
                             </h2>
                             <button
                                 onClick={rebuildKB}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))]"
                             >
                                 <Database className="w-4 h-4" />
                                 Reconstruir KB
@@ -293,7 +293,7 @@ export default function AgentsPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {tools.length === 0 ? (
-                                <div className="col-span-full text-center py-12 text-gray-500">
+                                <div className="col-span-full text-center py-12 text-[hsl(var(--text-primary))]">
                                     Las herramientas se registran automáticamente al iniciar el backend.
                                     <br />
                                     <span className="text-sm">8 herramientas disponibles: CRM, Academy, Projects, Analytics</span>
@@ -302,14 +302,14 @@ export default function AgentsPage() {
                                 tools.map((tool, i) => (
                                     <div
                                         key={i}
-                                        className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700"
+                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-gray-700"
                                     >
                                         <div className="flex items-center gap-2 mb-2">
                                             <Zap className="w-5 h-5 text-yellow-500" />
-                                            <h3 className="font-medium text-gray-900 dark:text-white">{tool.name}</h3>
+                                            <h3 className="font-medium text-[hsl(var(--text-primary))] dark:text-white">{tool.name}</h3>
                                         </div>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{tool.description}</p>
-                                        <span className="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs rounded">
+                                        <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mb-2">{tool.description}</p>
+                                        <span className="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-[hsl(var(--primary))] dark:text-blue-300 text-xs rounded">
                                             {tool.module}
                                         </span>
                                     </div>
@@ -323,19 +323,19 @@ export default function AgentsPage() {
                 {activeTab === 'conversations' && (
                     <div>
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                            <h2 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                                 Conversaciones
                             </h2>
                             <button
                                 onClick={createConversation}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))]"
                             >
                                 <Plus className="w-4 h-4" />
                                 Nueva Conversación
                             </button>
                         </div>
                         {conversations.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
+                            <div className="text-center py-12 text-[hsl(var(--text-primary))]">
                                 No hay conversaciones aún. Crea una nueva para empezar.
                             </div>
                         ) : (
@@ -348,21 +348,21 @@ export default function AgentsPage() {
                                             setActiveTab('chat');
                                             setChatMessages([]);
                                         }}
-                                        className="w-full bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-left hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-gray-700 text-left hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <MessageCircle className="w-5 h-5 text-blue-500" />
+                                                <MessageCircle className="w-5 h-5 text-[hsl(var(--primary))]" />
                                                 <div>
-                                                    <h3 className="font-medium text-gray-900 dark:text-white">
+                                                    <h3 className="font-medium text-[hsl(var(--text-primary))] dark:text-white">
                                                         {conv.title || 'Sin título'}
                                                     </h3>
-                                                    <p className="text-sm text-gray-500">
+                                                    <p className="text-sm text-[hsl(var(--text-primary))]">
                                                         {conv.message_count} mensajes · {conv.agent_name}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                                            <div className="flex items-center gap-2 text-sm text-[hsl(var(--text-primary))]">
                                                 <Clock className="w-4 h-4" />
                                                 {new Date(conv.updated_at).toLocaleDateString('es-ES')}
                                             </div>
@@ -376,20 +376,20 @@ export default function AgentsPage() {
 
                 {/* Chat Tab */}
                 {activeTab === 'chat' && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg shadow-sm border border-[hsl(var(--border-primary))] dark:border-gray-700">
+                        <div className="p-4 border-b border-[hsl(var(--border-primary))] dark:border-gray-700 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <Bot className="w-6 h-6 text-blue-600" />
+                                <Bot className="w-6 h-6 text-[hsl(var(--primary))]" />
                                 <div>
-                                    <h3 className="font-medium text-gray-900 dark:text-white">Chat con Optimus</h3>
-                                    <p className="text-sm text-green-600 flex items-center gap-1">
-                                        <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
+                                    <h3 className="font-medium text-[hsl(var(--text-primary))] dark:text-white">Chat con Optimus</h3>
+                                    <p className="text-sm text-[hsl(var(--secondary))] flex items-center gap-1">
+                                        <span className="w-2 h-2 bg-[hsl(var(--secondary))] rounded-full inline-block"></span>
                                         En línea
                                     </p>
                                 </div>
                             </div>
                             {activeConversation && (
-                                <span className="text-sm text-gray-500">
+                                <span className="text-sm text-[hsl(var(--text-primary))]">
                                     Conversación #{activeConversation}
                                 </span>
                             )}
@@ -398,8 +398,8 @@ export default function AgentsPage() {
                         {/* Messages */}
                         <div className="h-96 overflow-y-auto p-4 space-y-4">
                             {chatMessages.length === 0 ? (
-                                <div className="text-center py-12 text-gray-500">
-                                    <BrainCircuit className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                <div className="text-center py-12 text-[hsl(var(--text-primary))]">
+                                    <BrainCircuit className="w-12 h-12 mx-auto mb-3 text-[hsl(var(--text-secondary))]" />
                                     <p>Haz una pregunta a Optimus</p>
                                     <p className="text-sm">Puede buscar miembros, cursos, proyectos y más</p>
                                 </div>
@@ -408,10 +408,10 @@ export default function AgentsPage() {
                                     <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[80%] rounded-lg p-3 ${
                                             msg.role === 'user'
-                                                ? 'bg-blue-600 text-white'
-                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                                                ? 'bg-[hsl(var(--primary))] text-white'
+                                                : 'bg-[hsl(var(--bg-muted))] dark:bg-gray-700 text-[hsl(var(--text-primary))] dark:text-white'
                                         }`}>
-                                            {msg.role === 'assistant' && <Bot className="w-4 h-4 mb-1 text-blue-500" />}
+                                            {msg.role === 'assistant' && <Bot className="w-4 h-4 mb-1 text-[hsl(var(--primary))]" />}
                                             <p className="whitespace-pre-wrap">{msg.content}</p>
                                         </div>
                                     </div>
@@ -419,7 +419,7 @@ export default function AgentsPage() {
                             )}
                             {chatLoading && (
                                 <div className="flex justify-start">
-                                    <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
+                                    <div className="bg-[hsl(var(--bg-muted))] dark:bg-gray-700 rounded-lg p-3">
                                         <div className="flex gap-1">
                                             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
                                             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
@@ -431,7 +431,7 @@ export default function AgentsPage() {
                         </div>
 
                         {/* Input */}
-                        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="p-4 border-t border-[hsl(var(--border-primary))] dark:border-gray-700">
                             <div className="flex gap-2">
                                 <input
                                     type="text"
@@ -444,7 +444,7 @@ export default function AgentsPage() {
                                 <button
                                     onClick={sendChat}
                                     disabled={chatLoading || !chatInput.trim()}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                    className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))] disabled:opacity-50"
                                 >
                                     <Send className="w-4 h-4" />
                                 </button>

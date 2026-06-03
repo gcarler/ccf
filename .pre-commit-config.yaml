@@ -1,25 +1,47 @@
+# Pre-commit hooks for CCF Platform
+# Install: pip install pre-commit && pre-commit install
+
 repos:
-  - repo: https://github.com/psf/black
-    rev: 24.3.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
     hooks:
-      - id: black
-        language_version: python3.11
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
 
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.0
     hooks:
-      - id: isort
+      - id: ruff
+        args: ["--select=E,W,F,I", "--fix"]
+      - id: ruff-format
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.0.0
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.7
     hooks:
-      - id: flake8
+      - id: bandit
+        args: ["-r", "backend/", "-ll"]
+        exclude: tests/
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
+  - repo: local
     hooks:
-      - id: mypy
-        additional_dependencies:
-          - pydantic
-          - sqlalchemy
-          - types-requests
+      - id: pytest-smoke
+        name: Run smoke tests
+        entry: pytest tests/test_smoke.py -q
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+
+      - id: test-reglas
+        name: Run platform rules tests
+        entry: pytest tests/test_reglas_plataforma.py -q
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true

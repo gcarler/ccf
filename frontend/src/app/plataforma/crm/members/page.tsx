@@ -298,7 +298,7 @@ export default function MembersPage() {
                         </div>
                         <button
                             onClick={() => setIsCreateOpen(true)}
-                            className="flex items-center gap-2 px-4 py-1.5 bg-white text-blue-700 rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 shrink-0"
+                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 shrink-0"
                         >
                             <Plus size={16} /> Nuevo Miembro
                         </button>
@@ -309,12 +309,12 @@ export default function MembersPage() {
                     {/* Metrics */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
-                            { label: 'Total Miembros', value: stats.total, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+                            { label: 'Total Miembros', value: stats.total, icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
                             { label: 'Líderes Activos', value: stats.leaders, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
                             { label: 'Bautizados', value: stats.baptized, icon: Filter, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
                             { label: 'Nuevos (Mes)', value: stats.newThisMonth, icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
                         ].map((s, i) => (
-                            <div key={i} className="p-3 rounded-md border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-all">
+                            <div key={i} className="p-3 rounded-md border border-slate-100 dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-white/5 flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-all">
                                 <div className={clsx("size-8 rounded-md flex items-center justify-center", s.bg, s.color)}>
                                     <s.icon size={20} />
                                 </div>
@@ -334,13 +334,13 @@ export default function MembersPage() {
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
                                 placeholder="Buscar por nombre, correo o ministerio..."
-                                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
+                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
                             />
                         </div>
                         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none snap-x">
-                            <button onClick={() => setRoleFilter('Todos')} className={clsx("px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === 'Todos' ? "bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-md" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10")}>Todos</button>
+                            <button onClick={() => setRoleFilter('Todos')} className={clsx("px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === 'Todos' ? "bg-slate-800 text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900 shadow-md" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10")}>Todos</button>
                             {roles.map(role => (
-                                <button key={role.id} onClick={() => setRoleFilter(role.name)} className={clsx("px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === role.name ? "bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-md" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10")}>{role.name}</button>
+                                <button key={role.id} onClick={() => setRoleFilter(role.name)} className={clsx("px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === role.name ? "bg-slate-800 text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900 shadow-md" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10")}>{role.name}</button>
                             ))}
                         </div>
                         <div className="ml-auto"><ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={FULL_VIEWS} /></div>
@@ -353,7 +353,7 @@ export default function MembersPage() {
                         <div className="space-y-1">
                             {filteredMembers.map(m => (
                                 <div key={m.id} onClick={() => router.push(`/plataforma/crm/personas/${m.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all">
-                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400 font-bold text-xs">
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs">
                                         {(m.nombre_completo?.charAt(0) || '')}
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -397,13 +397,13 @@ export default function MembersPage() {
                             <AnimatePresence>
                                 {filteredMembers.map(member => (
                                     <motion.div key={member.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
-                                        <div onClick={() => router.push(`/plataforma/crm/personas/${member.id}`)} className="group p-3 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
+                                        <div onClick={() => router.push(`/plataforma/crm/personas/${member.id}`)} className="group p-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
                                             <div className="flex items-center gap-4">
                                                 <div className="relative">
                                                     <div className="size-9 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-sm">
                                                         {(member.nombre_completo?.charAt(0) || '')}
                                                     </div>
-                                                    <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[#1e1f21]", member.spiritual_health > 0.7 ? "bg-emerald-500" : member.spiritual_health > 0.4 ? "bg-amber-500" : "bg-red-500")} />
+                                                    <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[#1e1f21]", member.spiritual_health > 0.7 ? "bg-emerald-500" : member.spiritual_health > 0.4 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]")} />
                                                 </div>
                                                 <div>
                                                     <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase truncate max-w-[150px]">{member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}</h3>
@@ -412,7 +412,7 @@ export default function MembersPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="size-8 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/20 group-hover:text-blue-600 transition-all">
+                                            <div className="size-8 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/20 group-hover:text-[hsl(var(--primary))] transition-all">
                                                 <ChevronRight size={16} />
                                             </div>
                                         </div>
@@ -435,7 +435,7 @@ export default function MembersPage() {
                 actions={
                     <>
                         <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700">Cancelar</button>
-                        <button form="create-member-form" type="submit" disabled={isSaving} className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-60">
+                        <button form="create-member-form" type="submit" disabled={isSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
                         </button>

@@ -22,13 +22,13 @@ export default function ProjectActivityFeed({ activities }: Props) {
     );
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden font-display">
             <header className="p-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
                 <div>
                     <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Actividad Reciente</h3>
-                    <p className="text-[9px] font-medium text-blue-600 uppercase mt-0.5">Pulso del Equipo</p>
+                    <p className="text-[9px] font-medium text-[hsl(var(--primary))] uppercase mt-0.5">Pulso del Equipo</p>
                 </div>
-                <div className="size-7 rounded-md bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
+                <div className="size-7 rounded-md bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[hsl(var(--primary))]">
                     <Clock size={12} />
                 </div>
             </header>
@@ -82,7 +82,7 @@ export default function ProjectActivityFeed({ activities }: Props) {
 function getIcon(type: string) {
     switch (type) {
         case 'project_created': return <Plus size={14} className="text-emerald-600" />;
-        case 'task_created': return <Plus size={14} className="text-blue-600" />;
+        case 'task_created': return <Plus size={14} className="text-[hsl(var(--primary))]" />;
         case 'status_changed': return <RefreshCcw size={14} className="text-amber-600" />;
         case 'comment_added': return <MessageSquare size={14} className="text-indigo-600" />;
         default: return <ArrowRight size={14} className="text-slate-600" />;

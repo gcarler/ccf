@@ -88,7 +88,7 @@ export default function GroupsAnalyticsPage() {
                 </section>
 
                 {loading && (
-                    <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-300">
+                    <div className="rounded-md border border-dashed border-slate-300 bg-[hsl(var(--bg-primary))] p-4 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-300">
                         Cargando metricas de grupos...
                     </div>
                 )}
@@ -107,7 +107,7 @@ export default function GroupsAnalyticsPage() {
                 )}
 
                 {!loading && !error && groups.length === 0 && (
-                    <div className="rounded-md border-2 border-dashed border-slate-200 bg-white p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
+                    <div className="rounded-md border-2 border-dashed border-slate-200 bg-[hsl(var(--bg-primary))] p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
                         <Users size={40} className="mx-auto text-slate-300" />
                         <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">No hay datos de grupos para analizar</p>
                     </div>
@@ -115,7 +115,7 @@ export default function GroupsAnalyticsPage() {
 
                 {!loading && !error && groups.length > 0 && (
                     <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                        <article className="rounded-md border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                        <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Top grupos por miembros</p>
                             <div className="mt-5 space-y-3">
                                 {metrics.topGroups.map((group) => {
@@ -130,7 +130,7 @@ export default function GroupsAnalyticsPage() {
                                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{members}/{cap}</p>
                                             </div>
                                             <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
-                                                <div className="h-full rounded-full bg-blue-600" style={{ width: `${pct}%` }} />
+                                                <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${pct}%` }} />
                                             </div>
                                         </div>
                                     );
@@ -138,7 +138,7 @@ export default function GroupsAnalyticsPage() {
                             </div>
                         </article>
 
-                        <article className="rounded-md border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                        <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Riesgos operativos</p>
                             <div className="mt-5 space-y-4">
                                 <RiskRow
@@ -167,7 +167,7 @@ export default function GroupsAnalyticsPage() {
 
 function MetricCard({ label, value, tone }: { label: string; value: string; tone: "blue" | "emerald" | "indigo" | "amber" | "rose" }) {
     const toneClass: Record<typeof tone, string> = {
-        blue: "text-blue-600",
+        blue: "text-[hsl(var(--primary))]",
         emerald: "text-emerald-600",
         indigo: "text-indigo-600",
         amber: "text-amber-500",
@@ -175,7 +175,7 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
     };
 
     return (
-        <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
+        <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
             <p className={`mt-2 text-xl font-bold ${toneClass[tone]}`}>{value}</p>
         </article>

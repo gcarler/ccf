@@ -796,7 +796,7 @@ async def upload_task_attachment(
 
     uploader_persona_id = get_user_persona_id(db, current_user.id)
     attachment = models.ProjectAttachment(
-        task_id=task_id,
+        task_id=_to_uuid(task_id),
         filename=filename,
         file_url=f"/api/static/{unique_name}",
         file_type=file.content_type,
@@ -849,7 +849,7 @@ def list_task_supplies(
     _ensure_task_in_project(db, project_id, task_id)
     return (
         db.query(models.TaskSupply)
-        .filter(models.TaskSupply.task_id == task_id)
+        .filter(models.TaskSupply.task_id == _to_uuid(task_id))
         .order_by(models.TaskSupply.id.asc())
         .all()
     )

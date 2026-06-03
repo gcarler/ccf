@@ -34,7 +34,7 @@ const STATUS_ORDER = ['open', 'pending', 'in_progress', 'resolved', 'closed'];
 const STATUS_CONFIG: Record<string, { icon: any; label: string; color: string; bg: string }> = {
     open: { icon: AlertCircle, label: 'Abierto', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
     pending: { icon: Clock, label: 'Pendiente', color: 'text-slate-600', bg: 'bg-slate-100 dark:bg-white/5' },
-    in_progress: { icon: Clock, label: 'En Proceso', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+    in_progress: { icon: Clock, label: 'En Proceso', color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
     resolved: { icon: CheckCircle, label: 'Resuelto', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
     closed: { icon: CheckCircle, label: 'Cerrado', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
 };
@@ -127,8 +127,8 @@ export default function SupportTicketsPage() {
 
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
-            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-white dark:bg-[#1a1d27]">
-                <MessageSquare size={16} className="text-blue-500" />
+            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
+                <MessageSquare size={16} className="text-[hsl(var(--primary))]" />
                 <h1 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex-1">Mis Tickets de Soporte</h1>
                 <div className="relative">
                     <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -141,13 +141,13 @@ export default function SupportTicketsPage() {
                 </div>
                 <button
                     onClick={() => setShowNew(true)}
-                    className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all"
+                    className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] shadow-lg shadow-blue-500/20 transition-all"
                 >
                     <Plus size={14} /> Nuevo Ticket
                 </button>
             </header>
 
-            <div className="flex items-center gap-1 px-3 py-3 border-b border-slate-200/60 dark:border-white/5 bg-white dark:bg-[#1a1d27] shrink-0">
+            <div className="flex items-center gap-1 px-3 py-3 border-b border-slate-200/60 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] shrink-0">
                 {['all', ...STATUS_ORDER].map((status) => (
                     <button
                         key={status}
@@ -155,7 +155,7 @@ export default function SupportTicketsPage() {
                         className={clsx(
                             'px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all',
                             filter === status
-                                ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600'
+                                ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]'
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300',
                         )}
                     >
@@ -170,7 +170,7 @@ export default function SupportTicketsPage() {
             <div className="flex-1 overflow-y-auto p-3">
  <div className="w-full space-y-3">
                     {loading && (
-                        <div className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white p-3 text-sm font-bold text-slate-400 dark:border-white/10 dark:bg-[#1a1d27]">
+                        <div className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 text-sm font-bold text-slate-400 dark:border-white/10 dark:bg-[#1a1d27]">
                             <Loader2 size={16} className="animate-spin" /> Cargando tickets...
                         </div>
                     )}
@@ -186,7 +186,7 @@ export default function SupportTicketsPage() {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.04 }}
-                                    className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 flex items-center gap-4 shadow-sm hover:shadow-md transition-all group"
+                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 flex items-center gap-4 shadow-sm hover:shadow-md transition-all group"
                                 >
                                     <div className={clsx('size-10 rounded-md flex items-center justify-center shrink-0', statusConfig.bg)}>
                                         <Icon size={18} className={statusConfig.color} />
@@ -198,14 +198,14 @@ export default function SupportTicketsPage() {
                                                 {statusConfig.label}
                                             </span>
                                         </div>
-                                        <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 truncate group-hover:text-blue-600 transition-colors">
+                                        <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                                             {ticket.subject}
                                         </p>
                                         <p className="text-[10px] text-slate-400 mt-0.5">
                                             Actualizado: {formatDate(ticket.updated_at ?? ticket.created_at)}
                                         </p>
                                     </div>
-                                    <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors shrink-0" />
+                                    <ChevronRight size={16} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors shrink-0" />
                                 </motion.div>
                             );
                         })}
@@ -234,7 +234,7 @@ export default function SupportTicketsPage() {
                             form="support-ticket-form"
                             type="submit"
                             disabled={submitting}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:cursor-wait disabled:opacity-60"
+                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all disabled:cursor-wait disabled:opacity-60"
                         >
                             {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
                             Enviar Ticket

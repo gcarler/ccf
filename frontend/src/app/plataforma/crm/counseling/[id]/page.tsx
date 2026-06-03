@@ -117,7 +117,7 @@ export default function CounselingDetailPage() {
                                 <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Participantes</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                        <div className="size-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                             <User size={16} />
                                         </div>
                                         <div className="flex-1">
@@ -126,7 +126,7 @@ export default function CounselingDetailPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                        <div className="size-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                             <Shield size={16} />
                                         </div>
                                         <div className="flex-1">

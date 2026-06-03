@@ -141,7 +141,7 @@ export default function InboxMessagesPage() {
   };
 
   return (
-    <div className="flex flex-1 overflow-hidden h-full bg-white dark:bg-[#1E1F21]">
+    <div className="flex flex-1 overflow-hidden h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21]">
         <aside
         className={clsx(
             'flex w-full flex-col border-r border-slate-100 dark:border-white/5 transition-all md:w-80 shrink-0 bg-slate-50/50 dark:bg-black/10',
@@ -162,7 +162,7 @@ export default function InboxMessagesPage() {
                     "flex size-7 items-center justify-center rounded-lg transition-all shadow-sm",
                     isCreatingNew 
                         ? "bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-white/10 dark:text-slate-300" 
-                        : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-500/30"
+                        : "bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))] hover:shadow-blue-500/30"
                 )}
                 title={isCreatingNew ? 'Cancelar' : 'Nueva conversación'}
                 >
@@ -174,7 +174,7 @@ export default function InboxMessagesPage() {
                 value={search}
                 onChange={event => setSearch(event.target.value)}
                 placeholder={isCreatingNew ? "Buscar miembro..." : "Buscar chat..."}
-                className="w-full rounded-lg bg-white border border-slate-200 pl-8 pr-3 py-1.5 text-[11px] font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-white/5 dark:border-white/10 transition-all shadow-sm"
+                className="w-full rounded-lg bg-[hsl(var(--bg-primary))] border border-slate-200 pl-8 pr-3 py-1.5 text-[11px] font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-white/5 dark:border-white/10 transition-all shadow-sm"
             />
             <Search
                 size={12}
@@ -200,7 +200,7 @@ export default function InboxMessagesPage() {
                             onClick={() => handleStartNewChat(member)}
                             className="flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors group"
                         >
-                            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-[10px] font-semibold uppercase text-slate-600 dark:bg-white/10 dark:text-white group-hover:bg-blue-200 group-hover:text-blue-700 transition-colors">
+                            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-[10px] font-semibold uppercase text-slate-600 dark:bg-white/10 dark:text-white group-hover:bg-blue-200 group-hover:text-[hsl(var(--primary))] transition-colors">
                             {member.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? member.first_name?.charAt(0) ?? ''}{member.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? member.last_name?.charAt(0) ?? ''}
                             </div>
                             <div className="min-w-0 flex-1">
@@ -208,7 +208,7 @@ export default function InboxMessagesPage() {
                                 {member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}
                             </h4>
                             </div>
-                            <UserPlus size={14} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+                            <UserPlus size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors" />
                         </button>
                         ))}
                         {visibleMembers.length === 0 && (
@@ -240,7 +240,7 @@ export default function InboxMessagesPage() {
                             <div className={clsx(
                             "flex size-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold uppercase transition-colors shadow-sm",
                             activeChat?.id === chat.id
-                                ? "bg-blue-600 text-white shadow-blue-500/20"
+                                ? "bg-[hsl(var(--primary))] text-white shadow-blue-500/20"
                                 : "bg-slate-800 text-white dark:bg-white/10 group-hover:bg-slate-700"
                             )}>
                             {chat.name.charAt(0)}
@@ -249,7 +249,7 @@ export default function InboxMessagesPage() {
                             <div className="mb-0.5 flex items-baseline justify-between">
                                 <h4 className={clsx(
                                     "truncate font-semibold",
-                                    activeChat?.id === chat.id ? "text-blue-700 dark:text-blue-400" : "text-slate-800 dark:text-slate-100"
+                                    activeChat?.id === chat.id ? "text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" : "text-slate-800 dark:text-slate-100"
                                 )}>
                                 {chat.name}
                                 </h4>
@@ -284,13 +284,13 @@ export default function InboxMessagesPage() {
 
         <main
         className={clsx(
-            'relative flex flex-1 flex-col bg-white dark:bg-[#1E1F21]',
+            'relative flex flex-1 flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21]',
             !activeChat && 'hidden items-center justify-center text-center md:flex'
         )}
         >
         {activeChat ? (
             <>
-            <header className="flex items-center gap-3 border-b border-slate-100 bg-white p-3 dark:border-white/5 dark:bg-[#1E1F21] sticky top-0 z-10 shrink-0">
+            <header className="flex items-center gap-3 border-b border-slate-100 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/5 dark:bg-[#1E1F21] sticky top-0 z-10 shrink-0">
                 <button
                 onClick={() => setActiveChat(null)}
                 className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors md:hidden bg-slate-100 dark:bg-white/5 rounded-lg"
@@ -304,7 +304,7 @@ export default function InboxMessagesPage() {
                 <h3 className="text-xs font-semibold text-slate-800 dark:text-white leading-tight">
                     {activeChat.name}
                 </h3>
-                <p className="text-[9px] font-bold uppercase tracking-wide text-blue-500 leading-tight">
+                <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] leading-tight">
                     {activeChat.channel}
                 </p>
                 </div>
@@ -327,21 +327,21 @@ export default function InboxMessagesPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="ml-auto flex max-w-[85%] md:max-w-[70%] flex-col items-end"
                     >
-                        <div className="rounded-md rounded-br-sm bg-blue-600 px-3 py-2 text-[11px] leading-relaxed font-medium text-white shadow-sm shadow-blue-500/10">
+                        <div className="rounded-md rounded-br-sm bg-[hsl(var(--primary))] px-3 py-2 text-[11px] leading-relaxed font-medium text-white shadow-sm shadow-blue-500/10">
                         {message.content}
                         </div>
                         <div className="mt-1 flex items-center gap-1 px-1">
                         <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
                             {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </span>
-                        <CheckCheck size={10} className="text-blue-500" />
+                        <CheckCheck size={10} className="text-[hsl(var(--primary))]" />
                         </div>
                     </motion.div>
                     ))
                 )}
             </div>
             
-            <footer className="border-t border-slate-100 bg-white p-3 dark:border-white/5 dark:bg-[#1E1F21] shrink-0">
+            <footer className="border-t border-slate-100 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/5 dark:bg-[#1E1F21] shrink-0">
                 <div className="mx-auto flex w-full items-center gap-2 rounded-md bg-slate-50 border border-slate-200/80 p-1 pl-3 pr-1 dark:border-white/10 dark:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-300 transition-all shadow-sm">
                 <input
                     value={inputText}
@@ -355,7 +355,7 @@ export default function InboxMessagesPage() {
                 <button
                     onClick={sendMessage}
                     disabled={!inputText.trim()}
-                    className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:hover:bg-blue-600"
+                    className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--primary))] text-white shadow-sm transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:hover:bg-[hsl(var(--primary))]"
                 >
                     <Send size={12} fill="currentColor" className="ml-0.5" />
                 </button>
@@ -364,7 +364,7 @@ export default function InboxMessagesPage() {
             </>
         ) : (
             <div className="space-y-3 flex flex-col items-center">
-            <div className="mx-auto flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-600/10 shadow-inner">
+            <div className="mx-auto flex size-8 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-600/10 shadow-inner">
                 <MessageSquare size={24} strokeWidth={2} />
             </div>
             <div className="space-y-1">
@@ -377,7 +377,7 @@ export default function InboxMessagesPage() {
             </div>
             <button 
                 onClick={() => setIsCreatingNew(true)}
-                className="mt-2 px-3 py-1.5 bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg hover:bg-blue-700 hover:shadow-md hover:shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2"
+                className="mt-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg hover:bg-[hsl(var(--primary))] hover:shadow-md hover:shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2"
             >
                 <Plus size={12} /> Nuevo Chat
             </button>

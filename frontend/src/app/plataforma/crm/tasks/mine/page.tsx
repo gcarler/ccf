@@ -27,7 +27,7 @@ interface CrmTask {
 const priorityTone: Record<string, string> = {
     'urgent': 'bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800',
     'high': 'bg-orange-100 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800',
-    'normal': 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800',
+    'normal': 'bg-blue-100 text-[hsl(var(--primary))] border-blue-200 dark:bg-blue-900/20 dark:border-blue-800',
     'low': 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
 };
 
@@ -152,7 +152,7 @@ export default function MyTasks() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="flex-1 min-w-[240px] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-md p-4 shadow-sm relative overflow-hidden group task-aura"
+                    className="flex-1 min-w-[240px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-md p-4 shadow-sm relative overflow-hidden group task-aura"
                     style={{ '--aura-color': 'rgba(244, 63, 94, 0.15)' } as any}
                 >
                     <div className="flex items-center gap-3 mb-3">
@@ -165,7 +165,7 @@ export default function MyTasks() {
             </section>
 
             {/* List View Cinematic */}
-            <section className="space-y-3 bg-white dark:bg-[#1e1f21] rounded-lg p-4 shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-50 dark:border-white/5">
+            <section className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] rounded-lg p-4 shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-50 dark:border-white/5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-lg">
                         {[
@@ -177,7 +177,7 @@ export default function MyTasks() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={clsx(
                                     "px-4 py-2 rounded-md text-[11px] font-bold uppercase tracking-wide transition-all",
-                                    activeTab === tab.id ? "bg-white dark:bg-slate-700 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                    activeTab === tab.id ? "bg-[hsl(var(--surface-1))] dark:bg-slate-700 text-[hsl(var(--primary))] shadow-sm" : "text-slate-400 hover:text-slate-600"
                                 )}
                             >
                                 {tab.label}
@@ -198,7 +198,7 @@ export default function MyTasks() {
                 <div className="rounded-md border border-slate-100 dark:border-white/5 overflow-hidden bg-slate-50/30 dark:bg-transparent">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-1.5 gap-4">
-                            <Loader2 className="animate-spin text-blue-600" size={32} />
+                            <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={32} />
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Sincronizando tareas pastorales...</p>
                         </div>
                     ) : filteredTasks.length > 0 ? (
@@ -213,7 +213,7 @@ export default function MyTasks() {
                                         <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide text-right">Estado</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-white/5 bg-white dark:bg-transparent">
+                                <tbody className="divide-y divide-slate-100 dark:divide-white/5 bg-[hsl(var(--surface-1))] dark:bg-transparent">
                                     <AnimatePresence mode="popLayout">
                                         {filteredTasks.map((task, idx) => (
                                             <motion.tr 
@@ -226,7 +226,7 @@ export default function MyTasks() {
                                             >
                                                 <td className="px-3 py-2">
                                                     <div className="flex items-center gap-4">
-                                                        <div className="size-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                                                        <div className="size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                                         <div>
                                                             <p className="text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight uppercase">{task.title}</p>
                                                             <p className="text-[10px] text-slate-400 font-bold line-clamp-1">{task.description || 'Sin descripción adicional'}</p>
@@ -235,7 +235,7 @@ export default function MyTasks() {
                                                 </td>
                                                 <td className="px-3 py-2">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
+                                                        <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-500">
                                                             <Users size={14} />
                                                         </div>
                                                         <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tight">{task.contact_name}</span>

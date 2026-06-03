@@ -34,10 +34,10 @@ export default function NewWhiteboardPage() {
             ]}
         >
             <div className="mx-auto flex h-full max-w-5xl items-center px-4 py-1.5">
-                <section className="grid w-full grid-cols-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl dark:border-white/10 dark:bg-white/5 lg:grid-cols-[1fr_0.9fr]">
+                <section className="grid w-full grid-cols-1 overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] shadow-2xl dark:border-white/10 dark:bg-white/5 lg:grid-cols-[1fr_0.9fr]">
                     <div className="space-y-3 p-4 lg:p-4">
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Lienzo colaborativo</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Lienzo colaborativo</p>
                             <h1 className="mt-2 text-lg font-bold tracking-tight text-slate-950 dark:text-white">Crear pizarra</h1>
                             <p className="mt-3 max-w-xl text-sm font-medium leading-6 text-slate-500">
                                 Activa un espacio de trabajo para mapas, diagramas, lluvia de ideas y planeacion asistida.
@@ -67,7 +67,7 @@ export default function NewWhiteboardPage() {
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={handleCreate}
-                                className="rounded-lg bg-blue-600 px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-white shadow-xl shadow-blue-500/20"
+                                className="rounded-lg bg-[hsl(var(--primary))] px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-white shadow-xl shadow-blue-500/20"
                             >
                                 Crear pizarra
                             </button>

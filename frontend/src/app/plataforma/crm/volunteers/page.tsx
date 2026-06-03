@@ -163,7 +163,7 @@ export default function VolunteersPage() {
                         </div>
                         <button
                             onClick={() => setShowAddForm(true)}
-                            className="flex items-center gap-2 px-4 py-1.5 bg-white text-blue-700 rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 shrink-0"
+                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 shrink-0"
                         >
                             <Plus size={16} /> Registrar Servidor
                         </button>
@@ -173,12 +173,12 @@ export default function VolunteersPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-3 -mt-3 mb-3 relative z-10">
                     {[
-                        { label: 'Total Servidores', value: stats.total, icon: Heart, bg: 'bg-blue-600' },
-                        { label: 'Equipos Activos', value: stats.teams, icon: Users, bg: 'bg-blue-500' },
+                        { label: 'Total Servidores', value: stats.total, icon: Heart, bg: 'bg-[hsl(var(--primary))]' },
+                        { label: 'Equipos Activos', value: stats.teams, icon: Users, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Disponibles', value: stats.active, icon: CheckCircle2, bg: 'bg-emerald-500' },
                         { label: 'Líderes de Equipo', value: stats.leaders, icon: Shield, bg: 'bg-amber-500' },
                     ].map(s => (
-                        <div key={s.label} className="bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
+                        <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
                             <div className={`inline-flex size-8 rounded-md ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
                                 <s.icon size={18} />
                             </div>
@@ -197,12 +197,12 @@ export default function VolunteersPage() {
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
                                 placeholder="Buscar servidor, equipo o rol..."
-                                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all placeholder:text-slate-400"
+                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all placeholder:text-slate-400"
                             />
                         </div>
                         <button
                             onClick={() => setShowFilters(p => !p)}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all border ${showFilters ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-600' : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-slate-300'}`}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all border ${showFilters ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-slate-300'}`}
                         >
                             <Filter size={14} /> Equipos
                         </button>
@@ -212,14 +212,14 @@ export default function VolunteersPage() {
                     <AnimatePresence>
                         {showFilters && (
                             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                                <div className="bg-white dark:bg-[#252528] rounded-lg border border-slate-200 dark:border-white/5 p-4">
+                                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-slate-200 dark:border-white/5 p-4">
                                     <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Filtrar por Equipo</p>
                                     <div className="flex flex-wrap gap-2">
                                         {['Todos', ...TEAMS].map(t => (
                                             <button
                                                 key={t}
                                                 onClick={() => setTeamFilter(t)}
-                                                className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all ${teamFilter === t ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10'}`}
+                                                className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all ${teamFilter === t ? 'bg-[hsl(var(--primary))] text-white shadow-md' : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10'}`}
                                             >
                                                 {t}
                                             </button>
@@ -233,7 +233,7 @@ export default function VolunteersPage() {
                     {/* Add Form */}
                     <AnimatePresence>
                         {showAddForm && (
-                            <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="bg-white dark:bg-[#252528] rounded-lg border border-blue-200 dark:border-blue-700/30 p-4 shadow-xl">
+                            <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-blue-200 dark:border-blue-700/30 p-4 shadow-xl">
                                 <div className="flex items-center justify-between mb-5">
                                     <h3 className="text-xs font-bold uppercase tracking-wide text-slate-800 dark:text-white">Registrar Servidor</h3>
                                     <button onClick={() => setShowAddForm(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-colors"><X size={16} /></button>
@@ -241,28 +241,28 @@ export default function VolunteersPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Nombre Completo *</label>
-                                        <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre del servidor..." className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300" />
+                                        <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre del servidor..." className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300" />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Equipo</label>
-                                        <select value={form.team} onChange={e => setForm(p => ({ ...p, team: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
+                                        <select value={form.team} onChange={e => setForm(p => ({ ...p, team: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
                                             {TEAMS.map(t => <option key={t}>{t}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Rol en el Equipo</label>
-                                        <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
+                                        <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
                                             {VOLUNTEER_ROLES.map(r => <option key={r}>{r}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Notas (opcional)</label>
-                                        <input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Habilidades, disponibilidad..." className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300" />
+                                        <input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Habilidades, disponibilidad..." className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300" />
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-3 mt-5">
                                     <button onClick={() => setShowAddForm(false)} className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 bg-slate-100 dark:bg-white/5 rounded-md hover:bg-slate-200 transition-colors">Cancelar</button>
-                                    <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-60">
+                                    <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all active:scale-95 disabled:opacity-60">
                                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                                         {saving ? 'Guardando...' : 'Registrar'}
                                     </button>
@@ -289,7 +289,7 @@ export default function VolunteersPage() {
                                 {query ? `No se encontraron servidores con "${query}"` : 'Registra el primer servidor de la comunidad.'}
                             </p>
                             {!query && (
-                                <button onClick={() => setShowAddForm(true)} className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg hover:bg-blue-700 transition-all active:scale-95">
+                                <button onClick={() => setShowAddForm(true)} className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] transition-all active:scale-95">
                                     <Plus size={14} /> Registrar Primer Servidor
                                 </button>
                             )}
@@ -317,7 +317,7 @@ export default function VolunteersPage() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: idx * 0.03 }}
                                                 onClick={() => router.push(`/plataforma/crm/volunteers/${v.id}`)}
-                                                className="group bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer overflow-hidden"
+                                                className="group bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer overflow-hidden"
                                             >
                                                 <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${getTeamColor(team)} opacity-0 group-hover:opacity-100 transition-opacity`} />
 
@@ -333,7 +333,7 @@ export default function VolunteersPage() {
                                                     </div>
                                                 </div>
 
-                                                <h4 className="text-xs font-semibold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                <h4 className="text-xs font-semibold text-slate-900 dark:text-white mb-1 group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors">
                                                     {v.name || 'Sin nombre'}
                                                 </h4>
 
@@ -360,7 +360,7 @@ export default function VolunteersPage() {
                                                 )}
 
                                                 <div className="flex justify-end mt-2">
-                                                    <ChevronRight size={14} className="text-slate-200 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                                                    <ChevronRight size={14} className="text-slate-200 group-hover:text-[hsl(var(--primary))] group-hover:translate-x-1 transition-all" />
                                                 </div>
                                             </motion.div>
                                         ))}

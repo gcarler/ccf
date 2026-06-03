@@ -201,7 +201,7 @@ export default function MessagesPage() {
     const conversationSidebar = (
         <div className="flex flex-col h-full bg-slate-50/30 dark:bg-[#1a1b1d] border-r border-slate-100 dark:border-white/[0.05]">
             {/* Header */}
-            <div className="h-10 px-3 flex items-center justify-between shrink-0 border-b border-slate-100 dark:border-white/[0.05] bg-white dark:bg-[#141517]">
+            <div className="h-10 px-3 flex items-center justify-between shrink-0 border-b border-slate-100 dark:border-white/[0.05] bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
                 <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                         <MessageCircle size={12} />
@@ -215,7 +215,7 @@ export default function MessagesPage() {
                 </div>
                 <button
                     onClick={openNewConvDrawer}
-                    className="size-6 rounded-md flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                    className="size-6 rounded-md flex items-center justify-center text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
                     title="Nueva conversación"
                 >
                     <Plus size={13} />
@@ -231,7 +231,7 @@ export default function MessagesPage() {
                         value={conversationFilter}
                         onChange={(e) => setConversationFilter(e.target.value)}
                         placeholder="Buscar..."
-                        className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
+                        className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
                     />
                 </div>
             </div>
@@ -254,7 +254,7 @@ export default function MessagesPage() {
                         {!conversationFilter && (
                             <button
                                 onClick={openNewConvDrawer}
-                                className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+                                className="flex items-center gap-1.5 text-[11px] font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
                             >
                                 <UserPlus size={12} /> Iniciar chat
                             </button>
@@ -271,7 +271,7 @@ export default function MessagesPage() {
                                 className={clsx(
                                     "w-full text-left flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all group mb-0.5",
                                     isActive
-                                        ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600"
+                                        ? "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]"
                                         : "hover:bg-slate-100/60 dark:hover:bg-white/[0.04]"
                                 )}
                             >
@@ -280,7 +280,7 @@ export default function MessagesPage() {
                                     <div className="flex items-center justify-between gap-1">
                                         <p className={clsx(
                                             "text-[12px] font-semibold truncate",
-                                            isActive ? "text-blue-700 dark:text-blue-400" : "text-slate-800 dark:text-slate-200"
+                                            isActive ? "text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" : "text-slate-800 dark:text-slate-200"
                                         )}>
                                             {other?.username || "Usuario"}
                                         </p>
@@ -295,7 +295,7 @@ export default function MessagesPage() {
                                             {conv.last_message_content || "Sin mensajes"}
                                         </p>
                                         {conv.unread_count > 0 && (
-                                            <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-blue-500 text-white text-[9px] font-bold shrink-0">
+                                            <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-[hsl(var(--primary))] text-white text-[9px] font-bold shrink-0">
                                                 {conv.unread_count}
                                             </span>
                                         )}
@@ -315,7 +315,7 @@ export default function MessagesPage() {
             customSidebar={conversationSidebar}
             sidebarSections={[]}
         >
-            <div className="flex flex-col h-full bg-white dark:bg-[#141517]">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
                 {!activeConv ? (
                     /* ── Empty state ── */
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-6">
@@ -328,7 +328,7 @@ export default function MessagesPage() {
                         </div>
                         <button
                             onClick={openNewConvDrawer}
-                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wide bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition-all shadow-sm shadow-blue-500/20 mt-1"
+                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wide bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all shadow-sm shadow-blue-500/20 mt-1"
                         >
                             <Plus size={13} /> Nueva conversación
                         </button>
@@ -336,7 +336,7 @@ export default function MessagesPage() {
                 ) : (
                     <>
                         {/* ── Thread header ── */}
-                        <div className="h-10 px-3 md:px-4 flex items-center gap-3 shrink-0 border-b border-slate-100 dark:border-white/[0.05] bg-white dark:bg-[#141517]">
+                        <div className="h-10 px-3 md:px-4 flex items-center gap-3 shrink-0 border-b border-slate-100 dark:border-white/[0.05] bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
                             <button
                                 onClick={() => setSidebarOpen(true)}
                                 className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"
@@ -396,20 +396,20 @@ export default function MessagesPage() {
                                                 <div className={clsx(
                                                     "px-3 md:px-3.5 py-2 rounded-2xl text-[13px] md:text-sm leading-relaxed",
                                                     isOwn
-                                                        ? "bg-blue-600 text-white rounded-br-md"
-                                                        : "bg-white dark:bg-white/[0.07] border border-slate-100 dark:border-white/[0.06] text-slate-800 dark:text-slate-100 rounded-bl-md shadow-sm"
+                                                        ? "bg-[hsl(var(--primary))] text-white rounded-br-md"
+                                                        : "bg-[hsl(var(--bg-primary))] dark:bg-white/[0.07] border border-slate-100 dark:border-white/[0.06] text-slate-800 dark:text-slate-100 rounded-bl-md shadow-sm"
                                                 )}>
                                                     <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                                                 </div>
                                                 <div className={clsx("flex items-center gap-1", isOwn ? "justify-end pr-1" : "pl-1")}>
                                                     <span className={clsx(
                                                         "text-[10px]",
-                                                        isOwn ? "text-blue-400" : "text-slate-400"
+                                                        isOwn ? "text-[hsl(var(--primary))]" : "text-slate-400"
                                                     )}>
                                                         {new Date(msg.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
                                                     </span>
                                                     {isOwn && (
-                                                        <span className="text-[10px] text-blue-400">{msg.is_read ? "✓✓" : "✓"}</span>
+                                                        <span className="text-[10px] text-[hsl(var(--primary))]">{msg.is_read ? "✓✓" : "✓"}</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -420,7 +420,7 @@ export default function MessagesPage() {
                         </div>
 
                         {/* ── Input bar ── */}
-                        <div className="border-t border-slate-100 dark:border-white/[0.05] p-2 md:p-3 bg-white dark:bg-[#141517]">
+                        <div className="border-t border-slate-100 dark:border-white/[0.05] p-2 md:p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
                             <div className="flex items-center gap-2">
                                 <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
                                     <input
@@ -436,7 +436,7 @@ export default function MessagesPage() {
                                 <button
                                     onClick={handleSend}
                                     disabled={!input.trim()}
-                                    className="size-9 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shadow-blue-500/20 shrink-0"
+                                    className="size-9 rounded-xl bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:bg-[hsl(var(--primary))] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shadow-blue-500/20 shrink-0"
                                 >
                                     <Send size={15} />
                                 </button>
@@ -496,7 +496,7 @@ export default function MessagesPage() {
                                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{u.username}</p>
                                         <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
                                     </div>
-                                    {creatingConv && <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />}
+                                    {creatingConv && <Loader2 size={14} className="animate-spin text-[hsl(var(--primary))] shrink-0" />}
                                 </button>
                             ))
                         ) : (

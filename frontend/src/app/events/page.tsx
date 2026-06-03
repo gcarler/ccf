@@ -82,7 +82,7 @@ export default function EventsPage() {
                                     </div>
                                     {/* Progress bar */}
                                     <div className="mt-3 w-full bg-white/20 rounded-full h-1.5">
-                                        <div className="bg-white rounded-full h-1.5 transition-all" style={{ width: `${pct(ev.attendees, ev.capacity)}%` }} />
+                                        <div className="bg-[hsl(var(--bg-primary))] rounded-full h-1.5 transition-all" style={{ width: `${pct(ev.attendees, ev.capacity)}%` }} />
                                     </div>
                                     <p className="text-white/50 text-[9px] mt-1">{ev.attendees}/{ev.capacity} inscritos</p>
                                 </div>

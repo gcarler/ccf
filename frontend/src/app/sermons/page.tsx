@@ -38,11 +38,11 @@ export default function SermonsPage() {
             <section className="relative py-1.5 px-3 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 to-transparent" />
                 <div className="max-w-6xl mx-auto relative text-center">
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 text-blue-400 text-[11px] font-bold uppercase tracking-wide mb-3">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 text-[hsl(var(--primary))] text-[11px] font-bold uppercase tracking-wide mb-3">
                         <Mic size={11} /> Prédicas & Mensajes
                     </span>
                     <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
-                        La Palabra que<br /><span className="text-blue-400">Transforma Vidas</span>
+                        La Palabra que<br /><span className="text-[hsl(var(--primary))]">Transforma Vidas</span>
                     </h1>
                     <p className="text-slate-400 text-lg mb-3 max-w-xl mx-auto">
                         Accede a todas nuestras prédicas, series y mensajes pastorales. Disponibles cuando los necesitas.
@@ -80,7 +80,7 @@ export default function SermonsPage() {
                     <Filter size={12} className="text-slate-600 shrink-0" />
                     {CATEGORIES.map(c => (
                         <button key={c} onClick={() => setCat(c)}
-                            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${cat === c ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}>
+                            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${cat === c ? 'bg-[hsl(var(--primary))] text-white' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}>
                             {c}
                         </button>
                     ))}
@@ -91,11 +91,11 @@ export default function SermonsPage() {
                     {filtered.map((s, i) => (
                         <motion.div key={s.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
                             className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 rounded-lg p-3 flex items-center gap-4 cursor-pointer group transition-all">
-                            <div className="size-7 rounded-lg bg-blue-600/20 flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                            <div className="size-7 rounded-lg bg-blue-600/20 flex items-center justify-center text-[hsl(var(--primary))] shrink-0 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
                                 <Play size={22} className="ml-0.5" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-bold text-white truncate group-hover:text-blue-400 transition-colors">{s.title}</p>
+                                <p className="text-[13px] font-bold text-white truncate group-hover:text-[hsl(var(--primary))] transition-colors">{s.title}</p>
                                 <div className="flex items-center gap-3 mt-1">
                                     <span className="text-[11px] text-slate-400">{s.speaker}</span>
                                     <span className="text-slate-600">·</span>

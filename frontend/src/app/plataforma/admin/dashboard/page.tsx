@@ -105,7 +105,7 @@ export default function AdminDashboard() {
                     </section>
 
                     {/* Interactive Chart Section */}
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 group">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 group">
                         <div className="flex justify-between items-center">
                             <div>
                                 <h3 className="text-xl font-bold tracking-tight mb-1">Tendencia de Crecimiento</h3>
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-md border border-slate-200 dark:border-white/10">
                                 {['7D', '30D', '90D'].map(p => (
-                                    <button key={p} className={clsx("px-4 py-1.5 rounded-lg font-semibold transition-all", p === '7D' ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm" : "text-slate-500")}>{p}</button>
+                                    <button key={p} className={clsx("px-4 py-1.5 rounded-lg font-semibold transition-all", p === '7D' ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-sm" : "text-slate-500")}>{p}</button>
                                 ))}
                             </div>
                         </div>
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
                                         initial={{ height: 0 }} animate={{ height: `${h}%` }}
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative",
-                                            i === 6 ? "bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.4)]" : "bg-slate-200 dark:bg-white/10 opacity-60 group-hover/bar:opacity-100"
+                                            i === 6 ? "bg-[hsl(var(--primary))] shadow-[0_0_20px_rgba(37,99,235,0.4)]" : "bg-slate-200 dark:bg-white/10 opacity-60 group-hover/bar:opacity-100"
                                         )}
                                     >
                                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity bg-slate-900 text-white px-2 py-1 rounded font-semibold">
@@ -141,15 +141,15 @@ export default function AdminDashboard() {
                     <section className="space-y-3">
                         <div className="flex justify-between items-center px-4">
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Actividad Reciente</h3>
-                            <button className="font-semibold text-blue-600 uppercase tracking-wide hover:underline">Ver Todo</button>
+                            <button className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide hover:underline">Ver Todo</button>
                         </div>
                         <div className="space-y-4">
                             {[
-                                { title: 'Nueva Inscripción', desc: 'Ricardo Mendez se unió a "Fundamentos de la Fe"', time: 'Hace 5 min', icon: UserPlus, color: 'text-blue-500', bg: 'bg-blue-50' },
+                                { title: 'Nueva Inscripción', desc: 'Ricardo Mendez se unió a "Fundamentos de la Fe"', time: 'Hace 5 min', icon: UserPlus, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50' },
                                 { title: 'Donación Recibida', desc: 'Ofrenda especial pro-construcción confirmada', time: 'Hace 12 min', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' },
                                 { title: 'Examen Completado', desc: 'Elena Rodriguez aprobó "Historia de la Iglesia"', time: 'Hace 45 min', icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50' },
                             ].map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-3 p-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg hover:border-blue-500/20 transition-all group cursor-pointer shadow-sm hover:shadow-md">
+                                <div key={idx} className="flex items-center gap-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg hover:border-blue-500/20 transition-all group cursor-pointer shadow-sm hover:shadow-md">
                                     <div className={clsx("size-7 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform", item.bg, "dark:bg-white/10", item.color)}>
                                         <item.icon size={28} />
                                     </div>
@@ -159,7 +159,7 @@ export default function AdminDashboard() {
                                     </div>
                                     <div className="text-right shrink-0">
                                         <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{item.time}</p>
-                                        <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-600 transition-colors inline-block" />
+                                        <ChevronRight size={18} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors inline-block" />
                                     </div>
                                 </div>
                             ))}
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
                     {/* ACADEMY PERFORMANCE SECTION - MVP-006 */}
                     <section className="pt-10 space-y-3">
                          <div className="flex items-center gap-4 px-4">
-                            <div className="size-10 rounded-md bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                            <div className="size-10 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
                                 <Target size={20} />
                             </div>
                             <div>
@@ -198,10 +198,10 @@ export default function AdminDashboard() {
                              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3 px-2">Cursos más Populares</h4>
                              <div className="space-y-4">
                                 {academy?.top_courses.map((course, i) => (
-                                    <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 group hover:border-blue-500/20 transition-all">
+                                    <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 group hover:border-blue-500/20 transition-all">
                                         <div className="flex items-center gap-4">
                                             <span className="font-semibold text-slate-300">0{i+1}</span>
-                                            <span className="text-sm font-semibold group-hover:text-blue-600 transition-colors">{course.title}</span>
+                                            <span className="text-sm font-semibold group-hover:text-[hsl(var(--primary))] transition-colors">{course.title}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-semibold">{course.count}</span>
@@ -221,8 +221,8 @@ export default function AdminDashboard() {
                         
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
-                                <PieChart size={20} className="text-blue-400" />
-                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-blue-400">Distribución de Impacto</h4>
+                                <PieChart size={20} className="text-[hsl(var(--primary))]" />
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Distribución de Impacto</h4>
                             </div>
                             <div className="relative size-56 mx-auto mb-3">
                                 <svg className="size-full -rotate-90 drop-shadow-2xl" viewBox="0 0 36 36">
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
                             <div className="space-y-4">
-                                <ProgressItem label="Inscripciones" value="75%" color="bg-blue-600" />
+                                <ProgressItem label="Inscripciones" value="75%" color="bg-[hsl(var(--primary))]" />
                                 <ProgressItem label="Graduaciones" value="25%" color="bg-slate-700" />
                             </div>
                         </div>
@@ -244,7 +244,7 @@ export default function AdminDashboard() {
                         <div className="relative z-10 pt-10 border-t border-white/5">
                             <div className="p-3 bg-white/5 rounded-lg border border-white/10 space-y-4">
                                 <div className="flex items-center gap-3">
-                                    <Sparkles size={18} className="text-blue-400" />
+                                    <Sparkles size={18} className="text-[hsl(var(--primary))]" />
                                     <h5 className="text-[10px] font-semibold uppercase tracking-wide">IA Insights</h5>
                                 </div>
                                 <p className="text-[11px] font-bold text-slate-400 leading-relaxed uppercase tracking-wider">
@@ -253,12 +253,12 @@ export default function AdminDashboard() {
                             </div>
                         </div>
 
-                        <button className="relative z-10 w-full py-2 bg-white text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:scale-[1.02] transition-all active:scale-95">
+                        <button className="relative z-10 w-full py-2 bg-[hsl(var(--bg-primary))] text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:scale-[1.02] transition-all active:scale-95">
                             Generar Auditoría
                         </button>
                     </div>
 
-                    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between">
                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Próximos Eventos</h4>
                             <Calendar size={18} className="text-slate-300" />
@@ -269,12 +269,12 @@ export default function AdminDashboard() {
                                 { day: '22', month: 'MAR', title: 'Asamblea de Líderes', time: '06:30 PM' },
                             ].map((event, i) => (
                                 <div key={i} className="flex gap-3 items-center group cursor-pointer">
-                                    <div className="flex flex-col items-center justify-center size-7 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                    <div className="flex flex-col items-center justify-center size-7 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
                                         <span className="text-lg font-bold leading-none">{event.day}</span>
                                         <span className="text-[8px] font-semibold uppercase">{event.month}</span>
                                     </div>
                                     <div>
-                                        <h5 className="font-semibold text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors">{event.title}</h5>
+                                        <h5 className="font-semibold text-slate-800 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">{event.title}</h5>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{event.time}</p>
                                     </div>
                                 </div>
@@ -291,13 +291,13 @@ function ModalityCard({ title, stats, icon: Icon, color }: any) {
     if (!stats) return <div className="h-48 bg-slate-50 dark:bg-white/5 rounded-lg animate-pulse" />;
     
     const colorMap: any = {
-        blue: { text: 'text-blue-600', bg: 'bg-blue-50', bar: 'bg-blue-600', border: 'border-blue-100' },
+        blue: { text: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50', bar: 'bg-[hsl(var(--primary))]', border: 'border-blue-100' },
         amber: { text: 'text-amber-600', bg: 'bg-amber-50', bar: 'bg-amber-600', border: 'border-amber-100' }
     };
     const c = colorMap[color];
 
     return (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-sm group hover:shadow-xl transition-all">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-sm group hover:shadow-xl transition-all">
             <div className="flex justify-between items-start">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", c.bg, "dark:bg-white/10", c.text)}>
                     <Icon size={24} />
@@ -340,12 +340,12 @@ function ModalityCard({ title, stats, icon: Icon, color }: any) {
 
 function StatCard({ label, value, icon: Icon, trend, color }: any) {
     const colors: any = {
-        blue: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
+        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20',
         rose: 'text-rose-600 bg-rose-50 dark:bg-rose-900/20',
         emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
     };
     return (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
             <div className="absolute top-0 right-0 -mr-6 -mt-3 size-10 bg-slate-50 dark:bg-white/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-700" />
             <div className="relative z-10 space-y-3">
                 <div className="flex justify-between items-center">

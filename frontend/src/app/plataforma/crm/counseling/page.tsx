@@ -195,7 +195,7 @@ export default function CounselingPage() {
                 <input
                     type="text"
                     placeholder="Buscar por tema..."
-                    className="w-full bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-md py-1.5 pl-12 pr-4 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-all"
+                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-md py-1.5 pl-12 pr-4 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-all"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -220,7 +220,7 @@ export default function CounselingPage() {
                 {[
                     { label: 'Sesiones Pendientes', val: sessions.filter(s => s.status === 'Pendiente').length, color: 'text-amber-500', bg: 'bg-amber-500/10' },
                     { label: 'Completadas', val: sessions.filter(s => s.status === 'Realizada').length, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-                    { label: 'Total Histórico', val: sessions.length, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                    { label: 'Total Histórico', val: sessions.length, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-500/10' },
                 ].map((stat, i) => (
                     <div key={i} className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 p-4 rounded-md flex items-center justify-between">
                         <div>
@@ -245,7 +245,7 @@ export default function CounselingPage() {
                         <div 
                             key={session.id} 
                             onClick={() => openSessionDetail(session)}
-                            className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 hover:border-sky-500/40 hover:shadow-2xl hover:shadow-sky-500/5 transition-all group relative overflow-hidden cursor-pointer"
+                            className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 hover:border-sky-500/40 hover:shadow-2xl hover:shadow-sky-500/5 transition-all group relative overflow-hidden cursor-pointer"
                         >
                             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity text-sky-500">
                                 <MessageSquare size={80} />
@@ -257,7 +257,7 @@ export default function CounselingPage() {
                                         {session.status}
                                     </span>
                                     {(session as any).priority_level && (
-                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-600 text-white animate-pulse' : (session as any).priority_level === 'ALTA' ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'}`}>
+                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-600 text-white animate-pulse' : (session as any).priority_level === 'ALTA' ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
                                             <ShieldCheck size={10} /> {(session as any).priority_level}
                                         </span>
                                     )}
@@ -304,7 +304,7 @@ export default function CounselingPage() {
         )}
 
         {viewType === 'list' && (
-            <div className="bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
+            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
                 <div className="divide-y divide-slate-100 dark:divide-white/5">
                     {filteredSessions.map(session => (
                         <div 
@@ -319,7 +319,7 @@ export default function CounselingPage() {
                                     <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500 w-20">{session.status}</span>
                                 </div>
                                 {(session as any).priority_level && (
-                                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-500 text-white' : (session as any).priority_level === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'}`}>
+                                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-500 text-white' : (session as any).priority_level === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
                                         {(session as any).priority_level}
                                     </span>
                                 )}
@@ -347,15 +347,15 @@ export default function CounselingPage() {
 
                             {/* Actions */}
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 sm:static">
-                                <button className="p-2 text-slate-400 hover:text-sky-500 bg-white dark:bg-black rounded-lg shadow-sm border border-slate-200 dark:border-white/10 transition-all">
+                                <button className="p-2 text-slate-400 hover:text-sky-500 bg-[hsl(var(--surface-1))] dark:bg-black rounded-lg shadow-sm border border-slate-200 dark:border-white/10 transition-all">
                                     <MessageSquare size={14} />
                                 </button>
                                 {session.status === 'Pendiente' && (
                                     <>
-                                        <button onClick={() => handleUpdateStatus(session.id, 'Realizada')} aria-label="Completar" className="p-2 text-emerald-500 hover:bg-emerald-500 hover:text-white bg-white dark:bg-black rounded-lg shadow-sm border border-slate-200 dark:border-white/10 transition-all">
+                                        <button onClick={() => handleUpdateStatus(session.id, 'Realizada')} aria-label="Completar" className="p-2 text-emerald-500 hover:bg-emerald-500 hover:text-white bg-[hsl(var(--surface-1))] dark:bg-black rounded-lg shadow-sm border border-slate-200 dark:border-white/10 transition-all">
                                             <CheckCircle2 size={14} />
                                         </button>
-                                        <button onClick={() => handleUpdateStatus(session.id, 'Cancelada')} aria-label="Cancelar" className="p-2 text-rose-500 hover:bg-rose-500 hover:text-white bg-white dark:bg-black rounded-lg shadow-sm border border-slate-200 dark:border-white/10 transition-all">
+                                        <button onClick={() => handleUpdateStatus(session.id, 'Cancelada')} aria-label="Cancelar" className="p-2 text-rose-500 hover:bg-rose-500 hover:text-white bg-[hsl(var(--surface-1))] dark:bg-black rounded-lg shadow-sm border border-slate-200 dark:border-white/10 transition-all">
                                             <XCircle size={14} />
                                         </button>
                                     </>
@@ -419,7 +419,7 @@ export default function CounselingPage() {
                             const prior = (session as any).priority_level;
                             if (!prior) return <span className="text-slate-400">—</span>;
                             return (
-                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 w-max ${prior === 'URGENTE' ? 'bg-rose-500 text-white' : prior === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'}`}>
+                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 w-max ${prior === 'URGENTE' ? 'bg-rose-500 text-white' : prior === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
                                     {prior}
                                 </span>
                             );
@@ -467,11 +467,11 @@ export default function CounselingPage() {
                         </div>
                         <div className="p-4 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
                             {filteredSessions.filter(s => s.status === status).map(session => (
-                                <div key={session.id} onClick={() => openSessionDetail(session)} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1A1A] p-3 space-y-4 shadow-sm hover:shadow-xl hover:shadow-sky-500/5 hover:border-sky-500/40 transition-all duration-300 group relative overflow-hidden flex flex-col cursor-pointer">
+                                <div key={session.id} onClick={() => openSessionDetail(session)} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#1A1A1A] p-3 space-y-4 shadow-sm hover:shadow-xl hover:shadow-sky-500/5 hover:border-sky-500/40 transition-all duration-300 group relative overflow-hidden flex flex-col cursor-pointer">
                                     <div className="flex justify-between items-start">
                                         <div className="flex gap-1.5 flex-wrap">
                                             {(session as any).priority_level && (
-                                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-500 text-white' : (session as any).priority_level === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'}`}>
+                                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-500 text-white' : (session as any).priority_level === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
                                                     {(session as any).priority_level}
                                                 </span>
                                             )}
@@ -512,7 +512,7 @@ export default function CounselingPage() {
         )}
 
         {viewType === 'calendar' && (
-            <div className="space-y-3 bg-white dark:bg-[#1E1F21] p-4 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+            <div className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] p-4 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                     <Calendar size={200} />
                 </div>
@@ -568,7 +568,7 @@ export default function CounselingPage() {
         )}
 
         {viewType === 'gantt' && (
-            <div className="bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/10 p-4 shadow-sm">
+            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/10 p-4 shadow-sm">
                 <div className="mb-3 flex items-center justify-between">
                     <div>
                         <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Timeline de Consolidación</h3>
@@ -608,9 +608,9 @@ export default function CounselingPage() {
 
         {viewType === 'wiki' && (
             <div className="flex flex-col h-[75vh] bg-slate-50 dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
-                <div className="flex items-center justify-between p-4 px-4 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-[#1A1A1A]">
+                <div className="flex items-center justify-between p-4 px-4 border-b border-slate-200 dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-[#1A1A1A]">
                     <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                        <div className="size-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-[hsl(var(--primary))]">
                             <BookOpen size={16} />
                         </div>
                         <div>
@@ -623,7 +623,7 @@ export default function CounselingPage() {
                         <button className="px-3 py-1.5 bg-sky-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-sky-500/20 hover:bg-sky-500 transition-colors">Exportar</button>
                     </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 md:p-4 lg:p-4 custom-scrollbar bg-white dark:bg-transparent">
+                <div className="flex-1 overflow-y-auto p-4 md:p-4 lg:p-4 custom-scrollbar bg-[hsl(var(--surface-1))] dark:bg-transparent">
                     <div className="max-w-3xl mx-auto">
                         <textarea
                             value={wikiNotes}
@@ -669,7 +669,7 @@ export default function CounselingPage() {
                     <div className="relative">
                         <select
                             required
-                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold appearance-none"
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold appearance-none"
                             value={newSession.persona_id}
                             onChange={(e) => setNewSession({ ...newSession, persona_id: e.target.value })}
                         >
@@ -686,7 +686,7 @@ export default function CounselingPage() {
                     <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Tema de la Sesión</label>
                     <input
                         type="text"
-                        className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold"
+                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold"
                         placeholder="Ej: Orientación Familiar, Fortaleza..."
                         value={newSession.topic}
                         onChange={(e) => setNewSession({ ...newSession, topic: e.target.value })}
@@ -696,7 +696,7 @@ export default function CounselingPage() {
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Notas Iniciales</label>
                     <textarea
-                        className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold min-h-12 resize-none"
+                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold min-h-12 resize-none"
                         placeholder="Describe brevemente el caso..."
                         value={newSession.notes}
                         onChange={(e) => setNewSession({ ...newSession, notes: e.target.value })}
@@ -708,7 +708,7 @@ export default function CounselingPage() {
                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Fecha y Hora</label>
                         <input
                             type="datetime-local"
-                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold"
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold"
                             style={{ colorScheme: theme === 'night' ? 'dark' : 'light' }}
                             value={newSession.scheduled_at}
                             onChange={(e) => setNewSession({ ...newSession, scheduled_at: e.target.value })}
@@ -718,7 +718,7 @@ export default function CounselingPage() {
                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Duración</label>
                         <div className="relative">
                             <select
-                                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold appearance-none"
+                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold appearance-none"
                                 value={newSession.duration_minutes}
                                 onChange={(e) => setNewSession({ ...newSession, duration_minutes: parseInt(e.target.value) })}
                             >

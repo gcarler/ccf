@@ -105,7 +105,7 @@ export default function CommentModeration() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0a0f16] font-display overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] font-display overflow-hidden">
             <style jsx global>{`
                 .comment-aura {
                     position: relative;
@@ -129,7 +129,7 @@ export default function CommentModeration() {
                 breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Moderación de Comunidad', icon: MessageSquare }]}
                 viewType={viewType} setViewType={setViewType} availableViews={COMMENT_VIEWS}
                 rightActions={
-                    <button className="p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-blue-600 relative active:scale-95 transition-all">
+                    <button className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[hsl(var(--primary))] relative active:scale-95 transition-all">
                         <Bell size={20} />
                         <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-[#0a0f16]"></span>
                     </button>
@@ -142,11 +142,11 @@ export default function CommentModeration() {
                         key={f} onClick={() => setActiveFilter(f)}
                         className={clsx(
                             "px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all relative border-b-2 shrink-0",
-                            activeFilter === f ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600"
+                            activeFilter === f ? "text-[hsl(var(--primary))] border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600"
                         )}
                     >
                         {f}
-                        {activeFilter === f && <motion.div layoutId="mod-tab" className="absolute bottom-[-2px] left-0 right-0 h-1 bg-blue-600 rounded-t-full shadow-[0_0_15px_rgba(37,99,235,0.4)]" />}
+                        {activeFilter === f && <motion.div layoutId="mod-tab" className="absolute bottom-[-2px] left-0 right-0 h-1 bg-[hsl(var(--primary))] rounded-t-full shadow-[0_0_15px_rgba(37,99,235,0.4)]" />}
                     </button>
                 ))}
             </div>
@@ -159,20 +159,20 @@ export default function CommentModeration() {
                         <div className="space-y-4">
                             <motion.div 
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
                             >
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Moderación Activo
                             </motion.div>
                             <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
-                                Centro de <span className="text-blue-600 italic">Interacción.</span>
+                                Centro de <span className="text-[hsl(var(--primary))] italic">Interacción.</span>
                             </h1>
                         </div>
                         <div className="relative group w-full md:w-72">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[hsl(var(--primary))] transition-colors" size={18} />
                             <input 
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-4 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+                                className="w-full pl-12 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
                                 placeholder="Filtrar por autor o contenido..."
                             />
                         </div>
@@ -181,10 +181,10 @@ export default function CommentModeration() {
                     <AnimatePresence mode="wait">
                         {loading ? (
                             <div className="py-1.5 flex flex-col items-center justify-center gap-3 text-slate-400 font-semibold uppercase tracking-wide animate-pulse">
-                                <Loader2 className="animate-spin text-blue-600" size={48} strokeWidth={1.5} /> Sincronizando Comentarios...
+                                <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} strokeWidth={1.5} /> Sincronizando Comentarios...
                             </div>
                         ) : viewType === 'table' ? (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                                 <table className="w-full text-left text-sm">
                                     <thead className="border-b border-slate-100 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:border-white/10">
                                         <tr><th className="px-3 py-3">Autor</th><th className="px-3 py-3">Contexto</th><th className="px-3 py-3">Tipo</th><th className="px-3 py-3">Fecha</th><th className="px-3 py-3" /></tr>
@@ -205,10 +205,10 @@ export default function CommentModeration() {
                         ) : viewType === 'grid' ? (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 {filteredComments.map((comment) => (
-                                    <article key={comment.id} className="rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+                                    <article key={comment.id} className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
                                         <p className="text-sm font-semibold text-slate-900 dark:text-white">{comment.author}</p>
                                         <p className="mt-2 line-clamp-3 text-sm font-medium text-slate-500">{comment.text}</p>
-                                        <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-blue-500">{comment.type}</p>
+                                        <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{comment.type}</p>
                                     </article>
                                 ))}
                             </motion.div>
@@ -222,7 +222,7 @@ export default function CommentModeration() {
                                         </div>
                                         <div className="space-y-2">
                                             {column.items.map((comment) => (
-                                                <article key={comment.id} className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+                                                <article key={comment.id} className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
                                                     <p className="text-xs font-semibold text-slate-900 dark:text-white">{comment.author}</p>
                                                     <p className="mt-2 line-clamp-2 text-[11px] font-medium text-slate-500">{comment.text}</p>
                                                 </article>
@@ -254,22 +254,22 @@ export default function CommentModeration() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.05 }}
-                                        className="comment-aura group bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col space-y-3"
+                                        className="comment-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col space-y-3"
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className="relative shrink-0">
-                                                <div className="size-8 rounded-full bg-gradient-to-tr from-slate-100 to-white dark:from-white/10 dark:to-white/5 flex items-center justify-center text-blue-600 font-black text-xl border-4 border-white dark:border-[#0a0f16] shadow-xl group-hover:rotate-6 transition-transform duration-500">
+                                                <div className="size-8 rounded-full bg-gradient-to-tr from-slate-100 to-white dark:from-white/10 dark:to-white/5 flex items-center justify-center text-[hsl(var(--primary))] font-black text-xl border-4 border-white dark:border-[#0a0f16] shadow-xl group-hover:rotate-6 transition-transform duration-500">
                                                     {comment.author.charAt(0)}
                                                 </div>
-                                                <div className="absolute -bottom-1 -right-1 size-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg border-2 border-white dark:border-[#0a0f16]">
+                                                <div className="absolute -bottom-1 -right-1 size-7 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shadow-lg border-2 border-white dark:border-[#0a0f16]">
                                                     <MessageSquare size={14} fill="currentColor" />
                                                 </div>
                                             </div>
                                             <div className="flex-1 space-y-4">
                                                 <div className="flex justify-between items-center">
                                                     <div>
-                                                        <h4 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-blue-600 transition-colors">{comment.author}</h4>
-                                                        <p className="font-semibold text-blue-500 uppercase tracking-wide mt-2 flex items-center gap-2">
+                                                        <h4 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{comment.author}</h4>
+                                                        <p className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide mt-2 flex items-center gap-2">
                                                             <Globe size={10} /> En: <span className="text-slate-400 italic">&quot;{comment.context}&quot;</span>
                                                         </p>
                                                     </div>
@@ -282,7 +282,7 @@ export default function CommentModeration() {
                                         </div>
 
                                         <div className="flex gap-4 pt-8 border-t border-slate-100 dark:border-white/5">
-                                            <button className="flex-1 py-1.5 bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95 flex items-center justify-center gap-3">
+                                            <button className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all active:scale-95 flex items-center justify-center gap-3">
                                                 <CheckCircle2 size={16} /> Aprobar Registro
                                             </button>
                                             <button className="px-4 py-1.5 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[10px] font-semibold uppercase tracking-wide rounded-lg hover:bg-slate-200 transition-all active:scale-95">

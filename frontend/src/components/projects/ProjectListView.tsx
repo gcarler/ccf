@@ -41,7 +41,7 @@ function formatRelative(date: Date): string {
 const STATUS_OPTIONS = [
     { value: 'todo',        label: 'Pendiente',   dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-white/5',           text: 'text-slate-600 dark:text-slate-300',    border: 'border-slate-200 dark:border-white/10' },
     { value: 'pending',     label: 'Pendiente',   dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-white/5',           text: 'text-slate-600 dark:text-slate-300',    border: 'border-slate-200 dark:border-white/10' },
-    { value: 'in_progress', label: 'En Progreso', dot: 'bg-blue-500',  bg: 'bg-blue-100 dark:bg-blue-500/20',    text: 'text-blue-700 dark:text-blue-300',  border: 'border-blue-200 dark:border-blue-500/30' },
+    { value: 'in_progress', label: 'En Progreso', dot: 'bg-[hsl(var(--primary))]',  bg: 'bg-blue-100 dark:bg-blue-500/20',    text: 'text-[hsl(var(--primary))] dark:text-blue-300',  border: 'border-blue-200 dark:border-blue-500/30' },
     { value: 'blocked',     label: 'Bloqueado',   dot: 'bg-rose-500',    bg: 'bg-rose-100 dark:bg-rose-500/20',        text: 'text-rose-700 dark:text-rose-300',      border: 'border-rose-200 dark:border-rose-500/30' },
     { value: 'completed',        label: 'Completado',  dot: 'bg-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-500/20',  text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-500/30' },
 ] as const;
@@ -52,7 +52,7 @@ function getStatus(val: string) {
 // ─── Priority Config ──────────────────────────────────────────────────────────
 const PRIORITY_OPTIONS = [
     { value: 'low',    label: 'Baja',    color: 'text-slate-400',   fill: '#94a3b8' },
-    { value: 'normal', label: 'Media',   color: 'text-blue-500',    fill: '#3b82f6' },
+    { value: 'normal', label: 'Media',   color: 'text-[hsl(var(--primary))]',    fill: '#3b82f6' },
     { value: 'high',   label: 'Alta',    color: 'text-orange-500',  fill: '#f97316' },
     { value: 'urgent', label: 'Urgente', color: 'text-rose-500',    fill: '#ef4444' },
 ] as const;
@@ -62,7 +62,7 @@ function getPriority(val: string) {
 
 // ─── Group header pill styles ─────────────────────────────────────────────────
 const GROUP_PILL: Record<string, string> = {
-    in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
+    in_progress: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-500/20 dark:text-blue-300',
     pending:     'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-300',
     todo:        'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-300',
     done:        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -148,7 +148,7 @@ function InlineUserPicker({
                             {initials}
                         </div>
                     ) : (
-                        <div className="size-6 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-500/20 group-hover:text-blue-500 transition-colors">
+                        <div className="size-6 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-500/20 group-hover:text-[hsl(var(--primary))] transition-colors">
                             <User size={12} />
                         </div>
                     )}
@@ -157,7 +157,7 @@ function InlineUserPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden"
+                    className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden"
                     sideOffset={6}
                     align="start"
                     onOpenAutoFocus={e => e.preventDefault()}
@@ -179,7 +179,7 @@ function InlineUserPicker({
                     <div className="max-h-52 overflow-y-auto p-1 scrollbar-thin">
                         {loading ? (
                             <div className="flex items-center justify-center py-2">
-                                <Loader2 size={16} className="animate-spin text-blue-500" />
+                                <Loader2 size={16} className="animate-spin text-[hsl(var(--primary))]" />
                             </div>
                         ) : filtered.length === 0 ? (
                             <p className="text-center text-[11px] text-slate-400 py-1.5">
@@ -192,7 +192,7 @@ function InlineUserPicker({
                                 className={clsx(
                                     'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors text-left',
                                     currentUser?.id === user.id
-                                        ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                                        ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300'
                                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                                 )}
                             >
@@ -203,7 +203,7 @@ function InlineUserPicker({
                                     <p className="truncate font-semibold">{user.username}</p>
                                     <p className="truncate text-[10px] text-slate-400">{user.email}</p>
                                 </div>
-                                {currentUser?.id === user.id && <Check size={13} className="text-blue-500 shrink-0" />}
+                                {currentUser?.id === user.id && <Check size={13} className="text-[hsl(var(--primary))] shrink-0" />}
                             </button>
                         ))}
                     </div>
@@ -270,7 +270,7 @@ function InlineDatePicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-[248px] bg-white dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 p-3 select-none"
+                    className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 p-3 select-none"
                     sideOffset={6}
                     align="start"
                     onOpenAutoFocus={e => e.preventDefault()}
@@ -310,9 +310,9 @@ function InlineDatePicker({
                                     className={clsx(
                                         'size-8 rounded-lg text-[12px] font-medium transition-all mx-auto flex items-center justify-center',
                                         isSelected
-                                            ? 'bg-blue-600 text-white font-bold shadow-sm'
+                                            ? 'bg-[hsl(var(--primary))] text-white font-bold shadow-sm'
                                             : isTodayCell
-                                            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold ring-1 ring-blue-200 dark:ring-blue-500/30'
+                                            ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold ring-1 ring-blue-200 dark:ring-blue-500/30'
                                             : isPast
                                             ? 'text-slate-300 dark:text-white/20 hover:bg-slate-50 dark:hover:bg-white/5'
                                             : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
@@ -328,7 +328,7 @@ function InlineDatePicker({
                     <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-white/5">
                         <button
                             onClick={() => selectDay(today.getDate())}
-                            className="flex-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+                            className="flex-1 text-[11px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
                         >
                             Hoy
                         </button>
@@ -380,7 +380,7 @@ function InlinePriorityPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-44 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 p-1"
+                    className="z-[500] w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 p-1"
                     sideOffset={6}
                     align="start"
                 >
@@ -401,7 +401,7 @@ function InlinePriorityPicker({
                                 <line x1="4" y1="22" x2="4" y2="15" stroke={opt.fill} strokeWidth="2" strokeLinecap="round"/>
                             </svg>
                             {opt.label}
-                            {currentPriority === opt.value && <Check size={12} className="ml-auto text-blue-500" />}
+                            {currentPriority === opt.value && <Check size={12} className="ml-auto text-[hsl(var(--primary))]" />}
                         </button>
                     ))}
                 </Popover.Content>
@@ -443,7 +443,7 @@ function InlineStatusPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-48 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 p-1"
+                    className="z-[500] w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 p-1"
                     sideOffset={6}
                     align="start"
                 >
@@ -461,7 +461,7 @@ function InlineStatusPicker({
                         >
                             <span className={clsx('size-2 rounded-full shrink-0', opt.dot)} />
                             {opt.label}
-                            {currentStatus === opt.value && <Check size={12} className="ml-auto text-blue-500" />}
+                            {currentStatus === opt.value && <Check size={12} className="ml-auto text-[hsl(var(--primary))]" />}
                         </button>
                     ))}
                 </Popover.Content>
@@ -474,7 +474,7 @@ function InlineStatusPicker({
 function CommentPopover({ onClose }: { onClose: () => void }) {
     const [text, setText] = useState('');
     return (
-        <div className="absolute right-0 top-full mt-1 w-80 bg-white dark:bg-[#252528] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 z-[500] overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 w-80 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 z-[500] overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-white/5">
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Comentario rápido</span>
@@ -498,13 +498,13 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
             </div>
             {/* Toolbar */}
             <div className="flex items-center gap-1 px-3 pb-3">
-                <button className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Adjuntar">
+                <button className="p-1.5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Adjuntar">
                     <Paperclip size={13} />
                 </button>
-                <button className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Mencionar">
+                <button className="p-1.5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Mencionar">
                     <AtSign size={13} />
                 </button>
-                <button className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Emoji">
+                <button className="p-1.5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Emoji">
                     <Smile size={13} />
                 </button>
                 <div className="flex-1" />
@@ -514,7 +514,7 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
                     className={clsx(
                         'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold transition-all',
                         text.trim()
-                            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20 active:scale-95'
+                            ? 'bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))] shadow-md shadow-blue-500/20 active:scale-95'
                             : 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed'
                     )}
                     disabled={!text.trim()}
@@ -598,7 +598,7 @@ function TaskRow({
                     'text-[13px] font-medium truncate transition-colors',
                     status === 'completed'
                         ? 'line-through text-slate-400 dark:text-slate-600'
-                        : 'text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                        : 'text-slate-800 dark:text-slate-200 group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))]'
                 )}>
                     {task.title}
                 </span>
@@ -643,8 +643,8 @@ function TaskRow({
                     className={clsx(
                         'flex items-center justify-center size-8 rounded-lg border transition-all min-h-[40px] min-w-[32px]',
                         commentOpen
-                            ? 'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-blue-600'
-                            : 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-slate-600 hover:border-blue-200 dark:hover:border-blue-500/30 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10'
+                            ? 'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]'
+                            : 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-slate-600 hover:border-blue-200 dark:hover:border-blue-500/30 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10'
                     )}
                     aria-label="Ver comentarios y actividad"
                 >
@@ -787,7 +787,7 @@ function StatusGroup({
                                 />
                                 <button
                                     onClick={onQuickAddConfirm}
-                                    className="px-3 py-1.5 bg-blue-600 text-white text-[11px] font-bold rounded-lg hover:bg-blue-700 active:scale-95 transition-all"
+                                    className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white text-[11px] font-bold rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
                                 >
                                     Guardar
                                 </button>
@@ -801,7 +801,7 @@ function StatusGroup({
                         ) : (
                             <button
                                 onClick={() => onAddTask(status)}
-                                className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-white/[0.02] w-full transition-colors border-b border-slate-100 dark:border-white/[0.04] min-h-[40px]"
+                                className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium text-slate-400 hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] hover:bg-slate-50 dark:hover:bg-white/[0.02] w-full transition-colors border-b border-slate-100 dark:border-white/[0.04] min-h-[40px]"
                             >
                                 <Plus size={13} />
                                 Nuevo
@@ -869,7 +869,7 @@ export default function ProjectListView({
     });
 
     return (
-        <div className="h-full overflow-y-auto bg-white dark:bg-[#1e1f21] scrollbar-thin">
+        <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] scrollbar-thin">
 
             {/* ── STICKY QUICK-ADD BAR ── */}
             <AnimatePresence>
@@ -965,7 +965,7 @@ function QuickAddBar({
             />
             <button
                 onClick={onQuickAddConfirm}
-                className="px-4 py-1.5 bg-blue-600 text-white text-[11px] font-bold rounded-lg hover:bg-blue-700 active:scale-95 transition-all shrink-0"
+                className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white text-[11px] font-bold rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all shrink-0"
             >
                 Guardar
             </button>

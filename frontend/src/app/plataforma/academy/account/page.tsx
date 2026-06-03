@@ -23,7 +23,7 @@ export default function AcademyAccountPage() {
     }, [token]);
 
     const stats = [
-        { icon: BookOpen, label: 'Cursos Activos', value: enrollments.length, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+        { icon: BookOpen, label: 'Cursos Activos', value: enrollments.length, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
         { icon: Award, label: 'Certificados', value: 2, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
         { icon: Star, label: 'Promedio', value: '9.4', color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-500/10' },
         { icon: Calendar, label: 'Dias Activo', value: 47, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
@@ -41,7 +41,7 @@ export default function AcademyAccountPage() {
                             <div className="size-10 rounded-lg bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white text-xl font-bold shadow-2xl">
                                 {(user as any)?.name?.[0] ?? 'E'}
                             </div>
-                            <button className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-white text-blue-600 flex items-center justify-center shadow-lg hover:scale-110 transition-all">
+                            <button className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] flex items-center justify-center shadow-lg hover:scale-110 transition-all">
                                 <Camera size={14} />
                             </button>
                         </div>
@@ -79,7 +79,7 @@ export default function AcademyAccountPage() {
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
-                            className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm"
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm"
                         >
                             <div className={`size-8 rounded-lg ${s.bg} flex items-center justify-center mb-3`}>
                                 <s.icon size={18} className={s.color} />
@@ -96,7 +96,7 @@ export default function AcademyAccountPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="col-span-1 bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm space-y-4"
+                        className="col-span-1 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm space-y-4"
                     >
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Informacion Personal</p>
                         {[
@@ -122,7 +122,7 @@ export default function AcademyAccountPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.25 }}
-                        className="col-span-2 bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm"
+                        className="col-span-2 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm"
                     >
                         <div className="flex items-center justify-between mb-4">
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Mis Cursos</p>
@@ -150,7 +150,7 @@ export default function AcademyAccountPage() {
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[12px] font-bold text-slate-700 dark:text-slate-200 truncate">{course.title ?? `Curso ${i + 1}`}</p>
                                             <div className="w-full bg-slate-100 dark:bg-white/10 rounded-full h-1.5 mt-1.5">
-                                                <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${30 + i * 15}%` }} />
+                                                <div className="bg-[hsl(var(--primary))] h-1.5 rounded-full" style={{ width: `${30 + i * 15}%` }} />
                                             </div>
                                         </div>
                                         <span className="font-semibold text-slate-400">{30 + i * 15}%</span>

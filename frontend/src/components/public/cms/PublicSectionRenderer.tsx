@@ -77,7 +77,7 @@ function HeroSection({ section }: { section: CmsSection }) {
         {ctaLabel && (
           <Link
             href={ctaHref}
-            className="inline-flex mt-8 items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest bg-white shadow-lg transition-transform hover:scale-105"
+            className="inline-flex mt-8 items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest bg-[hsl(var(--bg-primary))] shadow-lg transition-transform hover:scale-105"
             style={{ color: "var(--faro-primary)" }}
           >
             {ctaLabel}
@@ -667,7 +667,7 @@ function PricingSection({ section }: { section: CmsSection }) {
               }}
             >
               {featured && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest bg-white" style={{ color: "var(--faro-primary)" }}>
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest bg-[hsl(var(--bg-primary))]" style={{ color: "var(--faro-primary)" }}>
                   Recomendado
                 </span>
               )}
@@ -1259,7 +1259,7 @@ function DocumentUploadSection({ section }: { section: CmsSection }) {
         <FileText size={48} className="mx-auto mb-3 opacity-30" style={{ color: "var(--faro-primary)" }} />
         <h3 className="text-lg font-bold mb-2" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
         {description && <p className="text-sm mb-4" style={{ color: "var(--faro-on-surface-variant)" }}>{description}</p>}
-        {error && <p className="text-sm mb-3 text-red-500 font-semibold">{error}</p>}
+        {error && <p className="text-sm mb-3 text-[hsl(var(--destructive))] font-semibold">{error}</p>}
         <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer hover:scale-105 transition-all" style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}>
           <Upload size={16} /> Seleccionar archivo
           <input type="file" accept={acceptedTypes} onChange={handleFile} className="hidden" />

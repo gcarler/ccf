@@ -138,7 +138,7 @@ export default function CmsTestimonialDetailPage() {
                             {mediaUrl && (
                                 <DSCard>
                                     <div className="mb-4 flex items-center gap-2">
-                                        {testimonial.media_type === 'video' ? <PlayCircle size={16} className="text-rose-500" /> : testimonial.media_type === 'podcast' ? <Headphones size={16} className="text-amber-500" /> : <ImageIcon size={16} className="text-blue-500" />}
+                                        {testimonial.media_type === 'video' ? <PlayCircle size={16} className="text-rose-500" /> : testimonial.media_type === 'podcast' ? <Headphones size={16} className="text-amber-500" /> : <ImageIcon size={16} className="text-[hsl(var(--primary))]" />}
                                         <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                             Media asociada
                                         </h3>
@@ -151,7 +151,7 @@ export default function CmsTestimonialDetailPage() {
                                                 <source src={mediaUrl} />
                                             </video>
                                         ) : (
-                                            <div className="space-y-4 bg-white p-3 dark:bg-white/5">
+                                            <div className="space-y-4 bg-[hsl(var(--bg-primary))] p-3 dark:bg-white/5">
                                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Podcast / audio testimonial</p>
                                                 <audio controls src={mediaUrl} className="w-full" />
                                             </div>
@@ -182,7 +182,7 @@ export default function CmsTestimonialDetailPage() {
                                     </div>
                                     <div>
                                         <h4 className="text-lg font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{testimonial.author_name}</h4>
-                                        <p className="text-xs font-bold text-blue-600 uppercase tracking-wide">{testimonial.author_role}</p>
+                                        <p className="text-xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{testimonial.author_role}</p>
                                     </div>
                                 </div>
                             </DSCard>

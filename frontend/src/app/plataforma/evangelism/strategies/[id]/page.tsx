@@ -124,7 +124,7 @@ const MEMBER_ROLES = [
 ];
 
 const ROLE_COLORS: Record<string, string> = {
-    lider: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    lider: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
     colider: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
     miembro: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
     visitante: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
@@ -283,7 +283,7 @@ export default function StrategyDetailPage() {
     const fetchGroups = useCallback(async () => {
         try {
             const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token });
-            setGroups((all || []).filter(g => (g as any).evangelism_strategy_id === parseInt(id)));
+            setGroups((all || []).filter(g => (g as any).estrategia_id === id));
         } catch { toast.error('Error al cargar grupos'); }
     }, [id]);
 
@@ -343,7 +343,7 @@ export default function StrategyDetailPage() {
                     leader_id: groupForm.leader_id,
                     assistant_id: groupForm.assistant_id,
                     host_id: groupForm.host_id,
-                    evangelism_strategy_id: parseInt(id),
+                    estrategia_id: id,
                     members_count: 0, capacity: groupForm.capacity,
                     status: 'Activo',
                     day_of_week: groupForm.day_of_week || null,
@@ -592,7 +592,7 @@ export default function StrategyDetailPage() {
                     <AlertCircle size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
                     <h2 className="text-lg font-bold text-slate-700 dark:text-slate-300">Estrategia no encontrada</h2>
                     <button onClick={() => router.push('/plataforma/evangelism')}
-                        className="mt-4 px-4 h-9 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">
+                        className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
                         Volver a Estrategias
                     </button>
                 </div>
@@ -635,7 +635,7 @@ export default function StrategyDetailPage() {
                         </div>
                     </div>
                     <button onClick={handleDelete}
-                        className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all" title="Eliminar estrategia">
+                        className="p-2 rounded-lg text-slate-400 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-all" title="Eliminar estrategia">
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -646,7 +646,7 @@ export default function StrategyDetailPage() {
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${
                                 activeTab === tab.id
-                                    ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                                    ? 'border-blue-600 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] dark:border-blue-400'
                                     : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                             }`}>
                             <tab.icon size={14} />{tab.label}
@@ -708,7 +708,7 @@ export default function StrategyDetailPage() {
                                     </div>
                                     <div className="space-y-2">
                                         {filtered.map(s => (
-                                            <div key={s.id} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1b1e] p-3">
+                                            <div key={s.id} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-3">
                                                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{s.topic || `Sesión #${s.id}`}</p>
                                                 <p className="text-xs text-slate-400 mt-1">{groupName(s.grupo_id)}</p>
                                                 <p className="text-xs text-slate-500 mt-1">{formatDate(s.session_date)}</p>
@@ -745,7 +745,7 @@ export default function StrategyDetailPage() {
                                 ))}
                                 {sessions.map(s => (
                                     <tr key={`s-${s.id}`} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
-                                        <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Sesión</span></td>
+                                        <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300">Sesión</span></td>
                                         <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{s.topic || `Sesión #${s.id}`}</td>
                                         <td className="py-2 px-3 text-slate-400">{formatDate(s.session_date)}</td>
                                         <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? '#10B98120' : '#3B82F620', color: s.status === 'Realizada' ? '#10B981' : '#3B82F6' }}>{s.status}</span></td>
@@ -767,12 +767,12 @@ export default function StrategyDetailPage() {
                                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{g.name}</p>
                                     <p className="text-xs text-slate-400">{g.members_count} miembros{g.zone ? ` · ${g.zone}` : ''}</p>
                                 </div>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">Grupo</span>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-green-300">Grupo</span>
                             </div>
                         ))}
                         {sessions.map(s => (
                             <div key={`s-${s.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Calendar size={14} className="text-blue-600 dark:text-blue-400" /></div>
+                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Calendar size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{s.topic || `Sesión #${s.id}`}</p>
                                     <p className="text-xs text-slate-400">{groupName(s.grupo_id)} · {formatDate(s.session_date)}</p>
@@ -787,7 +787,7 @@ export default function StrategyDetailPage() {
                 {viewType === 'grid' && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {groups.map(g => (
-                            <div key={`g-${g.id}`} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
+                            <div key={`g-${g.id}`} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center"><Users size={12} className="text-purple-600 dark:text-purple-400" /></div>
                                     <span className="text-xs font-bold text-purple-600 dark:text-purple-400">GRUPO</span>
@@ -798,10 +798,10 @@ export default function StrategyDetailPage() {
                             </div>
                         ))}
                         {sessions.map(s => (
-                            <div key={`s-${s.id}`} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
+                            <div key={`s-${s.id}`} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><Calendar size={12} className="text-blue-600 dark:text-blue-400" /></div>
-                                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400">SESIÓN</span>
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><Calendar size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
+                                    <span className="text-xs font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">SESIÓN</span>
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">{s.topic || `Sesión #${s.id}`}</h3>
                                 <p className="text-xs text-slate-400 mt-1">{groupName(s.grupo_id)}</p>
@@ -816,7 +816,7 @@ export default function StrategyDetailPage() {
 
                 {/* ── Dashboard view: show tabs ── */}
                 {activeTab === 'overview' && (
-                    <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-4">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-4">
                         <div>
                             <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Nombre</label>
                             <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
@@ -859,7 +859,7 @@ export default function StrategyDetailPage() {
                                         <button key={c} onClick={() => setEditClaseRaiz(c)}
                                             className={`flex-1 px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all capitalize ${
                                                 editClaseRaiz === c
-                                                    ? 'bg-blue-600 text-white shadow-sm'
+                                                    ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
                                                     : 'bg-slate-50 dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10'
                                             }`}>
                                             {c === 'evento_masivo' ? 'Evento Masivo' : c}
@@ -894,7 +894,7 @@ export default function StrategyDetailPage() {
                         <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
                             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                                 onClick={handleSave} disabled={saving}
-                                className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors">
+                                className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] disabled:opacity-60 transition-colors">
                                 <Save size={14} />{saving ? 'Guardando...' : 'Guardar cambios'}
                             </motion.button>
                         </div>
@@ -914,12 +914,12 @@ export default function StrategyDetailPage() {
                                 )}
                             </div>
                             <button onClick={openGroupDrawer}
-                                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">
+                                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
                                 <Plus size={14} />Nuevo grupo
                             </button>
                         </div>
                         {groups.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg">
+                            <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg">
                                 <Home size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
                                 <p className="text-sm font-medium text-slate-500">Sin grupos aún</p>
                                 <p className="text-xs text-slate-400">Crea el primer grupo para esta estrategia</p>
@@ -928,14 +928,14 @@ export default function StrategyDetailPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {groups.map(g => (
                                     <div key={g.id}
-                                        className="group bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer relative"
+                                        className="group bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer relative"
                                         onClick={() => openMemberDrawer(g)}>
                                         <button onClick={e => { e.stopPropagation(); handleDeleteGroup(g.id, g.name); }}
-                                            className="absolute top-2 right-2 p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
+                                            className="absolute top-2 right-2 p-1 rounded text-slate-300 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
                                             <Trash2 size={14} />
                                         </button>
                                         <button onClick={e => { e.stopPropagation(); router.push(`/plataforma/evangelism/faro/${g.id}`); }}
-                                            className="absolute top-2 right-8 p-1 rounded text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
+                                            className="absolute top-2 right-8 p-1 rounded text-slate-300 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
                                             <Calendar size={14} />
                                         </button>
                                         <h3 className="text-sm font-bold text-slate-900 dark:text-white pr-16">{g.name}</h3>
@@ -962,7 +962,7 @@ export default function StrategyDetailPage() {
                                 setSessionForm({ grupo_id: groups[0]?.id || '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
                                 setIsNewSessionDrawerOpen(true);
                             }}
-                                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">
+                                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
                                 <Plus size={14} />Nueva sesión
                             </button>
                         </div>
@@ -972,7 +972,7 @@ export default function StrategyDetailPage() {
                                 <select
                                     value={sessionGroupFilter}
                                     onChange={e => setSessionGroupFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                                    className="h-8 px-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1e1f21] text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    className="h-8 px-2 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
                                     <option value="all">Todos los grupos</option>
                                     {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                                 </select>
@@ -984,7 +984,7 @@ export default function StrategyDetailPage() {
                                 {[1, 2, 3].map(i => <div key={i} className="h-14 bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" />)}
                             </div>
                         ) : sessions.filter(s => sessionGroupFilter === 'all' || s.grupo_id === sessionGroupFilter).length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg">
+                            <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg">
                                 <ClipboardList size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
                                 <p className="text-sm font-medium text-slate-500">Sin sesiones registradas</p>
                                 <p className="text-xs text-slate-400">Registra la primera sesión semanal</p>
@@ -992,13 +992,13 @@ export default function StrategyDetailPage() {
                         ) : (
                             <div className="space-y-2">
                                 {sessions.filter(s => sessionGroupFilter === 'all' || s.grupo_id === sessionGroupFilter).map(s => (
-                                    <div key={s.id} className="flex items-center gap-3 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg px-4 py-3 hover:border-blue-300 dark:hover:border-blue-800 transition-all">
+                                    <div key={s.id} className="flex items-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg px-4 py-3 hover:border-blue-300 dark:hover:border-blue-800 transition-all">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-xs font-bold text-slate-700 dark:text-white">
                                                     {new Date(s.session_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
                                                 </span>
-                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-[hsl(var(--secondary))]">
                                                     {s.status}
                                                 </span>
                                             </div>
@@ -1010,7 +1010,7 @@ export default function StrategyDetailPage() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button onClick={() => openAttendanceDrawer(s)}
-                                                className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[11px] font-semibold hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors whitespace-nowrap">
+                                                className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[11px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
                                                 <Users size={12} />Asistencia
                                             </button>
                                             <div className="relative">
@@ -1019,10 +1019,10 @@ export default function StrategyDetailPage() {
                                                     <span className="text-base leading-none">⋯</span>
                                                 </button>
                                                 {sessionMenuId === s.id && (
-                                                    <div className="absolute right-0 top-8 z-20 bg-white dark:bg-[#2a2b2d] border border-slate-200 dark:border-white/10 rounded-lg shadow-lg py-1 min-w-[130px]">
+                                                    <div className="absolute right-0 top-8 z-20 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-slate-200 dark:border-white/10 rounded-lg shadow-lg py-1 min-w-[130px]">
                                                         <button
                                                             onClick={() => handleDeleteSession(s.id)}
-                                                            className="w-full text-left px-3 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                                                            className="w-full text-left px-3 py-2 text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
                                                             <Trash2 size={12} />Eliminar sesión
                                                         </button>
                                                     </div>
@@ -1041,7 +1041,7 @@ export default function StrategyDetailPage() {
                     <div className="space-y-3">
                         <h2 className="text-sm font-bold text-slate-900 dark:text-white">Métricas de la estrategia</h2>
                         {!metrics ? (
-                            <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-8 text-center">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-8 text-center">
                                 <BarChart3 size={32} className="text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                                 <p className="text-sm font-medium text-slate-500">Cargando métricas...</p>
                             </div>
@@ -1051,17 +1051,17 @@ export default function StrategyDetailPage() {
                                     {[
                                         { label: 'Grupos', value: metrics.summary.total_groups },
                                         { label: 'Sesiones', value: metrics.summary.total_sessions },
-                                        { label: 'Primeriza', value: metrics.summary.total_first_timers, cls: 'text-green-600 dark:text-green-400' },
-                                        { label: 'Inasistencias', value: metrics.summary.total_absences, cls: 'text-red-500 dark:text-red-400' },
+                                        { label: 'Primeriza', value: metrics.summary.total_first_timers, cls: 'text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]' },
+                                        { label: 'Inasistencias', value: metrics.summary.total_absences, cls: 'text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]' },
                                     ].map(stat => (
-                                        <div key={stat.label} className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
+                                        <div key={stat.label} className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
                                             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{stat.label}</p>
                                             <p className={`text-lg font-bold mt-1 ${stat.cls || 'text-slate-900 dark:text-white'}`}>{stat.value}</p>
                                         </div>
                                     ))}
                                 </div>
                                 {metrics.weekly && metrics.weekly.length > 0 && (
-                                    <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
+                                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
                                         <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-4">Asistencia semanal</h3>
                                         <div className="flex items-end gap-2 h-32">
                                             {metrics.weekly.map((w: any) => {
@@ -1069,7 +1069,7 @@ export default function StrategyDetailPage() {
                                                 return (
                                                     <div key={w.week} className="flex-1 flex flex-col items-center gap-1">
                                                         <div className="w-full flex flex-col" style={{ height: '100px' }}>
-                                                            <div className="w-full rounded-t bg-blue-500 dark:bg-blue-600 transition-all"
+                                                            <div className="w-full rounded-t bg-[hsl(var(--primary))] dark:bg-[hsl(var(--primary))] transition-all"
                                                                 style={{ height: `${(w.present / max) * 100}%`, minHeight: w.present > 0 ? '4px' : '0' }} />
                                                             {w.absent > 0 && (
                                                                 <div className="w-full rounded-t bg-red-300 dark:bg-red-800 transition-all"
@@ -1108,7 +1108,7 @@ export default function StrategyDetailPage() {
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Roles Personalizados</h3>
                             <button onClick={() => setShowRoleForm(!showRoleForm)}
-                                className="text-[11px] font-bold text-blue-500 hover:text-blue-600 flex items-center gap-1">
+                                className="text-[11px] font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] flex items-center gap-1">
                                 <Plus size={12} />{showRoleForm ? 'Cancelar' : 'Agregar'}
                             </button>
                         </div>
@@ -1117,10 +1117,10 @@ export default function StrategyDetailPage() {
                             <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg space-y-2">
                                 <input value={newRoleName} onChange={e => setNewRoleName(e.target.value)}
                                     placeholder="Nombre del rol (ej: Coordinador de zona)"
-                                    className="w-full px-2.5 py-1.5 text-[12px] bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none" />
+                                    className="w-full px-2.5 py-1.5 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none" />
                                 <input value={newRoleDesc} onChange={e => setNewRoleDesc(e.target.value)}
                                     placeholder="Descripción (opcional)"
-                                    className="w-full px-2.5 py-1.5 text-[12px] bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none" />
+                                    className="w-full px-2.5 py-1.5 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none" />
                                 <button onClick={async () => {
                                     if (!newRoleName.trim()) return;
                                     try {
@@ -1133,7 +1133,7 @@ export default function StrategyDetailPage() {
                                         fetchCustomRoles();
                                     } catch { toast.error('Error al crear rol'); }
                                 }} disabled={!newRoleName.trim()}
-                                    className="px-3 py-1.5 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors">
+                                    className="px-3 py-1.5 text-[11px] font-bold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-lg transition-colors">
                                     Crear Rol
                                 </button>
                             </div>
@@ -1146,7 +1146,7 @@ export default function StrategyDetailPage() {
                         ) : (
                             <div className="space-y-1.5">
                                 {customRoles.map(r => (
-                                    <div key={r.id} className="flex items-center justify-between px-2.5 py-1.5 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
+                                    <div key={r.id} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
                                         <div>
                                             <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{r.nombre}</span>
                                             {r.descripcion && <p className="text-[10px] text-slate-400">{r.descripcion}</p>}
@@ -1158,7 +1158,7 @@ export default function StrategyDetailPage() {
                                                 toast.success('Rol eliminado');
                                                 fetchCustomRoles();
                                             } catch { toast.error('Error al eliminar rol'); }
-                                        }} className="p-1 text-slate-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                        }} className="p-1 text-slate-400 hover:text-[hsl(var(--destructive))] rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                             <X size={12} />
                                         </button>
                                     </div>
@@ -1182,9 +1182,9 @@ export default function StrategyDetailPage() {
                         ) : (
                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
                                 {followUps.filter(f => !f.completado).slice(0, 10).map(f => (
-                                    <div key={f.id} className="flex items-center justify-between px-2.5 py-1.5 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
+                                    <div key={f.id} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
                                         <div className="flex items-center gap-2">
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.tipo === 'llamada' ? 'bg-blue-100 text-blue-700' : f.tipo === 'visita' ? 'bg-purple-100 text-purple-700' : f.tipo === 'oracion' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.tipo === 'llamada' ? 'bg-blue-100 text-[hsl(var(--primary))]' : f.tipo === 'visita' ? 'bg-purple-100 text-purple-700' : f.tipo === 'oracion' ? 'bg-green-100 text-[hsl(var(--secondary))]' : 'bg-slate-100 text-slate-600'}`}>
                                                 {f.tipo}
                                             </span>
                                             <span className="text-[11px] text-slate-500">{f.notas || '—'}</span>
@@ -1217,13 +1217,13 @@ export default function StrategyDetailPage() {
                     <button onClick={() => setIsGroupDrawerOpen(false)}
                         className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors">Cancelar</button>
                     <button onClick={handleCreateGroup} disabled={groupSaving || !groupForm.name.trim()}
-                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
                         {groupSaving ? <><Sparkles size={14} className="animate-spin" />Creando...</> : <><Plus size={14} />Crear Grupo</>}
                     </button>
                 </>}>
                 <div className="space-y-4">
                     {strategy?.typology === 'relacional' && (
-                        <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-[11px] text-blue-700 dark:text-blue-300">
+                        <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-[11px] text-[hsl(var(--primary))] dark:text-blue-300">
                             <p className="font-semibold">Config. heredada:</p>
                             <p>Recurrencia: {strategy.recurrence} · Día: {strategy.day_of_week} · Hora: {strategy.start_time}</p>
                         </div>
@@ -1289,7 +1289,7 @@ export default function StrategyDetailPage() {
                     <button onClick={() => setIsMemberDrawerOpen(false)}
                         className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors">Cancelar</button>
                     <button onClick={handleSaveMembers} disabled={memberSaving}
-                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
                         {memberSaving ? <><Sparkles size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar ({groupMembers.length})</>}
                     </button>
                 </>}>
@@ -1314,7 +1314,7 @@ export default function StrategyDetailPage() {
                                             {MEMBER_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                                         </select>
                                         <button onClick={() => removeMemberFromGroup(m.id)}
-                                            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
+                                            className="p-1 text-slate-400 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
                                             <UserMinus size={13} />
                                         </button>
                                     </div>
@@ -1345,7 +1345,7 @@ export default function StrategyDetailPage() {
                                         <span className="font-medium text-slate-700 dark:text-slate-200">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}
                                             {m.email && <span className="text-slate-400 ml-2">{m.email}</span>}
                                         </span>
-                                        <Plus size={14} className="text-slate-300 group-hover/add:text-blue-500 transition-colors" />
+                                        <Plus size={14} className="text-slate-300 group-hover/add:text-[hsl(var(--primary))] transition-colors" />
                                     </button>
                                 ))}
                         </div>
@@ -1360,7 +1360,7 @@ export default function StrategyDetailPage() {
                     <button onClick={() => setIsNewSessionDrawerOpen(false)}
                         className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors">Cancelar</button>
                     <button onClick={handleCreateSession} disabled={sessionSaving}
-                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
                         {sessionSaving ? <><Sparkles size={14} className="animate-spin" />Guardando...</> : <><Save size={14} />Guardar</>}
                     </button>
                 </>}>
@@ -1407,7 +1407,7 @@ export default function StrategyDetailPage() {
                     <button onClick={() => setIsAttendanceDrawerOpen(false)}
                         className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors">Cancelar</button>
                     <button onClick={handleSaveAttendance} disabled={attendanceSaving}
-                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
                         {attendanceSaving ? <><Sparkles size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar asistencia</>}
                     </button>
                 </>}>
@@ -1426,7 +1426,7 @@ export default function StrategyDetailPage() {
                                     <span>·</span>
                                     <span>{attendanceMembers.filter(m => m.status === 'absent').length} ausentes</span>
                                     <span>·</span>
-                                    <span className="text-blue-500">{attendanceMembers.filter(m => m.status === 'first_time').length} primera vez</span>
+                                    <span className="text-[hsl(var(--primary))]">{attendanceMembers.filter(m => m.status === 'first_time').length} primera vez</span>
                                 </div>
                             )}
                             <div className="space-y-2">
@@ -1435,7 +1435,7 @@ export default function StrategyDetailPage() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-1.5">
                                                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{m.name}</p>
-                                                {m.status === 'first_time' && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-blue-500 text-white">1ª vez</span>}
+                                                {m.status === 'first_time' && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[hsl(var(--primary))] text-white">1ª vez</span>}
                                             </div>
                                             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${ROLE_COLORS[m.role] || ROLE_COLORS.miembro}`}>
                                                 {MEMBER_ROLES.find(r => r.value === m.role)?.label || m.role}
@@ -1443,9 +1443,9 @@ export default function StrategyDetailPage() {
                                         </div>
                                         <div className="flex items-center gap-1">
                                             {[
-                                                { status: 'present', label: 'P', cls: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', activeCls: 'ring-2 ring-green-500' },
-                                                { status: 'absent', label: 'A', cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', activeCls: 'ring-2 ring-red-500' },
-                                                { status: 'first_time', label: '1°', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', activeCls: 'ring-2 ring-blue-500' },
+                                                { status: 'present', label: 'P', cls: 'bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-[hsl(var(--secondary))]', activeCls: 'ring-2 ring-green-500' },
+                                                { status: 'absent', label: 'A', cls: 'bg-red-100 text-[hsl(var(--destructive))] dark:bg-red-900/30 dark:text-[hsl(var(--destructive))]', activeCls: 'ring-2 ring-red-500' },
+                                                { status: 'first_time', label: '1°', cls: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-[hsl(var(--primary))]', activeCls: 'ring-2 ring-blue-500' },
                                             ].map(opt => (
                                                 <button key={opt.status}
                                                     onClick={() => setAttendanceMembers(prev => prev.map((x, j) => j === i ? { ...x, status: opt.status as any } : x))}
@@ -1455,7 +1455,7 @@ export default function StrategyDetailPage() {
                                             ))}
                                             {m.role === 'visitante' && (
                                                 <button onClick={() => setAttendanceMembers(prev => prev.filter((_, j) => j !== i))}
-                                                    className="w-7 h-7 ml-1 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 transition-colors">
+                                                    className="w-7 h-7 ml-1 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-[hsl(var(--destructive))] dark:hover:bg-red-900/20 transition-colors">
                                                     <X size={12} />
                                                 </button>
                                             )}
@@ -1470,7 +1470,7 @@ export default function StrategyDetailPage() {
                     <div className="pt-2 border-t border-slate-200 dark:border-white/10">
                         {!showVisitorSearch ? (
                             <button onClick={() => setShowVisitorSearch(true)}
-                                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-dashed border-slate-300 dark:border-white/20 text-xs text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-700 dark:hover:text-blue-400 transition-colors">
+                                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-dashed border-slate-300 dark:border-white/20 text-xs text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-[hsl(var(--primary))] dark:hover:border-blue-700 dark:hover:text-[hsl(var(--primary))] transition-colors">
                                 <UserPlus size={14} />Agregar visitante (1ª vez)
                             </button>
                         ) : (
@@ -1492,7 +1492,7 @@ export default function StrategyDetailPage() {
                                     </button>
                                 </div>
                                 {visitorSearch.trim().length >= 2 && (
-                                    <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1e1f21] p-1">
+                                    <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] p-1">
                                         {allMembers
                                             .filter(m => {
                                                 const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
@@ -1514,7 +1514,7 @@ export default function StrategyDetailPage() {
                                                         setShowVisitorSearch(false);
                                                     }}
                                                     className="w-full text-left px-3 py-2 rounded-md text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2 transition-colors">
-                                                    <UserPlus size={12} className="text-blue-500 shrink-0" />
+                                                    <UserPlus size={12} className="text-[hsl(var(--primary))] shrink-0" />
                                                     <span className="font-medium">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</span>
                                                     {m.church_role && <span className="text-slate-400 text-[10px]">({m.church_role})</span>}
                                                 </button>

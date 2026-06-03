@@ -81,7 +81,7 @@ function VerifyEmailContent() {
           <p className="text-[#018ABD] text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
             Comunidad <br /> Cristiana
           </p>
-          <div className="w-16 h-1.5 bg-white mt-3 rounded-full" />
+          <div className="w-16 h-1.5 bg-[hsl(var(--bg-primary))] mt-3 rounded-full" />
         </motion.div>
 
         <motion.div
@@ -110,7 +110,7 @@ function VerifyEmailContent() {
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="flex-1 bg-white flex flex-col justify-center px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen"
+        className="flex-1 bg-[hsl(var(--bg-primary))] flex flex-col justify-center px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen"
       >
         <div className="w-full max-w-[420px] mx-auto text-center">
           <motion.div
@@ -120,7 +120,7 @@ function VerifyEmailContent() {
             className="mb-3 flex justify-center"
           >
             {status === "loading" && (
-              <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-[hsl(var(--bg-muted))] flex items-center justify-center">
                 <Loader2 className="w-10 h-10 animate-spin text-[#018ABD]" />
               </div>
             )}
@@ -146,7 +146,7 @@ function VerifyEmailContent() {
               {status === "success" && "¡Correo verificado!"}
               {status === "error" && "No pudimos verificar"}
             </h2>
-            <p className="text-gray-500 text-sm font-medium leading-relaxed mb-3">
+            <p className="text-[hsl(var(--text-primary))] text-sm font-medium leading-relaxed mb-3">
               {message}
             </p>
           </motion.div>
@@ -171,13 +171,13 @@ function VerifyEmailContent() {
                     <div className="w-full border-t-2 border-gray-100" />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="bg-white px-4 text-[9px] font-bold uppercase tracking-wide text-gray-300">
+                    <span className="bg-[hsl(var(--bg-primary))] px-4 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                       Salmos 133:1
                     </span>
                   </div>
                 </div>
 
-                <p className="text-gray-400 italic text-sm leading-relaxed">
+                <p className="text-[hsl(var(--text-secondary))] italic text-sm leading-relaxed">
                   &ldquo;Mirad cu&aacute;n bueno y cu&aacute;n delicioso es<br />
                   habitar los hermanos juntos en armon&iacute;a.&rdquo;
                 </p>

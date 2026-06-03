@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { useStudentEnrollments } from '@/hooks/useStudentEnrollments';
 import type { CertificateRecord } from '@/types/academy';
-import CertificateModal from '@/components/CertificateModal';
+import CertificateDrawer from '@/components/CertificateDrawer';
 import AdminHero from '@/components/admin/AdminHero';
 import { toast } from 'sonner';
 
@@ -88,7 +88,7 @@ export default function StudentCertificates() {
                     toast.success('Alertas de certificados activadas');
                 } }}
             />
-            <main className="rounded-md border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden pb-4 relative z-10 hide-scrollbar">
+            <main className="rounded-md border border-slate-200 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl overflow-hidden pb-4 relative z-10 hide-scrollbar">
                 {totalLoading ? (
                     <div className="flex items-center justify-center py-1.5 text-slate-500 text-sm uppercase tracking-wide font-black">
                         Cargando historial...
@@ -180,7 +180,7 @@ export default function StudentCertificates() {
             </main>
 
             {activeCertificate && (
-                <CertificateModal
+                <CertificateDrawer
                     certificate={activeCertificate}
                     enrollment={
                         resolveEnrollment(activeCertificate) || {

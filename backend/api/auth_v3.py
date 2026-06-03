@@ -54,6 +54,7 @@ def _create_access_token(user_id: str, platform_role: str, sede_id: str = "") ->
         "role": platform_role,
         "platform_role": platform_role,
         "sede_id": sede_id,
+        "jti": secrets.token_hex(8),
     }
     expire = _utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
     to_encode.update({"exp": expire, "iat": _utcnow()})
@@ -481,7 +482,11 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
-    user = db.query(Usuario).filter(Usuario.id == user_id).first()
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    user = db.query(Usuario).filter(Usuario.id == user_uuid).first()
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
 

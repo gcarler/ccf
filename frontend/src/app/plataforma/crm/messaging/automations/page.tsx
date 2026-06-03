@@ -43,7 +43,7 @@ const ACTIONS = [
 ];
 
 const TRIGGER_COLORS: Record<string, string> = {
-    new_member: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+    new_member: 'bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20',
     birthday: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
     inactivity: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
     low_attendance: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
@@ -164,7 +164,7 @@ export default function AutomationsPage() {
             rightActions={
                 <button
                     onClick={openCreate}
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Regla
                 </button>
@@ -179,7 +179,7 @@ export default function AutomationsPage() {
                         { label: 'Activas', val: rules.filter(r => r.active).length, color: 'text-emerald-600' },
                         { label: 'Inactivas', val: rules.filter(r => !r.active).length, color: 'text-slate-400' },
                     ].map(s => (
-                        <div key={s.label} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
+                        <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
                             <p className={`text-lg font-bold ${s.color}`}>{s.val}</p>
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{s.label}</p>
                         </div>
@@ -200,7 +200,7 @@ export default function AutomationsPage() {
                         </div>
                         <button
                             onClick={openCreate}
-                            className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
+                            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
                         >
                             Crear primera regla
                         </button>
@@ -220,7 +220,7 @@ export default function AutomationsPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.97 }}
                                     className={clsx(
-                                        "bg-white dark:bg-white/5 border rounded-md p-3 transition-all",
+                                        "bg-[hsl(var(--surface-1))] dark:bg-white/5 border rounded-md p-3 transition-all",
                                         rule.active
                                             ? "border-slate-200 dark:border-white/10 shadow-sm"
                                             : "border-dashed border-slate-200 dark:border-white/5 opacity-60"
@@ -258,7 +258,7 @@ export default function AutomationsPage() {
                                             </button>
                                             <button
                                                 onClick={() => openEdit(rule)}
-                                                className="p-2 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                                                className="p-2 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
                                             >
                                                 <Settings2 size={16} />
                                             </button>
@@ -301,7 +301,7 @@ export default function AutomationsPage() {
                             form="automation-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
                             {editingRule ? 'Guardar Cambios' : 'Crear Regla'}
@@ -336,16 +336,16 @@ export default function AutomationsPage() {
                                             "flex items-center gap-3 px-4 py-1.5 rounded-lg border text-left transition-all",
                                             selected
                                                 ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                                : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-blue-300"
+                                                : "border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:border-blue-300"
                                         )}
                                     >
-                                        <div className={clsx("size-8 rounded-md flex items-center justify-center", selected ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400')}>
+                                        <div className={clsx("size-8 rounded-md flex items-center justify-center", selected ? 'bg-[hsl(var(--primary))] text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400')}>
                                             <Icon size={16} />
                                         </div>
-                                        <span className={clsx("text-[11px] font-bold uppercase tracking-wide", selected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300')}>
+                                        <span className={clsx("text-[11px] font-bold uppercase tracking-wide", selected ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' : 'text-slate-600 dark:text-slate-300')}>
                                             {t.label}
                                         </span>
-                                        {selected && <CheckCircle2 size={16} className="ml-auto text-blue-600" />}
+                                        {selected && <CheckCircle2 size={16} className="ml-auto text-[hsl(var(--primary))]" />}
                                     </button>
                                 );
                             })}

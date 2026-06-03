@@ -157,7 +157,7 @@ export default function MessagingCampaignCenter() {
             viewType={viewType}
             onViewChange={setViewType}
             rightActions={
-                <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 hover:bg-slate-50 rounded-md text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 shadow-sm transition-all active:scale-95">
+                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-slate-50 rounded-md text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 shadow-sm transition-all active:scale-95">
                     <History size={14} /> Historial Detallado
                 </button>
             }
@@ -170,7 +170,7 @@ export default function MessagingCampaignCenter() {
                             <div 
                                 key={item.id} 
                                 onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
-                                className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer group"
+                                className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer group"
                             >
                                 <div>
                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{item.name}</p>
@@ -184,7 +184,7 @@ export default function MessagingCampaignCenter() {
                 )}
 
                 {viewType === 'table' && (
- <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+ <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-[hsl(var(--surface-1))] dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-white/5">
                                 <tr>
@@ -227,7 +227,7 @@ export default function MessagingCampaignCenter() {
                                         <div 
                                             key={item.id} 
                                             onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
-                                            className="rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3 hover:border-blue-500/30 transition-all cursor-pointer"
+                                            className="rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3 hover:border-blue-500/30 transition-all cursor-pointer"
                                         >
                                             <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{item.name}</p>
                                             <p className="text-[10px] text-slate-400">{item.date} · {item.target_count} envíos</p>
@@ -242,14 +242,14 @@ export default function MessagingCampaignCenter() {
                 {viewType === 'calendar' && (
  <div className="w-full space-y-4">
                         {groupedByDate.map(([label, items]) => (
-                            <div key={label} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                            <div key={label} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                 <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {items.map((item: any) => (
                                         <div 
                                             key={item.id} 
                                             onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
-                                            className="rounded-md border border-slate-200 dark:border-white/10 p-3 hover:border-blue-500/30 transition-all cursor-pointer bg-white dark:bg-white/5"
+                                            className="rounded-md border border-slate-200 dark:border-white/10 p-3 hover:border-blue-500/30 transition-all cursor-pointer bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
                                             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{item.name}</p>
                                             <p className="text-[10px] text-slate-400">{item.channel} · {item.status} · {item.target_count}</p>
@@ -262,7 +262,7 @@ export default function MessagingCampaignCenter() {
                 )}
 
                 {viewType === 'gantt' && (
- <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+ <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Avance de entrega</p>
                         {history.map((item) => (
                             <div 
@@ -275,7 +275,7 @@ export default function MessagingCampaignCenter() {
                                     <span className="font-bold text-slate-400">{STATUS_PROGRESS[item.status] ?? 0}%</span>
                                 </div>
                                 <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
-                                    <div className="h-full bg-blue-600" style={{ width: `${STATUS_PROGRESS[item.status] ?? 0}%` }} />
+                                    <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${STATUS_PROGRESS[item.status] ?? 0}%` }} />
                                 </div>
                             </div>
                         ))}
@@ -283,7 +283,7 @@ export default function MessagingCampaignCenter() {
                 )}
 
                 {viewType === 'wiki' && (
- <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+ <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Wiki de mensajería</p>
                         <textarea
                             value={wikiNotes}
@@ -299,7 +299,7 @@ export default function MessagingCampaignCenter() {
                     
                     {/* Left Column: Composer */}
                     <div className="lg:col-span-7 space-y-3">
-                        <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 shadow-xl space-y-4 relative overflow-hidden">
+                        <section className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 shadow-xl space-y-4 relative overflow-hidden">
                             <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-blue-600/5 rounded-full blur-3xl" />
                             
                             <div className="relative z-10 flex justify-between items-center">
@@ -333,8 +333,8 @@ export default function MessagingCampaignCenter() {
                                             className="w-full h-48 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-md p-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"
                                         />
                                         <div className="absolute bottom-4 right-4 flex gap-2">
-                                            <button className="p-2.5 bg-white dark:bg-white/10 rounded-md text-slate-400 hover:text-blue-600 transition-colors shadow-sm"><Bot size={18} /></button>
-                                            <button className="p-2.5 bg-white dark:bg-white/10 rounded-md text-slate-400 hover:text-blue-600 transition-colors shadow-sm"><ImageIcon size={18} /></button>
+                                            <button className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-colors shadow-sm"><Bot size={18} /></button>
+                                            <button className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-colors shadow-sm"><ImageIcon size={18} /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -348,7 +348,7 @@ export default function MessagingCampaignCenter() {
                                 </div>
                                 <button 
                                     onClick={handleSendCampaign} disabled={isSending}
-                                    className="flex items-center gap-3 px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
+                                    className="flex items-center gap-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
                                 >
                                     {isSending ? <Clock size={18} className="animate-spin" /> : <Zap size={18} fill="currentColor" />}
                                     Lanzar Campaña
@@ -357,7 +357,7 @@ export default function MessagingCampaignCenter() {
                         </section>
 
                         <section className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3 border border-blue-100 dark:border-blue-500/20 space-y-3">
-                            <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400">
+                            <div className="flex items-center gap-3 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
                                 <Sparkles size={20} />
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide">IA Copywriting Helper</h3>
                             </div>
@@ -369,7 +369,7 @@ export default function MessagingCampaignCenter() {
 
                     {/* Right Column: Targeting & History */}
                     <div className="lg:col-span-5 space-y-3">
-                        <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 shadow-xl space-y-3">
+                        <section className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 shadow-xl space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-bold tracking-tight uppercase tracking-wide leading-none">Audiencia</h3>
                                 <Filter size={18} className="text-slate-300" />
@@ -384,17 +384,17 @@ export default function MessagingCampaignCenter() {
                             </div>
                             <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-8 rounded-md bg-blue-100 flex items-center justify-center text-blue-600"><Users size={20} /></div>
+                                    <div className="size-8 rounded-md bg-blue-100 flex items-center justify-center text-[hsl(var(--primary))]"><Users size={20} /></div>
                                     <div>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Segmentos Seleccionados</p>
                                         <h4 className="text-base font-bold text-slate-900 dark:text-white">{segments.length} <span className="text-[10px] text-slate-400 font-bold tracking-normal uppercase">Segmentos</span></h4>
                                     </div>
                                 </div>
-                                <Target size={20} className="text-blue-500" />
+                                <Target size={20} className="text-[hsl(var(--primary))]" />
                             </div>
                         </section>
 
-                        <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 shadow-xl space-y-3">
+                        <section className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 shadow-xl space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-bold tracking-tight uppercase tracking-wide leading-none">Actividad Reciente</h3>
                                 <BarChart3 size={18} className="text-slate-300" />
@@ -409,7 +409,7 @@ export default function MessagingCampaignCenter() {
                                         <div className="flex items-center gap-4">
                                             <div className={clsx(
                                                 "size-9 rounded-lg flex items-center justify-center transition-all group-hover:scale-110",
-                                                item.channel === 'whatsapp' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" : "bg-blue-50 dark:bg-blue-900/20 text-blue-600"
+                                                item.channel === 'whatsapp' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" : "bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))]"
                                             )}>
                                                 {item.channel === 'whatsapp' ? <MessageSquare size={20} /> : <Mail size={20} />}
                                             </div>
@@ -418,7 +418,7 @@ export default function MessagingCampaignCenter() {
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{item.date}</span>
                                                     <div className="size-1 rounded-full bg-slate-300" />
-                                                    <span className="text-[9px] font-bold text-blue-500 uppercase">{item.count} envíos</span>
+                                                    <span className="text-[9px] font-bold text-[hsl(var(--primary))] uppercase">{item.count} envíos</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -454,7 +454,7 @@ function ChannelButton({ active, onClick, icon: Icon, label }: any) {
             onClick={onClick}
             className={clsx(
                 "flex items-center gap-2.5 px-4 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all",
-                active ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xl shadow-blue-500/10" : "text-slate-400 hover:text-slate-600"
+                active ? "bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-xl shadow-blue-500/10" : "text-slate-400 hover:text-slate-600"
             )}
         >
             <Icon size={14} /> {label}
@@ -469,8 +469,8 @@ function SegmentTag({ label, active, onClick }: any) {
             className={clsx(
                 "py-1.5 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider text-left transition-all border",
                 active 
-                    ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                    : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:border-blue-500/30"
+                    ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                    : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:border-blue-500/30"
             )}
         >
             {label}

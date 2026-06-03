@@ -44,7 +44,7 @@ export default function WikiDocEditPage() {
     };
 
     if (loading) return (
-        <div className="flex-1 flex items-center justify-center bg-white dark:bg-[#141517]">
+        <div className="flex-1 flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
             <motion.div 
                 animate={{ rotate: 360 }}
                 transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
@@ -64,7 +64,7 @@ export default function WikiDocEditPage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Wiki" sidebarSections={sidebarSections}>
-            <div className="flex-1 flex flex-col bg-white dark:bg-[#141517] overflow-hidden">
+            <div className="flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#141517] overflow-hidden">
             {/* Minimal Header */}
             <header className="h-8 px-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0 bg-white/80 dark:bg-[#141517]/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-4">

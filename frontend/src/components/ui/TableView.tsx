@@ -401,7 +401,7 @@ export default function TableView<T extends Record<string, any>>({
                 }
               }}
               placeholder="Buscar…"
-              className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-1 focus:ring-indigo-400"
+              className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200 dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-1 focus:ring-indigo-400"
             />
             {quickFilter && (
               <button onClick={() => {
@@ -420,12 +420,12 @@ export default function TableView<T extends Record<string, any>>({
             <>
               <span className="text-xs text-slate-500 dark:text-slate-400 mr-1">{selectedIds.length} seleccionados</span>
               {actions?.map((a, i) => (
-                <button key={i} onClick={() => a.onClick(selectedIds as any)} className={clsx("flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors", a.danger ? "bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100" : "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 hover:bg-indigo-100")}>
+                <button key={i} onClick={() => a.onClick(selectedIds as any)} className={clsx("flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors", a.danger ? "bg-red-50 dark:bg-red-900/20 text-[hsl(var(--destructive))] hover:bg-red-100" : "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 hover:bg-indigo-100")}>
                   {a.icon}{a.label}
                 </button>
               ))}
               {onDeleteRows && (
-                <button onClick={handleDeleteSelected} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100 transition-colors">
+                <button onClick={handleDeleteSelected} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50 dark:bg-red-900/20 text-[hsl(var(--destructive))] hover:bg-red-100 transition-colors">
                   <Trash2 size={12} /> Eliminar
                 </button>
               )}
@@ -445,7 +445,7 @@ export default function TableView<T extends Record<string, any>>({
       {/* Grid */}
       <div className="flex-1 min-h-[300px] rounded-xl overflow-hidden border border-slate-200 dark:border-white/10">
         {!serverSide && data.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-sm text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900">
+          <div className="flex items-center justify-center h-full text-sm text-slate-400 dark:text-slate-500 bg-[hsl(var(--bg-primary))] dark:bg-slate-900">
             {emptyMessage}
           </div>
         ) : serverSide ? (

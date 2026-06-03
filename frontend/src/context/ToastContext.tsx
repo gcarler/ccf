@@ -34,7 +34,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                         <div className={`p-2 rounded-md ${toast.type === 'success' ? 'bg-emerald-500 text-white' :
                                 toast.type === 'error' ? 'bg-rose-500 text-white' :
                                     toast.type === 'warning' ? 'bg-amber-500 text-white' :
-                                        'bg-blue-500 text-white'
+                                        'bg-[hsl(var(--primary))] text-white'
                             }`}>
                             {toast.type === 'success' && <CheckCircle size={18} />}
                             {toast.type === 'error' && <AlertCircle size={18} />}

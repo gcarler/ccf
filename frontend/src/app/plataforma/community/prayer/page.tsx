@@ -157,7 +157,7 @@ export default function PrayerWall() {
                         animate={{ opacity: 1, scale: 1 }}
                         className="flex flex-col items-center justify-center py-1.5 text-center space-y-3 bg-slate-50/50 dark:bg-white/5 rounded-lg border-2 border-dashed border-slate-200 dark:border-white/10"
                     >
-                        <div className="size-10 rounded-lg bg-white dark:bg-white/5 flex items-center justify-center text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-white/5 shadow-xl">
+                        <div className="size-10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 flex items-center justify-center text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-white/5 shadow-xl">
                             <HandHeart size={48} strokeWidth={1} />
                         </div>
                         <div className="space-y-2">
@@ -213,7 +213,7 @@ export default function PrayerWall() {
                                             <div className="size-2.5 rounded-full bg-current animate-pulse shadow-[0_0_12px_currentColor]"></div>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide">En intercesión</span>
                                         </div>
-                                        <button className="h-8 px-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[10px] font-semibold uppercase tracking-wide transition-all hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3 group/btn hover:shadow-primary/20">
+                                        <button className="h-8 px-3 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg text-[10px] font-semibold uppercase tracking-wide transition-all hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3 group/btn hover:shadow-primary/20">
                                             <Heart size={16} className="group-hover/btn:fill-rose-500 group-hover/btn:text-rose-500 transition-all duration-500" />
                                             Me uno
                                         </button>

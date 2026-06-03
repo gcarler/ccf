@@ -28,7 +28,7 @@ type Volunteer = {
 
 function Badge({ label, tone = "blue" }: { label: string; tone?: string }) {
     const styles: Record<string, string> = {
-        blue: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200/50",
+        blue: "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50",
         emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50",
         violet: "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-200/50",
     };
@@ -135,7 +135,7 @@ export default function VolunteerDetailPage() {
  className="w-full space-y-3">
 
                     {/* Hero */}
-                    <header className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm flex items-center gap-3">
+                    <header className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm flex items-center gap-3">
                         <div className="size-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-xl flex-shrink-0">
                             {initials}
                         </div>
@@ -148,7 +148,7 @@ export default function VolunteerDetailPage() {
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <button onClick={openEdit}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
+                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all">
                                 <PencilLine size={13} /> Editar
                             </button>
                             <button onClick={() => setDeleteConfirm(true)}
@@ -160,7 +160,7 @@ export default function VolunteerDetailPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         <div className="lg:col-span-2 space-y-3">
-                            <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-5">Información del Servidor</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
@@ -176,7 +176,7 @@ export default function VolunteerDetailPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-4">Habilidades y Dones</p>
                                 <div className="flex flex-wrap gap-2">
                                     {volunteer.skills.length > 0
@@ -187,7 +187,7 @@ export default function VolunteerDetailPage() {
                         </div>
 
                         <aside className="space-y-3">
-                            <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-5">Métricas de Servicio</p>
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
@@ -218,7 +218,7 @@ export default function VolunteerDetailPage() {
                             initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: "100%", opacity: 0 }}
                             transition={{ type: "spring", damping: 26, stiffness: 260 }}
-                            className="fixed top-0 right-0 h-screen z-[100] w-full max-w-md bg-white dark:bg-[#15171c] shadow-2xl rounded-l-lg overflow-hidden flex flex-col">
+                            className="fixed top-0 right-0 h-screen z-[100] w-full max-w-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] shadow-2xl rounded-l-lg overflow-hidden flex flex-col">
                             <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5">
                                 <div>
                                     <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Editar Servidor</p>
@@ -243,7 +243,7 @@ export default function VolunteerDetailPage() {
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 py-3 rounded-md bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                                     <Save size={14} /> {saving ? "Guardando..." : "Guardar"}
                                 </button>
                             </div>
@@ -259,7 +259,7 @@ export default function VolunteerDetailPage() {
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                                className="bg-white dark:bg-[#15171c] rounded-lg p-4 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-white/10">
+                                className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg p-4 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-white/10">
                                 <div className="size-8 rounded-lg bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-600 mb-5">
                                     <Trash2 size={24} />
                                 </div>

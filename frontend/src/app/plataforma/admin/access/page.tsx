@@ -37,7 +37,7 @@ import clsx from 'clsx';
 const ACCESS_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 const MODULES = [
-    { id: 'crm', label: 'CRM Pastoral', icon: Users, color: 'text-blue-500' },
+    { id: 'crm', label: 'CRM Pastoral', icon: Users, color: 'text-[hsl(var(--primary))]' },
     { id: 'academy', label: 'Academia Faro', icon: BookOpen, color: 'text-emerald-500' },
     { id: 'projects', label: 'Proyectos', icon: ClipboardList, color: 'text-indigo-500' },
     { id: 'finance', label: 'Finanzas', icon: Lock, color: 'text-amber-500' },
@@ -246,7 +246,7 @@ export default function AccessManagementPage() {
             header: 'Nombre del Rol', 
             cell: info => (
                 <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 shadow-sm">
+                    <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[hsl(var(--primary))] shadow-sm">
                         <Shield size={16} />
                     </div>
                     <span className="font-semibold text-slate-800 dark:text-white uppercase tracking-tight">{info.getValue() as string}</span>
@@ -295,7 +295,7 @@ export default function AccessManagementPage() {
             accessorKey: 'role', 
             header: 'Rol Asignado', 
             cell: info => (
-                <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-[9px] font-semibold uppercase tracking-wide border border-blue-100 dark:border-blue-800">
+                <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-[9px] font-semibold uppercase tracking-wide border border-blue-100 dark:border-blue-800">
                     {info.getValue() as string}
                 </span>
             ) 
@@ -396,12 +396,12 @@ export default function AccessManagementPage() {
                         key={row.id || title}
                         onClick={() => handleOpenEntity(row)}
                         className={clsx(
-                            'text-left bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 hover:border-blue-300 hover:shadow-xl transition-all',
+                            'text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 hover:border-blue-300 hover:shadow-xl transition-all',
                             mode === 'list' && 'flex items-center justify-between gap-4'
                         )}
                     >
                         <div className="flex items-center gap-4">
-                            <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+                            <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center">
                                 {activeTab === 'roles' ? <Shield size={22} /> : <UserCircle size={22} />}
                             </div>
                             <div>
@@ -426,7 +426,7 @@ export default function AccessManagementPage() {
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((row) => (
-                            <button key={row.id || row.name || row.username} onClick={() => handleOpenEntity(row)} className="w-full text-left bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4 hover:border-blue-300 transition-all">
+                            <button key={row.id || row.name || row.username} onClick={() => handleOpenEntity(row)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4 hover:border-blue-300 transition-all">
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{activeTab === 'roles' ? row.name : row.username || row.email}</p>
                                 <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{activeTab === 'roles' ? `${row.users_count || 0} usuarios` : row.role}</p>
                             </button>
@@ -438,7 +438,7 @@ export default function AccessManagementPage() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <style jsx global>{`
                 .permission-card {
                     transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
@@ -456,7 +456,7 @@ export default function AccessManagementPage() {
                 availableViews={ACCESS_VIEWS}
                 onSearch={setSearch}
                 rightActions={
-                    <button onClick={handleCreateEntity} className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700">
+                    <button onClick={handleCreateEntity} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-[hsl(var(--primary))]">
                         <Plus size={14} /> Crear Nuevo
                     </button>
                 }
@@ -465,8 +465,8 @@ export default function AccessManagementPage() {
             {/* Cinematic Tab Navigation */}
             <div className="flex px-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
-                <button onClick={() => setActiveTab('roles')} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10", activeTab === 'roles' ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-white/50")}>Roles Ministeriales</button>
-                <button onClick={() => setActiveTab('users')} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10", activeTab === 'users' ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-white/50")}>Auditoría de Usuarios</button>
+                <button onClick={() => setActiveTab('roles')} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10", activeTab === 'roles' ? "text-[hsl(var(--primary))] border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-white/50")}>Roles Ministeriales</button>
+                <button onClick={() => setActiveTab('users')} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10", activeTab === 'users' ? "text-[hsl(var(--primary))] border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-white/50")}>Auditoría de Usuarios</button>
             </div>
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4">
@@ -519,7 +519,7 @@ export default function AccessManagementPage() {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm"
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm"
                         >
                             <DataTable
                                 data={currentRows}
@@ -540,7 +540,7 @@ export default function AccessManagementPage() {
                         <button className="px-3 py-2.5 bg-slate-100 dark:bg-white/5 text-slate-500 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-slate-200 transition-all" onClick={() => setIsDrawerOpen(false)}>Cerrar</button>
                         <button 
                             disabled={isSaving}
-                            className="px-4 py-2.5 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all" 
+                            className="px-4 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all" 
                             onClick={handleSavePermissions}
                         >
                             {isSaving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />} Guardar Cambios
@@ -553,7 +553,7 @@ export default function AccessManagementPage() {
                     <section className="space-y-3">
                         <div className="flex items-center justify-between px-2">
                             <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
-                                <Layout size={16} className="text-blue-500" /> Matriz de Operaciones
+                                <Layout size={16} className="text-[hsl(var(--primary))]" /> Matriz de Operaciones
                             </h4>
                             <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
                                 <Shield size={10} className="text-amber-600" />
@@ -580,7 +580,7 @@ export default function AccessManagementPage() {
                     <section className="p-4 bg-slate-900 rounded-lg text-white relative overflow-hidden group shadow-2xl">
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Lock size={80} /></div>
                         <div className="relative z-10 space-y-4">
-                            <div className="flex items-center gap-3 text-blue-400 font-semibold uppercase tracking-wide text-[10px]">
+                            <div className="flex items-center gap-3 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px]">
                                 <AlertCircle size={14} /> Protocolo de Seguridad
                             </div>
                             <p className="text-xs text-slate-300 leading-relaxed font-medium">
@@ -605,15 +605,15 @@ function PermissionRow({ moduleId, label, icon: Icon, color, level, onChange }: 
     return (
         <div className="permission-card p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 flex items-center justify-between group">
             <div className="flex items-center gap-3">
-                <div className={clsx("size-7 rounded-[1.25rem] flex items-center justify-center bg-white dark:bg-black/40 shadow-sm border border-slate-100 dark:border-white/5 transition-all group-hover:scale-110 group-hover:rotate-3", color)}>
+                <div className={clsx("size-7 rounded-[1.25rem] flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/40 shadow-sm border border-slate-100 dark:border-white/5 transition-all group-hover:scale-110 group-hover:rotate-3", color)}>
                     <Icon size={24} strokeWidth={1.5} />
                 </div>
                 <div>
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-none mb-1">{label}</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Estado: <span className="text-blue-500">{LEVEL_LABELS[level] || level}</span></p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Estado: <span className="text-[hsl(var(--primary))]">{LEVEL_LABELS[level] || level}</span></p>
                 </div>
             </div>
-            <div className="flex bg-white dark:bg-black/40 p-1.5 rounded-lg border border-slate-200 dark:border-white/10 shadow-inner">
+            <div className="flex bg-[hsl(var(--bg-primary))] dark:bg-black/40 p-1.5 rounded-lg border border-slate-200 dark:border-white/10 shadow-inner">
                 <LevelBtn active={level === 'none'} icon={XCircle} tooltip="Sin Acceso" onClick={() => onChange('none')} />
                 <LevelBtn active={level === 'read'} icon={Eye} tooltip="Solo Lectura" onClick={() => onChange('read')} />
                 {moduleId === 'academy' && <LevelBtn active={level === 'study'} icon={BookOpen} tooltip="Estudiante" onClick={() => onChange('study')} />}
@@ -631,7 +631,7 @@ function LevelBtn({ active, icon: Icon, tooltip, onClick }: any) {
             onClick={onClick}
             className={clsx(
                 "p-2 rounded-md transition-all duration-300 relative group/btn",
-                active ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-300 hover:text-slate-600 dark:hover:text-slate-200"
+                active ? "bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-300 hover:text-slate-600 dark:hover:text-slate-200"
             )}
         >
             <Icon size={16} />

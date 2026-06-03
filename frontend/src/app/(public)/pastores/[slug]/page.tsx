@@ -41,7 +41,7 @@ export default function PastorDetailPage() {
             <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
                 <div className="text-center">
                     <h1 className="text-lg font-bold text-slate-800 mb-4">Pastor no encontrado</h1>
-                    <button onClick={() => router.push('/pastores')} className="text-blue-600 font-bold hover:underline">
+                    <button onClick={() => router.push('/pastores')} className="text-[hsl(var(--primary))] font-bold hover:underline">
                         Volver a la galería
                     </button>
                 </div>
@@ -50,7 +50,7 @@ export default function PastorDetailPage() {
     }
 
     return (
-        <div className="min-h-screen bg-white dark:bg-[#0b0d11] selection:bg-blue-500/30 selection:text-blue-900">
+        <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] selection:bg-blue-500/30 selection:text-blue-900">
 
             <main>
                 <div className="relative pt-32 pb-4 lg:pt-48 lg:pb-4 overflow-hidden">
@@ -60,7 +60,7 @@ export default function PastorDetailPage() {
                     </div>
 
                     <div className="max-w-7xl mx-auto px-3 md:px-6 lg:px-8 xl:px-12">
-                        <Link href="/pastores" className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-sm mb-3 transition-colors">
+                        <Link href="/pastores" className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] font-bold text-sm mb-3 transition-colors">
                             <ArrowLeft size={16} /> Volver al liderazgo
                         </Link>
 
@@ -76,7 +76,7 @@ export default function PastorDetailPage() {
                                 <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight mb-4">
                                     {pastor.name}
                                 </h1>
-                                <p className="text-lg md:text-xl text-blue-600 dark:text-blue-400 font-bold tracking-wide mb-3">
+                                <p className="text-lg md:text-xl text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold tracking-wide mb-3">
                                     {pastor.title}
                                 </p>
 
@@ -107,7 +107,7 @@ export default function PastorDetailPage() {
                         <div
                             className="prose prose-lg dark:prose-invert max-w-none
                             prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-p:leading-relaxed
-                            prose-blockquote:border-l-blue-500 prose-blockquote:bg-white dark:prose-blockquote:bg-[#151821] prose-blockquote:py-2 prose-blockquote:px-3 prose-blockquote:rounded-r-2xl prose-blockquote:font-medium prose-blockquote:text-slate-800 dark:prose-blockquote:text-slate-200 prose-blockquote:shadow-sm"
+                            prose-blockquote:border-l-blue-500 prose-blockquote:bg-[hsl(var(--bg-primary))] dark:prose-blockquote:bg-[#151821] prose-blockquote:py-2 prose-blockquote:px-3 prose-blockquote:rounded-r-2xl prose-blockquote:font-medium prose-blockquote:text-slate-800 dark:prose-blockquote:text-slate-200 prose-blockquote:shadow-sm"
                             dangerouslySetInnerHTML={{ __html: pastor.fullStory }}
                         />
                     </div>

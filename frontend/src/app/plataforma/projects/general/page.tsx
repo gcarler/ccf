@@ -73,7 +73,7 @@ export default function ProjectsGeneralPage() {
     const ganttItems = activities.map((activity) => ({ id: activity.id, title: activity.task_title || activity.project_title, subtitle: activity.description, start_date: activity.created_at, end_date: activity.created_at, color: 'blue' as const, progress: 65 }));
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Canal General', icon: Hash }]}
                 viewType={viewType}
@@ -87,7 +87,7 @@ export default function ProjectsGeneralPage() {
                         <select
                             value={projectId}
                             onChange={(event) => setProjectId(Number(event.target.value))}
-                            className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
+                            className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-black/20"
                         >
                             {projects.map((project) => (
                                 <option key={project.id} value={project.id}>{project.title}</option>
@@ -97,12 +97,12 @@ export default function ProjectsGeneralPage() {
                             value={content}
                             onChange={(event) => setContent(event.target.value)}
                             placeholder="Escribe una actualización para el canal general..."
-                            className="md:col-span-2 rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
+                            className="md:col-span-2 rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-black/20"
                         />
                         <button
                             onClick={postMessage}
                             disabled={saving || !projectId || !content.trim()}
-                            className="rounded-md bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                            className="rounded-md bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
                         >
                             {saving ? 'Publicando...' : 'Publicar'}
                         </button>
@@ -113,9 +113,9 @@ export default function ProjectsGeneralPage() {
                 ) : viewType === 'table' ? (
                     <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Proyecto</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Actividad</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{activities.map((activity) => <tr key={activity.id}><td className="px-3 py-2 text-sm font-medium">{activity.project_title}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{activity.description}</td></tr>)}</tbody></table></div>
                 ) : viewType === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{activities.map((activity) => <article key={activity.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">{activity.project_title}</p><h3 className="font-bold mt-1">{activity.task_title || 'Actividad'}</h3><p className="text-sm mt-1">{activity.description}</p></article>)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{activities.map((activity) => <article key={activity.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{activity.project_title}</p><h3 className="font-bold mt-1">{activity.task_title || 'Actividad'}</h3><p className="text-sm mt-1">{activity.description}</p></article>)}</div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">{Object.entries(groupedActivities).map(([project, rows]) => <section key={project} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{project}</span><span className="text-[10px] font-bold text-slate-400">{rows.length}</span></div><div className="space-y-2">{rows.map((row) => <div key={row.id} className="rounded-md bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm">{row.description}</div>)}</div></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">{Object.entries(groupedActivities).map(([project, rows]) => <section key={project} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{project}</span><span className="text-[10px] font-bold text-slate-400">{rows.length}</span></div><div className="space-y-2">{rows.map((row) => <div key={row.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm">{row.description}</div>)}</div></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario del canal general" />
                 ) : viewType === 'gantt' ? (
@@ -126,7 +126,7 @@ export default function ProjectsGeneralPage() {
                     <div className="space-y-3">
                         {activities.map((activity) => (
                             <article key={activity.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/5">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">{activity.project_title}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{activity.project_title}</p>
                                 <h3 className="font-bold text-slate-800 dark:text-white mt-1">{activity.task_title || 'Actividad'}</h3>
                                 <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{activity.description}</p>
                             </article>
