@@ -8,7 +8,7 @@ import MeshChat from '@/components/ui/MeshChat';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Tooltip from '@/components/ui/Tooltip';
 import { useAuth } from '@/context/AuthContext';
-import { Bell, Bot, ChevronLeft, ChevronRight, LogOut, Maximize2, Minimize2 } from 'lucide-react';
+import { Bell, Bot, ChevronLeft, ChevronRight, Maximize2, Minimize2, LogOut, User, Settings } from 'lucide-react';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
@@ -272,6 +272,85 @@ function WorkspaceLayoutInner({
         ? user.username.split('@')[0]
         : user?.username;
 
+    // ── User dropdown menu (Gmail-style) ──
+    function UserMenuDropdown({ displayName, logout }: { displayName: string; logout: () => void }) {
+        const [isOpen, setIsOpen] = useState(false);
+        const menuRef = useRef<HTMLDivElement>(null);
+
+        useEffect(() => {
+            const handleClickOutside = (e: MouseEvent) => {
+                if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                    setIsOpen(false);
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }, []);
+
+        return (
+            <div className="relative" ref={menuRef}>
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex items-center gap-1.5 h-7 pl-2 pr-1 bg-slate-50 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.07] rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all group"
+                >
+                    <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors max-w-[80px] truncate">
+                        {displayName}
+                    </span>
+                    <div className="size-5 rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-[8px]">
+                        {displayName?.substring(0, 2).toUpperCase()}
+                    </div>
+                </button>
+
+                <AnimatePresence>
+                    {isOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 5, scale: 0.96 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 5, scale: 0.96 }}
+                            transition={{ duration: 0.12, ease: "easeOut" }}
+                            className="absolute top-9 right-0 w-56 bg-[hsl(var(--bg-primary))] dark:bg-[#252628] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl py-2 z-[100] origin-top-right"
+                        >
+                            {/* Header */}
+                            <div className="px-3 pb-2 mb-1 border-b border-slate-100 dark:border-white/5">
+                                <p className="text-xs font-bold text-slate-900 dark:text-white">{displayName}</p>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{user?.username}</p>
+                            </div>
+
+                            {/* Options */}
+                            <div className="px-1.5 flex flex-col gap-0.5">
+                                <button
+                                    onClick={() => { setIsOpen(false); }}
+                                    className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-all text-left"
+                                >
+                                    <User size={14} className="text-slate-400" />
+                                    <span>Mi perfil</span>
+                                </button>
+                                <button
+                                    onClick={() => { setIsOpen(false); }}
+                                    className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-all text-left"
+                                >
+                                    <Settings size={14} className="text-slate-400" />
+                                    <span>Configuración</span>
+                                </button>
+                            </div>
+
+                            {/* Logout */}
+                            <div className="mt-1 pt-1 border-t border-slate-100 dark:border-white/5 px-1.5">
+                                <button
+                                    onClick={() => { setIsOpen(false); logout(); }}
+                                    className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all text-left"
+                                >
+                                    <LogOut size={14} />
+                                    <span className="font-semibold">Cerrar sesión</span>
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        );
+    }
+
     // Combined Right Actions for WorkspaceToolbar
     const defaultRightActions = (
         <div className="flex items-center gap-0.5">
@@ -302,22 +381,7 @@ function WorkspaceLayoutInner({
 
             <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
 
-            <button className="flex items-center gap-1.5 h-7 pl-2 pr-1 bg-slate-50 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.07] rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
-                <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors max-w-[80px] truncate">
-                    {displayName}
-                </span>
-                <div className="size-5 rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-[8px]">
-                    {displayName?.substring(0, 2).toUpperCase()}
-                </div>
-            </button>
-
-            <button
-                onClick={logout}
-                className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all text-slate-400 hover:text-[hsl(var(--destructive))]"
-                title="Cerrar sesión"
-            >
-                <LogOut size={14} />
-            </button>
+            <UserMenuDropdown displayName={displayName} logout={logout} />
         </div>
     );
 
