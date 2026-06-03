@@ -67,7 +67,7 @@ class EstadoSesionEnum(str, Enum):
 class EstrategiaEvangelismoBase(BaseModel):
     name: str
     description: Optional[str] = None
-    clase_raiz: Optional[ClaseEstrategiaEnum] = None
+    clase_raiz: Optional[str] = None
     activa: bool = True
 
     # Campos legacy (back-compat)

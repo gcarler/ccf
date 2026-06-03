@@ -171,6 +171,7 @@ class EstrategiaEvangelismo(Base):
     day_of_week = synonym("dia_reunion")
     start_time = synonym("hora_reunion")
     recurrence = synonym("frecuencia")
+    created_at = synonym("fecha_creacion")
 
 
 class RolPersonalizadoEstrategia(Base):

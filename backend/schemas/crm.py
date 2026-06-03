@@ -625,8 +625,9 @@ class EvangelismStrategyBase(BaseModel):
 class EvangelismStrategy(EvangelismStrategyBase):
     """Legacy response schema — id is now str (UUID) from canonical model."""
     id: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    fecha_creacion: Optional[datetime] = None
     model_config = orm_config
 
 class MemberEvangelismBase(BaseModel):
