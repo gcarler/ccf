@@ -213,12 +213,12 @@ def list_consolidation_cases(
     if stage:
         q = q.filter(models.CasoCRM.estado == stage)
     if status:
-        q = q.filter(models.CasoCRM.status == status)
+        q = q.filter(models.CasoCRM.estado == status)
     if persona_id:
         q = q.filter(models.CasoCRM.persona_id == persona_id)
 
     total = q.count()
-    cases = q.order_by(models.CasoCRM.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    cases = q.order_by(models.CasoCRM.fecha_creacion.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
     return {
         "cases": [_serialize_case(c) for c in cases],
@@ -1578,12 +1578,12 @@ def get_newsletter_leads(
     if campaign:
         query = query.filter(models.CasoCRM.payload_web.like(f"%Campaign: {campaign}%"))
     if date_from:
-        query = query.filter(models.CasoCRM.created_at >= date_from)
+        query = query.filter(models.CasoCRM.fecha_creacion >= date_from)
     if date_to:
-        query = query.filter(models.CasoCRM.created_at <= date_to)
+        query = query.filter(models.CasoCRM.fecha_creacion <= date_to)
 
     total = query.count()
-    cases = query.order_by(models.CasoCRM.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    cases = query.order_by(models.CasoCRM.fecha_creacion.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
     leads = []
     for case in cases:
@@ -1595,10 +1595,10 @@ def get_newsletter_leads(
                 "nombre_completo": persona.nombre_completo if persona else "",
                 "email": persona.email if persona else None,
                 "telefono": persona.telefono if persona else None,
-                "source": case.source,
-                "stage": case.stage,
-                "notes": case.notes,
-                "created_at": case.created_at.isoformat() if case.created_at else None,
+                "source": str(case.origen_canal.value) if case.origen_canal else None,
+                "stage": str(case.estado.value) if case.estado else None,
+                "notes": case.titulo_caso,
+                "created_at": case.fecha_creacion.isoformat() if case.fecha_creacion else None,
             }
         )
 
@@ -1634,11 +1634,11 @@ def export_newsletter_leads_csv(
     if source:
         query = query.filter(models.CasoCRM.origen_canal == source)
     if date_from:
-        query = query.filter(models.CasoCRM.created_at >= date_from)
+        query = query.filter(models.CasoCRM.fecha_creacion >= date_from)
     if date_to:
-        query = query.filter(models.CasoCRM.created_at <= date_to)
+        query = query.filter(models.CasoCRM.fecha_creacion <= date_to)
 
-    cases = query.order_by(models.CasoCRM.created_at.desc()).all()
+    cases = query.order_by(models.CasoCRM.fecha_creacion.desc()).all()
 
     rows = []
     for case in cases:
@@ -1649,10 +1649,10 @@ def export_newsletter_leads_csv(
                 "last_name": persona.last_name if persona else "",
                 "email": persona.email if persona else "",
                 "phone": persona.phone if persona else "",
-                "source": case.source,
-                "stage": case.stage,
-                "notes": case.notes or "",
-                "created_at": str(case.created_at) if case.created_at else "",
+                "source": str(case.origen_canal.value) if case.origen_canal else "",
+                "stage": str(case.estado.value) if case.estado else "",
+                "notes": case.titulo_caso or "",
+                "created_at": str(case.fecha_creacion) if case.fecha_creacion else "",
             }
         )
 

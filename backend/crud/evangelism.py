@@ -20,7 +20,6 @@ from backend.models_evangelism import (
     RolPersonalizadoEstrategia,
     RegistroSeguimiento,
 )
-from backend.schemas.evangelism import ClaseEstrategiaEnum
 from backend.schemas.evangelism import (
     AsistenciaSesionCreate,
     EstrategiaEvangelismoCreate,

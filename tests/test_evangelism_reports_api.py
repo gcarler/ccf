@@ -8,7 +8,7 @@ from tests.conftest import seed_admin_v2, auth_headers_v2
 
 def _seed_sede(db_session):
     sede = models.Sede(
-        id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True
+        id=str(uuid.uuid4()), nombre="Test Sede", ciudad="Bogota", es_activa=True
     )
     db_session.add(sede)
     db_session.commit()
@@ -32,7 +32,7 @@ def test_attendance_pdf_for_group(client, db_session):
 
     import uuid
     estrategia = models.EstrategiaEvangelismo(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         nombre="Estrategia Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -68,7 +68,7 @@ def test_attendance_excel_for_group(client, db_session):
     cat = _seed_categoria(db_session)
 
     estrategia = models.EstrategiaEvangelismo(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         nombre="Estrategia Test 2",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -107,7 +107,7 @@ def test_strategy_summary(client, db_session):
     cat = _seed_categoria(db_session)
 
     estrategia = models.EstrategiaEvangelismo(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         nombre="Estrategia Resumen",
         categoria_id=cat.id,
         sede_id=sede.id,
