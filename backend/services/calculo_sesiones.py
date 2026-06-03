@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import calendar
 from datetime import datetime, timedelta, timezone
-from typing import Callable, List, Union
+from typing import List, Union
 import uuid
 
 from dateutil.relativedelta import relativedelta
