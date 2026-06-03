@@ -966,8 +966,42 @@ def create_community_card(db: Session, card: schemas.CommunityBoardCardCreate) -
 
 
 # --- Evangelism Strategies ---
-# MOVED to crud/evangelism.py (EstrategiaEvangelismo with UUID PK)
 
+
+def get_evangelism_strategies(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(EvangelismStrategy).offset(skip).limit(limit).all()
+
+
+def create_evangelism_strategy(db: Session, strategy: EvangelismStrategyCreate):
+    valid_cols = {c.key for c in EvangelismStrategy.__table__.columns}
+    data = {k: v for k, v in strategy.model_dump().items() if k in valid_cols}
+    db_obj = EvangelismStrategy(**data)
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+def update_evangelism_strategy(db: Session, strategy_id: int, strategy: EvangelismStrategyUpdate):
+    db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
+    if not db_obj:
+        return None
+    valid_cols = {c.key for c in EvangelismStrategy.__table__.columns}
+    update_data = {k: v for k, v in strategy.model_dump(exclude_unset=True).items() if k in valid_cols}
+    for key, value in update_data.items():
+        setattr(db_obj, key, value)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
+    db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
+    if not db_obj:
+        return False
+    db_obj.deleted_at = _utcnow()
+    db.commit()
+    return True
 
 
 # ── Missing CRUDs ──────────────────────────────────────
