@@ -310,6 +310,14 @@ function WorkspaceLayoutInner({
                     {displayName?.substring(0, 2).toUpperCase()}
                 </div>
             </button>
+
+            <button
+                onClick={logout}
+                className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all text-slate-400 hover:text-[hsl(var(--destructive))]"
+                title="Cerrar sesión"
+            >
+                <LogOut size={14} />
+            </button>
         </div>
     );
 
@@ -381,13 +389,6 @@ function WorkspaceLayoutInner({
                                 </div>
                             </div>
                             {defaultRightActions}
-                            <button
-                                onClick={logout}
-                                className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all text-slate-400 hover:text-[hsl(var(--destructive))]"
-                                title="Cerrar sesión"
-                            >
-                                <LogOut size={14} />
-                            </button>
                         </header>
                     )}
                 </div>

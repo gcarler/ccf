@@ -8,7 +8,8 @@ import {
     Flame,
     Calendar,
     ChevronRight,
-    Users
+    Users,
+    Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/http';
@@ -127,7 +128,15 @@ export default function EvangelismClient() {
                 viewType={viewType}
                 onViewChange={setViewType}
             onSearch={setSearch}
-            onAdd={handleAddItem}
+            rightActions={
+                <button
+                    onClick={handleAddItem}
+                    className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-[7px] transition-all shadow-sm"
+                >
+                    <Plus size={12} />
+                    Crear Estrategia
+                </button>
+            }
         >
             <div className="h-full flex flex-col relative">
                 {loading ? (

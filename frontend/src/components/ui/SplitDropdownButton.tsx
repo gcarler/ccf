@@ -52,22 +52,22 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
 
     return (
         <div className="relative inline-flex items-center ml-2" ref={dropdownRef}>
-            {/* Split Button Container */}
-            <div className="flex items-center bg-[#1e272e] hover:bg-[#2f3640] text-white rounded-[7px] overflow-hidden transition-all shadow-sm">
-                
+            {/* Split Button Container — usa variables del tema en vez de colores fijos oscuros */}
+            <div className="flex items-center bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-[7px] overflow-hidden transition-all shadow-sm">
+
                 {/* Main Action */}
-                <button 
+                <button
                     onClick={onMainClick}
-                    className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 transition-colors border-r border-white/10 active:bg-white/10 whitespace-nowrap"
+                    className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 transition-colors border-r border-white/20 active:bg-white/15 whitespace-nowrap"
                 >
                     {Icon && <Icon size={12} />}
                     {mainLabel}
                 </button>
 
                 {/* Dropdown Chevron */}
-                <button 
+                <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="h-7 w-7 flex items-center justify-center transition-colors hover:bg-white/10 active:bg-white/20"
+                    className="h-7 w-7 flex items-center justify-center transition-colors hover:bg-white/15 active:bg-white/25"
                 >
                     <ChevronDown size={13} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
