@@ -9,6 +9,15 @@ from sqlalchemy.orm import Session
 from backend.models_evangelism import SesionGrupo
 
 FRECUENCIAS = {
+    # Valores del FrecuenciaEnum (MAYÚSCULAS) que vienen de la BD
+    "SEMANAL": timedelta(weeks=1),
+    "QUINCENAL": timedelta(weeks=2),
+    "MENSUAL": timedelta(days=30),
+    "BIMENSUAL": timedelta(days=60),
+    "TRIMESTRAL": timedelta(days=90),
+    "SEMESTRAL": timedelta(days=180),
+    "ANUAL": timedelta(days=365),
+    # Back-compat: valores capitalizados
     "Semanal": timedelta(weeks=1),
     "Quincenal": timedelta(weeks=2),
     "Mensual": timedelta(days=30),
