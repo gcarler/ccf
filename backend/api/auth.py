@@ -83,25 +83,21 @@ def login(
     user = None
     is_v2 = False
     if "@" in form_data.username:
-        user = crud.get_user_by_email(db, email=form_data.username)
-        if not user:
-            user = (
-                db.query(Usuario)
-                .options(joinedload(Usuario.rol_plataforma))
-                .filter(Usuario.email == form_data.username)
-                .first()
-            )
-            is_v2 = True
+        user = (
+            db.query(Usuario)
+            .options(joinedload(Usuario.rol_plataforma))
+            .filter(Usuario.email == form_data.username)
+            .first()
+        )
+        is_v2 = True
     else:
-        user = crud.get_user_by_username(db, username=form_data.username)
-        if not user:
-            user = (
-                db.query(Usuario)
-                .options(joinedload(Usuario.rol_plataforma))
-                .filter(Usuario.username == form_data.username)
-                .first()
-            )
-            is_v2 = True
+        user = (
+            db.query(Usuario)
+            .options(joinedload(Usuario.rol_plataforma))
+            .filter(Usuario.username == form_data.username)
+            .first()
+        )
+        is_v2 = True
 
     ip_address = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
