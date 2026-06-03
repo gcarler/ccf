@@ -3,6 +3,7 @@ from datetime import datetime, date, timezone
 
 import pytest
 from backend import models
+from tests.conftest import seed_admin_v2, auth_headers_v2
 
 
 def _seed_sede(db_session):

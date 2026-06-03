@@ -443,18 +443,21 @@ def create_access_token(
 def create_refresh_token(db: Session, user_id: int | str, ip_address: str = None, user_agent: str = None) -> str:
     """Create a cryptographically random refresh token and persist it."""
     from backend import crud  # avoid circular import
+    import uuid as _uuid
 
     token = secrets.token_urlsafe(48)
     expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
 
-    # Bridge: if user_id is a UUID string, use auth_v2 storage
-    if isinstance(user_id, str) and "-" in user_id:
+    # Bridge: if user_id is a UUID string or UUID object, use auth_v2 storage
+    if isinstance(user_id, (str, _uuid.UUID)):
         from backend.models_auth import TokenSesion
 
+        # Convert string to UUID object if needed (TokenSesion.user_id is UUID PK)
+        user_uuid = _uuid.UUID(user_id) if isinstance(user_id, str) else user_id
         try:
             db.add(
                 TokenSesion(
-                    user_id=user_id,
+                    user_id=user_uuid,
                     token=token,
                     expires_at=expires_at,
                     ip_address=ip_address,

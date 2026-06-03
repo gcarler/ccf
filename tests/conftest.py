@@ -11,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 
 from backend.app import app
 from backend.core.database import Base, get_db
+import backend.models  # noqa: F401 — register all models (incl. auth_v2) so create_all works
 
 SQLALCHEMY_DATABASE_URL = (
     os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite://"
@@ -71,6 +72,7 @@ def client(db_session):
 def seed_admin_v2(db_session, email="admin@example.com", password="testpass123"):
     """Crea un admin funcional en auth_users + persona + RolPlataforma."""
     import uuid as _uuid
+    from backend import models as _models
     from backend.models_auth import Usuario, RolPlataforma
     from backend.models_crm import Persona
     from backend.core.security import get_password_hash
@@ -94,7 +96,7 @@ def seed_admin_v2(db_session, email="admin@example.com", password="testpass123")
         db_session.add(role)
         db_session.flush()
 
-    sede = models.Sede(
+    sede = _models.Sede(
         id=_uuid.uuid4(),
         nombre="Sede Test",
         ciudad="Bogota",

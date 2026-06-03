@@ -5,6 +5,7 @@ import pytest
 
 from backend import models
 from backend.services.evangelism_projection import proyectar_sesiones, FRECUENCIAS
+from tests.conftest import seed_admin_v2, auth_headers_v2
 from backend.services.evangelism_crm_bridge import (
     crear_caso_desde_asistencia,
     _obtener_o_crear_pipeline_nuevos_visitantes,
