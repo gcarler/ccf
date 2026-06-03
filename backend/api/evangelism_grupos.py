@@ -1519,7 +1519,6 @@ def submit_attendance(
 
 def _check_absence_trigger(db: Session, session_id: int):
     """If a member has 3 consecutive absences, create N2 task in Consolidation."""
-    from backend import models
     from backend.models import (
         Asistencia,
         SesionGrupo,
