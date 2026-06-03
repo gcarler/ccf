@@ -1137,7 +1137,7 @@ def generate_strategy_sessions(
     """Genera sesiones automáticas para todos los grupos de una estrategia según su recurrencia."""
     from backend.models_evangelism import EstrategiaEvangelismo as StratModel
     from backend.models_evangelism import GrupoEvangelismo
-    from backend.services.evangelism_projection import proyectar_sesiones
+    from backend.services.calculo_sesiones import calcular_sesiones
 
     strat = db.query(StratModel).filter(StratModel.id == strategy_id).first()
     if not strat:
@@ -1151,7 +1151,7 @@ def generate_strategy_sessions(
     groups = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.estrategia_id == strategy_id).all()
 
     try:
-        created = proyectar_sesiones(
+        created = calcular_sesiones(
             db=db,
             estrategia_id=strategy_id,
             sede_id=strat.sede_id,
