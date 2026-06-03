@@ -958,13 +958,29 @@ export default function StrategyDetailPage() {
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Registro de sesiones</h2>
-                            <button onClick={() => {
-                                setSessionForm({ grupo_id: groups[0]?.id || '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
-                                setIsNewSessionDrawerOpen(true);
-                            }}
-                                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
-                                <Plus size={14} />Nueva sesión
-                            </button>
+                            <div className="flex items-center gap-2">
+                                {strategy.recurrence && strategy.start_date && strategy.end_date && (
+                                    <button onClick={async () => {
+                                        try {
+                                            const res = await apiFetch<any>(`/evangelism/strategies/${id}/generate-sessions`, { method: 'POST', token });
+                                            toast.success(`Sesiones generadas: ${res.sessions_per_group || ''} por grupo`);
+                                            fetchSessions();
+                                        } catch (e: any) {
+                                            toast.error('Error: ' + (e.message || 'Verifica fechas y frecuencia'));
+                                        }
+                                    }}
+                                        className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-slate-300 dark:border-white/20 text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                                        <Sparkles size={14} />Generar sesiones
+                                    </button>
+                                )}
+                                <button onClick={() => {
+                                    setSessionForm({ grupo_id: groups[0]?.id || '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
+                                    setIsNewSessionDrawerOpen(true);
+                                }}
+                                    className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
+                                    <Plus size={14} />Nueva sesión
+                                </button>
+                            </div>
                         </div>
 
                         {groups.length > 1 && (
