@@ -300,7 +300,7 @@ export default function MembersPage() {
         <CrmShell
             breadcrumbs={[
                 { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
-                { label: 'Membresía', icon: Users },
+                { label: 'Membresía', icon: LayoutDashboard },
             ]}
         >
             <main className="flex-1 overflow-y-auto scrollbar-thin">
