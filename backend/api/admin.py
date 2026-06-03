@@ -165,27 +165,26 @@ def get_user_permissions(
 
 @router.put("/users/{user_id}/permissions")
 def set_user_permissions(
-    user_id: int,
+    user_id: str,
     payload: Dict[str, str],
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
-    """Asigna permisos modulares a un usuario (nivel lector/editor/gestor).
+    """Asigna permisos modulares a un usuario auth_users por módulo/nivel.
 
-    Ejemplo del payload:
-    ```json
-    {
-        "crm": "read",
-        "projects": "manage",
-        "academy": "study",
-        "finance": "read"
-    }
-    ```
-    Usar ``null`` o omitir un módulo para quitar el permiso.
-    Los módulos válidos son: crm, finance, projects, cms, academy, messaging.
-    Los niveles válidos son: read, edit, manage (y study para academy).
+    Payload: {"crm": "read", "projects": "manage", "academy": "study"}
+    Niveles: read, edit, manage (y study para academy).
     """
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    import uuid as _uuid
+    from backend.models_auth import Usuario, RolPlataforma
+    from sqlalchemy.orm import joinedload
+
+    # Resolve user from auth_users (UUID-based)
+    try:
+        uid = _uuid.UUID(str(user_id))
+        user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == uid).first()
+    except ValueError:
+        user = None
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -220,18 +219,23 @@ def set_user_permissions(
     # profile:manage is always preserved
     resolved_perms["profile:manage"] = "allow"
 
-    # Upsert UserPermission row
-    override = (
-        db.query(models.UserPermission)
-        .filter(models.UserPermission.user_id == user_id)
-        .first()
-    )
-
-    if override:
-        override.permissions = resolved_perms
+    # Persist en RolPlataforma del usuario: crear/actualizar rol personalizado
+    from backend.models_auth import RolPlataforma
+    rol = user.rol_plataforma
+    if rol:
+        # Actualizar permisos del rol existente
+        current = dict(rol.permisos or {})
+        current.update(resolved_perms)
+        rol.permisos = current
     else:
-        override = models.UserPermission(user_id=user_id, permissions=resolved_perms)
-        db.add(override)
+        # Crear rol personal para este usuario
+        new_rol = RolPlataforma(
+            nombre=f"PERSONALIZADO_{str(user.id)[:8].upper()}",
+            permisos=resolved_perms,
+        )
+        db.add(new_rol)
+        db.flush()
+        user.rol_plataforma_id = new_rol.id
 
     db.commit()
     return {"status": "success", "user_id": user_id, "permissions": resolved_perms}
@@ -347,34 +351,27 @@ def list_admin_members(
 
 @router.get("/users", response_model=List[Dict[str, Any]])
 def list_admin_users(
-    db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
+    db: Session = Depends(get_db), current_user=Depends(require_admin)
 ):
-    """Lista usuarios para gestión de permisos."""
-    users = db.query(models.User).all()
+    """Lista usuarios de auth_users para gestión de permisos granulares."""
+    from backend.models_auth import Usuario, RolPlataforma
+    from sqlalchemy.orm import joinedload
+    users = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).all()
     result = []
     for u in users:
-        # Resolver permisos efectivos para que el frontend pueda mostrarlos
-        role_perms = {}
-        if u.user_role_obj:
-            rp = u.user_role_obj.permissions or {}
-            role_perms = dict(rp) if isinstance(rp, dict) else {}
-        override_perms = {}
-        if u.permissions_override:
-            op = u.permissions_override.permissions or {}
-            override_perms = dict(op) if isinstance(op, dict) else {}
-        effective = dict(role_perms)
-        effective.update(override_perms)
+        rol = u.rol_plataforma
+        permisos = rol.permisos if rol else {}
         result.append(
             {
-                "id": u.id,
+                "id": str(u.id),
                 "username": u.username,
                 "email": u.email,
-                "role": u.role,
-                "role_id": u.role_id,
+                "role": rol.nombre if rol else "LECTOR",
+                "role_id": str(u.rol_plataforma_id) if u.rol_plataforma_id else None,
                 "is_active": u.is_active,
-                "permissions": effective,
-                "role_permissions": role_perms,
-                "override_permissions": override_perms,
+                "permissions": permisos if isinstance(permisos, dict) else {},
+                "role_permissions": permisos if isinstance(permisos, dict) else {},
+                "override_permissions": {},
             }
         )
     return result
