@@ -2,92 +2,256 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Loader2, Mail, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { apiFetch } from '@/lib/http';
-import AuthShowcasePanel from '@/components/AuthShowcasePanel';
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<string | null>(null);
+    const [sent, setSent] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setMessage(null);
         setError(null);
         try {
             await apiFetch('/auth/forgot-password', {
                 method: 'POST',
                 body: { email },
             });
-            setMessage('Te enviamos un correo con instrucciones para restablecer tu contraseña.');
+            setSent(true);
         } catch (err: any) {
-            setError(err?.detail?.message || 'No pudimos procesar tu solicitud.');
+            setError('No encontramos una cuenta con ese correo o hubo un problema. Intenta de nuevo.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="relative min-h-screen w-full overflow-hidden bg-[#020617] text-white">
-            <div className="absolute inset-0 z-0">
-                <div className="absolute top-[-15%] left-[-15%] w-[45%] h-[45%] rounded-full bg-indigo-600/30 blur-[130px] animate-pulse-soft"></div>
-                <div className="absolute bottom-[-20%] right-[-10%] w-[55%] h-[55%] rounded-full bg-blue-500/20 blur-[150px] animate-pulse-soft delay-500"></div>
-                <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.18]"></div>
-            </div>
+        <div className="flex w-screen min-h-screen font-sans">
 
-            <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-3 px-3 py-1.5 lg:grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-center">
-                <Link href="/login" className="absolute top-3 left-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
-                    <div className="p-2 rounded-full bg-white/5 border border-white/10 group-hover:bg-white/10 transition-all">
-                        <ArrowLeft className="w-4 h-4" />
-                    </div>
-                    <span className="text-xs font-bold uppercase tracking-wide">Volver al acceso</span>
-                </Link>
+            {/* ── LEFT PANEL: BRANDING ── */}
+            <motion.section
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="flex-[1.2] bg-ccf-blue-dark relative flex flex-col justify-between px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen overflow-hidden"
+            >
+                {/* Radial glow */}
+                <div
+                    className="absolute top-[-20%] right-[-20%] w-[140%] h-[140%] pointer-events-none z-0"
+                    style={{ background: 'radial-gradient(circle at 70% 30%, rgba(1,138,189,0.25) 0%, transparent 60%)' }}
+                />
 
-                <div className="order-2 w-full max-w-[480px] mx-auto lg:order-1 glass-card rounded-lg border border-white/10 p-4 shadow-2xl">
-                    <div className="mb-3 space-y-3 text-center">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Recuperar acceso</p>
-                        <h1 className="text-xl font-bold tracking-tight text-white">¿Olvidaste tu contraseña?</h1>
-                        <p className="text-slate-400 text-sm">Ingresa tu correo y te enviaremos un enlace seguro para restablecerla.</p>
+                {/* Top badge */}
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="relative z-10"
+                >
+                    <div className="inline-flex items-center gap-3 border border-white/20 rounded-full px-3 py-2.5 bg-white/5 backdrop-blur-md">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                            <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round"/>
+                            <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
+                        </svg>
+                        <span className="text-white font-bold uppercase tracking-wide text-[10px]">
+                            Ministerio Internacional
+                        </span>
                     </div>
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Correo electrónico</label>
-                            <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                    placeholder="tu@correo.com"
-                                />
-                            </div>
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="relative w-full overflow-hidden rounded-lg bg-primary py-1.5 text-sm font-semibold uppercase tracking-wide shadow-lg shadow-primary/30 transition hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2"
+                </motion.div>
+
+                {/* Title */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6, duration: 0.8 }}
+                    className="relative z-10"
+                >
+                    <h1 className="font-bold tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
+                        EL <br /> FARO
+                    </h1>
+                    <p className="text-ccf-blue-light text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
+                        Comunidad <br /> Cristiana
+                    </p>
+                    <div className="w-16 h-1.5 bg-[hsl(var(--bg-primary))] mt-3 rounded-full" />
+                </motion.div>
+
+                {/* Bottom motto */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1 }}
+                    className="relative z-10"
+                >
+                    <p className="text-white/90 text-lg font-medium tracking-normal leading-relaxed">
+                        Guiando a las naciones <br /> hacia la luz de la verdad.
+                    </p>
+                </motion.div>
+
+                {/* Decorative SVG waves */}
+                <svg
+                    className="absolute bottom-0 left-0 w-full z-0 pointer-events-none"
+                    viewBox="0 0 1440 320"
+                    preserveAspectRatio="none"
+                >
+                    <path fill="rgba(255,255,255,0.03)" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,218.7C672,235,768,245,864,240C960,235,1056,213,1152,197.3C1248,181,1344,171,1392,165.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"/>
+                    <path fill="rgba(255,255,255,0.06)" d="M0,128L48,144C96,160,192,192,288,197.3C384,203,480,181,576,160C672,139,768,117,864,128C960,139,1056,181,1152,186.7C1248,192,1344,160,1392,144L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"/>
+                </svg>
+            </motion.section>
+
+            {/* ── RIGHT PANEL: FORM ── */}
+            <motion.section
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="flex-1 bg-[hsl(var(--bg-primary))] flex flex-col justify-center px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen"
+            >
+                <div className="w-full max-w-[420px] mx-auto">
+
+                    {/* Back link */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="mb-6"
+                    >
+                        <Link
+                            href="/login"
+                            className="inline-flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-ccf-blue-dark transition-colors no-underline group"
                         >
-                            {loading && <Loader2 className="w-4 h-4 animate-spin" />} Enviar enlace seguro
-                        </button>
-                    </form>
-                    {message && <p className="mt-3 text-center text-sm font-semibold text-emerald-400">{message}</p>}
-                    {error && <p className="mt-3 text-center text-sm font-semibold text-rose-400">{error}</p>}
-                    <div className="mt-3 text-center text-xs text-slate-400">
-                        ¿Recordaste tu clave?{' '}
-                        <Link href="/login" className="font-bold text-primary hover:text-primary/80">
-                            Inicia sesión
+                            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+                            <span className="text-[9px] font-bold uppercase tracking-wider">Volver al acceso</span>
                         </Link>
-                    </div>
-                </div>
+                    </motion.div>
 
-                <AuthShowcasePanel mode="login" className="order-1 lg:order-2" />
-            </div>
+                    {/* Header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="mb-6"
+                    >
+                        <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] font-extrabold text-ccf-blue-dark tracking-[-0.02em] leading-none m-0 mb-3">
+                            Recuperar acceso
+                        </h2>
+                        <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px] m-0">
+                            Restablece tu contraseña por correo
+                        </p>
+                    </motion.div>
+
+                    <AnimatePresence mode="wait">
+                        {sent ? (
+                            /* ── SUCCESS STATE ── */
+                            <motion.div
+                                key="success"
+                                initial={{ opacity: 0, scale: 0.96 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="flex flex-col items-center text-center gap-4 py-6"
+                            >
+                                <div className="w-14 h-14 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center">
+                                    <CheckCircle2 className="text-emerald-500" size={28} />
+                                </div>
+                                <div>
+                                    <p className="text-ccf-blue-dark font-extrabold text-base m-0 mb-1">
+                                        Revisa tu correo
+                                    </p>
+                                    <p className="text-[hsl(var(--text-secondary))] text-[11px] leading-relaxed m-0">
+                                        Te enviamos las instrucciones a <strong className="text-ccf-blue-dark">{email}</strong>.
+                                        Si no lo ves, revisa la carpeta de spam.
+                                    </p>
+                                </div>
+                                <Link
+                                    href="/login"
+                                    className="text-ccf-blue-light font-bold text-[10px] uppercase tracking-wider no-underline"
+                                >
+                                    Volver al inicio de sesión
+                                </Link>
+                            </motion.div>
+                        ) : (
+                            /* ── FORM STATE ── */
+                            <motion.form
+                                key="form"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                onSubmit={handleSubmit}
+                                className="flex flex-col gap-4"
+                            >
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                >
+                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
+                                        Correo electrónico
+                                    </label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="usuario@ministeriofaro.org"
+                                        className="login-input"
+                                    />
+                                </motion.div>
+
+                                <AnimatePresence>
+                                    {error && (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.96 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.96 }}
+                                            className="px-3 py-1.5 bg-rose-50 border-2 border-rose-200 rounded-lg text-rose-600 text-[11px] font-bold text-center uppercase tracking-wider"
+                                        >
+                                            {error}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                <motion.button
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.6 }}
+                                    type="submit"
+                                    disabled={loading}
+                                    className="login-btn"
+                                >
+                                    {loading ? (
+                                        <Loader2 className="animate-spin" size={20} />
+                                    ) : (
+                                        <>
+                                            ENVIAR ENLACE SEGURO
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                            </svg>
+                                        </>
+                                    )}
+                                </motion.button>
+
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.7 }}
+                                    className="text-center"
+                                >
+                                    <p className="text-[hsl(var(--text-secondary))] text-[10px] font-bold tracking-wider uppercase mb-2">
+                                        ¿Recordaste tu clave?
+                                    </p>
+                                    <Link
+                                        href="/login"
+                                        className="text-ccf-blue-light font-bold text-[10px] uppercase tracking-wider no-underline"
+                                    >
+                                        Inicia sesión
+                                    </Link>
+                                </motion.div>
+                            </motion.form>
+                        )}
+                    </AnimatePresence>
+
+                </div>
+            </motion.section>
         </div>
     );
 }
-
