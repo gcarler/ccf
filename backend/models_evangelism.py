@@ -110,6 +110,7 @@ class MotivoExcusa(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     descripcion = Column(String(200), nullable=False, unique=True)
     es_del_sistema = Column(Boolean, default=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     activo = Column(Boolean, default=True)
 
 
@@ -290,7 +291,6 @@ class GrupoEvangelismo(Base):
 # ──────────────────────────────────────────────
 # PARTICIPANTES, SESIONES Y ASISTENCIA
 # ──────────────────────────────────────────────
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 class ParticipanteGrupo(Base):
     __tablename__ = "grupo_participantes"

@@ -246,14 +246,14 @@ class ForumThreadBase(BaseModel):
 
 
 class ForumThreadCreate(ForumThreadBase):
-    author_id: int
+    author_persona_id: str  # UUID de Persona
 
 
 class ForumThread(BaseModel):
     id: int
     title: str
     category: str
-    author_id: int
+    author_persona_id: str  # UUID de Persona
     is_resolved: bool = False
     created_at: datetime
     model_config = orm_config

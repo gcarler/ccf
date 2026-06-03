@@ -61,7 +61,7 @@ def get_estrategias(
     skip: int = 0,
     limit: int = 100,
     activa: Optional[bool] = None,
-    clase_raiz: Optional[ClaseEstrategiaEnum] = None,
+    clase_raiz: Optional[str] = None,
     sede_id: Optional[str] = None,
 ) -> List[EstrategiaEvangelismo]:
     """Lista estrategias con filtros opcionales."""
@@ -69,7 +69,7 @@ def get_estrategias(
     if activa is not None:
         q = q.filter(EstrategiaEvangelismo.activa == activa)
     if clase_raiz is not None:
-        q = q.filter(EstrategiaEvangelismo.clase_raiz == clase_raiz.value)
+        q = q.filter(EstrategiaEvangelismo.clase_raiz == clase_raiz)
     if sede_id is not None:
         q = q.filter(EstrategiaEvangelismo.sede_id == sede_id)
     return q.offset(skip).limit(limit).all()

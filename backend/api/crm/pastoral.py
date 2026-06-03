@@ -624,7 +624,9 @@ def update_crm_task(
                     val = datetime.fromisoformat(val.replace("Z", "+00:00"))
                 except ValueError:
                     raise HTTPException(status_code=400, detail="Formato de fecha inválido")
-            setattr(task, field, val)
+            # Frontend sends "assignee_id" as Integer (user ID); map to assignee_user_id column
+            target_field = "assignee_user_id" if field == "assignee_id" else field
+            setattr(task, target_field, val)
     db.commit()
     db.refresh(task)
     return _serialize_task(task)

@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+import uuid as _uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -12,6 +14,20 @@ from backend.core.database import get_db
 from backend.core.permissions import require_active_user
 
 router = APIRouter(prefix="/api/tables", tags=["tables"])
+
+
+def _resolve_persona(db: Session, user) -> models.Persona | None:
+    """Resolve the Persona record for the current user.
+
+    Legacy User: has Integer .id, we look up Persona.user_id.
+    Auth v2 Usuario: has UUID .id == Persona.id (PK FK relationship).
+    """
+    if isinstance(user.id, int):
+        return db.query(models.Persona).filter(models.Persona.user_id == user.id).first()
+    if isinstance(user.id, (_uuid.UUID, str)):
+        uid = _uuid.UUID(str(user.id))
+        return db.query(models.Persona).filter(models.Persona.id == uid).first()
+    return None
 
 
 # ── Models ──────────────────────────────────────────────────────────────────────
@@ -34,9 +50,11 @@ def list_table_schemas(
     current_user: models.User = Depends(require_active_user),
 ):
     """List all saved table schemas for the current user."""
+    persona = _resolve_persona(db, current_user)
+    persona_id = persona.id if persona else None
     views = (
         db.query(models.SavedView)
-        .filter(models.SavedView.user_id == current_user.id)
+        .filter(models.SavedView.persona_id == persona_id)
         .all()
     )
     return [
@@ -59,8 +77,11 @@ def create_table_schema(
     current_user: models.User = Depends(require_active_user),
 ):
     """Save a new table schema/view."""
+    persona = _resolve_persona(db, current_user)
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
     view = models.SavedView(
-        user_id=current_user.id,
+        persona_id=persona.id,
         name=payload.get("name", "Untitled View"),
         schema_json=payload.get("schema", {}),
         filters_json=payload.get("filters", []),
@@ -81,9 +102,12 @@ def update_table_schema(
     current_user: models.User = Depends(require_active_user),
 ):
     """Update a saved table schema/view."""
+    persona = _resolve_persona(db, current_user)
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
     view = db.query(models.SavedView).filter(
         models.SavedView.id == view_id,
-        models.SavedView.user_id == current_user.id,
+        models.SavedView.persona_id == persona.id,
     ).first()
     if not view:
         raise HTTPException(status_code=404, detail="View not found")
@@ -109,9 +133,12 @@ def delete_table_schema(
     current_user: models.User = Depends(require_active_user),
 ):
     """Delete a saved table schema/view."""
+    persona = _resolve_persona(db, current_user)
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
     view = db.query(models.SavedView).filter(
         models.SavedView.id == view_id,
-        models.SavedView.user_id == current_user.id,
+        models.SavedView.persona_id == persona.id,
     ).first()
     if not view:
         raise HTTPException(status_code=404, detail="View not found")

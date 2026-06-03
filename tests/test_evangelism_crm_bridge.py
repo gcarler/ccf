@@ -42,7 +42,7 @@ def test_proyectar_sesiones_semanal_2_meses(db_session):
     fecha_fin = datetime(2026, 2, 19, tzinfo=timezone.utc)
 
     estrategia = models.EstrategiaEvangelismo(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         nombre="Proyeccion Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -93,7 +93,7 @@ def test_asistencia_primera_vez_crea_caso_crm(db_session):
     db_session.commit()
 
     estrategia = models.EstrategiaEvangelismo(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         nombre="Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -148,7 +148,7 @@ def test_asistencia_requiere_seguimiento_crea_caso_crm(db_session):
     db_session.commit()
 
     estrategia = models.EstrategiaEvangelismo(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         nombre="Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -199,7 +199,7 @@ def test_persona_tags_actualizados(db_session):
     db_session.commit()
 
     estrategia = models.EstrategiaEvangelismo(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         nombre="Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -256,7 +256,7 @@ def test_persona_tags_actualizados(db_session):
     assert "GRUPO_Grupo Tags" in persona.tags
     assert f"SESION_{sesion.fecha_sesion.date().isoformat()}" in persona.tags
     assert persona.spiritual_status == "VISITANTE_EVANGELISMO"
-    assert persona.origen_estrategia_id == estrategia.id
+    assert str(persona.origen_estrategia_id) == estrategia.id
     assert persona.origen_grupo_id == grupo.id
 
 
@@ -269,7 +269,7 @@ def test_sla_calculado_correctamente(db_session):
     db_session.commit()
 
     estrategia = models.EstrategiaEvangelismo(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         nombre="Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -361,7 +361,7 @@ def test_respuesta_json_estructura_correcta(client, db_session):
     db_session.commit()
 
     estrategia = models.EstrategiaEvangelismo(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         nombre="Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -411,7 +411,7 @@ def test_respuesta_json_estructura_correcta(client, db_session):
     assert visitante["persona_id"] == str(persona.id)
     assert visitante["nombre"] == "Visitante Nuevo"
     assert visitante["rol_iglesia"] == "VISITANTE_EVANGELISMO"
-    assert any("VISITANTE_ESTRATEGIA_EST-INT-001" in t for t in visitante["tags_aplicados"])
+    assert any(f"VISITANTE_ESTRATEGIA_{estrategia.id}" in t for t in visitante["tags_aplicados"])
 
     crm = evento["crm_consolidacion"]
     assert crm["pipeline"] == "NUEVOS_VISITANTES"

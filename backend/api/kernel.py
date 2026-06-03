@@ -199,12 +199,13 @@ def add_ministry(
 ):
     from backend.crud import kernel as kernel_crud
 
+    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
     result = kernel_crud.add_persona_ministry(
         db,
         persona_id=persona_id,
         ministry=payload.ministry,
         is_primary=payload.is_primary,
-        recognized_by_id=current_user.id,
+        recognized_by_persona_id=str(persona.id) if persona else None,
         notes=payload.notes,
     )
     if not result:

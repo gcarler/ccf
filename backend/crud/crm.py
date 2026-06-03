@@ -473,12 +473,12 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
 
 def get_crm_tasks(
     db: Session,
-    assignee_id: Optional[int] = None,
+    assignee_user_id: Optional[int] = None,
     persona_id: Optional[str] = None,
 ) -> List[models.CrmTask]:
     query = db.query(models.CrmTask)
-    if assignee_id:
-        query = query.filter(models.CrmTask.assignee_id == assignee_id)
+    if assignee_user_id:
+        query = query.filter(models.CrmTask.assignee_user_id == assignee_user_id)
     if persona_id:
         query = query.filter(models.CrmTask.persona_id == persona_id)
     return query.order_by(models.CrmTask.due_date.asc()).all()
@@ -951,7 +951,7 @@ def create_support_ticket(db: Session, ticket: schemas.SupportTicketCreate) -> m
 
 
 def get_support_tickets(
-    db: Session, user_id: Optional[int] = None, skip: int = 0, limit: int = 100
+    db: Session, user_id: Optional[uuid.UUID] = None, skip: int = 0, limit: int = 100
 ) -> List[models.SupportTicket]:
     q = db.query(models.SupportTicket).order_by(models.SupportTicket.created_at.desc())
     if user_id is not None:

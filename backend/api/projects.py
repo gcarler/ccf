@@ -564,24 +564,30 @@ def list_inbox(
     """Bandeja de entrada: tareas recién asignadas y comentarios no leídos."""
     inbox_items: list[schemas.ProjectInboxItem] = []
 
+    # Obtener persona_id (UUID) desde current_user.id (Integer)
+    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    persona_id = persona.id if persona else None
+
     # Comentarios no leídos en proyectos del usuario
-    unread_comments = (
-        db.query(models.ProjectComment, models.Project)
-        .join(models.Project, models.Project.id == models.ProjectComment.project_id)
-        .filter(
-            ~models.ProjectComment.is_resolved,
-            models.ProjectComment.author_id != current_user.id,
+    unread_comments = ()
+    if persona_id:
+        unread_comments = (
+            db.query(models.ProjectComment, models.Project)
+            .join(models.Project, models.Project.id == models.ProjectComment.project_id)
+            .filter(
+                ~models.ProjectComment.is_resolved,
+                models.ProjectComment.author_id != persona_id,
+            )
+            .order_by(models.ProjectComment.created_at.desc())
+            .limit(limit)
+            .all()
         )
-        .order_by(models.ProjectComment.created_at.desc())
-        .limit(limit)
-        .all()
-    )
 
     for comment, project in unread_comments:
         state = (
             db.query(models.ProjectInboxState)
             .filter(
-                models.ProjectInboxState.user_id == current_user.id,
+                models.ProjectInboxState.persona_id == persona_id,
                 models.ProjectInboxState.item_id == f"comment-{comment.id}",
             )
             .first()
@@ -613,10 +619,13 @@ def mark_inbox_read(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Marca un item del inbox como leído."""
+    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
     state = (
         db.query(models.ProjectInboxState)
         .filter(
-            models.ProjectInboxState.user_id == current_user.id,
+            models.ProjectInboxState.persona_id == persona.id,
             models.ProjectInboxState.item_id == item_id,
         )
         .first()
@@ -624,7 +633,7 @@ def mark_inbox_read(
     if state:
         state.is_read = True
     else:
-        state = models.ProjectInboxState(user_id=current_user.id, item_id=item_id, is_read=True)
+        state = models.ProjectInboxState(persona_id=persona.id, item_id=item_id, is_read=True)
         db.add(state)
     db.commit()
     return {"ok": True, "item_id": item_id}
@@ -1266,8 +1275,11 @@ def send_project_message(
 ):
     """Send a message to the project chat room."""
     _ensure_project(db, project_id)
+    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
     msg = models.ChatMessage(
-        sender_id=current_user.id,
+        sender_id=persona.id,
         room_id=f"project_{project_id}",
         content=payload.content,
     )

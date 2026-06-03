@@ -235,11 +235,12 @@ def record_bulk_attendance(
         )
 
         if enrollment:
+            persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
             db_attendance = models.CourseAttendance(
                 enrollment_id=record.enrollment_id,
                 status=record.status,
                 session_date=payload.session_date,
-                recorded_by_id=current_user.id,
+                recorded_by_persona_id=persona.id if persona else None,
             )
             db.add(db_attendance)
             recorded_count += 1
@@ -891,8 +892,9 @@ def create_thread(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
+    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
     thread_data = schemas.ForumThreadCreate(
-        **thread.model_dump(), author_id=current_user.id
+        **thread.model_dump(), author_persona_id=str(persona.id) if persona else ""
     )
     return crud.create_forum_thread(db, thread_data)
 

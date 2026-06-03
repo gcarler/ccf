@@ -1404,8 +1404,8 @@ def submit_attendance(
         raise HTTPException(status_code=404, detail="Session not found")
 
     # Soft-delete existing attendance for this session
-    db.query(Asistencia).filter(models.Asistencia.sesion_id == session_id).update(
-        {models.Asistencia.deleted_at: utc_now()}, synchronize_session=False
+    db.query(Asistencia).filter(Asistencia.sesion_id == session_id).update(
+        {Asistencia.deleted_at: utc_now()}, synchronize_session=False
     )
 
     submitted = []
@@ -1519,6 +1519,7 @@ def submit_attendance(
 
 def _check_absence_trigger(db: Session, session_id: int):
     """If a member has 3 consecutive absences, create N2 task in Consolidation."""
+    from backend import models
     from backend.models import (
         Asistencia,
         SesionGrupo,
@@ -1526,19 +1527,19 @@ def _check_absence_trigger(db: Session, session_id: int):
     )
     from backend.models_personas import Persona
 
-    session = db.query(SesionGrupo).filter(models.SesionGrupo.id == session_id).first()
+    session = db.query(SesionGrupo).filter(SesionGrupo.id == session_id).first()
     if not session:
         return
 
-    house = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == session.grupo_id).first()
+    house = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.id == session.grupo_id).first()
     if not house:
         return
 
     # Get last 3 sessions for this house
     recent_sessions = (
         db.query(SesionGrupo)
-        .filter(models.SesionGrupo.grupo_id == house.id)
-        .order_by(models.SesionGrupo.fecha_sesion.desc())
+        .filter(SesionGrupo.grupo_id == house.id)
+        .order_by(SesionGrupo.fecha_sesion.desc())
         .limit(3)
         .all()
     )
@@ -1554,9 +1555,9 @@ def _check_absence_trigger(db: Session, session_id: int):
             att = (
                 db.query(Asistencia)
                 .filter(
-                    models.Asistencia.sesion_id == s.id,
-                    models.Asistencia.persona_id == member_id,
-                    models.Asistencia.estado == "absent",
+                    Asistencia.sesion_id == s.id,
+                    Asistencia.persona_id == member_id,
+                    Asistencia.estado == "ausente",
                 )
                 .first()
             )
@@ -1586,12 +1587,13 @@ def _check_absence_trigger(db: Session, session_id: int):
 def _check_first_time_lead_trigger(db: Session, session_id: int):
     """If a first_time attendee is recorded, mark as LEAD_NUEVO in CRM."""
     from backend.models_personas import Persona
+    from backend.models_evangelism import Asistencia
 
     first_timers = (
         db.query(Asistencia)
         .filter(
-            models.Asistencia.sesion_id == session_id,
-            models.Asistencia.estado == "first_time",
+            Asistencia.sesion_id == session_id,
+            Asistencia.estado == "primera_vez",
         )
         .all()
     )

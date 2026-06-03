@@ -410,3 +410,29 @@ from backend.crud.projects import (
     update_project_wiki,
     update_supply,
 )
+
+# Evangelism
+from backend.crud.evangelism import (  # noqa: F401
+    get_estrategias,
+    get_estrategia,
+    create_estrategia,
+    update_estrategia,
+    delete_estrategia,
+    get_roles_personalizados,
+    create_rol_personalizado,
+    delete_rol_personalizado,
+    get_participantes,
+    agregar_participante,
+    actualizar_participante,
+    remover_participante,
+    submit_asistencia,
+    get_seguimientos,
+    create_seguimiento,
+    update_seguimiento,
+    get_pendientes_seguimiento,
+    get_motivos_excusa,
+    create_motivo_excusa,
+    update_motivo_excusa,
+    delete_motivo_excusa,
+    seed_motivos_excusa,
+)

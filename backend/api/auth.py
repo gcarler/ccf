@@ -309,14 +309,28 @@ def get_sessions(
     db: Session = Depends(get_db),
 ):
     """Lista las sesiones activas del usuario autenticado."""
-    from backend.models_identity import RefreshToken
+    import uuid as _uuid
 
-    sessions = (
-        db.query(RefreshToken)
-        .filter(RefreshToken.user_id == current_user.id, RefreshToken.revoked.is_(False))
-        .order_by(RefreshToken.last_active.desc())
-        .all()
-    )
+    # Auth v2: use TokenSesion model (UUID user_id)
+    if isinstance(current_user.id, (_uuid.UUID, str)):
+        from backend.models_auth import TokenSesion as SessionModel
+
+        sessions = (
+            db.query(SessionModel)
+            .filter(SessionModel.user_id == current_user.id, SessionModel.revoked.is_(False))
+            .order_by(SessionModel.last_active.desc())
+            .all()
+        )
+    # Legacy identity: use RefreshToken model (Integer user_id)
+    else:
+        from backend.models_identity import RefreshToken as SessionModel
+
+        sessions = (
+            db.query(SessionModel)
+            .filter(SessionModel.user_id == current_user.id, SessionModel.revoked.is_(False))
+            .order_by(SessionModel.last_active.desc())
+            .all()
+        )
     result = []
     for s in sessions:
         result.append(
@@ -335,22 +349,38 @@ def get_sessions(
 
 @router.post("/sessions/{session_id}/revoke", status_code=204)
 def revoke_session(
-    session_id: int,
+    session_id: str,
     current_user: models.User = Depends(require_active_user),
     db: Session = Depends(get_db),
 ):
     """Revoca una sesión específica del usuario autenticado."""
-    from backend.models_identity import RefreshToken
+    import uuid as _uuid
 
-    session = (
-        db.query(RefreshToken)
-        .filter(
-            RefreshToken.id == session_id,
-            RefreshToken.user_id == current_user.id,
-            RefreshToken.revoked.is_(False),
+    # Auth v2: use TokenSesion model (UUID user_id, UUID id)
+    if isinstance(current_user.id, (_uuid.UUID, str)):
+        from backend.models_auth import TokenSesion as SessionModel
+
+        session = (
+            db.query(SessionModel)
+            .filter(
+                SessionModel.id == _uuid.UUID(session_id),
+                SessionModel.user_id == current_user.id,
+                SessionModel.revoked.is_(False),
+            )
+            .first()
         )
-        .first()
-    )
+    else:
+        from backend.models_identity import RefreshToken as SessionModel
+
+        session = (
+            db.query(SessionModel)
+            .filter(
+                SessionModel.id == int(session_id),
+                SessionModel.user_id == current_user.id,
+                SessionModel.revoked.is_(False),
+            )
+            .first()
+        )
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
     session.revoked = True

@@ -25,8 +25,8 @@ class Agent(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     is_active = Column(Boolean, default=True, index=True)
-    created_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
-    updated_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     auth_credentials = relationship("AgentAuth", back_populates="agent", cascade="all, delete-orphan")
     contacts = relationship("AgentContact", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentContact.agent_id")
     roles = relationship("AgentRole", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentRole.agent_id")
@@ -79,7 +79,7 @@ class AgentRole(Base):
     started_at = Column(DateTime(timezone=True), default=_utcnow)
     ended_at = Column(DateTime(timezone=True), nullable=True)
     is_primary = Column(Boolean, default=False)
-    created_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     agent = relationship("Agent", back_populates="roles", foreign_keys=[agent_id])
 
 

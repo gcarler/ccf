@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.auth import require_active_user
-from backend.crud.crm import get_user_sede_id
 from backend.core.database import get_db
 
 router = APIRouter()
@@ -17,9 +16,11 @@ def create_support_ticket(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    # Ensure user can only create for themselves
-    if ticket.user_id != current_user.id:
-        ticket.user_id = current_user.id
+    # SupportTicket.user_id es UUID FK personas.id — obtener persona desde current_user.id (Integer)
+    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found for current user")
+    ticket.user_id = persona.id  # UUID
     return crud.create_support_ticket(db=db, ticket=ticket)
 
 
@@ -31,8 +32,9 @@ def read_support_tickets(
     current_user: models.User = Depends(require_active_user),
 ):
     # Axioma 3: Admin filtrado por sede, usuarios ven solo los suyos
-    get_user_sede_id(db, current_user.id)
-    user_id = None if current_user.role in ["admin", "staff"] else current_user.id
+    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    sede_id = persona.sede_id if persona else None
+    user_id = None if current_user.role in ["admin", "staff"] else persona.id if persona else None
     return crud.get_support_tickets(db=db, user_id=user_id, skip=skip, limit=limit)
 
 

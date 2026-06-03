@@ -884,5 +884,45 @@ def remove_user_module_role(
     umr = db.query(UsuarioRolModulo).filter(UsuarioRolModulo.id == aid).first()
     if not umr:
         raise HTTPException(status_code=404, detail="Asignacion no encontrada")
-    umr.deleted_at = _utcnow()
+    db.delete(umr)
     db.commit()
+
+
+@router.get("/users-with-roles")
+def list_users_with_roles(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Lista todos los usuarios auth v3 con sus roles de plataforma y modulares.
+
+    Util para el panel de administracion de permisos granulares.
+    """
+    import uuid
+    from backend.models_auth import Usuario, RolPlataforma, UsuarioRolModulo
+    from backend.models_crm import Persona
+
+    users = db.query(Usuario).all()
+    result = []
+    for u in users:
+        persona = db.query(Persona).filter(Persona.id == u.id).first()
+        nombre = persona.nombre_completo if persona else "—"
+
+        rol_plat = db.query(RolPlataforma).filter(RolPlataforma.id == u.rol_plataforma_id).first() if u.rol_plataforma_id else None
+
+        modulares = db.query(UsuarioRolModulo, RolPlataforma).join(
+            RolPlataforma, RolPlataforma.id == UsuarioRolModulo.rol_id
+        ).filter(UsuarioRolModulo.user_id == u.id).all()
+
+        result.append({
+            "user_id": str(u.id),
+            "username": u.username,
+            "email": u.email,
+            "nombre": nombre,
+            "is_active": u.is_active,
+            "rol_plataforma": {"id": str(rol_plat.id), "nombre": rol_plat.nombre} if rol_plat else None,
+            "roles_modulares": [
+                {"id": str(umr.id), "modulo": umr.modulo, "rol_id": str(r.id), "rol_nombre": r.nombre}
+                for umr, r in modulares
+            ],
+        })
+    return result
