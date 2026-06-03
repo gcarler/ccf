@@ -16,15 +16,23 @@ from backend.schemas.legacy import CommunityBoardCardUpdate
 from backend.schemas.notifications import CommunicationLogUpdate
 
 
-def get_user_sede_id(db: Session, user_id: int) -> int | None:
+def get_user_sede_id(db: Session, user_id: str) -> str | None:
     """Obtiene el sede_id de la Persona vinculada al usuario actual.
 
     Retorna None si el usuario no tiene persona asociada o la persona no tiene sede.
     Usado para imponer filtro Multi-Tenant (Axioma 3) en todas las queries.
     """
-    persona = db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
-    if persona:
-        return persona.sede_id
+    try:
+        # Try user_id as UUID string (v2 auth_users)
+        from sqlalchemy import text as sa_text
+        result = db.execute(
+            sa_text("SELECT sede_id FROM personas WHERE user_id::text = :uid LIMIT 1"),
+            {"uid": str(user_id)}
+        ).scalar()
+        if result:
+            return str(result)
+    except Exception:
+        pass
     return None
 
 
@@ -117,7 +125,7 @@ def search_personas(
     role: str | None = None,
     estado_vital: str | None = None,
     family_id: int | None = None,
-    sede_id: int | None = None,
+    sede_id: str | None = None,
     skip: int = 0,
     limit: int = 1000,
     sort_by: str | None = None,
@@ -958,42 +966,8 @@ def create_community_card(db: Session, card: schemas.CommunityBoardCardCreate) -
 
 
 # --- Evangelism Strategies ---
+# MOVED to crud/evangelism.py (EstrategiaEvangelismo with UUID PK)
 
-
-def get_evangelism_strategies(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(EvangelismStrategy).offset(skip).limit(limit).all()
-
-
-def create_evangelism_strategy(db: Session, strategy: EvangelismStrategyCreate):
-    valid_cols = {c.key for c in EvangelismStrategy.__table__.columns}
-    data = {k: v for k, v in strategy.model_dump().items() if k in valid_cols}
-    db_obj = EvangelismStrategy(**data)
-    db.add(db_obj)
-    db.commit()
-    db.refresh(db_obj)
-    return db_obj
-
-
-def update_evangelism_strategy(db: Session, strategy_id: int, strategy: EvangelismStrategyUpdate):
-    db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
-    if not db_obj:
-        return None
-    valid_cols = {c.key for c in EvangelismStrategy.__table__.columns}
-    update_data = {k: v for k, v in strategy.model_dump(exclude_unset=True).items() if k in valid_cols}
-    for key, value in update_data.items():
-        setattr(db_obj, key, value)
-    db.commit()
-    db.refresh(db_obj)
-    return db_obj
-
-
-def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
-    db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
-    if not db_obj:
-        return False
-    db_obj.deleted_at = _utcnow()
-    db.commit()
-    return True
 
 
 # ── Missing CRUDs ──────────────────────────────────────
