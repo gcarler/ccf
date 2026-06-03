@@ -96,6 +96,10 @@ def create_estrategia(
             else dump["clase_raiz"]
         )
     # Map English schema fields to Spanish model columns (via synonym — no field_map needed)
+    FIELD_MAP = {"name": "nombre", "description": "descripcion", "start_date": "fecha_inicio", "end_date": "fecha_fin", "day_of_week": "dia_reunion", "start_time": "hora_reunion", "recurrence": "frecuencia"}
+    for eng, spa in FIELD_MAP.items():
+        if eng in dump and dump[eng] is not None:
+            dump[spa] = dump[eng]
     # Campos que no existen como columnas directas: descartar
     row_data = {k: v for k, v in dump.items() if k in valid_cols}
     # Asignar sede_id y categoria_id al objeto

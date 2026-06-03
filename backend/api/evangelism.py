@@ -569,7 +569,7 @@ def _serialize_crm_task(
     persona = getattr(task, "persona", None)
     member_name = contact_name or (f"{persona.first_name} {persona.last_name}" if persona else None)
     assignee = getattr(task, "assignee", None)
-    assigned_to = assignee_name or (assignee.username if assignee else None)
+    assigned_to = assignee_name or (assignee.nombre_completo if assignee else None)
     return {
         "id": task.id,
         "title": task.title,
@@ -589,7 +589,7 @@ def _serialize_crm_task(
 @router.get("/tasks", response_model=List[dict])
 def list_crm_tasks(
     status: Optional[str] = None,
-    assignee_id: Optional[int] = None,
+    assignee_user_id: Optional[int] = None,
     persona_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -600,8 +600,8 @@ def list_crm_tasks(
         from sqlalchemy.orm import joinedload
 
         q = db.query(models.CrmTask).options(joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee))
-        if assignee_id:
-            q = q.filter(models.CrmTask.assignee_id == assignee_id)
+        if assignee_user_id:
+            q = q.filter(models.CrmTask.assignee_user_id == assignee_user_id)
         if persona_id:
             q = q.filter(models.CrmTask.persona_id == persona_id)
 
@@ -637,7 +637,7 @@ def list_my_crm_tasks(
         q = (
             db.query(models.CrmTask)
             .options(joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee))
-            .filter(models.CrmTask.assignee_id == current_user.id)
+            .filter(models.CrmTask.assignee_user_id == current_user.id)
         )
         tasks = q.order_by(models.CrmTask.created_at.desc()).all()
         result = [_serialize_crm_task(task) for task in tasks]
@@ -696,7 +696,7 @@ async def create_crm_task(
             status=payload.get("status", "pending"),
             priority=payload.get("priority", "medium"),
             category=payload.get("category", "Pastoral"),
-            assignee_id=current_user.id,
+            assignee_user_id=current_user.id,
             persona_id=payload["persona_id"] if payload.get("persona_id") else None,
             due_date=due_date,
             created_at=utc_now(),
@@ -1079,10 +1079,15 @@ def create_strategy(
 ):
     try:
         from backend.models_evangelism import CategoriaEstrategia
+        from backend.models import Sede as _Sede
         # Asignar sede_id desde el usuario autenticado
         sede_id = crud.get_user_sede_id(db, current_user.id)
         if not sede_id:
-            raise HTTPException(400, detail="No se pudo determinar la sede del usuario. Asigne una sede al perfil.")
+            # Fallback: usar la primera sede disponible
+            primera_sede = db.query(_Sede).order_by("nombre").first()
+            if not primera_sede:
+                raise HTTPException(400, detail="No hay sedes configuradas en el sistema.")
+            sede_id = str(primera_sede.id)
         # Asignar categoria_id por defecto (tomar la primera disponible, o crear una genérica)
         primera_categoria = db.query(CategoriaEstrategia).order_by("id").first()
         if not primera_categoria:

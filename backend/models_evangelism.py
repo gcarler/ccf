@@ -120,7 +120,7 @@ class MotivoExcusa(Base):
 class EstrategiaEvangelismo(Base):
     __tablename__ = "estrategias_evangelismo"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=lambda: str(_uuid.uuid4()))
     codigo = Column(String(20), unique=True, nullable=True, index=True)
     nombre = Column(String(200), nullable=False)
     descripcion = Column(Text, nullable=True)
@@ -178,7 +178,7 @@ class RolPersonalizadoEstrategia(Base):
     __tablename__ = "estrategia_roles_personalizados"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True, index=True)
+    estrategia_id = Column(String(36), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True, index=True)
     nombre_rol = Column(String(100), nullable=False)
     descripcion = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
@@ -192,7 +192,7 @@ class GrupoEvangelismo(Base):
     __tablename__ = "grupos_evangelismo"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    estrategia_id = Column(String(36), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     codigo = Column(String(30), unique=True, nullable=True, index=True)
     nombre = Column(String(150), nullable=False)

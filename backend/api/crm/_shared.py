@@ -92,8 +92,8 @@ def _serialize_task(task: models.CrmTask) -> dict:
         "persona_id": task.persona_id,
         "persona_name": _persona_full_name(persona) if persona else None,
         "contact_name": _persona_full_name(persona) if persona else None,
-        "assigned_to": assignee.username if assignee else None,
-        "assignee_id": task.assignee_id,
+        "assigned_to": assignee.nombre_completo if assignee else None,
+        "assignee_id": task.assignee_user_id,
         "due_date": task.due_date.isoformat() if task.due_date else None,
         "created_at": task.created_at.isoformat() if task.created_at else None,
     }

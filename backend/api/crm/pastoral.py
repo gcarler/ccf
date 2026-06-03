@@ -518,14 +518,14 @@ def get_messaging_history_item(
 
 @router.get("/tasks", response_model=List[dict])
 def list_crm_tasks(
-    assignee_id: Optional[int] = None,
+    assignee_user_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    """Lista todas las tareas CRM con filtro opcional por asignado."""
+    """Lista todas las tareas CRM con filtro opcional por usuario asignado."""
     q = db.query(models.CrmTask)
-    if assignee_id:
-        q = q.filter(models.CrmTask.assignee_user_id == assignee_id)
+    if assignee_user_id:
+        q = q.filter(models.CrmTask.assignee_user_id == assignee_user_id)
     tasks = q.order_by(models.CrmTask.created_at.desc()).all()
     return [_serialize_task(t) for t in tasks]
 
