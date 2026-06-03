@@ -84,7 +84,7 @@ def get_estrategia(db: Session, strategy_id: str) -> Optional[EstrategiaEvangeli
 
 
 def create_estrategia(
-    db: Session, data: EstrategiaEvangelismoCreate
+    db: Session, data: EstrategiaEvangelismoCreate, sede_id: str | None = None, categoria_id: int | None = None
 ) -> EstrategiaEvangelismo:
     valid_cols = {c.key for c in EstrategiaEvangelismo.__table__.columns}
     dump = data.model_dump()
@@ -98,6 +98,11 @@ def create_estrategia(
     # Map English schema fields to Spanish model columns (via synonym — no field_map needed)
     # Campos que no existen como columnas directas: descartar
     row_data = {k: v for k, v in dump.items() if k in valid_cols}
+    # Asignar sede_id y categoria_id al objeto
+    if sede_id is not None:
+        row_data["sede_id"] = sede_id
+    if categoria_id is not None:
+        row_data["categoria_id"] = categoria_id
     db_obj = EstrategiaEvangelismo(**row_data)
     db.add(db_obj)
     db.flush()  # Obtener el ID

@@ -1075,10 +1075,24 @@ def read_strategy(
 def create_strategy(
     strategy: EvangelismStrategyCreate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     try:
-        result = create_evangelism_strategy(db=db, data=strategy)
+        from backend.models_evangelism import CategoriaEstrategia
+        # Asignar sede_id desde el usuario autenticado
+        sede_id = crud.get_user_sede_id(db, current_user.id)
+        if not sede_id:
+            raise HTTPException(400, detail="No se pudo determinar la sede del usuario. Asigne una sede al perfil.")
+        # Asignar categoria_id por defecto (tomar la primera disponible, o crear una genérica)
+        primera_categoria = db.query(CategoriaEstrategia).order_by("id").first()
+        if not primera_categoria:
+            # Crear categoría por defecto si no existe ninguna
+            primera_categoria = CategoriaEstrategia(nombre="General")
+            db.add(primera_categoria)
+            db.flush()
+        result = create_evangelism_strategy(db=db, data=strategy, sede_id=sede_id, categoria_id=primera_categoria.id)
+    except HTTPException:
+        raise
     except Exception:
         db.rollback()
         raise

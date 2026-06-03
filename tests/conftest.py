@@ -10,6 +10,47 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+# ── SQLite UUID adapter (MUST be before any model import) ──────────────
+# SQLite no soporta UUID nativamente. El bind_processor de Uuid espera
+# un objeto uuid.UUID y llama .hex. Parcheamos el processor para que
+# también acepte strings (lo que ocurre en comparaciones como
+# UUIDColumn == string_param en SQLite).
+import sqlalchemy.types as _satypes
+import uuid as _uuid
+
+_sqlite_uuid_patched = False
+
+
+def _patch_sqlite_uuid():
+    global _sqlite_uuid_patched
+    if _sqlite_uuid_patched:
+        return
+    _orig_bind = _satypes.Uuid.bind_processor
+
+    def _patched_bind(self, dialect):
+        proc = _orig_bind(self, dialect)
+        if dialect.name != "sqlite" or proc is None:
+            return proc
+
+        def _safe_process(value):
+            if isinstance(value, str):
+                if len(value) == 36 and value.count("-") == 4:
+                    try:
+                        value = _uuid.UUID(value)
+                    except (ValueError, AttributeError):
+                        return value
+                else:
+                    # Non-UUID string on SQLite — can't call .hex, pass raw
+                    return value
+            return proc(value)
+        return _safe_process
+
+    _satypes.Uuid.bind_processor = _patched_bind
+    _sqlite_uuid_patched = True
+
+
+_patch_sqlite_uuid()
+
 from backend.app import app
 from backend.core.database import Base, get_db
 import backend.models  # noqa: F401 — register all models (incl. auth_v2) so create_all works
@@ -26,56 +67,6 @@ if database_url.drivername.startswith("sqlite"):
         engine_kwargs["poolclass"] = StaticPool
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_kwargs)
-
-
-# ── SQLite UUID adapter ──────────────────────────────────────────────────
-# SQLite no soporta UUID nativamente. Los tests usan SQLite (:memory:), pero
-# muchos modelos tienen UUID(as_uuid=True). El bind_processor de SQLAlchemy
-# para UUID(as_uuid=True) espera un objeto uuid.UUID y llama .hex — si recibe
-# un string crashea. En PostgreSQL funciona porque el driver nativo convierte.
-#
-# Solución: interceptar en 2 niveles —
-#   1. `setinputsizes` en el cursor sqlite3 permite convertir strings a UUID
-#      antes de que el bind_processor los toque (no funciona, el processor
-#      de SQLA corre antes).
-#   2. Usamos un event listener "before_execute" que modifica los parámetros
-#      compilados antes de que el cursor los procese.
-#
-# Enfoque actual: reemplazar el type processor del UUID nativo para SQLite
-# para que sea tolerante a strings.
-import sqlalchemy.types as _satypes
-
-_sqlite_uuid_patched = False
-
-
-def _patch_sqlite_uuid():
-    """Monkey-patch: hace que el bind processor de Uuid para SQLite
-    convierta strings a uuid.UUID antes de llamar .hex.
-    """
-    global _sqlite_uuid_patched
-    if _sqlite_uuid_patched:
-        return
-    _orig_bind = _satypes.Uuid.bind_processor
-
-    def _patched_bind(self, dialect):
-        proc = _orig_bind(self, dialect)
-        if dialect.name != "sqlite" or proc is None:
-            return proc
-
-        def _safe_process(value):
-            if isinstance(value, str) and len(value) == 36 and value.count("-") == 4:
-                try:
-                    value = _uuid.UUID(value)
-                except (ValueError, AttributeError):
-                    pass
-            return proc(value)
-        return _safe_process
-
-    _satypes.Uuid.bind_processor = _patched_bind
-    _sqlite_uuid_patched = True
-
-
-_patch_sqlite_uuid()
 
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
