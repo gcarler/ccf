@@ -65,7 +65,7 @@ def test_proyectar_sesiones_semanal_2_meses(db_session):
     fecha_fin = datetime(2026, 2, 19, tzinfo=timezone.utc)
 
     estrategia = models.EstrategiaEvangelismo(
-        id="EST-PROJ-001",
+        id=uuid.uuid4(),
         nombre="Proyeccion Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -116,7 +116,7 @@ def test_asistencia_primera_vez_crea_caso_crm(db_session):
     db_session.commit()
 
     estrategia = models.EstrategiaEvangelismo(
-        id="EST-001",
+        id=uuid.uuid4(),
         nombre="Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -171,7 +171,7 @@ def test_asistencia_requiere_seguimiento_crea_caso_crm(db_session):
     db_session.commit()
 
     estrategia = models.EstrategiaEvangelismo(
-        id="EST-002",
+        id=uuid.uuid4(),
         nombre="Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -222,7 +222,7 @@ def test_persona_tags_actualizados(db_session):
     db_session.commit()
 
     estrategia = models.EstrategiaEvangelismo(
-        id="EST-003",
+        id=uuid.uuid4(),
         nombre="Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -275,7 +275,7 @@ def test_persona_tags_actualizados(db_session):
     db_session.commit()
     db_session.refresh(persona)
 
-    assert "VISITANTE_ESTRATEGIA_EST-003" in persona.tags
+    assert f"VISITANTE_ESTRATEGIA_{estrategia.id}" in persona.tags
     assert "GRUPO_Grupo Tags" in persona.tags
     assert f"SESION_{sesion.fecha_sesion.date().isoformat()}" in persona.tags
     assert persona.spiritual_status == "VISITANTE_EVANGELISMO"
@@ -292,7 +292,7 @@ def test_sla_calculado_correctamente(db_session):
     db_session.commit()
 
     estrategia = models.EstrategiaEvangelismo(
-        id="EST-004",
+        id=uuid.uuid4(),
         nombre="Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -384,7 +384,7 @@ def test_respuesta_json_estructura_correcta(client, db_session):
     db_session.commit()
 
     estrategia = models.EstrategiaEvangelismo(
-        id="EST-INT-001",
+        id=uuid.uuid4(),
         nombre="Test",
         categoria_id=cat.id,
         sede_id=sede.id,

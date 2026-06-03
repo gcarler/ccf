@@ -56,7 +56,7 @@ export default function PastorDetailPage() {
                 <div className="relative pt-32 pb-4 lg:pt-48 lg:pb-4 overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
                         <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-400/10 blur-[100px] rounded-full"></div>
-                        <div className="absolute top-40 -left-20 w-72 h-48 bg-indigo-400/10 blur-[80px] rounded-full"></div>
+                        <div className="absolute top-40 -left-20 w-72 h-48 bg-[hsl(var(--primary)/0.1)] blur-[80px] rounded-full"></div>
                     </div>
 
                     <div className="max-w-7xl mx-auto px-3 md:px-6 lg:px-8 xl:px-12">
@@ -88,8 +88,8 @@ export default function PastorDetailPage() {
                                 </div>
 
                                 <div className="flex items-start gap-4">
-                                    <div className="mt-1 w-10 h-10 rounded-md bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
-                                        <BookOpen className="text-indigo-600 dark:text-indigo-400" size={20} />
+                                    <div className="mt-1 w-10 h-10 rounded-md bg-blue-50 dark:bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                                        <BookOpen className="text-[hsl(var(--primary))] dark:text-blue-400" size={20} />
                                     </div>
                                     <div>
                                         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2">Versículo Lema</h3>

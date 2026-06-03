@@ -223,8 +223,8 @@ class CellGroup(Base):
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
 
     evangelism_strategy_id = Column(
-        Integer,
-        ForeignKey("evangelism_strategies.id", ondelete="SET NULL"),
+        UUID(as_uuid=True),
+        ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )

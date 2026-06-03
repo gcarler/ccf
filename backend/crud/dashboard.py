@@ -74,14 +74,18 @@ def get_crm_dashboard(db: Session, sede_id: Optional[int] = None) -> CrmDashboar
 
     total = db.execute(sqlt(f"SELECT COUNT(*) FROM personas p WHERE 1=1 {base_where}")).scalar() or 0
 
-    # Pipeline por etapas
-    casos = db.execute(sqlt("""
-        SELECT stage, COUNT(*) as cnt FROM consolidation_cases
-        WHERE status = 'active' GROUP BY stage ORDER BY stage
-    """)).all()
-    total_casos = sum(r[1] for r in casos) or 1
+    # Pipeline por etapas — desde church_role de personas
+    from sqlalchemy import case, func
+    role_stages = db.query(
+        models.Persona.church_role,
+        func.count(models.Persona.id)
+    ).filter(
+        models.Persona.church_role.isnot(None),
+        models.Persona.church_role != ''
+    ).group_by(models.Persona.church_role).all()
+    total_casos = total or 1
     funnel = [FunnelStage(stage=r[0] or 'new', count=r[1],
-                          conversion_rate=round(r[1]/total_casos*100, 1)) for r in casos]
+                          conversion_rate=round(r[1]/total_casos*100, 1)) for r in role_stages]
 
     # Crecimiento mensual de personas
     growth = []
@@ -92,19 +96,19 @@ def get_crm_dashboard(db: Session, sede_id: Optional[int] = None) -> CrmDashboar
         ), {"s": start, "e": end}).scalar() or 0
         growth.append(ChartDataPoint(label=start.strftime("%b"), value=c))
 
-    # Seguimientos pendientes
-    pending = db.execute(sqlt(
-        "SELECT COUNT(*) FROM consolidation_cases WHERE next_contact_at <= :now AND status = 'active'"
-    ), {"now": _utcnow()}).scalar() or 0
+    # Seguimientos pendientes (placeholder mientras no hay modulo de seguimientos)
+    pending = 0
 
-    # Tasa de conversión
-    won_closed = sum(r[1] for r in casos if r[0] in ('won', 'closed'))
-    conversion = round(won_closed / max(total_casos, 1) * 100, 1)
+    # Tasa de conversión (personas con rol asignado vs total)
+    with_role = db.execute(sqlt(
+        "SELECT COUNT(*) FROM personas WHERE church_role IS NOT NULL AND church_role != ''"
+    )).scalar() or 0
+    conversion = round(with_role / max(total, 1) * 100, 1)
 
     # Distribución de roles eclesiásticos
     role_chart = db.execute(sqlt("""
         SELECT church_role, COUNT(*) FROM personas
-        WHERE church_role IS NOT NULL
+        WHERE church_role IS NOT NULL AND church_role != ''
         GROUP BY church_role ORDER BY COUNT(*) DESC LIMIT 8
     """)).all()
     growth_chart = growth + [
@@ -115,9 +119,9 @@ def get_crm_dashboard(db: Session, sede_id: Optional[int] = None) -> CrmDashboar
     return CrmDashboard(
         cards=[
             MetricCard(title="Personas Registradas", value=str(total), tone="blue", icon="Users"),
-            MetricCard(title="Casos Activos", value=str(total_casos), trend=f"{conversion}% convertidos", tone="emerald", icon="FolderKanban"),
-            MetricCard(title="Etapas Pipeline", value=str(len(funnel)), tone="amber", icon="BarChart3"),
-            MetricCard(title="Seguimientos Pend.", value=str(pending), tone="violet", icon="Bell"),
+            MetricCard(title="Roles Asignados", value=str(with_role), trend=f"{conversion}% del total", tone="emerald", icon="FolderKanban"),
+            MetricCard(title="Roles Distintos", value=str(len(funnel)), tone="amber", icon="BarChart3"),
+            MetricCard(title="Sin Seguimiento", value="0", tone="violet", icon="Bell"),
         ],
         pipeline_funnel=funnel,
         growth_chart=growth_chart,

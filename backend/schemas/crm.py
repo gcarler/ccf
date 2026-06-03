@@ -589,56 +589,42 @@ class MemberFormation(MemberFormationBase):
     id: int
     model_config = orm_config
 
+# ── Legacy EvangelismStrategy schemas — re-exported from canonical schemas/evangelism.py ──
+from backend.schemas.evangelism import (
+    EstrategiaEvangelismoCreate as EvangelismStrategyCreate,
+    EstrategiaEvangelismoUpdate as EvangelismStrategyUpdate,
+)
+# Response schema: id as str (UUID) for backward compatibility
+from backend.schemas.evangelism import EstrategiaEvangelismoResponse as _EstrategiaEvangelismoResponse
+
 class EvangelismStrategyBase(BaseModel):
+    """Legacy schema — kept for backward compatibility in api/evangelism.py.
+
+    All fields are inherited from EstrategiaEvangelismoBase.
+    The id type changes from int to str (UUID).
+    """
     name: str
     description: Optional[str] = None
     codigo: Optional[str] = None
-    clase_raiz: Optional[str] = None  # ClaseEstrategiaEnum values
-    activa: bool = True
-    typology: Optional[str] = None  # relacional | evento_masivo | sectorial
-
-    # Relacional
-    recurrence: Optional[str] = None  # SEMANAL | QUINCENAL | MENSUAL | BIMENSUAL | TRIMESTRAL | SEMESTRAL | ANUAL
-    day_of_week: Optional[str] = None
-    start_time: Optional[str] = None
-
-    # Evento Masivo
-    event_format: Optional[str] = None  # UNICA_LOCACION | MULTILOCACION
-    phases: Optional[list[dict]] = None
-    phase_count: Optional[int] = None
-
-    # Sectorial
-    niche_objective: Optional[str] = None
-
-    strategy_type: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    status: str = "active"
-    group_count: Optional[int] = None
-
-class EvangelismStrategyCreate(EvangelismStrategyBase):
-    pass
-
-class EvangelismStrategyUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    codigo: Optional[str] = None
     clase_raiz: Optional[str] = None
-    activa: Optional[bool] = None
+    activa: bool = True
     typology: Optional[str] = None
     recurrence: Optional[str] = None
     day_of_week: Optional[str] = None
     start_time: Optional[str] = None
     event_format: Optional[str] = None
     phases: Optional[list[dict]] = None
+    phase_count: Optional[int] = None
     niche_objective: Optional[str] = None
     strategy_type: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
-    status: Optional[str] = None
+    status: str = "active"
+    group_count: Optional[int] = None
 
 class EvangelismStrategy(EvangelismStrategyBase):
-    id: int
+    """Legacy response schema — id is now str (UUID) from canonical model."""
+    id: str
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = orm_config

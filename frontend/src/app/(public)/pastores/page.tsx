@@ -78,9 +78,9 @@ export default function PastoresIndexPage() {
                                     {pastor.shortStory}
                                 </p>
 
-                                <div className="flex items-center justify-between text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-sm group-hover:text-indigo-600 transition-colors">
+                                <div className="flex items-center justify-between text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-sm group-hover:text-[hsl(var(--primary))] transition-colors">
                                     <span>Leer testimonio</span>
-                                    <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20 transition-colors">
+                                    <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-[hsl(var(--primary))]/20 transition-colors">
                                         <ChevronRight size={16} />
                                     </div>
                                 </div>

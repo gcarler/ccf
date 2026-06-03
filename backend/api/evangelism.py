@@ -23,10 +23,10 @@ from backend.auth import (
     require_pastor_or_admin,
 )
 from backend.core.database import get_db
-from backend.crud.crm import (
-    create_evangelism_strategy,
-    delete_evangelism_strategy,
-    update_evangelism_strategy,
+from backend.crud.evangelism import (  # canonical CRUD (UUID PK)
+    create_estrategia as create_evangelism_strategy,
+    update_estrategia as update_evangelism_strategy,
+    delete_estrategia as delete_evangelism_strategy,
 )
 from backend.schemas.crm import (
     EvangelismStrategy,
@@ -1056,7 +1056,7 @@ def read_evangelism_strategies(
 
 @router.get("/strategies/{strategy_id}", response_model=EvangelismStrategy)
 def read_strategy(
-    strategy_id: int,
+    strategy_id: str,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -1067,7 +1067,7 @@ def read_strategy(
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
-    result.group_count = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.estrategia_id == str(strategy_id)).count()
+    result.group_count = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.estrategia_id == strategy_id).count()
     return result
 
 
@@ -1078,7 +1078,7 @@ def create_strategy(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     try:
-        result = create_evangelism_strategy(db=db, strategy=strategy)
+        result = create_evangelism_strategy(db=db, data=strategy)
     except Exception:
         db.rollback()
         raise
@@ -1090,13 +1090,13 @@ def create_strategy(
 
 @router.put("/strategies/{strategy_id}", response_model=EvangelismStrategy)
 def update_strategy(
-    strategy_id: int,
+    strategy_id: str,
     strategy: EvangelismStrategyUpdate,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     try:
-        db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, strategy=strategy)
+        db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, data=strategy)
     except Exception:
         db.rollback()
         raise
@@ -1160,7 +1160,7 @@ def generate_strategy_sessions(
     response_model=List[schemas.RolPersonalizadoEstrategiaResponse],
 )
 def list_strategy_roles(
-    strategy_id: int,
+    strategy_id: str,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -1168,9 +1168,9 @@ def list_strategy_roles(
     from backend.crud.evangelism import get_roles_personalizados
 
     strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
-    if not strategy or not strategy.codigo:
-        raise HTTPException(status_code=404, detail="Estrategia no encontrada o sin código")
-    return get_roles_personalizados(db, strategy.codigo)
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+    return get_roles_personalizados(db, estrategia_id=strategy_id)
 
 
 @router.post(
@@ -1178,7 +1178,7 @@ def list_strategy_roles(
     response_model=schemas.RolPersonalizadoEstrategiaResponse,
 )
 def create_strategy_role(
-    strategy_id: int,
+    strategy_id: str,
     payload: schemas.RolPersonalizadoEstrategiaCreate,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
@@ -1187,15 +1187,15 @@ def create_strategy_role(
     from backend.crud.evangelism import create_rol_personalizado
 
     strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
-    if not strategy or not strategy.codigo:
-        raise HTTPException(status_code=404, detail="Estrategia no encontrada o sin código")
-    payload.estrategia_id = strategy.codigo
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+    payload.estrategia_id = strategy_id
     return create_rol_personalizado(db, payload)
 
 
 @router.delete("/strategies/{strategy_id}/roles/{role_id}")
 def delete_strategy_role(
-    strategy_id: int,
+    strategy_id: str,
     role_id: int,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
@@ -1279,7 +1279,7 @@ def seed_motivos_excusa(
     return {"created": len(created), "excusas": [e.descripcion for e in created]}
 
 
-def _project_phases_as_tasks(db, strategy_id: int, strategy_name: str, phases: list[dict], start_date=None):
+def _project_phases_as_tasks(db, strategy_id: str, strategy_name: str, phases: list[dict], start_date=None):
     """Create N1 tasks in Projects module for each phase of a mass event."""
     from backend.models_projects import Project, ProjectTask
     from datetime import datetime
@@ -1330,10 +1330,9 @@ def _project_phases_as_tasks(db, strategy_id: int, strategy_name: str, phases: l
 
 @router.delete("/strategies/{strategy_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_strategy(
-    strategy_id: int,
+    strategy_id: str,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    db_obj = delete_evangelism_strategy(db=db, strategy_id=strategy_id)
-    if not db_obj:
+    if not delete_evangelism_strategy(db=db, strategy_id=strategy_id):
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")

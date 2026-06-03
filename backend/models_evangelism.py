@@ -120,40 +120,78 @@ class MotivoExcusa(Base):
 class EstrategiaEvangelismo(Base):
     __tablename__ = "estrategias_evangelismo"
 
-    id = Column(String(50), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    codigo = Column(String(20), unique=True, nullable=True, index=True)
     nombre = Column(String(200), nullable=False)
-    categoria_id = Column(Integer, ForeignKey("categorias_estrategia.id"), nullable=False)
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
-    fecha_creacion = Column(DateTime(timezone=True), default=_utcnow)
+    descripcion = Column(Text, nullable=True)
+    clase_raiz = Column(String(50), nullable=True, index=True)
+    activa = Column(Boolean, default=True, index=True)
+
+    # Tipología
+    typology = Column(String(50), nullable=True, index=True)  # relacional | evento_masivo | sectorial
+
+    # Relacional
     frecuencia = Column(String(20), nullable=True)
+    dia_reunion = Column(String(20), nullable=True)
+    hora_reunion = Column(String(10), nullable=True)
+
+    # Evento Masivo
+    event_format = Column(String(30), nullable=True)  # UNICA_LOCACION | MULTILOCACION
+    phases = Column(JSON, nullable=True)
+
+    # Sectorial
+    niche_objective = Column(String(255), nullable=True)
+
+    # General
+    strategy_type = Column(String(100), nullable=True)
+    status = Column(String(50), default="active")
+
+    # Fechas
     fecha_inicio = Column(DateTime(timezone=True), nullable=True)
     fecha_fin = Column(DateTime(timezone=True), nullable=True)
-    activa = Column(Boolean, default=True)
+    fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
+    # FKs
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
+    categoria_id = Column(Integer, ForeignKey("categorias_estrategia.id"), nullable=False)
+
+    # Relaciones
     categoria = relationship("CategoriaEstrategia")
     sede = relationship("Sede")
     grupos = relationship("GrupoEvangelismo", back_populates="estrategia", cascade="all, delete-orphan")
     roles_personalizados = relationship("RolPersonalizadoEstrategia", back_populates="estrategia")
+
+    # English aliases for backward compatibility
+    name = synonym("nombre")
+    description = synonym("descripcion")
+    start_date = synonym("fecha_inicio")
+    end_date = synonym("fecha_fin")
+    day_of_week = synonym("dia_reunion")
+    start_time = synonym("hora_reunion")
+    recurrence = synonym("frecuencia")
 
 
 class RolPersonalizadoEstrategia(Base):
     __tablename__ = "estrategia_roles_personalizados"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True, index=True)
+    estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True, index=True)
     nombre_rol = Column(String(100), nullable=False)
     descripcion = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     estrategia = relationship("EstrategiaEvangelismo", back_populates="roles_personalizados")
 
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
+
 class GrupoEvangelismo(Base):
     __tablename__ = "grupos_evangelismo"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True, index=True)
-    evangelism_strategy_id = Column(Integer, ForeignKey("evangelism_strategies.id", ondelete="SET NULL"), nullable=True, index=True)
+    estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     codigo = Column(String(30), unique=True, nullable=True, index=True)
     nombre = Column(String(150), nullable=False)

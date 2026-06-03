@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud._utils import _utcnow
-from backend.models_evangelism import EstrategiaEvangelismo as EvangelismStrategy
+from backend.models_evangelism import EstrategiaEvangelismo
 from backend.models_evangelism import (
     ParticipanteGrupo, Asistencia,
 )
@@ -40,9 +40,9 @@ from backend.schemas.evangelism import (
 def _generate_codigo(db: Session) -> str:
     """Genera un código EVG-XXX auto-incremental."""
     last = (
-        db.query(EvangelismStrategy.codigo)
-        .filter(EvangelismStrategy.codigo.isnot(None))
-        .order_by(EvangelismStrategy.id.desc())
+        db.query(EstrategiaEvangelismo.codigo)
+        .filter(EstrategiaEvangelismo.codigo.isnot(None))
+        .order_by(EstrategiaEvangelismo.codigo.desc())
         .first()
     )
     if last and last.codigo:
@@ -51,10 +51,9 @@ def _generate_codigo(db: Session) -> str:
             return f"EVG-{num + 1}"
         except (IndexError, ValueError):
             pass
-    # Fallback: usar el próximo ID
-    from sqlalchemy import func
-    max_id = db.query(func.max(EvangelismStrategy.id)).scalar() or 0
-    return f"EVG-{max_id + 1}"
+    # Fallback: timestamp-based
+    import time
+    return f"EVG-{int(time.time()) % 100000}"
 
 
 def get_estrategias(
@@ -63,31 +62,31 @@ def get_estrategias(
     limit: int = 100,
     activa: Optional[bool] = None,
     clase_raiz: Optional[ClaseEstrategiaEnum] = None,
-    sede_id: Optional[int] = None,
-) -> List[EvangelismStrategy]:
+    sede_id: Optional[str] = None,
+) -> List[EstrategiaEvangelismo]:
     """Lista estrategias con filtros opcionales."""
-    q = db.query(EvangelismStrategy).order_by(EvangelismStrategy.created_at.desc())
+    q = db.query(EstrategiaEvangelismo).order_by(EstrategiaEvangelismo.created_at.desc())
     if activa is not None:
-        q = q.filter(EvangelismStrategy.activa == activa)
+        q = q.filter(EstrategiaEvangelismo.activa == activa)
     if clase_raiz is not None:
-        q = q.filter(EvangelismStrategy.clase_raiz == clase_raiz.value)
+        q = q.filter(EstrategiaEvangelismo.clase_raiz == clase_raiz.value)
     if sede_id is not None:
-        q = q.filter(EvangelismStrategy.sede_id == sede_id)
+        q = q.filter(EstrategiaEvangelismo.sede_id == sede_id)
     return q.offset(skip).limit(limit).all()
 
 
-def get_estrategia(db: Session, strategy_id: int) -> Optional[EvangelismStrategy]:
+def get_estrategia(db: Session, strategy_id: str) -> Optional[EstrategiaEvangelismo]:
     return (
-        db.query(EvangelismStrategy)
-        .filter(EvangelismStrategy.id == strategy_id)
+        db.query(EstrategiaEvangelismo)
+        .filter(EstrategiaEvangelismo.id == strategy_id)
         .first()
     )
 
 
 def create_estrategia(
     db: Session, data: EstrategiaEvangelismoCreate
-) -> EvangelismStrategy:
-    valid_cols = {c.key for c in EvangelismStrategy.__table__.columns}
+) -> EstrategiaEvangelismo:
+    valid_cols = {c.key for c in EstrategiaEvangelismo.__table__.columns}
     dump = data.model_dump()
     # Mapear clase_raiz a string si viene como enum
     if "clase_raiz" in dump and dump["clase_raiz"] is not None:
@@ -96,19 +95,16 @@ def create_estrategia(
             if hasattr(dump["clase_raiz"], "value")
             else dump["clase_raiz"]
         )
-    # Map English schema fields to Spanish model columns
-    field_map = {"name": "nombre", "description": "descripcion", "status": "estado"}
-    for eng, esp in field_map.items():
-        if eng in dump and esp not in dump:
-            dump[esp] = dump.pop(eng)
+    # Map English schema fields to Spanish model columns (via synonym — no field_map needed)
+    # Campos que no existen como columnas directas: descartar
     row_data = {k: v for k, v in dump.items() if k in valid_cols}
-    db_obj = EvangelismStrategy(**row_data)
+    db_obj = EstrategiaEvangelismo(**row_data)
     db.add(db_obj)
     db.flush()  # Obtener el ID
-    # Generar código después del flush para tener el ID
+    # Generar código después del flush
     if not db_obj.codigo:
-        db_obj.codigo = f"EVG-{db_obj.id}"
-        # Sincronizar clase_raiz con typology si no se especificó
+        db_obj.codigo = f"EVG-{str(db_obj.id)[:8]}"
+    # Sincronizar clase_raiz con typology si no se especificó
     if not db_obj.clase_raiz and db_obj.typology:
         db_obj.clase_raiz = db_obj.typology
     db.commit()
@@ -117,16 +113,16 @@ def create_estrategia(
 
 
 def update_estrategia(
-    db: Session, strategy_id: int, data: EstrategiaEvangelismoUpdate
-) -> Optional[EvangelismStrategy]:
+    db: Session, strategy_id: str, data: EstrategiaEvangelismoUpdate
+) -> Optional[EstrategiaEvangelismo]:
     db_obj = (
-        db.query(EvangelismStrategy)
-        .filter(EvangelismStrategy.id == strategy_id)
+        db.query(EstrategiaEvangelismo)
+        .filter(EstrategiaEvangelismo.id == strategy_id)
         .first()
     )
     if not db_obj:
         return None
-    valid_cols = {c.key for c in EvangelismStrategy.__table__.columns}
+    valid_cols = {c.key for c in EstrategiaEvangelismo.__table__.columns}
     dump = data.model_dump(exclude_unset=True)
     # Mapear clase_raiz enum a string
     if "clase_raiz" in dump and dump["clase_raiz"] is not None:
@@ -135,11 +131,6 @@ def update_estrategia(
             if hasattr(dump["clase_raiz"], "value")
             else dump["clase_raiz"]
         )
-    # Map English schema fields to Spanish model columns
-    field_map = {"name": "nombre", "description": "descripcion", "status": "estado"}
-    for eng, esp in field_map.items():
-        if eng in dump and esp not in dump:
-            dump[esp] = dump.pop(eng)
     update_data = {k: v for k, v in dump.items() if k in valid_cols}
     for key, value in update_data.items():
         setattr(db_obj, key, value)
@@ -148,10 +139,10 @@ def update_estrategia(
     return db_obj
 
 
-def delete_estrategia(db: Session, strategy_id: int) -> bool:
+def delete_estrategia(db: Session, strategy_id: str) -> bool:
     db_obj = (
-        db.query(EvangelismStrategy)
-        .filter(EvangelismStrategy.id == strategy_id)
+        db.query(EstrategiaEvangelismo)
+        .filter(EstrategiaEvangelismo.id == strategy_id)
         .first()
     )
     if not db_obj:

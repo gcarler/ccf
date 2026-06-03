@@ -67,7 +67,7 @@ CATALOG_CLASSES = {
     "RoleDefinition", "RolPlataforma", "NivelGamificado", "Medalla",
     "Position", "ColombianDepartment", "ColombianCity",
     "DonationCategory", "Fund", "ChurchLocation", "SocialChannel",
-    "SystemVariable", "Badge", "EvangelismStrategy",
+    "SystemVariable", "Badge", "EstrategiaEvangelismo",
     "Role", "Comment", "Rule", "UsuarioRolModulo",
     "AgentTask", "AgentInsight", "AgentRole", "AgentActivity",
     "CmsSection", "SavedView", "AutomationRule",

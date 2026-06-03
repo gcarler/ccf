@@ -315,7 +315,7 @@ class Persona(Base):
     spiritual_gifts = Column(Text, nullable=True)
     pastoral_notes = Column(Text, nullable=True)
     tags = Column(JSON, nullable=True, default=list)
-    origen_estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    origen_estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     origen_grupo_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     origen_fecha = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
@@ -889,43 +889,6 @@ class CommunityBoardCard(Base):
     position = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-
-
-class EvangelismStrategy(Base):
-    __tablename__ = "evangelism_strategies"
-    id = Column(Integer, primary_key=True, index=True)
-
-    codigo = Column(String(20), unique=True, nullable=True, index=True)
-    clase_raiz = Column(String(50), nullable=True, index=True)
-    activa = Column(Boolean, default=True, index=True)
-
-    name = Column(String(200), nullable=False)
-    description = Column(Text, nullable=True)
-
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
-    categoria_id = Column(Integer, ForeignKey("categorias_estrategia.id"), nullable=True, index=True)
-
-    typology = Column(String(50), nullable=True, index=True)
-
-    recurrence = Column(String(20), nullable=True)
-    day_of_week = Column(String(20), nullable=True)
-    start_time = Column(String(10), nullable=True)
-
-    event_format = Column(String(30), nullable=True)
-    phases = Column(JSON, nullable=True)
-
-    niche_objective = Column(String(255), nullable=True)
-
-    strategy_type = Column(String(100), nullable=True)
-    start_date = Column(DateTime(timezone=True), nullable=True)
-    end_date = Column(DateTime(timezone=True), nullable=True)
-    status = Column(String(50), default="active")
-    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
-    updated_at = Column(DateTime(timezone=True), onupdate=_utcnow)
-
-    sede = relationship("Sede", foreign_keys=[sede_id])
-    categoria = relationship("CategoriaEstrategia", foreign_keys=[categoria_id])
-
 
 
 

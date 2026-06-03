@@ -58,7 +58,7 @@ def list_cell_groups(
 ):
     q = db.query(GrupoEvangelismo)
     if estrategia_id:
-        q = q.filter(GrupoEvangelismo.evangelism_strategy_id == estrategia_id)
+        q = q.filter(GrupoEvangelismo.estrategia_id == estrategia_id)
     if sede_id is not None:
         q = q.filter(GrupoEvangelismo.sede_id == sede_id)
     groups = q.order_by(GrupoEvangelismo.nombre.asc()).all()
@@ -77,7 +77,7 @@ def list_cell_groups(
             "day_of_week": g.dia_reunion,
             "start_time": g.hora_reunion,
             "status": "Activo" if g.activo else "Inactivo",
-            "evangelism_strategy_id": g.evangelism_strategy_id,
+            "evangelism_strategy_id": str(g.estrategia_id) if g.estrategia_id else None,
         }
         for g in groups
     ]
@@ -424,7 +424,7 @@ def create_cell_group(
         "host_id": str(obj.anfitrion_persona_id) if obj.anfitrion_persona_id else None,
         "status": "Activo" if obj.activo else "Inactivo",
         "members_count": len(obj.participantes) if obj.participantes else 0,
-        "evangelism_strategy_id": obj.evangelism_strategy_id,
+        "evangelism_strategy_id": str(obj.estrategia_id) if obj.estrategia_id else None,
     }
 
 
@@ -1219,7 +1219,7 @@ def list_sessions(
     q = db.query(SesionGrupo)
     if strategy_id:
         q = q.join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id).filter(
-            GrupoEvangelismo.evangelism_strategy_id == strategy_id
+            GrupoEvangelismo.estrategia_id == strategy_id
         )
     if house_id:
         q = q.filter(models.SesionGrupo.grupo_id == house_id)
@@ -1626,7 +1626,7 @@ def get_strategy_metrics(
 
     # Get all houses for this strategy
     strategy_ref = str(strategy_id)
-    houses = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.evangelism_strategy_id == strategy_ref).all()
+    houses = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.estrategia_id == strategy_ref).all()
     house_ids = [h.id for h in houses]
 
     if not house_ids:

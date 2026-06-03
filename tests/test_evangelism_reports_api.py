@@ -67,8 +67,9 @@ def test_attendance_pdf_for_group(client, db_session):
     headers = _auth_headers(client)
     cat = _seed_categoria(db_session)
 
+    import uuid
     estrategia = models.EstrategiaEvangelismo(
-        id="EST-TEST-001",
+        id=uuid.uuid4(),
         nombre="Estrategia Test",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -104,7 +105,7 @@ def test_attendance_excel_for_group(client, db_session):
     cat = _seed_categoria(db_session)
 
     estrategia = models.EstrategiaEvangelismo(
-        id="EST-TEST-002",
+        id=uuid.uuid4(),
         nombre="Estrategia Test 2",
         categoria_id=cat.id,
         sede_id=sede.id,
@@ -143,7 +144,7 @@ def test_strategy_summary(client, db_session):
     cat = _seed_categoria(db_session)
 
     estrategia = models.EstrategiaEvangelismo(
-        id="EST-TEST-003",
+        id=uuid.uuid4(),
         nombre="Estrategia Resumen",
         categoria_id=cat.id,
         sede_id=sede.id,

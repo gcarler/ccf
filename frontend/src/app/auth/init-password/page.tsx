@@ -98,7 +98,7 @@ function InitPasswordContent() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Mínimo 8 caracteres"
-                                className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                                className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                                 required
                                 minLength={8}
                             />
@@ -121,7 +121,7 @@ function InitPasswordContent() {
                             value={confirm}
                             onChange={(e) => setConfirm(e.target.value)}
                             placeholder="Repite la contraseña"
-                            className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                            className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                             required
                         />
                     </div>
@@ -144,7 +144,7 @@ export default function InitPasswordPage() {
     return (
         <Suspense fallback={
             <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0f1116] dark:to-[#1a1b1e]">
-                <Loader2 className="animate-spin text-indigo-500" size={32} />
+                <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={32} />
             </div>
         }>
             <InitPasswordContent />

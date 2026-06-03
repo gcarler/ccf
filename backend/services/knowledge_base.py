@@ -102,8 +102,8 @@ class KnowledgeIndexer:
         """Indexa estrategias de evangelismo."""
         from backend import models
 
-        strategies = self.db.query(models.EvangelismStrategy).filter(
-            models.EvangelismStrategy.is_active,
+        strategies = self.db.query(models.EstrategiaEvangelismo).filter(
+            models.EstrategiaEvangelismo.activa == True,  # noqa: E712
         ).all()
         count = 0
         for s in strategies:

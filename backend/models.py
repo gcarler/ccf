@@ -33,7 +33,7 @@ from backend.models_crm import (
     CommunicationLog, CommunityBoardCard,
     Conversation, ConversationParticipant,
     CounselingTicket, CrmTask, Donation, DonationCategory, EventAssignment,
-    EventAttendance, EvangelismStrategy, Fund, MemberMinistry,
+    EventAttendance, Fund, MemberMinistry,
     MemberPosition, MemberRole, Ministry, PastoralCallLog, Position,
     PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
     VolunteerShift, VolunteerSkill, member_volunteer_skills)

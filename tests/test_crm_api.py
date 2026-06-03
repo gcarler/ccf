@@ -33,13 +33,17 @@ def auth_headers(client, email="admin@example.com", password="secret123"):
 
 def seed_strategy(db_session):
     """Create a Relacional evangelism strategy for test fixtures."""
-    strategy = models.EvangelismStrategy(
-        name="Estrategia Test",
+    import uuid
+    strategy = models.EstrategiaEvangelismo(
+        id=uuid.uuid4(),
+        nombre="Estrategia Test",
         typology="relacional",
-        recurrence="SEMANAL",
-        day_of_week="Miercoles",
-        start_time="19:00",
+        frecuencia="SEMANAL",
+        dia_reunion="Miercoles",
+        hora_reunion="19:00",
         status="active",
+        sede_id=seed_sede(db_session).id,
+        categoria_id=1,
     )
     db_session.add(strategy)
     db_session.commit()
