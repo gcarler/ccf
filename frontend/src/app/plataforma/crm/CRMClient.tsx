@@ -124,7 +124,7 @@ export default function CRMClient() {
                             {/* Quick Access */}
                             <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <Link
-                                    href="/plataforma/crm/members"
+                                    href="/plataforma/crm/personas"
                                     className="group relative overflow-hidden rounded-lg border-2 border-dashed border-slate-200 dark:border-white/10 p-5 hover:border-ccf-blue/40 dark:hover:border-ccf-blue/40 transition-all bg-white dark:bg-white/5 hover:bg-ccf-blue/5 dark:hover:bg-ccf-blue/10 no-underline"
                                 >
                                     <div className="flex items-center gap-3">

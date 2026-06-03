@@ -3,6 +3,30 @@ from datetime import datetime
 
 import pytest
 from backend import models
+from backend.core.security import get_password_hash
+
+
+def seed_admin(db_session, email="admin@example.com", password="secret123", role="admin"):
+    user = models.User(
+        username="admin",
+        email=email,
+        password_hash=get_password_hash(password),
+        role=role,
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+def auth_headers(client, email="admin@example.com", password="secret123"):
+    response = client.post(
+        "/api/auth/login",
+        data={"username": email, "password": password, "grant_type": "password"},
+    )
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
 def seed_strategy(db_session):
