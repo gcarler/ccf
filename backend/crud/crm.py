@@ -671,8 +671,14 @@ def get_cell_groups(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.CellGroup).offset(skip).limit(limit).all()
 
 
-def create_cell_group(db: Session, payload: schemas.CellGroupCreate):
+def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: str | None = None):
     data = payload.model_dump(exclude={"base_attendee_ids"})
+    # Map evangelism_strategy_id -> estrategia_id (CellGroup = GrupoEvangelismo uses estrategia_id)
+    if data.get("evangelism_strategy_id") and not data.get("estrategia_id"):
+        data["estrategia_id"] = data.pop("evangelism_strategy_id")
+    # Infer sede_id from user if not provided in payload
+    if sede_id and not data.get("sede_id"):
+        data["sede_id"] = sede_id
     if not str(data.get("code") or "").strip():
         base = (str(data.get("name") or data.get("address") or "FARO").strip().upper().replace(" ", "-"))[
             :12

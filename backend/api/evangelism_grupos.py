@@ -4,7 +4,7 @@ import collections
 from datetime import datetime as _datetime, timezone as _timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
@@ -404,12 +404,24 @@ def get_cell_group(
 
 @router.post("/grupos", response_model=dict)
 @router.post("/faro", response_model=dict)
-def create_cell_group(
+async def create_cell_group(
+    request: Request,
     payload: schemas.GrupoEvangelismoCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    obj = crud.create_cell_group(db, payload)
+    # Frontend sends "estrategia_id" but the schema uses "evangelism_strategy_id".
+    # Read from raw JSON before Pydantic discards unknown fields, then patch.
+    import json as _json
+    body = _json.loads(await request.body())
+    if body.get("estrategia_id") and not payload.evangelism_strategy_id:
+        object.__setattr__(payload, "evangelism_strategy_id", body["estrategia_id"])
+    # Infer sede_id from user's profile, fallback to first sede
+    user_sede = crud.get_user_sede_id(db, current_user.id)
+    if not user_sede:
+        primera_sede = db.query(models.Sede).order_by("nombre").first()
+        user_sede = str(primera_sede.id) if primera_sede else None
+    obj = crud.create_cell_group(db, payload, sede_id=user_sede)
     return {
         "id": obj.id,
         "code": obj.codigo,
