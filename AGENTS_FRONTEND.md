@@ -52,19 +52,81 @@ import { Dialog } from '@headlessui/react';
 
 ### 4. Tokens Semánticos (Colores del Sistema)
 
-**Prohibido** usar colores fijos de Tailwind (`bg-blue-500`, `border-gray-200`, `text-gray-800`) en componentes del sistema.
+**Prohibido** usar colores fijos de Tailwind en componentes del sistema. Usar exclusivamente variables CSS semánticas.
 
-Usar exclusivamente variables CSS semánticas:
+#### 🔵 Paleta de colores CCF — SOLO AZULES
+
+La plataforma usa **exclusivamente tonos azules**. Está **estrictamente prohibido** usar `indigo`, `violet` o `purple` en cualquier botón, badge, borde, texto o fondo de la UI.
+
+| Color | RGB | Tailwind | Uso |
+|---|---|---|---|
+| **Azul oscuro** | `rgb(0, 27, 72)` | `ccf-blue-dark` | Headings, branding, texto principal de auth |
+| **Azul medio** | `rgb(0, 69, 129)` | `ccf-blue-medium` | Hover de botones primarios |
+| **Azul primario** | `rgb(1, 138, 189)` | `ccf-blue-light` / `hsl(var(--primary))` | Botones, links, iconos de acción |
+| **Azul pálido** | `rgb(221, 232, 240)` | `ccf-blue-pale` | Fondos de badges, highlights |
+
+#### Variables CSS — modo claro (`[data-theme="day"]`)
+
+```css
+--primary: 197 98% 37%;          /* rgb(1,138,189) — azul CCF principal */
+--primary-foreground: 0 0% 100%; /* blanco para texto sobre botones */
+--bg-primary: 0 0% 100%;
+--bg-secondary: 210 40% 98%;
+--surface-1: 0 0% 100%;
+--surface-2: 210 40% 98%;
+--surface-3: 210 40% 96.1%;
+--text-primary: 222 47% 11%;
+--text-secondary: 215 16% 47%;
+--border: 214 32% 91%;
+--destructive: 0 84.2% 60.2%;   /* rojo — solo para acciones destructivas */
+--secondary: 142 76% 36%;        /* verde — confirmaciones / éxito */
+```
+
+#### Variables CSS — modo oscuro (`[data-theme="night"]`)
+
+```css
+--primary: 197 78% 50%;          /* azul CCF más claro para fondos oscuros */
+--primary-foreground: 0 0% 100%;
+--bg-primary: 222 47% 4%;
+--bg-secondary: 222 47% 6%;
+--surface-1: 222 47% 4%;
+--surface-2: 222 47% 10%;
+--surface-3: 222 47% 15%;
+--text-primary: 210 40% 98%;
+--text-secondary: 215 20.2% 65.1%;
+--border: 217 33% 17%;
+--destructive: 0 62.8% 30.6%;
+--secondary: 142 71% 45%;
+```
+
+#### Uso correcto en JSX
 
 ```tsx
-// ✅ CORRECTO
-<div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))]" />
-<button className="bg-[hsl(var(--primary))] text-white" />
+// ✅ CORRECTO — botón primario
+<button className="bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary)/0.85)]" />
 
-// ❌ INCORRECTO
-<div className="bg-white border border-gray-200 text-gray-800" />
-<button className="bg-blue-500 text-white" />
+// ✅ CORRECTO — panel/card
+<div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))]" />
+
+// ✅ CORRECTO — badge de acción
+<span className="bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/20 dark:text-blue-400" />
+
+// ❌ INCORRECTO — violaciones de color
+<button className="bg-indigo-600" />   // indigo → reemplazar por hsl(var(--primary))
+<button className="bg-violet-500" />   // violet → reemplazar por hsl(var(--primary))
+<button className="bg-purple-600" />   // purple → reemplazar por hsl(var(--primary))
 ```
+
+#### Colores de Tailwind permitidos para decoración categórica (iconos, estadísticas)
+
+Cuando se usan colores para **diferenciar categorías** (no botones ni UI chrome), se permiten:
+- `blue-*` — categoría de proyectos, datos
+- `green-*` / `emerald-*` — éxito, activo, crecimiento
+- `red-*` / `rose-*` — error, inactivo, peligro
+- `amber-*` / `yellow-*` — advertencia, pendiente
+- `teal-*` / `cyan-*` — evangelismo, comunidad
+
+**Nunca** `indigo-*`, `violet-*`, `purple-*` aunque sea decorativo.
 
 **Variables semánticas disponibles:**
 | Variable | Uso |
@@ -209,6 +271,7 @@ frontend/src/
 - [ ] 8. ¿Usé tokens semánticos (`--primary`, `--border`, etc.)?
 - [ ] 9. ¿Usé `DSButton` / `DSCard` del design system donde aplica?
 - [ ] 10. ¿El módulo nuevo está registrado en el layout de plataforma?
+- [ ] 11. **¿El código tiene `indigo`, `violet` o `purple`?** Si hay alguno → BLOQUEADO. Reemplazar por `hsl(var(--primary))` o `blue-*`.
 
 ---
 
