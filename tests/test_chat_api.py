@@ -3,7 +3,9 @@ from datetime import datetime, timezone
 
 import pytest
 from backend import models
-from backend.core.security import get_password_hash
+from tests.conftest import seed_admin_v2 as _seed_admin
+from tests.conftest import auth_headers_v2 as _auth_headers
+from tests.conftest import seed_user_with_role_v2
 
 
 def _seed_sede(db_session):
@@ -14,68 +16,6 @@ def _seed_sede(db_session):
     db_session.commit()
     db_session.refresh(sede)
     return sede
-
-
-def _seed_admin(db_session, email="test@example.com", password="testpass123"):
-    user = models.User(
-        username=email.split("@")[0],
-        email=email,
-        password_hash=get_password_hash(password),
-        role="admin",
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-
-    sede = _seed_sede(db_session)
-
-    persona = models.Persona(
-        id=uuid.uuid4(),
-        user_id=user.id,
-        first_name="Test",
-        last_name="User",
-        email=email,
-        sede_id=sede.id,
-    )
-    db_session.add(persona)
-    db_session.commit()
-    return user, persona, sede
-
-
-def _seed_user(db_session, email, sede_id):
-    user = models.User(
-        username=email.split("@")[0],
-        email=email,
-        password_hash=get_password_hash("testpass123"),
-        role="estudiante",
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-
-    persona = models.Persona(
-        id=uuid.uuid4(),
-        user_id=user.id,
-        first_name="Test",
-        last_name="User",
-        email=email,
-        sede_id=sede_id,
-    )
-    db_session.add(persona)
-    db_session.commit()
-    return user, persona
-
-
-def _auth_headers(client, email="test@example.com", password="testpass123"):
-    resp = client.post(
-        "/api/auth/login",
-        data={"username": email, "password": password, "grant_type": "password"},
-    )
-    assert resp.status_code == 200
-    token = resp.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.mark.xfail(reason="ConversationParticipant.user_id is UUID but current_user.id is int")
@@ -89,7 +29,7 @@ def test_search_chat_users(client, db_session):
 @pytest.mark.xfail(reason="ConversationParticipant.user_id is UUID but current_user.id is int")
 def test_create_and_list_conversations(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2 = _seed_user(db_session, "user2@example.com", sede.id)
+    user2, persona2, _ = seed_user_with_role_v2(db_session, "estudiante", "user2@example.com")
     headers = _auth_headers(client)
 
     resp = client.post(
@@ -110,7 +50,7 @@ def test_create_and_list_conversations(client, db_session):
 @pytest.mark.xfail(reason="ConversationParticipant.user_id is UUID but current_user.id is int")
 def test_send_and_list_messages(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2 = _seed_user(db_session, "user2@example.com", sede.id)
+    user2, persona2, _ = seed_user_with_role_v2(db_session, "estudiante", "user2@example.com")
     headers = _auth_headers(client)
 
     resp = client.post(
@@ -140,7 +80,7 @@ def test_send_and_list_messages(client, db_session):
 @pytest.mark.xfail(reason="ConversationParticipant.user_id is UUID but current_user.id is int")
 def test_mark_conversation_read(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2 = _seed_user(db_session, "user2@example.com", sede.id)
+    user2, persona2, _ = seed_user_with_role_v2(db_session, "estudiante", "user2@example.com")
     headers = _auth_headers(client)
 
     resp = client.post(

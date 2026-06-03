@@ -1,28 +1,14 @@
 from backend import models
-from backend.core.security import get_password_hash
+from tests.conftest import seed_admin_v2, auth_headers_v2
 
 
 def seed_admin(db_session, email="admin@example.com", password="secret123"):
-    user = models.User(
-        username="admin",
-        email=email,
-        password_hash=get_password_hash(password),
-        role="admin",
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    return user
+    user_obj, _, _ = seed_admin_v2(db_session, email, password)
+    return user_obj
 
 
 def auth_headers(client, email="admin@example.com", password="secret123"):
-    response = client.post(
-        "/api/auth/login",
-        data={"username": email, "password": password, "grant_type": "password"},
-    )
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+    return auth_headers_v2(client, email, password)
 
 
 def test_wiki_content_accepts_plain_text(client, db_session):

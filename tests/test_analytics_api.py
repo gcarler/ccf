@@ -3,7 +3,8 @@ from datetime import datetime, timezone
 
 import pytest
 from backend import models
-from backend.core.security import get_password_hash
+from tests.conftest import seed_admin_v2 as _seed_admin
+from tests.conftest import auth_headers_v2 as _auth_headers
 
 
 def _seed_sede(db_session):
@@ -14,43 +15,6 @@ def _seed_sede(db_session):
     db_session.commit()
     db_session.refresh(sede)
     return sede
-
-
-def _seed_admin(db_session, email="test@example.com", password="testpass123"):
-    user = models.User(
-        username=email.split("@")[0],
-        email=email,
-        password_hash=get_password_hash(password),
-        role="admin",
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-
-    sede = _seed_sede(db_session)
-
-    persona = models.Persona(
-        id=uuid.uuid4(),
-        user_id=user.id,
-        first_name="Test",
-        last_name="User",
-        email=email,
-        sede_id=sede.id,
-    )
-    db_session.add(persona)
-    db_session.commit()
-    return user, persona, sede
-
-
-def _auth_headers(client, email="test@example.com", password="testpass123"):
-    resp = client.post(
-        "/api/auth/login",
-        data={"username": email, "password": password, "grant_type": "password"},
-    )
-    assert resp.status_code == 200
-    token = resp.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
 
 
 def test_analytics_radar_returns_data(client, db_session):
@@ -97,29 +61,9 @@ def test_analytics_events_summary(client, db_session):
 
 
 def test_analytics_radar_rejects_non_pastor(client, db_session):
-    user = models.User(
-        username="student",
-        email="student@example.com",
-        password_hash=get_password_hash("testpass123"),
-        role="estudiante",
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
+    from tests.conftest import seed_user_with_role_v2
 
-    sede = _seed_sede(db_session)
-    persona = models.Persona(
-        id=uuid.uuid4(),
-        user_id=user.id,
-        first_name="Student",
-        last_name="User",
-        email="student@example.com",
-        sede_id=sede.id,
-    )
-    db_session.add(persona)
-    db_session.commit()
-
+    user, persona, _ = seed_user_with_role_v2(db_session, "estudiante", "student@example.com")
     headers = _auth_headers(client, email="student@example.com")
     resp = client.get("/api/analytics/radar", headers=headers)
     assert resp.status_code == 403

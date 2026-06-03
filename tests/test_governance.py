@@ -3,33 +3,19 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from backend import crud, models
-from backend.core.security import get_password_hash
+from tests.conftest import seed_admin_v2, auth_headers_v2
 
 
 def seed_admin(
     db_session, email: str = "admin@example.com", password: str = "secret123"
 ) -> tuple[models.User, str]:
-    admin = models.User(
-        username="admin",
-        email=email,
-        password_hash=get_password_hash(password),
-        role="admin",
-        is_active=True,
-    )
-    db_session.add(admin)
-    db_session.commit()
-    db_session.refresh(admin)
-    return admin, password
+    user_obj, _, _ = seed_admin_v2(db_session, email, password)
+    return user_obj, password
 
 
 def obtain_token(client: TestClient, email: str, password: str) -> str:
-    response = client.post(
-        "/api/auth/login",
-        data={"username": email, "password": password, "grant_type": "password"},
-    )
-    assert response.status_code == 200
-    data = response.json()
-    return data["access_token"]
+    headers = auth_headers_v2(client, email, password)
+    return headers["Authorization"].removeprefix("Bearer ")
 
 
 def auth_headers(token: str) -> dict[str, str]:

@@ -1,28 +1,13 @@
-from backend import models
-from backend.core.security import get_password_hash
+from tests.conftest import seed_user_with_role_v2, auth_headers_v2
 
 
 def seed_user(db_session, email="student@example.com", password="secret123"):
-    user = models.User(
-        username="student",
-        email=email,
-        password_hash=get_password_hash(password),
-        role="estudiante",
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    return user
+    user_obj, _, _ = seed_user_with_role_v2(db_session, "estudiante", email, password)
+    return user_obj
 
 
 def auth_headers(client, email="student@example.com", password="secret123"):
-    response = client.post(
-        "/api/auth/login",
-        data={"username": email, "password": password, "grant_type": "password"},
-    )
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+    return auth_headers_v2(client, email, password)
 
 
 def test_my_academy_profile_uses_authenticated_user_id(client, db_session):

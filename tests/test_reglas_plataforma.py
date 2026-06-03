@@ -16,9 +16,10 @@ import ast
 import sys
 from pathlib import Path
 
-API_DIR = Path("backend/api")
-MODELS_DIR = Path("backend")
-SCHEMAS_DIR = Path("backend/schemas")
+ROOT = Path(__file__).resolve().parents[1]
+API_DIR = ROOT / "backend" / "api"
+MODELS_DIR = ROOT / "backend"
+SCHEMAS_DIR = ROOT / "backend" / "schemas"
 
 # ── Configuración ──────────────────────────────────────────────────────────
 # Endpoints que pueden tener .all() sin sede_id por ser catálogos o admin global
@@ -220,7 +221,7 @@ def test_no_jsonb():
 def test_module_registration():
     """Regla 9: Módulos en api/__init__.py + app.py."""
     init_content = (API_DIR / "__init__.py").read_text()
-    app_content = (Path("backend") / "app.py").read_text()
+    app_content = (ROOT / "backend" / "app.py").read_text()
     
     # Extract modules from app.py import line
     import_match = re.search(r"from backend\.api import \((.*?)\)", app_content, re.DOTALL)

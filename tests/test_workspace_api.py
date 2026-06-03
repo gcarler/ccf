@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from backend import models
 from backend.api import workspace_shared
-from backend.core.security import get_password_hash
+from tests.conftest import seed_admin_v2, auth_headers_v2
 
 pytestmark = pytest.mark.xfail(
     reason="DATA_DIR apunta a ruta Windows (C:/Users/USUARIO/) — no disponible en servidor Linux",
@@ -49,30 +49,15 @@ def isolated_workspace_storage(monkeypatch):
 
 def seed_admin(
     db_session, email: str = "admin@example.com", password: str = "secret123"
-) -> models.User:
-    user = models.User(
-        username="admin",
-        email=email,
-        password_hash=get_password_hash(password),
-        role="admin",
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    return user
+):
+    user_obj, _, _ = seed_admin_v2(db_session, email, password)
+    return user_obj
 
 
 def auth_headers(
-    client: TestClient, email: str = "admin@example.com", password: str = "secret123"
+    client, email: str = "admin@example.com", password: str = "secret123"
 ) -> dict[str, str]:
-    response = client.post(
-        "/api/auth/login",
-        data={"username": email, "password": password, "grant_type": "password"},
-    )
-    assert response.status_code == 200
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+    return auth_headers_v2(client, email, password)
 
 
 def test_workspace_config_returns_resolved_features(client: TestClient, db_session):

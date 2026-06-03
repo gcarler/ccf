@@ -522,104 +522,117 @@ export default function MembersPage() {
                     ) : (
                         <div className="space-y-6">
                             {(() => {
-                                const groups = [
-                                    { key: 'Visitante', label: 'Visitantes', desc: 'Personas en proceso de conocer la iglesia', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800/30' },
+                                const FIXED_GROUPS = [
                                     { key: 'Activo', label: 'Miembros Activos', desc: 'Miembros activos y en cobertura', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800/30' },
                                     { key: 'Miembro', label: 'Miembros', desc: 'Miembros registrados sin estado específico', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800/30' },
                                     { key: 'Inactivo', label: 'Inactivos', desc: 'Miembros que han dejado de asistir', color: 'text-slate-600', bg: 'bg-slate-50 dark:bg-slate-800/20', border: 'border-slate-200 dark:border-slate-700/30' },
                                     { key: 'Transferido', label: 'Transferidos', desc: 'Miembros transferidos a otra congregación', color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', border: 'border-purple-200 dark:border-purple-800/30' },
                                 ];
-                                const grouped = groups.map(g => ({
-                                    ...g,
-                                    items: filteredMembers.filter(m => (m.membership_type || '') === g.key),
-                                }));
+
+                                // Collect unique group_name values from filtered Visitante members
+                                const visitantes = filteredMembers.filter(m => (m.membership_type || '') === 'Visitante');
+                                const visitantGroups = [...new Set(visitantes.map((m: any) => m.group_name).filter(Boolean))].sort();
+                                const visitantesSinGrupo = visitantes.filter(m => !m.group_name);
+
                                 const sinMembresia = filteredMembers.filter(m => !m.membership_type);
+
+                                function renderMemberCard(member: any) {
+                                    return (
+                                        <motion.div key={member.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
+                                            <div onClick={() => router.push(`/plataforma/crm/personas/${member.id}`)} className="group p-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="relative">
+                                                        <div className="size-9 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-sm">
+                                                            {(member.nombre_completo?.charAt(0) || '')}
+                                                        </div>
+                                                        <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[#1e1f21]", member.spiritual_health > 0.7 ? "bg-emerald-500" : member.spiritual_health > 0.4 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]")} />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase truncate max-w-[150px]">{member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}</h3>
+                                                        <div className="mt-1 flex items-center gap-2">
+                                                            <span className={clsx("px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide", getRoleColor(member.church_role || ''))}>{member.church_role || 'Miembro'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="size-8 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/20 group-hover:text-[hsl(var(--primary))] transition-all">
+                                                    <ChevronRight size={16} />
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                }
+
+                                function renderGroupMemberCards(members: any[]) {
+                                    return (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            <AnimatePresence>
+                                                {members.map(renderMemberCard)}
+                                            </AnimatePresence>
+                                        </div>
+                                    );
+                                }
+
+                                function renderSectionHeader(label: string, desc: string, color: string, bg: string, count: number) {
+                                    return (
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className={clsx("size-8 rounded-lg flex items-center justify-center", bg, color)}>
+                                                <Users size={16} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{label}</h3>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{desc} · {count} persona{count !== 1 ? 's' : ''}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
                                 return (
                                     <>
-                                        {groups.map(group => {
+                                        {/* Visitantes — subagrupados por estrategia evangelística (group_name) */}
+                                        {visitantes.length > 0 && (
+                                            <div key="Visitantes">
+                                                {renderSectionHeader('Visitantes', 'Personas en proceso de conocer la iglesia', 'text-amber-600', 'bg-amber-50 dark:bg-amber-900/20', visitantes.length)}
+                                                <div className="space-y-5 pl-4 border-l-2 border-amber-200 dark:border-amber-800/30">
+                                                    {visitantGroups.map(g => {
+                                                        const gm = visitantes.filter(m => m.group_name === g);
+                                                        return (
+                                                            <div key={g}>
+                                                                <h4 className="text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 mb-2">▸ {g} ({gm.length})</h4>
+                                                                {renderGroupMemberCards(gm)}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    {visitantesSinGrupo.length > 0 && (
+                                                        <div>
+                                                            <h4 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-2">▸ Sin Grupo ({visitantesSinGrupo.length})</h4>
+                                                            {renderGroupMemberCards(visitantesSinGrupo)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Grupos fijos: Activo, Miembro, Inactivo, Transferido */}
+                                        {FIXED_GROUPS.map(group => {
                                             const groupMembers = filteredMembers.filter(m => (m.membership_type || '') === group.key);
                                             if (groupMembers.length === 0) return null;
                                             return (
                                                 <div key={group.key}>
-                                                    <div className="flex items-center gap-3 mb-3">
-                                                        <div className={clsx("size-8 rounded-lg flex items-center justify-center", group.bg, group.color)}>
-                                                            <Users size={16} />
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{group.label}</h3>
-                                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{group.desc} · {groupMembers.length} persona{groupMembers.length !== 1 ? 's' : ''}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                        <AnimatePresence>
-                                                            {groupMembers.map(member => (
-                                                                <motion.div key={member.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
-                                                                    <div onClick={() => router.push(`/plataforma/crm/personas/${member.id}`)} className="group p-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
-                                                                        <div className="flex items-center gap-4">
-                                                                            <div className="relative">
-                                                                                <div className="size-9 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-sm">
-                                                                                    {(member.nombre_completo?.charAt(0) || '')}
-                                                                                </div>
-                                                                                <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[#1e1f21]", member.spiritual_health > 0.7 ? "bg-emerald-500" : member.spiritual_health > 0.4 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]")} />
-                                                                            </div>
-                                                                            <div>
-                                                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase truncate max-w-[150px]">{member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}</h3>
-                                                                                <div className="mt-1 flex items-center gap-2">
-                                                                                    <span className={clsx("px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide", getRoleColor(member.church_role || ''))}>{member.church_role || 'Miembro'}</span>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="size-8 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/20 group-hover:text-[hsl(var(--primary))] transition-all">
-                                                                            <ChevronRight size={16} />
-                                                                        </div>
-                                                                    </div>
-                                                                </motion.div>
-                                                            ))}
-                                                        </AnimatePresence>
-                                                    </div>
+                                                    {renderSectionHeader(group.label, group.desc, group.color, group.bg, groupMembers.length)}
+                                                    {renderGroupMemberCards(groupMembers)}
                                                 </div>
                                             );
                                         })}
+
+                                        {/* Sin Membresía */}
                                         {sinMembresia.length > 0 && (
                                             <div>
-                                                <div className="flex items-center gap-3 mb-3">
-                                                    <div className="size-8 rounded-lg flex items-center justify-center bg-slate-50 dark:bg-white/5 text-slate-400">
-                                                        <Users size={16} />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">Sin Membresía</h3>
-                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sin tipo de membresía asignado · {sinMembresia.length} persona{sinMembresia.length !== 1 ? 's' : ''}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                    <AnimatePresence>
-                                                        {sinMembresia.map(member => (
-                                                            <motion.div key={member.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
-                                                                <div onClick={() => router.push(`/plataforma/crm/personas/${member.id}`)} className="group p-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
-                                                                    <div className="flex items-center gap-4">
-                                                                        <div className="relative">
-                                                                            <div className="size-9 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-sm">
-                                                                                {(member.nombre_completo?.charAt(0) || '')}
-                                                                            </div>
-                                                                            <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[#1e1f21]", member.spiritual_health > 0.7 ? "bg-emerald-500" : member.spiritual_health > 0.4 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]")} />
-                                                                        </div>
-                                                                        <div>
-                                                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase truncate max-w-[150px]">{member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}</h3>
-                                                                            <div className="mt-1 flex items-center gap-2">
-                                                                                <span className={clsx("px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide", getRoleColor(member.church_role || ''))}>{member.church_role || 'Miembro'}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="size-8 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/20 group-hover:text-[hsl(var(--primary))] transition-all">
-                                                                        <ChevronRight size={16} />
-                                                                    </div>
-                                                                </div>
-                                                            </motion.div>
-                                                        ))}
-                                                    </AnimatePresence>
-                                                </div>
+                                                {renderSectionHeader('Sin Membresía', 'Sin tipo de membresía asignado', 'text-slate-400', 'bg-slate-50 dark:bg-white/5', sinMembresia.length)}
+                                                {renderGroupMemberCards(sinMembresia)}
                                             </div>
                                         )}
+
+                                        {/* Empty state */}
                                         {filteredMembers.length === 0 && (
                                             <div className="text-center py-6 font-bold text-slate-400">No se encontraron personas con esos filtros.</div>
                                         )}
