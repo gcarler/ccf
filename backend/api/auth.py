@@ -714,6 +714,19 @@ def google_login(request: Request):
     return RedirectResponse(url=google_url)
 
 
+def get_default_sede_id(db: Session) -> str:
+    """Obtiene el UUID de la primera sede disponible o None."""
+    from backend.models_auth import Sede
+    sede = db.query(Sede).first()
+    if sede:
+        return sede.id
+    # Fallback: insertar una sede por defecto
+    sede = Sede(nombre="Sede Principal", ciudad="Sin Información", es_activa=True)
+    db.add(sede)
+    db.flush()
+    return sede.id
+
+
 @router.get("/google/callback")
 def google_callback(
     code: str,
@@ -774,21 +787,19 @@ def google_callback(
     if not google_email:
         raise HTTPException(status_code=400, detail="Google no proporcionó un email")
 
-    # 3. Find or create user
-    user = crud.get_user_by_email(db, google_email)
-    is_v2 = False
-    if not user:
-        from backend.models_auth import Usuario
+    # 3. Find or create user (V3: auth_users only)
+    from backend.models_auth import Usuario
 
-        user = db.query(Usuario).filter(Usuario.email == google_email).first()
-        if user:
-            is_v2 = True
+    user = db.query(Usuario).filter(Usuario.email == google_email).first()
+    is_v2 = bool(user)
 
     if not user:
-        # Create new user from Google data
         import secrets
         from backend.models_auth import Usuario, RolPlataforma
         from backend.core.security import get_password_hash
+
+        # Default sede UUID
+        default_sede_id = get_default_sede_id(db)
 
         # Ensure persona exists or create one
         persona = db.query(models.Persona).filter(models.Persona.email == google_email).first()
@@ -801,7 +812,7 @@ def google_callback(
                 email=google_email,
                 church_role="Miembro",
                 spiritual_status="Nuevo",
-                sede_id=1,  # Default
+                sede_id=default_sede_id,
                 estado_vital="ACTIVO",
             )
             db.add(persona)
@@ -813,7 +824,7 @@ def google_callback(
 
         user = Usuario(
             id=persona.id,
-            sede_id=persona.sede_id or 1,
+            sede_id=default_sede_id,
             username=google_email.split("@")[0],
             email=google_email,
             password_hash=get_password_hash(secrets.token_urlsafe(32)),
