@@ -61,3 +61,69 @@ def client(db_session):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides = {get_db: override_get_db}
+
+
+# ── Auth Helper (v2 / auth_users) ─────────────────────────────────────
+# All test files that need authenticated endpoints should use these
+# helpers instead of the legacy models.User pattern, because the
+# /api/auth/login endpoint queries Usuario (auth_users), not User (users).
+
+def seed_admin_v2(db_session, email="admin@example.com", password="testpass123"):
+    """Crea un admin funcional en auth_users + persona + RolPlataforma."""
+    import uuid as _uuid
+    from backend.models_auth import Usuario, RolPlataforma
+    from backend.models_crm import Persona
+    from backend.core.security import get_password_hash
+
+    persona = Persona(
+        id=_uuid.uuid4(),
+        first_name="Admin",
+        last_name="Test",
+        email=email,
+    )
+    db_session.add(persona)
+    db_session.flush()
+
+    role = db_session.query(RolPlataforma).filter(RolPlataforma.nombre == "ADMIN").first()
+    if not role:
+        role = RolPlataforma(
+            id=_uuid.uuid4(),
+            nombre="ADMIN",
+            permisos={"*": "allow"},
+        )
+        db_session.add(role)
+        db_session.flush()
+
+    sede = models.Sede(
+        id=_uuid.uuid4(),
+        nombre="Sede Test",
+        ciudad="Bogota",
+        es_activa=True,
+    )
+    db_session.add(sede)
+    db_session.flush()
+
+    user = Usuario(
+        id=persona.id,
+        sede_id=sede.id,
+        username=email.split("@")[0],
+        email=email,
+        password_hash=get_password_hash(password),
+        rol_plataforma_id=role.id,
+        is_active=True,
+        is_email_verified=True,
+    )
+    db_session.add(user)
+    db_session.commit()
+    return user, persona, sede
+
+
+def auth_headers_v2(client, email="admin@example.com", password="testpass123"):
+    """Obtiene headers de autorización usando el endpoint /api/auth/login."""
+    resp = client.post(
+        "/api/auth/login",
+        data={"username": email, "password": password, "grant_type": "password"},
+    )
+    assert resp.status_code == 200, f"Login failed: {resp.status_code} {resp.text}"
+    token = resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}

@@ -3,7 +3,6 @@ from datetime import datetime, date, timezone
 
 import pytest
 from backend import models
-from backend.core.security import get_password_hash
 
 
 def _seed_sede(db_session):
@@ -16,43 +15,6 @@ def _seed_sede(db_session):
     return sede
 
 
-def _seed_admin(db_session, email="test@example.com", password="testpass123"):
-    user = models.User(
-        username=email.split("@")[0],
-        email=email,
-        password_hash=get_password_hash(password),
-        role="admin",
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-
-    sede = _seed_sede(db_session)
-
-    persona = models.Persona(
-        id=uuid.uuid4(),
-        user_id=user.id,
-        first_name="Test",
-        last_name="User",
-        email=email,
-        sede_id=sede.id,
-    )
-    db_session.add(persona)
-    db_session.commit()
-    return user, persona, sede
-
-
-def _auth_headers(client, email="test@example.com", password="testpass123"):
-    resp = client.post(
-        "/api/auth/login",
-        data={"username": email, "password": password, "grant_type": "password"},
-    )
-    assert resp.status_code == 200
-    token = resp.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
-
-
 def _seed_categoria(db_session):
     cat = models.CategoriaEstrategia(nombre="Test Cat", descripcion="Desc")
     db_session.add(cat)
@@ -63,8 +25,8 @@ def _seed_categoria(db_session):
 
 @pytest.mark.xfail(reason="reportlab not installed in test env", strict=False)
 def test_attendance_pdf_for_group(client, db_session):
-    admin, persona, sede = _seed_admin(db_session)
-    headers = _auth_headers(client)
+    admin, persona, sede = seed_admin_v2(db_session)
+    headers = auth_headers_v2(client)
     cat = _seed_categoria(db_session)
 
     import uuid
@@ -100,8 +62,8 @@ def test_attendance_pdf_for_group(client, db_session):
 
 
 def test_attendance_excel_for_group(client, db_session):
-    admin, persona, sede = _seed_admin(db_session)
-    headers = _auth_headers(client)
+    admin, persona, sede = seed_admin_v2(db_session)
+    headers = auth_headers_v2(client)
     cat = _seed_categoria(db_session)
 
     estrategia = models.EstrategiaEvangelismo(
@@ -139,8 +101,8 @@ def test_attendance_excel_for_group(client, db_session):
 
 
 def test_strategy_summary(client, db_session):
-    admin, persona, sede = _seed_admin(db_session)
-    headers = _auth_headers(client)
+    admin, persona, sede = seed_admin_v2(db_session)
+    headers = auth_headers_v2(client)
     cat = _seed_categoria(db_session)
 
     estrategia = models.EstrategiaEvangelismo(
@@ -177,8 +139,8 @@ def test_strategy_summary(client, db_session):
 
 
 def test_strategy_summary_404_for_missing_strategy(client, db_session):
-    _seed_admin(db_session)
-    headers = _auth_headers(client)
+    seed_admin_v2(db_session)
+    headers = auth_headers_v2(client)
     resp = client.get(
         "/api/evangelism/reports/strategy/NONEXISTENT/summary", headers=headers
     )

@@ -4,7 +4,6 @@ import uuid
 import pytest
 
 from backend import models
-from backend.core.security import get_password_hash
 from backend.services.evangelism_projection import proyectar_sesiones, FRECUENCIAS
 from backend.services.evangelism_crm_bridge import (
     crear_caso_desde_asistencia,
@@ -16,29 +15,6 @@ from backend.models_crm_core import (
     PrioridadCasoEnum,
     CanalOrigenEnum,
 )
-
-
-def _seed_admin(db_session, email="admin@example.com", password="secret123"):
-    user = models.User(
-        username="admin",
-        email=email,
-        password_hash=get_password_hash(password),
-        role="admin",
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    return user
-
-
-def _auth_headers(client, email="admin@example.com", password="secret123"):
-    response = client.post(
-        "/api/auth/login",
-        data={"username": email, "password": password, "grant_type": "password"},
-    )
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
 
 
 def _seed_sede(db_session):
@@ -375,7 +351,7 @@ def test_pipeline_reutilizado_si_ya_existe(db_session):
 
 
 def test_respuesta_json_estructura_correcta(client, db_session):
-    admin = _seed_admin(db_session)
+    admin = seed_admin_v2(db_session)
     sede = _seed_sede(db_session)
     cat = _seed_categoria(db_session)
 
@@ -411,7 +387,7 @@ def test_respuesta_json_estructura_correcta(client, db_session):
     db_session.add(sesion)
     db_session.commit()
 
-    headers = _auth_headers(client)
+    headers = auth_headers_v2(client)
 
     response = client.post(
         f"/api/evangelism/sessions/{sesion.id}/attendance",

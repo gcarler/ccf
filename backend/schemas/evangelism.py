@@ -111,7 +111,7 @@ class EstrategiaEvangelismoUpdate(BaseModel):
 
 
 class EstrategiaEvangelismoResponse(EstrategiaEvangelismoBase):
-    id: int
+    id: str
     codigo: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None

@@ -1102,10 +1102,11 @@ def update_strategy(
         raise
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
+    result = EvangelismStrategy.model_validate(db_obj)
     # ── Phase scheduling trigger ──
     if strategy.typology == "evento_masivo" and strategy.phases:
-        _project_phases_as_tasks(db, strategy_id, db_obj.name, strategy.phases, strategy.start_date)
-    return db_obj
+        _project_phases_as_tasks(db, strategy_id, result.name, strategy.phases, strategy.start_date)
+    return result
 
 
 @router.post("/strategies/{strategy_id}/generate-sessions", response_model=dict)

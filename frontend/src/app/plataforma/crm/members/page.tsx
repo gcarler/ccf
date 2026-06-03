@@ -21,7 +21,15 @@ import {
     TrendingUp,
     CheckCircle2,
     Loader2,
-    Send
+    Send,
+    X,
+    SlidersHorizontal,
+    Fingerprint,
+    Phone,
+    Calendar,
+    MapPin,
+    VenetianMask,
+    BookOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -175,6 +183,13 @@ export default function MembersPage() {
 
     const [query, setQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('Todos');
+    const [idTypeFilter, setIdTypeFilter] = useState('');
+    const [sexFilter, setSexFilter] = useState('');
+    const [groupFilter, setGroupFilter] = useState('');
+    const [membershipFilter, setMembershipFilter] = useState('');
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    const [uniqueGroups, setUniqueGroups] = useState<string[]>([]);
+    const [activeFilterCount, setActiveFilterCount] = useState(0);
 
     useEffect(() => {
         if (!token) return;
@@ -189,6 +204,10 @@ export default function MembersPage() {
                 setMembers(membersData);
                 setRoles(rolesData);
                 setDepartments(deptData);
+                // Extract unique group names for filter
+                const groups = [...new Set(membersData.map((m: any) => m.group_name).filter(Boolean))] as string[];
+                groups.sort();
+                setUniqueGroups(groups);
             } catch {
                 toast.error('Error al cargar membresía');
             } finally {
@@ -238,14 +257,33 @@ export default function MembersPage() {
             list = list.filter(m =>
                 (m.nombre_completo || '').toLowerCase().includes(q) ||
                 m.email?.toLowerCase().includes(q) ||
-                m.church_role?.toLowerCase().includes(q)
+                m.church_role?.toLowerCase().includes(q) ||
+                (m.id_number || '').toLowerCase().includes(q) ||
+                (m.phone || '').toLowerCase().includes(q) ||
+                (m.mobile_phone || '').toLowerCase().includes(q)
             );
         }
         if (roleFilter !== 'Todos') {
             list = list.filter(m => m.church_role === roleFilter);
         }
+        if (idTypeFilter) {
+            list = list.filter(m => m.id_type === idTypeFilter);
+        }
+        if (sexFilter) {
+            list = list.filter(m => m.sex === sexFilter);
+        }
+        if (groupFilter) {
+            list = list.filter(m => m.group_name === groupFilter);
+        }
+        if (membershipFilter) {
+            list = list.filter(m => m.membership_type === membershipFilter);
+        }
+        // Count active filters
+        const count = [idTypeFilter, sexFilter, groupFilter, membershipFilter].filter(Boolean).length
+            + (roleFilter !== 'Todos' ? 1 : 0);
+        setActiveFilterCount(count);
         return list;
-    }, [members, query, roleFilter]);
+    }, [members, query, roleFilter, idTypeFilter, sexFilter, groupFilter, membershipFilter]);
 
     const um = (key: keyof MemberFormData) => (value: string) => setNewMember(prev => ({ ...prev, [key]: value }));
 
@@ -327,23 +365,151 @@ export default function MembersPage() {
                     </div>
 
                     {/* Filters Toolbar */}
-                    <div className="sticky top-0 z-10 bg-slate-50/80 dark:bg-[#121212]/80 backdrop-blur-xl py-2 flex flex-col md:flex-row gap-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input
-                                value={query}
-                                onChange={e => setQuery(e.target.value)}
-                                placeholder="Buscar por nombre, correo o ministerio..."
-                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
-                            />
+                    <div className="sticky top-0 z-10 bg-slate-50/80 dark:bg-[#121212]/80 backdrop-blur-xl pt-2 space-y-2">
+                        {/* Search + Filter Toggle Row */}
+                        <div className="flex flex-col md:flex-row gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    value={query}
+                                    onChange={e => setQuery(e.target.value)}
+                                    placeholder="Buscar por nombre, documento, teléfono, email o ministerio..."
+                                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                    className={clsx(
+                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all shrink-0 border",
+                                        showAdvancedFilters || activeFilterCount > 0
+                                            ? "bg-ccf-blue text-white border-ccf-blue shadow-md"
+                                            : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10"
+                                    )}
+                                >
+                                    <SlidersHorizontal size={14} />
+                                    Filtros
+                                    {activeFilterCount > 0 && (
+                                        <span className="ml-1 size-4 rounded-full bg-white text-ccf-blue text-[9px] font-bold flex items-center justify-center">
+                                            {activeFilterCount}
+                                        </span>
+                                    )}
+                                </button>
+                                <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={FULL_VIEWS} />
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none snap-x">
-                            <button onClick={() => setRoleFilter('Todos')} className={clsx("px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === 'Todos' ? "bg-slate-800 text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900 shadow-md" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10")}>Todos</button>
+
+                        {/* Role Chips Row */}
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none snap-x">
+                            <button onClick={() => setRoleFilter('Todos')} className={clsx("px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === 'Todos' ? "bg-slate-800 text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900 shadow-md" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10")}>Todos</button>
                             {roles.map(role => (
-                                <button key={role.id} onClick={() => setRoleFilter(role.name)} className={clsx("px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === role.name ? "bg-slate-800 text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900 shadow-md" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10")}>{role.name}</button>
+                                <button key={role.id} onClick={() => setRoleFilter(role.name)} className={clsx("px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === role.name ? "bg-slate-800 text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900 shadow-md" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10")}>{role.name}</button>
                             ))}
                         </div>
-                        <div className="ml-auto"><ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={FULL_VIEWS} /></div>
+
+                        {/* Advanced Filters Panel */}
+                        <AnimatePresence>
+                            {showAdvancedFilters && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h4 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Filtros Avanzados</h4>
+                                            <button
+                                                onClick={() => {
+                                                    setIdTypeFilter('');
+                                                    setSexFilter('');
+                                                    setGroupFilter('');
+                                                    setMembershipFilter('');
+                                                    setRoleFilter('Todos');
+                                                }}
+                                                className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-red-400 hover:text-red-500 transition-colors"
+                                            >
+                                                <X size={12} /> Limpiar
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                            {/* Tipo de Identificación */}
+                                            <div className="space-y-1">
+                                                <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                                                    <Fingerprint size={11} /> Tipo ID
+                                                </label>
+                                                <select
+                                                    value={idTypeFilter}
+                                                    onChange={e => setIdTypeFilter(e.target.value)}
+                                                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                >
+                                                    <option value="">Todos</option>
+                                                    <option value="Cédula De Ciudadanía">Cédula Ciudadanía</option>
+                                                    <option value="Cédula De Extranjería">Cédula Extranjería</option>
+                                                    <option value="Pasaporte">Pasaporte</option>
+                                                    <option value="Tarjeta De Identidad">Tarjeta Identidad</option>
+                                                    <option value="NIT">NIT</option>
+                                                    <option value="Otro">Otro</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Sexo */}
+                                            <div className="space-y-1">
+                                                <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                                                    <VenetianMask size={11} /> Sexo
+                                                </label>
+                                                <select
+                                                    value={sexFilter}
+                                                    onChange={e => setSexFilter(e.target.value)}
+                                                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                >
+                                                    <option value="">Todos</option>
+                                                    <option value="M">Masculino</option>
+                                                    <option value="F">Femenino</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Grupo */}
+                                            <div className="space-y-1">
+                                                <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                                                    <MapPin size={11} /> Grupo
+                                                </label>
+                                                <select
+                                                    value={groupFilter}
+                                                    onChange={e => setGroupFilter(e.target.value)}
+                                                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                >
+                                                    <option value="">Todos</option>
+                                                    {uniqueGroups.map(g => (
+                                                        <option key={g} value={g}>{g}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            {/* Tipo Membresía */}
+                                            <div className="space-y-1">
+                                                <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                                                    <BookOpen size={11} /> Membresía
+                                                </label>
+                                                <select
+                                                    value={membershipFilter}
+                                                    onChange={e => setMembershipFilter(e.target.value)}
+                                                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                >
+                                                    <option value="">Todos</option>
+                                                    <option value="Activo">Activo</option>
+                                                    <option value="Inactivo">Inactivo</option>
+                                                    <option value="Visitante">Visitante</option>
+                                                    <option value="Miembro">Miembro</option>
+                                                    <option value="Transferido">Transferido</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                     {/* Members List */}
