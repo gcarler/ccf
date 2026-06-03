@@ -283,7 +283,7 @@ export default function StrategyDetailPage() {
     const fetchGroups = useCallback(async () => {
         try {
             const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token });
-            setGroups((all || []).filter(g => (g as any).estrategia_id === id));
+            setGroups((all || []).filter(g => (g as any).evangelism_strategy_id === id));
         } catch { toast.error('Error al cargar grupos'); }
     }, [id]);
 
