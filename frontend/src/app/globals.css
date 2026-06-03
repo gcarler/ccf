@@ -10,7 +10,7 @@
   --text-primary: 222 47% 11%;
   --text-secondary: 215 16% 47%;
 
-  --primary: 245 78% 67%; /* #7b68ee */
+  --primary: 197 98% 37%; /* rgb(1,138,189) — azul CCF */
   --primary-foreground: 0 0% 100%;
 
   --surface-1: 0 0% 100%;
@@ -52,6 +52,9 @@
   --surface-2: 222 47% 10%;
   --surface-3: 222 47% 15%;
   
+  --primary: 197 78% 50%; /* azul CCF más claro para fondos oscuros */
+  --primary-foreground: 0 0% 100%;
+
   --border: 217 33% 17%;
   --border-primary: 217 33% 17%;
   --border-glass: 255 255% 255% / 0.05;

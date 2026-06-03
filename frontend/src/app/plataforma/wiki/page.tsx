@@ -81,7 +81,7 @@ export default function WikiHomePage() {
             {/* TOOLBAR */}
             <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21]">
                 <div className="flex items-center gap-2 flex-1">
-                    <BookOpen size={16} className="text-indigo-600" />
+                    <BookOpen size={16} className="text-[hsl(var(--primary))]" />
                     <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                         BASE DE CONOCIMIENTO
                     </h2>
@@ -95,12 +95,12 @@ export default function WikiHomePage() {
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
                             placeholder="Buscar en la wiki..."
-                            className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-lg text-[12px] focus:ring-2 focus:ring-indigo-500/20 w-64 transition-all"
+                            className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-lg text-[12px] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-64 transition-all"
                         />
                     </div>
                     <button 
                         onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
-                        className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-2"
+                        className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary)/0.85)] active:scale-95 transition-all flex items-center gap-2"
                     >
                         <Plus size={14} />
                         Nuevo Doc
@@ -168,7 +168,7 @@ export default function WikiHomePage() {
                                         
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-start justify-between">
-                                                <div className="size-10 rounded-md bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
+                                                <div className="size-10 rounded-md bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-[hsl(var(--primary))] transition-colors">
                                                     <FileText size={20} />
                                                 </div>
                                                 <button className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400">
@@ -177,7 +177,7 @@ export default function WikiHomePage() {
                                             </div>
                                             
                                             <div>
-                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors line-clamp-2">
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
                                                     {doc.title}
                                                 </h3>
                                                 <p className="text-[12px] text-slate-500 mt-2 line-clamp-3 leading-relaxed">
@@ -193,7 +193,7 @@ export default function WikiHomePage() {
                                             </div>
                                             <Link 
                                                 href={`/wiki/docs/${doc.page_key}`}
-                                                className="text-[10px] font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all"
+                                                className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all"
                                             >
                                                 EDITAR <ChevronRight size={12} />
                                             </Link>

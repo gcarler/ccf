@@ -21,7 +21,7 @@ import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion } from 'framer-motion';
 
 interface Strategy {
-    id: number;
+    id: string;
     name: string;
     description: string;
     codigo?: string;
@@ -125,7 +125,7 @@ const MEMBER_ROLES = [
 
 const ROLE_COLORS: Record<string, string> = {
     lider: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
-    colider: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    colider: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
     miembro: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
     visitante: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
     asistente: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
@@ -736,7 +736,7 @@ export default function StrategyDetailPage() {
                             <tbody>
                                 {groups.map(g => (
                                     <tr key={`g-${g.id}`} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
-                                        <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">Grupo</span></td>
+                                        <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300">Grupo</span></td>
                                         <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{g.name}</td>
                                         <td className="py-2 px-3 text-slate-400">—</td>
                                         <td className="py-2 px-3 text-slate-400">Activo</td>
@@ -762,7 +762,7 @@ export default function StrategyDetailPage() {
                     <div className="space-y-1">
                         {groups.map(g => (
                             <div key={`g-${g.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
-                                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0"><Users size={14} className="text-purple-600 dark:text-purple-400" /></div>
+                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Users size={14} className="text-[hsl(var(--primary))] dark:text-blue-400" /></div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{g.name}</p>
                                     <p className="text-xs text-slate-400">{g.members_count} miembros{g.zone ? ` · ${g.zone}` : ''}</p>
@@ -789,8 +789,8 @@ export default function StrategyDetailPage() {
                         {groups.map(g => (
                             <div key={`g-${g.id}`} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center"><Users size={12} className="text-purple-600 dark:text-purple-400" /></div>
-                                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400">GRUPO</span>
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><Users size={12} className="text-[hsl(var(--primary))] dark:text-blue-400" /></div>
+                                    <span className="text-xs font-bold text-[hsl(var(--primary))] dark:text-blue-400">GRUPO</span>
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">{g.name}</h3>
                                 <p className="text-xs text-slate-400 mt-1">{g.zone || 'Sin zona'}</p>
@@ -1184,7 +1184,7 @@ export default function StrategyDetailPage() {
                                 {followUps.filter(f => !f.completado).slice(0, 10).map(f => (
                                     <div key={f.id} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
                                         <div className="flex items-center gap-2">
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.tipo === 'llamada' ? 'bg-blue-100 text-[hsl(var(--primary))]' : f.tipo === 'visita' ? 'bg-purple-100 text-purple-700' : f.tipo === 'oracion' ? 'bg-green-100 text-[hsl(var(--secondary))]' : 'bg-slate-100 text-slate-600'}`}>
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.tipo === 'llamada' ? 'bg-blue-100 text-[hsl(var(--primary))]' : f.tipo === 'visita' ? 'bg-blue-100 text-[hsl(var(--primary))]' : f.tipo === 'oracion' ? 'bg-green-100 text-[hsl(var(--secondary))]' : 'bg-slate-100 text-slate-600'}`}>
                                                 {f.tipo}
                                             </span>
                                             <span className="text-[11px] text-slate-500">{f.notas || '—'}</span>

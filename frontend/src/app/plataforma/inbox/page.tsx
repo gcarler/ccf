@@ -26,7 +26,7 @@ const TYPE_CONFIG: Record<NotificationKind, { icon: React.ElementType; color: st
     comment: { icon: MessageSquare, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
     task: { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
     system: { icon: Bell, color: 'text-slate-500', bg: 'bg-slate-100 dark:bg-white/5' },
-    ai: { icon: Bot, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+    ai: { icon: Bot, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
     reminder: { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
 };
 

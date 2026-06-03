@@ -124,7 +124,7 @@ function FilterBar({
                     <select
                         value={activeFilters[f.key] ?? f.default ?? ''}
                         onChange={(e) => onFilterChange(f.key, e.target.value)}
-                        className="text-[11px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-md px-2 py-1 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                        className="text-[11px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-md px-2 py-1 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                     >
                         {(f.options || []).map((opt) => (
                             <option key={opt.value} value={opt.value}>
@@ -147,9 +147,9 @@ function FunnelChart({ stages }: { stages: FunnelStage[] }) {
             {stages.map((s, i) => {
                 const pct = (s.count / maxVal) * 100;
                 const barColor =
-                    i === 0 ? 'bg-indigo-500' :
+                    i === 0 ? 'bg-[hsl(var(--primary))]' :
                     i === stages.length - 1 ? 'bg-emerald-500' :
-                    'bg-indigo-400/70';
+                    'bg-[hsl(var(--primary)/0.7)]';
                 return (
                     <div key={s.stage} className="space-y-0.5">
                         <div className="flex items-center justify-between text-[11px]">
@@ -240,8 +240,8 @@ function GeoMap({ data }: { data: GeoBucket[] }) {
                     key={g.label}
                     className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                 >
-                    <div className="size-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0">
-                        <MapPin size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    <div className="size-8 rounded-full bg-blue-100 dark:bg-[hsl(var(--primary))]/20 flex items-center justify-center shrink-0">
+                        <MapPin size={14} className="text-[hsl(var(--primary))] dark:text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 truncate">
@@ -379,9 +379,9 @@ export default function DashboardShell({
                 <div className="flex items-center gap-3">
                     <div className={clsx(
                         'size-10 rounded-xl flex items-center justify-center',
-                        'bg-indigo-50 dark:bg-indigo-500/10',
+                        'bg-blue-50 dark:bg-[hsl(var(--primary))]/10',
                     )}>
-                        <MetricIcon size={20} className="text-indigo-600 dark:text-indigo-400" />
+                        <MetricIcon size={20} className="text-[hsl(var(--primary))] dark:text-blue-400" />
                     </div>
                     <div>
                         <h1 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">
@@ -423,7 +423,7 @@ export default function DashboardShell({
             {/* Loading */}
             {loading && (
                 <div className="flex items-center justify-center h-64">
-                    <Loader2 size={24} className="animate-spin text-indigo-500" />
+                    <Loader2 size={24} className="animate-spin text-[hsl(var(--primary))]" />
                 </div>
             )}
 
@@ -435,7 +435,7 @@ export default function DashboardShell({
                         <p className="text-sm text-slate-500">{error}</p>
                         <button
                             onClick={fetchDashboard}
-                            className="text-[11px] font-semibold text-indigo-600 hover:underline"
+                            className="text-[11px] font-semibold text-[hsl(var(--primary))] hover:underline"
                         >
                             Reintentar
                         </button>
@@ -850,7 +850,7 @@ export default function DashboardShell({
                                             <span className="text-[12px] font-medium text-slate-700 dark:text-slate-200">
                                                 {c.title}
                                             </span>
-                                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                                            <span className="text-[11px] font-bold text-[hsl(var(--primary))] dark:text-blue-400">
                                                 {c.count} matriculados
                                             </span>
                                         </div>

@@ -474,7 +474,7 @@ export default function FaroDetailPage() {
                                 <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/5 p-4 shadow-sm space-y-2">
                                     <div className="flex items-center justify-between gap-4">
                                         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-800 dark:text-white flex items-center gap-2">
-                                            <BarChart3 className="text-indigo-500" size={18} /> Monitoreo de la casa
+                                            <BarChart3 className="text-[hsl(var(--primary))]" size={18} /> Monitoreo de la casa
                                         </h3>
                                         <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                             {monitoring?.expected_members ?? 0} esperados

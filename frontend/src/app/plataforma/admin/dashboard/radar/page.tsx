@@ -190,7 +190,7 @@ export default function PastorRadarPage() {
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:rotate-12 transition-transform duration-1000"><Sparkles size={120} /></div>
                         
                         <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
-                            <Target className="text-indigo-500" /> Metas Trimestrales
+                            <Target className="text-[hsl(var(--primary))]" /> Metas Trimestrales
                         </h2>
                         <div className="space-y-3">
                             <GoalItem label="Bautismos Meta" target={50} current={data?.bautismos_este_anio || 0} color="bg-[hsl(var(--primary))]" />
@@ -200,7 +200,7 @@ export default function PastorRadarPage() {
 
                         <div className="pt-8 border-t border-white/5 space-y-3">
                             <div className="flex items-center gap-4">
-                                <div className="size-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xl shadow-indigo-500/20"><Zap size={24} fill="currentColor" /></div>
+                                <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-xl shadow-[hsl(var(--primary)/0.2)]"><Zap size={24} fill="currentColor" /></div>
                                 <div>
                                     <p className="font-semibold text-slate-400 uppercase tracking-wide">Sugerencia IA</p>
                                     <p className="text-[13px] font-bold text-slate-700 dark:text-slate-300 leading-tight">Potenciar el ministerio de Hospitalidad para el próximo servicio.</p>

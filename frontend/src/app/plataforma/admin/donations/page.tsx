@@ -22,7 +22,7 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
         blue: "text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10",
         emerald: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10",
         amber: "text-amber-600 bg-amber-50 dark:bg-amber-500/10",
-        violet: "text-violet-600 bg-violet-50 dark:bg-violet-500/10",
+        violet: "text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10",
     };
     return (
         <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">

@@ -281,7 +281,7 @@ function CommandCenterHome({ user, token }: any) {
                         <motion.div variants={itemVariants} className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-lg shadow-sm">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                                    <Bot size={16} className="text-violet-500" /> MESH AI
+                                    <Bot size={16} className="text-[hsl(var(--primary))]" /> MESH AI
                                 </h3>
                                 <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
                                     <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -291,8 +291,8 @@ function CommandCenterHome({ user, token }: any) {
 
                             <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 space-y-2 mb-4">
                                 <div className="flex items-center gap-1.5">
-                                    <Sparkles size={12} className="text-violet-500" />
-                                    <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wide">
+                                    <Sparkles size={12} className="text-[hsl(var(--primary))]" />
+                                    <span className="text-[9px] font-bold text-[hsl(var(--primary))] dark:text-blue-400 uppercase tracking-wide">
                                         {insights.length > 0 ? insights[0].title : 'Insight del día'}
                                     </span>
                                 </div>

@@ -29,9 +29,9 @@ interface Props {
 const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: string; activeColor?: string }[] = [
     { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' },
     { id: 'event',      label: 'Evento',       icon: Calendar,       color: 'text-emerald-500', activeColor: 'text-emerald-600 dark:text-emerald-400' },
-    { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-indigo-500', activeColor: 'text-indigo-600 dark:text-indigo-400' },
+    { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-blue-400' },
     { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-rose-500', activeColor: 'text-rose-600 dark:text-rose-400' },
-    { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-violet-500', activeColor: 'text-violet-600 dark:text-violet-400' },
+    { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-blue-400' },
     { id: 'panel',      label: 'Panel',        icon: Layers,         color: 'text-sky-500', activeColor: 'text-sky-600 dark:text-sky-400' },
 ];
 
@@ -275,9 +275,9 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             "absolute bottom-0 left-0 right-0 h-[2.5px]",
                                             tab.id === 'task' && "bg-[hsl(var(--primary))]",
                                             tab.id === 'event' && "bg-emerald-500",
-                                            tab.id === 'doc' && "bg-indigo-500",
+                                            tab.id === 'doc' && "bg-[hsl(var(--primary))]",
                                             tab.id === 'reminder' && "bg-rose-500",
-                                            tab.id === 'whiteboard' && "bg-violet-500",
+                                            tab.id === 'whiteboard' && "bg-blue-500",
                                             tab.id === 'panel' && "bg-sky-500"
                                         )}
                                     />
@@ -503,10 +503,10 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 }}
                                                 className={clsx(
                                                     "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors hover:bg-slate-50 dark:hover:bg-white/5",
-                                                    tags.length > 0 ? "border-violet-200 dark:border-violet-500/30 bg-violet-50/50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400" : "border-slate-200 dark:border-white/10 text-slate-500"
+                                                    tags.length > 0 ? "border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-400" : "border-slate-200 dark:border-white/10 text-slate-500"
                                                 )}
                                             >
-                                                <Tag size={12} className={tags.length > 0 ? "text-violet-500" : "text-slate-400"} />
+                                                <Tag size={12} className={tags.length > 0 ? "text-[hsl(var(--primary))]" : "text-slate-400"} />
                                                 {tags.length > 0 ? `Etiquetas: ${tags.join(', ')}` : 'Etiquetas'}
                                             </button>
                                             {showTagsDropdown && (
@@ -529,7 +529,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                                 className="flex items-center justify-between px-3 py-1.5 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
                                                             >
                                                                 <span>{t}</span>
-                                                                {isSelected && <span className="size-1.5 rounded-full bg-violet-500" />}
+                                                                {isSelected && <span className="size-1.5 rounded-full bg-blue-500" />}
                                                             </button>
                                                         );
                                                     })}
@@ -800,7 +800,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                     className={clsx(
                                                         "px-3 py-1.5 rounded-lg border text-[12px] font-medium capitalize transition-all",
                                                         whiteboardBg === bg
-                                                            ? "border-violet-500 bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 font-semibold"
+                                                            ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-400 font-semibold"
                                                             : "border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5"
                                                     )}
                                                 >

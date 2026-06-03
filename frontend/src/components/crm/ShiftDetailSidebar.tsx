@@ -34,7 +34,7 @@ const colorMap: Record<string, string> = {
     'Alabanza': 'bg-[hsl(var(--primary))]',
     'Generación G': 'bg-sky-600',
     'Hospitalidad': 'bg-amber-500',
-    'Oración': 'bg-indigo-600',
+    'Oración': 'bg-[hsl(var(--primary))]',
     'Seguridad': 'bg-slate-800',
     'Media': 'bg-rose-600'
 };

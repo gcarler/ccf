@@ -129,7 +129,7 @@ function ProgressRenderer({ value }: any) {
   return (
     <div className="flex items-center gap-2 w-full">
       <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-        <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+        <div className="h-full bg-[hsl(var(--primary))] rounded-full" style={{ width: `${pct}%` }} />
       </div>
       <span className="text-xs font-mono text-slate-500 w-8 text-right">{pct}%</span>
     </div>
@@ -202,14 +202,14 @@ function toColDef(col: TableColumn, allData: any[]): ColDef {
       return {
         ...base,
         cellRenderer: ({ value }: any) =>
-          value ? <a href={`mailto:${value}`} className="text-indigo-500 hover:underline text-xs" onClick={(e) => e.stopPropagation()}>{value}</a> : null,
+          value ? <a href={`mailto:${value}`} className="text-[hsl(var(--primary))] hover:underline text-xs" onClick={(e) => e.stopPropagation()}>{value}</a> : null,
       };
 
     case "url":
       return {
         ...base,
         cellRenderer: ({ value }: any) =>
-          value ? <a href={value} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline text-xs truncate block" onClick={(e) => e.stopPropagation()}>{value}</a> : null,
+          value ? <a href={value} target="_blank" rel="noopener noreferrer" className="text-[hsl(var(--primary))] hover:underline text-xs truncate block" onClick={(e) => e.stopPropagation()}>{value}</a> : null,
       };
 
     default:
@@ -420,7 +420,7 @@ export default function TableView<T extends Record<string, any>>({
             <>
               <span className="text-xs text-slate-500 dark:text-slate-400 mr-1">{selectedIds.length} seleccionados</span>
               {actions?.map((a, i) => (
-                <button key={i} onClick={() => a.onClick(selectedIds as any)} className={clsx("flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors", a.danger ? "bg-red-50 dark:bg-red-900/20 text-[hsl(var(--destructive))] hover:bg-red-100" : "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 hover:bg-indigo-100")}>
+                <button key={i} onClick={() => a.onClick(selectedIds as any)} className={clsx("flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors", a.danger ? "bg-red-50 dark:bg-red-900/20 text-[hsl(var(--destructive))] hover:bg-red-100" : "bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] hover:bg-blue-100")}>
                   {a.icon}{a.label}
                 </button>
               ))}
@@ -435,7 +435,7 @@ export default function TableView<T extends Record<string, any>>({
             <Download size={14} />
           </button>
           {onAddRow && (
-            <button onClick={handleAddRow} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
+            <button onClick={handleAddRow} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors">
               <Plus size={13} /> Nueva fila
             </button>
           )}

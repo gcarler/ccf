@@ -30,7 +30,7 @@ export default function DashboardEmbed({
                 className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
             >
                 {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                <BarChart3 size={14} className="text-indigo-500" />
+                <BarChart3 size={14} className="text-[hsl(var(--primary))]" />
                 📊 Dashboard {displayLabel}
                 <span className="ml-auto text-[9px] text-slate-400">
                     {open ? 'ocultar' : 'mostrar métricas'}

@@ -32,7 +32,7 @@ function InfoRow({ icon: Icon, label, value, color = 'text-[hsl(var(--primary))]
 function Badge({ label, color = 'blue' }: { label: string; color?: string }) {
     const styles: Record<string, string> = {
         blue:   'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50 dark:border-blue-500/20',
-        violet: 'bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-200/50 dark:border-violet-500/20',
+        violet: 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50 dark:border-blue-500/20',
         emerald:'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50 dark:border-emerald-500/20',
         rose:   'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-500/20',
     };
@@ -139,7 +139,7 @@ export default function MemberDetailPage() {
                                     <InfoRow icon={Phone} label="Teléfono Móvil" value={member.phone} />
                                     <InfoRow icon={Mail} label="Correo Electrónico" value={member.email} />
                                     <InfoRow icon={MapPin} label="Dirección" value={member.address} color="text-rose-500" />
-                                    <InfoRow icon={Briefcase} label="Ocupación" value={member.occupation} color="text-violet-600" />
+                                    <InfoRow icon={Briefcase} label="Ocupación" value={member.occupation} color="text-[hsl(var(--primary))]" />
                                 </div>
                             </div>
 
@@ -147,7 +147,7 @@ export default function MemberDetailPage() {
                             <div className="grid grid-cols-3 gap-3">
                                 {[
                                     { label: 'Salud Esp.', value: member.spiritual_health ? `${Math.round(member.spiritual_health * 100)}%` : '—', icon: Heart, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-                                    { label: 'Progreso', value: member.academy_progress ? `${Math.round(member.academy_progress)}%` : '—', icon: GraduationCap, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
+                                    { label: 'Progreso', value: member.academy_progress ? `${Math.round(member.academy_progress)}%` : '—', icon: GraduationCap, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-[hsl(var(--primary))]/10' },
                                     { label: 'Familia', value: member.family_id ? `#${member.family_id}` : '—', icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                                 ].map(s => {
                                     const Icon = s.icon;

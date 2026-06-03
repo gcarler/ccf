@@ -24,7 +24,7 @@ interface Grupo {
     host_id: string | null;
     members_count: number;
     status: string;
-    evangelism_strategy_id: number | null;
+    evangelism_strategy_id: string | null;
     base_attendees?: { persona_id: string; role: string; member?: { nombre_completo: string; telefono?: string } }[];
 }
 
@@ -172,7 +172,7 @@ export default function SessionReportPage() {
 
     const ROLE_STYLES: Record<string, { bg: string; text: string; border: string; icon: typeof User }> = {
         'Líder': { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]', border: 'border-blue-200 dark:border-blue-800', icon: Shield },
-        'Asistente del Líder': { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-400', border: 'border-indigo-200 dark:border-indigo-800', icon: User },
+        'Asistente del Líder': { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-[hsl(var(--primary))] dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800', icon: User },
         'Anfitrión': { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800', icon: Home },
         'Asistente': { bg: 'bg-slate-50 dark:bg-white/5', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-200 dark:border-white/10', icon: Users },
     };

@@ -85,7 +85,7 @@ export default function CrmSidebar() {
                     <button className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-md transition-all">
                         <Monitor size={20} />
                     </button>
-                    <div className="size-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-[10px] border border-indigo-400/20 cursor-pointer">
+                    <div className="size-8 rounded-full bg-[hsl(var(--primary))]/20 flex items-center justify-center text-[hsl(var(--primary))] font-bold text-[10px] border border-[hsl(var(--primary)/0.2)] cursor-pointer">
                         JD
                     </div>
                 </div>
@@ -147,7 +147,7 @@ export default function CrmSidebar() {
                             {expandedSpaces.includes('ministerio') && (
                                 <div className="ml-6 space-y-0.5 border-l border-white/5 pl-2">
                                     {navItem('/crm/pipeline', <Layers />, 'Consolidación')}
-                                    {navItem('/crm/newsletter-leads', <Mail />, 'Newsletter CRM', 'text-indigo-400')}
+                                    {navItem('/crm/newsletter-leads', <Mail />, 'Newsletter CRM', 'text-[hsl(var(--primary))]')}
                                     {navItem('/crm/counseling', <Heart />, 'Consejería')}
                                     {navItem('/crm/prayers', <MessageCircle />, 'Muro de Oración')}
                                     {navItem('/crm/groups', <HouseIcon />, 'Grupos')}

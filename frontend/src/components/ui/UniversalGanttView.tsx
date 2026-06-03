@@ -31,7 +31,7 @@ const COLORS = {
     emerald: 'bg-emerald-500 shadow-emerald-500/20',
     amber: 'bg-amber-500 shadow-amber-500/20',
     rose: 'bg-rose-500 shadow-rose-500/20',
-    indigo: 'bg-indigo-600 shadow-indigo-500/20',
+    indigo: 'bg-[hsl(var(--primary))] shadow-[hsl(var(--primary)/0.2)]',
 };
 
 export default function UniversalGanttView({ items, moduleName = "Módulo", onItemClick, onOptimize }: UniversalGanttViewProps) {

@@ -139,7 +139,7 @@ export default function MinisteriosPage() {
                     {[
                         { label: 'Total Ministerios', value: ministries.length, icon: Church, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                         { label: 'Con Líder Asignado', value: ministries.filter(m => m.leader_id).length, icon: Target, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-                        { label: 'Total Miembros', value: ministries.reduce((acc, m) => acc + (m.members_count ?? 0), 0), icon: Users, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-500/10' },
+                        { label: 'Total Miembros', value: ministries.reduce((acc, m) => acc + (m.members_count ?? 0), 0), icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                     ].map(stat => {
                         const Icon = stat.icon;
                         return (

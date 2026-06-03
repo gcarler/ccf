@@ -251,7 +251,7 @@ function TitleRenderer(params: ICellRendererParams) {
                 task.status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-white/20')}>
                 {task.status === 'completed' && <span className="text-[7px] font-bold">✓</span>}
             </div>
-            <span className={clsx('text-[13px] font-semibold truncate group-hover:text-indigo-600 transition-colors', task.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200')}>
+            <span className={clsx('text-[13px] font-semibold truncate group-hover:text-[hsl(var(--primary))] transition-colors', task.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200')}>
                 {task.title}
             </span>
             {(task.comments_count ?? 0) > 0 && (
@@ -429,7 +429,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{label}</span>
                 <span className="text-[10px] font-semibold text-slate-400 bg-slate-200 dark:bg-white/10 rounded-full px-2 py-0.5">{row.__groupCount}</span>
                 <button onClick={() => setQuickAddGroup(row.__groupKey)}
-                    className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-indigo-500 hover:text-indigo-700 transition-colors">
+                    className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/0.8)] transition-colors">
                     <Plus size={11} /> Agregar
                 </button>
             </div>
@@ -543,7 +543,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                             {activeFilters.map((f, i) => <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] text-[10px] font-semibold">{f.label}<button onClick={() => setActiveFilters(p => p.filter((_,j) => j !== i))}><X size={9} /></button></span>)}
                         </div>
                     )}
-                    <button onClick={() => onAddTask('todo')} className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
+                    <button onClick={() => onAddTask('todo')} className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors">
                         <Plus size={13} /> Nueva tarea
                     </button>
                 </div>
@@ -578,7 +578,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
                         <Circle size={28} className="text-slate-200 dark:text-white/10" />
                         <p className="text-sm font-medium">Sin tareas en este proyecto</p>
-                        <button onClick={() => onAddTask('todo')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
+                        <button onClick={() => onAddTask('todo')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors">
                             <Plus size={13} /> Crear primera tarea
                         </button>
                     </div>

@@ -308,7 +308,7 @@ export default function ProjectDetailPage() {
                             <PencilRuler size={14} /> Pizarra
                         </button>
                         {phases.length > 0 && (
-                            <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-indigo-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
+                            <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Fases
                             </button>
                         )}

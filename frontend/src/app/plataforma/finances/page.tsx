@@ -270,7 +270,7 @@ export default function FinancesPage() {
                                         const cats: Record<string, number> = {};
                                         transactions.forEach(t => { cats[t.category] = (cats[t.category] || 0) + t.amount; });
                                         const total = Object.values(cats).reduce((s, v) => s + v, 0) || 1;
-                                        const COLORS = ['bg-[hsl(var(--primary))]', 'bg-indigo-500', 'bg-[hsl(var(--primary))]', 'bg-emerald-500', 'bg-amber-500'];
+                                        const COLORS = ['bg-[hsl(var(--primary))]', 'bg-[hsl(var(--primary))]', 'bg-[hsl(var(--primary))]', 'bg-emerald-500', 'bg-amber-500'];
                                         return Object.entries(cats).slice(0, 5).map(([label, amount], i) => {
                                             const pct = Math.round((amount / total) * 100);
                                             return (

@@ -30,7 +30,7 @@ function Badge({ label, tone = "blue" }: { label: string; tone?: string }) {
     const styles: Record<string, string> = {
         blue: "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50",
         emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50",
-        violet: "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-200/50",
+        violet: "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50",
     };
     return (
         <span className={clsx("inline-flex items-center px-3 py-1 rounded-md border text-[9px] font-bold uppercase tracking-wide", styles[tone] ?? styles.blue)}>

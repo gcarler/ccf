@@ -113,7 +113,7 @@ function AlertConfigModal({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                        <Bell size={16} className="text-indigo-500" /> Alertas - {module}
+                        <Bell size={16} className="text-[hsl(var(--primary))]" /> Alertas - {module}
                     </h3>
                     <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded">
                         <X size={16} className="text-slate-400" />
@@ -128,7 +128,7 @@ function AlertConfigModal({
                                 <button onClick={() => {
                                     setLocalRules(prev => prev.map(x => x.id === r.id ? {...x, enabled: !x.enabled} : x));
                                 }}>
-                                    {r.enabled ? <Bell size={14} className="text-indigo-500" /> : <BellOff size={14} className="text-slate-400" />}
+                                    {r.enabled ? <Bell size={14} className="text-[hsl(var(--primary))]" /> : <BellOff size={14} className="text-slate-400" />}
                                 </button>
                                 <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
                                     {r.label}
@@ -162,7 +162,7 @@ function AlertConfigModal({
                 )}
                 <div className="flex gap-2">
                     <button onClick={addRule} disabled={!newMetric}
-                        className="px-3 py-1.5 bg-indigo-500 text-white rounded-md text-[11px] font-bold hover:bg-indigo-600 disabled:opacity-40 transition-colors">
+                        className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold hover:bg-[hsl(var(--primary))] disabled:opacity-40 transition-colors">
                         + Agregar Regla
                     </button>
                     <button onClick={() => { onSave(localRules); onClose(); }}
@@ -284,7 +284,7 @@ export default function EmbeddedDashboard({
                 <div className="flex items-center gap-2">
                     {title && (
                         <h3 className="text-[13px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                            <BarChart3 size={14} className="text-indigo-500" /> {title}
+                            <BarChart3 size={14} className="text-[hsl(var(--primary))]" /> {title}
                         </h3>
                     )}
                     {hasAlerts && <AlertBadge rules={alertRules} metrics={metrics} />}
@@ -306,7 +306,7 @@ export default function EmbeddedDashboard({
                             title="Configurar alertas">
                             <Bell size={14} />
                             {alertRules.length > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 size-2 bg-indigo-500 rounded-full" />
+                                <span className="absolute -top-0.5 -right-0.5 size-2 bg-[hsl(var(--primary))] rounded-full" />
                             )}
                         </button>
                     )}
@@ -346,7 +346,7 @@ export default function EmbeddedDashboard({
             <div ref={exportRef} id="dashboard-export-area">
                 {loading && (
                     <div className="flex items-center justify-center py-8">
-                        <Loader2 size={20} className="animate-spin text-indigo-500" />
+                        <Loader2 size={20} className="animate-spin text-[hsl(var(--primary))]" />
                     </div>
                 )}
 
@@ -355,7 +355,7 @@ export default function EmbeddedDashboard({
                         <div className="text-center space-y-1">
                             <AlertTriangle size={20} className="mx-auto text-amber-500" />
                             <p className="text-[11px] text-slate-500">{error}</p>
-                            <button onClick={fetchData} className="text-[10px] font-semibold text-indigo-600 hover:underline">Reintentar</button>
+                            <button onClick={fetchData} className="text-[10px] font-semibold text-[hsl(var(--primary))] hover:underline">Reintentar</button>
                         </div>
                     </div>
                 )}
@@ -383,7 +383,7 @@ export default function EmbeddedDashboard({
                                                 <div key={s.stage} className="flex items-center gap-2 py-0.5">
                                                     <span className="text-[10px] text-slate-500 w-20 truncate">{s.stage}</span>
                                                     <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                                        <div className="h-full rounded-full bg-indigo-500 transition-all duration-500"
+                                                        <div className="h-full rounded-full bg-[hsl(var(--primary))] transition-all duration-500"
                                                             style={{ width: `${(s.count / max) * 100}%` }} />
                                                     </div>
                                                     <span className="text-[10px] font-bold text-slate-600 w-8 text-right">{s.count}</span>
@@ -440,7 +440,7 @@ export default function EmbeddedDashboard({
                                         <div className="space-y-1">
                                             {data.grupos_por_ubicacion.map((g: any) => (
                                                 <div key={g.label} className="flex items-center gap-2 text-[11px]">
-                                                    <div className="size-1.5 rounded-full bg-indigo-500" />
+                                                    <div className="size-1.5 rounded-full bg-[hsl(var(--primary))]" />
                                                     <span className="text-slate-600 dark:text-slate-300">{g.label}</span>
                                                     {g.lat && <span className="text-[9px] text-slate-400 ml-auto">({g.lat.toFixed(3)}, {g.lng.toFixed(3)})</span>}
                                                 </div>

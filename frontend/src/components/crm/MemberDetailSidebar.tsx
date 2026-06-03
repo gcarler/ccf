@@ -226,7 +226,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                 <div className="grid grid-cols-3 gap-3 mt-3 relative z-10">
                     {[
                         { label: 'Salud Esp.', value: `${Math.round(selectedMember.spiritual_health * 100)}%`, color: 'text-emerald-600', bg: 'bg-emerald-500/5', border: 'border-emerald-500/10' },
-                        { label: 'Academia', value: `${Math.round(selectedMember.academy_progress)}%`, color: 'text-indigo-600', bg: 'bg-indigo-500/5', border: 'border-indigo-500/10' },
+                        { label: 'Academia', value: `${Math.round(selectedMember.academy_progress)}%`, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary))]/5', border: 'border-[hsl(var(--primary))]/10' },
                         { label: 'Asistencia', value: '92%', color: 'text-sky-600', bg: 'bg-sky-500/5', border: 'border-sky-500/10' }
                     ].map((kpi, i) => (
                         <div key={i} className={clsx(
@@ -283,7 +283,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                             <p className="text-xs font-bold text-slate-700 dark:text-slate-300 italic">&quot;{selectedMember.talents || 'Pendiente por registrar'}&quot;</p>
                                         )}
                                     </div>
-                                    <div className={clsx("p-3 rounded-md border transition-all", editMode ? "bg-[hsl(var(--bg-primary))] border-indigo-200 ring-4 ring-indigo-50" : "bg-blue-50/30 dark:bg-indigo-900/10 border-blue-100 dark:border-indigo-900/30")}>
+                                    <div className={clsx("p-3 rounded-md border transition-all", editMode ? "bg-[hsl(var(--bg-primary))] border-blue-200 ring-4 ring-blue-50" : "bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30")}>
                                         <p className="text-[9px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide mb-2">Dones Espirituales</p>
                                         {editMode ? (
                                             <textarea 

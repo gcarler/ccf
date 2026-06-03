@@ -48,7 +48,7 @@ export default function WikiDocEditPage() {
             <motion.div 
                 animate={{ rotate: 360 }}
                 transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                className="size-8 border-2 border-indigo-600 border-t-transparent rounded-full"
+                className="size-8 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full"
             />
         </div>
     );

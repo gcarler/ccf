@@ -29,7 +29,7 @@ function getStatusStyles(stage: string) {
         case 'new':          return 'bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20';
         case 'call':         return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
         case 'visit':        return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
-        case 'discipleship': return 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20';
+        case 'discipleship': return 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20';
         case 'consolidated': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
         default:             return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
     }
@@ -39,7 +39,7 @@ function getStatusDot(stage: string) {
         case 'new':          return 'bg-[hsl(var(--primary))]';
         case 'call':         return 'bg-amber-500';
         case 'visit':        return 'bg-sky-500';
-        case 'discipleship': return 'bg-indigo-500';
+        case 'discipleship': return 'bg-[hsl(var(--primary))]';
         case 'consolidated': return 'bg-emerald-500';
         default:             return 'bg-slate-400';
     }

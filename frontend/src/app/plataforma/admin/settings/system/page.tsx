@@ -880,7 +880,7 @@ export default function SystemSettings() {
                                     <option value="weekly">weekly</option>
                                     <option value="monthly">monthly</option>
                                 </select>
-                                <button onClick={downloadComplianceSnapshot} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-indigo-600 hover:bg-indigo-50 dark:hover:bg-white/10">Compliance Snapshot</button>
+                                <button onClick={downloadComplianceSnapshot} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-white/10">Compliance Snapshot</button>
                                 <button onClick={() => downloadIncidents('json')} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export Incidents JSON</button>
                                 <button onClick={() => downloadIncidents('csv')} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export Incidents CSV</button>
                                 <button onClick={cleanupIncidents} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">
@@ -996,7 +996,7 @@ export default function SystemSettings() {
                                         <option key={`to-${item.snapshot_id}`} value={item.snapshot_id}>{item.snapshot_id}</option>
                                     ))}
                                 </select>
-                                <button onClick={runComplianceCompare} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-indigo-600 hover:bg-indigo-50 dark:hover:bg-white/10">
+                                <button onClick={runComplianceCompare} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-white/10">
                                     {actionLoading === 'compare-compliance' ? 'Comparando...' : 'Compare'}
                                 </button>
                             </div>
@@ -1034,7 +1034,7 @@ export default function SystemSettings() {
                                     {Array.isArray(compareResult.diff?.drift?.mitigations) && compareResult.diff.drift.mitigations.length > 0 ? (
                                         <div className="pt-1 space-y-1">
                                             {compareResult.diff.drift.mitigations.slice(0, 3).map((item: string, idx: number) => (
-                                                <p key={`${item}-${idx}`} className="text-[11px] text-indigo-600 dark:text-indigo-300">* {item}</p>
+                                                <p key={`${item}-${idx}`} className="text-[11px] text-[hsl(var(--primary))] dark:text-blue-300">* {item}</p>
                                             ))}
                                         </div>
                                     ) : null}
@@ -1048,7 +1048,7 @@ export default function SystemSettings() {
                                         <div key={`${item.snapshot_id}-${item.recorded_at}`} className="rounded-md border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 p-3">
                                             <div className="flex flex-wrap items-center justify-between gap-2">
                                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{item.snapshot_id}</p>
-                                                <button onClick={() => downloadComplianceHistoryItem(String(item.snapshot_id || ''))} className="h-7 rounded-lg border border-slate-200 dark:border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-indigo-600">Download</button>
+                                                <button onClick={() => downloadComplianceHistoryItem(String(item.snapshot_id || ''))} className="h-7 rounded-lg border border-slate-200 dark:border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Download</button>
                                             </div>
                                             <p className="text-[11px] text-slate-600 dark:text-slate-300">{item.recorded_at ? new Date(item.recorded_at).toLocaleString() : 'n/a'}</p>
                                             <p className="text-[10px] text-slate-400">events: {item.summary?.audit_events ?? '-'} | incidents: {item.summary?.incidents ?? '-'}</p>
@@ -1105,7 +1105,7 @@ export default function SystemSettings() {
                                             },
                                         },
                                     })}
-                                    className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-indigo-600"
+                                    className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]"
                                 >
                                     {actionLoading === 'update-policy' ? 'Saving...' : 'Save Policy'}
                                 </button>
@@ -1124,7 +1124,7 @@ export default function SystemSettings() {
                                     </select>
                                     <input value={suppressionDraft.value} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, value: event.target.value }))} placeholder="value" className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-[10px] font-bold" />
                                     <input type="number" min={1} max={720} value={suppressionDraft.hours} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, hours: Number(event.target.value) || 24 }))} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-[10px] font-bold" />
-                                    <button onClick={createSuppression} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-indigo-600">{actionLoading === 'create-suppression' ? 'Creating...' : 'Add'}</button>
+                                    <button onClick={createSuppression} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{actionLoading === 'create-suppression' ? 'Creating...' : 'Add'}</button>
                                 </div>
                                 {Array.isArray(compliancePolicy?.resolved?.suppressions) && compliancePolicy.resolved.suppressions.length > 0 ? (
                                     <div className="space-y-1 max-h-36 overflow-y-auto">

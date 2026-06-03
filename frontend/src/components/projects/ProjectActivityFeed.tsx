@@ -84,7 +84,7 @@ function getIcon(type: string) {
         case 'project_created': return <Plus size={14} className="text-emerald-600" />;
         case 'task_created': return <Plus size={14} className="text-[hsl(var(--primary))]" />;
         case 'status_changed': return <RefreshCcw size={14} className="text-amber-600" />;
-        case 'comment_added': return <MessageSquare size={14} className="text-indigo-600" />;
+        case 'comment_added': return <MessageSquare size={14} className="text-[hsl(var(--primary))]" />;
         default: return <ArrowRight size={14} className="text-slate-600" />;
     }
 }
@@ -94,7 +94,7 @@ function getIconBg(type: string) {
         case 'project_created': return "bg-emerald-100 dark:bg-emerald-900/20";
         case 'task_created': return "bg-blue-100 dark:bg-blue-900/20";
         case 'status_changed': return "bg-amber-100 dark:bg-amber-900/20";
-        case 'comment_added': return "bg-indigo-100 dark:bg-indigo-900/20";
+        case 'comment_added': return "bg-blue-100 dark:bg-blue-900/20";
         default: return "bg-slate-100 dark:bg-white/5";
     }
 }

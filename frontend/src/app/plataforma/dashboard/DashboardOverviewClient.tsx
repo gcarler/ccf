@@ -27,8 +27,8 @@ export default function DashboardOverviewClient() {
         <div className="flex flex-col h-full bg-slate-50 dark:bg-transparent overflow-y-auto p-4 font-sans">
             <div className="mb-6">
                 <div className="flex items-center gap-3 mb-1">
-                    <div className="size-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
-                        <LayoutDashboard size={20} className="text-indigo-600 dark:text-indigo-400" />
+                    <div className="size-10 rounded-xl bg-blue-50 dark:bg-[hsl(var(--primary))]/10 flex items-center justify-center">
+                        <LayoutDashboard size={20} className="text-[hsl(var(--primary))] dark:text-blue-400" />
                     </div>
                     <div>
                         <h1 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">
@@ -69,14 +69,14 @@ export default function DashboardOverviewClient() {
                                             />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="text-[13px] font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                            <h3 className="text-[13px] font-bold text-slate-800 dark:text-white group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors">
                                                 {cfg?.label || mod.key}
                                             </h3>
                                             <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
                                                 {mod.desc}
                                             </p>
                                         </div>
-                                        <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0 mt-1" />
+                                        <ArrowRight size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors shrink-0 mt-1" />
                                     </div>
                                 </DSCard>
                             </Link>

@@ -20,7 +20,7 @@ const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-slate-400"
 const CONTENT_TYPE_META: Record<string, { label: string; icon: any; color: string; bg: string }> = {
     video:    { label: 'Video',    icon: Video,     color: 'text-rose-600',   bg: 'bg-rose-50 dark:bg-rose-500/10' },
     text:     { label: 'Texto',    icon: FileText,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-500/10' },
-    document: { label: 'Documento',icon: FileText,  color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
+    document: { label: 'Documento',icon: FileText,  color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-[hsl(var(--primary))]/10' },
     link:     { label: 'Enlace',   icon: LinkIcon,  color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
 };
 

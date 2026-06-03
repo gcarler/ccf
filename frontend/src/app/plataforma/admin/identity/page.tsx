@@ -20,7 +20,7 @@ const CHURCH_ROLES = [
     { value: 'SERVIDOR', label: 'Servidor', color: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]' },
     { value: 'MIEMBRO_BAUTIZADO', label: 'Miembro Bautizado', color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' },
     { value: 'SIMPATIZANTE', label: 'Simpatizante', color: 'bg-slate-50 text-slate-600 dark:bg-white/5 dark:text-slate-400' },
-    { value: 'VISITANTE_SERVICIO', label: 'Visitante (Servicio)', color: 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400' },
+    { value: 'VISITANTE_SERVICIO', label: 'Visitante (Servicio)', color: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-400' },
     { value: 'VISITANTE_EVANGELISMO', label: 'Visitante (Evangelismo)', color: 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' },
     { value: 'VISITANTE_ONLINE', label: 'Visitante (Online)', color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-500/10 dark:text-cyan-400' },
 ];
@@ -305,7 +305,7 @@ export default function IdentityManagementPage() {
                                                 <span className={clsx(
                                                     "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase",
                                                     user.role === 'admin' ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400" :
-                                                    user.role === 'pastor' ? "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400" :
+                                                    user.role === 'pastor' ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-400" :
                                                     "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400"
                                                 )}>
                                                     {user.role}
@@ -515,11 +515,11 @@ export default function IdentityManagementPage() {
                         {profile?.effective_permissions && Object.keys(profile.effective_permissions).length > 0 && (
                             <section>
                                 <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2 mb-3">
-                                    <Shield size={14} className="text-indigo-500" /> Permisos Efectivos
+                                    <Shield size={14} className="text-[hsl(var(--primary))]" /> Permisos Efectivos
                                 </h4>
                                 <div className="flex flex-wrap gap-1">
                                     {Object.entries(profile.effective_permissions).map(([key, val]) => (
-                                        <span key={key} className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded text-[9px] font-semibold uppercase">
+                                        <span key={key} className="px-2 py-0.5 bg-blue-50 dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-blue-400 rounded text-[9px] font-semibold uppercase">
                                             {key}: {val}
                                         </span>
                                     ))}

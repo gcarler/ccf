@@ -319,7 +319,7 @@ const mapApiCardToBoardItem = (card: CommunityApiCard): BoardItem => ({
 
 const palette = ['bg-primary/10 text-primary', 'bg-emerald-100 text-emerald-600', 'bg-amber-100 text-amber-600'];
 const columnAccentDot: Record<ColumnId, string> = {
-    canales: 'bg-indigo-400',
+    canales: 'bg-[hsl(var(--primary))]',
     cuidado: 'bg-rose-400',
     grupos: 'bg-amber-400',
     generosidad: 'bg-emerald-400'

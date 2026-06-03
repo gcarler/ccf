@@ -48,7 +48,7 @@ const TRIGGER_COLORS: Record<string, string> = {
     inactivity: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
     low_attendance: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
     anniversary: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
-    stage_change: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
+    stage_change: 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20',
 };
 
 const EMPTY_FORM = { name: '', trigger: 'new_member', action: 'send_whatsapp', message: '', taskTitle: '' };

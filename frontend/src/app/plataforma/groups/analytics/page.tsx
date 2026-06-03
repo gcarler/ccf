@@ -169,7 +169,7 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
     const toneClass: Record<typeof tone, string> = {
         blue: "text-[hsl(var(--primary))]",
         emerald: "text-emerald-600",
-        indigo: "text-indigo-600",
+        indigo: "text-[hsl(var(--primary))]",
         amber: "text-amber-500",
         rose: "text-rose-500",
     };

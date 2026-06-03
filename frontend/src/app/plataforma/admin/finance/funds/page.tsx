@@ -156,7 +156,7 @@ export default function FundsPage() {
                     {[
                         { label: "Total de Fondos", value: String(funds.length), color: "text-[hsl(var(--primary))]" },
                         { label: "Balance Total", value: `$${totalBalance.toLocaleString()}`, color: "text-emerald-600" },
-                        { label: "Fondos Públicos", value: String(publicCount), color: "text-violet-600" },
+                        { label: "Fondos Públicos", value: String(publicCount), color: "text-[hsl(var(--primary))]" },
                     ].map((s) => (
                         <div key={s.label} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
                             <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-2">{s.label}</p>

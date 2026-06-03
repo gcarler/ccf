@@ -138,7 +138,7 @@ export default function AdvancedBIReports() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
                             <div className="flex justify-between items-center">
-                                <div className="size-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
+                                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center">
                                     <Users size={24} />
                                 </div>
                                 <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors"><ChevronDown size={18} /></button>
@@ -153,7 +153,7 @@ export default function AdvancedBIReports() {
                                     <span>92%</span>
                                 </div>
                                 <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-indigo-500 w-[92%]" />
+                                    <div className="h-full bg-[hsl(var(--primary))] w-[92%]" />
                                 </div>
                                 <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                     <span>No Formal</span>

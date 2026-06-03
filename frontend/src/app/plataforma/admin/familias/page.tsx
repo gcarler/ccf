@@ -158,7 +158,7 @@ export default function FamiliasPage() {
                     {[
                         { label: 'Total Familias', value: families.length, icon: Home, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                         { label: 'Primer Contacto Este Mes', value: thisMonth, icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-                        { label: 'Total Integrantes', value: families.reduce((acc, f) => acc + (f.members_count ?? 0), 0), icon: Users, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-500/10' },
+                        { label: 'Total Integrantes', value: families.reduce((acc, f) => acc + (f.members_count ?? 0), 0), icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                     ].map(stat => {
                         const Icon = stat.icon;
                         return (

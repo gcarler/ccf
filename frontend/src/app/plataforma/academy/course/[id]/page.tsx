@@ -362,12 +362,12 @@ export default function CourseViewPage() {
                             )}
                             {activeLesson?.content_type === 'quiz' && (
                                 <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-slate-50 dark:bg-black space-y-3">
-                                    <HelpCircle size={64} className="text-indigo-500" />
+                                    <HelpCircle size={64} className="text-[hsl(var(--primary))]" />
                                     <div>
                                         <h3 className="text-base font-bold text-slate-800 dark:text-white">Evaluación de Conocimiento</h3>
                                         <p className="text-slate-500 text-sm mt-2">Responde las preguntas para avanzar a la siguiente etapa.</p>
                                     </div>
-                                    <button onClick={handleLessonComplete} className="px-4 py-1.5 bg-indigo-600 text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
+                                    <button onClick={handleLessonComplete} className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-[hsl(var(--primary)/0.85)] transition-colors shadow-lg shadow-[hsl(var(--primary)/0.3)]">
                                         Comenzar Cuestionario
                                     </button>
                                 </div>

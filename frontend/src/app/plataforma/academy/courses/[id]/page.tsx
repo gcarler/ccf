@@ -181,9 +181,9 @@ export default function CourseCoordinationPage() {
                             </div>
                         </DSCard>
 
-                        <div className="bg-indigo-600 rounded-md p-4 text-white space-y-4 shadow-xl shadow-indigo-500/20">
+                        <div className="bg-[hsl(var(--primary))] rounded-md p-4 text-white space-y-4 shadow-xl shadow-[hsl(var(--primary)/0.2)]">
                             <h4 className="text-sm font-semibold uppercase tracking-tight">Optimus Coach</h4>
-                            <p className="text-[11px] text-indigo-100 font-medium leading-relaxed">
+                            <p className="text-[11px] text-blue-100 font-medium leading-relaxed">
                                 Este curso tiene un 15% más de participación que el promedio. Recomiendo abrir una segunda cohorte para el próximo periodo.
                             </p>
                             <button className="text-[10px] font-semibold uppercase tracking-wide px-4 py-2 bg-white/20 rounded-md hover:bg-white/30 transition-all">

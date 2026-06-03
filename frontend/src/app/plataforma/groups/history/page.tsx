@@ -85,7 +85,7 @@ export default function GroupsHistoryPage() {
                     </article>
                     <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Meses con actividad</p>
-                        <p className="mt-2 text-xl font-bold text-indigo-600">{timeline.length}</p>
+                        <p className="mt-2 text-xl font-bold text-[hsl(var(--primary))]">{timeline.length}</p>
                     </article>
                     <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Con lider asignado</p>

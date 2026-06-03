@@ -311,7 +311,7 @@ export default function MembersPage() {
                         {[
                             { label: 'Total Miembros', value: stats.total, icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
                             { label: 'Líderes Activos', value: stats.leaders, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-                            { label: 'Bautizados', value: stats.baptized, icon: Filter, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+                            { label: 'Bautizados', value: stats.baptized, icon: Filter, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
                             { label: 'Nuevos (Mes)', value: stats.newThisMonth, icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
                         ].map((s, i) => (
                             <div key={i} className="p-3 rounded-md border border-slate-100 dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-white/5 flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-all">

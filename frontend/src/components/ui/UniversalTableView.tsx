@@ -48,7 +48,7 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string; dot:
     todo:        { label: 'Pendiente',   bg: 'bg-amber-50 dark:bg-amber-900/20',   text: 'text-amber-700 dark:text-amber-400',   dot: 'bg-amber-400' },
     pending:     { label: 'Pendiente',   bg: 'bg-amber-50 dark:bg-amber-900/20',   text: 'text-amber-700 dark:text-amber-400',   dot: 'bg-amber-400' },
     in_progress: { label: 'En Progreso', bg: 'bg-blue-50 dark:bg-blue-900/20',     text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     dot: 'bg-[hsl(var(--primary))]'  },
-    review:      { label: 'En Revisión', bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-700 dark:text-purple-400', dot: 'bg-purple-500' },
+    review:      { label: 'En Revisión', bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-[hsl(var(--primary))] dark:text-blue-400', dot: 'bg-blue-500' },
     done:        { label: 'Terminado',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',     text: 'text-cyan-700 dark:text-cyan-400',     dot: 'bg-cyan-500'  },
     completed:   { label: 'Completado',  bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' },
     blocked:     { label: 'Bloqueado',   bg: 'bg-rose-50 dark:bg-rose-900/20',     text: 'text-rose-700 dark:text-rose-400',     dot: 'bg-rose-500'  },
@@ -240,7 +240,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
             <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-white/10 rounded-full px-2 py-0.5">{row.__groupCount}</span>
             {onAddItem && (
                 <button onClick={(e) => { e.stopPropagation(); onAddItem(row.__groupKey); }}
-                    className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-indigo-500 hover:text-indigo-700 transition-colors">
+                    className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/0.8)] transition-colors">
                     <Plus size={11} /> Agregar
                 </button>
             )}
@@ -287,7 +287,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                     <div className="relative" ref={colPanelRef}>
                         <button onClick={() => setShowColPanel(s => !s)}
                             className={clsx('flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors border',
-                                showColPanel ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 border-indigo-200 dark:border-indigo-700' : 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-slate-300')}>
+                                showColPanel ? 'bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] border-blue-200 dark:border-blue-700' : 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-slate-300')}>
                             <ColumnsIcon size={13} /> Columnas
                         </button>
                         <AnimatePresence>
@@ -302,7 +302,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                                             <button key={key} onClick={() => setHiddenCols(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; })}
                                                 className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                                 <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">{col.label}</span>
-                                                <div className={clsx('size-4 rounded border-2 flex items-center justify-center', !hidden ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 dark:border-white/20')}>
+                                                <div className={clsx('size-4 rounded border-2 flex items-center justify-center', !hidden ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]' : 'border-slate-300 dark:border-white/20')}>
                                                     {!hidden && <span className="text-white text-[8px] font-bold">✓</span>}
                                                 </div>
                                             </button>
@@ -320,7 +320,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
 
                     {onAddItem && (
                         <button onClick={() => onAddItem()}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors">
                             <Plus size={13} /> Agregar
                         </button>
                     )}
@@ -331,7 +331,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
             <div className="flex-1 min-h-[200px] rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 relative">
                 {isLoading ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-slate-900 z-10">
-                        <Loader2 size={20} className="animate-spin text-indigo-500" />
+                        <Loader2 size={20} className="animate-spin text-[hsl(var(--primary))]" />
                     </div>
                 ) : data.length === 0 ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-slate-900 text-sm text-slate-400">

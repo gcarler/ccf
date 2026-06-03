@@ -330,14 +330,14 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
             const progressOffset = progressCircumference - (progressCircumference * item.progress_percent) / 100;
 
             return (
-              <article key={item.id} className="bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[#e8eaed] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 group hover:border-indigo-500/30 transition-all hover:shadow-xl hover:shadow-indigo-500/5 cursor-pointer" onClick={() => openLessons(item)}>
+              <article key={item.id} className="bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[#e8eaed] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 group hover:border-[hsl(var(--primary))]/30 transition-all hover:shadow-xl hover:shadow-indigo-500/5 cursor-pointer" onClick={() => openLessons(item)}>
                 <div className="flex gap-4 items-center relative">
                   <div className="relative flex size-7 shrink-0 items-center justify-center">
                     <svg className="absolute inset-0 size-7 -rotate-90" viewBox="0 0 100 100">
                       <circle className="text-slate-100 dark:text-white/5 stroke-current" cx="50" cy="50" fill="transparent" r="42" strokeWidth="10"></circle>
-                      <circle className="text-indigo-600 stroke-current transition-all duration-1000 ease-out" cx="50" cy="50" fill="transparent" r="42" strokeLinecap="round" strokeWidth="10" style={{ strokeDasharray: progressCircumference, strokeDashoffset: progressOffset }}></circle>
+                      <circle className="text-[hsl(var(--primary))] stroke-current transition-all duration-1000 ease-out" cx="50" cy="50" fill="transparent" r="42" strokeLinecap="round" strokeWidth="10" style={{ strokeDasharray: progressCircumference, strokeDashoffset: progressOffset }}></circle>
                     </svg>
-                    <div className="z-10 text-indigo-600 dark:text-indigo-400">
+                    <div className="z-10 text-[hsl(var(--primary))] dark:text-blue-400">
                       {item.course.modality === 'formal' ? <School size={16} /> : <BookOpen size={16} />}
                     </div>
                   </div>
@@ -346,8 +346,8 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                     <div className="flex justify-between items-start">
                       <h3 className="font-bold text-sm truncate pr-2 text-slate-800 dark:text-white tracking-tight">{item.course.title}</h3>
                       <div className="flex items-center gap-1.5 shrink-0">
-                         <span className="font-semibold text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 uppercase tracking-wide">{Math.round(item.progress_percent)}%</span>
-                         <ChevronRight size={14} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                         <span className="font-semibold text-[hsl(var(--primary))] dark:text-blue-400 px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 uppercase tracking-wide">{Math.round(item.progress_percent)}%</span>
+                         <ChevronRight size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors" />
                       </div>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
@@ -375,7 +375,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                           e.stopPropagation(); 
                           setActiveAssessment({ id: assessmentsByCourse[item.course.id][0].id, enrollmentId: item.id }); 
                         }} 
-                        className="flex-1 py-1.5 bg-indigo-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+                        className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary)/0.85)] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[hsl(var(--primary)/0.2)]"
                     >
                       Tomar Examen <ArrowRight size={12} />
                     </button>

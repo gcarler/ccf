@@ -293,7 +293,7 @@ export default function AdminMissionImpactPage() {
                                 
                                 <div className="space-y-3 relative z-10">
                                     <GoalProgress label="Miembros registrados" current={stats.members} target={1000} color="bg-[hsl(var(--primary))]" />
-                                    <GoalProgress label="Impacto Social" current={12000} target={20000} color="bg-indigo-500" />
+                                    <GoalProgress label="Impacto Social" current={12000} target={20000} color="bg-[hsl(var(--primary))]" />
                                     <GoalProgress label="Nuevas Sedes" current={3} target={5} color="bg-emerald-500" />
                                 </div>
 

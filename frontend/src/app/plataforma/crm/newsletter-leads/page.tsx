@@ -62,7 +62,7 @@ const STAGE_COLORS: Record<string, string> = {
     new: 'bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20',
     call: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
     visit: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
-    discipleship: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
+    discipleship: 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20',
     consolidated: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
 };
 
@@ -200,7 +200,7 @@ export default function NewsletterLeadsPage() {
                             { label: 'Total leads', value: summary.total, icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                             { label: 'Con email', value: summary.withEmail, icon: Mail, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
                             { label: 'Nuevos', value: summary.newCount, icon: Tag, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
-                            { label: 'Landings', value: summary.landingPages, icon: Globe, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-500/10' },
+                            { label: 'Landings', value: summary.landingPages, icon: Globe, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                         ].map((stat, i) => (
                             <div key={i} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3">
                                 <div className="flex items-center gap-2 mb-1">
@@ -267,11 +267,11 @@ export default function NewsletterLeadsPage() {
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-9 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                                        <div className="size-9 rounded-lg bg-blue-50 dark:bg-[hsl(var(--primary))]/10 border border-blue-200 dark:border-[hsl(var(--primary))]/20 flex items-center justify-center text-[hsl(var(--primary))] dark:text-blue-400 font-bold text-sm">
                                             {lead.nombre_completo?.charAt(0) || (lead.first_name?.charAt(0) ?? '?')}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || (lead.last_name?.charAt(0) ?? '')}
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 transition-colors">
+                                            <h3 className="font-bold text-slate-800 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">
                                                 {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                                             </h3>
                                             <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">

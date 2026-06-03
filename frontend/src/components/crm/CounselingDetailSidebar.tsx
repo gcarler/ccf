@@ -267,7 +267,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
 
                     {activeTab === 'ai' && (
                         <motion.div key="ai" initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="py-2 text-center space-y-3">
-                            <div className="size-8 rounded-lg bg-indigo-600 mx-auto flex items-center justify-center text-white shadow-xl">
+                            <div className="size-8 rounded-lg bg-[hsl(var(--primary))] mx-auto flex items-center justify-center text-white shadow-xl">
                                 <Zap size={24} fill="currentColor" />
                             </div>
                             <div className="space-y-2">
@@ -277,7 +277,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                 </p>
                             </div>
                             <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center gap-4">
-                                <Loader2 size={24} className="animate-spin text-indigo-400" />
+                                <Loader2 size={24} className="animate-spin text-[hsl(var(--primary))]" />
                                 <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400 animate-pulse">Sincronizando Grafo...</span>
                             </div>
                         </motion.div>

@@ -124,7 +124,7 @@ export default function GlobalEventAnalyticsPage() {
                             </div>
 
                             <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col justify-between">
-                                <div className="size-9 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-3">
+                                <div className="size-9 rounded-lg bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] flex items-center justify-center mb-3">
                                     <TrendingUp size={24} />
                                 </div>
                                 <div>
