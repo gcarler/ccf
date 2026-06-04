@@ -256,15 +256,20 @@ def google_callback(
                 detail="No tienes una cuenta registrada en la plataforma. Contacta a un administrador.",
             )
 
-        lector_role = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.role == "LECTOR").first()
+        from backend.models_kernel import PlatformRole as PlatformRoleEnum
+        lector_role = db.query(PlatformRoleDefinition).filter(
+            PlatformRoleDefinition.role == PlatformRoleEnum.LECTOR
+        ).first()
+        if not lector_role:
+            raise HTTPException(status_code=500, detail="Rol LECTOR no configurado. Contacta al administrador.")
 
         user = Usuario(
             id=persona.id,
-            sede_id=persona.sede_id or 1,
+            sede_id=persona.sede_id,
             username=google_email.split("@")[0].replace(".", "_")[:50],
             email=google_email,
             password_hash=None,
-            platform_role_id=lector_role.id if lector_role else 4,
+            platform_role_id=lector_role.id,
             is_active=True,
             is_email_verified=True,
         )

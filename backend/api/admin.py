@@ -386,42 +386,80 @@ def list_admin_users(
 def create_admin_user(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
-    """Crea un nuevo usuario desde el panel de administracion."""
+    """Crea un nuevo usuario en auth_users (v2) desde el panel de administración.
+
+    Crea una Persona mínima vinculada a la sede principal, luego un Usuario
+    con las credenciales proporcionadas y rol LECTOR por defecto.
+    """
+    import uuid as _uuid
     from backend.core.permissions import hash_password
+    from backend.models_auth import Usuario
+    from backend.models_kernel import PlatformRoleDefinition, PlatformRole
+    from backend.models_crm import Persona
 
     username = str(payload.get("username", "")).strip()
     email = str(payload.get("email", "")).strip()
     password = str(payload.get("password", ""))
-    role = str(payload.get("role", "estudiante")).strip()
+    nombre = str(payload.get("nombre", username)).strip()
+    apellido = str(payload.get("apellido", "")).strip()
+
     if not username or not email or not password:
-        raise HTTPException(
-            status_code=400, detail="username, email y password son requeridos"
-        )
-    existing = (
-        db.query(models.User)
-        .filter((models.User.username == username) | (models.User.email == email))
-        .first()
-    )
+        raise HTTPException(status_code=400, detail="username, email y password son requeridos")
+
+    # Verificar duplicados en auth_users (v2)
+    existing = db.query(Usuario).filter(
+        (Usuario.username == username) | (Usuario.email == email)
+    ).first()
     if existing:
         raise HTTPException(status_code=409, detail="Usuario o email ya existe")
-    user = models.User(
+
+    # Obtener sede_id (usar la primera sede disponible)
+    sede = db.query(models.Sede).first()
+    if not sede:
+        raise HTTPException(status_code=500, detail="No hay sedes configuradas en el sistema")
+
+    # Resolver rol LECTOR de PlatformRoleDefinition
+    lector_role = db.query(PlatformRoleDefinition).filter(
+        PlatformRoleDefinition.role == PlatformRole.LECTOR
+    ).first()
+
+    # Crear Persona mínima (requerido como FK de Usuario)
+    persona_id = _uuid.uuid4()
+    persona = Persona(
+        id=persona_id,
+        nombre=nombre or username,
+        apellido=apellido,
+        email=email,
+        sede_id=sede.id,
+    )
+    db.add(persona)
+    db.flush()
+
+    # Crear Usuario en auth_users (v2)
+    new_user = Usuario(
+        id=persona_id,
+        sede_id=sede.id,
         username=username,
         email=email,
         password_hash=hash_password(password),
-        role=role,
+        platform_role_id=lector_role.id if lector_role else None,
         is_active=True,
+        is_email_verified=False,
     )
-    db.add(user)
+    db.add(new_user)
     db.commit()
-    db.refresh(user)
+    db.refresh(new_user)
+
+    rol = new_user.rol_plataforma
     return {
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "role": user.role,
-        "is_active": user.is_active,
+        "id": str(new_user.id),
+        "username": new_user.username,
+        "email": new_user.email,
+        "role": lector_role.role.value if lector_role else "LECTOR",
+        "is_active": new_user.is_active,
+        "permissions": {},
     }
 
 
