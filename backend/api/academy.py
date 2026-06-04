@@ -362,33 +362,35 @@ def create_enrollment(
     - member: requiere academy:study
     - advanced: requiere academy:edit
     """
-    user_id = coerce_user_id(getattr(current_user, "id", 0))
-    role = normalize_role(str(getattr(current_user, "role", "") or ""))
+    from backend.models_academy_core import Curso
+    from backend.core.permissions import get_user_effective_permissions
 
-    # Verificar access_level del curso
-    course = db.query(models.Course).filter(models.Course.id == enrollment.course_id).first()
-    if not course:
+    user_id = coerce_user_id(getattr(current_user, "id", 0))
+    # Obtener role correcto tanto en auth v1 como v2
+    role = normalize_role(str(getattr(current_user, "role", "") or ""))
+    if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+        role = normalize_role(current_user.rol_plataforma.nombre)
+
+    # Verificar access_level usando el modelo correcto (academy_courses)
+    curso = db.query(Curso).filter(Curso.id == enrollment.course_id).first()
+    if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
-    access = getattr(course, "access_level", "member") or "member"
-    if access == "member":
-        # Requiere academy:study — verificar si el usuario tiene el permiso
-        from backend.core.permissions import get_user_effective_permissions
+    access = curso.access_level or "member"
+    if access not in {"open", "member", "advanced"}:
+        access = "member"  # valor inválido en DB → comportamiento seguro por defecto
+
+    if access in {"member", "advanced"}:
+        required_perm = "academy:study" if access == "member" else "academy:edit"
+        detail = (
+            "Este curso requiere membresía activa (academy:study)."
+            if access == "member"
+            else "Este curso es solo para formadores (academy:edit)."
+        )
         eff = get_user_effective_permissions(db, current_user)
-        if role not in {"admin", "administrador"} and "academy:study" not in eff:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Este curso requiere membresía activa (academy:study).",
-            )
-    elif access == "advanced":
-        from backend.core.permissions import get_user_effective_permissions
-        eff = get_user_effective_permissions(db, current_user)
-        if role not in {"admin", "administrador"} and "academy:edit" not in eff:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Este curso es solo para formadores (academy:edit).",
-            )
-    # access == "open": cualquier registrado puede inscribirse
+        if role not in {"admin", "administrador"} and required_perm not in eff:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+    # access == "open": cualquier registrado con academy:read puede inscribirse
 
     if (
         normalize_role(str(current_user.role)) != "admin"

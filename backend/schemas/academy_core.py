@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -26,7 +26,7 @@ class CursoCreate(BaseModel):
     duration_hours: int
     xp_per_lesson: int = 10
     image_url: Optional[str] = None
-    access_level: str = "member"  # open | member | advanced
+    access_level: Literal["open", "member", "advanced"] = "member"
 
 
 class CursoUpdate(BaseModel):
@@ -41,7 +41,7 @@ class CursoUpdate(BaseModel):
     duration_hours: Optional[int] = None
     xp_per_lesson: Optional[int] = None
     image_url: Optional[str] = None
-    access_level: Optional[str] = None  # open | member | advanced
+    access_level: Optional[Literal["open", "member", "advanced"]] = None
 
 
 class CursoResponse(BaseModel):

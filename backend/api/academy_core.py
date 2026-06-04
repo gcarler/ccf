@@ -146,8 +146,35 @@ def delete_lesson(
 def enroll_persona(
     payload: MatriculaCreate,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user=Depends(require_pastor_or_admin),
 ):
+    """Inscribe una persona en un curso respetando access_level."""
+    from backend.models_academy_core import Curso
+    from backend.core.permissions import get_user_effective_permissions
+    from backend.core.permissions import normalize_role as _nr
+
+    curso = db.query(Curso).filter(Curso.id == payload.course_id).first()
+    if not curso:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    access = curso.access_level or "member"
+    if access not in {"open", "member", "advanced"}:
+        access = "member"
+
+    if access in {"member", "advanced"}:
+        role = _nr(str(getattr(current_user, "role", "") or ""))
+        if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+            role = _nr(current_user.rol_plataforma.nombre)
+        required_perm = "academy:study" if access == "member" else "academy:edit"
+        detail = (
+            "Este curso requiere membresía activa (academy:study)."
+            if access == "member"
+            else "Este curso es solo para formadores (academy:edit)."
+        )
+        eff = get_user_effective_permissions(db, current_user)
+        if role not in {"admin", "administrador"} and required_perm not in eff:
+            raise HTTPException(status_code=403, detail=detail)
+
     return crud.enroll(db, payload.model_dump())
 
 
