@@ -83,11 +83,14 @@ interface StrategyGroup {
     members_count: number;
 }
 
+type HabilitacionEstado = 'DESHABILITADO' | 'HABILITADO' | 'CERRADO' | 'CANCELADA';
+
 interface SessionRow {
     id: number;
     grupo_id: number;
     session_date: string;
     status: string;
+    estado_habilitacion?: HabilitacionEstado;
     topic?: string | null;
     offering_amount?: number | null;
     report_notes?: string | null;
@@ -974,9 +977,9 @@ export default function StrategyDetailPage() {
                 {/* ── Sesiones ── */}
                 {activeTab === 'sessions' && (
                     <div className="space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
                             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Registro de sesiones</h2>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 {strategy.recurrence && strategy.start_date && strategy.end_date && (
                                     <button onClick={async () => {
                                         try {
@@ -991,11 +994,32 @@ export default function StrategyDetailPage() {
                                         <Sparkles size={14} />Generar sesiones
                                     </button>
                                 )}
+                                <button onClick={async () => {
+                                    try {
+                                        const res = await apiFetch<any>(`/evangelism/strategies/${id}/habilitar-todas`, { method: 'POST', token });
+                                        toast.success(`${res.sesiones_habilitadas} sesiones habilitadas`);
+                                        fetchSessions();
+                                    } catch (e: any) { toast.error('Error al habilitar sesiones'); }
+                                }}
+                                    className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+                                    <CheckCircle2 size={14} />Habilitar todas
+                                </button>
+                                <button onClick={async () => {
+                                    if (!window.confirm('¿Bloquear todas las sesiones para reporte?')) return;
+                                    try {
+                                        const res = await apiFetch<any>(`/evangelism/strategies/${id}/deshabilitar-todas`, { method: 'POST', token });
+                                        toast.success(`${res.sesiones_deshabilitadas} sesiones bloqueadas`);
+                                        fetchSessions();
+                                    } catch (e: any) { toast.error('Error al deshabilitar sesiones'); }
+                                }}
+                                    className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 text-xs font-semibold hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">
+                                    <AlertCircle size={14} />Bloquear todas
+                                </button>
                                 <button onClick={() => {
                                     setSessionForm({ grupo_id: groups[0]?.id || '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
                                     setIsNewSessionDrawerOpen(true);
                                 }}
-                                    className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
+                                    className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:opacity-90 transition-colors">
                                     <Plus size={14} />Nueva sesión
                                 </button>
                             </div>
@@ -1026,15 +1050,31 @@ export default function StrategyDetailPage() {
                         ) : (
                             <div className="space-y-2">
                                 {sessions.filter(s => sessionGroupFilter === 'all' || s.grupo_id === sessionGroupFilter).map(s => (
-                                    <div key={s.id} className="flex items-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg px-4 py-3 hover:border-blue-300 dark:hover:border-blue-800 transition-all">
+                                    <div key={s.id} className={`flex items-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border rounded-lg px-4 py-3 transition-all ${
+                                        s.estado_habilitacion === 'HABILITADO'
+                                            ? 'border-emerald-300 dark:border-emerald-700'
+                                            : s.estado_habilitacion === 'CERRADO'
+                                            ? 'border-slate-300 dark:border-white/5 opacity-60'
+                                            : 'border-slate-200 dark:border-white/10'
+                                    }`}>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="text-xs font-bold text-slate-700 dark:text-white">
                                                     {new Date(s.session_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
                                                 </span>
                                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-[hsl(var(--secondary))]">
                                                     {s.status}
                                                 </span>
+                                                {/* Badge de habilitación */}
+                                                {s.estado_habilitacion === 'HABILITADO' && (
+                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Abierta</span>
+                                                )}
+                                                {s.estado_habilitacion === 'CERRADO' && (
+                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-500">Cerrada</span>
+                                                )}
+                                                {(!s.estado_habilitacion || s.estado_habilitacion === 'DESHABILITADO') && (
+                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">Bloqueada</span>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-400">
                                                 <span>{groupName(s.grupo_id)}</span>
@@ -1043,6 +1083,27 @@ export default function StrategyDetailPage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
+                                            {/* Toggle habilitación individual */}
+                                            <button
+                                                onClick={async () => {
+                                                    const accion = s.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
+                                                    try {
+                                                        await apiFetch(`/evangelism/sessions/${s.id}/habilitacion`, {
+                                                            method: 'PATCH', token,
+                                                            body: JSON.stringify({ accion }),
+                                                        });
+                                                        fetchSessions();
+                                                    } catch { toast.error('Error al cambiar estado'); }
+                                                }}
+                                                title={s.estado_habilitacion === 'HABILITADO' ? 'Bloquear sesión' : 'Habilitar sesión'}
+                                                className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-[11px] font-bold ${
+                                                    s.estado_habilitacion === 'HABILITADO'
+                                                        ? 'bg-emerald-100 text-emerald-700 hover:bg-rose-100 hover:text-rose-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                        : 'bg-amber-50 text-amber-600 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-amber-900/20 dark:text-amber-400'
+                                                }`}
+                                            >
+                                                {s.estado_habilitacion === 'HABILITADO' ? '✓' : '○'}
+                                            </button>
                                             <button onClick={() => openAttendanceDrawer(s)}
                                                 className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[11px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
                                                 <Users size={12} />Asistencia

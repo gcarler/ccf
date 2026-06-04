@@ -62,6 +62,11 @@ class FrecuenciaEnum(str, enum.Enum):
 class EstadoSesionEnum(str, enum.Enum):
     PENDIENTE = "PENDIENTE"
     REALIZADA = "REALIZADA"
+
+class HabilitacionSesionEnum(str, enum.Enum):
+    DESHABILITADO = "DESHABILITADO"
+    HABILITADO = "HABILITADO"
+    CERRADO = "CERRADO"
     CANCELADA = "CANCELADA"
 
 
@@ -329,6 +334,9 @@ class SesionGrupo(Base):
     grupo_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)
     fecha_sesion = Column(DateTime(timezone=True), nullable=False)
     estado = Column(String(20), default=EstadoSesionEnum.PENDIENTE.value, nullable=False)
+    estado_habilitacion = Column(String(20), default=HabilitacionSesionEnum.DESHABILITADO.value, nullable=False)
+    habilitado_por = Column(UUID(as_uuid=True), nullable=True)
+    habilitado_en = Column(DateTime(timezone=True), nullable=True)
     motivo_cancelacion = Column(String(255), nullable=True)
     tema_estudio = Column(String(200), nullable=True)
     notas_lider = Column(Text, nullable=True)

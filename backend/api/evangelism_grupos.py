@@ -1252,6 +1252,7 @@ def list_sessions(
             "grupo_id": s.cell_group_id,
             "session_date": s.session_date.isoformat() if s.session_date else None,
             "status": s.status or "Realizada",
+            "estado_habilitacion": getattr(s, "estado_habilitacion", "DESHABILITADO"),
             "topic": s.topic,
             "offering_amount": float(s.offering_amount) if s.offering_amount else None,
             "report_notes": s.report_notes,
@@ -1420,6 +1421,14 @@ def submit_attendance(
     session = db.query(SesionGrupo).filter(models.SesionGrupo.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+
+    # Protección IDOR: solo sesiones habilitadas aceptan reportes
+    from backend.models_evangelism import HabilitacionSesionEnum
+    if session.estado_habilitacion != HabilitacionSesionEnum.HABILITADO.value:
+        raise HTTPException(
+            status_code=403,
+            detail=f"La sesión está {session.estado_habilitacion.lower()} y no acepta reportes de asistencia."
+        )
 
     # Soft-delete existing attendance for this session
     db.query(Asistencia).filter(Asistencia.sesion_id == session_id).update(
@@ -1813,3 +1822,108 @@ def update_seguimiento(
     if not result:
         raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
     return result
+
+
+# ── GOBERNANZA DE SESIONES (Habilitación / Bloqueo) ─────────────────────────
+
+@router.patch("/sessions/{session_id}/habilitacion", response_model=dict)
+def toggle_session_habilitacion(
+    session_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Admin: habilita o deshabilita manualmente una sesión para recibir reportes."""
+    from backend.models_evangelism import HabilitacionSesionEnum
+    from backend.models_auth import Usuario
+
+    session = db.query(SesionGrupo).filter(SesionGrupo.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+
+    accion = payload.get("accion", "").upper()
+    if accion not in ("HABILITAR", "DESHABILITAR", "CERRAR"):
+        raise HTTPException(status_code=400, detail="accion debe ser HABILITAR, DESHABILITAR o CERRAR")
+
+    nuevo_estado = {
+        "HABILITAR": HabilitacionSesionEnum.HABILITADO.value,
+        "DESHABILITAR": HabilitacionSesionEnum.DESHABILITADO.value,
+        "CERRAR": HabilitacionSesionEnum.CERRADO.value,
+    }[accion]
+
+    # Resolver persona del usuario actual
+    from backend.models import Persona
+    persona = db.query(Persona).filter(Persona.user_id == current_user.id).first()
+
+    session.estado_habilitacion = nuevo_estado
+    session.habilitado_por = persona.id if persona else None
+    session.habilitado_en = utc_now()
+    db.commit()
+    db.refresh(session)
+
+    return {
+        "session_id": session_id,
+        "estado_habilitacion": session.estado_habilitacion,
+        "habilitado_en": session.habilitado_en.isoformat() if session.habilitado_en else None,
+    }
+
+
+@router.post("/strategies/{strategy_id}/habilitar-todas", response_model=dict)
+def habilitar_todas_sesiones(
+    strategy_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Admin: habilita todas las sesiones de una estrategia de un golpe."""
+    from backend.models_evangelism import HabilitacionSesionEnum, GrupoEvangelismo
+
+    grupos = db.query(GrupoEvangelismo).filter(
+        GrupoEvangelismo.estrategia_id == strategy_id,
+        GrupoEvangelismo.deleted_at.is_(None),
+    ).all()
+    grupo_ids = [g.id for g in grupos]
+    if not grupo_ids:
+        raise HTTPException(status_code=404, detail="Estrategia sin grupos")
+
+    from backend.models import Persona
+    persona = db.query(Persona).filter(Persona.user_id == current_user.id).first()
+
+    updated = db.query(SesionGrupo).filter(
+        SesionGrupo.grupo_id.in_(grupo_ids),
+        SesionGrupo.deleted_at.is_(None),
+    ).update({
+        "estado_habilitacion": HabilitacionSesionEnum.HABILITADO.value,
+        "habilitado_por": persona.id if persona else None,
+        "habilitado_en": utc_now(),
+    }, synchronize_session=False)
+    db.commit()
+
+    return {"strategy_id": strategy_id, "sesiones_habilitadas": updated}
+
+
+@router.post("/strategies/{strategy_id}/deshabilitar-todas", response_model=dict)
+def deshabilitar_todas_sesiones(
+    strategy_id: str,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Admin: bloquea todas las sesiones de una estrategia."""
+    from backend.models_evangelism import HabilitacionSesionEnum, GrupoEvangelismo
+
+    grupos = db.query(GrupoEvangelismo).filter(
+        GrupoEvangelismo.estrategia_id == strategy_id,
+        GrupoEvangelismo.deleted_at.is_(None),
+    ).all()
+    grupo_ids = [g.id for g in grupos]
+    if not grupo_ids:
+        raise HTTPException(status_code=404, detail="Estrategia sin grupos")
+
+    updated = db.query(SesionGrupo).filter(
+        SesionGrupo.grupo_id.in_(grupo_ids),
+        SesionGrupo.deleted_at.is_(None),
+    ).update({
+        "estado_habilitacion": HabilitacionSesionEnum.DESHABILITADO.value,
+    }, synchronize_session=False)
+    db.commit()
+
+    return {"strategy_id": strategy_id, "sesiones_deshabilitadas": updated}
