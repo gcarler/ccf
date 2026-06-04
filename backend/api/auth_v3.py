@@ -404,7 +404,8 @@ def login(
     # Resolve sede_id (from user record, fallback to persona)
     sede_id = str(user.sede_id) if user.sede_id else ""
     if not sede_id:
-        persona = db.query(models.Persona).filter(models.Persona.id == user.id).first()
+        from backend import models as _m
+        persona = db.query(_m.Persona).filter(_m.Persona.id == user.id).first()
         if persona and persona.sede_id:
             sede_id = str(persona.sede_id)
 
