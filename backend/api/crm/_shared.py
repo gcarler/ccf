@@ -123,5 +123,9 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
         "failed_count": failed_count,
         "sent_at": first.created_at.isoformat() if first.created_at else None,
         "campaign_name": campaign_name,
+        "member_name": persona_name,
+        "content": first.content or "",
+        "recipient_phone": first.recipient_phone,
+        "external_id": first.external_id,
         "log_ids": [item.id for item in logs],
     }
