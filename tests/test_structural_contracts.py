@@ -248,3 +248,161 @@ def test_platform_frontend_respects_ccf_ui_contracts():
                         violations.append(f"{path.relative_to(root)}:{line_no} contains {term}")
 
     assert violations == []
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BACKEND AXIOMATIC RULES — REGLAS.md + ESTANDARES_DESARROLLO.md
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_backend_no_jsonb_columns():
+    """REGLAS §2.8 — usar JSON no JSONB. JSONB rompe compatibilidad con SQLite (tests)."""
+    root = Path(__file__).resolve().parents[1]
+    violations = []
+    for path in (root / "backend").rglob("models*.py"):
+        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if line.strip().startswith("#"):
+                continue
+            if "JSONB" in line:
+                violations.append(f"{path.relative_to(root)}:{line_no}: {line.strip()[:80]}")
+    assert violations == [], "Usar JSON en lugar de JSONB para compatibilidad con SQLite en tests"
+
+
+def test_backend_datetime_columns_always_have_timezone():
+    """REGLAS §2.D — todos los Column(DateTime) deben incluir timezone=True."""
+    root = Path(__file__).resolve().parents[1]
+    violations = []
+    for path in (root / "backend").rglob("models*.py"):
+        text = path.read_text(encoding="utf-8")
+        for line_no, line in enumerate(text.splitlines(), 1):
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue
+            # Detecta Column(DateTime) o Column(DateTime()) sin timezone=True
+            if "Column(DateTime" in line and "timezone=True" not in line:
+                violations.append(f"{path.relative_to(root)}:{line_no}: {stripped[:80]}")
+    assert violations == [], "Todos los DateTime en modelos deben usar timezone=True"
+
+
+def test_backend_no_hard_deletes_in_transactional_apis():
+    """REGLAS §2.C — prohibido db.delete() en tablas transaccionales. Usar soft delete."""
+    root = Path(__file__).resolve().parents[1]
+    # Tablas transaccionales históricas — excluir archivos de control/auth que sí usan hard delete legítimo
+    ALLOWED_FILES = {
+        "backend/api/admin.py",       # asignaciones de roles (tablas de control, no históricas)
+        "backend/api/auth.py",        # refresh tokens revocados
+        "backend/api/auth_v3.py",     # tokens de sesión
+    }
+    violations = []
+    for scan_dir in [(root / "backend" / "api"), (root / "backend" / "crud")]:
+        for path in scan_dir.rglob("*.py"):
+            rel = str(path.relative_to(root)).replace("\\", "/")
+            if rel in ALLOWED_FILES:
+                continue
+            for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                stripped = line.strip()
+                if stripped.startswith("#"):
+                    continue
+                if "db.delete(" in line:
+                    violations.append(f"{rel}:{line_no}: {stripped[:80]}")
+    assert violations == [], (
+        "Usar soft delete (deleted_at o estado_vital='INACTIVO') en vez de db.delete() "
+        "en endpoints transaccionales"
+    )
+
+
+def test_backend_new_models_use_uuid_not_integer_pk_for_persona_linked_tables():
+    """REGLAS §2.A — tablas con FK a personas.id deben usar UUID como PK, no Integer.
+
+    Deuda técnica conocida (pre-existente, no bloquea pero se monitorea):
+    Las clases listadas en KNOWN_VIOLATIONS tienen Integer PK con FK a personas.id.
+    Deben migrarse a UUID en el ciclo de deuda técnica Q3-2026.
+    NO AÑADIR nuevas clases a esta lista sin aprobación de arquitectura.
+    """
+    root = Path(__file__).resolve().parents[1]
+
+    # Deuda técnica existente — NO AMPLIAR esta lista
+    KNOWN_VIOLATIONS = {
+        "ProgresoLeccion", "AsistenciaClase", "ActaFormal",
+        "HiloForo", "ComentarioForo", "LogAuditoria",
+    }
+
+    target_models = [
+        root / "backend" / "models_academy_core.py",
+        root / "backend" / "models_evangelism.py",
+    ]
+    new_violations = []
+    for path in target_models:
+        if not path.exists():
+            continue
+        in_class = False
+        has_persona_fk = False
+        has_integer_pk = False
+        class_name = ""
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith("class ") and "(Base)" in line:
+                if in_class and has_persona_fk and has_integer_pk:
+                    bare = class_name.split("(")[0].replace("class ", "").strip()
+                    if bare not in KNOWN_VIOLATIONS:
+                        new_violations.append(f"{path.name}::{bare}")
+                in_class = True
+                class_name = line.strip()
+                has_persona_fk = False
+                has_integer_pk = False
+            if in_class:
+                if 'ForeignKey("personas.id")' in line or "ForeignKey('personas.id')" in line:
+                    has_persona_fk = True
+                if "primary_key=True" in line and "Integer" in line:
+                    has_integer_pk = True
+        if in_class and has_persona_fk and has_integer_pk:
+            bare = class_name.split("(")[0].replace("class ", "").strip()
+            if bare not in KNOWN_VIOLATIONS:
+                new_violations.append(f"{path.name}::{bare}")
+
+    assert new_violations == [], (
+        "NUEVAS tablas vinculadas a personas.id con PK Integer detectadas. "
+        "Usar UUID(as_uuid=True) como PK. Ver REGLAS §2.A"
+    )
+
+
+def test_frontend_no_direct_fetch_calls():
+    """AGENTS_FRONTEND §8 — usar apiFetch() de @/lib/http, nunca fetch() directo.
+
+    Excepciones legítimas donde fetch() directo ES correcto:
+    - Descargas de blob/binarios (CSV, PDF) donde se necesita .blob()
+    - Upload de FormData (archivos adjuntos, multimedia)
+    - Componentes públicos (CMS renderer) con submits de formulario nativos
+    """
+    root = Path(__file__).resolve().parents[1]
+    scan_roots = [
+        root / "frontend" / "src" / "app" / "plataforma",
+        root / "frontend" / "src" / "components",
+    ]
+    # Archivos con uso legítimo de fetch() directo (descargas blob / FormData uploads)
+    ALLOWED_FILES = {
+        # Exportaciones binarias (CSV/JSON blob downloads)
+        "frontend/src/app/plataforma/admin/settings/system/page.tsx",
+        "frontend/src/app/plataforma/admin/analytics/web-vitals/page.tsx",
+        # Upload de archivos adjuntos (FormData multipart)
+        "frontend/src/components/projects/TaskDetailPanel.tsx",
+        # Formularios públicos nativos del CMS (sin auth header)
+        "frontend/src/components/public/cms/PublicSectionRenderer.tsx",
+    }
+    violations = []
+    for scan_root in scan_roots:
+        for path in scan_root.rglob("*"):
+            if path.suffix not in {".ts", ".tsx"}:
+                continue
+            rel = str(path.relative_to(root)).replace("\\", "/")
+            if rel in ALLOWED_FILES:
+                continue
+            for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                stripped = line.strip()
+                if stripped.startswith("//") or stripped.startswith("*"):
+                    continue
+                if (
+                    ("await fetch(" in line or "= fetch(" in line or "return fetch(" in line)
+                    and "apiFetch" not in line
+                    and "nativeFetch" not in line
+                ):
+                    violations.append(f"{rel}:{line_no}: {stripped[:80]}")
+    assert violations == [], "Usar apiFetch() de @/lib/http en vez de fetch() directo"
