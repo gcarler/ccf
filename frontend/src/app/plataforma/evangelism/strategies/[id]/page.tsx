@@ -188,7 +188,9 @@ export default function StrategyDetailPage() {
     const { viewType, setViewType } = useViewType(`strategy_${id}`, 'dashboard');
     const [groups, setGroups] = useState<StrategyGroup[]>([]);
     const [metrics, setMetrics] = useState<any>(null);
-    const [members, setMembers] = useState<any[]>([]);
+    const [memberCache, setMemberCache] = useState<Record<string, any>>({});
+    const [roleResults, setRoleResults] = useState<Record<'leader_id'|'assistant_id'|'host_id', any[]>>({ leader_id: [], assistant_id: [], host_id: [] });
+    const [roleLoading, setRoleLoading] = useState<Record<'leader_id'|'assistant_id'|'host_id', boolean>>({ leader_id: false, assistant_id: false, host_id: false });
 
     // Group creation drawer
     const [isGroupDrawerOpen, setIsGroupDrawerOpen] = useState(false);
@@ -332,10 +334,24 @@ export default function StrategyDetailPage() {
     }, [activeTab, fetchGroups, fetchMetrics, fetchSessions]);
 
     useEffect(() => {
-        if (isGroupDrawerOpen && members.length === 0) {
-            apiFetch<any[]>('/crm/personas', { token, query: { limit: 1000 } }).then(m => setMembers(m || [])).catch(() => toast.error('Error al cargar personas'));
-        }
-    }, [isGroupDrawerOpen, members.length, token]);
+        if (!roleDropdown) return;
+        const field = roleDropdown;
+        const query = roleSearch[field].trim();
+        setRoleLoading(l => ({ ...l, [field]: true }));
+        const timer = setTimeout(async () => {
+            try {
+                const params: Record<string, any> = { limit: 30 };
+                if (query.length >= 1) params.search = query;
+                const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
+                setRoleResults(r => ({ ...r, [field]: res || [] }));
+            } catch {
+                setRoleResults(r => ({ ...r, [field]: [] }));
+            } finally {
+                setRoleLoading(l => ({ ...l, [field]: false }));
+            }
+        }, query.length >= 1 ? 300 : 0);
+        return () => clearTimeout(timer);
+    }, [roleSearch, roleDropdown, token]);
 
     const openGroupDrawer = () => {
         setGroupForm({
@@ -346,6 +362,8 @@ export default function StrategyDetailPage() {
             leader_id: null, assistant_id: null, host_id: null,
         });
         setRoleSearch({ leader_id: '', assistant_id: '', host_id: '' });
+        setRoleResults({ leader_id: [], assistant_id: [], host_id: [] });
+        setRoleLoading({ leader_id: false, assistant_id: false, host_id: false });
         setRoleDropdown(null);
         setIsGroupDrawerOpen(true);
     };
@@ -395,12 +413,8 @@ export default function StrategyDetailPage() {
     const openMemberDrawer = async (group: StrategyGroup) => {
         setSelectedGroup(group);
         setIsMemberDrawerOpen(true);
-        if (allMembers.length === 0) {
-            try {
-                const m = await apiFetch<any[]>('/crm/personas', { token });
-                setAllMembers(m || []);
-            } catch { toast.error('Error al cargar personas'); }
-        }
+        setMemberSearch('');
+        setAllMembers([]);
         try {
             const house = await apiFetch<any>(`/evangelism/grupos/${group.id}`, { token });
             setGroupMembers(house?.base_attendees?.map((a: any) => ({
@@ -411,6 +425,21 @@ export default function StrategyDetailPage() {
             })) || []);
         } catch { setGroupMembers([]); }
     };
+
+    // Búsqueda en tiempo real de personas para agregar al grupo
+    useEffect(() => {
+        if (!isMemberDrawerOpen) return;
+        const query = memberSearch.trim();
+        const timer = setTimeout(async () => {
+            try {
+                const params: Record<string, any> = { limit: 30 };
+                if (query.length >= 1) params.search = query;
+                const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
+                setAllMembers(res || []);
+            } catch { /* silently keep previous results */ }
+        }, query.length >= 1 ? 300 : 0);
+        return () => clearTimeout(timer);
+    }, [memberSearch, isMemberDrawerOpen, token]);
 
     const handleSaveMembers = async () => {
         if (!selectedGroup) return;
@@ -1371,17 +1400,13 @@ export default function StrategyDetailPage() {
                         { label: 'Anfitrión', field: 'host_id' as const },
                     ]).map(({ label, field }) => {
                         const selectedId = (groupForm as any)[field] as string | null;
-                        const selectedMember = selectedId ? members.find(m => m.id === selectedId) : null;
+                        const selectedMember = selectedId ? memberCache[selectedId] : null;
                         const selectedName = selectedMember
                             ? (selectedMember.nombre_completo || `${selectedMember.first_name ?? ''} ${selectedMember.last_name ?? ''}`.trim())
                             : '';
                         const query = roleSearch[field];
-                        const filtered = query.trim()
-                            ? members.filter(m => {
-                                const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()).toLowerCase();
-                                return name.includes(query.toLowerCase());
-                            })
-                            : members.slice(0, 8);
+                        const results = roleResults[field];
+                        const isLoading = roleLoading[field];
                         return (
                             <div key={field} className="relative">
                                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">{label}</label>
@@ -1418,15 +1443,18 @@ export default function StrategyDetailPage() {
                                         >
                                             Sin asignar
                                         </button>
-                                        {filtered.length === 0 ? (
+                                        {isLoading ? (
+                                            <div className="px-3 py-3 text-[12px] text-slate-400 text-center">Buscando...</div>
+                                        ) : results.length === 0 ? (
                                             <div className="px-3 py-3 text-[12px] text-slate-400 text-center">Sin resultados</div>
-                                        ) : filtered.map(m => {
+                                        ) : results.map(m => {
                                             const name = m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim();
                                             return (
                                                 <button
                                                     key={m.id}
                                                     type="button"
                                                     onMouseDown={() => {
+                                                        setMemberCache(c => ({ ...c, [m.id]: m }));
                                                         setGroupForm(f => ({ ...f, [field]: m.id }));
                                                         setRoleDropdown(null);
                                                         setRoleSearch(s => ({ ...s, [field]: '' }));
@@ -1495,14 +1523,11 @@ export default function StrategyDetailPage() {
                                 className="w-full pl-9 pr-3 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
                         </div>
                         <div className="space-y-1 max-h-48 overflow-y-auto">
+                            {allMembers.length === 0 && !memberSearch && (
+                                <p className="text-[11px] text-slate-400 text-center py-3">Escribe para buscar personas...</p>
+                            )}
                             {allMembers
-                                .filter(m => {
-                                    if (!memberSearch) return true;
-                                    const term = memberSearch.toLowerCase();
-                                    return (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase().includes(term) || (m.email || '').toLowerCase().includes(term);
-                                })
                                 .filter(m => !groupMembers.find(gm => gm.id === m.id))
-                                .slice(0, 20)
                                 .map(m => (
                                     <button key={m.id} onClick={() => addMemberToGroup(m)}
                                         className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md text-xs text-left transition-colors group/add">
