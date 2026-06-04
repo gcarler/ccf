@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -37,7 +37,7 @@ def delete_community_card(
     card = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
-    card.deleted_at = datetime.utcnow()
+    card.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return None
 

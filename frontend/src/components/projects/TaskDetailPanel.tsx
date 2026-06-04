@@ -569,16 +569,13 @@ export default function TaskDetailPanel({
             try {
                 const formData = new FormData();
                 formData.append('file', file);
-                const res = await fetch(`/api/projects/${task.project_id}/tasks/${task.id}/attachments`, {
+                const updated = await apiFetch(`/api/projects/${task.project_id}/tasks/${task.id}/attachments`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
+                    token,
                     body: formData,
                 });
-                if (res.ok) {
-                    const updated = await res.json();
-                    onUpdate?.({ ...task, ...updated });
-                    onActivityCreated?.();
-                }
+                onUpdate?.({ ...task, ...updated });
+                onActivityCreated?.();
             } catch (err) {
                 console.error('Error uploading file', err);
             }

@@ -2,6 +2,7 @@
 
 import { useCallback,useRef,useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/http";
 
 export interface AirTableHistoryEntry {
   rowId: string;
@@ -48,12 +49,11 @@ export function useAirTable(options: UseAirTableOptions = {}) {
 
     if (apiEndpoint && token) {
       try {
-        const res = await fetch(`${apiEndpoint}/${rowId}`, {
+        await apiFetch(`${apiEndpoint}/${rowId}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ [colId]: newValue }),
+          token,
+          body: { [colId]: newValue },
         });
-        if (!res.ok) throw new Error("Failed");
       } catch {
         toast.error("Error al guardar cambio");
       }

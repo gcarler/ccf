@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -114,7 +114,7 @@ def eliminar_proyecto(
     _=Depends(require_module_access("projects", "manage")),
 ):
     proy = _get_proyecto_o_404(proyecto_id, db)
-    proy.deleted_at = datetime.utcnow()
+    proy.deleted_at = datetime.now(timezone.utc)
     db.commit()
 
 
@@ -163,7 +163,7 @@ def remover_miembro(
     ).first()
     if not miembro:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Miembro no encontrado en el equipo")
-    miembro.deleted_at = datetime.utcnow()
+    miembro.deleted_at = datetime.now(timezone.utc)
     db.commit()
 
 
@@ -226,7 +226,7 @@ def eliminar_tarea(
     tarea = _get_tarea_o_404(tarea_id, db)
     if str(tarea.proyecto_id) != proyecto_id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="La tarea no pertenece a este proyecto")
-    tarea.deleted_at = datetime.utcnow()
+    tarea.deleted_at = datetime.now(timezone.utc)
     db.commit()
 
 

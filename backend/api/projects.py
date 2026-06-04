@@ -909,7 +909,7 @@ def delete_task_supply(
         "supply_deleted",
         f"Insumo '{supply.item_name}' eliminado de '{task.title}'",
     )
-    supply.deleted_at = datetime.utcnow()
+    supply.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return {"ok": True, "deleted": supply_id}
 
@@ -993,7 +993,7 @@ def delete_subtask(
     subtask = _ensure_task_in_project(db, project_id, subtask_id)
     if subtask.parent_id != task_id:
         raise HTTPException(status_code=404, detail="Subtask not found under task")
-    subtask.deleted_at = datetime.utcnow()
+    subtask.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return {"ok": True, "deleted": subtask_id}
 
@@ -1191,7 +1191,7 @@ def delete_project(
 ):
     """Elimina un proyecto y todos sus datos relacionados."""
     project = _ensure_project(db, project_id)
-    project.deleted_at = datetime.utcnow()
+    project.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return {"ok": True, "deleted": project_id}
 
@@ -1206,7 +1206,7 @@ def delete_project_task(
     """Elimina una tarea de un proyecto."""
     _ensure_project(db, project_id)
     task = _ensure_task_in_project(db, project_id, task_id)
-    task.deleted_at = datetime.utcnow()
+    task.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return {"ok": True, "deleted": task_id}
 
@@ -1221,7 +1221,7 @@ def delete_project_comment(
     comment = db.query(models.ProjectComment).filter(models.ProjectComment.id == comment_id).first()
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
-    comment.deleted_at = datetime.utcnow()
+    comment.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return {"ok": True, "deleted": comment_id}
 
@@ -1333,7 +1333,7 @@ def delete_project_message(
         role = normalize_role(getattr(current_user, "role", ""))
         if role not in ("admin", "pastor", "coordinador"):
             raise HTTPException(403, detail="Cannot delete another user's message")
-    msg.deleted_at = datetime.utcnow()
+    msg.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return {"ok": True}
 

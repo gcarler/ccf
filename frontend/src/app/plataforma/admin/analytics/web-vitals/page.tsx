@@ -5,6 +5,7 @@ import { Activity, BarChart3, Gauge } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
 import AdminHero from "@/components/admin/AdminHero";
 import { useConfig } from "@/context/ConfigContext";
+import { apiFetch } from "@/lib/http";
 
 type VitalRecord = {
   id: string;
@@ -30,8 +31,10 @@ export default function WebVitalsAnalyticsPage() {
     }
     const load = async () => {
       try {
-        const response = await fetch("/api/analytics/web-vitals?limit=500", { cache: "no-store" });
-        const data = await response.json();
+        const data = await apiFetch("/api/analytics/web-vitals", {
+          query: { limit: "500" },
+          cache: "no-store",
+        });
         setRecords(Array.isArray(data.records) ? data.records : []);
         setSummary((data.summary || {}) as Summary);
       } catch (error) {

@@ -174,6 +174,10 @@ def seed_admin_v2(db_session, email="admin@example.com", password="testpass123")
     db_session.add(legacy_user)
     db_session.commit()
     user.legacy_user = legacy_user
+    # Vincular Persona con User legacy para que require_user_sede_id() resuelva la sede
+    persona.user_id = legacy_user.id
+    db_session.add(persona)
+    db_session.commit()
     return user, persona, sede
 
 
@@ -265,4 +269,8 @@ def seed_user_with_role_v2(db_session, role_name="member", email="user@example.c
     db_session.add(legacy_user)
     db_session.commit()
     user.legacy_user = legacy_user
+    # Vincular Persona con User legacy para que require_user_sede_id() resuelva la sede
+    persona.user_id = legacy_user.id
+    db_session.add(persona)
+    db_session.commit()
     return user, persona, sede

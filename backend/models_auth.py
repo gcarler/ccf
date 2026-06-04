@@ -81,6 +81,7 @@ class UsuarioRolModulo(Base):
     rol_id = Column(UUID(as_uuid=True), ForeignKey("auth_roles.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     usuario = relationship("Usuario", back_populates="roles_modulares")
     rol = relationship("RolPlataforma")

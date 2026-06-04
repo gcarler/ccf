@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -99,6 +99,6 @@ def delete_agenda_event(
     if not agenda_event:
         raise HTTPException(status_code=404, detail="Agenda event not found")
 
-    agenda_event.deleted_at = datetime.utcnow()
+    agenda_event.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return {"status": "deleted", "id": event_id}

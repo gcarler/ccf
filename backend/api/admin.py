@@ -927,16 +927,20 @@ def remove_user_module_role(
     current_user: models.User = Depends(require_admin),
 ):
     """Elimina una asignacion de rol modular."""
+    from datetime import datetime, timezone
     import uuid
     from backend.models_auth import UsuarioRolModulo
     try:
         aid = uuid.UUID(assignment_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="assignment_id invalido")
-    umr = db.query(UsuarioRolModulo).filter(UsuarioRolModulo.id == aid).first()
+    umr = db.query(UsuarioRolModulo).filter(
+        UsuarioRolModulo.id == aid,
+        UsuarioRolModulo.deleted_at.is_(None)
+    ).first()
     if not umr:
         raise HTTPException(status_code=404, detail="Asignacion no encontrada")
-    db.delete(umr)
+    umr.deleted_at = datetime.now(timezone.utc)
     db.commit()
 
 
