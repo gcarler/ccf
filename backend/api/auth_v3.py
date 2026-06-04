@@ -401,8 +401,15 @@ def login(
         if pr:
             platform_role_name = pr.role
 
+    # Resolve sede_id (from user record, fallback to persona)
+    sede_id = str(user.sede_id) if user.sede_id else ""
+    if not sede_id:
+        persona = db.query(models.Persona).filter(models.Persona.id == user.id).first()
+        if persona and persona.sede_id:
+            sede_id = str(persona.sede_id)
+
     # Generate tokens
-    access_token = _create_access_token(str(user.id), platform_role_name)
+    access_token = _create_access_token(str(user.id), platform_role_name, sede_id)
     refresh_token = _create_refresh_token(db, user.id)
 
     _set_cookies(response, access_token, refresh_token)

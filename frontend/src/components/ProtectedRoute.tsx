@@ -288,7 +288,7 @@ export default function ProtectedRoute({ children, allowedRoles, allowedPermissi
     const router = useRouter();
 
     useEffect(() => {
-        const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('ccf_token');
+        const hasToken = typeof window !== 'undefined' && (!!sessionStorage.getItem('ccf_token') || !!localStorage.getItem('ccf_token'));
 
         if (!loading) {
             if (!isAuthenticated && !hasToken) {
