@@ -232,14 +232,23 @@ export default function LoginPage() {
                                 type="text"
                                 required
                                 value={email}
-                                onChange={e => setEmail(e.target.value)}
+                                onChange={e => { setEmail(e.target.value); if (step === 'password') setStep('email'); }}
                                 placeholder="usuario@ministeriofaro.org"
                                 className="login-input"
+                                autoFocus
                             />
                         </motion.div>
 
-                        {/* Password */}
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+                        {/* Password — solo aparece tras verificar el email */}
+                        <AnimatePresence>
+                        {step === 'password' && (
+                        <motion.div
+                            key="password-field"
+                            initial={{ opacity: 0, y: -8, height: 0 }}
+                            animate={{ opacity: 1, y: 0, height: 'auto' }}
+                            exit={{ opacity: 0, y: -8, height: 0 }}
+                            transition={{ duration: 0.22 }}
+                        >
                             <div className="flex justify-between items-center mb-3 mx-2">
                                 <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
                                     Contraseña
@@ -252,6 +261,7 @@ export default function LoginPage() {
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     required
+                                    autoFocus
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
                                     placeholder="••••••••"
@@ -267,6 +277,8 @@ export default function LoginPage() {
                                 </button>
                             </div>
                         </motion.div>
+                        )}
+                        </AnimatePresence>
 
                         {/* Error */}
                         <AnimatePresence>
@@ -295,7 +307,7 @@ export default function LoginPage() {
                                 <Loader2 className="animate-spin" size={20} />
                             ) : (
                                 <>
-                                    INGRESAR
+                                    {step === 'email' ? 'CONTINUAR' : 'INGRESAR'}
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                     </svg>
