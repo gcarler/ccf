@@ -133,7 +133,7 @@ def get_user_permissions(
 ):
     """Obtiene los permisos actuales de un usuario auth_users."""
     import uuid as _uuid
-    from backend.models_auth import Usuario, RolPlataforma
+    from backend.models_auth import Usuario
     from sqlalchemy.orm import joinedload
     try:
         uid = _uuid.UUID(str(user_id))
@@ -148,13 +148,20 @@ def get_user_permissions(
     if not isinstance(permisos, dict):
         permisos = {}
 
+    # Separar permisos base de plataforma vs granulares personales
+    personal_nombre = f"PERSONALIZADO_{str(user.id).replace('-', '').upper()}"
+    is_personal_rol = rol and rol.nombre == personal_nombre
+    # override_permissions = granulares personales; role_permissions = del rol compartido
+    override_perms = permisos if is_personal_rol else {}
+    role_perms = {} if is_personal_rol else permisos
+
     return {
         "user_id": str(user.id),
         "username": user.username,
         "email": user.email,
         "role": rol.nombre if rol else "LECTOR",
-        "role_permissions": permisos,
-        "override_permissions": permisos,
+        "role_permissions": role_perms,
+        "override_permissions": override_perms,
         "effective_permissions": permisos,
     }
 
@@ -212,18 +219,27 @@ def set_user_permissions(
         for perm_key in expand_module_permissions(module, level):
             resolved_perms[perm_key] = "allow"
 
-    # profile:manage is always preserved
+    # profile:manage siempre se preserva
     resolved_perms["profile:manage"] = "allow"
+
+    # Preservar system:config si el usuario actual lo tenía (evita lockout de admins)
+    current_rol = user.rol_plataforma
+    if current_rol:
+        current_perms = current_rol.permisos or {}
+        if isinstance(current_perms, dict) and current_perms.get("system:config"):
+            resolved_perms["system:config"] = "allow"
 
     # Persist en RolPlataforma personal del usuario (nunca tocar roles compartidos)
     from backend.models_auth import RolPlataforma
-    rol = user.rol_plataforma
+    from sqlalchemy.orm.attributes import flag_modified
+
     personal_nombre = f"PERSONALIZADO_{str(user.id).replace('-', '').upper()}"
-    is_personal = rol and rol.nombre == personal_nombre
+    is_personal = current_rol and current_rol.nombre == personal_nombre
 
     if is_personal:
         # Reemplazar completamente — permite quitar permisos
-        rol.permisos = resolved_perms
+        current_rol.permisos = resolved_perms
+        flag_modified(current_rol, "permisos")
     else:
         # Buscar si ya existe un rol personal creado antes para este usuario
         existing_personal = db.query(RolPlataforma).filter(
@@ -231,13 +247,11 @@ def set_user_permissions(
         ).first()
         if existing_personal:
             existing_personal.permisos = resolved_perms
+            flag_modified(existing_personal, "permisos")
             user.rol_plataforma_id = existing_personal.id
         else:
             # Crear rol personal nuevo sin modificar el rol compartido
-            new_rol = RolPlataforma(
-                nombre=personal_nombre,
-                permisos=resolved_perms,
-            )
+            new_rol = RolPlataforma(nombre=personal_nombre, permisos=resolved_perms)
             db.add(new_rol)
             db.flush()
             user.rol_plataforma_id = new_rol.id
