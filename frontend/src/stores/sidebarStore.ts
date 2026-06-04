@@ -32,7 +32,7 @@ interface SidebarState {
     resetSidebarStack: () => void;
 }
 
-export const useSidebarStore = create<SidebarState>((set, get) => ({
+export const useSidebarStore = create<SidebarState>((set) => ({
     layers: { S1: true, S2: true, RIGHT: false },
     rightMode: 'push',
     sidebarStack: [],
@@ -54,7 +54,7 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
     setRightMode: (mode) => set({ rightMode: mode }),
 
     pushSidebarPanel: (panel) => set((s) => {
-        const direction: 'forward' = 'forward';
+        const direction = 'forward' as const;
         if (panel.replaceAll) return { sidebarStack: [panel], stackDirection: direction };
         const existingIndex = s.sidebarStack.findIndex(p => p.id === panel.id);
         if (existingIndex >= 0) {

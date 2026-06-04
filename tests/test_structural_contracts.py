@@ -1,4 +1,5 @@
-﻿import re
+﻿import inspect
+import re
 from pathlib import Path
 
 import pytest
@@ -162,3 +163,88 @@ def test_domain_modules_expose_only_expected_canonical_prefixes():
             violations.setdefault(module, []).append(path)
 
     assert violations == {}
+
+
+def _dependency_names(route):
+    names = set()
+
+    def walk(dependant):
+        for dependency in getattr(dependant, "dependencies", []) or []:
+            call = getattr(dependency, "call", None)
+            if call is not None:
+                names.add(getattr(call, "__name__", repr(call)))
+            walk(dependency)
+
+    walk(getattr(route, "dependant", None))
+    return names
+
+
+def test_dashboard_routes_require_authenticated_user():
+    protected = {
+        route.path: _dependency_names(route)
+        for route in app.routes
+        if getattr(route, "path", "") in {"/api/dashboard/{module}", "/api/dashboard/modules/list"}
+    }
+
+    assert protected
+    for path, dependencies in protected.items():
+        assert dependencies & {"get_current_user", "get_current_active_user"}, path
+
+
+def test_internal_routes_do_not_accept_client_sede_id_query():
+    checked_modules = {
+        "backend.api.dashboard",
+        "backend.api.agenda_core",
+        "backend.api.crm_core",
+        "backend.api.evangelism_grupos",
+        "backend.api.evangelism_multiplication",
+        "backend.api.evangelism_rankings",
+    }
+    violations = []
+
+    for route in app.routes:
+        endpoint = getattr(route, "endpoint", None)
+        if endpoint is None or endpoint.__module__ not in checked_modules:
+            continue
+        if "sede_id" in inspect.signature(endpoint).parameters:
+            violations.append(f"{route.path} -> {endpoint.__module__}.{endpoint.__name__}")
+
+    assert violations == []
+
+
+def test_app_lifespan_does_not_bootstrap_schema_with_create_all():
+    app_py = Path(__file__).resolve().parents[1] / "backend" / "app.py"
+    assert "create_all(" not in app_py.read_text(encoding="utf-8")
+
+
+def test_platform_frontend_respects_ccf_ui_contracts():
+    root = Path(__file__).resolve().parents[1]
+    scan_roots = [
+        root / "frontend" / "src" / "app" / "plataforma",
+        root / "frontend" / "src" / "components",
+        root / "frontend" / "src" / "design",
+    ]
+    forbidden = (
+        "indigo",
+        "violet",
+        "purple",
+        "Miembro",
+        "miembro",
+        "Membresía",
+        "membresía",
+        "@radix-ui/react-dialog",
+        "<Dialog",
+        "Dialog.",
+    )
+    violations = []
+
+    for scan_root in scan_roots:
+        for path in scan_root.rglob("*"):
+            if path.suffix not in {".ts", ".tsx"}:
+                continue
+            for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                for term in forbidden:
+                    if term in line:
+                        violations.append(f"{path.relative_to(root)}:{line_no} contains {term}")
+
+    assert violations == []

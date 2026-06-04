@@ -137,7 +137,7 @@ export default function MyTasks() {
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex-1 min-w-[240px] bg-gradient-to-br from-blue-600 to-indigo-700 rounded-md p-4 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
+                    className="flex-1 min-w-[240px] bg-gradient-to-br from-blue-600 to-sky-700 rounded-md p-4 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
                 >
                     <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
                     <div className="flex items-center gap-3 mb-3 relative z-10">
@@ -192,7 +192,7 @@ export default function MyTasks() {
 
                 <CommunityQuickCommentCard
                     title="Registra tus notas de seguimiento pastoral aquí."
-                    description="Las notas se vinculan automáticamente a la Hoja de Vida del miembro." 
+                    description="Las notas se vinculan automáticamente a la Hoja de Vida del persona."
                 />
 
                 <div className="rounded-md border border-slate-100 dark:border-white/5 overflow-hidden bg-slate-50/30 dark:bg-transparent">
@@ -278,4 +278,3 @@ export default function MyTasks() {
         </CrmShell>
     );
 }
-

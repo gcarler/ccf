@@ -37,7 +37,7 @@ export const Preview: Story = {
           <DSCard tone="light" className="space-y-4 lg:col-span-4">
             <DSSectionHeader eyebrow="Command" title="Quick Actions" description="Entradas del command palette listas para integracion." />
             <div className="space-y-2">
-              <DSCommandEntry label="Ir a CRM Pastoral" shortcut="G C" active description="Pipeline, miembros y seguimiento." />
+              <DSCommandEntry label="Ir a CRM Pastoral" shortcut="G C" active description="Pipeline, personas y seguimiento." />
               <DSCommandEntry label="Abrir Projects" shortcut="G P" description="Tableros de tareas y recursos." />
               <DSCommandEntry label="Ver Academy" shortcut="G A" description="Cursos, progreso y certificados." />
             </div>

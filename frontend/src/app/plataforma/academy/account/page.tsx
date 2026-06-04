@@ -32,7 +32,7 @@ export default function AcademyAccountPage() {
     return (
         <div className="min-h-full bg-slate-50 dark:bg-[#1E1F21]">
             {/* Hero Header */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-blue-600 to-sky-700 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10"
                     style={{ backgroundImage: "radial-gradient(circle at 70% 50%, white 0%, transparent 60%)" }} />
                 <div className="max-w-4xl mx-auto px-3 py-1.5 relative">
@@ -103,7 +103,7 @@ export default function AcademyAccountPage() {
                             { icon: Mail, label: 'Email', value: (user as any)?.email ?? '—' },
                             { icon: Phone, label: 'Telefono', value: '+57 300 000 0000' },
                             { icon: MapPin, label: 'Ciudad', value: 'Mocoa, Putumayo' },
-                            { icon: ShieldCheck, label: 'Rol', value: 'Miembro Activo' },
+                            { icon: ShieldCheck, label: 'Rol', value: 'Persona Activo' },
                         ].map(row => (
                             <div key={row.label} className="flex items-start gap-3">
                                 <div className="size-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0">
@@ -144,7 +144,7 @@ export default function AcademyAccountPage() {
                             <div className="space-y-2">
                                 {enrollments.map((course: any, i) => (
                                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
-                                        <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
+                                        <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
                                             {course.title?.[0] ?? 'C'}
                                         </div>
                                         <div className="flex-1 min-w-0">

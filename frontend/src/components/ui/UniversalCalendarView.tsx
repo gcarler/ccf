@@ -14,7 +14,7 @@ interface CalendarEvent {
     date: string; // YYYY-MM-DD
     time?: string;
     type?: 'permanent' | 'annual' | 'once';
-    color?: 'blue' | 'purple' | 'emerald' | 'amber' | 'rose' | 'indigo';
+    color?: 'blue' | 'emerald' | 'amber' | 'rose' | 'sky';
     location?: string;
 }
 
@@ -28,11 +28,10 @@ interface UniversalCalendarViewProps {
 
 const COLORS: any = {
     blue: 'bg-[hsl(var(--primary))] shadow-blue-500/20 text-white',
-    purple: 'bg-sky-600 shadow-sky-500/20 text-white',
+    sky: 'bg-sky-600 shadow-sky-500/20 text-white',
     emerald: 'bg-emerald-600 shadow-emerald-500/20 text-white',
     amber: 'bg-amber-600 shadow-amber-500/20 text-white',
     rose: 'bg-rose-600 shadow-rose-500/20 text-white',
-    indigo: 'bg-[hsl(var(--primary))] shadow-[hsl(var(--primary)/0.2)] text-white',
 };
 
 const DAY_LABELS = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];

@@ -1,11 +1,11 @@
 export const colors = {
     primary: {
-        50: '#eef2ff',
-        100: '#e0e7ff',
-        200: '#c7d2fe',
-        500: '#6366f1',
-        600: '#4f46e5',
-        700: '#4338ca',
+        50: '#dde8f0',
+        100: '#bfdbfe',
+        200: '#93c5fd',
+        500: '#018abd',
+        600: '#004581',
+        700: '#001b48',
     },
     emerald: {
         100: '#d1fae5',
@@ -17,10 +17,10 @@ export const colors = {
         500: '#f59e0b',
         600: '#d97706',
     },
-    violet: {
-        100: '#ede9fe',
-        500: '#8b5cf6',
-        600: '#7c3aed',
+    blue: {
+        100: '#dde8f0',
+        500: '#018abd',
+        600: '#004581',
     },
     slate: {
         50: '#f8fafc',
@@ -38,7 +38,7 @@ export const radii = {
     sm: '0.25rem',     // 4px - badges, chips
     md: '0.375rem',    // 6px - buttons, inputs
     lg: '0.5rem',      // 8px - cards, dropdowns
-    xl: '0.75rem',     // 12px - modals (max)
+    xl: '0.75rem',     // 12px - large overlays (max)
     pill: '9999px',    // only for avatar/status indicators
 };
 

@@ -36,7 +36,7 @@ export default function TalentSearchPage() {
                     Buscador de <span className="text-amber-500">Talentos</span>
                 </h1>
                 <p className="text-muted-foreground text-sm max-w-2xl">
-                    Identifica a los miembros segun sus dones y habilidades tecnicas directamente desde la base de datos ministerial.
+                    Identifica a los personas segun sus dones y habilidades tecnicas directamente desde la base de datos ministerial.
                 </p>
             </div>
 

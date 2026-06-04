@@ -31,7 +31,7 @@ export function normalizeMembers(payload: any[]): CrmPersona[] {
         status: m.spiritual_status || m.status || 'Nuevo',
         phone: m.telefono || m.phone,
         joinedAt: m.created_at,
-        church_role: m.church_role || 'Miembro',
+        church_role: m.church_role || 'Persona',
         family_id: m.family_id,
     }));
 }

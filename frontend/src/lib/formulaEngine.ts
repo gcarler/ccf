@@ -124,8 +124,7 @@ function evaluateCondition(cond: string): boolean {
 
 export function evaluateFormula(
   formula: string,
-  row: Record<string, any>,
-  allRows: Record<string, any>[] = []
+  row: Record<string, any>
 ): any {
   if (!formula || !formula.startsWith("=")) return formula;
 

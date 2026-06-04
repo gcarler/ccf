@@ -139,7 +139,7 @@ export default function DonatePage() {
     return (
         <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] relative overflow-hidden flex flex-col items-center">
             {/* Decorative backgrounds */}
-            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-blue-600 to-indigo-900 opacity-10 dark:opacity-20 pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-blue-600 to-sky-900 opacity-10 dark:opacity-20 pointer-events-none" />
             <div className="absolute top-[-10%] right-[-10%] size-96 bg-[hsl(var(--primary))] rounded-full blur-[120px] opacity-10 animate-pulse" />
 
             <header className="w-full max-w-5xl px-3 pt-12 flex items-center justify-between relative z-10">

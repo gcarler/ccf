@@ -4,11 +4,11 @@ import React, { ReactNode, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-type Variant = "indigo" | "emerald" | "amber" | "sky" | "violet";
+type Variant = "sky" | "emerald" | "amber" | "blue";
 
 const VARIANT_PRESETS: Record<Variant, { primary: string; secondary: string }> = {
-    indigo: {
-        primary: "from-indigo-500/20",
+    sky: {
+        primary: "from-sky-500/20",
         secondary: "from-sky-500/10",
     },
     emerald: {
@@ -19,12 +19,8 @@ const VARIANT_PRESETS: Record<Variant, { primary: string; secondary: string }> =
         primary: "from-amber-500/20",
         secondary: "from-rose-500/10",
     },
-    sky: {
-        primary: "from-sky-500/20",
-        secondary: "from-indigo-500/10",
-    },
-    violet: {
-        primary: "from-fuchsia-500/15",
+    blue: {
+        primary: "from-blue-500/15",
         secondary: "from-sky-500/10",
     },
 };
@@ -46,12 +42,12 @@ export function AcademyDetailShell({
     rightAction,
     headerContent,
     children,
-    variant = "indigo",
+    variant = "sky",
     onBack,
     contentClassName,
 }: AcademyDetailShellProps) {
     const router = useRouter();
-    const colors = VARIANT_PRESETS[variant] || VARIANT_PRESETS.indigo;
+    const colors = VARIANT_PRESETS[variant] || VARIANT_PRESETS.sky;
     const handleBack = useCallback(() => {
         if (onBack) return onBack();
         router.back();

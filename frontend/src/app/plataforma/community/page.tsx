@@ -293,7 +293,7 @@ const featureCards = [
         description: 'Explora nuevos ministerios, serving teams y oportunidades.',
         icon: Search,
         href: '/plataforma/community/discover',
-        tone: 'from-indigo-200/40 to-indigo-50/30'
+        tone: 'from-sky-200/40 to-sky-50/30'
     }
 ];
 

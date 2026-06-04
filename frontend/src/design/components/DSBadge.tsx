@@ -4,14 +4,13 @@ import React from 'react';
 import clsx from 'clsx';
 import { radii, typography } from '../tokens';
 
-type Tone = 'slate' | 'blue' | 'emerald' | 'amber' | 'violet';
+type Tone = 'slate' | 'blue' | 'emerald' | 'amber';
 
 const toneStyles: Record<Tone, string> = {
     slate: 'bg-slate-900/70 text-slate-100',
     blue: 'bg-blue-500/15 text-[hsl(var(--primary))]',
     emerald: 'bg-emerald-500/15 text-emerald-400',
     amber: 'bg-amber-500/15 text-amber-400',
-    violet: 'bg-blue-500/15 text-blue-300',
 };
 
 interface DSBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {

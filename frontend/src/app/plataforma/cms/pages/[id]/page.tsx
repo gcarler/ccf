@@ -101,7 +101,7 @@ export default function CmsPageDetailPage() {
       >
         {/* Icon */}
         <div className="flex justify-center">
-          <div className="size-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xl shadow-blue-500/30">
+          <div className="size-8 rounded-lg bg-gradient-to-br from-blue-600 to-sky-600 flex items-center justify-center shadow-2xl shadow-blue-500/30">
             <PenTool size={32} className="text-white" strokeWidth={1.5} />
           </div>
         </div>

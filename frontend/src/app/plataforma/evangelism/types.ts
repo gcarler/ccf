@@ -34,6 +34,8 @@ export interface Persona {
   church_role?: string;
 }
 
+export type Member = Persona;
+
 export interface EventDashboardStat {
   event_id: number;
   latest_session: string | null;

@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.auth import require_active_user
 from backend.core.database import get_db
+from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
 
@@ -70,12 +71,12 @@ def _active_groups_query(db: Session, strategy_id: Optional[str] = None, sede_id
 def rankings_groups(
     by: str = Query("attendance", description="attendance | growth | visitors"),
     strategy_id: Optional[str] = Query(None),
-    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
-    _current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
     """Top-10 grupos ordenados por asistencia, crecimiento o visitantes."""
 
+    sede_id = require_user_sede_id(db, current_user)
     groups = _active_groups_query(db, strategy_id, sede_id).all()
 
     this_start, this_end = _this_month_range()
@@ -199,11 +200,11 @@ def _rank_by_visitors(db: Session, groups, start, end):
 @router.get("/rankings/monthly-comparison")
 def monthly_comparison(
     strategy_id: Optional[str] = Query(None),
-    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
-    _current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
     """Comparativa mensual: este mes vs mes pasado."""
+    sede_id = require_user_sede_id(db, current_user)
     this_start, this_end = _this_month_range()
     last_start, last_end = _last_month_range()
 
@@ -309,11 +310,11 @@ def monthly_comparison(
 @router.get("/rankings/leaders")
 def rankings_leaders(
     strategy_id: Optional[str] = Query(None),
-    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
-    _current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
     """Tablero de líderes con nombre, grupo, % asistencia, miembros, visitantes este mes."""
+    sede_id = require_user_sede_id(db, current_user)
     this_start, this_end = _this_month_range()
 
     groups = _active_groups_query(db, strategy_id, sede_id).all()

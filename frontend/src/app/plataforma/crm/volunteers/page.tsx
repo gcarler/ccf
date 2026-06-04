@@ -29,14 +29,14 @@ const VOLUNTEER_ROLES = ['Líder de Equipo', 'Asistente de Líder', 'Servidor', 
 
 const TEAM_COLORS: Record<string, string> = {
     'Alabanza': 'from-blue-500 to-sky-600',
-    'Ujieres': 'from-blue-500 to-indigo-600',
+    'Ujieres': 'from-blue-500 to-sky-600',
     'Niños': 'from-pink-500 to-rose-600',
     'Cocina': 'from-orange-500 to-amber-600',
     'Medios': 'from-cyan-500 to-sky-600',
     'Oración': 'from-emerald-500 to-teal-600',
     'Evangelismo': 'from-amber-500 to-yellow-600',
     'Limpieza': 'from-slate-500 to-gray-600',
-    'Logística': 'from-indigo-500 to-blue-600',
+    'Logística': 'from-sky-500 to-blue-600',
     'Otro': 'from-fuchsia-500 to-pink-600',
 };
 
@@ -152,7 +152,7 @@ export default function VolunteersPage() {
         >
             <main className="flex-1 overflow-y-auto scrollbar-thin">
                 {/* Hero */}
-                <div className="relative bg-gradient-to-br from-blue-600 via-sky-600 to-indigo-700 px-3 py-2 overflow-hidden">
+                <div className="relative bg-gradient-to-br from-blue-600 via-sky-600 to-sky-700 px-3 py-2 overflow-hidden">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.1)_0%,_transparent_60%)] pointer-events-none" />
                     <div className="absolute -bottom-12 -right-12 size-10 rounded-full bg-white/5 blur-2xl" />
                     <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">

@@ -1,24 +1,35 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import clsx from 'clsx';
-import {
-    Users, UserCheck, Crown, Shield, AlertTriangle, Clock,
-    Plus, X, Save, Loader2, ChevronDown, Search,
-    HeartHandshake, BookOpen, Briefcase, Eye, UserPlus, Key, Zap
-} from 'lucide-react';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import Skeleton from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import Skeleton from '@/components/ui/Skeleton';
+import clsx from 'clsx';
+import {
+AlertTriangle,
+BookOpen,Briefcase,
+Clock,
+Crown,
+Eye,
+HeartHandshake,
+Key,
+Loader2,
+Save,
+Search,
+Shield,
+UserCheck,
+UserPlus,
+Users,
+Zap
+} from 'lucide-react';
+import { useCallback,useEffect,useState } from 'react';
 
 const CHURCH_ROLES = [
     { value: 'LIDER', label: 'Líder', color: 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' },
     { value: 'SERVIDOR', label: 'Servidor', color: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]' },
-    { value: 'MIEMBRO_BAUTIZADO', label: 'Miembro Bautizado', color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' },
+    { value: 'MIEMBRO_BAUTIZADO', label: 'Persona Bautizado', color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' },
     { value: 'SIMPATIZANTE', label: 'Simpatizante', color: 'bg-slate-50 text-slate-600 dark:bg-white/5 dark:text-slate-400' },
     { value: 'VISITANTE_SERVICIO', label: 'Visitante (Servicio)', color: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-400' },
     { value: 'VISITANTE_EVANGELISMO', label: 'Visitante (Evangelismo)', color: 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' },
@@ -248,7 +259,7 @@ export default function IdentityManagementPage() {
                     {/* Header */}
                     <div>
                         <h1 className="text-lg font-bold text-slate-800 dark:text-white tracking-tighter">
-                            Identidad <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Integral.</span>
+                            Identidad <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-600">Integral.</span>
                         </h1>
                         <p className="text-slate-500 dark:text-slate-400 font-medium">
                             Gestiona el estado vital, roles ministeriales, oficio espiritual y permisos de plataforma de cada persona.
@@ -294,7 +305,7 @@ export default function IdentityManagementPage() {
                                         >
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-9 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
+                                                    <div className="size-9 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-600 flex items-center justify-center text-white font-semibold text-xs">
                                                         {user.username.substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <p className="text-sm font-bold text-slate-800 dark:text-white">{user.username}</p>

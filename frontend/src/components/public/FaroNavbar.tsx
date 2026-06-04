@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { MapPin, Menu, X, Sun, Moon, Zap } from "lucide-react";
-import { useFaroTheme } from "./FaroThemeProvider";
 import { useContentBlock } from "@/hooks/useContent";
 import { getCmsPublicMenu } from "@/lib/cms/v2";
+import { MapPin,Menu,Sun,X } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect,useState } from "react";
+import { useFaroTheme } from "./FaroThemeProvider";
 
 const DEFAULT_NAV_LINKS = [
     { href: "/", label: "Inicio" },

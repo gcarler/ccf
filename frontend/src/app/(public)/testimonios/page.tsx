@@ -122,7 +122,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                                     className="text-[10px] uppercase tracking-wide font-bold opacity-80 truncate"
                                     style={{ color: "var(--faro-on-surface-variant)" }}
                                 >
-                                    {t.author?.role ?? "Miembro"}
+                                    {t.author?.role ?? "Persona"}
                                 </p>
                             </div>
                         </div>

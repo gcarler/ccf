@@ -1,26 +1,23 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import StrategyCreationDrawer from '@/components/evangelism/StrategyCreationDrawer';
-import {
-    Flame,
-    Calendar,
-    ChevronRight,
-    Users,
-    Plus
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { apiFetch } from '@/lib/http';
-import { useAuth } from '@/context/AuthContext';
-import Skeleton from '@/components/ui/Skeleton';
-import EmptyState from '@/components/ui/EmptyState';
-import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
-import { useViewType, OPERATIONAL_VIEWS } from '@/hooks/useViewType';
 import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
-import DashboardEmbed from '@/components/DashboardEmbed';
+import EmptyState from '@/components/ui/EmptyState';
+import Skeleton from '@/components/ui/Skeleton';
+import { useAuth } from '@/context/AuthContext';
+import { OPERATIONAL_VIEWS,useViewType } from '@/hooks/useViewType';
+import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
+import {
+Calendar,
+ChevronRight,
+Flame,
+Plus
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useCallback,useEffect,useMemo,useState } from 'react';
+import { toast } from 'sonner';
 
 export interface EvangelismStrategy {
     id: string;

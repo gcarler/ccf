@@ -49,7 +49,7 @@ export default function GroupsPage() {
             <main className="flex-1 overflow-y-auto p-4 lg:p-4 space-y-4">
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <DSMetric label="Total Casas" value={String(groups.length)} trend="+2 este mes" tone="blue" />
-                    <DSMetric label="Miembros Activos" value="245" trend="85% asistencia" tone="emerald" />
+                    <DSMetric label="Personas Activos" value="245" trend="85% asistencia" tone="emerald" />
                     <DSMetric label="Nuevos este mes" value="12" trend="Crecimiento 5%" tone="amber" />
                 </section>
 

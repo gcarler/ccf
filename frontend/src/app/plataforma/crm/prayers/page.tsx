@@ -113,7 +113,7 @@ export default function PrayerSupportCenter() {
     const columns = useMemo<ColumnDef<any>[]>(() => [
         {
             accessorKey: 'name',
-            header: 'Miembro / Solicitante',
+            header: 'Persona / Solicitante',
             size: 250,
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">

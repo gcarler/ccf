@@ -26,7 +26,7 @@ export const PREMIUM_COURSES: CourseItem[] = [
         id: "fundamentos-teologia",
         title: "Fundamentos de Teología",
         excerpt: "Un recorrido intensivo por las doctrinas principales que sostienen nuestra fe, diseñado para forjar convicciones inquebrantables.",
-        desc: "Este curso está diseñado para equipar a líderes y miembros activos con una comprensión profunda de la gracia, la salvación y la escatología básica. A través de este programa, aprenderás a defender tu fe con amor y a enseñar a otros con claridad bíblica absoluta.",
+        desc: "Este curso está diseñado para equipar a líderes y personas activos con una comprensión profunda de la gracia, la salvación y la escatología básica. A través de este programa, aprenderás a defender tu fe con amor y a enseñar a otros con claridad bíblica absoluta.",
         tag: "Certificación Master",
         modality: "Presencial & Online",
         lessons: 12,

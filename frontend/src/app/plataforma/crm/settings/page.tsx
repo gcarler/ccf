@@ -277,7 +277,7 @@ export default function CrmSettingsPage() {
                                                 <AlertTriangle size={18} className="text-rose-600 dark:text-rose-500 mt-0.5" />
                                                 <div>
                                                     <h4 className="text-xs font-bold text-rose-900 dark:text-rose-400">Purga del Sistema</h4>
-                                                    <p className="text-[12px] text-rose-700/70 dark:text-rose-500/80 mt-0.5">Atención: esto borrará todos los registros de miembros permanentemente.</p>
+                                                    <p className="text-[12px] text-rose-700/70 dark:text-rose-500/80 mt-0.5">Atención: esto borrará todos los registros de personas permanentemente.</p>
                                                 </div>
                                             </div>
                                             <button className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-bold shadow-sm transition-all active:scale-95 shrink-0">

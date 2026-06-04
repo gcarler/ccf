@@ -1,18 +1,32 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-    Shield, ArrowUpRight, ArrowRight, FileText, CheckCircle2, TrendingUp, Users, Calendar, CheckSquare,
-    MoreHorizontal, Plus, Bot, Sparkles, History, Zap, Globe, Filter, ChevronRight, AlertTriangle
-} from "lucide-react";
-import clsx from "clsx";
-import { apiFetch } from "@/lib/http";
-import { useAuth } from "@/context/AuthContext";
-import WorkspaceToolbar from "@/components/WorkspaceToolbar";
-import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import { ViewType } from "@/components/ViewSwitcher";
-import DashboardEmbed from '@/components/DashboardEmbed';
+import WorkspaceDrawer from "@/components/WorkspaceDrawer";
+import WorkspaceToolbar from "@/components/WorkspaceToolbar";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/http";
+import clsx from "clsx";
 import { motion } from 'framer-motion';
+import {
+AlertTriangle,
+ArrowRight,
+ArrowUpRight,
+Bot,
+Calendar,
+CheckCircle2,
+CheckSquare,
+ChevronRight,
+FileText,
+Filter,
+Globe,
+History,
+MoreHorizontal,Plus,
+Shield,
+Sparkles,
+TrendingUp,Users,
+Zap
+} from "lucide-react";
+import { useEffect,useState } from "react";
 
 export default function AdminDashboardPage() {
   const { token } = useAuth();
@@ -128,7 +142,7 @@ export default function AdminDashboardPage() {
                             </div>
                         </div>
                     </div>
-                    <KpiCard title="Miembros" value="1,240" trend="+42 nuevas" icon={Users} color="text-[hsl(var(--primary))]" />
+                    <KpiCard title="Personas" value="1,240" trend="+42 nuevas" icon={Users} color="text-[hsl(var(--primary))]" />
                     <KpiCard title="Asistencia" value="85%" trend="Óptimo" icon={Calendar} color="text-emerald-500" />
                 </motion.section>
 
@@ -306,7 +320,7 @@ function AdminTaskRow({ task, onOpen, index }: any) {
                 <span className="text-[8px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide hidden sm:inline">Revisar</span>
                 <ChevronRight size={10} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" strokeWidth={3} />
             </div>
-            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 to-sky-600 opacity-0 group-hover:opacity-100 transition-opacity" />
         </motion.div>
     );
 }

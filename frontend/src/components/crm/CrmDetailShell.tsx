@@ -4,12 +4,12 @@ import { ReactNode, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-type Variant = "indigo" | "emerald" | "amber" | "rose";
+type Variant = "sky" | "emerald" | "amber" | "rose";
 
 const VARIANT_PRESETS: Record<Variant, { primary: string; accent: string }> = {
-    indigo: {
+    sky: {
         primary: "from-blue-500/20",
-        accent: "from-indigo-500/20"
+        accent: "from-sky-500/20"
     },
     emerald: {
         primary: "from-emerald-500/15",
@@ -43,12 +43,12 @@ export default function CrmDetailShell({
     rightAction,
     headerContent,
     children,
-    variant = "indigo",
+    variant = "sky",
     onBack,
     contentClassName
 }: CrmDetailShellProps) {
     const router = useRouter();
-    const preset = VARIANT_PRESETS[variant] || VARIANT_PRESETS.indigo;
+    const preset = VARIANT_PRESETS[variant] || VARIANT_PRESETS.sky;
     const isDark = true;
     const baseBg = isDark ? 'bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))]' : 'bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))]';
     const headerBg = isDark ? 'bg-[hsl(var(--bg-primary)/0.85)] border-[hsl(var(--border))]' : 'bg-[hsl(var(--bg-primary)/0.8)] border-[hsl(var(--border))] text-[hsl(var(--text-primary))]';

@@ -7,7 +7,7 @@ import { Play, Search, Clock, Calendar, Mic, ChevronRight, Filter } from 'lucide
 
 const CATEGORIES = ['Todos', 'Salvación', 'Familia', 'Liderazgo', 'Profecía', 'Adoración', 'Discipulado'];
 const SERIES = [
-    { id: 1, category: 'Liderazgo', title: 'Levántate y Brilla', thumb: 'from-blue-600 to-indigo-700', count: 6 },
+    { id: 1, category: 'Liderazgo', title: 'Levántate y Brilla', thumb: 'from-blue-600 to-sky-700', count: 6 },
     { id: 2, category: 'Familia', title: 'Fundamentos del Hogar', thumb: 'from-rose-500 to-pink-600', count: 8 },
     { id: 3, category: 'Salvación', title: 'El Camino de Regreso', thumb: 'from-amber-500 to-orange-600', count: 4 },
 ];

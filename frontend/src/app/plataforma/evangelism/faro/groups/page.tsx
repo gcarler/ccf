@@ -122,8 +122,8 @@ const MODE_CONFIG: Record<
     icon: Home,
   },
   members: {
-    title: 'Asignar miembros',
-    description: 'Miembros sin casa y miembros por casa',
+    title: 'Asignar personas',
+    description: 'Personas sin casa y personas por casa',
     icon: UserPlus,
   },
   monitor: {
@@ -362,9 +362,9 @@ function FaroGroupsContent() {
         { token }
       );
       setSummary(refreshed);
-      toast.success('Miembro asignado');
+      toast.success('Persona asignado');
     } catch {
-      toast.error('Error al asignar miembro');
+      toast.error('Error al asignar persona');
     } finally {
       setSaving(false);
     }
@@ -1065,10 +1065,10 @@ function FaroGroupsContent() {
                     <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 border-t border-slate-100 dark:border-white/5 pt-8 mt-4">
                       <div>
                         <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-2">
-                          <Users size={12} className="text-[hsl(var(--primary))]" /> Miembros actuales ({selectedMemberIds.size})
+                          <Users size={12} className="text-[hsl(var(--primary))]" /> Personas actuales ({selectedMemberIds.size})
                         </h3>
                         <p className="text-xs text-slate-500">
-                          Estos son los miembros actualmente asignados al grupo.
+                          Estos son los personas actualmente asignados al grupo.
                         </p>
                       </div>
                       <button
@@ -1080,7 +1080,7 @@ function FaroGroupsContent() {
                             : 'bg-blue-50 text-[hsl(var(--primary))] hover:bg-blue-100 dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]'
                         }`}
                       >
-                        <UserPlus size={14} /> {isAddingMembers ? 'Ocultar catálogo' : 'Añadir miembros'}
+                        <UserPlus size={14} /> {isAddingMembers ? 'Ocultar catálogo' : 'Añadir personas'}
                       </button>
                     </div>
 
@@ -1114,7 +1114,7 @@ function FaroGroupsContent() {
                       </div>
                     ) : (
                       <div className="py-2 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg">
-                        <p className="text-sm text-slate-400 font-medium">No hay miembros asignados a este grupo.</p>
+                        <p className="text-sm text-slate-400 font-medium">No hay personas asignados a este grupo.</p>
                       </div>
                     )}
 
@@ -1143,7 +1143,7 @@ function FaroGroupsContent() {
                             <input
                               value={memberSearchQuery}
                               onChange={e => setMemberSearchQuery(e.target.value)}
-                              placeholder="Buscar miembro..."
+                              placeholder="Buscar persona..."
                               className={inputCls + " pl-9 py-2"}
                             />
                           </div>
@@ -1205,7 +1205,7 @@ function FaroGroupsContent() {
                           })}
                           {filteredMembersList.filter(m => !selectedMemberIds.has(m.id)).length === 0 && (
                               <div className="col-span-full py-1.5 text-center text-slate-400 text-sm">
-                                No se encontraron miembros disponibles con estos filtros.
+                                No se encontraron personas disponibles con estos filtros.
                               </div>
                           )}
                         </div>
@@ -1250,7 +1250,7 @@ function FaroGroupsContent() {
                     Asignación rápida
                   </p>
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mt-1">
-                    Asigna miembros sin grupo a una casa específica sin salir de
+                    Asigna personas sin grupo a una casa específica sin salir de
                     esta vista.
                   </p>
                 </div>
@@ -1258,7 +1258,7 @@ function FaroGroupsContent() {
                 <div className="space-y-3">
                   {summary.unassigned_members.length === 0 ? (
                     <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-4 py-1.5 text-center text-slate-400">
-                      No hay miembros sin grupo asignado.
+                      No hay personas sin grupo asignado.
                     </div>
                   ) : (
                     summary.unassigned_members.map(member => (

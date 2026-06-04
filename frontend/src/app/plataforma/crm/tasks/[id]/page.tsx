@@ -35,7 +35,7 @@ export default function CrmTaskDetailPage() {
                 setTask(data || {
                     id,
                     title: 'Seguimiento de Consolidación',
-                    description: 'Contactar al nuevo miembro para invitarlo al grupo de su sector.',
+                    description: 'Contactar al nuevo persona para invitarlo al grupo de su sector.',
                     status: 'pending',
                     priority: 'high',
                     due_date: '2026-04-20',
@@ -66,7 +66,7 @@ export default function CrmTaskDetailPage() {
                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <DSBadge tone="violet" label={task.category.toUpperCase()} />
+                                <DSBadge tone="blue" label={task.category.toUpperCase()} />
                                 <DSBadge tone={task.status === 'completed' ? 'emerald' : 'amber'} label={task.status.toUpperCase()} />
                             </div>
                             <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">

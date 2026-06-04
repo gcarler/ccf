@@ -27,12 +27,12 @@ interface AutomationRule {
 
 // ─── Constants ───────────────────────────────────────────
 const TRIGGERS = [
-    { value: 'new_member', label: 'Nuevo Miembro', icon: Users, color: 'blue' },
+    { value: 'new_member', label: 'Nuevo Persona', icon: Users, color: 'blue' },
     { value: 'birthday', label: 'Cumpleaños', icon: Bell, color: 'amber' },
     { value: 'inactivity', label: 'Inactividad (30 días)', icon: Clock, color: 'rose' },
     { value: 'low_attendance', label: 'Baja Asistencia', icon: AlertTriangle, color: 'orange' },
-    { value: 'anniversary', label: 'Aniversario Espiritual', icon: Heart, color: 'purple' },
-    { value: 'stage_change', label: 'Cambio de Etapa Pipeline', icon: Zap, color: 'indigo' },
+    { value: 'anniversary', label: 'Aniversario Espiritual', icon: Heart, color: 'blue' },
+    { value: 'stage_change', label: 'Cambio de Etapa Pipeline', icon: Zap, color: 'sky' },
 ];
 
 const ACTIONS = [
@@ -316,7 +316,7 @@ export default function AutomationsPage() {
                             required
                             value={form.name}
                             onChange={e => setForm({ ...form, name: e.target.value })}
-                            placeholder="Ej: Bienvenida a nuevos miembros"
+                            placeholder="Ej: Bienvenida a nuevos personas"
                             className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                         />
                     </div>
@@ -369,7 +369,7 @@ export default function AutomationsPage() {
                             <input
                                 value={form.taskTitle}
                                 onChange={e => setForm({ ...form, taskTitle: e.target.value })}
-                                placeholder="Ej: Visitar al nuevo miembro"
+                                placeholder="Ej: Visitar al nuevo persona"
                                 className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                             />
                         </div>

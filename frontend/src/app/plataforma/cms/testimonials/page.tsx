@@ -278,7 +278,7 @@ export default function CmsTestimonialsPage() {
     title: `${t.emotion || "Testimonio"} #${t.id}`,
     date: (t.created_at || new Date().toISOString()).split("T")[0],
     color: t.published ? "emerald" as const : "amber" as const,
-    location: `Miembro #${t.author_id}`,
+    location: `Persona #${t.author_id}`,
   })), [filtered]);
 
   const ganttItems = useMemo(() => filtered.map(t => ({
@@ -352,7 +352,7 @@ export default function CmsTestimonialsPage() {
           <div className="space-y-3">
             {group.items.map(t => (
               <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-lg p-4 hover:border-rose-300 transition-all", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Miembro #{t.author_id} · {t.emotion || "Testimonio"}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Persona #{t.author_id} · {t.emotion || "Testimonio"}</p>
                 <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-3">{t.content}</p>
               </button>
             ))}
@@ -526,7 +526,7 @@ export default function CmsTestimonialsPage() {
                         {getInitials(t.author_id)}
                       </div>
                       <div>
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Miembro #{t.author_id}</p>
+                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Persona #{t.author_id}</p>
                         <div className={clsx("flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide", cfg.color)}>
                           <span>{cfg.emoji}</span>
                           <span>{t.emotion || "Testimonio"}</span>
@@ -621,7 +621,7 @@ export default function CmsTestimonialsPage() {
                       {getInitials(selected.author_id)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">Miembro #{selected.author_id}</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">Persona #{selected.author_id}</p>
                       <div className={clsx("flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide mt-0.5", cfg.color)}>
                         <span>{cfg.emoji}</span>
                         <span>{selected.emotion || "Sin categoría"}</span>

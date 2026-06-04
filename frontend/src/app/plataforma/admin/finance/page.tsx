@@ -325,7 +325,7 @@ export default function FinanceAdminPage() {
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 className="space-y-3"
                             >
-                                <section className="p-4 lg:p-4 bg-gradient-to-br from-slate-900 via-indigo-950 to-sky-900 rounded-lg text-white shadow-2xl relative overflow-hidden group">
+                                <section className="p-4 lg:p-4 bg-gradient-to-br from-slate-900 via-sky-950 to-sky-900 rounded-lg text-white shadow-2xl relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000"><Sparkles size={240} /></div>
                                     <div className="absolute -bottom-20 -left-20 size-96 bg-blue-500/10 blur-[100px] rounded-full" />
                                     

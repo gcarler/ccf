@@ -120,7 +120,10 @@ def test_sede_id_in_all_queries():
             print(f"   ... y {len(violations) - 20} más")
     else:
         print("✅ Todas las queries .all() tienen sede_id o están en allowlist")
-    
+
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        assert len(violations) == 0
+        return
     return len(violations)
 
 
@@ -140,6 +143,9 @@ def test_persona_id_is_str():
     else:
         print("✅ Todos los persona_id en schemas son str")
     
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        assert len(violations) == 0
+        return
     return len(violations)
 
 
@@ -177,6 +183,9 @@ def test_no_hard_deletes():
     else:
         print("✅ No hay hard deletes en tablas transaccionales")
     
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        assert len(violations) == 0
+        return
     return len(violations)
 
 
@@ -196,6 +205,9 @@ def test_datetime_timezone():
     else:
         print("✅ Todos los DateTime tienen timezone=True")
     
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        assert len(violations) == 0
+        return
     return len(violations)
 
 
@@ -215,6 +227,9 @@ def test_no_jsonb():
     else:
         print("✅ No hay JSONB en modelos")
     
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        assert len(violations) == 0
+        return
     return len(violations)
 
 
@@ -265,6 +280,9 @@ def test_module_registration():
     else:
         print(f"✅ Todos los módulos registrados correctamente ({len(all_modules)} en __all__)")
     
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        assert len(violations) == 0
+        return
     return len(violations)
 
 
@@ -299,6 +317,9 @@ def test_soft_delete_fields_exist():
     else:
         print("✅ Todos los modelos transaccionales tienen soft delete")
     
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        assert len(violations) == 0
+        return
     return len(violations)
 
 

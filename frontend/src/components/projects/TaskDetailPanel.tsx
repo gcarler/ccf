@@ -1,18 +1,36 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    X, ChevronRight, ChevronDown, Paperclip, Star, Maximize2, Trash2,
-    UserRound, CalendarDays, Flag, Tag, AlignLeft, MessageSquare,
-    Plus, Check, Send, Circle,
-    CheckCircle2, Loader2, GitBranch, Home, FolderOpen, Boxes
-} from 'lucide-react';
-import clsx from 'clsx';
-import { apiFetch } from '@/lib/http';
-import { useAuth } from '@/context/AuthContext';
 import UserSelect from '@/components/ui/UserSelect';
-import type { ProjectTaskRecord, TaskSupplyRecord } from '@/types/projects';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+import type { ProjectTaskRecord,TaskSupplyRecord } from '@/types/projects';
+import clsx from 'clsx';
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+AlignLeft,
+Boxes,
+CalendarDays,
+Check,
+CheckCircle2,
+ChevronDown,
+ChevronRight,
+Circle,
+Flag,
+FolderOpen,
+GitBranch,Home,
+Loader2,
+Maximize2,
+MessageSquare,
+Paperclip,
+Plus,
+Send,
+Star,
+Tag,
+Trash2,
+UserRound,
+X
+} from 'lucide-react';
+import React,{ useCallback,useEffect,useRef,useState } from 'react';
 
 // Paleta de colores para etiquetas
 const LABEL_COLORS = [
@@ -281,7 +299,7 @@ export default function TaskDetailPanel({
     onActivityCreated,
     onVerRutaClick,
 }: TaskDetailPanelProps) {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
 
     // ── Width / resize state ──────────────────────────────────────
     const [width, setWidth] = useState<number>(() => {

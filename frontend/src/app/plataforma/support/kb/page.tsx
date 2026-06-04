@@ -15,7 +15,7 @@ const CATEGORIES = [
 ];
 
 const POPULAR_ARTICLES = [
-    { id: 1, title: '¿Cómo registrar un nuevo miembro en el CRM?', category: 'CRM Pastoral', views: 342, helpful: 98 },
+    { id: 1, title: '¿Cómo registrar un nuevo persona en el CRM?', category: 'CRM Pastoral', views: 342, helpful: 98 },
     { id: 2, title: 'Configurar tu primer pipeline de consolidación', category: 'CRM Pastoral', views: 289, helpful: 95 },
     { id: 3, title: 'Crear y publicar un curso en Academia CCF', category: 'Academia CCF', views: 201, helpful: 91 },
     { id: 4, title: 'Gestionar permisos y roles de usuario', category: 'Configuración', views: 178, helpful: 88 },
@@ -29,7 +29,7 @@ export default function SupportKBPage() {
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
             {/* Hero Search */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-4 text-center relative overflow-hidden">
+            <div className="bg-gradient-to-br from-blue-600 to-sky-700 p-4 text-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 50% 0%, white 0%, transparent 60%)" }} />
                 <div className="relative">
                     <Book size={32} className="text-white/60 mx-auto mb-4" />

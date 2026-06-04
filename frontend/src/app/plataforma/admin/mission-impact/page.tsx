@@ -29,11 +29,11 @@ const MISSION_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', '
 const IMPACT_ITEMS = [
     { id: 1, title: 'Misión Amazonas 2026', place: 'Leticia, Colombia', metric: '150 Biblias entregadas', date: '2026-05-12', status: 'Activo', tone: 'blue', progress: 70 },
     { id: 2, title: 'Comedor Comunitario Sur', place: 'Barrio El Sol', metric: '200 Almuerzos servidos', date: '2026-05-13', status: 'En seguimiento', tone: 'emerald', progress: 85 },
-    { id: 3, title: 'Brigada de Salud Integral', place: 'Vereda La Unión', metric: '80 Atenciones médicas', date: '2026-05-07', status: 'Completado', tone: 'indigo', progress: 100 },
+    { id: 3, title: 'Brigada de Salud Integral', place: 'Vereda La Unión', metric: '80 Atenciones médicas', date: '2026-05-07', status: 'Completado', tone: 'sky', progress: 100 },
 ];
 
 interface MissionImpactSummary {
-    total_miembros: number;
+    total_personas: number;
     total_familias: number;
     total_donaciones_cop: number;
     total_matriculas: number;
@@ -58,7 +58,7 @@ export default function AdminMissionImpactPage() {
                 setStats((current) => ({
                     ...current,
                     families: data.total_familias,
-                    members: data.total_miembros,
+                    members: data.total_personas,
                 }));
             } catch (err) {
                 console.error(err);
@@ -252,7 +252,7 @@ export default function AdminMissionImpactPage() {
                                     {[
                                         { title: 'Misión Amazonas 2026', place: 'Leticia, Colombia', metric: '150 Biblias entregadas', date: 'Hace 2 días', tone: 'blue' },
                                         { title: 'Comedor Comunitario Sur', place: 'Barrio El Sol', metric: '200 Almuerzos servidos', date: 'Ayer', tone: 'emerald' },
-                                        { title: 'Brigada de Salud Integral', place: 'Vereda La Unión', metric: '80 Atenciones médicas', date: 'Hace 1 semana', tone: 'indigo' },
+                                        { title: 'Brigada de Salud Integral', place: 'Vereda La Unión', metric: '80 Atenciones médicas', date: 'Hace 1 semana', tone: 'sky' },
                                     ].map((item, i) => (
                                         <motion.div 
                                             key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
@@ -292,7 +292,7 @@ export default function AdminMissionImpactPage() {
                                 </h3>
                                 
                                 <div className="space-y-3 relative z-10">
-                                    <GoalProgress label="Miembros registrados" current={stats.members} target={1000} color="bg-[hsl(var(--primary))]" />
+                                    <GoalProgress label="Personas registrados" current={stats.members} target={1000} color="bg-[hsl(var(--primary))]" />
                                     <GoalProgress label="Impacto Social" current={12000} target={20000} color="bg-[hsl(var(--primary))]" />
                                     <GoalProgress label="Nuevas Sedes" current={3} target={5} color="bg-emerald-500" />
                                 </div>

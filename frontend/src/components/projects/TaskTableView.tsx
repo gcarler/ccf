@@ -1,26 +1,37 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import {
-    AllCommunityModule, ModuleRegistry, themeQuartz,
-    ColDef, ICellRendererParams, GetRowIdParams,
-} from 'ag-grid-community';
-import {
-    Plus, Flag, Calendar, User, X, CheckCircle2, Circle,
-    ChevronDown, AlertCircle,
-    ArrowUp, ArrowDown, ChevronsUpDown, Check, Search, Loader2,
-    ChevronLeft, Trash2, MessageSquare, Settings2, SlidersHorizontal,
-    Layers, Eye, EyeOff, Filter,
-} from 'lucide-react';
-import * as Popover from '@radix-ui/react-popover';
-import { motion, AnimatePresence } from 'framer-motion';
-import clsx from 'clsx';
-import type { ProjectTaskRecord } from '@/types/projects';
-import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
-import { useSidebarLayers } from '@/context/SidebarLayerContext';
+import { apiFetch } from '@/lib/http';
+import type { ProjectTaskRecord } from '@/types/projects';
+import * as Popover from '@radix-ui/react-popover';
+import {
+AllCommunityModule,
+ColDef,
+GetRowIdParams,
+ICellRendererParams,
+ModuleRegistry,themeQuartz,
+} from 'ag-grid-community';
+import { AgGridReact } from 'ag-grid-react';
+import clsx from 'clsx';
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+AlertCircle,
+Calendar,
+Check,
+ChevronDown,
+ChevronLeft,
+Circle,
+Eye,EyeOff,Filter,
+Layers,
+Loader2,
+MessageSquare,
+Plus,
+Search,
+Settings2,
+User,X
+} from 'lucide-react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -57,9 +68,6 @@ const PRIORITY_OPTIONS = [
     { value:'urgent', label:'Urgente', color:'text-rose-500',   fill:'#ef4444' },
 ] as const;
 function getPriority(val: string) { return PRIORITY_OPTIONS.find(p => p.value === val) ?? PRIORITY_OPTIONS[1]; }
-
-const STATUS_ORDER: Record<string, number> = { urgent:0, in_progress:1, todo:2, pending:2, blocked:3, done:4, completed:5 };
-const PRIORITY_ORDER: Record<string, number> = { urgent:0, high:1, normal:2, low:3 };
 
 const FlagIcon = ({ fill, size = 14 }: { fill: string; size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} xmlns="http://www.w3.org/2000/svg">
@@ -288,7 +296,7 @@ function AssigneeRenderer(params: ICellRendererParams) {
     if (params.data?.__isGroup) return null;
     const { applyChangeRef, token } = params.context ?? {};
     const task = params.data as ProjectTaskRecord;
-    return <InlineUserCell value={task.assignee_id} token={token} onChange={(id, name) => applyChangeRef?.current?.(task.id, 'assignee_id', id)} />;
+    return <InlineUserCell value={task.assignee_id} token={token} onChange={(id) => applyChangeRef?.current?.(task.id, 'assignee_id', id)} />;
 }
 
 // ─── Props / Types ─────────────────────────────────────────────────────────────
@@ -315,7 +323,6 @@ type ActiveFilter = { field: 'status' | 'priority'; value: string; label: string
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask, onTaskUpdated }: Props) {
     const { token } = useAuth();
-    const { openLayer } = useSidebarLayers();
     const gridRef = useRef<AgGridReact>(null);
     const [isDark, setIsDark] = useState(false);
     const [overrides, setOverrides] = useState<Record<number, Partial<ProjectTaskRecord>>>({});

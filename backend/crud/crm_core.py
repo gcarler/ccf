@@ -41,7 +41,7 @@ def get_pipeline(db: Session, pipeline_id: int) -> Optional[PipelineCRM]:
     return db.query(PipelineCRM).filter(PipelineCRM.id == pipeline_id).first()
 
 
-def list_pipelines(db: Session, sede_id: Optional[int] = None) -> List[PipelineCRM]:
+def list_pipelines(db: Session, sede_id: Optional[str] = None) -> List[PipelineCRM]:
     q = db.query(PipelineCRM)
     if sede_id:
         q = q.filter(PipelineCRM.sede_id == sede_id)
@@ -84,8 +84,12 @@ def get_etapas_by_pipeline(db: Session, pipeline_id: int) -> List[EtapaPipeline]
     return db.query(EtapaPipeline).filter(EtapaPipeline.pipeline_id == pipeline_id).order_by(EtapaPipeline.orden).all()
 
 
+def get_etapa(db: Session, etapa_id: int) -> Optional[EtapaPipeline]:
+    return db.query(EtapaPipeline).filter(EtapaPipeline.id == etapa_id).first()
+
+
 def update_etapa(db: Session, etapa_id: int, payload: EtapaPipelineCreate) -> Optional[EtapaPipeline]:
-    obj = db.query(EtapaPipeline).filter(EtapaPipeline.id == etapa_id).first()
+    obj = get_etapa(db, etapa_id)
     if not obj:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -96,7 +100,7 @@ def update_etapa(db: Session, etapa_id: int, payload: EtapaPipelineCreate) -> Op
 
 
 def delete_etapa(db: Session, etapa_id: int) -> bool:
-    obj = db.query(EtapaPipeline).filter(EtapaPipeline.id == etapa_id).first()
+    obj = get_etapa(db, etapa_id)
     if not obj:
         return False
     obj.deleted_at = _utcnow()
@@ -142,7 +146,7 @@ def list_casos(
     pipeline_id: Optional[int] = None,
     asignado_a_id: Optional[str] = None,
     estado: Optional[str] = None,
-    sede_id: Optional[int] = None,
+    sede_id: Optional[str] = None,
 ) -> List[CasoCRM]:
     q = db.query(CasoCRM).filter(CasoCRM.deleted_at.is_(None))
     if pipeline_id:
@@ -227,8 +231,12 @@ def list_tareas(db: Session, caso_id: int) -> List[TareaCRM]:
     return db.query(TareaCRM).filter(TareaCRM.caso_id == caso_id).order_by(TareaCRM.created_at.desc()).all()
 
 
+def get_tarea(db: Session, tarea_id: int) -> Optional[TareaCRM]:
+    return db.query(TareaCRM).filter(TareaCRM.id == tarea_id).first()
+
+
 def complete_tarea(db: Session, tarea_id: int) -> Optional[TareaCRM]:
-    obj = db.query(TareaCRM).filter(TareaCRM.id == tarea_id).first()
+    obj = get_tarea(db, tarea_id)
     if not obj:
         return None
     obj.completada = True

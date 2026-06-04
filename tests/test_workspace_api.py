@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from backend import models
 from backend.api import workspace_shared
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin_v2, auth_headers_legacy
 
 pytestmark = pytest.mark.xfail(
     reason="DATA_DIR apunta a ruta Windows (C:/Users/USUARIO/) — no disponible en servidor Linux",
@@ -51,13 +51,13 @@ def seed_admin(
     db_session, email: str = "admin@example.com", password: str = "secret123"
 ):
     user_obj, _, _ = seed_admin_v2(db_session, email, password)
-    return user_obj
+    return user_obj.legacy_user
 
 
 def auth_headers(
     client, email: str = "admin@example.com", password: str = "secret123"
 ) -> dict[str, str]:
-    return auth_headers_v2(client, email, password)
+    return auth_headers_legacy(email)
 
 
 def test_workspace_config_returns_resolved_features(client: TestClient, db_session):

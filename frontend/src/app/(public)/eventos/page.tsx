@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useMemo,useState } from "react";
 
-import Image from "next/image";
-import { Bell, ChevronLeft, ChevronRight, MapPin, Star, CalendarDays } from "lucide-react";
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
-import { apiFetch } from "@/lib/http";
-import { toast } from "sonner";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
+import { Bell,ChevronLeft,ChevronRight,MapPin,Star } from "lucide-react";
+import Image from "next/image";
+import { toast } from "sonner";
 
 interface PublicEventItem {
     title?: string;
@@ -48,7 +47,6 @@ export default function EventosPage() {
     const { data: heroContent } = useContentBlock("faro_events_hero");
     const { data: eventsContent } = useContentBlock(FARO_EVENTS_BLOCK_KEY);
     const [activeFilter, setActiveFilter] = useState("Todos");
-    const [reserveModal, setReserveModal] = useState<PublicEventItem | null>(null);
     const [calendarView, setCalendarView] = useState<"Semanal" | "Mensual" | "Anual">("Mensual");
     const [currentMonth, setCurrentMonth] = useState(5); // June (0-indexed)
     const [currentYear, setCurrentYear] = useState(2026);
@@ -59,9 +57,13 @@ export default function EventosPage() {
         heroContent?.description ||
         "Espacios diseñados para el crecimiento, la conexión y la guía espiritual.";
 
-    const parsedEvents = Array.isArray(eventsContent?.parsed)
-        ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
-        : [];
+    const parsedEvents = useMemo(
+        () =>
+            Array.isArray(eventsContent?.parsed)
+                ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
+                : [],
+        [eventsContent?.parsed],
+    );
 
     const filteredEvents = useMemo(() => {
         if (activeFilter === "Todos") return parsedEvents;

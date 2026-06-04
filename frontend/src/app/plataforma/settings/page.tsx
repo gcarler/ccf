@@ -26,7 +26,7 @@ const SETTINGS_GROUPS = [
     },
     {
         title: "Apariencia",
-        color: "purple",
+        color: "blue",
         items: [
             { icon: Palette, label: "Tema Visual", desc: "Modo claro, oscuro o sistema", href: "/theme" },
             { icon: Languages, label: "Idioma y Región", desc: "Español (Colombia)", href: "#idioma" },
@@ -46,7 +46,7 @@ const SETTINGS_GROUPS = [
 
 const COLOR_MAP: Record<string, string> = {
     blue: "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]",
-    purple: "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400",
+    sky: "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400",
     emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
 };
 
@@ -89,7 +89,7 @@ export default function SettingsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 flex items-center gap-3 shadow-sm"
                 >
-                    <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-500/20 shrink-0">
+                    <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-500/20 shrink-0">
                         {(user as any)?.name?.[0] ?? 'A'}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -202,4 +202,3 @@ export default function SettingsPage() {
         </WorkspaceLayout>
     );
 }
-

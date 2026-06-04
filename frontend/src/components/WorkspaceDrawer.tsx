@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MoreHorizontal, MessageSquare, Clock, Sparkles } from 'lucide-react';
 
@@ -23,46 +22,41 @@ export default function WorkspaceDrawer({
     actions
 }: WorkspaceDrawerProps) {
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <AnimatePresence>
-                {isOpen && (
-                    <Dialog.Portal forceMount>
-                        {/* Backdrop */}
-                        <Dialog.Overlay asChild>
-                            <motion.div 
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-slate-900/20 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
-                            />
-                        </Dialog.Overlay>
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-slate-900/20 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
+                        onClick={onClose}
+                    />
 
-                        {/* Content */}
-                        <Dialog.Content asChild>
-                        <motion.div
+                    <motion.div
                         initial={{ x: '100%' }}
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                         className="fixed top-0 right-0 h-screen w-full max-w-[600px] lg:max-w-[800px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
-                        >
+                        role="complementary"
+                        aria-label={title}
+                    >
                         {/* Drawer Header */}
                         <header className="h-14 flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-white/10 shrink-0 bg-slate-50/50 dark:bg-white/5">
                             <div className="flex items-center gap-4 overflow-hidden">
-                                <Dialog.Close asChild>
-                                    <button className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-md transition-colors text-slate-500">
-                                        <X size={20} />
-                                    </button>
-                                </Dialog.Close>
+                                <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-md transition-colors text-slate-500">
+                                    <X size={20} />
+                                </button>
                                 <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10" />
                                 <div className="flex flex-col overflow-hidden">
-                                    <Dialog.Title className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate tracking-tight">
+                                    <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate tracking-tight">
                                         {title}
-                                    </Dialog.Title>
+                                    </h2>
                                     {subtitle && (
-                                        <Dialog.Description className="text-[10px] text-slate-400 font-black truncate uppercase tracking-wide">
+                                        <p className="text-[10px] text-slate-400 font-black truncate uppercase tracking-wide">
                                             {subtitle}
-                                        </Dialog.Description>
+                                        </p>
                                     )}
                                 </div>
                             </div>
@@ -88,12 +82,10 @@ export default function WorkspaceDrawer({
                                         {actions}
                                     </footer>
                                 )}
-                            </motion.div>
-                        </Dialog.Content>
-                    </Dialog.Portal>
-                )}
-            </AnimatePresence>
-        </Dialog.Root>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
     );
 }
 

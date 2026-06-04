@@ -171,7 +171,7 @@ export default function StudentProfilePage() {
                             
                             <div className="relative z-10 flex flex-col items-center text-center space-y-3">
                                 <div className="relative">
-                                    <div className="size-10 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-600 p-1 shadow-2xl">
+                                    <div className="size-10 rounded-md bg-gradient-to-tr from-blue-600 to-sky-600 p-1 shadow-2xl">
                                         <div className="size-full rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] flex items-center justify-center text-lg font-bold text-[hsl(var(--primary))] uppercase border-4 border-white dark:border-[#0a0f16]">
                                             {user.username?.charAt(0)}
                                         </div>
@@ -201,7 +201,7 @@ export default function StudentProfilePage() {
                                          <span className="font-semibold text-slate-400 uppercase">Progreso total: {profile?.total_progress ?? 0}%</span>
                                      </div>
                                      <div className="h-3 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner p-0.5">
-                                         <motion.div initial={{ width: 0 }} animate={{ width: `${profile?.total_progress ?? 0}%` }} className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]" />
+                                         <motion.div initial={{ width: 0 }} animate={{ width: `${profile?.total_progress ?? 0}%` }} className="h-full bg-gradient-to-r from-blue-600 to-sky-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]" />
                                      </div>
                                  </div>
                             </div>
@@ -215,9 +215,9 @@ export default function StudentProfilePage() {
                                 <div className="grid grid-cols-3 gap-4">
                                     {[
                                         { icon: Star, color: 'from-amber-400 to-orange-500', locked: false, title: 'Excelencia' },
-                                        { icon: BookOpen, color: 'from-blue-400 to-indigo-600', locked: false, title: 'Sabiduría' },
+                                        { icon: BookOpen, color: 'from-blue-400 to-sky-600', locked: false, title: 'Sabiduría' },
                                         { icon: Heart, color: 'from-rose-400 to-pink-600', locked: false, title: 'Servicio' },
-                                        { icon: Zap, color: 'from-indigo-400 to-sky-600', locked: false, title: 'Poder' },
+                                        { icon: Zap, color: 'from-sky-400 to-sky-600', locked: false, title: 'Poder' },
                                         { icon: ShieldCheck, color: 'from-emerald-400 to-teal-600', locked: false, title: 'Fidelidad' },
                                         { icon: Target, color: 'from-slate-400 to-slate-600', locked: true, title: 'Misiones' },
                                     ].map((badge, i) => (
@@ -359,7 +359,7 @@ function StatBox({ icon: Icon, label, value, color }: any) {
 }
 
 function ProgressPill({ label, value, tone }: { label: string; value: number; tone: 'primary' | 'emerald' }) {
-    const bg = tone === 'primary' ? 'from-blue-500 to-indigo-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'from-emerald-500 to-teal-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]';
+    const bg = tone === 'primary' ? 'from-blue-500 to-sky-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'from-emerald-500 to-teal-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]';
     return (
         <div className="w-full">
             <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">

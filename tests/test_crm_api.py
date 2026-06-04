@@ -3,23 +3,23 @@ from datetime import datetime
 
 import pytest
 from backend import models
-from tests.conftest import seed_admin_v2, auth_headers_v2, seed_user_with_role_v2
+from tests.conftest import seed_admin_v2, auth_headers_legacy, seed_user_with_role_v2
 
 
 def seed_admin(db_session, email="admin@example.com", password="secret123", role="admin"):
     user_obj, _, _ = seed_admin_v2(db_session, email, password)
-    return user_obj
+    return user_obj.legacy_user
 
 
 def auth_headers(client, email="admin@example.com", password="secret123"):
-    return auth_headers_v2(client, email, password)
+    return auth_headers_legacy(email)
 
 
 def seed_strategy(db_session):
     """Create a Relacional evangelism strategy for test fixtures."""
     import uuid
     strategy = models.EstrategiaEvangelismo(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         nombre="Estrategia Test",
         typology="relacional",
         frecuencia="SEMANAL",
@@ -45,7 +45,7 @@ def seed_sede(db_session):
 
 def seed_user_with_role(db_session, role: str, email: str, password: str = "secret123"):
     user_obj, _, _ = seed_user_with_role_v2(db_session, role, email, password)
-    return user_obj
+    return user_obj.legacy_user
 
 
 async def _failing_send_whatsapp(db, member_id, content, sender_user_id):

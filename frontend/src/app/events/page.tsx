@@ -7,7 +7,7 @@ import { Calendar, Clock, MapPin, Users, Search, ChevronRight, Star, Filter, Tic
 import clsx from 'clsx';
 
 const EVENTS = [
-    { id: 1, title: 'Retiro de Jóvenes 2026', date: '2026-05-02', endDate: '2026-05-04', time: '8:00 AM', location: 'Campamento El Buen Pastor', category: 'Retiro', attendees: 120, capacity: 150, featured: true, color: 'from-blue-600 to-indigo-700' },
+    { id: 1, title: 'Retiro de Jóvenes 2026', date: '2026-05-02', endDate: '2026-05-04', time: '8:00 AM', location: 'Campamento El Buen Pastor', category: 'Retiro', attendees: 120, capacity: 150, featured: true, color: 'from-blue-600 to-sky-700' },
     { id: 2, title: 'Concierto de Adoración Noches de Gloria', date: '2026-04-20', endDate: null, time: '6:00 PM', location: 'Sede Central - Mocoa', category: 'Adoración', attendees: 350, capacity: 500, featured: true, color: 'from-sky-600 to-blue-700' },
     { id: 3, title: 'Seminario: Finanzas con Fe', date: '2026-04-26', endDate: null, time: '9:00 AM', location: 'Salón Principal CCF', category: 'Seminario', attendees: 45, capacity: 80, featured: false, color: 'from-amber-500 to-orange-600' },
     { id: 4, title: 'Taller de Matrimonios Fuertes', date: '2026-05-10', endDate: '2026-05-11', time: '2:00 PM', location: 'Sede Centro - Pasto', category: 'Taller', attendees: 28, capacity: 40, featured: false, color: 'from-rose-500 to-pink-600' },

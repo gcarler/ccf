@@ -431,11 +431,11 @@ export default function TaskEditDrawer({
 
                             {/* ─ MESH AI ─ */}
                             <div className="px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.05]">
-                                <div className="rounded-lg bg-gradient-to-br from-blue-50 via-indigo-50/50 to-blue-50/30 dark:from-blue-900/15 dark:via-indigo-900/10 dark:to-transparent border border-blue-200/60 dark:border-blue-500/20 overflow-hidden">
+                                <div className="rounded-lg bg-gradient-to-br from-blue-50 via-sky-50/50 to-blue-50/30 dark:from-blue-900/15 dark:via-sky-900/10 dark:to-transparent border border-blue-200/60 dark:border-blue-500/20 overflow-hidden">
                                     {/* AI header */}
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200/40 dark:border-blue-500/15">
                                         <div className="flex items-center gap-2">
-                                            <div className="size-6 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm">
+                                            <div className="size-6 rounded-lg bg-gradient-to-br from-blue-600 to-sky-600 flex items-center justify-center shadow-sm">
                                                 <Sparkles size={11} className="text-white" />
                                             </div>
                                             <span className="font-semibold text-[hsl(var(--primary))] dark:text-blue-300 tracking-wide uppercase">MESH AI</span>
@@ -444,7 +444,7 @@ export default function TaskEditDrawer({
                                         <button
                                             onClick={handleAiSuggest}
                                             disabled={aiLoading}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-bold shadow-md shadow-blue-500/25 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-sky-600 text-white text-[10px] font-bold shadow-md shadow-blue-500/25 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                                         >
                                             {aiLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
                                             {aiLoading ? 'Analizando...' : 'Sugerir'}

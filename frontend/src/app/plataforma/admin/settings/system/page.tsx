@@ -647,7 +647,7 @@ export default function SystemSettings() {
                                     loading={actionLoading === 'flag-lms'}
                                 />
                                 <FeatureToggle 
-                                    label="CRM Pastoral" desc="Control de miembros, casas y consolidación." 
+                                    label="CRM Pastoral" desc="Control de personas, casas y consolidación."
                                     active={config?.features_enabled?.crm} onToggle={() => toggleFeature('crm')} 
                                     loading={actionLoading === 'flag-crm'}
                                 />
@@ -1392,4 +1392,3 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
         </div>
     );
 }
-

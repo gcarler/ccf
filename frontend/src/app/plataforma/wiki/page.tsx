@@ -164,7 +164,7 @@ export default function WikiHomePage() {
                                         className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
                                     >
                                         {/* Acento de color top */}
-                                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-600 to-indigo-600" />
+                                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-600 to-sky-600" />
                                         
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-start justify-between">

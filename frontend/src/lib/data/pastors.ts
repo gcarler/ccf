@@ -39,7 +39,7 @@ export const PASTORS: PastorProfile[] = [
         name: "Camilo Pájaro y Alba Estrada",
         role: "Pastor",
         category: "pastors",
-        description: "Una pareja pastoral con un corazón gigante para la restauración de matrimonios y el cuidado de los miembros. Camilo y Alba lideran ministerios enfocados en la sanidad interior, la consejería familiar y la integración. Su calidez, empatía y testimonio de vida han inspirado a innumerables familias a encontrar esperanza y reconstruir sus hogares sobre el fundamento de Cristo. Son conocidos por su hospitalidad y por hacer sentir a todos como en casa.",
+        description: "Una pareja pastoral con un corazón gigante para la restauración de matrimonios y el cuidado de los personas. Camilo y Alba lideran ministerios enfocados en la sanidad interior, la consejería familiar y la integración. Su calidez, empatía y testimonio de vida han inspirado a innumerables familias a encontrar esperanza y reconstruir sus hogares sobre el fundamento de Cristo. Son conocidos por su hospitalidad y por hacer sentir a todos como en casa.",
         img: "/images/pastores/camilo_alba.png",
         social: { instagram: "https://instagram.com/comunidadfaro", facebook: "https://facebook.com/comunidadfaro" }
     },
@@ -59,7 +59,7 @@ export const PASTORS: PastorProfile[] = [
         name: "Fernando Ascencio y Mónica de Arco",
         role: "Pastor",
         category: "pastors",
-        description: "Líderes estratégicos y mentores de vida. Fernando y Mónica tienen una unción especial para la enseñanza práctica y la consolidación de procesos educativos dentro de la iglesia. Dirigen programas de discipulado avanzado y capacitación ministerial. Su enfoque alegre pero estructurado ayuda a los creyentes a transicionar de asistentes a discípulos comprometidos. Siempre están listos para escuchar, orientar y celebrar las victorias de cada miembro de la congregación.",
+        description: "Líderes estratégicos y mentores de vida. Fernando y Mónica tienen una unción especial para la enseñanza práctica y la consolidación de procesos educativos dentro de la iglesia. Dirigen programas de discipulado avanzado y capacitación ministerial. Su enfoque alegre pero estructurado ayuda a los creyentes a transicionar de asistentes a discípulos comprometidos. Siempre están listos para escuchar, orientar y celebrar las victorias de cada persona de la congregación.",
         img: "/images/pastores/fernando_monica.png",
         social: { instagram: "https://instagram.com/comunidadfaro", facebook: "https://facebook.com/comunidadfaro" }
     },

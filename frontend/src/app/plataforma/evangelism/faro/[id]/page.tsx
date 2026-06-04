@@ -262,7 +262,7 @@ export default function FaroDetailPage() {
     // Load members for selector
     useEffect(() => {
         if (!token || !showAddAttendee) return;
-        apiFetch<Member[]>('/crm/personas', { token }).then(setMembers).catch((err) => { console.error('[FaroDetailPage] Failed to load members:', err); toast.error('Error al cargar miembros'); });
+        apiFetch<Member[]>('/crm/personas', { token }).then(setMembers).catch((err) => { console.error('[FaroDetailPage] Failed to load members:', err); toast.error('Error al cargar personas'); });
     }, [showAddAttendee, token]);
 
     const filteredMembers = useMemo(() => {
@@ -554,7 +554,7 @@ export default function FaroDetailPage() {
                                             <Activity className="text-[hsl(var(--primary))]" size={18} /> Reporte semanal
                                         </h3>
                                         <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                                            {reportMembers.length} miembros
+                                            {reportMembers.length} personas
                                         </span>
                                     </div>
 
@@ -648,7 +648,7 @@ export default function FaroDetailPage() {
 
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between">
-                                            <h4 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Asistencia por miembro</h4>
+                                            <h4 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Asistencia por persona</h4>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Presente / Ausente</span>
                                         </div>
                                         <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
@@ -659,7 +659,7 @@ export default function FaroDetailPage() {
                                                         <div className="flex items-center justify-between gap-3">
                                                             <div className="min-w-0">
                                                                 <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{row.name}</p>
-                                                                <p className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{row.role || 'Miembro'}</p>
+                                                                <p className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{row.role || 'Persona'}</p>
                                                             </div>
                                                             <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                                                                 <input
@@ -773,7 +773,7 @@ export default function FaroDetailPage() {
                     <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-white/5">
                         <div>
                             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Registrar Asistentes</h3>
-                            <p className="text-[10px] uppercase tracking-wide text-slate-400 font-bold mt-1">Busca o crea miembros para registrar su asistencia</p>
+                            <p className="text-[10px] uppercase tracking-wide text-slate-400 font-bold mt-1">Busca o crea personas para registrar su asistencia</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
@@ -855,7 +855,7 @@ export default function FaroDetailPage() {
                         ) : (
                             <div className="flex-1 overflow-y-auto pb-6 space-y-1 border-t border-slate-100 dark:border-white/5 pt-4">
                                 {filteredMembers.length === 0 ? (
-                                    <p className="text-center text-slate-400 text-sm py-1.5">No se encontraron miembros</p>
+                                    <p className="text-center text-slate-400 text-sm py-1.5">No se encontraron personas</p>
                                 ) : filteredMembers.map(m => {
                                     const isSelected = selectedIds.has(m.id);
                                     return (

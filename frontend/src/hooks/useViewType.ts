@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import { ViewType } from "@/components/ViewSwitcher";
+import { useCallback,useState } from "react";
 
 const PREFIX = "ccf_view_";
 

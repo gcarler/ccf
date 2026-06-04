@@ -100,7 +100,7 @@ export default function CourseCoordinationPage() {
             <main className="flex-1 overflow-y-auto p-4 lg:p-4 space-y-3">
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div className="space-y-2">
-                        <DSBadge tone={course.modality === 'formal' ? 'violet' : 'emerald'} label={course.modality === 'formal' ? 'RUTA FORMAL' : 'RUTA NO FORMAL'} />
+                        <DSBadge tone={course.modality === 'formal' ? 'blue' : 'emerald'} label={course.modality === 'formal' ? 'RUTA FORMAL' : 'RUTA NO FORMAL'} />
                         <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none uppercase">
                             {course.title}
                         </h1>
@@ -114,7 +114,7 @@ export default function CourseCoordinationPage() {
                     <DSMetric label="Inscritos" value={String(stats?.total_enrolled ?? 0)} trend="+5 esta semana" tone="blue" />
                     <DSMetric label="Finalización" value={`${stats?.completion_rate ?? 0}%`} trend="Target 90%" tone="emerald" />
                     <DSMetric label="Promedio" value={String(stats?.average_grade ?? 0)} trend="Sobre 100" tone="amber" />
-                    <DSMetric label="Lecciones" value={String(course.lessons_count ?? 0)} trend="Activas" tone="violet" />
+                    <DSMetric label="Lecciones" value={String(course.lessons_count ?? 0)} trend="Activas" tone="blue" />
                 </section>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

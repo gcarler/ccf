@@ -167,7 +167,7 @@ export default function TaskAssignment() {
                     <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[hsl(var(--primary))] transition-colors" size={20} />
                     <input
                         type="text"
-                        placeholder="Buscar miembro para seguimiento..."
+                        placeholder="Buscar persona para seguimiento..."
                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-md py-2 pl-14 pr-6 text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -302,7 +302,7 @@ export default function TaskAssignment() {
                             <div className="size-10 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/10 shadow-2xl flex items-center justify-center text-slate-200"><User size={64} strokeWidth={1} /></div>
                             <div className="space-y-2">
                                 <h4 className="text-base font-bold text-slate-800 dark:text-white uppercase tracking-tight">Esperando selección</h4>
-                                <p className="text-sm text-slate-400 font-medium max-w-[240px] mx-auto leading-relaxed">Selecciona un miembro de la congregación para iniciar el proceso de asignación pastoral.</p>
+                                <p className="text-sm text-slate-400 font-medium max-w-[240px] mx-auto leading-relaxed">Selecciona un persona de la congregación para iniciar el proceso de asignación pastoral.</p>
                             </div>
                         </div>
                     )}

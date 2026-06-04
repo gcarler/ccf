@@ -1,24 +1,39 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/http';
-import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
-import {
-    ArrowLeft, Flame, Calendar, Clock, CheckCircle2,
-    AlertCircle, Sparkles, Save, Trash2, Users,
-    BarChart3, FolderOpen, Plus, X, Home, UserPlus,
-    Search, UserMinus, UserCheck, ClipboardList, ChevronDown, ChevronUp
-} from 'lucide-react';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
-import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
-import { useViewType, FULL_VIEWS } from '@/hooks/useViewType';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
+import ViewSwitcher from '@/components/ViewSwitcher';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import { useAuth } from '@/context/AuthContext';
+import { FULL_VIEWS,useViewType } from '@/hooks/useViewType';
+import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
+import {
+AlertCircle,
+ArrowLeft,
+BarChart3,
+Calendar,
+ClipboardList,
+Clock,
+Flame,
+FolderOpen,
+Home,
+Plus,
+Save,
+Search,
+Sparkles,
+Trash2,
+UserCheck,
+UserMinus,
+UserPlus,
+Users,
+X
+} from 'lucide-react';
+import { useParams,useRouter } from 'next/navigation';
+import { useCallback,useEffect,useState } from 'react';
+import { toast } from 'sonner';
 
 interface Strategy {
     id: string;
@@ -119,14 +134,14 @@ const TYPOLOGY_LABELS: Record<string, string> = {
 const MEMBER_ROLES = [
     { value: 'lider', label: 'Líder' },
     { value: 'colider', label: 'Colíder' },
-    { value: 'miembro', label: 'Miembro' },
+    { value: 'persona', label: 'Persona' },
     { value: 'visitante', label: 'Visitante' },
 ];
 
 const ROLE_COLORS: Record<string, string> = {
     lider: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
     colider: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
-    miembro: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
+    persona: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
     visitante: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
     asistente: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
 };
@@ -165,7 +180,6 @@ export default function StrategyDetailPage() {
     // Seguimiento
     const [followUps, setFollowUps] = useState<FollowUpRecord[]>([]);
     const [loadingFollowUps, setLoadingFollowUps] = useState(false);
-    const [showFollowUpPanel, setShowFollowUpPanel] = useState(false);
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const { viewType, setViewType } = useViewType(`strategy_${id}`, 'dashboard');
     const [groups, setGroups] = useState<StrategyGroup[]>([]);
@@ -243,7 +257,7 @@ export default function StrategyDetailPage() {
         } finally {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, token]);
 
     const fetchCustomRoles = useCallback(async () => {
         setLoadingRoles(true);
@@ -256,23 +270,19 @@ export default function StrategyDetailPage() {
         } finally {
             setLoadingRoles(false);
         }
-    }, [id]);
+    }, [id, token]);
 
     const fetchFollowUps = useCallback(async () => {
         setLoadingFollowUps(true);
         try {
             const result = await apiFetch<FollowUpRecord[]>('/evangelism/follow-up/pending', { token });
-            // Filter follow-ups that belong to this strategy's groups
-            setFollowUps(result?.filter(f => {
-                // We'll show all pending follow-ups for now, filtered will show in detail
-                return true;
-            }) || []);
+            setFollowUps(result || []);
         } catch {
             setFollowUps([]);
         } finally {
             setLoadingFollowUps(false);
         }
-    }, [id]);
+    }, [token]);
 
     useEffect(() => {
         fetchStrategy();
@@ -297,7 +307,7 @@ export default function StrategyDetailPage() {
             const m = await apiFetch<any>(`/evangelism/strategies/${id}/metrics`, { token });
             setMetrics(m);
         } catch { toast.error('Error al cargar métricas'); }
-    }, [id]);
+    }, [id, token]);
 
     const fetchSessions = useCallback(async () => {
         setSessionsLoading(true);
@@ -307,7 +317,7 @@ export default function StrategyDetailPage() {
         } catch { toast.error('Error al cargar sesiones'); } finally {
             setSessionsLoading(false);
         }
-    }, [id]);
+    }, [id, token]);
 
     useEffect(() => {
         if (activeTab === 'groups') fetchGroups();
@@ -317,9 +327,9 @@ export default function StrategyDetailPage() {
 
     useEffect(() => {
         if (isGroupDrawerOpen && members.length === 0) {
-            apiFetch<any[]>('/crm/personas', { token }).then(m => setMembers(m || [])).catch(() => toast.error('Error al cargar miembros'));
+            apiFetch<any[]>('/crm/personas', { token }).then(m => setMembers(m || [])).catch(() => toast.error('Error al cargar personas'));
         }
-    }, [isGroupDrawerOpen, members.length]);
+    }, [isGroupDrawerOpen, members.length, token]);
 
     const openGroupDrawer = () => {
         setGroupForm({
@@ -381,7 +391,7 @@ export default function StrategyDetailPage() {
             try {
                 const m = await apiFetch<any[]>('/crm/personas', { token });
                 setAllMembers(m || []);
-            } catch { toast.error('Error al cargar miembros'); }
+            } catch { toast.error('Error al cargar personas'); }
         }
         try {
             const house = await apiFetch<any>(`/evangelism/grupos/${group.id}`, { token });
@@ -389,7 +399,7 @@ export default function StrategyDetailPage() {
                 id: a.persona_id,
                 name: a.name || a.member?.nombre_completo || '',
                 email: a.member?.email || '',
-                role: a.role || 'miembro',
+                role: a.role || 'persona',
             })) || []);
         } catch { setGroupMembers([]); }
     };
@@ -407,7 +417,7 @@ export default function StrategyDetailPage() {
                     })),
                 },
             });
-            toast.success('Miembros actualizados');
+            toast.success('Personas actualizados');
             setIsMemberDrawerOpen(false);
             fetchGroups();
         } catch (e: any) {
@@ -421,7 +431,7 @@ export default function StrategyDetailPage() {
             id: member.id,
             name: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(),
             email: member.email || '',
-            role: 'miembro',
+            role: 'persona',
         }]);
     };
 
@@ -468,7 +478,7 @@ export default function StrategyDetailPage() {
         if (allMembers.length === 0) {
             apiFetch<any[]>('/crm/personas?limit=1000', { token }).then(res => {
                 if (Array.isArray(res)) setAllMembers(res);
-            }).catch((err) => { console.error('[StrategyDetailPage] Failed to load members for attendance:', err); toast.error('Error al cargar miembros'); });
+            }).catch((err) => { console.error('[StrategyDetailPage] Failed to load members for attendance:', err); toast.error('Error al cargar personas'); });
         }
         try {
             // Get house members to build attendance list
@@ -483,7 +493,7 @@ export default function StrategyDetailPage() {
             const memberList = house?.base_attendees?.map((a: any) => ({
                 persona_id: a.persona_id,
                 name: a.name || a.member?.nombre_completo || '',
-                role: a.role || 'miembro',
+                role: a.role || 'persona',
                 status: (existingMap[a.persona_id]?.status as any) || 'present',
                 notes: existingMap[a.persona_id]?.notes || '',
             })) || [];
@@ -685,7 +695,7 @@ export default function StrategyDetailPage() {
                                 id: String(g.id), name: g.name, title: g.name,
                                 start_date: new Date().toISOString(), end_date: new Date(Date.now() + 30 * 86400000).toISOString(),
                                 progress: Math.min(g.members_count * 20, 100),
-                                color: 'blue' as const, subtitle: `${g.members_count} miembros`,
+                                color: 'blue' as const, subtitle: `${g.members_count} personas`,
                             })),
                             ...sessions.map(s => ({
                                 id: `s-${s.id}`, title: s.topic || `Sesión #${s.id}`,
@@ -739,7 +749,7 @@ export default function StrategyDetailPage() {
                                 <th className="text-left py-2 px-3 font-semibold">Nombre</th>
                                 <th className="text-left py-2 px-3 font-semibold">Fecha</th>
                                 <th className="text-left py-2 px-3 font-semibold">Estado</th>
-                                <th className="text-left py-2 px-3 font-semibold">Miembros</th>
+                                <th className="text-left py-2 px-3 font-semibold">Personas</th>
                             </tr></thead>
                             <tbody>
                                 {groups.map(g => (
@@ -773,7 +783,7 @@ export default function StrategyDetailPage() {
                                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Users size={14} className="text-[hsl(var(--primary))] dark:text-blue-400" /></div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{g.name}</p>
-                                    <p className="text-xs text-slate-400">{g.members_count} miembros{g.zone ? ` · ${g.zone}` : ''}</p>
+                                    <p className="text-xs text-slate-400">{g.members_count} personas{g.zone ? ` · ${g.zone}` : ''}</p>
                                 </div>
                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-green-300">Grupo</span>
                             </div>
@@ -802,7 +812,7 @@ export default function StrategyDetailPage() {
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">{g.name}</h3>
                                 <p className="text-xs text-slate-400 mt-1">{g.zone || 'Sin zona'}</p>
-                                <span className="text-xs font-medium text-slate-500 mt-3 block">{g.members_count} miembros</span>
+                                <span className="text-xs font-medium text-slate-500 mt-3 block">{g.members_count} personas</span>
                             </div>
                         ))}
                         {sessions.map(s => (
@@ -950,7 +960,7 @@ export default function StrategyDetailPage() {
                                         <p className="text-xs text-slate-400 mt-1">{g.zone || 'Sin zona'}</p>
                                         <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
                                             <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5">
-                                                <Users size={12} />{g.members_count} miembros
+                                                <Users size={12} />{g.members_count} personas
                                             </span>
                                             {g.leader_name && <span>Líder: {g.leader_name}</span>}
                                         </div>
@@ -1308,7 +1318,7 @@ export default function StrategyDetailPage() {
 
             {/* ── Member Management Drawer ── */}
             <WorkspaceDrawer isOpen={isMemberDrawerOpen} onClose={() => setIsMemberDrawerOpen(false)}
-                title="Gestionar Miembros" subtitle={selectedGroup?.name || ''}
+                title="Gestionar Personas" subtitle={selectedGroup?.name || ''}
                 actions={<>
                     <button onClick={() => setIsMemberDrawerOpen(false)}
                         className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors">Cancelar</button>
@@ -1321,11 +1331,11 @@ export default function StrategyDetailPage() {
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                                Miembros ({groupMembers.length})
+                                Personas ({groupMembers.length})
                             </label>
                         </div>
                         {groupMembers.length === 0 ? (
-                            <p className="text-xs text-slate-400 italic py-2">Sin miembros asignados</p>
+                            <p className="text-xs text-slate-400 italic py-2">Sin personas asignados</p>
                         ) : (
                             <div className="space-y-1.5 max-h-64 overflow-y-auto">
                                 {groupMembers.map(m => (
@@ -1334,7 +1344,7 @@ export default function StrategyDetailPage() {
                                             <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate block">{m.name}</span>
                                         </div>
                                         <select value={m.role} onChange={e => updateMemberRole(m.id, e.target.value)}
-                                            className={`text-[11px] font-semibold px-2 py-1 rounded border-0 outline-none cursor-pointer ${ROLE_COLORS[m.role] || ROLE_COLORS.miembro}`}>
+                                            className={`text-[11px] font-semibold px-2 py-1 rounded border-0 outline-none cursor-pointer ${ROLE_COLORS[m.role] || ROLE_COLORS.persona}`}>
                                             {MEMBER_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                                         </select>
                                         <button onClick={() => removeMemberFromGroup(m.id)}
@@ -1347,7 +1357,7 @@ export default function StrategyDetailPage() {
                         )}
                     </div>
                     <div className="border-t border-slate-100 dark:border-white/5 pt-4">
-                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Agregar miembros</label>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Agregar personas</label>
                         <div className="relative mb-2">
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)}
@@ -1439,8 +1449,8 @@ export default function StrategyDetailPage() {
                     {attendanceMembers.length === 0 && !showVisitorSearch ? (
                         <div className="text-center py-8">
                             <Users size={32} className="text-slate-300 mx-auto mb-2" />
-                            <p className="text-xs text-slate-400">Este grupo no tiene miembros asignados</p>
-                            <p className="text-[11px] text-slate-400 mt-1">Agrega miembros desde la pestaña Grupos</p>
+                            <p className="text-xs text-slate-400">Este grupo no tiene personas asignados</p>
+                            <p className="text-[11px] text-slate-400 mt-1">Agrega personas desde la pestaña Grupos</p>
                         </div>
                     ) : (
                         <>
@@ -1461,7 +1471,7 @@ export default function StrategyDetailPage() {
                                                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{m.name}</p>
                                                 {m.status === 'first_time' && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[hsl(var(--primary))] text-white">1ª vez</span>}
                                             </div>
-                                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${ROLE_COLORS[m.role] || ROLE_COLORS.miembro}`}>
+                                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${ROLE_COLORS[m.role] || ROLE_COLORS.persona}`}>
                                                 {MEMBER_ROLES.find(r => r.value === m.role)?.label || m.role}
                                             </span>
                                         </div>
@@ -1506,7 +1516,7 @@ export default function StrategyDetailPage() {
                                             autoFocus
                                             value={visitorSearch}
                                             onChange={e => setVisitorSearch(e.target.value)}
-                                            placeholder="Buscar miembro por nombre..."
+                                            placeholder="Buscar persona por nombre..."
                                             className="w-full pl-8 pr-3 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                                         />
                                     </div>
@@ -1547,7 +1557,7 @@ export default function StrategyDetailPage() {
                                             const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
                                             return name.includes(visitorSearch.toLowerCase()) && !attendanceMembers.find(a => a.persona_id === m.id);
                                         }).length === 0 && (
-                                            <p className="text-center py-3 text-xs text-slate-400">No se encontraron miembros</p>
+                                            <p className="text-center py-3 text-xs text-slate-400">No se encontraron personas</p>
                                         )}
                                     </div>
                                 )}

@@ -12,7 +12,7 @@ import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 interface Role {
     id: string;
     name: string;
-    permissions: any;
+    permissions: string[];
 }
 
 export default function RolesPage() {
@@ -68,7 +68,7 @@ export default function RolesPage() {
     const togglePermission = (permKey: string) => {
         const current = editingRole.permissions || [];
         if (current.includes(permKey)) {
-            setEditingRole({ ...editingRole, permissions: current.filter(p => p !== permKey) });
+            setEditingRole({ ...editingRole, permissions: current.filter((p: string) => p !== permKey) });
         } else {
             setEditingRole({ ...editingRole, permissions: [...current, permKey] });
         }
@@ -171,7 +171,7 @@ export default function RolesPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {roles.map(role => (
                             <div 
-                                key={role.role_id}
+                                key={role.id}
                                 onClick={() => openEditDrawer(role)}
                                 className="bg-[hsl(var(--bg-primary))] rounded-lg p-3 border border-slate-100 shadow-xl shadow-slate-200/20 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group"
                             >
@@ -182,7 +182,7 @@ export default function RolesPage() {
                                         </div>
                                         <h3 className="font-bold text-slate-800">{role.name}</h3>
                                     </div>
-                                    <button onClick={(e) => handleDelete(e, role.role_id)} className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
+                                    <button onClick={(e) => handleDelete(e, role.id)} className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
                                         <Trash2 size={16} />
                                     </button>
                                 </div>
@@ -191,7 +191,7 @@ export default function RolesPage() {
                                         {role.permissions.length} Permisos Activos
                                     </p>
                                     <div className="flex flex-wrap gap-1.5">
-                                        {role.permissions.slice(0, 5).map(p => (
+                                        {role.permissions.slice(0, 5).map((p: string) => (
                                             <span key={p} className="px-2 py-1 bg-slate-50 text-slate-500 rounded-md text-[10px] font-bold border border-slate-100">
                                                 {p}
                                             </span>
@@ -213,7 +213,7 @@ export default function RolesPage() {
             <WorkspaceDrawer
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
-                title={editingRole.role_id ? "Editar Rol" : "Nuevo Rol"}
+                title={editingRole.id ? "Editar Rol" : "Nuevo Rol"}
                 subtitle="Configura los alcances de este perfil"
                 actions={
                     <button onClick={handleSaveRole} className="flex items-center gap-2 px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-slate-800 active:scale-95 transition-all shadow-xl">

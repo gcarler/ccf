@@ -26,7 +26,7 @@ export default function FamilyNucleusPage() {
                         Mi Núcleo <span className="text-rose-500">Familiar</span>
                     </h1>
                     <p className="text-muted-foreground text-sm max-w-xl">
-                        Gestiona a los miembros de tu casa, vincula sus perfiles y accede a consejería familiar integrada.
+                        Gestiona a los personas de tu casa, vincula sus perfiles y accede a consejería familiar integrada.
                     </p>
                 </div>
 
@@ -50,7 +50,7 @@ export default function FamilyNucleusPage() {
                                 <div>
                                     <h2 className="text-lg font-bold text-white tracking-tight uppercase italic">Familia <span className="text-rose-500">Gomez Sanchez</span></h2>
                                     <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide flex items-center gap-2">
-                                        <Shield size={12} className="text-rose-500" /> Miembros Activos: 4
+                                        <Shield size={12} className="text-rose-500" /> Personas Activos: 4
                                     </p>
                                 </div>
                             </div>

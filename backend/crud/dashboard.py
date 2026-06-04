@@ -65,24 +65,32 @@ def _sede_filters(db: Session) -> List[DashboardFilter]:
 # 1. CRM DASHBOARD
 # ═══════════════════════════════════════════════════════════════════
 
-def get_crm_dashboard(db: Session, sede_id: Optional[int] = None) -> CrmDashboard:
+def get_crm_dashboard(db: Session, sede_id: Optional[str] = None) -> CrmDashboard:
     from sqlalchemy import text as sqlt
 
+    params = {}
     base_where = ""
     if sede_id:
-        base_where = f"AND p.sede_id = {sede_id}"
+        base_where = "AND p.sede_id = :sede_id"
+        params["sede_id"] = sede_id
 
-    total = db.execute(sqlt(f"SELECT COUNT(*) FROM personas p WHERE 1=1 {base_where}")).scalar() or 0
+    total = db.execute(
+        sqlt(f"SELECT COUNT(*) FROM personas p WHERE 1=1 {base_where}"),
+        params,
+    ).scalar() or 0
 
     # Pipeline por etapas — desde church_role de personas
     from sqlalchemy import case, func
-    role_stages = db.query(
+    role_q = db.query(
         models.Persona.church_role,
         func.count(models.Persona.id)
     ).filter(
         models.Persona.church_role.isnot(None),
         models.Persona.church_role != ''
-    ).group_by(models.Persona.church_role).all()
+    )
+    if sede_id:
+        role_q = role_q.filter(models.Persona.sede_id == sede_id)
+    role_stages = role_q.group_by(models.Persona.church_role).all()
     total_casos = total or 1
     funnel = [FunnelStage(stage=r[0] or 'new', count=r[1],
                           conversion_rate=round(r[1]/total_casos*100, 1)) for r in role_stages]
@@ -91,9 +99,10 @@ def get_crm_dashboard(db: Session, sede_id: Optional[int] = None) -> CrmDashboar
     growth = []
     for i in range(5, -1, -1):
         start, end = _month_range(i)
+        growth_params = {"s": start, "e": end, **params}
         c = db.execute(sqlt(
-            "SELECT COUNT(*) FROM personas WHERE created_at BETWEEN :s AND :e"
-        ), {"s": start, "e": end}).scalar() or 0
+            f"SELECT COUNT(*) FROM personas p WHERE created_at BETWEEN :s AND :e {base_where}"
+        ), growth_params).scalar() or 0
         growth.append(ChartDataPoint(label=start.strftime("%b"), value=c))
 
     # Seguimientos pendientes (placeholder mientras no hay modulo de seguimientos)
@@ -101,16 +110,16 @@ def get_crm_dashboard(db: Session, sede_id: Optional[int] = None) -> CrmDashboar
 
     # Tasa de conversión (personas con rol asignado vs total)
     with_role = db.execute(sqlt(
-        "SELECT COUNT(*) FROM personas WHERE church_role IS NOT NULL AND church_role != ''"
-    )).scalar() or 0
+        f"SELECT COUNT(*) FROM personas p WHERE church_role IS NOT NULL AND church_role != '' {base_where}"
+    ), params).scalar() or 0
     conversion = round(with_role / max(total, 1) * 100, 1)
 
     # Distribución de roles eclesiásticos
-    role_chart = db.execute(sqlt("""
+    role_chart = db.execute(sqlt(f"""
         SELECT church_role, COUNT(*) FROM personas
-        WHERE church_role IS NOT NULL AND church_role != ''
+        WHERE church_role IS NOT NULL AND church_role != '' {"AND sede_id = :sede_id" if sede_id else ""}
         GROUP BY church_role ORDER BY COUNT(*) DESC LIMIT 8
-    """)).all()
+    """), params).all()
     growth_chart = growth + [
         ChartDataPoint(label=r[0] or 'Sin rol', value=float(r[1]))
         for r in role_chart
@@ -139,28 +148,31 @@ def get_crm_dashboard(db: Session, sede_id: Optional[int] = None) -> CrmDashboar
 # ═══════════════════════════════════════════════════════════════════
 
 def get_evangelism_dashboard(
-    db: Session, sede_id: Optional[int] = None, estrategia_id: Optional[str] = None
+    db: Session, sede_id: Optional[str] = None, estrategia_id: Optional[str] = None
 ) -> EvangelismDashboard:
     from sqlalchemy import text as sqlt
 
     where = "WHERE ge.activo = true"
     where_asi = ""
+    params = {}
     if sede_id:
-        where += f" AND ge.sede_id = {sede_id}"
-        where_asi = f" AND ge.sede_id = {sede_id}"
+        where += " AND ge.sede_id = :sede_id"
+        where_asi = " AND ge.sede_id = :sede_id"
+        params["sede_id"] = sede_id
     if estrategia_id:
-        where += f" AND ge.estrategia_id = '{estrategia_id}'"
-        where_asi += f" AND ge.estrategia_id = '{estrategia_id}'"
+        where += " AND ge.estrategia_id = :estrategia_id"
+        where_asi += " AND ge.estrategia_id = :estrategia_id"
+        params["estrategia_id"] = estrategia_id
 
     # Totales
     total_grupos = db.execute(sqlt(f"""
         SELECT COUNT(*) FROM grupos_evangelismo ge {where}
-    """)).scalar() or 0
+    """), params).scalar() or 0
     total_participantes = db.execute(sqlt(f"""
         SELECT COUNT(DISTINCT gp.persona_id) FROM grupo_participantes gp
         JOIN grupos_evangelismo ge ON gp.grupo_id = ge.id
-        WHERE ge.activo = true{f" AND ge.sede_id = {sede_id}" if sede_id else ""}
-    """)).scalar() or 0
+        WHERE ge.activo = true{" AND ge.sede_id = :sede_id" if sede_id else ""}
+    """), params).scalar() or 0
 
     # Asistencia últimos 30 días
     cutoff = _utcnow() - timedelta(days=30)
@@ -170,7 +182,7 @@ def get_evangelism_dashboard(
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
         WHERE sg.fecha_sesion >= :cutoff {where_asi}
         AND a.estado = 'Presente'
-    """), {"cutoff": cutoff}).scalar() or 0
+    """), {"cutoff": cutoff, **params}).scalar() or 0
 
     ausentes = db.execute(sqlt(f"""
         SELECT COUNT(*) FROM asistencias a
@@ -178,7 +190,7 @@ def get_evangelism_dashboard(
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
         WHERE sg.fecha_sesion >= :cutoff {where_asi}
         AND (a.estado = 'Ausente' OR a.estado IS NULL)
-    """), {"cutoff": cutoff}).scalar() or 0
+    """), {"cutoff": cutoff, **params}).scalar() or 0
 
     total_asi = presentes + ausentes
     attendance_rate = round(presentes / max(total_asi, 1) * 100, 1)
@@ -187,9 +199,9 @@ def get_evangelism_dashboard(
     geo_rows = db.execute(sqlt(f"""
         SELECT ge.nombre, ge.ubicacion, ge.latitud, ge.longitud
         FROM grupos_evangelismo ge
-        WHERE ge.activo = true AND ge.latitud IS NOT NULL
+        WHERE ge.activo = true AND ge.latitud IS NOT NULL{" AND ge.sede_id = :sede_id" if sede_id else ""}
         LIMIT 50
-    """)).all()
+    """), params).all()
 
     geo_buckets = [
         GeoBucket(label=r[1] or r[0] or "Sin ubicación", value=0,
@@ -206,9 +218,9 @@ def get_evangelism_dashboard(
             (SELECT COUNT(*) FROM asistencias WHERE sesion_id = sg.id AND (estado = 'Ausente' OR estado IS NULL)) as ausentes
         FROM sesiones_grupo sg
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
-        WHERE sg.fecha_sesion >= :cutoff
+        WHERE sg.fecha_sesion >= :cutoff {where_asi}
         ORDER BY sg.fecha_sesion DESC LIMIT 10
-    """), {"cutoff": cutoff}).all()
+    """), {"cutoff": cutoff, **params}).all()
     
     asistencia_chart = []
     for s in reversed(sesiones):
@@ -236,9 +248,9 @@ def get_evangelism_dashboard(
     seguimientos = db.execute(sqlt(f"""
         SELECT COUNT(*) FROM asistencias a
         JOIN sesiones_grupo sg ON a.sesion_id = sg.id
-        WHERE sg.fecha_sesion >= :cutoff
+        WHERE sg.fecha_sesion >= :cutoff {where_asi}
         AND a.requiere_seguimiento = true
-    """), {"cutoff": cutoff}).scalar() or 0
+    """), {"cutoff": cutoff, **params}).scalar() or 0
 
     # Detalle ausentes
     ausentes_rows = db.execute(sqlt(f"""
@@ -248,11 +260,11 @@ def get_evangelism_dashboard(
         JOIN sesiones_grupo sg ON a.sesion_id = sg.id
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
         JOIN personas p ON a.persona_id = p.id
-        WHERE sg.fecha_sesion >= :cutoff
+        WHERE sg.fecha_sesion >= :cutoff {where_asi}
         AND a.estado = 'Ausente'
         ORDER BY sg.fecha_sesion DESC
         LIMIT 50
-    """), {"cutoff": cutoff}).all()
+    """), {"cutoff": cutoff, **params}).all()
 
     ausentes_detalle = []
     for r in ausentes_rows:
@@ -280,11 +292,11 @@ def get_evangelism_dashboard(
         JOIN sesiones_grupo sg ON a.sesion_id = sg.id
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
         JOIN personas p ON a.persona_id = p.id
-        WHERE sg.fecha_sesion >= :cutoff
+        WHERE sg.fecha_sesion >= :cutoff {where_asi}
         AND a.estado = 'Presente'
         ORDER BY a.persona_id, sg.fecha_sesion DESC
         LIMIT 50
-    """), {"cutoff": cutoff}).all()
+    """), {"cutoff": cutoff, **params}).all()
 
     asistentes_detalle = []
     for r in asistentes_rows:
@@ -649,9 +661,13 @@ def get_dashboard_metrics(db: Session):
     return get_academy_dashboard(db)
 
 
-def get_pastor_radar(db: Session, sede_id: Optional[int] = None):
+def get_pastor_radar(db: Session, sede_id: Optional[str] = None):
     from sqlalchemy import text as sqlt
-    q = db.execute(sqlt("SELECT COUNT(*) FROM personas")).scalar() or 0
+    params = {"sede_id": sede_id} if sede_id else {}
+    q = db.execute(
+        sqlt(f"SELECT COUNT(*) FROM personas {'WHERE sede_id = :sede_id' if sede_id else ''}"),
+        params,
+    ).scalar() or 0
     return {"membresia_viva": q, "bautismos_este_anio": 0, "estudiantes_activos": 0, "recaudacion_mes": 0.0}
 
 

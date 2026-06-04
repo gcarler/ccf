@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useCallback,useRef,useState } from "react";
 import { toast } from "sonner";
 
 export interface AirTableHistoryEntry {
@@ -16,8 +16,8 @@ export interface UseAirTableOptions {
   token?: string;
 }
 
-export function useAirTable<T extends Record<string, any>>(options: UseAirTableOptions = {}) {
-  const { storageKey, apiEndpoint, token } = options;
+export function useAirTable(options: UseAirTableOptions = {}) {
+  const { apiEndpoint, token } = options;
 
   const [history, setHistory] = useState<AirTableHistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);

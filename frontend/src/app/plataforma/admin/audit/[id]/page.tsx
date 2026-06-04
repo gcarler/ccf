@@ -73,7 +73,7 @@ export default function AuditDetailPage() {
  <div className="w-full space-y-3">
                     <header className="space-y-4">
                         <div className="flex items-center gap-3">
-                            <DSBadge tone="violet" label="SECURITY_LOG" />
+                            <DSBadge tone="blue" label="SECURITY_LOG" />
                             <DSBadge tone="blue" label={log.action} />
                         </div>
                         <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">

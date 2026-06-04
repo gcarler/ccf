@@ -3,18 +3,18 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from backend import crud, models
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin_v2, auth_headers_legacy
 
 
 def seed_admin(
     db_session, email: str = "admin@example.com", password: str = "secret123"
 ) -> tuple[models.User, str]:
     user_obj, _, _ = seed_admin_v2(db_session, email, password)
-    return user_obj, password
+    return user_obj.legacy_user, password
 
 
 def obtain_token(client: TestClient, email: str, password: str) -> str:
-    headers = auth_headers_v2(client, email, password)
+    headers = auth_headers_legacy(email)
     return headers["Authorization"].removeprefix("Bearer ")
 
 

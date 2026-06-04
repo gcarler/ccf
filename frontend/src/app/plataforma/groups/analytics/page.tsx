@@ -82,7 +82,7 @@ export default function GroupsAnalyticsPage() {
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
                     <MetricCard label="Total casas" value={String(metrics.total)} tone="blue" />
                     <MetricCard label="Casas activas" value={String(metrics.active)} tone="emerald" />
-                    <MetricCard label="Miembros" value={String(metrics.totalMembers)} tone="indigo" />
+                    <MetricCard label="Personas" value={String(metrics.totalMembers)} tone="sky" />
                     <MetricCard label="Capacidad" value={String(metrics.totalCapacity)} tone="amber" />
                     <MetricCard label="Ocupacion" value={`${metrics.occupancyPct}%`} tone="rose" />
                 </section>
@@ -116,7 +116,7 @@ export default function GroupsAnalyticsPage() {
                 {!loading && !error && groups.length > 0 && (
                     <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Top grupos por miembros</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Top grupos por personas</p>
                             <div className="mt-5 space-y-3">
                                 {metrics.topGroups.map((group) => {
                                     const cap = Math.max(1, normalize(group.capacity));
@@ -165,11 +165,11 @@ export default function GroupsAnalyticsPage() {
     );
 }
 
-function MetricCard({ label, value, tone }: { label: string; value: string; tone: "blue" | "emerald" | "indigo" | "amber" | "rose" }) {
+function MetricCard({ label, value, tone }: { label: string; value: string; tone: "blue" | "emerald" | "sky" | "amber" | "rose" }) {
     const toneClass: Record<typeof tone, string> = {
         blue: "text-[hsl(var(--primary))]",
         emerald: "text-emerald-600",
-        indigo: "text-[hsl(var(--primary))]",
+        sky: "text-[hsl(var(--primary))]",
         amber: "text-amber-500",
         rose: "text-rose-500",
     };

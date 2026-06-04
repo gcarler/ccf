@@ -28,7 +28,7 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
         <div className="space-y-4 pb-4 overflow-y-auto h-full pr-2 scrollbar-thin">
             {/* 1. Header de Misión con Pulso de Salud */}
             <header className="relative p-4 rounded-lg bg-slate-900 text-white overflow-hidden shadow-2xl border border-white/5">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-600/20" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-sky-600/20" />
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                     <Radio size={220} />
                 </div>

@@ -64,7 +64,7 @@ export default function EnrollmentWizard() {
 
     if (loading) {
         return (
-            <AcademyDetailShell title="Procesando curso" description="Preparando requisitos de inscripción" variant="violet">
+            <AcademyDetailShell title="Procesando curso" description="Preparando requisitos de inscripción" variant="blue">
                 <div className="flex items-center justify-center py-1.5">
                     <Loader2 className="animate-spin text-[hsl(var(--primary))] w-10 h-10" />
                 </div>
@@ -78,7 +78,7 @@ export default function EnrollmentWizard() {
         <AcademyDetailShell
             title={`Inscripción · ${course.title}`}
             description="Completa requisitos, realiza pago y confirma tu nivel de formación"
-            variant="violet"
+            variant="blue"
             contentClassName="max-w-xl mx-auto"
         >
             <div className="px-4 mt-4 mb-4">
@@ -264,7 +264,7 @@ export default function EnrollmentWizard() {
                                 <><Loader2 className="animate-spin w-5 h-5" /> Encriptando...</>
                             ) : (
                                 <>
-                                    {step === 1 ? 'Iniciar Inscripción' : 'Confirmar Membresía'}
+                                    {step === 1 ? 'Iniciar Inscripción' : 'Confirmar Participación'}
                                     <ArrowRight size={18} />
                                 </>
                             )}

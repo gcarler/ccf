@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useCallback,useEffect,useState } from "react";
 
 export interface CellPosition {
   row: number;
@@ -88,7 +88,7 @@ export function useKeyboardNav({
 
   // Copy (Ctrl+C)
   useEffect(() => {
-    const handleCopy = (e: ClipboardEvent) => {
+    const handleCopy = () => {
       if (!activeCell || !onCopy) return;
       const cells = selectionRange ? getSelectedCells(selectionRange.start, selectionRange.end, rowCount, colCount) : [activeCell];
       onCopy(cells);

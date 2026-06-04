@@ -231,7 +231,7 @@ Attendance = CourseAttendance
 
 
 class AcademyStudentProfile(BaseModel):
-    user_id: int
+    user_id: int | str
     username: str
     total_progress: float = 0.0
     enrollments_count: int = 0

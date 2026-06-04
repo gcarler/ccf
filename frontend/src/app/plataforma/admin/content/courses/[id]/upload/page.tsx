@@ -133,7 +133,7 @@ export default function UploadMaterials() {
                         Finalizar y Publicar
                     </button>
                     <p className="text-center font-semibold text-slate-700 uppercase tracking-wide leading-loose max-w-xs mx-auto">
-                        Los materiales estarán disponibles para todos los miembros registrados una vez finalizado.
+                        Los materiales estarán disponibles para todos los personas registrados una vez finalizado.
                     </p>
                 </section>
             </main>

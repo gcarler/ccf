@@ -86,7 +86,7 @@ export default function SessionReportPage() {
             }
             for (const m of baseMembers) {
                 if (!roleIds.has(m.persona_id)) {
-                    ppl.push({ persona_id: m.persona_id, name: m.member?.nombre_completo || `Miembro #${m.persona_id}`, role: 'Asistente', phone: m.member?.telefono, status: 'absent' });
+                    ppl.push({ persona_id: m.persona_id, name: m.member?.nombre_completo || `Persona #${m.persona_id}`, role: 'Asistente', phone: m.member?.telefono, status: 'absent' });
                 }
             }
             setPeople(ppl);

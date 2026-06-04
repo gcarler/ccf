@@ -6,7 +6,7 @@ import { FileText, Play, Clock, Star, Filter, Search, ChevronRight, Lock } from 
 import clsx from 'clsx';
 
 const TUTORIALS = [
-    { id: 1, title: 'Primeros pasos en CCF Platform', category: 'Inicio', duration: '5 min', level: 'Básico', views: 512, rating: 4.9, free: true, thumbnail: 'from-blue-500 to-indigo-600' },
+    { id: 1, title: 'Primeros pasos en CCF Platform', category: 'Inicio', duration: '5 min', level: 'Básico', views: 512, rating: 4.9, free: true, thumbnail: 'from-blue-500 to-sky-600' },
     { id: 2, title: 'Cómo usar el CRM Pastoral correctamente', category: 'CRM', duration: '12 min', level: 'Intermedio', views: 341, rating: 4.8, free: true, thumbnail: 'from-sky-500 to-pink-600' },
     { id: 3, title: 'Gestionar el pipeline de consolidación paso a paso', category: 'CRM', duration: '18 min', level: 'Intermedio', views: 289, rating: 4.7, free: false, thumbnail: 'from-emerald-500 to-teal-600' },
     { id: 4, title: 'Crear cursos y contenido en la Academia', category: 'Academia', duration: '22 min', level: 'Avanzado', views: 198, rating: 4.6, free: false, thumbnail: 'from-amber-500 to-orange-600' },

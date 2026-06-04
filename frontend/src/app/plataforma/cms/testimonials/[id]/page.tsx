@@ -49,8 +49,8 @@ export default function CmsTestimonialDetailPage() {
                 const data = await apiFetch<any>(`/admin/testimonials/${id}`, { token }).catch(() => null);
                 const normalized = data ? {
                     ...data,
-                    author_name: data.author?.username || (data.author_id ? `Miembro #${data.author_id}` : 'Anonimo'),
-                    author_role: 'Miembro de la comunidad',
+                    author_name: data.author?.username || (data.author_id ? `Persona #${data.author_id}` : 'Anonimo'),
+                    author_role: 'Persona de la comunidad',
                     status: data.status || (data.is_approved ? 'approved' : 'pending'),
                     rating: 5,
                     category: data.emotion || 'Testimonio',
@@ -108,7 +108,7 @@ export default function CmsTestimonialDetailPage() {
                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <DSBadge tone="violet" label={testimonial.category.toUpperCase()} />
+                                <DSBadge tone="blue" label={testimonial.category.toUpperCase()} />
                                 <DSBadge tone={testimonial.status === 'approved' ? 'emerald' : testimonial.status === 'archived' ? 'slate' : 'amber'} label={testimonial.status.toUpperCase()} />
                             </div>
                             <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight leading-none uppercase">

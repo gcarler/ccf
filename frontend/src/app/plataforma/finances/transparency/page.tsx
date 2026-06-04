@@ -9,7 +9,7 @@ import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { apiFetch } from '@/lib/http';
 
 interface ImpactData {
-    total_miembros: number;
+    total_personas: number;
     total_familias: number;
     total_donaciones_cop: number;
     biblias_entregadas: number;
@@ -74,8 +74,8 @@ export default function TransparencyPage() {
                 {data && (
                     <div className="flex items-center justify-center gap-3 pt-2">
                         <div className="text-center">
-                            <p className="text-lg font-bold text-slate-900 dark:text-white">{data.total_miembros.toLocaleString()}</p>
-                            <p className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1 justify-center"><Users size={10}/> Miembros</p>
+                            <p className="text-lg font-bold text-slate-900 dark:text-white">{data.total_personas.toLocaleString()}</p>
+                            <p className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1 justify-center"><Users size={10}/> Personas</p>
                         </div>
                         <div className="w-px h-8 bg-slate-200 dark:bg-white/10" />
                         <div className="text-center">

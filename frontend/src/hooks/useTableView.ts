@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useCallback,useRef,useState } from "react";
 import { toast } from "sonner";
 
 export interface TableHistoryEntry {
@@ -16,8 +16,8 @@ export interface UseTableViewOptions {
   token?: string;
 }
 
-export function useTableView<T extends Record<string, any>>(options: UseTableViewOptions = {}) {
-  const { storageKey, apiEndpoint, token } = options;
+export function useTableView(options: UseTableViewOptions = {}) {
+  const { apiEndpoint, token } = options;
 
   const [history, setHistory] = useState<TableHistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);

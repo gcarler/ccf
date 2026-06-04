@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
+import { useRouter } from 'next/navigation';
+import React,{ createContext,useCallback,useContext,useEffect,useState } from 'react';
 
 interface AuthContextType {
     user: any;
@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    const redirectByRole = useCallback((_role: string) => {
+    const redirectByRole = useCallback(() => {
         router.push('/plataforma/messages');
     }, [router]);
 
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             sessionStorage.setItem('ccf_refresh_token', refreshToken);
         }
         const data = await fetchUser(accessToken);
-        if (data?.role) redirectByRole(data.role);
+        if (data?.role) redirectByRole();
         else if (accessToken) router.push('/plataforma/messages');
         
         // Auto-refresh permissions cache

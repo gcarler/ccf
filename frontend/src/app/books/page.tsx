@@ -7,7 +7,7 @@ import { BookOpen, Search, Download, Star, ExternalLink, Filter } from 'lucide-r
 import clsx from 'clsx';
 
 const BOOKS = [
-    { id: 1, title: 'El Discípulo Comprometido', author: 'Juan Carlos Ortiz', category: 'Discipulado', rating: 4.9, free: true, cover: 'from-blue-600 to-indigo-700', desc: 'Un clásico que revolucionará tu comprensión del verdadero discipulado.' },
+    { id: 1, title: 'El Discípulo Comprometido', author: 'Juan Carlos Ortiz', category: 'Discipulado', rating: 4.9, free: true, cover: 'from-blue-600 to-sky-700', desc: 'Un clásico que revolucionará tu comprensión del verdadero discipulado.' },
     { id: 2, title: 'Liderazgo con Propósito', author: 'Rick Warren', category: 'Liderazgo', rating: 4.8, free: false, cover: 'from-emerald-500 to-teal-600', desc: 'Descubre cómo liderar con propósito eterno en cada área de tu vida.' },
     { id: 3, title: 'La Oración que Mueve a Dios', author: 'E.M. Bounds', category: 'Oración', rating: 4.7, free: true, cover: 'from-sky-600 to-blue-700', desc: 'Las enseñanzas más profundas sobre el poder transformador de la oración.' },
     { id: 4, title: 'Gracia Divina para el Matrimonio', author: 'Tim Keller', category: 'Familia', rating: 4.8, free: false, cover: 'from-rose-500 to-pink-600', desc: 'Una perspectiva bíblica profunda sobre el matrimonio como reflejo del evangelio.' },

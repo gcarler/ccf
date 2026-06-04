@@ -1,15 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    X, CheckCircle2, AlertCircle, Loader2, 
-    ArrowRight, ArrowLeft, Trophy, Sparkles,
-    ShieldCheck, HelpCircle
-} from 'lucide-react';
+import { RightPanel } from '@/components/ui/RightPanel';
 import { apiFetch } from '@/lib/http';
 import clsx from 'clsx';
-import { RightPanel } from '@/components/ui/RightPanel';
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+AlertCircle,
+ArrowLeft,
+ArrowRight,
+CheckCircle2,
+HelpCircle,
+Loader2,
+ShieldCheck,
+Trophy
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface Option {
     id: number;

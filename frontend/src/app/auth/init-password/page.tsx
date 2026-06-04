@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
-import { Loader2, Eye, EyeOff, CheckCircle2, XCircle } from 'lucide-react';
-import Link from 'next/link';
+import { CheckCircle2,Eye,EyeOff,Loader2,XCircle } from 'lucide-react';
+import { useRouter,useSearchParams } from 'next/navigation';
+import React,{ Suspense,useState } from 'react';
 
 function InitPasswordContent() {
     const router = useRouter();
@@ -75,7 +74,7 @@ function InitPasswordContent() {
                 className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
             >
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5">
+                <div className="bg-gradient-to-r from-blue-600 to-sky-600 px-6 py-5">
                     <h1 className="text-lg font-bold text-white">Configurar Contraseña</h1>
                     <p className="text-blue-100 text-[12px] mt-1">CCF Plataforma</p>
                 </div>
@@ -129,7 +128,7 @@ function InitPasswordContent() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-[13px] font-bold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 text-white text-[13px] font-bold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 className="animate-spin" size={16} /> : null}
                         {loading ? 'Configurando...' : 'Configurar Contraseña'}

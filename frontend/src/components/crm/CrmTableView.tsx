@@ -35,7 +35,7 @@ function RoleRenderer({ value }: any) {
     const isLeader = String(value ?? '').toLowerCase().includes('líder') || String(value ?? '').toLowerCase().includes('lider');
     return (
         <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/30'}`}>
-            {value || 'Miembro'}
+            {value || 'Persona'}
         </span>
     );
 }
@@ -59,7 +59,7 @@ export default function CrmTableView({ members, search, onRowClick, isList = fal
 
     const colDefs = useMemo<ColDef[]>(() => {
         const cols: ColDef[] = [
-            { headerName: 'Miembro', flex: 2, cellRenderer: AvatarNameRenderer },
+            { headerName: 'Persona', flex: 2, cellRenderer: AvatarNameRenderer },
             { field: 'email', headerName: 'Email', flex: 1, cellStyle: { fontSize: '12px', color: '#64748b' } },
             { field: 'phone', headerName: 'Teléfono', width: 140, cellStyle: { fontSize: '12px', color: '#64748b' } },
             { field: 'church_role', headerName: 'Rol', width: 140, cellRenderer: RoleRenderer },

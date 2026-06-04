@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 import uuid as _uuid
 
+os.environ.setdefault("ENV", "test")
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, text
@@ -120,6 +122,7 @@ def seed_admin_v2(db_session, email="admin@example.com", password="testpass123")
     from backend.models_auth import Usuario, RolPlataforma
     from backend.models_crm import Persona
     from backend.core.security import get_password_hash
+    from backend.models_identity import User
 
     persona = Persona(
         id=_uuid.uuid4(),
@@ -161,6 +164,16 @@ def seed_admin_v2(db_session, email="admin@example.com", password="testpass123")
     )
     db_session.add(user)
     db_session.commit()
+    legacy_user = User(
+        username=email.split("@")[0],
+        email=email,
+        password_hash=get_password_hash(password),
+        role="admin",
+        is_active=True,
+    )
+    db_session.add(legacy_user)
+    db_session.commit()
+    user.legacy_user = legacy_user
     return user, persona, sede
 
 
@@ -175,6 +188,21 @@ def auth_headers_v2(client, email="admin@example.com", password="testpass123"):
     return {"Authorization": f"Bearer {token}"}
 
 
+def auth_headers_legacy(email="admin@example.com"):
+    """JWT para endpoints legacy que dependen de models.User.id entero."""
+    from backend.auth import create_access_token, normalize_role
+    from backend.models_identity import User
+
+    db = TestingSessionLocal()
+    try:
+        user = db.query(User).filter(User.email == email).first()
+        assert user is not None, f"Legacy user not found for {email}"
+        token = create_access_token({"sub": str(user.id), "role": normalize_role(user.role)})
+        return {"Authorization": f"Bearer {token}"}
+    finally:
+        db.close()
+
+
 def seed_user_with_role_v2(db_session, role_name="member", email="user@example.com", password="testpass123"):
     """Crea un usuario v2 (auth_users) con rol específico en RolPlataforma.
 
@@ -185,6 +213,7 @@ def seed_user_with_role_v2(db_session, role_name="member", email="user@example.c
     from backend.models_auth import Usuario, RolPlataforma
     from backend.models_crm import Persona
     from backend.core.security import get_password_hash
+    from backend.models_identity import User
 
     persona = Persona(
         id=_uuid.uuid4(),
@@ -226,4 +255,14 @@ def seed_user_with_role_v2(db_session, role_name="member", email="user@example.c
     )
     db_session.add(user)
     db_session.commit()
+    legacy_user = User(
+        username=email.split("@")[0],
+        email=email,
+        password_hash=get_password_hash(password),
+        role=role_name,
+        is_active=True,
+    )
+    db_session.add(legacy_user)
+    db_session.commit()
+    user.legacy_user = legacy_user
     return user, persona, sede

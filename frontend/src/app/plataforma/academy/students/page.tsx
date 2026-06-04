@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import ViewSwitcher from "@/components/ViewSwitcher";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
-import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
-import { useViewType, MINIMAL_VIEWS } from "@/hooks/useViewType";
 import { useAuth } from "@/context/AuthContext";
+import { MINIMAL_VIEWS,useViewType } from "@/hooks/useViewType";
 import { apiFetch } from "@/lib/http";
-import { GraduationCap, Search, UserRound, BookOpen, BarChart3 } from "lucide-react";
+import { BarChart3,BookOpen,GraduationCap,Search,UserRound } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect,useMemo,useState } from "react";
 
 type StudentRow = {
     id: number | string;

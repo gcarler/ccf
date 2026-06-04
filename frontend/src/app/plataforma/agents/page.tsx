@@ -1,27 +1,24 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-    Bot,
-    Users,
-    MessageSquare,
-    Settings,
-    Shield,
-    Zap,
-    Eye,
-    Activity,
-    Clock,
-    Search,
-    Plus,
-    RefreshCw,
-    BrainCircuit,
-    MessageCircle,
-    Database,
-    Send,
-} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
+import {
+Activity,
+Bot,
+BrainCircuit,
+Clock,
+Database,
+MessageCircle,
+MessageSquare,
+Plus,
+RefreshCw,
+Search,
+Send,
+Shield,
+Zap
+} from 'lucide-react';
+import { useCallback,useEffect,useState } from 'react';
 
 // Types
 interface Agent {
@@ -401,7 +398,7 @@ export default function AgentsPage() {
                                 <div className="text-center py-12 text-[hsl(var(--text-primary))]">
                                     <BrainCircuit className="w-12 h-12 mx-auto mb-3 text-[hsl(var(--text-secondary))]" />
                                     <p>Haz una pregunta a Optimus</p>
-                                    <p className="text-sm">Puede buscar miembros, cursos, proyectos y más</p>
+                                    <p className="text-sm">Puede buscar personas, cursos, proyectos y más</p>
                                 </div>
                             ) : (
                                 chatMessages.map((msg, i) => (

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import Link from "next/link";
 import { CmsSection } from "@/types/cms-v2";
-import { X, Star, ChevronDown, ChevronUp, Send, Calendar, MapPin, Upload, ChevronRight, Plus, Minus, FileText, CheckCircle2 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence,motion } from "framer-motion";
+import { Calendar,CheckCircle2,ChevronDown,ChevronRight,ChevronUp,FileText,MapPin,Send,Star,Upload,X } from "lucide-react";
+import Link from "next/link";
+import React,{ useCallback,useEffect,useRef,useState } from "react";
 
 function val(props: Record<string, unknown>, key: string, fallback = "") {
   const value = props?.[key];

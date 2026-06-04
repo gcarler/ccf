@@ -1,34 +1,37 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { 
-    Package, Plus, CheckCircle2, Wrench, AlertTriangle, ChevronRight,
-    Box, Cog, History, ShieldCheck, Zap, Tag, QrCode
-} from 'lucide-react';
-import { apiFetch } from '@/lib/http';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import { DSMetric } from '@/design/components/DSMetric';
-import { DSChart } from '@/design/components/DSChart';
-import { DSCard } from '@/design/components/DSCard';
-import { toast } from 'sonner';
-import clsx from 'clsx';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import Skeleton from '@/components/ui/Skeleton';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import type { ViewType } from '@/components/ViewSwitcher';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+import clsx from 'clsx';
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+AlertTriangle,
+Box,
+CheckCircle2,
+ChevronRight,
+Cog,History,
+Package,Plus,
+QrCode,
+ShieldCheck,
+Tag,
+Wrench,
+Zap
+} from 'lucide-react';
+import { useCallback,useEffect,useMemo,useState } from 'react';
+import { toast } from 'sonner';
 
 const INVENTORY_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function AdminInventoryPage() {
     const { token } = useAuth();
-    const { addToast } = useToast();
     const [assets, setAssets] = useState<any[]>([]);
-    const [dashboard, setDashboard] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewType, setViewType] = useState<ViewType>('table');
@@ -39,12 +42,8 @@ export default function AdminInventoryPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const [data, dbData] = await Promise.all([
-                apiFetch<any[]>('/assets/', { token, cache: 'no-store' }),
-                apiFetch<any>('/dashboard/assets', { token, cache: 'no-store' })
-            ]);
+            const data = await apiFetch<any[]>('/assets/', { token, cache: 'no-store' });
             setAssets(Array.isArray(data) ? data : []);
-            setDashboard(dbData);
         } catch (e) { 
             console.error(e);
             toast.error("Error al cargar inventario");
@@ -405,4 +404,3 @@ function SpecItem({ label, value, icon: Icon }: any) {
         </div>
     );
 }
-

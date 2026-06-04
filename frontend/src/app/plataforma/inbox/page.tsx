@@ -60,7 +60,7 @@ export default function InboxPage() {
 
     const displayName = user?.username?.includes('@')
         ? user.username.split('@')[0]
-        : user?.username || 'Miembro';
+        : user?.username || 'Persona';
 
     const filtered = useMemo(() => notifications.filter((notification) => {
         if (filter === 'unread' && notification.read) return false;

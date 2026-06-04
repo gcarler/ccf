@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pytest
 from backend import models
 from tests.conftest import seed_admin_v2 as _seed_admin
-from tests.conftest import auth_headers_v2 as _auth_headers
+from tests.conftest import auth_headers_legacy as _auth_headers
 
 
 def _seed_sede(db_session):
@@ -19,7 +19,7 @@ def _seed_sede(db_session):
 
 def test_messaging_presence(client, db_session):
     _seed_admin(db_session)
-    headers = _auth_headers(client)
+    headers = _auth_headers()
     resp = client.get("/api/messaging/presence/room1", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
@@ -28,7 +28,7 @@ def test_messaging_presence(client, db_session):
 
 def test_messaging_send_notification(client, db_session):
     _seed_admin(db_session)
-    headers = _auth_headers(client)
+    headers = _auth_headers()
     payload = {
         "event": "test_event",
         "body": {"message": "hola"},
@@ -41,10 +41,10 @@ def test_messaging_send_notification(client, db_session):
 
 def test_messaging_get_notifications(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    headers = _auth_headers(client)
+    headers = _auth_headers()
 
     notif = models.Notification(
-        user_id=admin.id,
+        user_id=admin.legacy_user.id,
         title="Test Notif",
         content="Contenido",
     )
@@ -60,10 +60,10 @@ def test_messaging_get_notifications(client, db_session):
 
 def test_messaging_mark_notification_read(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    headers = _auth_headers(client)
+    headers = _auth_headers()
 
     notif = models.Notification(
-        user_id=admin.id,
+        user_id=admin.legacy_user.id,
         title="Test Notif Read",
         content="Contenido",
     )
@@ -81,10 +81,10 @@ def test_messaging_mark_notification_read(client, db_session):
 
 def test_messaging_mark_all_read(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    headers = _auth_headers(client)
+    headers = _auth_headers()
 
     notif = models.Notification(
-        user_id=admin.id,
+        user_id=admin.legacy_user.id,
         title="Test Notif All",
         content="Contenido",
     )
@@ -102,7 +102,7 @@ def test_messaging_mark_all_read(client, db_session):
 )
 def test_messaging_history(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    headers = _auth_headers(client)
+    headers = _auth_headers()
 
     log = models.CommunicationLog(
         persona_id=persona.id,
@@ -127,7 +127,7 @@ def test_messaging_history(client, db_session):
 )
 def test_messaging_send_message(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    headers = _auth_headers(client)
+    headers = _auth_headers()
 
     resp = client.post(
         "/api/messaging/send",

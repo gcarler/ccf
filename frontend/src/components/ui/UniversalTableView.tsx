@@ -1,16 +1,25 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AgGridReact } from 'ag-grid-react';
 import {
-    AllCommunityModule, ModuleRegistry, themeQuartz,
-    ColDef, GridApi, GetRowIdParams, RowClassParams,
+AllCommunityModule,
+ColDef,
+GetRowIdParams,
+ModuleRegistry,themeQuartz
 } from 'ag-grid-community';
-import {
-    Plus, Search, X, Columns as ColumnsIcon, Download, Loader2, Flag, Calendar, User, Hash,
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AgGridReact } from 'ag-grid-react';
 import clsx from 'clsx';
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+Calendar,
+Columns as ColumnsIcon,Download,
+Flag,
+Hash,
+Loader2,
+Plus,Search,
+User,
+X,
+} from 'lucide-react';
+import React,{ useCallback,useEffect,useMemo,useRef,useState } from 'react';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -139,18 +148,10 @@ const darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12,
 
 const GROUP_ROW_ID_PREFIX = '__group__';
 
-interface FlatRow<T> {
-    __isGroup?: boolean;
-    __groupKey?: string;
-    __groupCount?: number;
-    __collapsed?: boolean;
-    data?: T;
-}
-
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export default function UniversalTableView<T extends { id: string | number }>({
-    data, columns, groupBy, onRowClick, onAddItem, onUpdateItem,
+    data, columns, groupBy, onRowClick, onAddItem,
     isLoading, emptyMessage = 'No hay registros para mostrar',
     renderDetailPanel,
 }: UniversalTableViewProps<T>) {
@@ -272,7 +273,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                             gridRef.current?.api?.setGridOption('quickFilterText', e.target.value);
                         }}
                         placeholder="Buscar…"
-                        className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200 dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-1 focus:ring-indigo-400"
+                        className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200 dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-1 focus:ring-sky-400"
                     />
                     {quickFilter && (
                         <button onClick={() => { setQuickFilter(''); gridRef.current?.api?.setGridOption('quickFilterText', ''); }}

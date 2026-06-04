@@ -88,21 +88,21 @@ export default function CrmAnalyticsPage() {
 
         return [
             {
-                label: 'Miembros Totales',
+                label: 'Personas Totales',
                 value: formatCount(analytics.total_members),
                 context: `${formatCount(analytics.total_families)} familias registradas`,
                 tone: 'neutral',
             },
             {
-                label: 'Miembros Activos',
+                label: 'Personas Activos',
                 value: formatCount(analytics.active_members),
                 context: `${activeRate}% de la membresia`,
                 tone: activeRate >= 70 ? 'positive' : 'warning',
             },
             {
-                label: 'Leads en Pipeline',
-                value: formatCount(analytics.total_leads),
-                context: `${Object.keys(analytics.pipeline_by_stage).length} etapas activas`,
+                label: 'Casos en Pipeline',
+                value: formatCount(analytics.total_cases),
+                context: `${Object.keys(analytics.cases_by_stage).length} etapas activas`,
                 tone: 'neutral',
             },
             {
@@ -116,14 +116,14 @@ export default function CrmAnalyticsPage() {
 
     const funnelRows = useMemo<FunnelRow[]>(() => {
         if (!analytics) return [];
-        const total = Math.max(analytics.total_leads, 1);
+        const total = Math.max(analytics.total_cases, 1);
 
-        return Object.entries(analytics.pipeline_by_stage)
+        return Object.entries(analytics.cases_by_stage)
             .map(([stage, value]) => ({
                 stage,
                 label: STAGE_LABEL[stage] ?? titleCase(stage),
-                value,
-                percent: Math.round((value / total) * 100),
+                value: Number(value),
+                percent: Math.round((Number(value) / total) * 100),
             }))
             .sort((a, b) => b.value - a.value);
     }, [analytics]);
@@ -230,7 +230,7 @@ export default function CrmAnalyticsPage() {
 
                                 <div className="mt-4 rounded-lg bg-slate-50 p-4 dark:bg-white/[0.03]">
                                     <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                                        <span>Activacion de miembros</span>
+                                        <span>Activacion de personas</span>
                                         <span>{activeRate}%</span>
                                     </div>
                                     <div className="h-2 overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">

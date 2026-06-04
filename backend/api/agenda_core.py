@@ -15,8 +15,8 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.auth import require_pastor_or_admin
 from backend.core.database import get_db
+from backend.core.tenant import require_user_sede_id
 from backend.crud import agenda_core as crud
-from backend.crud.crm import get_user_sede_id
 from backend.schemas.agenda_core import (
     EventoAgendaCreate, EventoAgendaResponse,
     ParticipanteEventoCreate, ParticipanteEventoResponse,
@@ -33,20 +33,19 @@ router = APIRouter(prefix="/v2/agenda", tags=["Agenda v2"])
 
 @router.get("/recursos", response_model=List[RecursoFisicoResponse])
 def list_recursos(
-    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    effective_sede = sede_id or get_user_sede_id(db, current_user.id)
-    return crud.list_recursos(db, sede_id=effective_sede)
+    return crud.list_recursos(db, sede_id=require_user_sede_id(db, current_user))
 
 
 @router.post("/recursos", response_model=RecursoFisicoResponse)
 def create_recurso(
     payload: RecursoFisicoCreate,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user=Depends(require_pastor_or_admin),
 ):
+    payload = payload.model_copy(update={"sede_id": require_user_sede_id(db, current_user)})
     return crud.create_recurso(db, payload)
 
 
@@ -57,8 +56,8 @@ def get_recurso(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     obj = crud.get_recurso(db, recurso_id)
-    user_sede = get_user_sede_id(db, current_user.id)
-    if not obj or (user_sede and obj.sede_id != user_sede):
+    user_sede = require_user_sede_id(db, current_user)
+    if not obj or str(obj.sede_id) != user_sede:
         raise HTTPException(status_code=404, detail="Recurso no encontrado")
     return obj
 
@@ -68,8 +67,13 @@ def update_recurso(
     recurso_id: int,
     payload: RecursoFisicoCreate,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user=Depends(require_pastor_or_admin),
 ):
+    current = crud.get_recurso(db, recurso_id)
+    user_sede = require_user_sede_id(db, current_user)
+    if not current or str(current.sede_id) != user_sede:
+        raise HTTPException(status_code=404, detail="Recurso no encontrado")
+    payload = payload.model_copy(update={"sede_id": user_sede})
     obj = crud.update_recurso(db, recurso_id, payload)
     if not obj:
         raise HTTPException(status_code=404, detail="Recurso no encontrado")
@@ -80,8 +84,11 @@ def update_recurso(
 def delete_recurso(
     recurso_id: int,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user=Depends(require_pastor_or_admin),
 ):
+    current = crud.get_recurso(db, recurso_id)
+    if not current or str(current.sede_id) != require_user_sede_id(db, current_user):
+        raise HTTPException(status_code=404, detail="Recurso no encontrado")
     if not crud.delete_recurso(db, recurso_id):
         raise HTTPException(status_code=404, detail="Recurso no encontrado")
 
@@ -92,31 +99,34 @@ def delete_recurso(
 
 @router.get("/eventos", response_model=List[EventoAgendaResponse])
 def list_eventos(
-    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    effective_sede = sede_id or get_user_sede_id(db, current_user.id)
-    return crud.list_eventos(db, sede_id=effective_sede)
+    return crud.list_eventos(db, sede_id=require_user_sede_id(db, current_user))
 
 
 @router.get("/eventos/by-date-range", response_model=List[EventoAgendaResponse])
 def list_eventos_by_date_range(
-    sede_id: int = Query(...),
     start: datetime = Query(...),
     end: datetime = Query(...),
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user=Depends(require_pastor_or_admin),
 ):
-    return crud.list_eventos_by_date_range(db, sede_id=sede_id, start=start, end=end)
+    return crud.list_eventos_by_date_range(
+        db,
+        sede_id=require_user_sede_id(db, current_user),
+        start=start,
+        end=end,
+    )
 
 
 @router.post("/eventos", response_model=EventoAgendaResponse)
 def create_evento(
     payload: EventoAgendaCreate,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user=Depends(require_pastor_or_admin),
 ):
+    payload = payload.model_copy(update={"sede_id": require_user_sede_id(db, current_user)})
     return crud.create_evento(db, payload)
 
 
@@ -127,8 +137,8 @@ def get_evento(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     obj = crud.get_evento(db, evento_id)
-    user_sede = get_user_sede_id(db, current_user.id)
-    if not obj or (user_sede and obj.sede_id != user_sede):
+    user_sede = require_user_sede_id(db, current_user)
+    if not obj or str(obj.sede_id) != user_sede:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
     return obj
 
@@ -138,8 +148,13 @@ def update_evento(
     evento_id: str,
     payload: EventoAgendaCreate,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user=Depends(require_pastor_or_admin),
 ):
+    current = crud.get_evento(db, evento_id)
+    user_sede = require_user_sede_id(db, current_user)
+    if not current or str(current.sede_id) != user_sede:
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    payload = payload.model_copy(update={"sede_id": user_sede})
     obj = crud.update_evento(db, evento_id, payload)
     if not obj:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
@@ -150,8 +165,11 @@ def update_evento(
 def delete_evento(
     evento_id: str,
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user=Depends(require_pastor_or_admin),
 ):
+    current = crud.get_evento(db, evento_id)
+    if not current or str(current.sede_id) != require_user_sede_id(db, current_user):
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
     if not crud.delete_evento(db, evento_id):
         raise HTTPException(status_code=404, detail="Evento no encontrado")
 

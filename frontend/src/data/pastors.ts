@@ -21,7 +21,7 @@ export const PASTORS: Pastor[] = [
         fullStory: `
             <p>El Pastor Histar Ariza ha sido un pilar fundamental en la fundación y consolidación de la Comunidad Cristiana Alfaro. Su ministerio nació de un profundo encuentro personal con la paternidad de Dios, lo que marcó para siempre su forma de liderar, amar y guiar a la iglesia.</p>
             <blockquote>"El ministerio no se trata de construir edificios grandes, sino de edificar familias fuertes que reflejen el carácter de Cristo."</blockquote>
-            <p>Con más de dos décadas de servicio ininterrumpido, su enseñanza se caracteriza por la profundidad teológica combinada con una aplicación práctica y compasiva. Su visión principal es ver a cada miembro de la comunidad no solo como un asistente, sino como un hijo espiritual llamado a cumplir un propósito eterno.</p>
+            <p>Con más de dos décadas de servicio ininterrumpido, su enseñanza se caracteriza por la profundidad teológica combinada con una aplicación práctica y compasiva. Su visión principal es ver a cada persona de la comunidad no solo como un asistente, sino como un hijo espiritual llamado a cumplir un propósito eterno.</p>
             <p>A lo largo de los años, el Pastor Histar ha liderado proyectos de expansión, siembra de nuevas misiones y ha formado a decenas de líderes que hoy sirven a lo largo de toda la congregación. Su testimonio es un recordatorio vivo de que cuando Dios llama, también respalda, provee y sostiene.</p>
         `
     },

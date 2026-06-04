@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import time
@@ -106,77 +105,62 @@ async def lifespan(_: FastAPI):
             settings.uploads_dir,
         )
 
-    # Ensure all ORM-managed tables exist (safe idempotent operation, retries for DB readiness)
-    for attempt in range(1, 6):
-        try:
-            from backend import models, models_cms, models_crm  # noqa: F401
-            import backend.models_agents  # noqa: F401
-            from backend.core.database import Base, engine
-
-            Base.metadata.create_all(bind=engine, checkfirst=True)
-            logger.info("ORM tables verified/created.")
-
-            # Register all agent tools
-            try:
-                from backend.services.tool_registry import register_all_tools
-
-                registry = register_all_tools()
-                logger.info("Agent tools registered: %d tools", registry.count)
-            except Exception as exc:
-                logger.warning("Tool registration failed: %s", exc)
-
-            # Register event consumers
-            try:
-                from backend.services.event_consumers import register_all_consumers
-
-                consumers = register_all_consumers()
-                logger.info("Event consumers registered: %d handlers", len(consumers))
-            except Exception as exc:
-                logger.warning("Event consumer registration failed: %s", exc)
-
-            # Rebuild knowledge base
-            try:
-                from backend.core.database import SessionLocal
-                from backend.services.knowledge_base import KnowledgeIndexer
-
-                db = SessionLocal()
-                indexer = KnowledgeIndexer(db)
-                stats = indexer.rebuild_all()
-                db.commit()
-                logger.info("Knowledge base rebuilt: %s", stats)
-                db.close()
-            except Exception as exc:
-                logger.warning("KB rebuild failed: %s", exc)
-
-            break
-        except Exception as exc:
-            err_msg = str(exc)
-            # Duplicate indexes/objects are harmless — schema is already correct
-            if "already exists" in err_msg.lower():
-                logger.info("ORM schema already up-to-date (idempotent).")
-                break
-            if attempt < 5:
-                logger.warning("create_all attempt %d/5 failed: %s — retrying...", attempt, exc)
-                await asyncio.sleep(3)
-            else:
-                logger.warning("Could not verify/create ORM tables after 5 attempts: %s", exc)
-
-    # Run outstanding Alembic migrations (idempotent, fast when up-to-date)
-    # FAIL HARD: if migrations cannot run, the app must not start
-    from pathlib import Path
-
-    from alembic import command
-    from alembic.config import Config
-
-    alembic_ini = Path(__file__).resolve().parent.parent / "alembic.ini"
-    if alembic_ini.exists():
-        alembic_cfg = Config(str(alembic_ini))
-        alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url)
-        command.upgrade(alembic_cfg, "head")
-        logger.info("Alembic migrations verified/applied.")
+    env = settings.environment.lower()
+    if env in {"test", "testing", "ci"}:
+        logger.info("Skipping Alembic migrations during tests.")
+        yield
+        return
     else:
-        logger.error("alembic.ini not found — cannot verify schema. App will not start.")
-        raise RuntimeError("alembic.ini not found; database migrations cannot run")
+        # Run outstanding Alembic migrations (idempotent, fast when up-to-date)
+        # FAIL HARD: if migrations cannot run, the app must not start
+        from pathlib import Path
+
+        from alembic import command
+        from alembic.config import Config
+
+        alembic_ini = Path(__file__).resolve().parent.parent / "alembic.ini"
+        if alembic_ini.exists():
+            alembic_cfg = Config(str(alembic_ini))
+            alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url)
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Alembic migrations verified/applied.")
+        else:
+            logger.error("alembic.ini not found — cannot verify schema. App will not start.")
+            raise RuntimeError("alembic.ini not found; database migrations cannot run")
+
+    # Register all agent tools after the schema is migrated.
+    try:
+        from backend.services.tool_registry import register_all_tools
+
+        registry = register_all_tools()
+        logger.info("Agent tools registered: %d tools", registry.count)
+    except Exception as exc:
+        logger.warning("Tool registration failed: %s", exc)
+
+    # Register event consumers.
+    try:
+        from backend.services.event_consumers import register_all_consumers
+
+        consumers = register_all_consumers()
+        logger.info("Event consumers registered: %d handlers", len(consumers))
+    except Exception as exc:
+        logger.warning("Event consumer registration failed: %s", exc)
+
+    # Rebuild knowledge base.
+    try:
+        from backend.core.database import SessionLocal
+        from backend.services.knowledge_base import KnowledgeIndexer
+
+        db = SessionLocal()
+        try:
+            indexer = KnowledgeIndexer(db)
+            stats = indexer.rebuild_all()
+            db.commit()
+            logger.info("Knowledge base rebuilt: %s", stats)
+        finally:
+            db.close()
+    except Exception as exc:
+        logger.warning("KB rebuild failed: %s", exc)
 
     yield
 

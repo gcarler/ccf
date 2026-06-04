@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Monitor, Smartphone, Globe, LogOut, Trash2, RefreshCw, Clock, MapPin, AlertCircle } from 'lucide-react';
-import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+import { motion } from 'framer-motion';
+import { AlertCircle,Clock,Globe,LogOut,MapPin,Monitor,RefreshCw,Smartphone,Trash2 } from 'lucide-react';
+import React,{ useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
 
 interface Session {
@@ -18,12 +18,12 @@ interface Session {
 }
 
 export default function AdminSettingsSessionsPage() {
-    const { user, token } = useAuth();
+    const { token } = useAuth();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
     const [revoking, setRevokeing] = useState<number | null>(null);
 
-    const fetchSessions = async () => {
+    const fetchSessions = useCallback(async () => {
         try {
             const data = await apiFetch<Session[]>('/auth/sessions', { token });
             // Mark the most recently active session as current
@@ -43,9 +43,9 @@ export default function AdminSettingsSessionsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
 
-    useEffect(() => { fetchSessions(); }, []);
+    useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
     const handleRevoke = async (sessionId: number) => {
         setRevokeing(sessionId);

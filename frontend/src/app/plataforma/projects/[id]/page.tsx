@@ -367,7 +367,7 @@ export default function ProjectDetailPage() {
                                     <DSMetric label="Actividades" value={String(tasks.length)} trend="Total" tone="blue" />
                                     <DSMetric label="Logradas" value={String(doneCount)} trend={`${progressPercent}%`} tone="emerald" />
                                     <DSMetric label={phases.find(p => p.slug === 'review')?.name || 'En Seguimiento'} value={String(tasks.filter(t => t.status === 'review').length)} trend="Consolidación" tone="amber" />
-                                    <DSMetric label="Por Hacer" value={String(tasks.filter(t => t.status !== 'completed').length)} trend="Pendientes" tone="violet" />
+                                    <DSMetric label="Por Hacer" value={String(tasks.filter(t => t.status !== 'completed').length)} trend="Pendientes" tone="blue" />
                                 </section>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

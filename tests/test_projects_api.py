@@ -1,16 +1,16 @@
 import uuid as _uuid
 
 from backend import models
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin_v2, auth_headers_legacy
 
 
 def seed_admin(db_session, email="admin@example.com", password="secret123"):
     user_obj, _, _ = seed_admin_v2(db_session, email, password)
-    return user_obj
+    return user_obj.legacy_user
 
 
 def auth_headers(client, email="admin@example.com", password="secret123"):
-    return auth_headers_v2(client, email, password)
+    return auth_headers_legacy(email)
 
 
 def test_project_whiteboard_roundtrip(client, db_session):

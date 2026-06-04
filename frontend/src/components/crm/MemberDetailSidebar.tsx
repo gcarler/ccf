@@ -199,7 +199,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                     <div className="relative">
                         <motion.div 
                             whileHover={{ scale: 1.05 }}
-                            className="size-10 rounded-md bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg shadow-2xl shadow-blue-500/30 border-4 border-white dark:border-[#1e1f21]"
+                            className="size-10 rounded-md bg-gradient-to-br from-blue-600 to-sky-700 text-white flex items-center justify-center font-bold text-lg shadow-2xl shadow-blue-500/30 border-4 border-white dark:border-[#1e1f21]"
                         >
                             {selectedMember.nombre_completo?.charAt(0) ?? ''}
                         </motion.div>
@@ -213,7 +213,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                         </h2>
                         <div className="flex items-center gap-2.5">
                             <span className="px-3 py-1 rounded-md bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 text-[9px] font-bold uppercase tracking-wider border border-blue-500/20">
-                                {selectedMember.role_in_family || 'Miembro'}
+                                {selectedMember.role_in_family || 'Persona'}
                             </span>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide opacity-60">
                                 ID {selectedMember.id}
@@ -453,7 +453,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                         />
                                     ) : (
                                         <p className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed italic">
-                                            {selectedMember.pastoral_notes || 'No hay notas pastorales registradas para este miembro.'}
+                                            {selectedMember.pastoral_notes || 'No hay notas pastorales registradas para este persona.'}
                                         </p>
                                     )}
                                 </div>

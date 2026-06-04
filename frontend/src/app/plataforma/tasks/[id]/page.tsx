@@ -91,7 +91,7 @@ export default function TaskDetailPage() {
                     <div className="lg:col-span-2 space-y-3">
                         <header className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <DSBadge tone={task.priority === 'high' ? 'violet' : 'amber'} label={task.priority.toUpperCase()} />
+                                <DSBadge tone={task.priority === 'high' ? 'blue' : 'amber'} label={task.priority.toUpperCase()} />
                                 <DSBadge tone="blue" label={task.status.toUpperCase()} />
                             </div>
                             <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight uppercase">

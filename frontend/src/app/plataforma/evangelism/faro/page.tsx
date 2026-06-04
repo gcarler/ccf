@@ -1,19 +1,19 @@
 ﻿'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch, ApiError } from '@/lib/http';
-import { Home, Plus, CheckCircle2, Loader2, ChevronRight, Clock } from 'lucide-react';
-import { toast } from 'sonner';
-import clsx from 'clsx';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
-import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
-import { useViewType, MINIMAL_VIEWS } from '@/hooks/useViewType';
-import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
-import { DSMetric, DSCard, DSBadge } from '@/design';
+import Skeleton from '@/components/ui/Skeleton';
+import ViewSwitcher from '@/components/ViewSwitcher';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import { useAuth } from '@/context/AuthContext';
+import { DSBadge,DSCard,DSMetric } from '@/design';
+import { MINIMAL_VIEWS,useViewType } from '@/hooks/useViewType';
+import { ApiError,apiFetch } from '@/lib/http';
+import clsx from 'clsx';
+import { CheckCircle2,ChevronRight,Clock,Home,Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useCallback,useEffect,useState } from 'react';
+import { toast } from 'sonner';
 
 interface FaroSeason { id: number; name: string; start_date: string; end_date: string; periodicity: string; status: string; }
 interface Grupo { id: number; name: string; leader_name?: string; zone?: string; day_of_week?: string; time?: string; status?: string; }

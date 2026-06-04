@@ -25,7 +25,7 @@ import {
 import { toast } from 'sonner';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
-const ZONE_COLORS = ['from-blue-500 to-indigo-600', 'from-blue-500 to-sky-600', 'from-emerald-500 to-teal-600', 'from-orange-500 to-amber-600', 'from-rose-500 to-pink-600', 'from-sky-500 to-cyan-600'];
+const ZONE_COLORS = ['from-blue-500 to-sky-600', 'from-blue-500 to-sky-600', 'from-emerald-500 to-teal-600', 'from-orange-500 to-amber-600', 'from-rose-500 to-pink-600', 'from-sky-500 to-cyan-600'];
 
 function getZoneColor(id: number) {
     return ZONE_COLORS[id % ZONE_COLORS.length];
@@ -95,7 +95,7 @@ export default function CrmGroupsPage() {
         if (!token || !inviteGroup) return;
         apiFetch<Member[]>('/crm/personas/', { token })
             .then(data => setMembers(Array.isArray(data) ? data : []))
-            .catch(() => toast.error('No se pudo cargar la lista de miembros'));
+            .catch(() => toast.error('No se pudo cargar la lista de personas'));
     }, [inviteGroup, token]);
 
     const filtered = useMemo(() => {
@@ -130,7 +130,10 @@ export default function CrmGroupsPage() {
         setAssigningMemberId(memberId);
         try {
             const detail = await apiFetch<Grupo>(`/crm/grupos/${inviteGroup.id}`, { token });
-            const current = new Set(detail.base_attendee_ids || detail.base_attendees?.map(member => member.persona_id) || []);
+            const current = new Set(
+                (detail.base_attendee_ids || detail.base_attendees?.map(member => member.persona_id) || [])
+                    .map(String)
+            );
             current.add(memberId);
             const updated = await apiFetch<Grupo>(`/crm/grupos/${inviteGroup.id}`, {
                 method: 'PUT',
@@ -153,9 +156,9 @@ export default function CrmGroupsPage() {
             });
             setGroups(prev => prev.map(group => group.id === updated.id ? { ...group, ...updated } : group));
             setInviteGroup(updated);
-            toast.success('Miembro agregado a la casa');
+            toast.success('Persona agregado a la casa');
         } catch {
-            toast.error('No se pudo agregar el miembro');
+            toast.error('No se pudo agregar el persona');
         } finally {
             setAssigningMemberId(null);
         }
@@ -345,7 +348,7 @@ export default function CrmGroupsPage() {
                     setMemberQuery('');
                 }}
                 title="Invitar persona"
-                subtitle={inviteGroup ? `Agregar miembro a ${inviteGroup.name}` : undefined}
+                subtitle={inviteGroup ? `Agregar persona a ${inviteGroup.name}` : undefined}
             >
                 <div className="space-y-2">
                     <div className="relative">
@@ -353,7 +356,7 @@ export default function CrmGroupsPage() {
                         <input
                             value={memberQuery}
                             onChange={event => setMemberQuery(event.target.value)}
-                            placeholder="Buscar miembro..."
+                            placeholder="Buscar persona..."
                             className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-11 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         />
                     </div>
@@ -362,7 +365,7 @@ export default function CrmGroupsPage() {
                             <div key={member.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-4 dark:border-white/10">
                                 <div>
                                     <p className="text-sm font-bold text-slate-900 dark:text-white">{member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}</p>
-                                    <p className="text-[11px] text-slate-400">{member.church_role || 'Miembro'}</p>
+                                    <p className="text-[11px] text-slate-400">{member.church_role || 'Persona'}</p>
                                 </div>
                                 <button
                                     onClick={() => handleInviteMember(member.id)}
@@ -376,7 +379,7 @@ export default function CrmGroupsPage() {
                         ))}
                         {filteredMembers.length === 0 && (
                             <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400 dark:border-white/10">
-                                No se encontraron miembros.
+                                No se encontraron personas.
                             </div>
                         )}
                     </div>

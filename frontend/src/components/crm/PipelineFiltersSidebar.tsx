@@ -35,7 +35,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                 </div>
                 
                 <div className="flex items-center gap-4 relative z-10 p-2">
-                    <div className="size-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-2xl shadow-blue-500/30">
+                    <div className="size-8 rounded-lg bg-gradient-to-br from-blue-600 to-sky-700 flex items-center justify-center text-white shadow-2xl shadow-blue-500/30">
                         <Target size={28} />
                     </div>
                     <div>
@@ -105,7 +105,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                     </div>
                 </section>
                 
-                <section className="p-4 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-md text-white shadow-2xl shadow-blue-500/25 relative overflow-hidden group">
+                <section className="p-4 bg-gradient-to-br from-blue-600 to-sky-700 rounded-md text-white shadow-2xl shadow-blue-500/25 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 transition-transform duration-700"><Zap size={80} /></div>
                     <div className="relative z-10">
                         <h4 className="text-sm font-bold uppercase tracking-tighter leading-tight mb-2">Asistente<br/>Optimus</h4>

@@ -1,9 +1,8 @@
 "use client";
 
-import React from 'react';
 import DashboardShell from '@/components/DashboardShell';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
-import { LayoutDashboard, LucideIcon } from 'lucide-react';
+import { LayoutDashboard,LucideIcon } from 'lucide-react';
 
 interface ModulePageConfig {
     module: string;
@@ -20,7 +19,7 @@ const SIDEBAR_SECTIONS = [
     },
 ];
 
-export default function ModuleDashboardPage({ module, title, icon: Icon }: ModulePageConfig) {
+export default function ModuleDashboardPage({ module, title }: ModulePageConfig) {
     return (
         <WorkspaceLayout
             sidebarTitle="Dashboards"

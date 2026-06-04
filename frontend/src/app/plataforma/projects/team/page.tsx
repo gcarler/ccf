@@ -93,7 +93,7 @@ export default function TeamPage() {
                     ) : team.length === 0 ? (
                         <EmptyState
                             icon={Users}
-                            title="No hay miembros en el equipo"
+                            title="No hay personas en el equipo"
                             description="Invita colaboradores al proyecto para visualizar su carga y disponibilidad aquí."
                         />
                     ) : (

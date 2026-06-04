@@ -60,7 +60,7 @@ export default function MyCardPage() {
                     <ShieldCheck size={48} />
                 </div>
                 <h1 className="text-lg font-bold text-white">Perfil no Encontrado</h1>
-                <p className="text-slate-400 max-w-sm">No hemos podido encontrar tu perfil de miembro vinculado a este usuario. Contacta con administración.</p>
+                <p className="text-slate-400 max-w-sm">No hemos podido encontrar tu perfil de persona vinculado a este usuario. Contacta con administración.</p>
                 <button onClick={() => router.back()} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold uppercase tracking-wide text-[10px] transition-all">
                     Volver
                 </button>
@@ -73,7 +73,7 @@ export default function MyCardPage() {
             case 'pastor':
                 return {
                     name: 'PASTORAL ELITE',
-                    primary: 'from-sky-600 to-indigo-900',
+                    primary: 'from-sky-600 to-sky-900',
                     border: 'border-sky-500/50',
                     badge: 'bg-sky-500',
                     glow: 'shadow-sky-500/20',
@@ -200,7 +200,7 @@ export default function MyCardPage() {
                 {/* Bottom Bar */}
                 <div className="mt-3 pt-6 border-t border-white/10 relative z-10 flex justify-between items-end">
                     <div className="space-y-1">
-                        <p className="text-[7px] font-bold text-white/50 uppercase tracking-wide">Miembro Desde</p>
+                        <p className="text-[7px] font-bold text-white/50 uppercase tracking-wide">Persona Desde</p>
                         <p className="text-[10px] font-bold text-white">{new Date(member.join_date).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">

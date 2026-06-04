@@ -70,7 +70,7 @@ export default function StudentCurriculum() {
                 </div>
                 <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <SummaryCard label="Formal" value={summary.formal} tone="blue" />
-                    <SummaryCard label="No formal" value={summary.informal} tone="violet" />
+                    <SummaryCard label="No formal" value={summary.informal} tone="blue" />
                     <SummaryCard label="Avg progreso" value={`${summary.avgProgress}%`} tone="emerald" />
                 </div>
                 {loading && <p className="px-4 pb-6 text-sm text-slate-500">Sincronizando tus cursos...</p>}
@@ -127,10 +127,10 @@ export default function StudentCurriculum() {
     );
 }
 
-function SummaryCard({ label, value, tone }: { label: string; value: string | number; tone: 'blue' | 'violet' | 'emerald' }) {
-    const colors: Record<'blue' | 'violet' | 'emerald', string> = {
+function SummaryCard({ label, value, tone }: { label: string; value: string | number; tone: 'blue' | 'sky' | 'emerald' }) {
+    const colors: Record<'blue' | 'sky' | 'emerald', string> = {
         blue: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10',
-        violet: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10',
+        sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/10',
         emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10',
     };
     return (
@@ -140,4 +140,3 @@ function SummaryCard({ label, value, tone }: { label: string; value: string | nu
         </div>
     );
 }
-

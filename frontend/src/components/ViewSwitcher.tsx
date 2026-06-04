@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { LayoutGrid, List, Kanban, GanttChart, CalendarDays, BookOpen, LayoutDashboard, TableProperties } from "lucide-react";
 import clsx from "clsx";
 
-export type ViewType = "dashboard" | "grid" | "list" | "kanban" | "table" | "gantt" | "calendar" | "board" | "wiki";
+export type ViewType = "dashboard" | "grid" | "list" | "kanban" | "table" | "gantt" | "calendar" | "board" | "wiki" | "chat";
 
 interface ViewOption {
     id: ViewType;

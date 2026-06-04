@@ -1,34 +1,41 @@
 "use client";
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { DSBadge } from "@/design";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  getGroupedRowModel,
-  getExpandedRowModel,
-  flexRender,
-  ColumnDef,
-  ColumnResizeMode,
-  SortingState,
-  ColumnFiltersState,
-  GroupingState,
-  ExpandedState,
-  Row,
-  Cell,
+ColumnDef,
+ColumnFiltersState,
+ColumnResizeMode,
+ExpandedState,
+flexRender,
+getCoreRowModel,
+getExpandedRowModel,
+getFilteredRowModel,
+getGroupedRowModel,
+getSortedRowModel,
+GroupingState,
+Row,
+SortingState,
+useReactTable
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import {
-  ChevronDown, ChevronRight, GripVertical, Plus, Search,
-  Filter, Columns, Settings, Undo2, Redo2, Trash2, Copy,
-  MoreHorizontal, X, ChevronLeft, ChevronRight as ChevronRightIcon,
-  ArrowUpDown, ArrowUp, ArrowDown, GripHorizontal, Download,
-  Keyboard, ClipboardPaste,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
-import { DSBadge } from "@/design";
+import { AnimatePresence,motion } from "framer-motion";
+import {
+ArrowDown,
+ArrowUp,
+ClipboardPaste,
+Columns,
+Download,
+GripHorizontal,
+Keyboard,
+Plus,
+Redo2,
+Search,
+Trash2,
+Undo2,
+X
+} from "lucide-react";
+import React,{ useCallback,useEffect,useMemo,useRef,useState } from "react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -38,7 +45,7 @@ export type AirTableCellType =
   | "phone" | "email" | "url" | "user"
   | "relation" | "attachment" | "formula" | "progress";
 
-export interface AirTableColumn<T = any> {
+export interface AirTableColumn {
   id: string;
   name: string;
   type: AirTableCellType;
@@ -60,7 +67,7 @@ export interface AirTableAction {
 
 export interface AirTableProps<T> {
   data: T[];
-  columns: AirTableColumn<T>[];
+  columns: AirTableColumn[];
   idAccessor: keyof T | ((row: T) => string);
   onChange?: (rowId: string, columnId: string, value: any) => void;
   onAddRow?: () => T;
@@ -173,7 +180,7 @@ function DateCell({ value, onChange, editing }: any) {
   );
 }
 
-function CheckboxCell({ value, onChange, editing }: any) {
+function CheckboxCell({ value, onChange }: any) {
   return (
     <button
       onClick={() => onChange?.(!value)}
@@ -242,13 +249,10 @@ export default function AirTable<T extends Record<string, any>>({
   onChange,
   onAddRow,
   onDeleteRows,
-  actions,
   storageKey,
   emptyMessage = "No rows yet. Click + to add.",
   rowHeight = 36,
-  enableBulkEdit = true,
   enableGrouping = true,
-  enableFilters = true,
 }: AirTableProps<T>) {
   // ── State ──
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -309,7 +313,7 @@ export default function AirTable<T extends Record<string, any>>({
         accessorKey: col.id,
         header: col.name,
         size: col.width || 180,
-        cell: ({ getValue, row, table }) => {
+        cell: ({ getValue, row }) => {
           const value = getValue();
           const isEditing = editingCell?.rowId === row.id && editingCell?.colId === col.id;
 
@@ -387,8 +391,6 @@ export default function AirTable<T extends Record<string, any>>({
   const paddingBottom = virtualRows.length > 0 ? totalSize - virtualRows[virtualRows.length - 1].end : 0;
 
   // ── Keyboard Navigation ──
-  const gridRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!editingCell && !isFocused) return;
@@ -526,7 +528,7 @@ export default function AirTable<T extends Record<string, any>>({
         </button>
 
         {onAddRow && (
-          <button onClick={() => { const newRow = onAddRow(); }} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]">
+          <button onClick={() => { onAddRow(); }} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]">
             <Plus size={12} /> Fila
           </button>
         )}

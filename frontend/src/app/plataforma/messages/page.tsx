@@ -1,17 +1,23 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { apiFetch } from "@/lib/http";
-import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
-import {
-    MessageCircle, Send, Plus, ChevronLeft,
-    Search, X, Loader2, UserPlus, Circle,
-} from "lucide-react";
-import type { ConversationRead, DirectMessageItem } from "@/types/directMessages";
-import WorkspaceLayout from "@/components/WorkspaceLayout";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
+import WorkspaceLayout from "@/components/WorkspaceLayout";
+import { useAuth } from "@/context/AuthContext";
+import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
+import { apiFetch } from "@/lib/http";
+import type { ConversationRead,DirectMessageItem } from "@/types/directMessages";
 import clsx from "clsx";
+import {
+ChevronLeft,
+Circle,
+Loader2,
+MessageCircle,
+Plus,
+Search,
+Send,
+UserPlus
+} from "lucide-react";
+import React,{ useCallback,useEffect,useRef,useState } from "react";
 
 interface SearchedUser {
     id: number;
@@ -24,7 +30,7 @@ function AvatarInitial({ name, size = "md" }: { name: string; size?: "sm" | "md"
     const initials = name.slice(0, 2).toUpperCase();
     const colors = [
         "from-blue-500 to-blue-700",
-        "from-violet-500 to-violet-700",
+        "from-blue-500 to-blue-700",
         "from-emerald-500 to-emerald-700",
         "from-rose-500 to-rose-700",
         "from-amber-500 to-amber-700",
@@ -50,7 +56,6 @@ export default function MessagesPage() {
     const [loading, setLoading] = useState(true);
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [conversationFilter, setConversationFilter] = useState("");
-    const [sidebarOpen, setSidebarOpen] = useState(true);
     const scrollRef = useRef<HTMLDivElement>(null);
     const userId = user?.id;
     const inputRef = useRef<HTMLInputElement>(null);
@@ -176,7 +181,6 @@ export default function MessagesPage() {
             setShowNewConvDrawer(false);
             setSearchQuery("");
             setSearchResults([]);
-            setSidebarOpen(false);
             setTimeout(() => inputRef.current?.focus(), 200);
         } catch { setSearchError("Error al crear la conversación"); }
         finally { setCreatingConv(false); }
@@ -192,7 +196,6 @@ export default function MessagesPage() {
 
     const selectConversation = (conv: ConversationRead) => {
         setActiveConv(conv);
-        setSidebarOpen(false);
     };
 
     const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
@@ -338,7 +341,6 @@ export default function MessagesPage() {
                         {/* ── Thread header ── */}
                         <div className="h-10 px-3 md:px-4 flex items-center gap-3 shrink-0 border-b border-slate-100 dark:border-white/[0.05] bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
                             <button
-                                onClick={() => setSidebarOpen(true)}
                                 className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"
                                 title="Volver a conversaciones"
                             >

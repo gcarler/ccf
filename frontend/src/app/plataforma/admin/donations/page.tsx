@@ -22,7 +22,7 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
         blue: "text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10",
         emerald: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10",
         amber: "text-amber-600 bg-amber-50 dark:bg-amber-500/10",
-        violet: "text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10",
+        sky: "text-sky-600 bg-sky-50 dark:bg-sky-500/10",
     };
     return (
         <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
@@ -178,7 +178,7 @@ export default function DonationsManagementPage() {
                     <StatCard label="Recaudación Mensual" value={`$${metrics.monthlyTotal.toLocaleString()}`} tone="blue" />
                     <StatCard label="Donantes Activos" value={String(metrics.donorCount)} tone="emerald" />
                     <StatCard label="Promedio por Donación" value={`$${Math.round(metrics.avgDonation).toLocaleString()}`} tone="amber" />
-                    <StatCard label="Pendientes" value={String(metrics.pendingCount)} tone="violet" />
+                    <StatCard label="Pendientes" value={String(metrics.pendingCount)} tone="blue" />
                 </div>
 
                 <div className="space-y-4">
@@ -313,9 +313,9 @@ export default function DonationsManagementPage() {
                                         placeholder="Nombre completo (opcional)" className={INPUT} />
                                 </div>
                                 <div>
-                                    <label className={LABEL}>ID de Miembro (opcional)</label>
+                                    <label className={LABEL}>ID de Persona (opcional)</label>
                                     <input type="number" value={fMemberId} onChange={(e) => setFMemberId(e.target.value)}
-                                        placeholder="ID numérico del miembro" className={INPUT} />
+                                        placeholder="ID numérico del persona" className={INPUT} />
                                 </div>
                                 <div>
                                     <label className={LABEL}>ID de Fondo</label>

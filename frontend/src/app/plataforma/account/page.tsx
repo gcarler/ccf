@@ -198,7 +198,7 @@ export default function AccountSettingsPage() {
                                             <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tighter">Tu Perfil Público</h3>
                                             <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-sm">Esta es tu identidad dentro de la comunidad CCF.</p>
                                             <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-4">
-                                                <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-blue-100 dark:border-blue-900/50 flex items-center gap-2"><ShieldCheck size={12} /> {user?.role || 'Miembro'}</div>
+                                                <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-blue-100 dark:border-blue-900/50 flex items-center gap-2"><ShieldCheck size={12} /> {user?.role || 'Persona'}</div>
                                                 <div className="px-3 py-1 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-slate-200 dark:border-white/10 flex items-center gap-2"><Globe size={12} /> Sede Central</div>
                                             </div>
                                         </div>

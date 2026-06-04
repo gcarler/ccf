@@ -270,7 +270,7 @@ export default function SpiritualMilestones() {
                                                 <div className="flex items-center gap-3 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px]">
                                                     <Zap size={16} fill="currentColor" /> Optimus Brain Processing
                                                 </div>
-                                                <h2 className="text-lg lg:text-xl font-bold tracking-tighter leading-none uppercase">Registro Masivo <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 italic">de Conquistas.</span></h2>
+                                                <h2 className="text-lg lg:text-xl font-bold tracking-tighter leading-none uppercase">Registro Masivo <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-sky-400 italic">de Conquistas.</span></h2>
                                             </div>
                                             <p className="text-lg text-slate-400 font-medium leading-relaxed max-w-xl italic">
                                                 &ldquo;Sube la nómina de vencedores y Optimus Brain se encargará de estampar los certificados digitales y actualizar las Hojas de Vida instantáneamente.&rdquo;

@@ -66,7 +66,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                     <div className="relative">
                         <motion.div 
                             whileHover={{ scale: 1.05 }}
-                            className="size-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-xl shadow-2xl shadow-blue-500/30 border-4 border-white dark:border-[#1e1f21]"
+                            className="size-10 rounded-lg bg-gradient-to-br from-blue-600 to-sky-700 text-white flex items-center justify-center font-bold text-xl shadow-2xl shadow-blue-500/30 border-4 border-white dark:border-[#1e1f21]"
                         >
                             {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? ''}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? ''}
                         </motion.div>

@@ -1,28 +1,27 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import WorkspaceMiniSidebar from '@/components/WorkspaceMiniSidebar';
-import WorkspaceMainSidebar from '@/components/WorkspaceMainSidebar';
-import WorkspaceInbox from '@/components/WorkspaceInbox';
-import MeshChat from '@/components/ui/MeshChat';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import Tooltip from '@/components/ui/Tooltip';
-import { useAuth } from '@/context/AuthContext';
-import { Bell, Bot, ChevronLeft, ChevronRight, Maximize2, Minimize2, LogOut, User, Settings } from 'lucide-react';
-import clsx from 'clsx';
-import { motion, AnimatePresence } from 'framer-motion';
-import { usePathname } from 'next/navigation';
-import { useCreation } from '@/context/CreationContext';
-import UniversalCreationDrawer from '@/components/ui/UniversalCreationDrawer';
-import ThemeToggle from '@/components/ui/ThemeToggle';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import MeshChat from '@/components/ui/MeshChat';
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import Tooltip from '@/components/ui/Tooltip';
+import UniversalCreationDrawer from '@/components/ui/UniversalCreationDrawer';
+import WorkspaceInbox from '@/components/WorkspaceInbox';
+import WorkspaceMainSidebar from '@/components/WorkspaceMainSidebar';
+import WorkspaceMiniSidebar from '@/components/WorkspaceMiniSidebar';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { useAuth } from '@/context/AuthContext';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
+import { useCreation } from '@/context/CreationContext';
+import clsx from 'clsx';
+import { AnimatePresence,motion } from 'framer-motion';
+import { Bell,Bot,ChevronLeft,ChevronRight,LogOut,Maximize2,Minimize2,Settings,User } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import React,{ useCallback,useEffect,useMemo,useRef,useState } from 'react';
 
 // â”€â”€ Layer Context (importamos el provider aquÃ­) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { MODULE_CONFIGS } from '@/components/workspace/moduleConfigs';
+import { useSidebarLayers } from '@/context/SidebarLayerContext';
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PUBLIC API: WorkspaceLayout wraps children with the layer provider
@@ -531,7 +530,7 @@ function WorkspaceLayoutInner({
                             whileHover={{ scale: 1.1, rotate: 5 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setShowChat(true)}
-                            className="fixed bottom-8 right-8 z-[500] size-7 rounded-lg bg-gradient-to-tr from-sky-600 to-indigo-600 text-white shadow-2xl shadow-sky-500/40 flex items-center justify-center border border-white/20 group"
+                            className="fixed bottom-8 right-8 z-[500] size-7 rounded-lg bg-gradient-to-tr from-sky-600 to-sky-600 text-white shadow-2xl shadow-sky-500/40 flex items-center justify-center border border-white/20 group"
                             aria-label="Abrir MESH AI"
                         >
                             <Bot size={28} className="group-hover:animate-pulse" />

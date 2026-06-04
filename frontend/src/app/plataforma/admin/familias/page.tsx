@@ -220,7 +220,7 @@ export default function FamiliasPage() {
                                             className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors border-b border-slate-100 dark:border-white/5 last:border-0 group">
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-8 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-black text-sm flex-shrink-0">
+                                                    <div className="size-8 rounded-md bg-gradient-to-br from-blue-500 to-sky-600 text-white flex items-center justify-center font-black text-sm flex-shrink-0">
                                                         {fam.name.charAt(0).toUpperCase()}
                                                     </div>
                                                     <p className="text-xs font-semibold text-slate-800 dark:text-white">Familia {fam.name}</p>
@@ -273,7 +273,7 @@ export default function FamiliasPage() {
                                 transition={{ delay: idx * 0.06 }}
                                 className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm hover:border-blue-500/20 transition-all group">
                                 <div className="flex items-start justify-between mb-4">
-                                    <div className="size-7 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-black text-xl">
+                                    <div className="size-7 rounded-md bg-gradient-to-br from-blue-500 to-sky-600 text-white flex items-center justify-center font-black text-xl">
                                         {fam.name.charAt(0).toUpperCase()}
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -312,7 +312,7 @@ export default function FamiliasPage() {
                                 initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.04 }}
                                 className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-md border border-slate-200 dark:border-white/5 p-4 flex items-center gap-4 group hover:border-blue-500/20 transition-all">
-                                <div className="size-10 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-black text-base flex-shrink-0">
+                                <div className="size-10 rounded-md bg-gradient-to-br from-blue-500 to-sky-600 text-white flex items-center justify-center font-black text-base flex-shrink-0">
                                     {fam.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">

@@ -216,6 +216,7 @@ class GrupoEvangelismo(Base):
     notes_historial = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     parent_group = relationship("GrupoEvangelismo", remote_side=[id], backref="child_groups")
     estrategia = relationship("EstrategiaEvangelismo", back_populates="grupos")
@@ -283,6 +284,8 @@ class GrupoEvangelismo(Base):
         leader_name = kwargs.pop("leader_name", None)
         members_count = kwargs.pop("members_count", None)
         end_time = kwargs.pop("end_time", None)
+        if "evangelism_strategy_id" in kwargs and "estrategia_id" not in kwargs:
+            kwargs["estrategia_id"] = kwargs.pop("evangelism_strategy_id")
         super().__init__(**kwargs)
         if leader_name is not None:
             self._leader_name = leader_name

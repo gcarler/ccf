@@ -30,13 +30,13 @@ export default function CrmTopBar({ title, view, onViewChange }: CrmTopBarProps)
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => onViewChange('list')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-bold transition-all ${view === 'list' ? 'bg-slate-100 dark:bg-white/5 text-cu-purple shadow-sm' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-bold transition-all ${view === 'list' ? 'bg-slate-100 dark:bg-white/5 text-cu-blue shadow-sm' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5'}`}
                     >
                         <List size={14} /> Lista
                     </button>
                     <button
                         onClick={() => onViewChange('board')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-bold transition-all ${view === 'board' ? 'bg-slate-100 dark:bg-white/5 text-cu-purple shadow-sm' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-bold transition-all ${view === 'board' ? 'bg-slate-100 dark:bg-white/5 text-cu-blue shadow-sm' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5'}`}
                     >
                         <LayoutGrid size={14} /> Tablero
                     </button>
@@ -46,11 +46,11 @@ export default function CrmTopBar({ title, view, onViewChange }: CrmTopBarProps)
             {/* Center: Search Bar */}
             <div className="flex-1 max-w-[400px] mx-8 hidden lg:block">
                 <div className="relative group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-cu-purple transition-colors" size={14} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-cu-blue transition-colors" size={14} />
                     <input
                         type="text"
                         placeholder="Buscar... Ctrl K"
-                        className="w-full bg-slate-100/50 dark:bg-white/5 border border-transparent focus:border-cu-purple/30 rounded-lg pl-9 pr-4 py-1.5 text-xs transition-all outline-none placeholder:text-slate-400"
+                        className="w-full bg-slate-100/50 dark:bg-white/5 border border-transparent focus:border-cu-blue/30 rounded-lg pl-9 pr-4 py-1.5 text-xs transition-all outline-none placeholder:text-slate-400"
                     />
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-[10px] text-slate-400 font-bold shadow-sm">
                         /
@@ -63,7 +63,7 @@ export default function CrmTopBar({ title, view, onViewChange }: CrmTopBarProps)
                 <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-white/10 pr-2 mr-1">
                     <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors" title="Agentes"><Zap size={18} /></button>
                     <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors" title="Automatizar"><Clock size={18} /></button>
-                    <button className="p-2 text-cu-purple hover:bg-cu-purple/10 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold">
+                    <button className="p-2 text-cu-blue hover:bg-cu-blue/10 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold">
                         <MessageSquare size={16} /> Ask AI
                     </button>
                 </div>

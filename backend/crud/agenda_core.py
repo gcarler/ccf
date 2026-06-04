@@ -32,7 +32,7 @@ def get_recurso(db: Session, recurso_id: int) -> Optional[RecursoFisico]:
     return db.query(RecursoFisico).filter(RecursoFisico.id == recurso_id).first()
 
 
-def list_recursos(db: Session, sede_id: Optional[int] = None) -> List[RecursoFisico]:
+def list_recursos(db: Session, sede_id: Optional[str] = None) -> List[RecursoFisico]:
     q = db.query(RecursoFisico)
     if sede_id is not None:
         q = q.filter(RecursoFisico.sede_id == sede_id)
@@ -80,7 +80,7 @@ def get_evento(db: Session, evento_id: str) -> Optional[EventoAgenda]:
     ).first()
 
 
-def list_eventos(db: Session, sede_id: Optional[int] = None) -> List[EventoAgenda]:
+def list_eventos(db: Session, sede_id: Optional[str] = None) -> List[EventoAgenda]:
     q = db.query(EventoAgenda).filter(EventoAgenda.deleted_at.is_(None))
     if sede_id is not None:
         q = q.filter(EventoAgenda.sede_id == sede_id)
@@ -89,7 +89,7 @@ def list_eventos(db: Session, sede_id: Optional[int] = None) -> List[EventoAgend
 
 def list_eventos_by_date_range(
     db: Session,
-    sede_id: int,
+    sede_id: str,
     start: datetime,
     end: datetime,
 ) -> List[EventoAgenda]:

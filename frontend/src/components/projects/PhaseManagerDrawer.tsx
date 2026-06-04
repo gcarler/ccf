@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState } from 'react';
-import {
-    GripVertical, Plus, Trash2, X, Save,
-} from 'lucide-react';
-import { apiFetch } from '@/lib/http';
+import { RightPanel } from '@/components/ui/RightPanel';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { apiFetch } from '@/lib/http';
+import {
+GripVertical,Plus,
+Save,
+Trash2
+} from 'lucide-react';
+import { useState } from 'react';
 import type { PhaseDef } from './ProjectKanbanBoard';
-import { RightPanel } from '@/components/ui/RightPanel';
 
 interface Props {
     projectId: number;

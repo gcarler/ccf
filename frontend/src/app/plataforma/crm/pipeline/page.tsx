@@ -419,7 +419,7 @@ export default function ConsolidationPipelinePage() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {[
                                                     { title: 'Primer Encuentro', icon: Users, desc: 'Contactar en menos de 24h. Usar tono cálido y empático.', color: 'text-[hsl(var(--primary))] bg-blue-50' },
-                                                    { title: 'Cierre de Etapa', icon: Target, desc: 'Validar disposición al bautismo o membresía activa.', color: 'text-emerald-500 bg-emerald-50' }
+                                                    { title: 'Cierre de Etapa', icon: Target, desc: 'Validar disposición al bautismo o participación activa.', color: 'text-emerald-500 bg-emerald-50' }
                                                 ].map((card, i) => (
                                                     <div key={i} className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all group">
                                                         <div className={clsx("size-8 rounded-md flex items-center justify-center mb-4 transition-transform group-hover:scale-110", card.color.split(' ')[1])}>
@@ -432,7 +432,7 @@ export default function ConsolidationPipelinePage() {
                                             </div>
 
                                             {/* Notes Area with Premium Styling */}
-                                            <div className="p-1 rounded-md bg-gradient-to-br from-blue-500/10 via-transparent to-indigo-500/10">
+                                            <div className="p-1 rounded-md bg-gradient-to-br from-blue-500/10 via-transparent to-sky-500/10">
                                                 <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-white/20 shadow-2xl space-y-4">
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block pl-1">Notas Dinámicas de Proceso</label>
                                                     <textarea
@@ -608,10 +608,10 @@ export default function ConsolidationPipelinePage() {
                     {(newLeadForm.first_name || newLeadForm.last_name) && (
                         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-700/30 flex items-center gap-3">
                             <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow">
-                                {newLeadForm.nombre_completo?.charAt(0) ?? newLeadForm.first_name?.[0] ?? ''}{newLeadForm.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? newLeadForm.last_name?.[0] ?? ''}
+                                {newLeadForm.first_name?.[0] ?? ''}{newLeadForm.last_name?.[0] ?? ''}
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-blue-800 dark:text-blue-300">{newLeadForm.nombre_completo || `${newLeadForm.first_name ?? ''} ${newLeadForm.last_name ?? ''}`.trim()}</p>
+                                <p className="text-sm font-bold text-blue-800 dark:text-blue-300">{`${newLeadForm.first_name ?? ''} ${newLeadForm.last_name ?? ''}`.trim()}</p>
                                 <p className="text-[9px] text-[hsl(var(--primary))] uppercase tracking-wide font-bold">Vista previa del prospecto</p>
                             </div>
                         </div>
@@ -621,6 +621,5 @@ export default function ConsolidationPipelinePage() {
         </CrmShell>
     );
 }
-
 
 

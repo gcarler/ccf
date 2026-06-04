@@ -1,35 +1,33 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import {
-  PlayCircle,
-  ChevronRight,
-  Users,
-  BookOpen,
-  Calendar,
-  Sparkles,
-  ArrowRight,
-  Loader2,
-  CheckCircle2,
-  Clock,
-  Layout,
-  FolderKanban,
-  Target,
-  Bell,
-  Star,
-  Zap,
-  Bot,
-  MessageSquare,
-  TrendingUp,
-  Activity,
-  ArrowUpRight
-} from 'lucide-react';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { motion } from 'framer-motion';
+import {
+Activity,
+ArrowRight,
+ArrowUpRight,
+Bell,
+BookOpen,
+Bot,
+Calendar,
+CheckCircle2,
+ChevronRight,
+Clock,
+FolderKanban,
+MessageSquare,
+PlayCircle,
+Sparkles,
+Star,
+Target,
+TrendingUp,
+Users,
+Zap
+} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect,useState } from 'react';
 
 const DASHBOARD_SECTIONS = [
     {
@@ -109,7 +107,7 @@ function CommandCenterHome({ user, token }: any) {
 
     const displayName = user?.username?.includes('@')
         ? user.username.split('@')[0]
-        : user?.username || 'Miembro';
+        : user?.username || 'Persona';
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -158,7 +156,7 @@ function CommandCenterHome({ user, token }: any) {
                                     "absolute top-0 left-0 right-0 h-[3px]",
                                     idx === 0 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" :
                                     idx === 1 ? "bg-gradient-to-r from-blue-400 to-blue-500" :
-                                    idx === 2 ? "bg-gradient-to-r from-violet-400 to-violet-500" :
+                                    idx === 2 ? "bg-gradient-to-r from-blue-400 to-blue-500" :
                                     "bg-gradient-to-r from-amber-400 to-amber-500"
                                 )} />
                                 <div className="flex items-center justify-between mb-3 mt-1">
@@ -303,7 +301,7 @@ function CommandCenterHome({ user, token }: any) {
                                 </p>
                             </div>
 
-                            <button className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-lg text-[11px] font-bold hover:opacity-90 active:scale-95 transition-all">
+                            <button className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-sky-600 text-white rounded-lg text-[11px] font-bold hover:opacity-90 active:scale-95 transition-all">
                                 Consultar <ArrowRight size={12} />
                             </button>
                         </motion.div>

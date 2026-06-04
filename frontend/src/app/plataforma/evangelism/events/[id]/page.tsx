@@ -126,7 +126,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
                             onFocus={() => setOpen(true)}
-                            placeholder="Buscar miembro..."
+                            placeholder="Buscar persona..."
                             className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
@@ -139,7 +139,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                                     className="w-full text-left px-4 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 border-b border-slate-100 dark:border-white/5 flex flex-col"
                                 >
                                     <span className="text-sm font-bold text-slate-800 dark:text-white">{m.nombre_completo}</span>
-                                    <span className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{m.church_role || 'Miembro'}</span>
+                                    <span className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{m.church_role || 'Persona'}</span>
                                 </button>
                             ))}
                             {filtered.length === 0 && <div className="p-4 text-center text-sm text-slate-500">Sin resultados</div>}
@@ -184,7 +184,7 @@ export default function EventDetailPage() {
     const buildSessionFingerprint = useMemo(() => {
         return (mc: string | null, preachers: string[], offering: string | null) => JSON.stringify({
             mc,
-            preachers: [...preachers].sort((a, b) => a - b),
+            preachers: [...preachers].sort((a, b) => a.localeCompare(b)),
             offering,
         });
     }, []);
@@ -238,7 +238,7 @@ export default function EventDetailPage() {
                     setOfferingId(off?.persona_id || null);
                     setInitialSessionFingerprint(JSON.stringify({
                         mc: mc?.persona_id || null,
-                        preachers: pre.map((a) => a.persona_id).sort((a, b) => a - b),
+                        preachers: pre.map((a) => a.persona_id).sort((a, b) => a.localeCompare(b)),
                         offering: off?.persona_id || null,
                     }));
                 } catch (err) {

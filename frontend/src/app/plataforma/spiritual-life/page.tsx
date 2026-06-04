@@ -24,7 +24,7 @@ const MILESTONE_DEFS = [
     { key: 'Decision_Fe',      label: 'Decisión de Fe',         icon: Zap,    color: 'text-amber-500',  bg: 'bg-amber-50 dark:bg-amber-900/20',  border: 'border-amber-200 dark:border-amber-500/20' },
     { key: 'Bautismo_Aguas',   label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-cyan-600',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',    border: 'border-cyan-200 dark:border-cyan-500/20' },
     { key: 'Bautismo_Espiritu',label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20',border: 'border-blue-200 dark:border-blue-500/20' },
-    { key: 'Miembro_Oficial',  label: 'Membresía Oficial',      icon: Shield, color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20',border: 'border-emerald-200 dark:border-emerald-500/20' },
+    { key: 'Persona_Oficial',  label: 'Participación Oficial',      icon: Shield, color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20',border: 'border-emerald-200 dark:border-emerald-500/20' },
     { key: 'Liderazgo',        label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20',    border: 'border-blue-200 dark:border-blue-500/20' },
 ];
 

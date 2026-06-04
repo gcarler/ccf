@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { AnimatePresence,motion } from 'framer-motion';
+import { Eye,EyeOff,Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import React,{ useEffect,useState } from 'react';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -25,23 +25,18 @@ export default function LoginPage() {
     }, [isAuthenticated, user, router]);
 
     const [step, setStep] = useState<'email' | 'password'>('email');
-    const [emailInfo, setEmailInfo] = useState<any>(null);
-    const [needsInit, setNeedsInit] = useState(false);
-
     const checkEmail = async () => {
         if (!email.includes('@')) { setError('Ingresa un email válido'); return; }
         setLoading(true);
         setError('');
         try {
             const res = await apiFetch<any>(`/v3/auth/check-email?email=${encodeURIComponent(email)}`);
-            setEmailInfo(res);
             if (res.is_gmail) {
                 // Google SSO — go direct
                 window.location.href = '/v3/auth/google';
                 return;
             }
             if (res.needs_password_init) {
-                setNeedsInit(true);
                 setError('Tu cuenta no tiene contraseña configurada. Revisa tu correo para el enlace de activación.');
                 setLoading(false);
                 return;
@@ -73,7 +68,6 @@ export default function LoginPage() {
         } catch (err: any) {
             console.error('[LOGIN ERROR]', err);
             if (err?.detail === 'CONTRASENA_NO_INICIALIZADA') {
-                setNeedsInit(true);
                 setError('Revisa tu correo electrónico para configurar tu contraseña por primera vez.');
             } else {
                 setError('Credenciales incorrectas o problema de conexión.');
@@ -209,7 +203,7 @@ export default function LoginPage() {
                                         <p className="text-white/70 text-[11px] leading-relaxed m-0 mb-4">
                                             El enlace al que intentas acceder es privado. Ingresa al ecosistema para continuar exactamente donde lo dejaste.
                                         </p>
-                                        <a
+                                        <Link
                                             href="/plataforma/admin"
                                             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] uppercase tracking-wider px-5 py-2.5 rounded-xl border border-white/20 transition-all no-underline"
                                         >
@@ -219,7 +213,7 @@ export default function LoginPage() {
                                                 <line x1="15" y1="12" x2="3" y2="12"/>
                                             </svg>
                                             Acceder a la Plataforma
-                                        </a>
+                                        </Link>
                                     </div>
                                 </div>
                             </motion.div>

@@ -89,7 +89,6 @@ def login(
             .filter(Usuario.email == form_data.username)
             .first()
         )
-        is_v2 = True
     else:
         user = (
             db.query(Usuario)
@@ -97,7 +96,15 @@ def login(
             .filter(Usuario.username == form_data.username)
             .first()
         )
+
+    if user:
         is_v2 = True
+    else:
+        legacy_query = db.query(models.User)
+        if "@" in form_data.username:
+            user = legacy_query.filter(models.User.email == form_data.username).first()
+        else:
+            user = legacy_query.filter(models.User.username == form_data.username).first()
 
     ip_address = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
@@ -186,10 +193,11 @@ def refresh_access_token(
     db: Session = Depends(get_db),
 ):
     """Refresca el access token usando rotación de tokens y cookies seguras."""
-    # Intentar obtener el refresh token de la cookie, fallback al payload
-    refresh_token = request.cookies.get(settings.refresh_token_cookie_name)
-    if not refresh_token and payload:
-        refresh_token = payload.refresh_token
+    # Payload explícito tiene prioridad; evita que una cookie antigua del cliente
+    # oculte el token que el caller está intentando rotar/revocar.
+    refresh_token = payload.refresh_token if payload else None
+    if not refresh_token:
+        refresh_token = request.cookies.get(settings.refresh_token_cookie_name)
 
     if not refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token")

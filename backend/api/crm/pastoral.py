@@ -405,11 +405,19 @@ async def send_crm_message(
                 q = db.query(models.Persona).filter(models.Persona.church_role == "Miembro")
                 if user_sede:
                     q = q.filter(models.Persona.sede_id == user_sede)
+                if channel in {"whatsapp", "sms"}:
+                    q = q.filter(models.Persona.phone.isnot(None), models.Persona.phone != "")
+                elif channel == "email":
+                    q = q.filter(models.Persona.email.isnot(None), models.Persona.email != "")
                 rows = q.all()
             elif normalized == "groups":
                 q = db.query(models.Persona).filter(models.Persona.family_id.isnot(None))
                 if user_sede:
                     q = q.filter(models.Persona.sede_id == user_sede)
+                if channel in {"whatsapp", "sms"}:
+                    q = q.filter(models.Persona.phone.isnot(None), models.Persona.phone != "")
+                elif channel == "email":
+                    q = q.filter(models.Persona.email.isnot(None), models.Persona.email != "")
                 rows = q.all()
             else:
                 rows = []
@@ -592,9 +600,12 @@ def get_crm_task_detail(
         "pastor",
         "coordinador",
     }
-    my_persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    my_user_id = getattr(current_user, "id", None)
+    my_persona = db.query(models.Persona).filter(models.Persona.user_id == my_user_id).first()
     my_persona_id = my_persona.id if my_persona else None
-    if not is_staff and task.assignee_id != my_persona_id:
+    is_persona_owner = task.assignee_id is not None and task.assignee_id == my_persona_id
+    is_legacy_owner = task.assignee_user_id is not None and task.assignee_user_id == my_user_id
+    if not is_staff and not (is_persona_owner or is_legacy_owner):
         raise HTTPException(status_code=403, detail="No autorizado para ver esta tarea")
     return _serialize_task(task)
 

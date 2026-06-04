@@ -56,7 +56,7 @@ export default function CrmSidebar() {
             </div>
             <span className="flex-1 truncate">{label}</span>
             {isLocked && <Clock size={12} className="text-slate-600" />}
-            {isActive(href) && <div className="absolute left-0 w-1 h-4 bg-cu-purple rounded-r-full"></div>}
+            {isActive(href) && <div className="absolute left-0 w-1 h-4 bg-cu-blue rounded-r-full"></div>}
         </Link>
     );
 
@@ -64,7 +64,7 @@ export default function CrmSidebar() {
         <div className="flex h-screen fixed left-0 top-0 z-[60]">
             {/* GLOBAL BAR (Far Left - Narrow) */}
             <div className="w-[56px] bg-[#1e2227] border-r border-white/5 flex flex-col items-center py-2 gap-4 shrink-0">
-                <div className="size-8 rounded-lg bg-cu-purple flex items-center justify-center text-white font-bold text-sm shadow-lg mb-2 cursor-pointer hover:scale-105 transition-transform">
+                <div className="size-8 rounded-lg bg-cu-blue flex items-center justify-center text-white font-bold text-sm shadow-lg mb-2 cursor-pointer hover:scale-105 transition-transform">
                     CC
                 </div>
 
@@ -96,7 +96,7 @@ export default function CrmSidebar() {
                 {/* Workspace Switcher */}
                 <div className="p-3 border-b border-white/5 flex items-center justify-between group cursor-pointer hover:bg-white/5 transition-colors m-2 rounded-lg">
                     <div className="flex items-center gap-2.5 overflow-hidden">
-                        <div className="size-6 rounded bg-gradient-to-tr from-cu-purple to-indigo-500 flex items-center justify-center text-white font-black text-[10px] shrink-0 shadow-md">
+                        <div className="size-6 rounded bg-gradient-to-tr from-cu-blue to-sky-500 flex items-center justify-center text-white font-black text-[10px] shrink-0 shadow-md">
                             C
                         </div>
                         <h2 className="text-xs font-bold text-white truncate">Carlos&apos;s Workspace</h2>
@@ -140,7 +140,7 @@ export default function CrmSidebar() {
                                 onClick={() => toggleSpace('ministerio')}
                                 className="w-full flex items-center gap-2 px-3 py-1 text-[12px] font-medium text-slate-400 hover:text-slate-200"
                             >
-                                <div className="size-4 rounded bg-cu-purple/20 flex items-center justify-center text-cu-purple font-black text-[8px]">M</div>
+                                <div className="size-4 rounded bg-cu-blue/20 flex items-center justify-center text-cu-blue font-black text-[8px]">M</div>
                                 <span className="flex-1 text-left">Ministerio</span>
                                 {expandedSpaces.includes('ministerio') ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                             </button>

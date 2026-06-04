@@ -1,32 +1,30 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-    Mail,
-    Search,
-    Download,
-    Users,
-    Calendar,
-    Filter,
-    Loader2,
-    ExternalLink,
-    ChevronLeft,
-    ChevronRight,
-    Globe,
-    Tag,
-    BarChart3,
-    BookOpen
-} from 'lucide-react';
+import CrmShell from '@/components/crm/CrmShell';
+import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+import Skeleton from '@/components/ui/Skeleton';
+import { ViewType,getStoredView } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
-import CrmShell from '@/components/crm/CrmShell';
-import Skeleton from '@/components/ui/Skeleton';
-import { ViewType, getStoredView } from '@/components/ViewSwitcher';
-import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+import { apiFetch } from '@/lib/http';
 import clsx from 'clsx';
+import {
+BookOpen,
+Calendar,
+ChevronLeft,
+ChevronRight,
+Download,
+Filter,
+Globe,
+Loader2,
+Mail,
+Search,
+Tag,
+Users
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useCallback,useEffect,useMemo,useState } from 'react';
 
 interface NewsletterLead {
     case_id: number;
@@ -78,7 +76,6 @@ export default function NewsletterLeadsPage() {
     const [page, setPage] = useState(1);
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_newsletter_view', 'list'));
     const [dateFrom, setDateFrom] = useState('');
-    const [dateTo] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_newsletter_wiki_notes', {
         title: 'Wiki de leads de newsletter',

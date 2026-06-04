@@ -9,7 +9,6 @@ import {
     X, Layers, LayoutDashboard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as Dialog from '@radix-ui/react-dialog';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -131,22 +130,20 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
     };
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <AnimatePresence>
-                {isOpen && (
-                    <Dialog.Portal forceMount>
-                        <Dialog.Overlay asChild>
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9500] bg-slate-900/40 backdrop-blur-md" />
-                        </Dialog.Overlay>
-                        <Dialog.Content asChild>
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9500] bg-slate-900/40 backdrop-blur-md" onClick={onClose} />
                             <motion.div 
                                 initial={{ x: '100%' }} 
                                 animate={{ x: 0 }} 
                                 exit={{ x: '100%' }}
                                 transition={{ type: 'spring', damping: 30, stiffness: 300 }}
                                 className="fixed right-0 top-0 z-[9501] h-screen w-[90vw] bg-[#f8fafc] dark:bg-[#0f1115] shadow-2xl border-l border-white/10 flex flex-col overflow-hidden"
+                                role="complementary"
+                                aria-label="Pizarra Infinita Ministerial"
                             >
-                                <Dialog.Title className="sr-only">Pizarra Infinita Ministerial</Dialog.Title>
+                                <h2 className="sr-only">Pizarra Infinita Ministerial</h2>
 
                                 {/* Top Bar: Calidad Premium */}
                                 <header className="h-8 px-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shrink-0">
@@ -209,11 +206,9 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                                     </div>
                                 </main>
                             </motion.div>
-                        </Dialog.Content>
-                    </Dialog.Portal>
-                )}
-            </AnimatePresence>
-        </Dialog.Root>
+                </>
+            )}
+        </AnimatePresence>
     );
 }
 

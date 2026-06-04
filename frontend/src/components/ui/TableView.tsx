@@ -1,25 +1,26 @@
 "use client";
 
-import React, { useCallback, useMemo, useRef, useState } from "react";
-import { AgGridReact } from "ag-grid-react";
-import {
-  AllCommunityModule,
-  ModuleRegistry,
-  themeQuartz,
-  ColDef,
-  CellValueChangedEvent,
-  GridReadyEvent,
-  GetRowIdParams,
-  IRowNode,
-  GridApi,
-  IDatasource,
-  IGetRowsParams,
-} from "ag-grid-community";
-import {
-  Plus, Trash2, Download, Filter, Search, X,
-} from "lucide-react";
-import clsx from "clsx";
 import { evaluateFormula } from "@/lib/formulaEngine";
+import {
+AllCommunityModule,
+CellValueChangedEvent,
+ColDef,
+GetRowIdParams,
+IDatasource,
+IGetRowsParams,
+ModuleRegistry,
+themeQuartz
+} from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
+import clsx from "clsx";
+import {
+Download,
+Plus,
+Search,
+Trash2,
+X
+} from "lucide-react";
+import React,{ useCallback,useMemo,useRef,useState } from "react";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -31,7 +32,7 @@ export type TableCellType =
   | "phone" | "email" | "url" | "user"
   | "relation" | "attachment" | "formula" | "progress";
 
-export interface TableColumn<T = any> {
+export interface TableColumn {
   id: string;
   name: string;
   type: TableCellType;
@@ -53,7 +54,7 @@ export interface TableAction {
 
 export interface TableViewProps<T = any> {
   data: T[];
-  columns: TableColumn<T>[];
+  columns: TableColumn[];
   idAccessor: keyof T | ((row: T) => string);
   onChange?: (rowId: string, columnId: string, value: any) => void;
   onAddRow?: () => T;
@@ -83,7 +84,7 @@ export interface TableViewProps<T = any> {
 
 const CELL_COLORS: Record<string, string> = {
   red:    "#ef4444", orange: "#f97316", yellow: "#eab308",
-  green:  "#22c55e", blue:   "#3b82f6", purple: "#a855f7",
+  green:  "#22c55e", blue:   "#3b82f6", sky: "#0ea5e9",
   pink:   "#ec4899", gray:   "#6b7280",
 };
 
@@ -100,7 +101,7 @@ function SelectRenderer({ value, colDef }: any) {
   );
 }
 
-function CheckboxRenderer({ value, node, column, api }: any) {
+function CheckboxRenderer({ value, node, column }: any) {
   return (
     <input
       type="checkbox"
@@ -108,7 +109,7 @@ function CheckboxRenderer({ value, node, column, api }: any) {
       onChange={(e) => {
         node.setDataValue(column.getColId(), e.target.checked);
       }}
-      className="w-4 h-4 rounded cursor-pointer accent-indigo-600"
+      className="w-4 h-4 rounded cursor-pointer accent-sky-600"
     />
   );
 }
@@ -138,7 +139,7 @@ function ProgressRenderer({ value }: any) {
 
 // ─── Column mapper ────────────────────────────────────────────────────────────
 
-function toColDef(col: TableColumn, allData: any[]): ColDef {
+function toColDef(col: TableColumn): ColDef {
   const base: ColDef = {
     field: col.id,
     headerName: col.name,
@@ -194,7 +195,7 @@ function toColDef(col: TableColumn, allData: any[]): ColDef {
         editable: false,
         valueGetter: ({ data }) => {
           if (!data || !col.formula) return "";
-          try { return evaluateFormula(col.formula, data, allData); } catch { return ""; }
+          try { return evaluateFormula(col.formula, data); } catch { return ""; }
         },
       };
 
@@ -307,10 +308,10 @@ export default function TableView<T extends Record<string, any>>({
         headerName: "",
         suppressHeaderMenuButton: true,
       },
-      ...columns.map((c) => toColDef(c, data)),
+      ...columns.map((c) => toColDef(c)),
     ];
     return defs;
-  }, [columns, data]);
+  }, [columns]);
 
   const defaultColDef = useMemo<ColDef>(() => ({
     resizable: true,
@@ -401,7 +402,7 @@ export default function TableView<T extends Record<string, any>>({
                 }
               }}
               placeholder="Buscar…"
-              className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200 dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-1 focus:ring-indigo-400"
+              className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200 dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-1 focus:ring-sky-400"
             />
             {quickFilter && (
               <button onClick={() => {

@@ -144,7 +144,7 @@ function InlineUserPicker({
                     aria-label="Selector de persona asignada"
                 >
                     {currentUser ? (
-                        <div className="size-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-semibold text-white shrink-0 shadow-sm">
+                        <div className="size-6 rounded-full bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center font-semibold text-white shrink-0 shadow-sm">
                             {initials}
                         </div>
                     ) : (

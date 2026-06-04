@@ -25,7 +25,7 @@ type CommunicationLog = {
   created_at: string;
 };
 type Chat = {
-  id: number;
+  id: string;
   name: string;
   lastMessage: string;
   time: string;
@@ -173,7 +173,7 @@ export default function InboxMessagesPage() {
             <input
                 value={search}
                 onChange={event => setSearch(event.target.value)}
-                placeholder={isCreatingNew ? "Buscar miembro..." : "Buscar chat..."}
+                placeholder={isCreatingNew ? "Buscar persona..." : "Buscar chat..."}
                 className="w-full rounded-lg bg-[hsl(var(--bg-primary))] border border-slate-200 pl-8 pr-3 py-1.5 text-[11px] font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-white/5 dark:border-white/10 transition-all shadow-sm"
             />
             <Search
@@ -213,7 +213,7 @@ export default function InboxMessagesPage() {
                         ))}
                         {visibleMembers.length === 0 && (
                             <div className="p-4 text-center">
-                                <p className="text-xs font-bold text-slate-500">Ningún miembro encontrado</p>
+                                <p className="text-xs font-bold text-slate-500">Ningún persona encontrado</p>
                             </div>
                         )}
                     </motion.div>
@@ -297,7 +297,7 @@ export default function InboxMessagesPage() {
                 >
                 <ChevronLeft size={16} />
                 </button>
-                <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-[10px] font-semibold uppercase text-white shadow-sm">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-sky-600 text-[10px] font-semibold uppercase text-white shadow-sm">
                 {activeChat.name.charAt(0)}
                 </div>
                 <div>

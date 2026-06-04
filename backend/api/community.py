@@ -45,7 +45,11 @@ def delete_community_card(
 @router.get("/grupos", response_model=List[dict])
 def list_community_cell_groups(db: Session = Depends(get_db)):
     """Lista grupos para la vista comunitaria."""
-    grupos = db.query(models.GrupoEvangelismo).all()
+    grupos = (
+        db.query(models.GrupoEvangelismo)
+        .filter(models.GrupoEvangelismo.deleted_at.is_(None))
+        .all()
+    )
     leader_ids = [g.lider_persona_id for g in grupos if g.lider_persona_id]
     leaders: dict = {}
     if leader_ids:

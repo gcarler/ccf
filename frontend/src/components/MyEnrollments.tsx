@@ -330,7 +330,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
             const progressOffset = progressCircumference - (progressCircumference * item.progress_percent) / 100;
 
             return (
-              <article key={item.id} className="bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[#e8eaed] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 group hover:border-[hsl(var(--primary))]/30 transition-all hover:shadow-xl hover:shadow-indigo-500/5 cursor-pointer" onClick={() => openLessons(item)}>
+              <article key={item.id} className="bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[#e8eaed] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 group hover:border-[hsl(var(--primary))]/30 transition-all hover:shadow-xl hover:shadow-sky-500/5 cursor-pointer" onClick={() => openLessons(item)}>
                 <div className="flex gap-4 items-center relative">
                   <div className="relative flex size-7 shrink-0 items-center justify-center">
                     <svg className="absolute inset-0 size-7 -rotate-90" viewBox="0 0 100 100">

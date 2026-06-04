@@ -178,7 +178,7 @@ export default function IntelligenceConsole() {
                 <div className="lg:col-span-8 space-y-3">
                     <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <StatusCard label="Salud del Core" value={loadError ? 'DEGRADADA' : 'ÓPTIMA'} status={loadError ? 'degraded' : 'online'} icon={Cpu} color="blue" />
-                        <StatusCard label="Insights Activos" value={insights.length.toString()} status="ready" icon={Sparkles} color="purple" />
+                        <StatusCard label="Insights Activos" value={insights.length.toString()} status="ready" icon={Sparkles} color="blue" />
                         <StatusCard label="Tareas en Cola" value={tasks.length.toString()} status="processing" icon={Layers} color="amber" />
                     </section>
 
@@ -381,7 +381,7 @@ export default function IntelligenceConsole() {
 function StatusCard({ label, value, status, icon: Icon, color }: any) {
     const colors: any = {
         blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20',
-        purple: 'text-sky-600 bg-sky-50 dark:bg-sky-900/20',
+        sky: 'text-sky-600 bg-sky-50 dark:bg-sky-900/20',
         amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20'
     };
     const statusTone = status === 'degraded'
@@ -419,4 +419,3 @@ function AgentState({ label, load, status, color }: any) {
         </div>
     );
 }
-

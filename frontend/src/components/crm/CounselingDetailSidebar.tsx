@@ -108,7 +108,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                 <div className="flex items-center gap-4 relative z-10">
                     <motion.div 
                         whileHover={{ scale: 1.05 }}
-                        className="size-10 rounded-lg bg-gradient-to-br from-sky-600 to-indigo-700 flex items-center justify-center text-white shadow-2xl shadow-sky-500/30 border-4 border-white dark:border-[#1e1f21]"
+                        className="size-10 rounded-lg bg-gradient-to-br from-sky-600 to-sky-700 flex items-center justify-center text-white shadow-2xl shadow-sky-500/30 border-4 border-white dark:border-[#1e1f21]"
                     >
                         <Heart size={28} />
                     </motion.div>
@@ -117,7 +117,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                             {session.topic || 'Sin tema <br/> asignado'}
                         </h2>
                         <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wide opacity-70">
-                            <span className="p-1.5 bg-sky-500/10 rounded-lg text-sky-600"><User size={12} /></span> {session.member_name || 'Miembro CCF'}
+                            <span className="p-1.5 bg-sky-500/10 rounded-lg text-sky-600"><User size={12} /></span> {session.member_name || 'Persona CCF'}
                         </p>
                     </div>
                 </div>

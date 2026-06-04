@@ -108,7 +108,7 @@ export default function PastorRadarPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-xl lg:text-xl font-bold tracking-tighter text-slate-900 dark:text-white uppercase leading-none"
                 >
-                    Radar <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Pastoral</span>
+                    Radar <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">Pastoral</span>
                 </motion.h1>
                 <motion.p 
                     initial={{ opacity: 0 }}
@@ -116,7 +116,7 @@ export default function PastorRadarPage() {
                     transition={{ delay: 0.2 }}
                     className="text-slate-500 dark:text-slate-400 text-lg font-medium max-w-2xl leading-relaxed"
                 >
-                    Consola de mando ejecutiva. Análisis dinámico de membresía, formación académica e impacto financiero consolidado.
+                    Consola de mando ejecutiva. Análisis dinámico de participación, formación académica e impacto financiero consolidado.
                 </motion.p>
             </header>
 
@@ -138,7 +138,7 @@ export default function PastorRadarPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
                 >
-                    <RadarStat label="Membresía Viva" value={data?.membresia_viva || 0} icon={Users} color="blue" trend="+5.2%" auraColor="rgba(37,99,235,0.15)" />
+                    <RadarStat label="Participación Viva" value={data?.membresia_viva || 0} icon={Users} color="blue" trend="+5.2%" auraColor="rgba(37,99,235,0.15)" />
                     <RadarStat label="Bautismos" value={data?.bautismos_este_anio || 0} icon={Waves} color="cyan" trend="+12%" auraColor="rgba(6,182,212,0.15)" />
                     <RadarStat label="Estudiantes" value={data?.estudiantes_activos || 0} icon={BookOpen} color="emerald" trend="+8" auraColor="rgba(16,185,129,0.15)" />
                     <RadarStat label="Recaudación" value={`$${(data?.recaudacion_mes || 0).toLocaleString()}`} icon={DollarSign} color="amber" trend="+15%" auraColor="rgba(245,158,11,0.15)" />
@@ -167,7 +167,7 @@ export default function PastorRadarPage() {
                                     <div 
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative shimmer-bar",
-                                            i === 5 ? "bg-gradient-to-t from-blue-600 to-indigo-500 shadow-[0_0_30px_rgba(37,99,235,0.3)]" : "bg-slate-100 dark:bg-white/5 group-hover/bar:bg-slate-200"
+                                            i === 5 ? "bg-gradient-to-t from-blue-600 to-sky-500 shadow-[0_0_30px_rgba(37,99,235,0.3)]" : "bg-slate-100 dark:bg-white/5 group-hover/bar:bg-slate-200"
                                         )}
                                         style={{ height: `${h}%` }}
                                     >
@@ -194,7 +194,7 @@ export default function PastorRadarPage() {
                         </h2>
                         <div className="space-y-3">
                             <GoalItem label="Bautismos Meta" target={50} current={data?.bautismos_este_anio || 0} color="bg-[hsl(var(--primary))]" />
-                            <GoalItem label="Nuevos Miembros" target={200} current={35} color="bg-emerald-500" />
+                            <GoalItem label="Nuevos Personas" target={200} current={35} color="bg-emerald-500" />
                             <GoalItem label="Estudiantes Liderazgo" target={80} current={12} color="bg-amber-500" />
                         </div>
 

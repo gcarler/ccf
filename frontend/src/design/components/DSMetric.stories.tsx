@@ -15,6 +15,6 @@ const meta: Meta<typeof DSMetric> = {
 export default meta;
 type Story = StoryObj<typeof DSMetric>;
 
-export const Indigo: Story = { args: { tone: 'blue' } };
+export const Sky: Story = { args: { tone: 'blue' } };
 export const Emerald: Story = { args: { tone: 'emerald' } };
 export const Amber: Story = { args: { tone: 'amber' } };

@@ -51,7 +51,7 @@ export default function CmsUiKitPage() {
               <DSBadge tone="blue" label="Blue" />
               <DSBadge tone="emerald" label="Emerald" />
               <DSBadge tone="amber" label="Amber" />
-              <DSBadge tone="violet" label="Violet" />
+              <DSBadge tone="blue" label="Blue" />
             </div>
           </DSCard>
         </section>
@@ -89,7 +89,7 @@ export default function CmsUiKitPage() {
             <DSMetric label="Total Usuarios" value="1,248" trend="+12" tone="blue" />
             <DSMetric label="Nuevos Hoy" value="42" trend="+5" tone="emerald" />
             <DSMetric label="Bajas" value="3" trend="-2" tone="amber" />
-            <DSMetric label="Tasa de Actividad" value="89%" tone="violet" />
+            <DSMetric label="Tasa de Actividad" value="89%" tone="blue" />
           </div>
         </section>
 

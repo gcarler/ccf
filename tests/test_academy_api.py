@@ -1,4 +1,5 @@
 from tests.conftest import seed_user_with_role_v2, auth_headers_v2
+from backend import models
 
 
 def seed_user(db_session, email="student@example.com", password="secret123"):
@@ -17,7 +18,7 @@ def test_my_academy_profile_uses_authenticated_user_id(client, db_session):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["user_id"] == user.id
+    assert data["user_id"] == str(user.id)
     assert data["username"] == user.username
     assert data["enrollments_count"] == 0
     assert data["certificates_count"] == 0
@@ -42,7 +43,7 @@ def test_academy_progress_for_current_user(client, db_session):
     db_session.flush()
 
     enrollment = models.Enrollment(
-        user_id=user.id,
+        persona_id=user.id,
         course_id=course.id,
         status="active",
         progress_percent=50,
@@ -55,7 +56,7 @@ def test_academy_progress_for_current_user(client, db_session):
 
     db_session.add(
         models.LessonProgress(
-            user_id=user.id,
+            persona_id=user.id,
             lesson_id=lesson_1.id,
             progress_percent=100,
             last_position_seconds=600,

@@ -21,6 +21,7 @@ import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import Link from 'next/link';
 
 // ─── Mentor Assignment Drawer ──────────────────────────────────────────────────
 
@@ -320,7 +321,7 @@ export default function MemberDetailPage() {
     const [mentorDrawerOpen, setMentorDrawerOpen] = useState(false);
     const [mentorDrawerConfig, setMentorDrawerConfig] = useState<{ title: string; subtitle: string }>({
         title: 'Asignar Mentoría',
-        subtitle: 'Selecciona el mentor que guiará el proceso espiritual de este miembro.',
+        subtitle: 'Selecciona el mentor que guiará el proceso espiritual de este persona.',
     });
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editMember, setEditMember] = useState<any>({});
@@ -349,7 +350,7 @@ export default function MemberDetailPage() {
                     address: data.address ?? '',
                     joinedAt: data.joinedAt ?? data.created_at ?? null,
                     status: data.status ?? 'Activo',
-                    church_role: data.church_role ?? 'Miembro',
+                    church_role: data.church_role ?? 'Persona',
                     xp: data.xp ?? 0,
                     level: data.level ?? 1,
                     house: data.house ?? '',
@@ -467,9 +468,9 @@ export default function MemberDetailPage() {
             setMember((prev: any) => ({ ...prev, ...updated }));
             setEditMember((prev: any) => ({ ...prev, ...updated }));
             setIsEditOpen(false);
-            toast.success('Miembro actualizado');
+            toast.success('Persona actualizado');
         } catch {
-            toast.error('No se pudo actualizar el miembro');
+            toast.error('No se pudo actualizar el persona');
         } finally {
             setIsEditSaving(false);
         }
@@ -558,7 +559,7 @@ export default function MemberDetailPage() {
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-3">
                     {/* Avatar */}
                     <div className="relative shrink-0">
-                        <div className="size-10 lg:size-10 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xl font-bold shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
+                        <div className="size-10 lg:size-10 rounded-md bg-gradient-to-tr from-blue-600 to-sky-700 flex items-center justify-center text-white text-xl font-bold shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
                             {initials}
                         </div>
                         <div className="absolute -bottom-3 -right-3 size-9 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg flex items-center justify-center shadow-xl border border-slate-50 dark:border-white/10">
@@ -653,7 +654,7 @@ export default function MemberDetailPage() {
                                     { label: 'Estado Civil', value: member.marital_status },
                                     { label: 'País de Nacimiento', value: member.birth_country },
                                     { label: 'Sexo', value: member.sex },
-                                    { label: 'Tipo de Membresía', value: member.membership_type },
+                                    { label: 'Tipo de Participación', value: member.membership_type },
                                 ]} />
                             </div>
 
@@ -726,7 +727,7 @@ export default function MemberDetailPage() {
                                     <div className="py-2 text-center rounded-lg bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10">
                                         <Users size={28} className="mx-auto text-slate-300 mb-3" />
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Sin núcleo familiar registrado</p>
-                                        <p className="text-xs text-slate-400 mt-1">Este miembro aún no pertenece a una familia</p>
+                                        <p className="text-xs text-slate-400 mt-1">Este persona aún no pertenece a una familia</p>
                                     </div>
                                 )}
                             </div>
@@ -734,7 +735,7 @@ export default function MemberDetailPage() {
 
                         <div className="lg:col-span-4 space-y-3">
                             {/* MESH Insight */}
-                            <div className="p-4 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-md text-white shadow-xl relative overflow-hidden group">
+                            <div className="p-4 bg-gradient-to-br from-sky-600 to-blue-700 rounded-md text-white shadow-xl relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700"><Sparkles size={100} /></div>
                                 <div className="relative z-10 space-y-2">
                                     <div className="flex items-center gap-2">
@@ -809,7 +810,7 @@ export default function MemberDetailPage() {
                                 <div className="absolute top-0 right-0 p-4 opacity-10"><Heart size={80} /></div>
                                 <div className="relative z-10 space-y-4">
                                     <h4 className="text-sm font-bold uppercase tracking-wide">Cuidado Pastoral</h4>
-                                    <p className="text-sm text-rose-100 leading-relaxed">Este miembro está siendo acompañado activamente en su proceso espiritual.</p>
+                                    <p className="text-sm text-rose-100 leading-relaxed">Este persona está siendo acompañado activamente en su proceso espiritual.</p>
                                     <button
                                         onClick={() => {
                                             setMentorDrawerConfig({
@@ -833,18 +834,18 @@ export default function MemberDetailPage() {
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Progreso Académico</h3>
-                                    <a href="/plataforma/academy" className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-all">
+                                    <Link href="/plataforma/academy" className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-all">
                                         Ver Academia <ExternalLink size={12} />
-                                    </a>
+                                    </Link>
                                 </div>
                                 <EmptyState
                                     icon={GraduationCap}
                                     title="Sin cursos registrados"
                                     description={`${fullName} aún no está inscrito en ningún curso de la Academia CCF.`}
                                     action={
-                                        <a href="/plataforma/academy" className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-sm hover:bg-[hsl(var(--primary))] transition-all mt-2">
+                                        <Link href="/plataforma/academy" className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-sm hover:bg-[hsl(var(--primary))] transition-all mt-2">
                                             <BookOpen size={16} /> Explorar Cursos
-                                        </a>
+                                        </Link>
                                     }
                                 />
                             </div>
@@ -897,7 +898,7 @@ export default function MemberDetailPage() {
                                     <EmptyState
                                         icon={DollarSign}
                                         title="Sin contribuciones registradas"
-                                        description="No se han registrado diezmos u ofrendas para este miembro."
+                                        description="No se han registrado diezmos u ofrendas para este persona."
                                     />
                                 )}
                             </div>
@@ -962,7 +963,7 @@ export default function MemberDetailPage() {
             <WorkspaceDrawer
                 isOpen={isEditOpen}
                 onClose={() => setIsEditOpen(false)}
-                title="Editar Miembro"
+                title="Editar Persona"
                 subtitle={`Actualizando perfil de ${fullName}`}
                 actions={
                     <>
@@ -991,8 +992,8 @@ export default function MemberDetailPage() {
                                 <EditField label="Teléfono" value={editMember.phone ?? ''} onChange={v => setEditMember((p: any) => ({...p, phone: v}))} placeholder="+57 300 000 0000" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <SelectField label="Rol" value={editMember.church_role ?? ''} onChange={v => setEditMember((p: any) => ({...p, church_role: v}))} options={['Miembro','Pastor','Líder','Diácono','Ministro de Culto','Apóstol','Profeta','Evangelista','Maestro','Administrador']} />
-                                <SelectField label="Tipo de Membresía" value={editMember.membership_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, membership_type: v}))} options={MEMBERSHIP_TYPES} />
+                                <SelectField label="Rol" value={editMember.church_role ?? ''} onChange={v => setEditMember((p: any) => ({...p, church_role: v}))} options={['Persona','Pastor','Líder','Diácono','Ministro de Culto','Apóstol','Profeta','Evangelista','Maestro','Administrador']} />
+                                <SelectField label="Tipo de Participación" value={editMember.membership_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, membership_type: v}))} options={MEMBERSHIP_TYPES} />
                             </div>
                         </div>
                     </div>

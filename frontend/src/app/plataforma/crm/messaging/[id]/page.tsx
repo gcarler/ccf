@@ -114,7 +114,7 @@ export default function MessagingDetailPage() {
                         trend={`${deliveryRate}% exito`}
                         tone="emerald"
                     />
-                    <DSMetric label="Fallidos" value={String(campaign.failed_count)} trend="Revisar numeros" tone="violet" />
+                    <DSMetric label="Fallidos" value={String(campaign.failed_count)} trend="Revisar numeros" tone="blue" />
                 </section>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

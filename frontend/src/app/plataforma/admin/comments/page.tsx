@@ -89,7 +89,7 @@ export default function CommentModeration() {
         id: comment.id,
         title: `${comment.author}: ${comment.context}`,
         date: (comment.created_at || new Date().toISOString()).slice(0, 10),
-        color: comment.type.includes('Cursos') ? 'indigo' as const : comment.type.includes('Foro') ? 'blue' as const : 'amber' as const,
+        color: comment.type.includes('Cursos') ? 'sky' as const : comment.type.includes('Foro') ? 'blue' as const : 'amber' as const,
         location: comment.type,
     })), [filteredComments]);
     const ganttItems = useMemo(() => filteredComments.map((comment) => ({
@@ -98,7 +98,7 @@ export default function CommentModeration() {
         subtitle: comment.context,
         start_date: (comment.created_at || new Date().toISOString()).slice(0, 10),
         end_date: (comment.created_at || new Date().toISOString()).slice(0, 10),
-        color: comment.type.includes('Cursos') ? 'indigo' as const : comment.type.includes('Foro') ? 'blue' as const : 'amber' as const,
+        color: comment.type.includes('Cursos') ? 'sky' as const : comment.type.includes('Foro') ? 'blue' as const : 'amber' as const,
         progress: 50,
     })), [filteredComments]);
 

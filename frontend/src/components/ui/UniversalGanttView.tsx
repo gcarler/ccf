@@ -14,7 +14,7 @@ interface GanttItem {
     subtitle?: string;
     start_date: string; // ISO or YYYY-MM-DD
     end_date: string;
-    color?: 'blue' | 'purple' | 'emerald' | 'amber' | 'rose' | 'indigo';
+    color?: 'blue' | 'emerald' | 'amber' | 'rose' | 'sky';
     progress?: number; // 0-100
 }
 
@@ -27,11 +27,10 @@ interface UniversalGanttViewProps {
 
 const COLORS = {
     blue: 'bg-[hsl(var(--primary))] shadow-blue-500/20',
-    purple: 'bg-sky-500 shadow-sky-500/20',
+    sky: 'bg-sky-500 shadow-sky-500/20',
     emerald: 'bg-emerald-500 shadow-emerald-500/20',
     amber: 'bg-amber-500 shadow-amber-500/20',
     rose: 'bg-rose-500 shadow-rose-500/20',
-    indigo: 'bg-[hsl(var(--primary))] shadow-[hsl(var(--primary)/0.2)]',
 };
 
 export default function UniversalGanttView({ items, moduleName = "Módulo", onItemClick, onOptimize }: UniversalGanttViewProps) {

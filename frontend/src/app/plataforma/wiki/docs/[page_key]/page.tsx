@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { ChevronLeft, Share2, MoreHorizontal, History, BookOpen, FileText } from 'lucide-react';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
-import { apiFetch } from '@/lib/http';
-import { useAuth } from '@/context/AuthContext';
 import WikiEditor from '@/components/wiki/WikiEditor';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+import { motion } from 'framer-motion';
+import { BookOpen,ChevronLeft,History,MoreHorizontal,Share2 } from 'lucide-react';
+import { useParams,useRouter } from 'next/navigation';
+import { useEffect,useState } from 'react';
 
 export default function WikiDocEditPage() {
     const params = useParams();

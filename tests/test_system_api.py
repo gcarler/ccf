@@ -3,16 +3,16 @@ from datetime import datetime
 from fastapi.testclient import TestClient
 
 from backend import models
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin_v2, auth_headers_legacy
 
 
 def seed_user(db_session, email="member@example.com", password="secret123"):
     user_obj, _, _ = seed_admin_v2(db_session, email, password)
-    return user_obj
+    return user_obj.legacy_user
 
 
 def auth_headers(client, email="member@example.com", password="secret123"):
-    return auth_headers_v2(client, email, password)
+    return auth_headers_legacy(email)
 
 
 def test_ai_generate_requires_prompt(client: TestClient, db_session):

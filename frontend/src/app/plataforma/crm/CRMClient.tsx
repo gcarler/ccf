@@ -1,35 +1,31 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import {
-    Users,
-    UserPlus,
-    Heart,
-    MessageCircle,
-    Mail,
-    Phone,
-    Calendar,
-    ArrowUpRight,
-    Search,
-    User,
-    Users as FamilyIcon,
-    LayoutDashboard,
-    List
-} from 'lucide-react';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
-import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
-import { motion, AnimatePresence } from 'framer-motion';
-import { apiFetch } from '@/lib/http';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
 import DashboardEmbed from '@/components/DashboardEmbed';
-import { DSCard } from '@/design/components/DSCard';
-import { DSMetric } from '@/design/components/DSMetric';
-import { DSChart } from '@/design/components/DSChart';
-import { toast } from 'sonner';
 import DSSkeleton from '@/components/ui/Skeleton';
-import { ViewType } from '@/components/ViewSwitcher';
+import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { useAuth } from '@/context/AuthContext';
+import { DSCard } from '@/design/components/DSCard';
+import { DSChart } from '@/design/components/DSChart';
+import { DSMetric } from '@/design/components/DSMetric';
+import { apiFetch } from '@/lib/http';
+import {
+ArrowUpRight,
+Calendar,
+Users as FamilyIcon,
+Heart,
+List,
+Mail,
+MessageCircle,
+Phone,
+User,
+UserPlus,
+Users
+} from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect,useState } from 'react';
+import { toast } from 'sonner';
 
 export default function CRMClient() {
     const { token } = useAuth();
@@ -63,7 +59,7 @@ export default function CRMClient() {
                     icon={UserPlus}
                     onMainClick={() => router.push('/plataforma/crm/personas')}
                     options={[
-                        { id: 'member', label: 'Miembro', icon: User, onClick: () => router.push('/plataforma/crm/personas') },
+                        { id: 'member', label: 'Persona', icon: User, onClick: () => router.push('/plataforma/crm/personas') },
                         { id: 'family', label: 'Familia', icon: FamilyIcon, onClick: () => router.push('/plataforma/crm/personas') },
                         { id: 'appointment', label: 'Cita', icon: Calendar, onClick: () => router.push('/plataforma/crm/counseling') },
                         { id: 'call', label: 'Llamada', icon: Phone, onClick: () => router.push('/plataforma/crm/pipeline') },
@@ -100,7 +96,7 @@ export default function CRMClient() {
                                         <DSMetric label="Personas Registradas" value="—" tone="blue" icon={Users} />
                                         <DSMetric label="Roles Asignados" value="—" tone="emerald" icon={Heart} />
                                         <DSMetric label="En Directorio" value="—" tone="amber" icon={List} />
-                                        <DSMetric label="Actividad" value="—" tone="violet" icon={Calendar} />
+                                        <DSMetric label="Actividad" value="—" tone="blue" icon={Calendar} />
                                     </>
                                 )}
                             </section>
@@ -109,7 +105,7 @@ export default function CRMClient() {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                                 <div className="lg:col-span-2">
                                     <DSCard>
-                                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Crecimiento de Membresía</h3>
+                                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Crecimiento de Participación</h3>
                                         <DSChart type="area" data={dashboard?.growth_chart} color="#10b981" height={220} />
                                     </DSCard>
                                 </div>
@@ -132,7 +128,7 @@ export default function CRMClient() {
                                             <Users className="size-5 text-ccf-blue" />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Directorio de Miembros</h4>
+                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Directorio de Personas</h4>
                                             <p className="text-[11px] text-slate-400 font-medium mt-0.5">Gestiona y filtra las personas registradas</p>
                                         </div>
                                     </div>
@@ -157,18 +153,18 @@ export default function CRMClient() {
 
                                 <Link
                                     href="/plataforma/crm/counseling"
-                                    className="group relative overflow-hidden rounded-lg border-2 border-dashed border-slate-200 dark:border-white/10 p-5 hover:border-violet-400/40 dark:hover:border-violet-400/40 transition-all bg-white dark:bg-white/5 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 no-underline"
+                                    className="group relative overflow-hidden rounded-lg border-2 border-dashed border-slate-200 dark:border-white/10 p-5 hover:border-blue-400/40 dark:hover:border-blue-400/40 transition-all bg-white dark:bg-white/5 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 no-underline"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2.5 rounded-lg bg-violet-100 dark:bg-violet-900/30">
-                                            <MessageCircle className="size-5 text-violet-600 dark:text-violet-400" />
+                                        <div className="p-2.5 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                                            <MessageCircle className="size-5 text-blue-600 dark:text-blue-400" />
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-bold text-slate-900 dark:text-white">Consejería y Citas</h4>
                                             <p className="text-[11px] text-slate-400 font-medium mt-0.5">Agenda de acompañamiento pastoral</p>
                                         </div>
                                     </div>
-                                    <ArrowUpRight className="absolute top-3 right-3 size-4 text-slate-300 group-hover:text-violet-500 transition-colors" />
+                                    <ArrowUpRight className="absolute top-3 right-3 size-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
                                 </Link>
                             </section>
                         </>

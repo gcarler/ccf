@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 const CAMPUSES = [
-    { id: 'central', name: 'Sede Central', location: 'Mocoa', color: 'from-blue-600 to-indigo-700' },
+    { id: 'central', name: 'Sede Central', location: 'Mocoa', color: 'from-blue-600 to-sky-700' },
     { id: 'norte', name: 'Sede Norte', location: 'Villagarzón', color: 'from-emerald-600 to-teal-700' },
     { id: 'sur', name: 'Sede Sur', location: 'Puerto Asís', color: 'from-rose-600 to-pink-700' },
 ];

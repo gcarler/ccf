@@ -47,7 +47,7 @@ const mockMembers = [
     status: 'Nuevo',
     phone: '+51 988 111 444',
     created_at: '2024-03-05T16:45:00Z',
-    church_role: 'Miembro',
+    church_role: 'Persona',
   },
 ]
 

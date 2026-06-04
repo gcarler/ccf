@@ -32,7 +32,7 @@ function InfoRow({ icon: Icon, label, value, color = 'text-[hsl(var(--primary))]
 function Badge({ label, color = 'blue' }: { label: string; color?: string }) {
     const styles: Record<string, string> = {
         blue:   'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50 dark:border-blue-500/20',
-        violet: 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50 dark:border-blue-500/20',
+        sky: 'bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-200/50 dark:border-sky-500/20',
         emerald:'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50 dark:border-emerald-500/20',
         rose:   'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-500/20',
     };
@@ -59,7 +59,7 @@ export default function MemberDetailPage() {
             const data = await apiFetch<any>(`/crm/personas/${id}`, { token });
             setMember(data);
         } catch {
-            toast.error('Error al cargar expediente de miembro');
+            toast.error('Error al cargar expediente de persona');
         } finally {
             setLoading(false);
         }
@@ -88,7 +88,7 @@ export default function MemberDetailPage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
-                    { label: 'Membresía', icon: User, href: '/plataforma/admin/members' },
+                    { label: 'Participación', icon: User, href: '/plataforma/admin/members' },
                     { label: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(), icon: User },
                 ]}
                 rightActions={
@@ -110,7 +110,7 @@ export default function MemberDetailPage() {
                             <User size={180} />
                         </div>
                         <motion.div whileHover={{ scale: 1.04 }}
-                            className="size-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-black text-lg shadow-2xl shadow-blue-500/25 border-4 border-white dark:border-[#1e1f21] flex-shrink-0 relative z-10">
+                            className="size-10 rounded-lg bg-gradient-to-br from-blue-600 to-sky-700 text-white flex items-center justify-center font-black text-lg shadow-2xl shadow-blue-500/25 border-4 border-white dark:border-[#1e1f21] flex-shrink-0 relative z-10">
                             {initials || <User size={48} />}
                         </motion.div>
                         <div className="relative z-10 space-y-3">
@@ -118,13 +118,13 @@ export default function MemberDetailPage() {
                                 {member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}
                             </h1>
                             <div className="flex flex-wrap items-center gap-2">
-                                {member.church_role && <Badge label={member.church_role.toUpperCase()} color="violet" />}
+                                {member.church_role && <Badge label={member.church_role.toUpperCase()} color="blue" />}
                                 {member.spiritual_status && <Badge label={member.spiritual_status.toUpperCase()} color="emerald" />}
                                 {member.is_baptized && <Badge label="BAUTIZADO" color="blue" />}
                             </div>
                             {member.joined_date && (
                                 <p className="font-semibold text-slate-400 uppercase tracking-wide">
-                                    Miembro desde {new Date(member.joined_date).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                                    Persona desde {new Date(member.joined_date).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
                                 </p>
                             )}
                         </div>

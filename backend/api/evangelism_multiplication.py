@@ -12,12 +12,13 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session, joinedload
 
 from backend import models
 from backend.auth import require_pastor_or_admin
 from backend.core.database import get_db
+from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -49,8 +50,7 @@ class MultiplicationHistoryItem(BaseModel):
     miembros_actuales: int = 0
     lider_nombre: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MultiplicationCheckItem(BaseModel):
@@ -61,8 +61,7 @@ class MultiplicationCheckItem(BaseModel):
     excede_umbral: bool
     sugerencia: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -101,15 +100,16 @@ def _serialize_grupo(grupo: models.GrupoEvangelismo, db: Session) -> dict:
 @router.get("/multiplication/check", response_model=List[MultiplicationCheckItem])
 def check_multiplication(
     umbral: int = Query(15, description="Umbral de miembros para sugerir división"),
-    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Analiza todos los grupos y devuelve los que superan el umbral de miembros,
     sugiriendo división."""
-    q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.activo)
-    if sede_id is not None:
-        q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
+    user_sede = require_user_sede_id(db, current_user)
+    q = db.query(models.GrupoEvangelismo).filter(
+        models.GrupoEvangelismo.activo,
+        models.GrupoEvangelismo.sede_id == user_sede,
+    )
     grupos = q.options(joinedload(models.GrupoEvangelismo.lider)).order_by(models.GrupoEvangelismo.nombre.asc()).all()
 
     resultados: list[dict] = []

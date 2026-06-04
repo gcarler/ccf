@@ -589,7 +589,7 @@ export default function CounselingPage() {
                             </div>
                             <div className="h-3.5 rounded-full bg-slate-100 dark:bg-white/5 overflow-hidden border border-slate-200/50 dark:border-white/5 relative">
                                 <div 
-                                    className={`h-full transition-all duration-1000 ease-out relative overflow-hidden ${session.status === 'Realizada' ? 'bg-emerald-500' : session.status === 'Cancelada' ? 'bg-rose-500' : 'bg-gradient-to-r from-sky-600 to-indigo-500'}`}
+                                    className={`h-full transition-all duration-1000 ease-out relative overflow-hidden ${session.status === 'Realizada' ? 'bg-emerald-500' : session.status === 'Cancelada' ? 'bg-rose-500' : 'bg-gradient-to-r from-sky-600 to-sky-500'}`}
                                     style={{ width: `${STATUS_PROGRESS[session.status] ?? 0}%` }}
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-full h-full -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
@@ -665,7 +665,7 @@ export default function CounselingPage() {
         >
             <div className="space-y-3">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Miembro / Lead</label>
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Persona / Lead</label>
                     <div className="relative">
                         <select
                             required
@@ -673,7 +673,7 @@ export default function CounselingPage() {
                             value={newSession.persona_id}
                             onChange={(e) => setNewSession({ ...newSession, persona_id: e.target.value })}
                         >
-                            <option value="" className="dark:bg-slate-900">Selecciona miembro...</option>
+                            <option value="" className="dark:bg-slate-900">Selecciona persona...</option>
                             {members.map(m => (
                                 <option key={m.id} value={m.id} className="dark:bg-slate-900">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</option>
                             ))}

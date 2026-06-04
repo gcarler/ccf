@@ -79,7 +79,7 @@ export default function RolesSettingsPage() {
                 method: 'DELETE',
                 token
             });
-            toast.success("Rol eliminado y miembros transferidos");
+            toast.success("Rol eliminado y personas transferidos");
             setIsDeleting(null);
             setFallbackId('');
             loadRoles();

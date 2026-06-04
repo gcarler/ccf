@@ -1,19 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import {
-    GraduationCap,
-    TrendingUp,
-    Sparkles,
-} from 'lucide-react';
-import DashboardEmbed from '@/components/DashboardEmbed';
+import { useAuth } from '@/context/AuthContext';
 import { DSCard } from '@/design/components/DSCard';
-import { DSMetric } from '@/design/components/DSMetric';
 import { DSChart } from '@/design/components/DSChart';
+import { DSMetric } from '@/design/components/DSMetric';
+import { apiFetch } from '@/lib/http';
+import {
+GraduationCap,
+Sparkles,
+TrendingUp,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect,useState } from 'react';
 import { toast } from 'sonner';
 
 export default function AcademyClient() {
@@ -102,7 +101,7 @@ export default function AcademyClient() {
                         </DSCard>
 
                         {/* Optimus Coach Card */}
-                        <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl text-white space-y-4 shadow-2xl shadow-blue-500/20 border border-white/10 relative overflow-hidden">
+                        <div className="p-3 bg-gradient-to-br from-blue-600 to-sky-700 rounded-2xl text-white space-y-4 shadow-2xl shadow-blue-500/20 border border-white/10 relative overflow-hidden">
                             <div className="absolute -right-4 -top-4 size-10 bg-white/10 rounded-full blur-3xl" />
                             <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide relative z-10">
                                 <Sparkles size={14} className="animate-pulse" /> Optimus Intelligence

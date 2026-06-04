@@ -1,36 +1,33 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
-import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
-import { useViewType, FULL_VIEWS } from '@/hooks/useViewType';
-import TableView, { TableColumn } from '@/components/ui/TableView';
-import { useTableView } from '@/hooks/useTableView';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Plus,
-    Search,
-    ChevronRight,
-    ChevronDown,
-    LayoutDashboard,
-    Loader2,
-    Send,
-    X,
-    SlidersHorizontal,
-    Fingerprint,
-    Phone,
-    Calendar,
-    MapPin,
-    VenetianMask,
-    BookOpen,
-    Users
-} from 'lucide-react';
-import { toast } from 'sonner';
-import clsx from 'clsx';
+import TableView from '@/components/ui/TableView';
+import ViewSwitcher from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import { useAuth } from '@/context/AuthContext';
+import { FULL_VIEWS,useViewType } from '@/hooks/useViewType';
+import { apiFetch } from '@/lib/http';
+import clsx from 'clsx';
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+BookOpen,
+ChevronDown,
+ChevronRight,
+Fingerprint,
+LayoutDashboard,
+Loader2,
+MapPin,
+Plus,
+Search,
+Send,
+SlidersHorizontal,
+Users,
+VenetianMask,
+X
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React,{ useEffect,useMemo,useState } from 'react';
+import { toast } from 'sonner';
 
 interface Department {
     id: number;
@@ -104,7 +101,7 @@ type MemberFormData = {
 };
 
 const INITIAL_MEMBER: MemberFormData = {
-    first_name: '', last_name: '', email: '', phone: '', church_role: 'Miembro',
+    first_name: '', last_name: '', email: '', phone: '', church_role: 'Persona',
     second_name: '', second_last_name: '', id_type: '', id_number: '',
     birth_country: '', sex: '', marital_status: '', birthday: '',
     landline_phone: '', other_phone: '', mobile_phone: '', address: '', housing_type: '',
@@ -206,7 +203,7 @@ export default function MembersPage() {
                 groups.sort();
                 setUniqueGroups(groups);
             } catch {
-                toast.error('Error al cargar membresía');
+                toast.error('Error al cargar participación');
             } finally {
                 setLoading(false);
             }
@@ -289,9 +286,9 @@ export default function MembersPage() {
             setMembers(prev => [created, ...prev]);
             setNewMember({ ...INITIAL_MEMBER });
             setIsCreateOpen(false);
-            toast.success('Miembro registrado');
+            toast.success('Persona registrado');
         } catch {
-            toast.error('No se pudo registrar el miembro');
+            toast.error('No se pudo registrar el persona');
         } finally {
             setIsSaving(false);
         }
@@ -445,10 +442,10 @@ export default function MembersPage() {
                                                 </select>
                                             </div>
 
-                                            {/* Tipo Membresía */}
+                                            {/* Tipo Participación */}
                                             <div className="space-y-1">
                                                 <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">
-                                                    <BookOpen size={11} /> Membresía
+                                                    <BookOpen size={11} /> Participación
                                                 </label>
                                                 <select
                                                     value={membershipFilter}
@@ -459,7 +456,7 @@ export default function MembersPage() {
                                                     <option value="Activo">Activo</option>
                                                     <option value="Inactivo">Inactivo</option>
                                                     <option value="Visitante">Visitante</option>
-                                                    <option value="Miembro">Miembro</option>
+                                                    <option value="Persona">Persona</option>
                                                     <option value="Transferido">Transferido</option>
                                                 </select>
                                             </div>
@@ -482,7 +479,7 @@ export default function MembersPage() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</p>
-                                        <p className="text-xs text-slate-400">{m.church_role || 'Miembro'}{m.email ? ` · ${m.email}` : ''}</p>
+                                        <p className="text-xs text-slate-400">{m.church_role || 'Persona'}{m.email ? ` · ${m.email}` : ''}</p>
                                     </div>
                                 </div>
                             ))}
@@ -497,7 +494,7 @@ export default function MembersPage() {
                                 { id: 'church_role', name: 'Rol', type: 'select', options: roles.map(r => ({ label: r.name, value: r.name, color: r.color })) },
                                 { id: 'email', name: 'Email', type: 'email' },
                                 { id: 'phone', name: 'Teléfono', type: 'phone' },
-                                { id: 'membership_type', name: 'Membresía', type: 'select', options: [{ label: 'Activo', value: 'Activo' }, { label: 'Inactivo', value: 'Inactivo' }] },
+                                { id: 'membership_type', name: 'Participación', type: 'select', options: [{ label: 'Activo', value: 'Activo' }, { label: 'Inactivo', value: 'Inactivo' }] },
                                 { id: 'spiritual_health', name: 'Salud Espiritual', type: 'progress' },
                             ]}
                             serverSide={{
@@ -520,10 +517,10 @@ export default function MembersPage() {
                         <div className="space-y-6">
                             {(() => {
                                 const FIXED_GROUPS = [
-                                    { key: 'Activo', label: 'Miembros Activos', desc: 'Miembros activos y en cobertura', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800/30' },
-                                    { key: 'Miembro', label: 'Miembros', desc: 'Miembros registrados sin estado específico', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800/30' },
-                                    { key: 'Inactivo', label: 'Inactivos', desc: 'Miembros que han dejado de asistir', color: 'text-slate-600', bg: 'bg-slate-50 dark:bg-slate-800/20', border: 'border-slate-200 dark:border-slate-700/30' },
-                                    { key: 'Transferido', label: 'Transferidos', desc: 'Miembros transferidos a otra congregación', color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', border: 'border-purple-200 dark:border-purple-800/30' },
+                                    { key: 'Activo', label: 'Personas Activos', desc: 'Personas activos y en cobertura', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800/30' },
+                                    { key: 'Persona', label: 'Personas', desc: 'Personas registrados sin estado específico', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800/30' },
+                                    { key: 'Inactivo', label: 'Inactivos', desc: 'Personas que han dejado de asistir', color: 'text-slate-600', bg: 'bg-slate-50 dark:bg-slate-800/20', border: 'border-slate-200 dark:border-slate-700/30' },
+                                    { key: 'Transferido', label: 'Transferidos', desc: 'Personas transferidos a otra congregación', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800/30' },
                                 ];
 
                                 // Collect unique group_name values from filtered Visitante members
@@ -547,7 +544,7 @@ export default function MembersPage() {
                                                     <div>
                                                         <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase truncate max-w-[150px]">{member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}</h3>
                                                         <div className="mt-1 flex items-center gap-2">
-                                                            <span className={clsx("px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide", getRoleColor(member.church_role || ''))}>{member.church_role || 'Miembro'}</span>
+                                                            <span className={clsx("px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide", getRoleColor(member.church_role || ''))}>{member.church_role || 'Persona'}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -609,7 +606,7 @@ export default function MembersPage() {
                                             </div>
                                         )}
 
-                                        {/* Grupos fijos: Activo, Miembro, Inactivo, Transferido */}
+                                        {/* Grupos fijos: Activo, Persona, Inactivo, Transferido */}
                                         {FIXED_GROUPS.map(group => {
                                             const groupMembers = filteredMembers.filter(m => (m.membership_type || '') === group.key);
                                             if (groupMembers.length === 0) return null;
@@ -621,10 +618,10 @@ export default function MembersPage() {
                                             );
                                         })}
 
-                                        {/* Sin Membresía */}
+                                        {/* Sin Participación */}
                                         {sinMembresia.length > 0 && (
                                             <div>
-                                                {renderSectionHeader('Sin Membresía', 'Sin tipo de membresía asignado', 'text-slate-400', 'bg-slate-50 dark:bg-white/5', sinMembresia.length)}
+                                                {renderSectionHeader('Sin Participación', 'Sin tipo de participación asignado', 'text-slate-400', 'bg-slate-50 dark:bg-white/5', sinMembresia.length)}
                                                 {renderGroupMemberCards(sinMembresia)}
                                             </div>
                                         )}
@@ -673,8 +670,8 @@ export default function MembersPage() {
                                 <MemberField label="Teléfono" value={newMember.phone} onChange={um('phone')} placeholder="+57 300 000 0000" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <SelectField label="Rol" value={newMember.church_role} onChange={um('church_role')} options={roles.map(r => r.name)} placeholder="Miembro" />
-                                <SelectField label="Tipo de Membresía" value={newMember.membership_type} onChange={um('membership_type')} options={MEMBERSHIP_TYPES} placeholder="Seleccionar..." />
+                                <SelectField label="Rol" value={newMember.church_role} onChange={um('church_role')} options={roles.map(r => r.name)} placeholder="Persona" />
+                                <SelectField label="Tipo de Participación" value={newMember.membership_type} onChange={um('membership_type')} options={MEMBERSHIP_TYPES} placeholder="Seleccionar..." />
                             </div>
                         </div>
                     </div>

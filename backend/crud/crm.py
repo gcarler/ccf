@@ -21,18 +21,9 @@ def get_user_sede_id(db: Session, user_id: str) -> str | None:
     Retorna None si el usuario no tiene persona asociada o la persona no tiene sede.
     Usado para imponer filtro Multi-Tenant (Axioma 3) en todas las queries.
     """
-    try:
-        # Try user_id as UUID string (v2 auth_users)
-        from sqlalchemy import text as sa_text
-        result = db.execute(
-            sa_text("SELECT sede_id FROM personas WHERE user_id::text = :uid LIMIT 1"),
-            {"uid": str(user_id)}
-        ).scalar()
-        if result:
-            return str(result)
-    except Exception:
-        pass
-    return None
+    from backend.core.tenant import get_user_sede_id as resolve_user_sede_id
+
+    return resolve_user_sede_id(db, user_id)
 
 
 def _audit_log(

@@ -1,15 +1,20 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
+import { MODULE_CONFIG } from '@/components/DashboardShell';
+import { DSCard } from '@/design/components/DSCard';
 import { motion } from 'framer-motion';
 import {
-    Users, BookOpen, Home, PiggyBank, Calendar, FileText,
-    FolderKanban, Shield, ArrowRight, LayoutDashboard,
-    LucideIcon,
+ArrowRight,
+BookOpen,
+Calendar,FileText,
+FolderKanban,
+Home,
+LayoutDashboard,
+PiggyBank,
+Shield,
+Users
 } from 'lucide-react';
-import { DSCard } from '@/design/components/DSCard';
-import { MODULE_CONFIG } from '@/components/DashboardShell';
+import Link from 'next/link';
 
 const MODULES = [
     { key: 'crm', icon: Users, desc: 'Personas, casos, pipelines, SLAs e interacciones' },

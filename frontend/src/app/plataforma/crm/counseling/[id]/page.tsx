@@ -87,7 +87,7 @@ export default function CounselingDetailPage() {
                                 {session.topic}
                             </h1>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Miembro: {session.member_name}
+                                Persona: {session.member_name}
                             </p>
                         </div>
                         <button className="px-4 py-2 bg-emerald-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all">
@@ -121,7 +121,7 @@ export default function CounselingDetailPage() {
                                             <User size={16} />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase">Miembro</p>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase">Persona</p>
                                             <p className="text-xs font-bold">{session.member_name}</p>
                                         </div>
                                     </div>

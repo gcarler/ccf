@@ -1,22 +1,27 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-    TrendingUp, TrendingDown, BarChart3, PiggyBank,
-    Download, Plus,
-    Search, ChevronRight, Landmark,
-    Gift, HeartHandshake, Zap,
-    Wallet, CircleDollarSign, Loader2
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import clsx from 'clsx';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
-import { DSMetric } from '@/design/components/DSMetric';
-import { DSChart } from '@/design/components/DSChart';
 import DashboardEmbed from '@/components/DashboardEmbed';
-import { DSCard } from '@/design/components/DSCard';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { useAuth } from '@/context/AuthContext';
+import { DSCard } from '@/design/components/DSCard';
+import { DSChart } from '@/design/components/DSChart';
+import { DSMetric } from '@/design/components/DSMetric';
 import { apiFetch } from '@/lib/http';
+import clsx from 'clsx';
+import { motion } from 'framer-motion';
+import {
+BarChart3,
+ChevronRight,
+CircleDollarSign,
+Download,
+Gift,HeartHandshake,
+Landmark,
+Loader2,
+Plus,
+Search,
+Zap
+} from 'lucide-react';
+import React,{ useEffect,useMemo,useState } from 'react';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 // ─── Tipo local ───────────────────────────────────────────────────────────────
@@ -27,14 +32,6 @@ interface TxRecord {
     description: string;
     amount: number;
     date: string | null;
-}
-
-interface FundsData {
-    ingresos_mes: number;
-    egresos_mes: number;
-    balance: number;
-    reserva: number;
-    total_historico: number;
 }
 
 // ─── Iconos por categoría ─────────────────────────────────────────────────────
@@ -51,29 +48,6 @@ const DEFAULT_ICON = CircleDollarSign;
 
 function fmt(n: number) {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
-}
-
-function StatCard({ label, value, sub, icon: Icon, colorClass, trend }: any) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-100 dark:border-white/[0.06] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group"
-        >
-            <div className={`absolute -top-4 -right-4 size-8 rounded-full blur-2xl opacity-30 group-hover:opacity-50 transition-opacity ${colorClass.split(' ')[0]}`} />
-            <div className={clsx('inline-flex items-center justify-center size-10 rounded-md mb-4 relative z-10', colorClass)}>
-                <Icon size={18} className="text-current" />
-            </div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1 relative z-10">{label}</p>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none relative z-10">{value}</h3>
-            {sub && (
-                <p className={clsx('text-[11px] font-bold mt-2.5 flex items-center gap-1 relative z-10', trend === 'up' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500')}>
-                    {trend === 'up' ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                    {sub}
-                </p>
-            )}
-        </motion.div>
-    );
 }
 
 export default function FinancesPage() {
@@ -104,10 +78,6 @@ export default function FinancesPage() {
             if (dbData) setDashboard(dbData);
         }).catch(console.error).finally(() => setLoading(false));
     }, [token]);
-
-    const summary = dashboard?.funds ?? {
-        ingresos_mes: 0, egresos_mes: 0, balance: 0, reserva: 0, total_historico: 0
-    };
 
     const filtered = useMemo(() => transactions.filter(t => {
         if (filter !== 'all' && t.type !== filter) return false;
@@ -315,4 +285,3 @@ export default function FinancesPage() {
 </WorkspaceLayout>
     );
 }
-

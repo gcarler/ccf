@@ -139,7 +139,7 @@ export default function MinisteriosPage() {
                     {[
                         { label: 'Total Ministerios', value: ministries.length, icon: Church, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                         { label: 'Con Líder Asignado', value: ministries.filter(m => m.leader_id).length, icon: Target, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-                        { label: 'Total Miembros', value: ministries.reduce((acc, m) => acc + (m.members_count ?? 0), 0), icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+                        { label: 'Total Personas', value: ministries.reduce((acc, m) => acc + (m.members_count ?? 0), 0), icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                     ].map(stat => {
                         const Icon = stat.icon;
                         return (
@@ -188,7 +188,7 @@ export default function MinisteriosPage() {
                             <table className="w-full text-left min-w-[600px]">
                                 <thead className="bg-slate-50 dark:bg-black/20">
                                     <tr>
-                                        {['Ministerio', 'Descripción', 'Líder', 'Miembros', 'Acciones'].map(h => (
+                                        {['Ministerio', 'Descripción', 'Líder', 'Personas', 'Acciones'].map(h => (
                                             <th key={h} className="py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-slate-400 border-b border-slate-100 dark:border-white/5">
                                                 {h}
                                             </th>
@@ -275,7 +275,7 @@ export default function MinisteriosPage() {
                                 <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{m.description || 'Sin descripción registrada.'}</p>
                                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
                                     <div className="flex items-center gap-1.5 font-semibold text-slate-400 uppercase tracking-wider">
-                                        <Users size={12} /> {m.members_count ?? 0} miembros
+                                        <Users size={12} /> {m.members_count ?? 0} personas
                                     </div>
                                     {m.leader_name && (
                                         <div className="flex items-center gap-1.5 font-semibold text-[hsl(var(--primary))] uppercase tracking-wider">
@@ -348,9 +348,9 @@ export default function MinisteriosPage() {
                                         className={clsx(INPUT, "resize-none leading-relaxed")} />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className={LABEL}>ID del Líder (Miembro)</label>
-                                    <input type="number" min={1} placeholder="ID del miembro líder" value={form.leader_id} onChange={set('leader_id')} className={INPUT} />
-                                    <p className="text-[10px] text-slate-400 ml-4">Ingresa el ID del miembro que liderará este ministerio.</p>
+                                    <label className={LABEL}>ID del Líder (Persona)</label>
+                                    <input type="number" min={1} placeholder="ID del persona líder" value={form.leader_id} onChange={set('leader_id')} className={INPUT} />
+                                    <p className="text-[10px] text-slate-400 ml-4">Ingresa el ID del persona que liderará este ministerio.</p>
                                 </div>
                             </form>
 

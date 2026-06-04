@@ -118,7 +118,7 @@ export default function AnnouncementsAdmin() {
         id: ann.id,
         title: ann.title,
         date: (ann.date || new Date().toISOString()).split('T')[0],
-        color: ann.featured ? 'blue' as const : 'indigo' as const,
+        color: ann.featured ? 'blue' as const : 'sky' as const,
         location: ann.category,
     }));
     const ganttItems = announcements.map((ann) => ({
@@ -127,7 +127,7 @@ export default function AnnouncementsAdmin() {
         subtitle: ann.category,
         start_date: ann.date || new Date().toISOString(),
         end_date: ann.date || new Date().toISOString(),
-        color: ann.featured ? 'blue' as const : 'indigo' as const,
+        color: ann.featured ? 'blue' as const : 'sky' as const,
         progress: ann.status === 'published' ? 100 : ann.status === 'draft' ? 40 : 15,
     }));
 
@@ -271,7 +271,7 @@ export default function AnnouncementsAdmin() {
                             <Sparkles size={12} className="animate-pulse" /> Difusión de Visión CCF
                         </motion.div>
                         <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
-                            El latido de la <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Comunidad.</span>
+                            El latido de la <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">Comunidad.</span>
                         </h1>
                     </header>
 

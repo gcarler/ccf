@@ -275,7 +275,7 @@ export const MODULE_CONFIGS: Record<string, any> = {
           },
           {
             id: 'faro-members',
-            label: 'Asignar Miembros',
+            label: 'Asignar Personas',
             href: '/plataforma/evangelism/faro/groups?mode=members',
             icon: Users,
           },

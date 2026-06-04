@@ -119,7 +119,7 @@ export function SortableTaskCard({ task, onOpen }: Props) {
                             </span>
                         )}
                         <div
-                            className="size-6 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 dark:from-blue-600 dark:to-indigo-700 flex items-center justify-center font-semibold text-white shadow ring-2 ring-white dark:ring-[#25262b]"
+                            className="size-6 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 dark:from-blue-600 dark:to-sky-700 flex items-center justify-center font-semibold text-white shadow ring-2 ring-white dark:ring-[#25262b]"
                             title={task.assignee_name || 'Sin asignar'}
                         >
                             {assigneeInitials}

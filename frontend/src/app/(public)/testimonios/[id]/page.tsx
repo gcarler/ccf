@@ -137,7 +137,7 @@ export default function TestimonioDetailPage() {
                             {testimonial.author?.username ?? "Anónimo"}
                         </h1>
                         <p className="text-xl md:text-lg opacity-70 font-medium" style={{ color: "var(--faro-on-surface-variant)" }}>
-                            {testimonial.author?.role ?? "Miembro de la comunidad"}
+                            {testimonial.author?.role ?? "Persona de la comunidad"}
                         </p>
                     </div>
                 </motion.header>

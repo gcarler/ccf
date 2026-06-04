@@ -298,7 +298,7 @@ export default function DonationConfig() {
 
                         <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
 
-                            Estructura de <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Recaudación Pro.</span>
+                            Estructura de <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">Recaudación Pro.</span>
 
                         </h1>
 

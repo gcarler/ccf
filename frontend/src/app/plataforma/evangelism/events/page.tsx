@@ -1,32 +1,31 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/http';
-import { toast } from 'sonner';
-import { parseAndValidateTime } from '@/lib/time';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
-import { Plus, Calendar, Check, Users, Link2, QrCode, Download, Pencil, Trash2, MoreVertical } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
-import { ViewType, getStoredView } from '@/components/ViewSwitcher';
-import EvangelismShell from '@/components/evangelism/EvangelismShell';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import Skeleton from '@/components/ui/Skeleton';
+import type {
+BulkAttendanceSyncResult,
+EventAudience,
+EventDashboardStat,
+EventSessionAttendanceData,
+Member,
+MinistryEvent,
+RoleDefinition,
+ScanValidationResult,
+} from '@/app/plataforma/evangelism/types';
+import { ViewType,getStoredView } from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import Skeleton from '@/components/ui/Skeleton';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
-import type {
-    BulkAttendanceSyncResult,
-    EventAudience,
-    EventDashboardStat,
-    EventSessionAttendanceData,
-    Member,
-    MinistryEvent,
-    RoleDefinition,
-    ScanValidationResult,
-} from '@/app/plataforma/evangelism/types';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
+import { apiFetch } from '@/lib/http';
+import { parseAndValidateTime } from '@/lib/time';
+import { Calendar,Check,Download,MoreVertical,Pencil,QrCode,Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { QRCodeSVG } from 'qrcode.react';
+import React,{ useEffect,useState } from 'react';
+import { toast } from 'sonner';
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
     PERMANENT: 'Semanal',
@@ -781,7 +780,7 @@ export default function EventsPage() {
                             <div>
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex gap-2 items-center">
-                                        <div className="w-12 h-8 rounded-lg bg-gradient-to-tr from-blue-50 to-indigo-50 text-[hsl(var(--primary))] flex items-center justify-center">
+                                        <div className="w-12 h-8 rounded-lg bg-gradient-to-tr from-blue-50 to-sky-50 text-[hsl(var(--primary))] flex items-center justify-center">
                                             <Calendar size={20} />
                                         </div>
                                         {ev.status === 'CANCELLED' && (
@@ -1434,7 +1433,7 @@ export default function EventsPage() {
                     ))}
                     {!attendanceLoading && filteredMembers.length === 0 && (
                         <div className="py-1.5 text-center text-slate-400 text-sm">
-                            {expectedUniverseMembers.length === 0 ? 'Este evento no tiene universo esperado configurado con miembros disponibles' : 'No hay miembros para este filtro'}
+                            {expectedUniverseMembers.length === 0 ? 'Este evento no tiene universo esperado configurado con personas disponibles' : 'No hay personas para este filtro'}
                         </div>
                     )}
                 </div>

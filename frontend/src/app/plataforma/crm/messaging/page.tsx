@@ -319,7 +319,7 @@ export default function MessagingCampaignCenter() {
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-4">Nombre de la Campaña</label>
                                     <input 
                                         value={campaignName} onChange={(e) => setCampaignName(e.target.value)}
-                                        placeholder="Ej: Invitación Asamblea de Miembros"
+                                        placeholder="Ej: Invitación Asamblea de Personas"
                                         className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-lg py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                                     />
                                 </div>
@@ -375,7 +375,7 @@ export default function MessagingCampaignCenter() {
                                 <Filter size={18} className="text-slate-300" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <SegmentTag label="Miembros Activos" active={segments.includes('active')} onClick={() => toggleSegment('active')} />
+                                <SegmentTag label="Personas Activos" active={segments.includes('active')} onClick={() => toggleSegment('active')} />
                                 <SegmentTag label="Nuevos Visitantes" active={segments.includes('new')} onClick={() => toggleSegment('new')} />
                                 <SegmentTag label="Pastores & Staff" active={segments.includes('staff')} onClick={() => toggleSegment('staff')} />
                                 <SegmentTag label="Grupos" active={segments.includes('groups')} onClick={() => toggleSegment('groups')} />

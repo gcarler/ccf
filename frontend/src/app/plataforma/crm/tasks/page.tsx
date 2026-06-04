@@ -352,7 +352,7 @@ export default function CrmTasksPage() {
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="border-b border-slate-200 dark:border-white/10">
-                                    {['Tarea', 'Miembro', 'Categoría', 'Prioridad', 'Estado', 'Vence'].map(h => (
+                                    {['Tarea', 'Persona', 'Categoría', 'Prioridad', 'Estado', 'Vence'].map(h => (
                                         <th key={h} className="pb-3 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{h}</th>
                                     ))}
                                 </tr>
@@ -401,7 +401,7 @@ export default function CrmTasksPage() {
                                     {bucket.map(task => (
                                         <button key={task.id} onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }} className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
                                             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{task.title}</p>
-                                            <p className="text-[10px] text-slate-400">{task.member_name || 'Sin miembro asignado'}</p>
+                                            <p className="text-[10px] text-slate-400">{task.member_name || 'Sin persona asignado'}</p>
                                         </button>
                                     ))}
                                 </div>
@@ -478,7 +478,7 @@ export default function CrmTasksPage() {
                         )}
                         <div className="grid grid-cols-2 gap-3">
                             {[
-                                { label: 'Miembro', val: selectedTask.member_name || '—' },
+                                { label: 'Persona', val: selectedTask.member_name || '—' },
                                 { label: 'Prioridad', val: selectedTask.priority.toUpperCase() },
                                 { label: 'Categoría', val: selectedTask.category },
                                 { label: 'Vence', val: selectedTask.due_date ? new Date(selectedTask.due_date).toLocaleDateString() : '—' },
@@ -605,7 +605,7 @@ export default function CrmTasksPage() {
                     </div>
                     {members.length > 0 && (
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Miembro asociado</label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Persona asociado</label>
                             <select
                                 value={newTask.persona_id}
                                 onChange={e => setNewTask({ ...newTask, persona_id: e.target.value })}

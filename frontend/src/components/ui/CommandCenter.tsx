@@ -55,7 +55,7 @@ export function CommandCenter() {
         { id: "academy", label: "Academia Faro", icon: GraduationCap, shortcut: "G A", group: "Acceso Rápido", action: () => router.push('/plataforma/academy') },
         { id: "cms", label: "Panel CMS", icon: Globe, group: "Acceso Rápido", action: () => router.push('/plataforma/cms') },
         { id: "new-task", label: "Nueva Tarea...", icon: Plus, shortcut: "N T", group: "Acciones", action: () => openModal('task') },
-        { id: "new-member", label: "Registrar Miembro...", icon: Plus, shortcut: "N M", group: "Acciones", action: () => router.push('/plataforma/crm/personas') },
+        { id: "new-member", label: "Registrar Persona...", icon: Plus, shortcut: "N M", group: "Acciones", action: () => router.push('/plataforma/crm/personas') },
         { id: "send-message", label: "Enviar Mensaje...", icon: MessageSquare, group: "Acciones", action: () => router.push('/plataforma/crm/messaging') },
         { id: "account-settings", label: "Configuración de Cuenta", icon: Settings, group: "Soporte y Ajustes", action: () => router.push('/plataforma/account') },
         { id: "help-center", label: "Centro de Ayuda", icon: LifeBuoy, group: "Soporte y Ajustes", action: () => router.push('/plataforma/support') },
@@ -134,7 +134,7 @@ export function CommandCenter() {
                                 <Command.Input
                                     value={search}
                                     onValueChange={setSearch}
-                                    placeholder="Buscar proyectos, miembros o tareas..."
+                                    placeholder="Buscar proyectos, personas o tareas..."
                                     className="flex h-8 w-full bg-transparent text-lg font-bold outline-none placeholder:text-slate-400 placeholder:font-medium disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                                 <div className="ml-auto hidden items-center gap-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/20 px-2 py-1 font-semibold text-slate-400 md:flex">

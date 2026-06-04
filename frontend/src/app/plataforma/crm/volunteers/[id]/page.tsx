@@ -30,7 +30,7 @@ function Badge({ label, tone = "blue" }: { label: string; tone?: string }) {
     const styles: Record<string, string> = {
         blue: "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50",
         emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50",
-        violet: "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50",
+        sky: "bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-200/50",
     };
     return (
         <span className={clsx("inline-flex items-center px-3 py-1 rounded-md border text-[9px] font-bold uppercase tracking-wide", styles[tone] ?? styles.blue)}>
@@ -136,7 +136,7 @@ export default function VolunteerDetailPage() {
 
                     {/* Hero */}
                     <header className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm flex items-center gap-3">
-                        <div className="size-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-xl flex-shrink-0">
+                        <div className="size-10 rounded-lg bg-gradient-to-br from-blue-500 to-sky-600 text-white flex items-center justify-center font-bold text-lg shadow-xl flex-shrink-0">
                             {initials}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -180,7 +180,7 @@ export default function VolunteerDetailPage() {
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-4">Habilidades y Dones</p>
                                 <div className="flex flex-wrap gap-2">
                                     {volunteer.skills.length > 0
-                                        ? volunteer.skills.map((s) => <Badge key={s} label={s} tone="violet" />)
+                                        ? volunteer.skills.map((s) => <Badge key={s} label={s} tone="blue" />)
                                         : <p className="text-sm text-slate-400">Sin habilidades registradas.</p>}
                                 </div>
                             </div>

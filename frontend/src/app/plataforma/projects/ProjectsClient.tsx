@@ -1,34 +1,30 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { 
-    Folder, 
-    Layers, 
-    Plus, 
-    ArrowUpRight,
-    TrendingUp
+import {
+ArrowUpRight,
+Folder,
+Layers,
+Plus
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React,{ useEffect,useMemo,useState } from 'react';
 
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
+import type { ViewType } from '@/components/ViewSwitcher';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
+import { DataTable } from '@/components/ui/DataTable';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
-import { motion, AnimatePresence } from 'framer-motion';
-import type { ViewType } from '@/components/ViewSwitcher';
-import type { ProjectRecord } from '@/types/projects';
-import { useRegisterCommands } from '@/context/CommandCenterContext';
 import UserSelect from '@/components/ui/UserSelect';
-import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/ui/DataTable';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { DSMetric } from '@/design/components/DSMetric';
-import { DSChart } from '@/design/components/DSChart';
-import DashboardEmbed from '@/components/DashboardEmbed';
+import { useAuth } from '@/context/AuthContext';
+import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { DSCard } from '@/design/components/DSCard';
+import { DSChart } from '@/design/components/DSChart';
+import { DSMetric } from '@/design/components/DSMetric';
+import { apiFetch } from '@/lib/http';
+import type { ProjectRecord } from '@/types/projects';
+import type { ColumnDef } from '@tanstack/react-table';
+import { AnimatePresence,motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 const PROJECT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
@@ -111,14 +107,6 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         } finally {
             setIsCreating(false);
         }
-    };
-
-    const handleQuickCreate = (type: string) => {
-        if (type === 'whiteboard') {
-            router.push('/plataforma/whiteboard/new');
-            return;
-        }
-        handleCreateProject();
     };
 
     const projectCommands = useMemo(() => filtered.slice(0, 7).map((project) => ({

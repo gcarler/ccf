@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import clsx from 'clsx';
-import {
-    Heart, Mail, Phone, Star, GraduationCap, ChevronRight,
-    Calendar
-} from 'lucide-react';
+import { AllCommunityModule,ColDef,ModuleRegistry,themeQuartz } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { AllCommunityModule, ModuleRegistry, themeQuartz, ColDef } from 'ag-grid-community';
+import { motion } from 'framer-motion';
+import {
+Calendar,
+ChevronRight,
+GraduationCap,
+Heart,Mail,Phone,Star
+} from 'lucide-react';
+import { useEffect,useMemo,useRef,useState } from 'react';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -71,7 +72,7 @@ function MemberCard({ member, index, onClick }: { member: Member, index: number,
                             {member.nombre_completo}
                         </h4>
                         <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 text-[9px] font-bold uppercase tracking-wide text-slate-500">
-                            {member.church_role || 'Miembro'}
+                            {member.church_role || 'Persona'}
                         </span>
                     </div>
                 </div>
@@ -126,7 +127,7 @@ export function CrmTableView({ members, onSelect, isList = false }: TableProps) 
     const colDefs = useMemo<ColDef[]>(() => {
         const cols: ColDef[] = [
             {
-                headerName: 'Miembro', flex: 2, minWidth: 180,
+                headerName: 'Persona', flex: 2, minWidth: 180,
                 cellRenderer: ({ data }: any) => {
                     const initials = data?.nombre_completo?.charAt(0) ?? '';
                     return (
@@ -155,7 +156,7 @@ export function CrmTableView({ members, onSelect, isList = false }: TableProps) 
                 field: 'church_role', headerName: 'Rol', width: 140,
                 cellRenderer: ({ value }: any) => {
                     const isLeader = String(value ?? '').toLowerCase().includes('líder') || String(value ?? '').toLowerCase().includes('lider');
-                    return <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/30'}`}>{value || 'Miembro'}</span>;
+                    return <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/30'}`}>{value || 'Persona'}</span>;
                 },
             },
         ];
@@ -253,7 +254,7 @@ export function CrmKanbanView({ members, onSelect }: CrmViewProps) {
                                 </div>
                                 <div className="flex items-center justify-between mt-2">
                                     <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-                                        {m.church_role || 'Miembro'}
+                                        {m.church_role || 'Persona'}
                                     </span>
                                     <div className="flex gap-1 text-[10px] font-bold text-emerald-600">
                                         <Heart size={12} fill="currentColor" /> {Math.round((m.spiritual_health || 0.8) * 100)}%
@@ -340,7 +341,7 @@ export function CrmGanttView({ members }: CrmViewProps) {
                                 <div className="font-bold text-sm text-slate-900 dark:text-white">{m.nombre_completo}</div>
                                 <time className="text-[10px] font-bold text-slate-400 uppercase">{new Date(m.created_at).toLocaleDateString()}</time>
                             </div>
-                            <div className="text-xs text-slate-500 font-bold">{m.church_role || 'Miembro'} ({m.spiritual_status || 'Nuevo'})</div>
+                            <div className="text-xs text-slate-500 font-bold">{m.church_role || 'Persona'} ({m.spiritual_status || 'Nuevo'})</div>
                         </div>
                     </div>
                 ))}

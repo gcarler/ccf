@@ -1049,7 +1049,10 @@ def read_evangelism_strategies(
     result = []
     for s in strategies:
         obj = EvangelismStrategy.model_validate(s)
-        obj.group_count = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.estrategia_id == str(s.id)).count()
+        obj.group_count = db.query(GrupoEvangelismo).filter(
+            GrupoEvangelismo.estrategia_id == str(s.id),
+            GrupoEvangelismo.deleted_at.is_(None),
+        ).count()
         result.append(obj)
     return result
 
@@ -1067,7 +1070,10 @@ def read_strategy(
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
-    result.group_count = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.estrategia_id == strategy_id).count()
+    result.group_count = db.query(GrupoEvangelismo).filter(
+        GrupoEvangelismo.estrategia_id == strategy_id,
+        GrupoEvangelismo.deleted_at.is_(None),
+    ).count()
     return result
 
 
@@ -1148,7 +1154,10 @@ def generate_strategy_sessions(
             detail="La estrategia necesita: frecuencia, fecha_inicio, fecha_fin",
         )
 
-    groups = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.estrategia_id == strategy_id).all()
+    groups = db.query(GrupoEvangelismo).filter(
+        GrupoEvangelismo.estrategia_id == strategy_id,
+        GrupoEvangelismo.deleted_at.is_(None),
+    ).all()
 
     try:
         created = calcular_sesiones(

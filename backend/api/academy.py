@@ -28,10 +28,34 @@ logger = logging.getLogger(__name__)
 def coerce_user_id(user_id):
     if user_id is None:
         return None
+    if isinstance(user_id, uuid.UUID):
+        return str(user_id)
+    if isinstance(user_id, str) and _is_uuid_like(user_id):
+        return user_id
     try:
         return int(user_id)
     except (ValueError, TypeError):
         return user_id
+
+
+def _is_uuid_like(value) -> bool:
+    try:
+        uuid.UUID(str(value))
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def _enrollment_identity_filter(user_id):
+    if _is_uuid_like(user_id):
+        return models.Enrollment.persona_id == uuid.UUID(str(user_id))
+    return models.Enrollment.user_id == coerce_user_id(user_id)
+
+
+def _lesson_progress_identity_filter(user_id):
+    if _is_uuid_like(user_id):
+        return models.LessonProgress.persona_id == uuid.UUID(str(user_id))
+    return models.LessonProgress.user_id == coerce_user_id(user_id)
 
 
 
@@ -655,14 +679,15 @@ def get_my_academy_profile(
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     user_id = coerce_user_id(current_user.id)
-    db_user = crud.get_user(db, user_id) or current_user
+    db_user = None if _is_uuid_like(user_id) else crud.get_user(db, user_id)
+    db_user = db_user or current_user
     enrollments = (
-        db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+        db.query(models.Enrollment).filter(_enrollment_identity_filter(user_id)).all()
     )
     certificates = (
         db.query(models.Certificate)
         .join(models.Enrollment)
-        .filter(models.Enrollment.user_id == user_id)
+        .filter(_enrollment_identity_filter(user_id))
         .all()
     )
 
@@ -692,14 +717,17 @@ def get_user_course_progress(
 ):
     """Devuelve el progreso agregado por curso para un usuario."""
     current_id = coerce_user_id(getattr(current_user, "id", 0))
-    if str(current_id) != str(user_id) and normalize_role(str(current_user.role)) not in {
+    role = normalize_role(str(getattr(current_user, "role", "")))
+    if not role and getattr(current_user, "rol_plataforma", None):
+        role = normalize_role(str(current_user.rol_plataforma.nombre))
+    if str(current_id) != str(user_id) and role not in {
         "admin",
         "coordinador",
     }:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     enrollments = (
-        db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+        db.query(models.Enrollment).filter(_enrollment_identity_filter(user_id)).all()
     )
     if not enrollments:
         return []
@@ -721,7 +749,7 @@ def get_user_course_progress(
         )
         .join(models.Lesson, models.Lesson.id == models.LessonProgress.lesson_id)
         .filter(
-            models.LessonProgress.user_id == user_id,
+            _lesson_progress_identity_filter(user_id),
             models.Lesson.course_id.in_(course_ids),
         )
         .group_by(models.Lesson.course_id)
@@ -734,7 +762,7 @@ def get_user_course_progress(
         )
         .join(models.Lesson, models.Lesson.id == models.LessonProgress.lesson_id)
         .filter(
-            models.LessonProgress.user_id == user_id,
+            _lesson_progress_identity_filter(user_id),
             models.Lesson.course_id.in_(course_ids),
         )
         .group_by(models.Lesson.course_id)
@@ -1105,4 +1133,3 @@ def update_assessment_admin(
         "title": assessment.title,
         "min_score": float(assessment.min_score),
     }
-
