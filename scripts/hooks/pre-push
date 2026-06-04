@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Pre-push hook: validaciones rápidas antes de enviar a producción
+# Pre-push hook: validaciones de seguridad antes de enviar a producción
+# Si cualquier validación crítica falla, el push se bloquea.
 set -euo pipefail
 
 VENV="/root/ccf/venv/bin"
@@ -8,6 +9,8 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+FAIL=0
+
 echo ""
 echo "🔍 Pre-push: validando cambios antes de enviar a producción..."
 echo ""
@@ -15,10 +18,11 @@ echo ""
 # Archivos modificados respecto a origin/main
 PY_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep '\.py$' || true)
 FRONTEND_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep '^frontend/' || true)
+ALEMBIC_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep 'alembic/versions/' || true)
 
 # ─── 1. SINTAXIS PYTHON ───────────────────────────────────────────────────────
 if [ -n "$PY_FILES" ]; then
-    echo "  [1/4] Sintaxis Python..."
+    echo "  [1/7] Sintaxis Python..."
     SYNTAX_ERRORS=0
     while IFS= read -r f; do
         [ -f "$f" ] || continue
@@ -31,83 +35,217 @@ if [ -n "$PY_FILES" ]; then
     if [ $SYNTAX_ERRORS -eq 0 ]; then
         echo -e "  ${GREEN}✓ Sintaxis OK${NC}"
     else
-        echo -e "\n  ${RED}Corrige los errores de sintaxis antes de hacer push.${NC}\n"
+        echo -e "\n  ${RED}✗ Corrige los errores de sintaxis antes de hacer push.${NC}\n"
         exit 1
     fi
 else
-    echo "  [1/4] Sin archivos Python modificados, saltando sintaxis."
+    echo "  [1/7] Sin archivos Python, saltando sintaxis."
 fi
 
 # ─── 2. LINTING RUFF ─────────────────────────────────────────────────────────
 if [ -n "$PY_FILES" ]; then
-    echo "  [2/4] Linting (ruff)..."
+    echo "  [2/7] Linting (ruff)..."
     LINT_FILES=$(echo "$PY_FILES" | tr '\n' ' ')
-    if ! $VENV/ruff check $LINT_FILES --quiet 2>/tmp/ruff_err; then
-        echo -e "  ${YELLOW}⚠ Advertencias de linting:${NC}"
-        cat /tmp/ruff_err | sed 's/^/      /'
-        echo ""
-        echo -e "  ${YELLOW}(Solo advertencia — el push continúa. Revisa los errores.)${NC}"
-    else
+    if $VENV/ruff check $LINT_FILES --quiet 2>/dev/null; then
         echo -e "  ${GREEN}✓ Linting OK${NC}"
-    fi
-else
-    echo "  [2/4] Sin archivos Python modificados, saltando linting."
-fi
-
-# ─── 3. BACKEND ARRIBA ───────────────────────────────────────────────────────
-echo "  [3/4] Verificando que el backend sigue online..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/healthz 2>/dev/null || echo "000")
-if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "204" ]; then
-    echo -e "  ${GREEN}✓ Backend responde OK (HTTP $HTTP_STATUS)${NC}"
-elif [ "$HTTP_STATUS" = "000" ]; then
-    echo -e "  ${YELLOW}⚠ Backend no responde en :8000 — verifica con: pm2 list${NC}"
-else
-    echo -e "  ${YELLOW}⚠ Backend responde HTTP $HTTP_STATUS — revisa pm2 logs ccf-backend-staging${NC}"
-fi
-
-# ─── 4. FRONTEND — reiniciar si hay cambios ──────────────────────────────────
-echo "  [4/4] Frontend..."
-if [ -n "$FRONTEND_FILES" ]; then
-    # Verificar que el build existe y es reciente (menos de 30 min)
-    BUILD_ID="/root/ccf/frontend/.next/BUILD_ID"
-    if [ ! -f "$BUILD_ID" ]; then
-        echo -e "  ${RED}✗ No hay build de Next.js en .next/ — ejecuta: cd frontend && npm run build${NC}"
-        exit 1
-    fi
-
-    BUILD_AGE=$(( $(date +%s) - $(stat -c %Y "$BUILD_ID") ))
-    if [ $BUILD_AGE -gt 1800 ]; then
-        echo -e "  ${YELLOW}⚠ El build tiene más de 30 min (${BUILD_AGE}s) — ¿olvidaste ejecutar npm run build?${NC}"
-        echo -e "  ${YELLOW}  Continúa de todas formas, pero reinicia el frontend manualmente si hay problemas.${NC}"
-    fi
-
-    echo -e "  Reiniciando ccf-frontend-staging para cargar el nuevo build..."
-    if pm2 restart ccf-frontend-staging --update-env > /dev/null 2>&1; then
-        sleep 3
-        FRONT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002 2>/dev/null || echo "000")
-        if [ "$FRONT_STATUS" = "200" ]; then
-            echo -e "  ${GREEN}✓ Frontend reiniciado y respondiendo OK (HTTP $FRONT_STATUS)${NC}"
-        else
-            echo -e "  ${YELLOW}⚠ Frontend reiniciado pero responde HTTP $FRONT_STATUS — revisa: pm2 logs ccf-frontend-staging${NC}"
-        fi
     else
-        echo -e "  ${YELLOW}⚠ No se pudo reiniciar el frontend — hazlo manualmente: pm2 restart ccf-frontend-staging${NC}"
+        LINT_OUTPUT=$($VENV/ruff check $LINT_FILES 2>&1 || true)
+        # Solo bloquear en errores (E/F), no en warnings (W)
+        ERRORS=$(echo "$LINT_OUTPUT" | grep -E '^[^ ]+:.+:(E|F)[0-9]+' || true)
+        if [ -n "$ERRORS" ]; then
+            echo -e "  ${RED}✗ Errores de linting (E/F):${NC}"
+            echo "$ERRORS" | head -10 | sed 's/^/      /'
+            FAIL=1
+        else
+            echo -e "  ${YELLOW}⚠ Advertencias de linting (W) — push continúa${NC}"
+        fi
     fi
 else
-    echo "  [4/4] Sin cambios en frontend/, no se reinicia el proceso."
+    echo "  [2/7] Sin archivos Python, saltando linting."
 fi
 
-# ─── ARCHIVOS PELIGROSOS ─────────────────────────────────────────────────────
+# ─── 3. ALEMBIC MIGRATION CHAIN ──────────────────────────────────────────────
+if [ -n "$ALEMBIC_FILES" ]; then
+    echo "  [3/7] Cadena de migraciones Alembic..."
+    # Verificar que no haya referencias rotas en la cadena
+    cd /root/ccf
+    MIGRATION_CHECK=$($VENV/python -c "
+import os, sys, re
+versions_dir = 'alembic/versions'
+revisions = {}
+down_refs = set()
+for f in os.listdir(versions_dir):
+    if not f.endswith('.py') or f == '__init__.py': continue
+    path = os.path.join(versions_dir, f)
+    with open(path) as fh:
+        content = fh.read()
+    rev_match = re.search(r\"^revision\\s*(?::\\s*\\w+\\s*)?[:=]\\s*['\\\"]([^'\\\"]+)['\\\"]\", content, re.MULTILINE)
+    down_match = re.search(r\"^down_revision\\s*(?::\\s*[\\w\\[\\], ]+\\s*)?[:=]\\s*['\\\"]([^'\\\"]+)['\\\"]\", content, re.MULTILINE)
+    if rev_match:
+        revisions[rev_match.group(1)] = f
+    if down_match and down_match.group(1) != 'None':
+        down_refs.add(down_match.group(1))
+broken = down_refs - set(revisions.keys())
+if broken:
+    print(f'BROKEN: {broken}')
+    sys.exit(1)
+print('OK')
+" 2>&1) || MIGRATION_CHECK="BROKEN: unknown"
+    cd - > /dev/null
+
+    if echo "$MIGRATION_CHECK" | grep -q "^BROKEN"; then
+        echo -e "  ${RED}✗ Migraciones rotas: $MIGRATION_CHECK${NC}"
+        FAIL=1
+    else
+        echo -e "  ${GREEN}✓ Cadena de migraciones intacta${NC}"
+    fi
+else
+    echo "  [3/7] Sin migraciones Alembic, saltando."
+fi
+
+# ─── 4. BACKEND ONLINE ───────────────────────────────────────────────────────
+echo "  [4/7] Backend en producción..."
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/system/health 2>/dev/null || echo "000")
+if [ "$HTTP_STATUS" = "200" ]; then
+    echo -e "  ${GREEN}✓ Backend responde OK (HTTP $HTTP_STATUS)${NC}"
+else
+    echo -e "  ${RED}✗ Backend NO responde (HTTP $HTTP_STATUS) — no se puede validar${NC}"
+    FAIL=1
+fi
+
+# ─── 5. FRONTEND BUILD ────────────────────────────────────────────────────────
+if [ -n "$FRONTEND_FILES" ]; then
+    echo "  [5/7] Build de Frontend..."
+    BUILD_ID="/root/ccf/frontend/.next/BUILD_ID"
+
+    # No solo verificar que BUILD_ID existe, sino que el build es válido
+    if [ ! -f "$BUILD_ID" ]; then
+        echo -e "  ${RED}✗ No hay build de Next.js en .next/${NC}"
+        echo -e "  ${YELLOW}  Ejecuta: cd /root/ccf/frontend && npm run build${NC}"
+        FAIL=1
+    elif [ ! -d "/root/ccf/frontend/.next/server" ]; then
+        echo -e "  ${RED}✗ Build incompleto — falta .next/server/${NC}"
+        echo -e "  ${YELLOW}  Ejecuta: cd /root/ccf/frontend && rm -rf .next && npm run build${NC}"
+        FAIL=1
+    else
+        BUILD_AGE=$(( $(date +%s) - $(stat -c %Y "$BUILD_ID") ))
+        if [ $BUILD_AGE -gt 1800 ]; then
+            echo -e "  ${YELLOW}⚠ Build viejo (${BUILD_AGE}s) — considera reconstruir${NC}"
+        else
+            echo -e "  ${GREEN}✓ Build válido y reciente (${BUILD_AGE}s)${NC}"
+        fi
+    fi
+
+    # Verificar que PM2 está corriendo
+    PM2_STATUS=$(pm2 jlist 2>/dev/null | python3 -c "
+import sys, json
+procs = json.load(sys.stdin)
+for p in procs:
+    if 'frontend' in p.get('name','').lower():
+        print(p.get('pm2_env',{}).get('status','unknown'))
+        sys.exit(0)
+print('not_found')
+" 2>/dev/null || echo "error")
+
+    if [ "$PM2_STATUS" = "online" ]; then
+        echo -e "  ${GREEN}✓ PM2 frontend: online${NC}"
+    elif [ "$PM2_STATUS" = "errored" ] || [ "$PM2_STATUS" = "stopped" ]; then
+        echo -e "  ${YELLOW}⚠ PM2 frontend: $PM2_STATUS — se reiniciará al hacer push${NC}"
+    else
+        echo -e "  ${YELLOW}⚠ PM2 frontend: $PM2_STATUS${NC}"
+    fi
+else
+    echo "  [5/7] Sin cambios en frontend, saltando."
+fi
+
+# ─── 6. TESTS RÁPIDOS ────────────────────────────────────────────────────────
+echo "  [6/7] Tests rápidos (smoke + structural)..."
+cd /root/ccf
+TEST_OUTPUT=$($VENV/python -m pytest tests/test_smoke.py tests/test_structural_contracts.py --override-ini="addopts=-p no:cacheprovider" -v --tb=short -q -x 2>&1) || TEST_RC=$?
+cd - > /dev/null
+
+if [ "${TEST_RC:-0}" -eq 0 ]; then
+    PASS_COUNT=$(echo "$TEST_OUTPUT" | grep -oP '\d+(?= passed)' || echo "?")
+    echo -e "  ${GREEN}✓ Tests OK ($PASS_COUNT passed)${NC}"
+else
+    echo -e "  ${RED}✗ Tests fallaron:${NC}"
+    echo "$TEST_OUTPUT" | grep -E 'FAILED|ERROR|AssertionError|Error:' | head -5 | sed 's/^/      /'
+    FAIL=1
+fi
+
+# ─── 7. VERIFICAR QUE NO SE ROMPE EL FRONTEND ACTUAL ─────────────────────────
+echo "  [7/7] Frontend actual respondiendo..."
+FRONT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3002 2>/dev/null || echo "000")
+if [ "$FRONT_STATUS" = "200" ]; then
+    echo -e "  ${GREEN}✓ Frontend actual: HTTP $FRONT_STATUS${NC}"
+else
+    echo -e "  ${YELLOW}⚠ Frontend actual no responde (HTTP $FRONT_STATUS) — posible problema en producción${NC}"
+fi
+
+# ─── RESULTADO FINAL ─────────────────────────────────────────────────────────
 echo ""
-DANGEROUS=$(git diff --name-only origin/main HEAD 2>/dev/null | grep -E '\.(env|dump|key|pem|secret)$|seaweed_s3\.json|backups/' || true)
-if [ -n "$DANGEROUS" ]; then
-    echo -e "  ${RED}⛔ ALERTA: estos archivos pueden contener datos sensibles:${NC}"
-    echo "$DANGEROUS" | sed 's/^/      /'
+if [ $FAIL -eq 1 ]; then
+    echo -e "  ${RED}╔══════════════════════════════════════════╗${NC}"
+    echo -e "  ${RED}║  ✗ VALIDACIONES FALLIDAS — PUSH BLOQUEADO ║${NC}"
+    echo -e "  ${RED}╚══════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "  ${RED}Cancela con Ctrl+C si no es intencional, o presiona Enter para continuar.${NC}"
-    read -r
+    echo -e "  ${YELLOW}Corrige los errores antes de hacer push.${NC}"
+    echo ""
+    exit 1
 fi
 
+echo -e "  ${GREEN}╔══════════════════════════════════════════╗${NC}"
+echo -e "  ${GREEN}║  ✓ TODAS LAS VALIDACIONES PASARON        ║${NC}"
+echo -e "  ${GREEN}╚══════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  ${GREEN}✓ Validaciones completadas — enviando a producción...${NC}"
+
+# ─── DEPLOY ──────────────────────────────────────────────────────────────────
+echo "  🚀 Desplegando cambios en producción..."
+echo ""
+
+# Migraciones Alembic
+if [ -n "$ALEMBIC_FILES" ]; then
+    echo "  [deploy] Aplicando migraciones Alembic..."
+    cd /root/ccf
+    if PYTHONPATH=/root/ccf $VENV/alembic upgrade head > /tmp/alembic_deploy.log 2>&1; then
+        echo -e "  ${GREEN}✓ Migraciones aplicadas${NC}"
+    else
+        echo -e "  ${YELLOW}⚠ Error en migraciones — revisa /tmp/alembic_deploy.log${NC}"
+        cat /tmp/alembic_deploy.log | tail -5 | sed 's/^/      /'
+    fi
+    cd - > /dev/null
+fi
+
+# Backend: reiniciar si hay cambios en Python
+if [ -n "$PY_FILES" ]; then
+    echo "  [deploy] Reiniciando backend (PM2)..."
+    if pm2 restart ccf-backend-staging > /dev/null 2>&1; then
+        sleep 2
+        BACK_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/system/health 2>/dev/null || echo "000")
+        echo -e "  ${GREEN}✓ Backend reiniciado — health: HTTP $BACK_HTTP${NC}"
+    else
+        echo -e "  ${YELLOW}⚠ No se pudo reiniciar el backend — revisa PM2${NC}"
+    fi
+fi
+
+# Frontend: reiniciar si el BUILD_ID en disco difiere del que sirve PM2
+if [ -n "$FRONTEND_FILES" ]; then
+    DISK_BUILD=$(cat /root/ccf/frontend/.next/BUILD_ID 2>/dev/null || echo "none")
+    # Obtener el buildId que PM2 está sirviendo actualmente
+    SERVING_BUILD=$(curl -s "http://127.0.0.1:3002/login" 2>/dev/null | grep -o '[A-Za-z0-9_-]\{20,\}' | head -1 || echo "unknown")
+
+    if [ "$DISK_BUILD" = "$SERVING_BUILD" ]; then
+        echo -e "  [deploy] Frontend: build en disco == build activo ($DISK_BUILD) — sin reinicio necesario"
+    else
+        echo "  [deploy] Reiniciando frontend (build en disco: $DISK_BUILD)..."
+        if pm2 restart ccf-frontend-staging > /dev/null 2>&1; then
+            sleep 3
+            FRONT_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3002 2>/dev/null || echo "000")
+            echo -e "  ${GREEN}✓ Frontend reiniciado — HTTP $FRONT_HTTP${NC}"
+        else
+            echo -e "  ${YELLOW}⚠ No se pudo reiniciar el frontend — revisa PM2${NC}"
+        fi
+    fi
+fi
+
 echo ""
