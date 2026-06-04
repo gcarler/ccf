@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
-from backend.core.permissions import require_module_access
+from backend.core.permissions import require_module_access, require_active_user
 from backend.models_proyectos import (ComentarioTarea, DependenciaTarea,
                                        EquipoProyecto, Proyecto, TareaProyecto)
 from backend.schemas.proyectos import (
@@ -58,11 +58,15 @@ def _get_tarea_o_404(tarea_id: str, db: Session) -> TareaProyecto:
 @router.get("/", response_model=list[ProyectoSchema])
 def listar_proyectos(
     db: Session = Depends(get_db),
+    current_user=Depends(require_active_user),
     _=Depends(require_module_access("projects", "read")),
 ):
     from backend.crud.crm import get_user_sede_id
     sede_id = get_user_sede_id(db, current_user.id)
-    return db.query(Proyecto).filter(Proyecto.sede_id == sede_id).order_by(Proyecto.fecha_creacion.desc()).all()
+    q = db.query(Proyecto)
+    if sede_id:
+        q = q.filter(Proyecto.sede_id == sede_id)
+    return q.order_by(Proyecto.fecha_creacion.desc()).all()
 
 
 @router.post("/", response_model=ProyectoSchema, status_code=status.HTTP_201_CREATED)

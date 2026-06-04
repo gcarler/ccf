@@ -3,6 +3,7 @@
 from typing import Optional
 
 from sqlalchemy.orm import Session
+from backend.models_shared import _utcnow
 
 from backend import models
 from backend.schemas.governance import (AutomationRuleCreate,
@@ -66,8 +67,6 @@ def delete_automation_rule(db: Session, rule_id: int) -> bool:
 
 def record_automation_run(db: Session, rule_id: int):
     """Update last_run timestamp for an automation rule."""
-    from backend.models_shared import _utcnow
-
     row = (
         db.query(models.AutomationRule)
         .filter(models.AutomationRule.id == rule_id)

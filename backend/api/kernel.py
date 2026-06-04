@@ -197,6 +197,7 @@ def add_ministry(
     db: Session = Depends(get_db),
     current_user=Depends(require_kernel_permission("system:config")),
 ):
+    from backend import models
     from backend.crud import kernel as kernel_crud
 
     persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()

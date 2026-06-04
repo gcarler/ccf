@@ -131,12 +131,6 @@ class CourseAttendanceCreate(CourseAttendanceBase):
     pass
 
 
-class CourseAttendance(CourseAttendanceBase):
-    id: int
-    recorded_by_id: Optional[int] = None
-    model_config = orm_config
-
-
 class BulkAttendanceRecord(BaseModel):
     enrollment_id: int
     status: str

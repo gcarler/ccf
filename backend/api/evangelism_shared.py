@@ -140,8 +140,12 @@ def get_expected_members_for_event(
             .order_by(models.Persona.nombre_completo.asc())
             .all()
         )
-    # 🛡️ Filtro sede_id agregado — regla Axioma 3
-    return db.query(models.Persona).filter(models.Persona.sede_id == sede_id).all()
+    # Fallback: todos los miembros de la sede del evento (Axioma 3)
+    sede_id = getattr(event, "sede_id", None)
+    q = db.query(models.Persona)
+    if sede_id:
+        q = q.filter(models.Persona.sede_id == sede_id)
+    return q.order_by(models.Persona.nombre_completo.asc()).all()
 
 
 def expected_group_rows(db: Session, grupo_id: int):

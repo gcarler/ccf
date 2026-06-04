@@ -104,7 +104,7 @@ def _serialize_conversation(db: Session, conv: models.Conversation, current_user
     )
 
 
-def _find_existing_dm(db: Session, persona_id1: uuid.UUID, persona_id2: uuid.UUID):
+def _find_existing_dm(db: Session, persona_id1: _uuid.UUID, persona_id2: _uuid.UUID):
     """Check if a 2-person DM conversation already exists."""
     cps = (
         db.query(models.ConversationParticipant).filter(models.ConversationParticipant.user_id.in_([persona_id1, persona_id2])).all()

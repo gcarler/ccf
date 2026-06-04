@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
+from backend.models_shared import _utcnow
 
 from backend.models_agenda import (
     EventoAgenda, ParticipanteEvento, RecursoFisico, ReservaRecurso,

@@ -186,7 +186,7 @@ class CRMSearchMember(AgentTool):
         db = SessionLocal()
         try:
             term = f"%{query}%"
-            db.query(models.Persona).filter(
+            members = db.query(models.Persona).filter(
                 models.Persona.first_name.ilike(term)
                 | models.Persona.last_name.ilike(term)
                 | models.Persona.email.ilike(term)

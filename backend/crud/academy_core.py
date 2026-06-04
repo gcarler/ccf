@@ -4,6 +4,7 @@ from typing import Optional, List
 from uuid import uuid4
 
 from sqlalchemy.orm import Session
+from backend.models_shared import _utcnow
 
 from backend.models_academy_core import (
     Curso, Leccion, Matricula, Evaluacion, ActaFormal,
