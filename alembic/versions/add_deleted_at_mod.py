@@ -1,6 +1,6 @@
 """add deleted_at to auth_user_module_roles
 
-Revision ID: 20260604_add_deleted_at_auth_user_module_roles
+Revision ID: add_deleted_at_mod
 Revises: 20260604_habilitacion_sesiones
 Create Date: 2026-06-04
 
@@ -11,7 +11,7 @@ to replace hard DELETE operations with logical deletion.
 from alembic import op
 import sqlalchemy as sa
 
-revision = "20260604_add_deleted_at_auth_user_module_roles"
+revision = "add_deleted_at_mod"
 down_revision = "20260604_habilitacion_sesiones"
 branch_labels = None
 depends_on = None
