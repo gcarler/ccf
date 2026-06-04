@@ -81,6 +81,7 @@ class Sede(Base):
     nombre = Column(String(150), nullable=False)
     ciudad = Column(String(100), nullable=False)
     es_activa = Column(Boolean, default=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 # ──────────────────────────────────────────────
@@ -97,6 +98,7 @@ class LogAuditoria(Base):
     detalles_cambio = Column(JSON, nullable=True)
     usuario_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     fecha_accion = Column(DateTime(timezone=True), default=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 # ──────────────────────────────────────────────
@@ -111,6 +113,7 @@ class CategoriaEstrategia(Base):
     descripcion = Column(String(255), nullable=True)
     es_del_sistema = Column(Boolean, default=False)
     activa = Column(Boolean, default=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class MotivoExcusa(Base):
@@ -445,7 +448,13 @@ class Asistencia(Base):
 
     @property
     def attended(self):
-        return self.estado in ("Presente", "ASISTIO", "present", True)
+        return str(self.estado).strip().lower() in {
+            "asistio",
+            "presente",
+            "present",
+            "primera_vez",
+            "first_time",
+        }
 
     @attended.setter
     def attended(self, value):
@@ -467,6 +476,7 @@ class RegistroSeguimiento(Base):
     tipo = Column(String(30), nullable=False)
     observaciones = Column(Text, nullable=True)
     estado_completado = Column(Boolean, default=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     asistencia = relationship("Asistencia", back_populates="seguimientos")
     responsable = relationship("Persona", foreign_keys=[responsable_id], back_populates="seguimientos_realizados")
@@ -485,5 +495,6 @@ class HistorialEmbudo(Base):
     rol_nuevo = Column(String(100), nullable=False)
     fecha_cambio = Column(DateTime(timezone=True), default=_utcnow)
     dias_en_estado_anterior = Column(Integer, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     persona = relationship("Persona", back_populates="historial_embudo")
