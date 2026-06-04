@@ -362,8 +362,6 @@ def create_enrollment(
     - member: requiere academy:study
     - advanced: requiere academy:edit
     """
-    from backend.core.permissions import require_module_access as _rma, _has_permission, normalize_role as _nr
-
     user_id = coerce_user_id(getattr(current_user, "id", 0))
     role = _nr(str(getattr(current_user, "role", "") or ""))
 

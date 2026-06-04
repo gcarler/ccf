@@ -14,7 +14,7 @@ type AccessLevel = "open" | "member" | "advanced";
 
 const ACCESS_LABEL: Record<AccessLevel, string> = {
   open: "Abierto",
-  member: "Miembros",
+  member: "Congregantes",
   advanced: "Formadores",
 };
 const ACCESS_COLOR: Record<AccessLevel, string> = {
