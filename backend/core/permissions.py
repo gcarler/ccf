@@ -448,8 +448,8 @@ def create_refresh_token(db: Session, user_id: int | str, ip_address: str = None
     token = secrets.token_urlsafe(48)
     expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
 
-    # Bridge: if user_id is a UUID string or UUID object, use auth_v2 storage
-    if isinstance(user_id, (str, _uuid.UUID)):
+    # Bridge: UUID ids use auth_v2 storage; numeric legacy ids still use users.
+    if isinstance(user_id, (str, _uuid.UUID)) and not str(user_id).isdigit():
         from backend.models_auth import TokenSesion
 
         # Convert string to UUID object if needed (TokenSesion.user_id is UUID PK)
@@ -609,7 +609,7 @@ def require_permission(permission: str):
         db_user = crud.get_user(db, current_user.id) if str(getattr(current_user, "id", "")).isdigit() else None
         user_perms: set[str] = set()
 
-        # 1. Role-based permissions
+        # 1. Role-based permissions (auth v1 legacy)
         if db_user and getattr(db_user, "user_role_obj", None):
             perms = getattr(db_user.user_role_obj, "permissions", None) or {}
             if isinstance(perms, dict):
@@ -617,13 +617,19 @@ def require_permission(permission: str):
             elif isinstance(perms, (list, set)):
                 user_perms.update(perms)
 
-        # 2. Per-user permission overrides (granular)
+        # 2. Per-user permission overrides (auth v1 legacy)
         if db_user and getattr(db_user, "permissions_override", None):
             override = getattr(db_user.permissions_override, "permissions", None) or {}
             if isinstance(override, dict):
                 user_perms.update(override.keys() if override else [])
             elif isinstance(override, (list, set)):
                 user_perms.update(override)
+
+        # 3. Granular permissions from auth_roles (RolPlataforma) — auth v2 source of truth
+        if hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+            rol_perms = current_user.rol_plataforma.permisos or {}
+            if isinstance(rol_perms, dict):
+                user_perms.update(k for k, v in rol_perms.items() if v)
 
         if _has_permission(role, user_perms, permission):
             return current_user

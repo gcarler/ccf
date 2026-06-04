@@ -522,21 +522,31 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
 
-    # Resolve effective permissions from platform role
+    # Resolve effective permissions: PlatformRoleDefinition + auth_roles granular perms
     permissions = {}
     try:
         from backend.models_kernel import PlatformRoleDefinition
+        from sqlalchemy.orm import joinedload
 
+        # Layer 1: base permissions from PlatformRoleDefinition
         pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
         if pr and pr.permissions:
             if "*" in pr.permissions:
                 from backend.core.permissions import PERMISSIONS
-
                 for p_key in PERMISSIONS:
                     permissions[p_key] = "allow"
             else:
                 for p in pr.permissions:
                     permissions[p] = "allow"
+
+        # Layer 2: granular permissions from auth_roles (RolPlataforma) — override/extend
+        user_with_rol = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == user_uuid).first()
+        if user_with_rol and user_with_rol.rol_plataforma:
+            rol_perms = user_with_rol.rol_plataforma.permisos or {}
+            if isinstance(rol_perms, dict):
+                for k, v in rol_perms.items():
+                    if v:  # cualquier valor truthy ("read", "edit", "manage", "allow", True)
+                        permissions[k] = "allow"
     except Exception:
         pass
 
