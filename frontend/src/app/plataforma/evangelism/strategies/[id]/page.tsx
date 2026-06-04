@@ -333,7 +333,7 @@ export default function StrategyDetailPage() {
 
     useEffect(() => {
         if (isGroupDrawerOpen && members.length === 0) {
-            apiFetch<any[]>('/crm/personas', { token }).then(m => setMembers(m || [])).catch(() => toast.error('Error al cargar personas'));
+            apiFetch<any[]>('/crm/personas', { token, query: { limit: 1000 } }).then(m => setMembers(m || [])).catch(() => toast.error('Error al cargar personas'));
         }
     }, [isGroupDrawerOpen, members.length, token]);
 
