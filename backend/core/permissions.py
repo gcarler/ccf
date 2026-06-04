@@ -677,12 +677,18 @@ async def require_pastor_or_admin(
     role = normalize_role(str(getattr(current_user, "role", "")))
     if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
         role = normalize_role(current_user.rol_plataforma.nombre)
-    if role not in {"admin", "administrador", "pastor"}:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Permisos insuficientes. Se requiere: crm:manage",
-        )
-    return current_user
+    if role in {"admin", "administrador", "pastor"}:
+        return current_user
+    # Fallback: accept users whose role has system:config or crm:manage permission
+    permisos = {}
+    if hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+        permisos = current_user.rol_plataforma.permisos or {}
+    if permisos.get("system:config") == "allow" or permisos.get("crm:manage") == "allow":
+        return current_user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Permisos insuficientes. Se requiere: crm:manage",
+    )
 
 
 # ── Legacy auth helpers ────────────────────────────────────────────────
