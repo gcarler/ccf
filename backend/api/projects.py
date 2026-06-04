@@ -50,7 +50,7 @@ def list_all_my_tasks(
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(timezone.utc)
 
 
 def _log_project_activity(db: Session, project_id: Any, user_id: Any, action_type: str, description: str):

@@ -4,7 +4,7 @@ import datetime as dt
 
 
 def _utcnow() -> dt.datetime:
-    return dt.datetime.now(dt.UTC).replace(tzinfo=None)
+    return dt.datetime.now(dt.timezone.utc)
 
 
 def analyze_pastoral_priority(notes: str) -> str:

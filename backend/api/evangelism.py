@@ -300,19 +300,19 @@ def _member_matches_segment(persona: models.Persona, segment: str, donation_pers
     return False
 
 
-def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.Persona]:
+def _resolve_campaign_members(db: Session, segments: list[str], sede_id=None) -> list[models.Persona]:
     normalized_segments = [segment for segment in (s.strip().lower() for s in segments) if segment]
     if not normalized_segments:
         return []
 
-    donation_persona_ids = {
-        persona_id
-        for (persona_id,) in db.query(models.Donation.persona_id)
-        .filter(models.Donation.persona_id.isnot(None))
-        .distinct()
-        .all()
-    }
-    personas = db.query(models.Persona).all()
+    donations_q = db.query(models.Donation.persona_id).filter(models.Donation.persona_id.isnot(None))
+    if sede_id:
+        donations_q = donations_q.filter(models.Donation.sede_id == sede_id)
+    donation_persona_ids = {persona_id for (persona_id,) in donations_q.distinct().all()}
+    personas_q = db.query(models.Persona)
+    if sede_id:
+        personas_q = personas_q.filter(models.Persona.sede_id == sede_id)
+    personas = personas_q.all()
     selected = []
     seen_ids: set[str] = set()
     for persona in personas:
@@ -448,7 +448,11 @@ async def send_crm_message(
         if target_segments:
             if not campaign_name or not content:
                 raise HTTPException(status_code=400, detail="campaign_name and content required")
-            personas = _resolve_campaign_members(db, list(target_segments))
+            personas = _resolve_campaign_members(
+                db,
+                list(target_segments),
+                sede_id=crud.get_user_sede_id(db, current_user.id),
+            )
             if not personas:
                 raise HTTPException(
                     status_code=404,
@@ -1003,7 +1007,7 @@ def crm_analytics(
     from datetime import datetime, timezone
 
     now = datetime.now(timezone.utc)
-    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     events_this_month = db.query(models.CrmEvent).filter(models.CrmEvent.event_date >= month_start).count()
 
     # Grupos

@@ -76,12 +76,15 @@ Auditoria del 2026-06-04 — commit `31774b6` (rama `main`, working tree con cam
 | Area | Resultado |
 |---|---:|
 | `tests/test_structural_contracts.py` + `tests/test_reglas_plataforma.py` | PASS |
-| `scripts/auditing/quality_gate.py` | PASS |
-| Referencias `db.delete(` no catalogadas automaticamente | 1 |
+| `scripts/auditing/quality_gate.py` | PASS (commit base) |
+| Referencias `db.delete(` en backend | 0 ✔️ erradicado |
+| `datetime.utcnow()` / `dt.utcnow()` directo | 0 ✔️ erradicado |
+| `.replace(tzinfo=None)` en backend | 0 ✔️ erradicado |
 | FKs legacy a `users.id` | 31 (28 activas + 3 DEPRECATED en `models_crm.py`) |
 | `persona_id: int` / `person_id: int` en API/schemas | 0 ✔️ resuelto |
-| `fetch(` directo en frontend | 16 (8 excepciones validas, 3-4 pendientes, 4-5 borderline) |
+| `fetch(` directo en frontend sin excepcion | 0 ✔️ erradicado |
 | Referencias `Dialog`/`Modal` en frontend | 0 ✔️ resuelto (solo nombres de variables) |
+| Texto "MIEMBRO" en UI (debe ser "consolidado") | 0 ✔️ erradicado |
 
 Estos numeros no autorizan correcciones masivas. Sirven para ordenar el saneamiento por puntos.
 
@@ -95,6 +98,9 @@ Estos numeros no autorizan correcciones masivas. Sirven para ordenar el saneamie
 | `fetch()` directo → `apiFetch()` | ✅ 4 reemplazos | useTableView, useAirTable, web-vitals, TaskDetailPanel |
 | Métricas documentales desactualizadas | ✅ Actualizadas | FKs 32→31, persona_id:int 0, Dialog/Modal 0 |
 | Migracion `deleted_at` para `auth_user_module_roles` | ✅ Creada | `20260604_add_deleted_at_auth_user_module_roles` |
+| `_utcnow()` devolviendo datetime naive (viola §2.D) | ✅ 5 arreglados | crud/dashboard, core/permissions, analytics/proactive_ia, api/projects, crud/_utils |
+| `.replace(tzinfo=None)` en APIs y CRUDs | ✅ 9 arreglados | finance (2), crud/audit, auth_v3, evangelism_shared, cms, evangelism, crm/_shared, crm/pastoral |
+| Texto "MIEMBRO" en UI | ✅ 2 reemplazos | `admin/members/page.tsx` (label), `crm/my-card/page.tsx` (nombre tarjeta) |
 
 ---
 

@@ -9,7 +9,7 @@ from backend import crud, models, schemas
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(timezone.utc)
 
 
 log = logging.getLogger(__name__)

@@ -19,7 +19,7 @@ def get_finance_summary(
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     """Resumen financiero para el dashboard de administración."""
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     total_income = (
@@ -50,7 +50,7 @@ def get_ministerial_funds(
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     """Resumen de fondos en tiempo real calculado desde donations."""
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     total_ingresos = (

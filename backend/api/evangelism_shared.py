@@ -16,9 +16,37 @@ ABSENCE_REASON_LABELS = {
     "other": "Otro",
 }
 
+ATTENDED_STATES = {"ASISTIO", "Presente", "present", "presente", "primera_vez", "first_time"}
+ABSENT_STATES = {"FALTO", "Ausente", "absent", "ausente"}
+EXCUSED_STATES = {"EXCUSA", "Excusa", "excusa"}
+FIRST_TIME_STATES = {"primera_vez", "first_time"}
+
+
+def normalize_attendance_status(value) -> str:
+    normalized = str(value or "").strip().lower()
+    if normalized in {state.lower() for state in ATTENDED_STATES}:
+        return "present"
+    if normalized in {state.lower() for state in ABSENT_STATES}:
+        return "absent"
+    if normalized in {state.lower() for state in EXCUSED_STATES}:
+        return "excused"
+    return normalized
+
+
+def is_attended_status(value) -> bool:
+    return normalize_attendance_status(value) == "present"
+
+
+def is_absent_status(value) -> bool:
+    return normalize_attendance_status(value) == "absent"
+
+
+def is_excused_status(value) -> bool:
+    return normalize_attendance_status(value) == "excused"
+
 
 def utc_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+    return datetime.datetime.now(datetime.timezone.utc)
 
 
 def parse_session_date(value: object) -> datetime.date:
@@ -99,8 +127,9 @@ def resolve_target_role_ids(event: models.CrmEvent) -> list[int]:
 
 
 def get_expected_members_for_event(
-    db: Session, event: models.CrmEvent
+    db: Session, event: models.CrmEvent, sede_id=None
 ) -> list[models.Persona]:
+    event_sede_id = sede_id or getattr(event, "sede_id", None)
     if event.target_audience == "ROLE":
         role_ids = resolve_target_role_ids(event)
         if not role_ids:
@@ -113,12 +142,10 @@ def get_expected_members_for_event(
         ]
         if not role_names:
             return []
-        return (
-            db.query(models.Persona)
-            .filter(models.Persona.church_role.in_(role_names))
-            .order_by(models.Persona.nombre_completo.asc())
-            .all()
-        )
+        q = db.query(models.Persona).filter(models.Persona.church_role.in_(role_names))
+        if event_sede_id:
+            q = q.filter(models.Persona.sede_id == event_sede_id)
+        return q.order_by(models.Persona.nombre_completo.asc()).all()
     if event.target_audience == "MANUAL":
         import uuid
         persona_ids = []
@@ -134,17 +161,14 @@ def get_expected_members_for_event(
         persona_ids = list(dict.fromkeys(persona_ids))
         if not persona_ids:
             return []
-        return (
-            db.query(models.Persona)
-            .filter(models.Persona.id.in_(persona_ids))
-            .order_by(models.Persona.nombre_completo.asc())
-            .all()
-        )
+        q = db.query(models.Persona).filter(models.Persona.id.in_(persona_ids))
+        if event_sede_id:
+            q = q.filter(models.Persona.sede_id == event_sede_id)
+        return q.order_by(models.Persona.nombre_completo.asc()).all()
     # Fallback: todos los miembros de la sede del evento (Axioma 3)
-    sede_id = getattr(event, "sede_id", None)
     q = db.query(models.Persona)
-    if sede_id:
-        q = q.filter(models.Persona.sede_id == sede_id)
+    if event_sede_id:
+        q = q.filter(models.Persona.sede_id == event_sede_id)
     return q.order_by(models.Persona.nombre_completo.asc()).all()
 
 
@@ -222,22 +246,21 @@ def _member_matches_segment(
     return False
 
 
-def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.Persona]:
+def _resolve_campaign_members(db: Session, segments: list[str], sede_id=None) -> list[models.Persona]:
     normalized_segments = [
         segment for segment in (s.strip().lower() for s in segments) if segment
     ]
     if not normalized_segments:
         return []
 
-    donation_persona_ids = {
-        str(pid)
-        for (pid,) in db.query(models.Donation.persona_id)
-        .filter(models.Donation.persona_id.isnot(None))
-        .distinct()
-        .all()
-    }
-    personas = db.query(models.Persona).all()
-    # 🛡️ Axioma 3: las queries deben filtrar por sede_id
+    donations_q = db.query(models.Donation.persona_id).filter(models.Donation.persona_id.isnot(None))
+    if sede_id:
+        donations_q = donations_q.filter(models.Donation.sede_id == sede_id)
+    donation_persona_ids = {str(pid) for (pid,) in donations_q.distinct().all()}
+    personas_q = db.query(models.Persona)
+    if sede_id:
+        personas_q = personas_q.filter(models.Persona.sede_id == sede_id)
+    personas = personas_q.all()
     selected = []
     seen_ids: set[str] = set()
     for persona in personas:

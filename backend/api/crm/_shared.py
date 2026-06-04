@@ -4,7 +4,7 @@ from backend import models
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(timezone.utc)
 
 
 def _serialize_member_position(member_position: models.MemberPosition) -> dict:

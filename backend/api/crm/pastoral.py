@@ -42,6 +42,27 @@ def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]):
     return case
 
 
+def _get_persona_or_404(db: Session, persona_ref: str, user_sede: Optional[int] = None):
+    """Resolve canonical UUID persona refs, with legacy user_id fallback."""
+    try:
+        persona_uuid = uuid.UUID(str(persona_ref))
+        persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
+    except (TypeError, ValueError):
+        persona = None
+        if str(persona_ref).isdigit():
+            persona = (
+                db.query(models.Persona)
+                .filter(models.Persona.user_id == int(str(persona_ref)))
+                .first()
+            )
+
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
+    if user_sede and persona.sede_id and str(persona.sede_id) != str(user_sede):
+        raise HTTPException(status_code=404, detail="Persona not found")
+    return persona
+
+
 # ═══════════════════════════════════════════════════════════════════
 # REDIRECTS: Old consolidation endpoints → new CRM Core
 # ═══════════════════════════════════════════════════════════════════
@@ -1140,7 +1161,7 @@ def get_crm_analytics_summary(
     open_counseling = counseling_q.count()
 
     month_start = (
-        datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
+        datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     )
     events_q = db.query(models.CrmEvent).filter(models.CrmEvent.event_date >= month_start)
     if user_sede:
@@ -1404,16 +1425,15 @@ def list_volunteers(
 
 @router.get("/volunteers/{persona_id}", response_model=dict)
 def get_volunteer_detail(
-    persona_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
-    if not persona:
-        raise HTTPException(status_code=404, detail="Volunteer not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    persona = _get_persona_or_404(db, persona_id, user_sede)
     shifts = (
         db.query(models.VolunteerShift)
-        .filter(models.VolunteerShift.persona_id == persona_id)
+        .filter(models.VolunteerShift.persona_id == persona.id)
         .order_by(models.VolunteerShift.shift_start.desc())
         .all()
     )
@@ -1430,7 +1450,7 @@ def get_volunteer_detail(
                 models.member_volunteer_skills,
                 models.member_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
             )
-            .filter(models.member_volunteer_skills.c.persona_id == persona_id)
+            .filter(models.member_volunteer_skills.c.persona_id == persona.id)
             .all()
         )
         if row.name
@@ -1449,14 +1469,13 @@ def get_volunteer_detail(
 
 @router.patch("/volunteers/{persona_id}", response_model=dict)
 def update_volunteer(
-    persona_id: int,
+    persona_id: str,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
-    if not persona:
-        raise HTTPException(status_code=404, detail="Volunteer not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    persona = _get_persona_or_404(db, persona_id, user_sede)
     allowed = {"church_role", "first_name", "last_name", "phone", "email"}
     for k, v in payload.items():
         if k in allowed:
@@ -1472,16 +1491,15 @@ def update_volunteer(
 
 @router.delete("/volunteers/{persona_id}", status_code=204)
 def delete_volunteer(
-    persona_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Soft-delete: desactiva turnos de voluntario y marca persona como INACTIVA."""
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
-    if not persona:
-        raise HTTPException(status_code=404, detail="Volunteer not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+    persona = _get_persona_or_404(db, persona_id, user_sede)
     # Cancelar turnos futuros del voluntario (datos satélite, no Persona)
-    db.query(models.VolunteerShift).filter(models.VolunteerShift.persona_id == persona_id).update(
+    db.query(models.VolunteerShift).filter(models.VolunteerShift.persona_id == persona.id).update(
         {models.VolunteerShift.deleted_at: utc_now()}, synchronize_session=False
     )
     # Soft-delete de la Persona

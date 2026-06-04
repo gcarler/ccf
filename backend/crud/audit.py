@@ -31,7 +31,7 @@ def create_admin_audit_log(
                 resolved_persona_id = str(persona.id) if persona else None
             except ValueError:
                 resolved_persona_id = None
-    now = dt.datetime.now(dt.UTC).replace(tzinfo=None)
+    now = dt.datetime.now(dt.timezone.utc)
     row = models.AdminAuditLog(
         actor_persona_id=resolved_persona_id,
         actor_user_id=actor_user_id,

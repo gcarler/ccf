@@ -143,7 +143,7 @@ def get_cms_announcement(
     db: Session = Depends(get_db),
 ):
     row = crud.get_announcement(db, announcement_id)
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = datetime.now(timezone.utc)
     if (
         not row
         or row.status != "published"

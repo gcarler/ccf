@@ -643,7 +643,7 @@ def refresh_token(
     if not rt:
         raise HTTPException(status_code=401, detail="Refresh token inválido")
 
-    if rt.expires_at.replace(tzinfo=None) < datetime.now(timezone.utc).replace(tzinfo=None):
+    if rt.expires_at < datetime.now(timezone.utc):
         rt.revoked = True
         db.commit()
         raise HTTPException(status_code=401, detail="Refresh token expirado")

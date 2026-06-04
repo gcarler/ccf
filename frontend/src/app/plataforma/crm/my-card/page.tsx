@@ -108,7 +108,7 @@ export default function MyCardPage() {
                 };
             default:
                 return {
-                    name: 'CCF MIEMBRO ACTIVO',
+                    name: 'CONSOLIDADO CCF',
                     primary: 'from-slate-700 to-slate-900',
                     border: 'border-slate-500/50',
                     badge: 'bg-slate-600',

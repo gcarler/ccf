@@ -34,7 +34,7 @@ const ROLE_OPTIONS: StatusOption[] = [
     { label: 'ADMIN', value: 'admin', color: 'bg-rose-500', text: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-900/20' },
     { label: 'STAFF', value: 'staff', color: 'bg-[hsl(var(--primary))]', text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
     { label: 'PASTOR', value: 'pastor', color: 'bg-sky-500', text: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-900/20' },
-    { label: 'MIEMBRO', value: 'estudiante', color: 'bg-slate-400', text: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-white/5' },
+    { label: 'ESTUDIANTE', value: 'estudiante', color: 'bg-slate-400', text: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-white/5' },
 ];
 
 export default function AdminMembersPage() {

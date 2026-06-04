@@ -29,7 +29,7 @@ from backend.schemas.dashboard import (
 
 
 def _utcnow():
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(timezone.utc)
 
 
 def _month_range(months_ago: int = 0):

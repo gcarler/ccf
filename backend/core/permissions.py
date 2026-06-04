@@ -321,7 +321,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(timezone.utc)
 
 
 def normalize_role(role: str) -> str:
