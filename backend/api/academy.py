@@ -354,9 +354,44 @@ def read_last_formal_acta(course_id: int, db: Session = Depends(get_db)):
 def create_enrollment(
     enrollment: schemas.EnrollmentCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("academy", "study")),
+    current_user: models.User = Depends(require_module_access("academy", "read")),
 ):
+    """Inscribe a un usuario en un curso, respetando el access_level del curso.
+
+    - open: cualquier usuario autenticado (academy:read)
+    - member: requiere academy:study
+    - advanced: requiere academy:edit
+    """
+    from backend.core.permissions import require_module_access as _rma, _has_permission, normalize_role as _nr
+
     user_id = coerce_user_id(getattr(current_user, "id", 0))
+    role = _nr(str(getattr(current_user, "role", "") or ""))
+
+    # Verificar access_level del curso
+    course = db.query(models.Course).filter(models.Course.id == enrollment.course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    access = getattr(course, "access_level", "member") or "member"
+    if access == "member":
+        # Requiere academy:study — verificar si el usuario tiene el permiso
+        from backend.core.permissions import get_user_effective_permissions
+        eff = get_user_effective_permissions(db, current_user)
+        if role not in {"admin", "administrador"} and "academy:study" not in eff:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Este curso requiere membresía activa (academy:study).",
+            )
+    elif access == "advanced":
+        from backend.core.permissions import get_user_effective_permissions
+        eff = get_user_effective_permissions(db, current_user)
+        if role not in {"admin", "administrador"} and "academy:edit" not in eff:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Este curso es solo para formadores (academy:edit).",
+            )
+    # access == "open": cualquier registrado puede inscribirse
+
     if (
         normalize_role(str(current_user.role)) != "admin"
         and str(user_id) != str(enrollment.user_id)

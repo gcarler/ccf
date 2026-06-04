@@ -26,6 +26,7 @@ class CursoCreate(BaseModel):
     duration_hours: int
     xp_per_lesson: int = 10
     image_url: Optional[str] = None
+    access_level: str = "member"  # open | member | advanced
 
 
 class CursoUpdate(BaseModel):
@@ -40,6 +41,7 @@ class CursoUpdate(BaseModel):
     duration_hours: Optional[int] = None
     xp_per_lesson: Optional[int] = None
     image_url: Optional[str] = None
+    access_level: Optional[str] = None  # open | member | advanced
 
 
 class CursoResponse(BaseModel):
@@ -55,6 +57,7 @@ class CursoResponse(BaseModel):
     duration_hours: int
     xp_per_lesson: int = 10
     image_url: Optional[str] = None
+    access_level: str = "member"
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     lecciones: list[LeccionResponse] = Field(default_factory=list)

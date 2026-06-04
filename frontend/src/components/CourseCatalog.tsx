@@ -10,6 +10,19 @@ import { useWikiDocument } from "@/hooks/useWikiDocument";
 
 type Modality = "formal" | "no_formal";
 
+type AccessLevel = "open" | "member" | "advanced";
+
+const ACCESS_LABEL: Record<AccessLevel, string> = {
+  open: "Abierto",
+  member: "Miembros",
+  advanced: "Formadores",
+};
+const ACCESS_COLOR: Record<AccessLevel, string> = {
+  open: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  member: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  advanced: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+};
+
 interface Course {
   id: number;
   code: string;
@@ -22,6 +35,7 @@ interface Course {
   certificate_type?: string | null;
   lesson_count: number;
   total_minutes: number;
+  access_level?: AccessLevel;
 }
 
 interface CourseCatalogProps {
@@ -174,7 +188,14 @@ export default function CourseCatalog({
                   <div className="flex flex-1 flex-col justify-center min-w-0">
                     <div className="flex justify-between items-start mb-1">
                       <h3 className="font-bold text-base text-white truncate pr-2">{course.title}</h3>
-                      <span className="text-[9px] font-bold text-primary px-2 py-0.5 rounded bg-primary/10 uppercase tracking-wider shrink-0">{course.code}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {course.access_level && course.access_level !== 'member' && (
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${ACCESS_COLOR[course.access_level] ?? ACCESS_COLOR.member}`}>
+                            {ACCESS_LABEL[course.access_level] ?? course.access_level}
+                          </span>
+                        )}
+                        <span className="text-[9px] font-bold text-primary px-2 py-0.5 rounded bg-primary/10 uppercase tracking-wider">{course.code}</span>
+                      </div>
                     </div>
                     <p className="text-slate-400 text-xs line-clamp-2 pr-2 leading-relaxed">{course.description}</p>
                   </div>

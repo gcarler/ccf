@@ -39,6 +39,8 @@ class Curso(Base):
     duration_hours = Column(Integer, nullable=False)
     xp_per_lesson = Column(Integer, default=10)
     image_url = Column(String(255))
+    # open=cualquier registrado | member=academy:study | advanced=academy:edit
+    access_level = Column(String(20), nullable=False, default="member", server_default="member")
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 

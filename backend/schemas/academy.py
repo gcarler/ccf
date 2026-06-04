@@ -25,6 +25,7 @@ class Course(BaseModel):
     description: Optional[str] = None
     modality: str
     is_published: bool = True
+    access_level: str = "member"  # open | member | advanced
     created_at: datetime | None = None
     prerequisites: List[CoursePrerequisite] = Field(default_factory=list)
     lesson_count: int = 0
