@@ -200,6 +200,8 @@ export default function StrategyDetailPage() {
         host_id: null as string | null,
     });
     const [groupSaving, setGroupSaving] = useState(false);
+    const [roleSearch, setRoleSearch] = useState({ leader_id: '', assistant_id: '', host_id: '' });
+    const [roleDropdown, setRoleDropdown] = useState<'leader_id' | 'assistant_id' | 'host_id' | null>(null);
 
     // Member management drawer
     const [isMemberDrawerOpen, setIsMemberDrawerOpen] = useState(false);
@@ -343,6 +345,8 @@ export default function StrategyDetailPage() {
             end_time: '',
             leader_id: null, assistant_id: null, host_id: null,
         });
+        setRoleSearch({ leader_id: '', assistant_id: '', host_id: '' });
+        setRoleDropdown(null);
         setIsGroupDrawerOpen(true);
     };
 
@@ -1361,20 +1365,84 @@ export default function StrategyDetailPage() {
                                 className="w-full px-2 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none" />
                         </div>
                     </div>
-                    {[
-                        { label: 'Líder', field: 'leader_id' },
-                        { label: 'Colíder', field: 'assistant_id' },
-                        { label: 'Anfitrión', field: 'host_id' },
-                    ].map(({ label, field }) => (
-                        <div key={field}>
-                            <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">{label}</label>
-                            <select value={(groupForm as any)[field] || ''} onChange={e => setGroupForm(f => ({ ...f, [field]: e.target.value || null }))}
-                                className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                                <option value="">Sin asignar</option>
-                                {members.map(m => <option key={m.id} value={m.id}>{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}{m.church_role ? ` (${m.church_role})` : ''}</option>)}
-                            </select>
-                        </div>
-                    ))}
+                    {([
+                        { label: 'Líder', field: 'leader_id' as const },
+                        { label: 'Colíder', field: 'assistant_id' as const },
+                        { label: 'Anfitrión', field: 'host_id' as const },
+                    ]).map(({ label, field }) => {
+                        const selectedId = (groupForm as any)[field] as string | null;
+                        const selectedMember = selectedId ? members.find(m => m.id === selectedId) : null;
+                        const selectedName = selectedMember
+                            ? (selectedMember.nombre_completo || `${selectedMember.first_name ?? ''} ${selectedMember.last_name ?? ''}`.trim())
+                            : '';
+                        const query = roleSearch[field];
+                        const filtered = query.trim()
+                            ? members.filter(m => {
+                                const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()).toLowerCase();
+                                return name.includes(query.toLowerCase());
+                            })
+                            : members.slice(0, 8);
+                        return (
+                            <div key={field} className="relative">
+                                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">{label}</label>
+                                <div className="relative">
+                                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    <input
+                                        type="text"
+                                        placeholder={selectedName || `Buscar ${label.toLowerCase()}...`}
+                                        value={roleDropdown === field ? query : selectedName}
+                                        onFocus={() => {
+                                            setRoleDropdown(field);
+                                            setRoleSearch(s => ({ ...s, [field]: '' }));
+                                        }}
+                                        onBlur={() => setTimeout(() => setRoleDropdown(null), 150)}
+                                        onChange={e => setRoleSearch(s => ({ ...s, [field]: e.target.value }))}
+                                        className="w-full pl-8 pr-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    />
+                                    {selectedId && (
+                                        <button
+                                            type="button"
+                                            onClick={() => { setGroupForm(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                        >
+                                            <X size={13} />
+                                        </button>
+                                    )}
+                                </div>
+                                {roleDropdown === field && (
+                                    <div className="absolute z-50 mt-1 w-full bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                        <button
+                                            type="button"
+                                            onMouseDown={() => { setGroupForm(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}
+                                            className="w-full text-left px-3 py-2 text-[12px] text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 border-b border-slate-100 dark:border-white/5"
+                                        >
+                                            Sin asignar
+                                        </button>
+                                        {filtered.length === 0 ? (
+                                            <div className="px-3 py-3 text-[12px] text-slate-400 text-center">Sin resultados</div>
+                                        ) : filtered.map(m => {
+                                            const name = m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim();
+                                            return (
+                                                <button
+                                                    key={m.id}
+                                                    type="button"
+                                                    onMouseDown={() => {
+                                                        setGroupForm(f => ({ ...f, [field]: m.id }));
+                                                        setRoleDropdown(null);
+                                                        setRoleSearch(s => ({ ...s, [field]: '' }));
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-between gap-2"
+                                                >
+                                                    <span className="font-medium">{name}</span>
+                                                    {m.church_role && <span className="text-[10px] text-slate-400 shrink-0">{m.church_role}</span>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </WorkspaceDrawer>
 
