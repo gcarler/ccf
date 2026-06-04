@@ -1,6 +1,7 @@
 "use client";
 
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
@@ -61,7 +62,7 @@ interface Strategy {
 interface CustomRole {
     id: number;
     estrategia_id: string;
-    nombre: string;
+    nombre_rol: string;
     descripcion?: string;
 }
 
@@ -173,6 +174,7 @@ export default function StrategyDetailPage() {
     const [editClaseRaiz, setEditClaseRaiz] = useState('');
     const [editStartDate, setEditStartDate] = useState('');
     const [editEndDate, setEditEndDate] = useState('');
+    const [editRecurrence, setEditRecurrence] = useState<string | null>(null);
 
     // Roles personalizados
     const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
@@ -184,6 +186,7 @@ export default function StrategyDetailPage() {
     // Seguimiento
     const [followUps, setFollowUps] = useState<FollowUpRecord[]>([]);
     const [loadingFollowUps, setLoadingFollowUps] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const { viewType, setViewType } = useViewType(`strategy_${id}`, 'dashboard');
     const [groups, setGroups] = useState<StrategyGroup[]>([]);
@@ -259,6 +262,7 @@ export default function StrategyDetailPage() {
             setEditClaseRaiz(result.clase_raiz || result.typology || '');
             setEditStartDate(result.start_date ? result.start_date.substring(0, 10) : '');
             setEditEndDate(result.end_date ? result.end_date.substring(0, 10) : '');
+            setEditRecurrence(result.recurrence || null);
         } catch (e: any) {
             console.error('[StrategyDetail] fetch error:', e);
             toast.error('Error al cargar la estrategia');
@@ -402,12 +406,21 @@ export default function StrategyDetailPage() {
     };
 
     const handleDeleteGroup = async (groupId: number, groupName: string) => {
-        if (!window.confirm(`¿Eliminar "${groupName}"? Se borrará todo el historial de asistencia.`)) return;
         try {
             await apiFetch(`/evangelism/grupos/${groupId}`, { method: 'DELETE', token });
             toast.success('Grupo eliminado');
             fetchGroups(); fetchStrategy();
         } catch { toast.error('Error al eliminar'); }
+    };
+
+    const requestDeleteGroup = (groupId: number, groupName: string) => {
+        setConfirmAction({
+            title: 'Eliminar grupo',
+            description: `Se eliminara "${groupName}" y todo su historial de asistencia.`,
+            confirmLabel: 'Eliminar',
+            destructive: true,
+            onConfirm: () => handleDeleteGroup(groupId, groupName),
+        });
     };
 
     // ── Member management ──
@@ -515,7 +528,7 @@ export default function StrategyDetailPage() {
         setVisitorSearch('');
         // Pre-load all members for visitor search if not already loaded
         if (allMembers.length === 0) {
-            apiFetch<any[]>('/crm/personas?limit=1000', { token }).then(res => {
+            apiFetch<any[]>('/crm/personas', { token, query: { limit: 200, sort_by: 'first_name', sort_dir: 'asc' } }).then(res => {
                 if (Array.isArray(res)) setAllMembers(res);
             }).catch((err) => { console.error('[StrategyDetailPage] Failed to load members for attendance:', err); toast.error('Error al cargar personas'); });
         }
@@ -562,7 +575,6 @@ export default function StrategyDetailPage() {
     };
 
     const handleDeleteSession = async (sessionId: number) => {
-        if (!confirm('¿Eliminar esta sesión y su asistencia?')) return;
         try {
             await apiFetch(`/evangelism/sessions/${sessionId}`, { method: 'DELETE', token });
             toast.success('Sesión eliminada');
@@ -571,6 +583,16 @@ export default function StrategyDetailPage() {
             toast.error('Error: ' + (e.message || 'Intente de nuevo'));
         }
         setSessionMenuId(null);
+    };
+
+    const requestDeleteSession = (sessionId: number) => {
+        setConfirmAction({
+            title: 'Eliminar sesion',
+            description: 'Se eliminara esta sesion y su asistencia registrada.',
+            confirmLabel: 'Eliminar',
+            destructive: true,
+            onConfirm: () => handleDeleteSession(sessionId),
+        });
     };
 
     const handleSave = async () => {
@@ -584,6 +606,7 @@ export default function StrategyDetailPage() {
                     status: editStatus,
                     activa: editActiva,
                     clase_raiz: editClaseRaiz || null,
+                    recurrence: editRecurrence,
                     start_date: editStartDate ? new Date(editStartDate).toISOString() : null,
                     end_date: editEndDate ? new Date(editEndDate).toISOString() : null,
                 },
@@ -601,7 +624,6 @@ export default function StrategyDetailPage() {
 
     const handleDelete = async () => {
         if (!strategy) return;
-        if (!window.confirm(`¿Está seguro de eliminar "${strategy.name}"? Se borrarán todos sus grupos, sesiones y registros de asistencia.`)) return;
         try {
             await apiFetch(`/evangelism/strategies/${id}`, { method: 'DELETE', token });
             toast.success('Estrategia eliminada');
@@ -611,6 +633,49 @@ export default function StrategyDetailPage() {
             console.error('[StrategyDetail] Delete error:', e);
             toast.error('Error al eliminar: ' + (e?.message || 'Intente de nuevo'));
         }
+    };
+
+    const requestDeleteStrategy = () => {
+        if (!strategy) return;
+        setConfirmAction({
+            title: 'Eliminar estrategia',
+            description: `Se eliminara "${strategy.name}" con sus grupos, sesiones y registros de asistencia.`,
+            confirmLabel: 'Eliminar',
+            destructive: true,
+            onConfirm: handleDelete,
+        });
+    };
+
+    const requestBlockAllSessions = () => {
+        setConfirmAction({
+            title: 'Bloquear sesiones',
+            description: 'Se bloquearan todas las sesiones para reporte.',
+            confirmLabel: 'Bloquear',
+            destructive: true,
+            onConfirm: async () => {
+                try {
+                    const res = await apiFetch<any>(`/evangelism/strategies/${id}/deshabilitar-todas`, { method: 'POST', token });
+                    toast.success(`${res.sesiones_deshabilitadas} sesiones bloqueadas`);
+                    fetchSessions();
+                } catch (e: any) { toast.error('Error al deshabilitar sesiones'); }
+            },
+        });
+    };
+
+    const requestDeleteRole = (role: CustomRole) => {
+        setConfirmAction({
+            title: 'Eliminar rol',
+            description: `Se eliminara el rol "${role.nombre_rol}".`,
+            confirmLabel: 'Eliminar',
+            destructive: true,
+            onConfirm: async () => {
+                try {
+                    await apiFetch(`/evangelism/strategies/${id}/roles/${role.id}`, { method: 'DELETE', token });
+                    toast.success('Rol eliminado');
+                    fetchCustomRoles();
+                } catch { toast.error('Error al eliminar rol'); }
+            },
+        });
     };
 
     const formatDate = (dateStr: string | null | undefined) => {
@@ -691,7 +756,7 @@ export default function StrategyDetailPage() {
                             </div>
                         </div>
                     </div>
-                    <button onClick={handleDelete}
+                    <button onClick={requestDeleteStrategy}
                         className="p-2 rounded-lg text-slate-400 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-all" title="Eliminar estrategia">
                         <Trash2 size={16} />
                     </button>
@@ -938,7 +1003,21 @@ export default function StrategyDetailPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Fecha de inicio</label>
+                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Recurrencia</label>
+                                <select value={editRecurrence || ''} onChange={e => setEditRecurrence(e.target.value || null)}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors">
+                                    <option value="">Sin recurrencia</option>
+                                    <option value="SEMANAL">Semanal</option>
+                                    <option value="QUINCENAL">Quincenal</option>
+                                    <option value="MENSUAL">Mensual</option>
+                                    <option value="BIMENSUAL">Bimensual</option>
+                                    <option value="TRIMESTRAL">Trimestral</option>
+                                    <option value="SEMESTRAL">Semestral</option>
+                                    <option value="ANUAL">Anual</option>
+                                    <option value="EVENTO_UNICO">Evento único</option>
+                                </select>
+                            </div>
+                            <div>
                                 <input type="date" value={editStartDate} onChange={e => setEditStartDate(e.target.value)}
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors" />
                             </div>
@@ -987,7 +1066,7 @@ export default function StrategyDetailPage() {
                                     <div key={g.id}
                                         className="group bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer relative"
                                         onClick={() => openMemberDrawer(g)}>
-                                        <button onClick={e => { e.stopPropagation(); handleDeleteGroup(g.id, g.name); }}
+                                        <button onClick={e => { e.stopPropagation(); requestDeleteGroup(g.id, g.name); }}
                                             className="absolute top-2 right-2 p-1 rounded text-slate-300 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
                                             <Trash2 size={14} />
                                         </button>
@@ -1040,14 +1119,7 @@ export default function StrategyDetailPage() {
                                     className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
                                     <CheckCircle2 size={14} />Habilitar todas
                                 </button>
-                                <button onClick={async () => {
-                                    if (!window.confirm('¿Bloquear todas las sesiones para reporte?')) return;
-                                    try {
-                                        const res = await apiFetch<any>(`/evangelism/strategies/${id}/deshabilitar-todas`, { method: 'POST', token });
-                                        toast.success(`${res.sesiones_deshabilitadas} sesiones bloqueadas`);
-                                        fetchSessions();
-                                    } catch (e: any) { toast.error('Error al deshabilitar sesiones'); }
-                                }}
+                                <button onClick={requestBlockAllSessions}
                                     className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 text-xs font-semibold hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">
                                     <AlertCircle size={14} />Bloquear todas
                                 </button>
@@ -1152,7 +1224,7 @@ export default function StrategyDetailPage() {
                                                 {sessionMenuId === s.id && (
                                                     <div className="absolute right-0 top-8 z-20 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-slate-200 dark:border-white/10 rounded-lg shadow-lg py-1 min-w-[130px]">
                                                         <button
-                                                            onClick={() => handleDeleteSession(s.id)}
+                                                            onClick={() => requestDeleteSession(s.id)}
                                                             className="w-full text-left px-3 py-2 text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
                                                             <Trash2 size={12} />Eliminar sesión
                                                         </button>
@@ -1257,7 +1329,7 @@ export default function StrategyDetailPage() {
                                     try {
                                         await apiFetch(`/evangelism/strategies/${id}/roles`, {
                                             method: 'POST', token,
-                                            body: { estrategia_id: strategy.codigo, nombre: newRoleName.trim(), descripcion: newRoleDesc || null },
+                                            body: { estrategia_id: id, nombre_rol: newRoleName.trim(), descripcion: newRoleDesc || null },
                                         });
                                         toast.success('Rol creado');
                                         setNewRoleName(''); setNewRoleDesc(''); setShowRoleForm(false);
@@ -1279,17 +1351,10 @@ export default function StrategyDetailPage() {
                                 {customRoles.map(r => (
                                     <div key={r.id} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
                                         <div>
-                                            <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{r.nombre}</span>
+                                            <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{r.nombre_rol}</span>
                                             {r.descripcion && <p className="text-[10px] text-slate-400">{r.descripcion}</p>}
                                         </div>
-                                        <button onClick={async () => {
-                                            if (!confirm(`¿Eliminar rol "${r.nombre}"?`)) return;
-                                            try {
-                                                await apiFetch(`/evangelism/strategies/${id}/roles/${r.id}`, { method: 'DELETE', token });
-                                                toast.success('Rol eliminado');
-                                                fetchCustomRoles();
-                                            } catch { toast.error('Error al eliminar rol'); }
-                                        }} className="p-1 text-slate-400 hover:text-[hsl(var(--destructive))] rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                        <button onClick={() => requestDeleteRole(r)} className="p-1 text-slate-400 hover:text-[hsl(var(--destructive))] rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                             <X size={12} />
                                         </button>
                                     </div>
@@ -1725,6 +1790,7 @@ export default function StrategyDetailPage() {
                     </div>
                 </div>
             </WorkspaceDrawer>
+            <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </EvangelismShell>
     );
 }

@@ -131,6 +131,18 @@ def update_estrategia(
     if not db_obj:
         return None
     valid_cols = {c.key for c in EstrategiaEvangelismo.__table__.columns}
+    # Los synonyms (recurrence→frecuencia, start_date→fecha_inicio, etc.)
+    # no aparecen en __table__.columns, así que los agregamos manualmente
+    synonym_map = {
+        "recurrence": "frecuencia",
+        "start_date": "fecha_inicio",
+        "end_date": "fecha_fin",
+        "day_of_week": "dia_reunion",
+        "start_time": "hora_reunion",
+        "created_at": "fecha_creacion",
+        "name": "nombre",
+        "description": "descripcion",
+    }
     dump = data.model_dump(exclude_unset=True)
     # Mapear clase_raiz enum a string
     if "clase_raiz" in dump and dump["clase_raiz"] is not None:
@@ -140,6 +152,10 @@ def update_estrategia(
             else dump["clase_raiz"]
         )
     update_data = {k: v for k, v in dump.items() if k in valid_cols}
+    # Agregar synonyms mapeados a sus columnas reales
+    for syn_key, col_name in synonym_map.items():
+        if syn_key in dump and col_name not in update_data:
+            update_data[col_name] = dump[syn_key]
     for key, value in update_data.items():
         setattr(db_obj, key, value)
     db.commit()
