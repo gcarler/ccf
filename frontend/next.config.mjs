@@ -42,6 +42,20 @@ const nextConfig = {
             },
         ];
     },
+    async redirects() {
+        return [
+            {
+                source: '/faro',
+                destination: '/',
+                permanent: true,
+            },
+            {
+                source: '/faro/:path*',
+                destination: '/:path*',
+                permanent: true,
+            },
+        ];
+    },
     async rewrites() {
         const target = process.env.API_PROXY_TARGET || 'http://backend:8000';
         return [
