@@ -363,7 +363,7 @@ def create_enrollment(
     - advanced: requiere academy:edit
     """
     user_id = coerce_user_id(getattr(current_user, "id", 0))
-    role = _nr(str(getattr(current_user, "role", "") or ""))
+    role = normalize_role(str(getattr(current_user, "role", "") or ""))
 
     # Verificar access_level del curso
     course = db.query(models.Course).filter(models.Course.id == enrollment.course_id).first()
