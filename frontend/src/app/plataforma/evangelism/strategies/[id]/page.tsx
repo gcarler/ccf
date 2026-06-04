@@ -340,8 +340,9 @@ export default function StrategyDetailPage() {
         setRoleLoading(l => ({ ...l, [field]: true }));
         const timer = setTimeout(async () => {
             try {
-                const params: Record<string, any> = { limit: 30 };
-                if (query.length >= 1) params.search = query;
+                const params: Record<string, any> = query.length >= 1
+                    ? { limit: 50, search: query }
+                    : { limit: 100, sort_by: 'first_name', sort_dir: 'asc' };
                 const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
                 setRoleResults(r => ({ ...r, [field]: res || [] }));
             } catch {
@@ -432,8 +433,9 @@ export default function StrategyDetailPage() {
         const query = memberSearch.trim();
         const timer = setTimeout(async () => {
             try {
-                const params: Record<string, any> = { limit: 30 };
-                if (query.length >= 1) params.search = query;
+                const params: Record<string, any> = query.length >= 1
+                    ? { limit: 50, search: query }
+                    : { limit: 2000, sort_by: 'first_name', sort_dir: 'asc' };
                 const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
                 setAllMembers(res || []);
             } catch { /* silently keep previous results */ }
@@ -1523,8 +1525,10 @@ export default function StrategyDetailPage() {
                                 className="w-full pl-9 pr-3 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
                         </div>
                         <div className="space-y-1 max-h-48 overflow-y-auto">
-                            {allMembers.length === 0 && !memberSearch && (
-                                <p className="text-[11px] text-slate-400 text-center py-3">Escribe para buscar personas...</p>
+                            {allMembers.length === 0 && (
+                                <p className="text-[11px] text-slate-400 text-center py-3">
+                                    {memberSearch ? 'Sin resultados para esta búsqueda' : 'Cargando personas...'}
+                                </p>
                             )}
                             {allMembers
                                 .filter(m => !groupMembers.find(gm => gm.id === m.id))
