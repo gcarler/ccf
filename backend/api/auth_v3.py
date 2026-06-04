@@ -263,9 +263,19 @@ def google_callback(
         if not lector_role:
             raise HTTPException(status_code=500, detail="Rol LECTOR no configurado. Contacta al administrador.")
 
+        # sede_id es NOT NULL en Usuario — usar la sede del sistema si la Persona no tiene
+        if not persona.sede_id:
+            from backend import models as _models
+            fallback_sede = db.query(_models.Sede).first()
+            if not fallback_sede:
+                raise HTTPException(status_code=500, detail="No hay sedes configuradas en el sistema.")
+            persona_sede_id = fallback_sede.id
+        else:
+            persona_sede_id = persona.sede_id
+
         user = Usuario(
             id=persona.id,
-            sede_id=persona.sede_id,
+            sede_id=persona_sede_id,
             username=google_email.split("@")[0].replace(".", "_")[:50],
             email=google_email,
             password_hash=None,

@@ -416,8 +416,8 @@ def create_admin_user(
     username = str(payload.get("username", "")).strip()
     email = str(payload.get("email", "")).strip()
     password = str(payload.get("password", ""))
-    nombre = str(payload.get("nombre", username)).strip()
-    apellido = str(payload.get("apellido", "")).strip()
+    first_name = str(payload.get("first_name", payload.get("nombre", username))).strip()
+    last_name = str(payload.get("last_name", payload.get("apellido", ""))).strip()
 
     if not username or not email or not password:
         raise HTTPException(status_code=400, detail="username, email y password son requeridos")
@@ -443,8 +443,8 @@ def create_admin_user(
     persona_id = _uuid.uuid4()
     persona = Persona(
         id=persona_id,
-        nombre=nombre or username,
-        apellido=apellido,
+        first_name=first_name or username,
+        last_name=last_name,
         email=email,
         sede_id=sede.id,
     )
@@ -465,8 +465,6 @@ def create_admin_user(
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-
-    rol = new_user.rol_plataforma
     return {
         "id": str(new_user.id),
         "username": new_user.username,

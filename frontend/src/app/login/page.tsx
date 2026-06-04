@@ -232,10 +232,10 @@ export default function LoginPage() {
                                 type="text"
                                 required
                                 value={email}
-                                onChange={e => { setEmail(e.target.value); if (step === 'password') setStep('email'); }}
+                                onChange={e => { setEmail(e.target.value); if (step === 'password') { setStep('email'); setPassword(''); } }}
                                 placeholder="usuario@ministeriofaro.org"
                                 className="login-input"
-                                autoFocus
+                                autoFocus={step === 'email'}
                             />
                         </motion.div>
 
@@ -261,7 +261,7 @@ export default function LoginPage() {
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     required
-                                    autoFocus
+                                    autoFocus={step === 'password'}
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
                                     placeholder="••••••••"
