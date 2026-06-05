@@ -53,7 +53,7 @@ export default function AdminMembersPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const res = await apiFetch<any[]>('/auth/user-list', { token, cache: 'no-store' });
+            const res = await apiFetch<any[]>('/admin/users', { token, cache: 'no-store' });
             setMembers(Array.isArray(res) ? res : []);
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
@@ -61,10 +61,10 @@ export default function AdminMembersPage() {
 
     useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-    const updateRole = useCallback(async (id: number, newRole: string) => {
+    const updateRole = useCallback(async (id: string, newRole: string) => {
         setMembers(prev => prev.map(m => m.id === id ? { ...m, role: newRole } : m));
         try {
-            await apiFetch(`/admin/users/${id}/role`, { method: 'PATCH', token, body: { role: newRole } });
+            await apiFetch(`/admin/users/${id}`, { method: 'PATCH', token, body: { role: newRole } });
             addToast('Rol actualizado correctamente', 'success');
         } catch (e) { addToast('Error al actualizar rol', 'error'); }
     }, [token, addToast]);
@@ -308,4 +308,3 @@ function AdminStat({ label, value, icon: Icon }: any) {
         </div>
     );
 }
-

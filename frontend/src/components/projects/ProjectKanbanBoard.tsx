@@ -50,7 +50,7 @@ export function ProjectKanbanBoard({ project, tasks, phases, onTasksChange, onOp
     );
 
     const handleDragStart = (event: DragStartEvent) => {
-        const task = tasks.find(t => t.id === parseInt(event.active.id as string, 10));
+        const task = tasks.find(t => t.id === String(event.active.id));
         setActiveTask(task ?? null);
     };
 
@@ -59,13 +59,13 @@ export function ProjectKanbanBoard({ project, tasks, phases, onTasksChange, onOp
         setActiveTask(null);
         if (!over) return;
 
-        const taskId = parseInt(active.id as string, 10);
+        const taskId = String(active.id);
         const overId = over.id as string;
 
         const isOverColumn = phases.some(s => s.slug === overId);
         let newStatus = overId;
         if (!isOverColumn) {
-            const overTask = tasks.find(t => t.id === parseInt(overId, 10));
+            const overTask = tasks.find(t => t.id === overId);
             if (overTask) newStatus = overTask.status || phases[0]?.slug || 'todo';
             else return;
         }

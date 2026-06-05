@@ -32,6 +32,19 @@ def _resolve_user_id(user, db) -> int | None:
     return None
 
 
+def _resolve_persona_id(user, db):
+    if isinstance(user.id, (_uuid.UUID, str)):
+        from backend.models_crm import Persona
+        persona = db.query(Persona).filter(Persona.id == user.id).first()
+        return persona.id if persona else None
+    legacy_user_id = _resolve_user_id(user, db)
+    if legacy_user_id is None:
+        return None
+    from backend.models_crm import Persona
+    persona = db.query(Persona).filter(Persona.user_id == legacy_user_id).first()
+    return persona.id if persona else None
+
+
 @analytics_router.get("/summary")
 def analytics_summary(
     db=Depends(get_db),
@@ -341,7 +354,7 @@ def add_agent_role(agent_id: int, role: AgentRoleCreate, db=Depends(get_db), cur
     agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
     if not agent:
         raise HTTPException(404, "Agent not found")
-    new_role = AgentRole(agent_id=agent_id, role_type=role.role_type, role_value=role.role_value, context_id=role.context_id, context_type=role.context_type, is_primary=role.is_primary, created_by=_resolve_user_id(current_user, db))
+    new_role = AgentRole(agent_id=agent_id, role_type=role.role_type, role_value=role.role_value, context_id=role.context_id, context_type=role.context_type, is_primary=role.is_primary, created_by=_resolve_user_id(current_user, db), created_by_persona_id=_resolve_persona_id(current_user, db))
     db.add(new_role)
     db.commit()
     db.refresh(new_role)
@@ -351,7 +364,7 @@ def add_agent_role(agent_id: int, role: AgentRoleCreate, db=Depends(get_db), cur
 @router.post("", response_model=AgentResponse)
 def create_agent(data: AgentCreate, db=Depends(get_db), current_user: models.User = Depends(require_admin)):
     code = _generate_agent_code(db)
-    agent = AgentModel(code=code, first_name=data.first_name, last_name=data.last_name, email=data.email, phone=data.phone, avatar_url=data.avatar_url, spiritual_stage=data.spiritual_stage, created_by=_resolve_user_id(current_user, db))
+    agent = AgentModel(code=code, first_name=data.first_name, last_name=data.last_name, email=data.email, phone=data.phone, avatar_url=data.avatar_url, spiritual_stage=data.spiritual_stage, created_by=_resolve_user_id(current_user, db), created_by_persona_id=_resolve_persona_id(current_user, db))
     db.add(agent)
     db.commit()
     db.refresh(agent)
@@ -366,6 +379,7 @@ def update_agent(agent_id: int, data: AgentUpdate, db=Depends(get_db), current_u
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(agent, field, value)
     agent.updated_by = _resolve_user_id(current_user, db)
+    agent.updated_by_persona_id = _resolve_persona_id(current_user, db)
     db.commit()
     db.refresh(agent)
     return agent
@@ -379,7 +393,9 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
     from_stage = agent.spiritual_stage
     agent.spiritual_stage = data.to_stage
     agent.updated_by = _resolve_user_id(current_user, db)
-    journey = AgentJourney(agent_id=agent_id, from_stage=from_stage, to_stage=data.to_stage, reason=data.reason, triggered_by="manual", triggered_by_id=_resolve_user_id(current_user, db))
+    actor_persona_id = _resolve_persona_id(current_user, db)
+    agent.updated_by_persona_id = actor_persona_id
+    journey = AgentJourney(agent_id=agent_id, from_stage=from_stage, to_stage=data.to_stage, reason=data.reason, triggered_by="manual", triggered_by_id=_resolve_user_id(current_user, db), triggered_by_persona_id=actor_persona_id)
     db.add(journey)
     db.commit()
     return {"from": from_stage, "to": data.to_stage, "agent_id": agent_id}

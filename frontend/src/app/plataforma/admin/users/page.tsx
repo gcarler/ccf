@@ -31,7 +31,7 @@ export default function AdminUsersPage() {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/auth/user-list', { token });
+            const data = await apiFetch<any[]>('/admin/users', { token });
             setUsers(Array.isArray(data) ? data : []);
         } catch (err) {
             addToast("Error al cargar lista de usuarios", "error");
@@ -45,9 +45,9 @@ export default function AdminUsersPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
-    const handleUpdateUser = async (userId: number, payload: any) => {
+    const handleUpdateUser = async (userId: string, payload: any) => {
         try {
-            await apiFetch(`/auth/users/${userId}`, {
+            await apiFetch(`/admin/users/${userId}`, {
                 method: 'PATCH',
                 token,
                 body: payload
@@ -60,7 +60,7 @@ export default function AdminUsersPage() {
         }
     };
 
-    const handleDeleteUser = async (userId: number) => {
+    const handleDeleteUser = async (userId: string) => {
         setConfirmAction({
             title: 'Eliminar acceso ministerial',
             description: 'Se revocará este acceso de forma permanente y el usuario deberá solicitar uno nuevo.',
@@ -68,7 +68,7 @@ export default function AdminUsersPage() {
             confirmLabel: 'Revocar acceso',
             onConfirm: async () => {
                 try {
-                    await apiFetch(`/auth/users/${userId}`, { method: 'DELETE', token });
+                    await apiFetch(`/admin/users/${userId}`, { method: 'DELETE', token });
                     addToast("Acceso revocado permanentemente", "success");
                     fetchUsers();
                 } catch (err) {
@@ -138,7 +138,7 @@ export default function AdminUsersPage() {
                                         <tr 
                                             key={user.id} 
                                             className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer" 
-                                            onClick={() => router.push(`/admin/users/${user.id}`)}
+                                            onClick={() => router.push(`/plataforma/admin/users/${user.id}`)}
                                         >
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-4">

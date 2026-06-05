@@ -6,15 +6,15 @@ import { apiFetch } from "@/lib/http";
 import { Check, ChevronDown, User as UserIcon, Search } from "lucide-react";
 
 interface UserOption {
-    id: number;
+    id: string;
     username: string;
     email: string;
     role?: string;
 }
 
 interface UserSelectProps {
-    value: number | null;
-    onChange: (userId: number | null) => void;
+    value: string | null;
+    onChange: (userId: string | null) => void;
     placeholder?: string;
     className?: string;
 }
@@ -33,7 +33,7 @@ export default function UserSelect({
 
     useEffect(() => {
         if (!token || users.length > 0) return;
-        apiFetch<UserOption[]>("/auth/user-list", { token })
+        apiFetch<UserOption[]>("/admin/users", { token })
             .then(setUsers)
             .catch((err) => { console.error('[UserSelect] Failed to load users:', err); });
     }, [token, users.length]);

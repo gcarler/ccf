@@ -57,15 +57,15 @@ export default function ProjectDetailPage() {
     const [editTitle, setEditTitle] = useState('');
     const [editDescription, setEditDescription] = useState('');
     const [editStatus, setEditStatus] = useState('');
-    const [editOwnerId, setEditOwnerId] = useState<number | null>(null);
+    const [editOwnerId, setEditOwnerId] = useState<string | null>(null);
     const [viewType, setViewType] = useState<ViewType>('dashboard');
     const [selectedTask, setSelectedTask] = useState<ProjectTaskRecord | null>(null);
     const [whiteboardOpen, setWhiteboardOpen] = useState(false);
     const [milestoneTitle, setMilestoneTitle] = useState('');
     const [milestoneDate, setMilestoneDate] = useState('');
     const [creatingMilestone, setCreatingMilestone] = useState(false);
-    const [updatingMilestoneId, setUpdatingMilestoneId] = useState<number | null>(null);
-    const [editingMilestoneId, setEditingMilestoneId] = useState<number | null>(null);
+    const [updatingMilestoneId, setUpdatingMilestoneId] = useState<string | null>(null);
+    const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
     const [milestoneDraftTitle, setMilestoneDraftTitle] = useState('');
     const [milestoneDraftDate, setMilestoneDraftDate] = useState('');
     const [phases, setPhases] = useState<PhaseDef[]>([]);
@@ -99,13 +99,13 @@ export default function ProjectDetailPage() {
     }, [loadProject]);
 
     useEffect(() => {
-        const taskId = Number(searchParams?.get('task'));
+        const taskId = searchParams?.get('task');
         if (!taskId || tasks.length === 0) return;
         const task = tasks.find((row) => row.id === taskId);
         if (task) setSelectedTask(task);
     }, [searchParams, tasks]);
 
-    const handleCreateTask = async (data: { title: string; description: string; priority: string; status: string; assignee_id?: number | null }) => {
+    const handleCreateTask = async (data: { title: string; description: string; priority: string; status: string; assignee_id?: string | null }) => {
         if (!token || !id) return;
         try {
             await apiFetch(`/projects/${id}/tasks`, {
@@ -139,7 +139,7 @@ export default function ProjectDetailPage() {
         }
     };
 
-    const handleDeleteTask = async (taskId: number) => {
+    const handleDeleteTask = async (taskId: string) => {
         if (!token || !id) return;
         try {
             await apiFetch(`/projects/${id}/tasks/${taskId}`, { method: 'DELETE', token });
@@ -248,7 +248,7 @@ export default function ProjectDetailPage() {
         setMilestoneDraftDate(milestone.target_date ? milestone.target_date.slice(0, 10) : '');
     };
 
-    const handleUpdateMilestone = async (milestoneId: number) => {
+    const handleUpdateMilestone = async (milestoneId: string) => {
         if (!token || !id || !milestoneDraftTitle.trim()) return;
         setUpdatingMilestoneId(milestoneId);
         try {

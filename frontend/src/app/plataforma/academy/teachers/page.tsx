@@ -29,7 +29,7 @@ export default function AcademyTeachersPage() {
         const load = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<TeacherRow[]>("/academy/users/?role=teacher", {
+                const data = await apiFetch<TeacherRow[]>("/academy/personas?role=teacher", {
                     token,
                     cache: "no-store",
                 });

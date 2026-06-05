@@ -37,6 +37,8 @@ def test_agent_task_creation_logs_audit(client: TestClient, db_session):
     assert len(logs) == 1
     assert logs[0].action == "create_agent_task"
     assert logs[0].actor_user_id == admin.id
+    persona = db_session.query(models.Persona).filter(models.Persona.user_id == admin.id).first()
+    assert logs[0].actor_persona_id == persona.id
 
 
 def test_audit_logs_endpoint_returns_entries(client: TestClient, db_session):
@@ -48,6 +50,9 @@ def test_audit_logs_endpoint_returns_entries(client: TestClient, db_session):
         resource_type="test",
         metadata={"note": "ok"},
     )
+    persona = db_session.query(models.Persona).filter(models.Persona.user_id == admin.id).first()
+    log = db_session.query(models.AdminAuditLog).one()
+    assert log.actor_persona_id == persona.id
     token = obtain_token(client, admin.email, password)
 
     response = client.get("/api/governance/audit-logs", headers=auth_headers(token))

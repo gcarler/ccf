@@ -368,6 +368,72 @@ def list_admin_members(
 # --- USER MANAGEMENT ---
 
 
+def _serialize_auth_user_row(user):
+    rol = user.rol_plataforma
+    platform_role = getattr(user, "platform_role", None)
+    platform_role_name = getattr(platform_role, "role", None)
+    if hasattr(platform_role_name, "value"):
+        platform_role_name = platform_role_name.value
+    display_role = rol.nombre if rol else (platform_role_name or "LECTOR")
+    permisos = rol.permisos if rol else {}
+    return {
+        "id": str(user.id),
+        "username": user.username,
+        "email": user.email,
+        "role": display_role,
+        "role_id": user.platform_role_id,
+        "role_name": platform_role_name,
+        "rol_plataforma_id": str(user.rol_plataforma_id) if user.rol_plataforma_id else None,
+        "platform_role_id": user.platform_role_id,
+        "sede_id": str(user.sede_id) if user.sede_id else None,
+        "xp": user.xp or 0,
+        "is_active": user.is_active,
+        "is_email_verified": user.is_email_verified,
+        "permissions": permisos if isinstance(permisos, dict) else {},
+        "role_permissions": permisos if isinstance(permisos, dict) else {},
+        "override_permissions": {},
+    }
+
+
+def _assign_auth_user_role(db: Session, user, role_name: str) -> None:
+    normalized = str(role_name or "").strip()
+    if not normalized:
+        return
+
+    from sqlalchemy import func
+    from backend.models_auth import RolPlataforma
+    from backend.models_kernel import PlatformRole, PlatformRoleDefinition
+
+    rol = (
+        db.query(RolPlataforma)
+        .filter(func.lower(RolPlataforma.nombre) == normalized.lower())
+        .first()
+    )
+    if rol:
+        user.rol_plataforma_id = rol.id
+
+    platform_aliases = {
+        "admin": PlatformRole.ADMINISTRADOR,
+        "administrador": PlatformRole.ADMINISTRADOR,
+        "staff": PlatformRole.GESTOR,
+        "pastor": PlatformRole.GESTOR,
+        "coordinador": PlatformRole.GESTOR,
+        "docente": PlatformRole.EDITOR,
+        "editor": PlatformRole.EDITOR,
+        "estudiante": PlatformRole.LECTOR,
+        "lector": PlatformRole.LECTOR,
+    }
+    platform_role = platform_aliases.get(normalized.lower())
+    if platform_role:
+        definition = (
+            db.query(PlatformRoleDefinition)
+            .filter(PlatformRoleDefinition.role == platform_role)
+            .first()
+        )
+        if definition:
+            user.platform_role_id = definition.id
+
+
 @router.get("/users", response_model=List[Dict[str, Any]])
 def list_admin_users(
     db: Session = Depends(get_db), current_user=Depends(require_admin)
@@ -376,24 +442,34 @@ def list_admin_users(
     from backend.models_auth import Usuario, RolPlataforma
     from sqlalchemy.orm import joinedload
     users = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).all()
-    result = []
-    for u in users:
-        rol = u.rol_plataforma
-        permisos = rol.permisos if rol else {}
-        result.append(
-            {
-                "id": str(u.id),
-                "username": u.username,
-                "email": u.email,
-                "role": rol.nombre if rol else "LECTOR",
-                "role_id": str(u.rol_plataforma_id) if u.rol_plataforma_id else None,
-                "is_active": u.is_active,
-                "permissions": permisos if isinstance(permisos, dict) else {},
-                "role_permissions": permisos if isinstance(permisos, dict) else {},
-                "override_permissions": {},
-            }
-        )
-    return result
+    return [_serialize_auth_user_row(u) for u in users]
+
+
+@router.get("/users/{user_id}", response_model=Dict[str, Any])
+def get_admin_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
+):
+    """Obtiene un usuario auth por UUID."""
+    import uuid as _uuid
+    from backend.models_auth import Usuario
+    from sqlalchemy.orm import joinedload
+
+    try:
+        uid = _uuid.UUID(str(user_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="user_id invalido")
+
+    user = (
+        db.query(Usuario)
+        .options(joinedload(Usuario.rol_plataforma))
+        .filter(Usuario.id == uid)
+        .first()
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return _serialize_auth_user_row(user)
 
 
 @router.post("/users", response_model=Dict[str, Any])
@@ -462,17 +538,100 @@ def create_admin_user(
         is_active=True,
         is_email_verified=False,
     )
+    if payload.get("role"):
+        _assign_auth_user_role(db, new_user, str(payload["role"]))
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     return {
-        "id": str(new_user.id),
-        "username": new_user.username,
-        "email": new_user.email,
-        "role": lector_role.role.value if lector_role else "LECTOR",
-        "is_active": new_user.is_active,
-        "permissions": {},
+        **_serialize_auth_user_row(new_user),
     }
+
+
+@router.patch("/users/{user_id}", response_model=Dict[str, Any])
+def update_admin_user(
+    user_id: str,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
+):
+    """Actualiza campos básicos de auth_users por UUID."""
+    import uuid as _uuid
+    from backend.core.permissions import hash_password
+    from backend.models_auth import Usuario
+    from sqlalchemy.orm import joinedload
+
+    try:
+        uid = _uuid.UUID(str(user_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="user_id invalido")
+
+    user = (
+        db.query(Usuario)
+        .options(joinedload(Usuario.rol_plataforma))
+        .filter(Usuario.id == uid)
+        .first()
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if "username" in payload and payload["username"] is not None:
+        user.username = str(payload["username"]).strip()
+    if "email" in payload and payload["email"] is not None:
+        user.email = str(payload["email"]).strip()
+    if "password" in payload and payload["password"]:
+        user.password_hash = hash_password(str(payload["password"]))
+    if "is_active" in payload and payload["is_active"] is not None:
+        user.is_active = bool(payload["is_active"])
+    if "rol_plataforma_id" in payload:
+        role_id = payload["rol_plataforma_id"]
+        if role_id in (None, "", "null"):
+            user.rol_plataforma_id = None
+        else:
+            import uuid
+
+            try:
+                user.rol_plataforma_id = uuid.UUID(str(role_id))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="rol_plataforma_id invalido")
+    if "platform_role_id" in payload:
+        value = payload["platform_role_id"]
+        user.platform_role_id = int(value) if value not in (None, "", "null") else None
+    if "role_id" in payload:
+        value = payload["role_id"]
+        user.platform_role_id = int(value) if value not in (None, "", "null") else None
+    if "role" in payload:
+        _assign_auth_user_role(db, user, str(payload["role"]))
+
+    db.commit()
+    db.refresh(user)
+    return _serialize_auth_user_row(user)
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def delete_admin_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
+):
+    """Desactiva un usuario auth por UUID.
+
+    Se conserva la cuenta para evitar pérdida de historial y relaciones
+    dependientes; la baja real se hace por desactivación.
+    """
+    import uuid as _uuid
+    from backend.models_auth import Usuario
+
+    try:
+        uid = _uuid.UUID(str(user_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="user_id invalido")
+
+    user = db.query(Usuario).filter(Usuario.id == uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_active = False
+    db.commit()
 
 
 @router.patch("/users/{user_id}/role")

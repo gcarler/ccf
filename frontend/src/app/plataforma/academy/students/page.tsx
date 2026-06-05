@@ -33,7 +33,7 @@ export default function AcademyStudentsPage() {
         const load = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<StudentRow[]>("/academy/users/?role=student", {
+                const data = await apiFetch<StudentRow[]>("/academy/personas?role=student", {
                     token,
                     cache: "no-store",
                 });

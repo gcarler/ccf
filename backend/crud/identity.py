@@ -1,6 +1,7 @@
 """User, auth, badges, XP, and UI preferences CRUD."""
 
 import secrets
+from datetime import timezone
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -8,6 +9,14 @@ from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend.core.security import get_password_hash
 from backend.crud._utils import _utcnow
+
+
+def _utc_compare(value):
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 # ── Users ──────────────────────────────────────────────
 
@@ -112,7 +121,8 @@ def get_valid_refresh_token(db: Session, token: str):
         return None
     if row.revoked:
         return None
-    if row.expires_at <= _utcnow():
+    expires_at = _utc_compare(row.expires_at)
+    if expires_at is None or expires_at <= _utcnow():
         return None
     return row
 
@@ -157,7 +167,8 @@ def use_verification_token(db: Session, token: str) -> Optional[int]:
     from backend.models_identity import User, VerificationToken
 
     row = db.query(VerificationToken).filter(VerificationToken.token == token).first()
-    if not row or row.used or row.expires_at <= _utcnow():
+    expires_at = _utc_compare(row.expires_at) if row else None
+    if not row or row.used or expires_at is None or expires_at <= _utcnow():
         return None
     row.used = True
 
@@ -189,7 +200,8 @@ def use_reset_token(db: Session, token: str, new_password: str) -> bool:
     from backend.models_identity import ResetToken, User
 
     row = db.query(ResetToken).filter(ResetToken.token == token).first()
-    if not row or row.used or row.expires_at <= _utcnow():
+    expires_at = _utc_compare(row.expires_at) if row else None
+    if not row or row.used or expires_at is None or expires_at <= _utcnow():
         return False
     if len(new_password) < 8:
         return False

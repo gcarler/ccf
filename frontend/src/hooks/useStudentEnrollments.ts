@@ -27,7 +27,7 @@ export function useStudentEnrollments(): UseEnrollmentsResult {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<EnrollmentRecord[]>(`/academy/users/${user.id}/enrollments`, {
+      const data = await apiFetch<EnrollmentRecord[]>('/academy/me/enrollments', {
         token,
         cache: 'no-store',
       });

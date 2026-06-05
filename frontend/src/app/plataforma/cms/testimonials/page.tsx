@@ -34,7 +34,8 @@ interface Testimonial {
   video_url?: string | null;
   podcast_url?: string | null;
   created_at: string;
-  author_id: number;
+  author_persona_id?: string | null;
+  author_id?: number | null;
   published?: boolean;
   is_approved?: boolean;
   show_on_home?: boolean;
@@ -77,17 +78,31 @@ function getMediaLabel(testimonial: Pick<Testimonial, "media_type" | "media_url"
   return "Medio";
 }
 
-function getInitials(id: number): string {
-  const names = ["AL", "MR", "JC", "PS", "LG", "DA", "CR", "FM", "BT", "NK"];
-  return names[id % names.length];
+function identityKey(testimonial: Pick<Testimonial, "author_persona_id" | "author_id">): string {
+  return testimonial.author_persona_id || (testimonial.author_id != null ? String(testimonial.author_id) : "anon");
 }
 
-function getAvatarColor(id: number): string {
+function authorLabel(testimonial: Pick<Testimonial, "author_persona_id" | "author_id">): string {
+  if (testimonial.author_persona_id) return `Persona ${testimonial.author_persona_id.slice(0, 8)}`;
+  if (testimonial.author_id != null) return `Legacy #${testimonial.author_id}`;
+  return "Anonimo";
+}
+
+function hashIdentity(value: string): number {
+  return value.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+}
+
+function getInitials(key: string): string {
+  const names = ["AL", "MR", "JC", "PS", "LG", "DA", "CR", "FM", "BT", "NK"];
+  return names[hashIdentity(key) % names.length];
+}
+
+function getAvatarColor(key: string): string {
   const colors = [
     "bg-[hsl(var(--primary))]", "bg-[hsl(var(--primary))]", "bg-emerald-600", "bg-rose-600",
     "bg-amber-600", "bg-cyan-600", "bg-pink-600", "bg-teal-600"
   ];
-  return colors[id % colors.length];
+  return colors[hashIdentity(key) % colors.length];
 }
 
 export default function CmsTestimonialsPage() {
@@ -278,7 +293,7 @@ export default function CmsTestimonialsPage() {
     title: `${t.emotion || "Testimonio"} #${t.id}`,
     date: (t.created_at || new Date().toISOString()).split("T")[0],
     color: t.published ? "emerald" as const : "amber" as const,
-    location: `Persona #${t.author_id}`,
+    location: authorLabel(t),
   })), [filtered]);
 
   const ganttItems = useMemo(() => filtered.map(t => ({
@@ -297,7 +312,7 @@ export default function CmsTestimonialsPage() {
         const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
         return (
           <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-rose-300 transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
-            <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-[11px] font-semibold shrink-0", getAvatarColor(t.author_id))}>{getInitials(t.author_id)}</div>
+            <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-[11px] font-semibold shrink-0", getAvatarColor(identityKey(t)))}>{getInitials(identityKey(t))}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className={clsx("text-[10px] font-semibold uppercase tracking-wide", cfg.color)}>{cfg.emoji} {t.emotion || "Testimonio"}</span>
@@ -352,7 +367,7 @@ export default function CmsTestimonialsPage() {
           <div className="space-y-3">
             {group.items.map(t => (
               <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-lg p-4 hover:border-rose-300 transition-all", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Persona #{t.author_id} · {t.emotion || "Testimonio"}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">{authorLabel(t)} · {t.emotion || "Testimonio"}</p>
                 <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-3">{t.content}</p>
               </button>
             ))}
@@ -522,11 +537,11 @@ export default function CmsTestimonialsPage() {
 
                     {/* Author */}
                     <div className="flex items-center gap-3 pr-20">
-                      <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-[11px] font-semibold shrink-0", getAvatarColor(t.author_id))}>
-                        {getInitials(t.author_id)}
+                      <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-[11px] font-semibold shrink-0", getAvatarColor(identityKey(t)))}>
+                        {getInitials(identityKey(t))}
                       </div>
                       <div>
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Persona #{t.author_id}</p>
+                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">{authorLabel(t)}</p>
                         <div className={clsx("flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide", cfg.color)}>
                           <span>{cfg.emoji}</span>
                           <span>{t.emotion || "Testimonio"}</span>
@@ -617,11 +632,11 @@ export default function CmsTestimonialsPage() {
                 const cfg = EMOTION_CONFIG[selected.emotion] ?? defaultEmotion;
                 return (
                   <div className={clsx("p-3 flex items-center gap-4 border-b border-slate-200 dark:border-white/5", cfg.bg)}>
-                    <div className={clsx("size-7 rounded-lg flex items-center justify-center text-white text-base font-semibold shrink-0", getAvatarColor(selected.author_id))}>
-                      {getInitials(selected.author_id)}
+                    <div className={clsx("size-7 rounded-lg flex items-center justify-center text-white text-base font-semibold shrink-0", getAvatarColor(identityKey(selected)))}>
+                      {getInitials(identityKey(selected))}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">Persona #{selected.author_id}</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">{authorLabel(selected)}</p>
                       <div className={clsx("flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide mt-0.5", cfg.color)}>
                         <span>{cfg.emoji}</span>
                         <span>{selected.emotion || "Sin categoría"}</span>
@@ -837,7 +852,12 @@ export default function CmsTestimonialsPage() {
           subtitle="Registrar experiencia"
       >
           <div className="mt-4">
-              <TestimonialForm userId={(user as any)?.id ?? 0} token={token ?? ''} onSubmitted={() => { setShowForm(false); fetchTestimonials(); }} />
+              <TestimonialForm
+                userId={(user as any)?.id ?? null}
+                authorPersonaId={(user as any)?.persona_id ?? null}
+                token={token ?? ''}
+                onSubmitted={() => { setShowForm(false); fetchTestimonials(); }}
+              />
           </div>
       </WorkspaceDrawer>
     </div>

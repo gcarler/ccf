@@ -21,6 +21,9 @@ def create_admin_audit_log(
     # If actor_persona_id is not a valid UUID, treat it as a legacy user_id
     # and resolve the linked persona UUID.
     resolved_persona_id = actor_persona_id
+    if not resolved_persona_id and actor_user_id is not None:
+        persona = db.query(models.Persona).filter(models.Persona.user_id == actor_user_id).first()
+        resolved_persona_id = str(persona.id) if persona else None
     if actor_persona_id:
         try:
             uuid.UUID(actor_persona_id)

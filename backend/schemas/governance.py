@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 
@@ -19,6 +19,11 @@ class AdminAuditLog(BaseModel):
     severity: str = "info"
     metadata: Dict[str, Any] = Field(default_factory=dict, validation_alias="metadata_json")
     created_at: datetime
+
+    @field_validator("actor_persona_id", mode="before")
+    @classmethod
+    def _actor_persona_id_to_str(cls, value):
+        return str(value) if value is not None else None
 
 
 class AutomationRuleRead(BaseModel):

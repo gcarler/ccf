@@ -41,8 +41,15 @@ def create_cms_testimonial(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
+    if not payload.author_persona_id:
+        payload.author_persona_id = str(
+            crud.resolve_persona_id_for_user(db, getattr(current_user, "id", None))
+            or ""
+        ) or None
     if not payload.author_id:
-        payload.author_id = current_user.id
+        current_user_id = getattr(current_user, "id", None)
+        if isinstance(current_user_id, int) and current_user_id > 0:
+            payload.author_id = current_user_id
     return crud.create_testimonial(db, payload)
 
 

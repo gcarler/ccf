@@ -82,7 +82,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
 
     setLoading(true);
     try {
-      const data = await apiFetch<Enrollment[]>(`/academy/users/${userId}/enrollments`, {
+      const data = await apiFetch<Enrollment[]>("/academy/me/enrollments", {
         token,
         cache: "no-store",
       });

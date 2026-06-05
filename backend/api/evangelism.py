@@ -8,6 +8,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -29,6 +30,11 @@ from backend.auth import (
     require_pastor_or_admin,
 )
 from backend.core.database import get_db
+from backend.crud.crm import (
+    legacy_user_id_from_identity,
+    resolve_persona_id_for_user,
+    resolve_persona_id_from_identity,
+)
 
 router = APIRouter()
 router.include_router(events_router)
@@ -498,6 +504,7 @@ async def send_crm_message(
                         campaign_name=campaign_name,
                         recipient_phone=persona.phone,
                         content=content,
+                        leader_id=resolve_persona_id_for_user(db, current_user.id),
                         leader_user_id=current_user.id,
                         outcome="failed",
                         external_id=campaign_id,
@@ -602,7 +609,16 @@ def list_crm_tasks(
 
         q = db.query(models.CrmTask).options(joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee))
         if assignee_user_id:
-            q = q.filter(models.CrmTask.assignee_user_id == assignee_user_id)
+            assignee_persona_id = resolve_persona_id_for_user(db, assignee_user_id)
+            if assignee_persona_id:
+                q = q.filter(
+                    or_(
+                        models.CrmTask.assignee_id == assignee_persona_id,
+                        models.CrmTask.assignee_user_id == assignee_user_id,
+                    )
+                )
+            else:
+                q = q.filter(models.CrmTask.assignee_user_id == assignee_user_id)
         if persona_id:
             q = q.filter(models.CrmTask.persona_id == persona_id)
 
@@ -635,10 +651,14 @@ def list_my_crm_tasks(
     try:
         from sqlalchemy.orm import joinedload
 
+        owner_conditions = [models.CrmTask.assignee_user_id == current_user.id]
+        my_persona_id = resolve_persona_id_for_user(db, current_user.id)
+        if my_persona_id:
+            owner_conditions.append(models.CrmTask.assignee_id == my_persona_id)
         q = (
             db.query(models.CrmTask)
             .options(joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee))
-            .filter(models.CrmTask.assignee_user_id == current_user.id)
+            .filter(or_(*owner_conditions))
         )
         tasks = q.order_by(models.CrmTask.created_at.desc()).all()
         result = [_serialize_crm_task(task) for task in tasks]
@@ -691,13 +711,15 @@ async def create_crm_task(
         due_date = None
         if due_date_value:
             due_date = datetime.datetime.fromisoformat(str(due_date_value))
+        assignee_identity = payload.get("assignee_id") or current_user.id
         task = models.CrmTask(
             title=title,
             description=payload.get("description"),
             status=payload.get("status", "pending"),
             priority=payload.get("priority", "medium"),
             category=payload.get("category", "Pastoral"),
-            assignee_user_id=current_user.id,
+            assignee_id=resolve_persona_id_from_identity(db, assignee_identity),
+            assignee_user_id=legacy_user_id_from_identity(assignee_identity),
             persona_id=payload["persona_id"] if payload.get("persona_id") else None,
             due_date=due_date,
             created_at=utc_now(),

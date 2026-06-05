@@ -64,7 +64,7 @@ export default function AssessmentPage() {
         if (!token || !user?.id) return;
         setIsSubmitting(true);
         try {
-            const enrollments = await apiFetch<Enrollment[]>(`/academy/users/${user.id}/enrollments`, { token });
+            const enrollments = await apiFetch<Enrollment[]>('/academy/me/enrollments', { token });
             const enrollment = enrollments.find((e: Enrollment) => e.course.id === assessment.course_id);
 
             if (!enrollment) {

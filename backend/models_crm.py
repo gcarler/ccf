@@ -600,6 +600,7 @@ class Donation(Base):
     )
     amount = Column(Numeric(14, 2), nullable=False)
     currency = Column(String(10), default="COP")
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     donation_type = Column(String(50), default="Diezmo", index=True)
     status = Column(String(20), default="completed", index=True)
     reference_code = Column(String(100), nullable=True)

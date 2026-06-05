@@ -4,11 +4,42 @@ import datetime as dt
 import uuid
 from typing import Optional
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from backend import models, schemas
 from backend.crud._utils import _utcnow
+
+
+def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
+    if user_id is None:
+        return None
+    try:
+        legacy_user_id = int(user_id)
+    except (TypeError, ValueError):
+        return None
+    persona = (
+        db.query(models.Persona.id)
+        .filter(models.Persona.user_id == legacy_user_id)
+        .first()
+    )
+    return persona[0] if persona else None
+
+
+def _identity_conditions(db: Session, model, user_id: int | str | None):
+    persona_id = resolve_persona_id_for_user(db, user_id)
+    try:
+        legacy_user_id = int(user_id) if user_id is not None else None
+    except (TypeError, ValueError):
+        legacy_user_id = None
+    conditions = []
+    if legacy_user_id is not None:
+        conditions.append(model.user_id == legacy_user_id)
+    if persona_id is not None:
+        conditions.append(model.persona_id == persona_id)
+    if not conditions:
+        conditions.append(model.user_id == user_id)
+    return or_(*conditions)
 
 # ── Courses ────────────────────────────────────────────
 
@@ -82,7 +113,7 @@ def check_user_meets_prerequisites(db: Session, user_id: int, course_id: int) ->
         completed = (
             db.query(models.Enrollment)
             .filter(
-                models.Enrollment.user_id == user_id,
+                _identity_conditions(db, models.Enrollment, user_id),
                 models.Enrollment.course_id == prereq.prerequisite_course_id,
                 models.Enrollment.status == "completed",
             )
@@ -108,16 +139,17 @@ def get_enrollments_by_user(db: Session, user_id: int):
             joinedload(models.Enrollment.course),
             selectinload(models.Enrollment.persona),
         )
-        .filter(models.Enrollment.user_id == user_id)
+        .filter(_identity_conditions(db, models.Enrollment, user_id))
         .all()
     )
 
 
 def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> models.Enrollment:
+    persona_id = resolve_persona_id_for_user(db, enrollment.user_id)
     existing = (
         db.query(models.Enrollment)
         .filter(
-            models.Enrollment.user_id == enrollment.user_id,
+            _identity_conditions(db, models.Enrollment, enrollment.user_id),
             models.Enrollment.course_id == enrollment.course_id,
         )
         .first()
@@ -136,6 +168,7 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
     try:
         row = models.Enrollment(
             user_id=enrollment.user_id,
+            persona_id=persona_id,
             course_id=enrollment.course_id,
             access_window_end=access_end,
         )
@@ -144,6 +177,7 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
         log = models.AcademyActivityLog(
             event_type="enrollment",
             course_id=enrollment.course_id,
+            persona_id=persona_id,
             user_id=enrollment.user_id,
             modality=db_course.modality if db_course else None,
         )
@@ -287,7 +321,7 @@ def get_lesson_progress(db: Session, user_id: int, lesson_id: int):
     return (
         db.query(models.LessonProgress)
         .filter(
-            models.LessonProgress.user_id == user_id,
+            _identity_conditions(db, models.LessonProgress, user_id),
             models.LessonProgress.lesson_id == lesson_id,
         )
         .first()
@@ -301,17 +335,24 @@ def update_lesson_progress(
     progress_percent: float,
     last_position: int,
 ):
+    persona_id = resolve_persona_id_for_user(db, user_id)
     row = (
         db.query(models.LessonProgress)
         .filter(
-            models.LessonProgress.user_id == user_id,
+            _identity_conditions(db, models.LessonProgress, user_id),
             models.LessonProgress.lesson_id == lesson_id,
         )
         .first()
     )
     if not row:
-        row = models.LessonProgress(user_id=user_id, lesson_id=lesson_id)
+        row = models.LessonProgress(
+            user_id=user_id,
+            persona_id=persona_id,
+            lesson_id=lesson_id,
+        )
         db.add(row)
+    elif persona_id and not row.persona_id:
+        row.persona_id = persona_id
 
     row.progress_percent = progress_percent
     row.last_position_seconds = last_position
@@ -326,7 +367,7 @@ def update_lesson_progress(
         enrollment = (
             db.query(models.Enrollment)
             .filter(
-                models.Enrollment.user_id == user_id,
+                _identity_conditions(db, models.Enrollment, user_id),
                 models.Enrollment.course_id == lesson.course_id,
             )
             .first()
@@ -338,7 +379,7 @@ def update_lesson_progress(
                 .join(models.Lesson)
                 .filter(
                     models.Lesson.course_id == lesson.course_id,
-                    models.LessonProgress.user_id == user_id,
+                    _identity_conditions(db, models.LessonProgress, user_id),
                     models.LessonProgress.is_completed,
                 )
                 .count()
@@ -421,6 +462,7 @@ def close_formal_acta(
     closed_by_user_id: int,
     min_grade: float,
     min_attendance: float,
+    closed_by_persona_id=None,
 ):
     course = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not course:
@@ -477,6 +519,7 @@ def close_formal_acta(
             log = models.AcademyActivityLog(
                 event_type="completion",
                 course_id=course_id,
+                persona_id=e.persona_id or resolve_persona_id_for_user(db, e.user_id),
                 user_id=e.user_id,
                 modality="formal",
                 value=float(final_grade),
@@ -485,6 +528,8 @@ def close_formal_acta(
 
     acta = models.FormalActa(
         course_id=course_id,
+        closed_by_persona_id=closed_by_persona_id
+        or resolve_persona_id_for_user(db, closed_by_user_id),
         closed_by_user_id=closed_by_user_id,
         min_grade_required=min_grade,
         min_attendance_required=min_attendance,

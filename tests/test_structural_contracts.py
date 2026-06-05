@@ -217,6 +217,157 @@ def test_app_lifespan_does_not_bootstrap_schema_with_create_all():
     assert "create_all(" not in app_py.read_text(encoding="utf-8")
 
 
+def test_frontend_does_not_add_auth_users_legacy_consumers():
+    root = Path(__file__).resolve().parents[1]
+    scan_roots = [
+        root / "frontend" / "src" / "app" / "plataforma",
+        root / "frontend" / "src" / "components",
+        root / "frontend" / "src" / "hooks",
+    ]
+    user_list_allowlist = set()
+    violations = []
+
+    for scan_root in scan_roots:
+        for path in scan_root.rglob("*"):
+            if path.suffix not in {".ts", ".tsx"}:
+                continue
+            rel = path.relative_to(root).as_posix()
+            content = path.read_text(encoding="utf-8")
+            if "/auth/users" in content:
+                violations.append(f"{rel} uses /auth/users")
+            if "/auth/user-list" in content and rel not in user_list_allowlist:
+                violations.append(f"{rel} uses /auth/user-list outside allowlist")
+
+    assert violations == []
+
+
+def test_frontend_does_not_add_academy_user_id_legacy_consumers():
+    root = Path(__file__).resolve().parents[1]
+    scan_roots = [
+        root / "frontend" / "src" / "app" / "plataforma",
+        root / "frontend" / "src" / "components",
+        root / "frontend" / "src" / "hooks",
+    ]
+    allowlist = set()
+    violations = []
+
+    for scan_root in scan_roots:
+        for path in scan_root.rglob("*"):
+            if path.suffix not in {".ts", ".tsx"}:
+                continue
+            rel = path.relative_to(root).as_posix()
+            content = path.read_text(encoding="utf-8")
+            if "/academy/users/" in content and rel not in allowlist:
+                violations.append(f"{rel} uses /academy/users outside allowlist")
+
+    assert violations == []
+
+
+def test_platform_frontend_uses_persona_uuid_for_cms_and_audit_identity_labels():
+    root = Path(__file__).resolve().parents[1]
+    files = [
+        root / "frontend" / "src" / "app" / "plataforma" / "cms" / "testimonials" / "page.tsx",
+        root / "frontend" / "src" / "app" / "plataforma" / "cms" / "testimonials" / "[id]" / "page.tsx",
+        root / "frontend" / "src" / "app" / "plataforma" / "admin" / "audit" / "page.tsx",
+    ]
+    violations = []
+    for path in files:
+        content = path.read_text(encoding="utf-8")
+        rel = path.relative_to(root).as_posix()
+        if rel.endswith("cms/testimonials/page.tsx") and "author_persona_id" not in content:
+            violations.append(f"{rel} does not use author_persona_id")
+        if rel.endswith("cms/testimonials/[id]/page.tsx") and "author_persona_id" not in content:
+            violations.append(f"{rel} does not use author_persona_id")
+        if rel.endswith("admin/audit/page.tsx") and "actor_persona_id" not in content:
+            violations.append(f"{rel} does not use actor_persona_id")
+        if "Persona #${" in content or "USR_ID:" in content:
+            violations.append(f"{rel} still labels identity with legacy integer")
+
+    assert violations == []
+
+
+def test_academy_persona_backfill_migration_exists():
+    root = Path(__file__).resolve().parents[1]
+    migration = root / "alembic" / "versions" / "20260605_academy_persona_backfill.py"
+
+    assert migration.exists()
+    content = migration.read_text(encoding="utf-8")
+
+    required_fragments = [
+        "down_revision: Union[str, None] = \"20260604_personas_scanner_token\"",
+        "_backfill(\"enrollments\", \"persona_id\")",
+        "_backfill(\"lesson_progress\", \"persona_id\")",
+        "_backfill(\"academy_activity_logs\", \"persona_id\")",
+        "_backfill(\"formal_actas\", \"closed_by_persona_id\", \"closed_by_user_id\")",
+        "uq_persona_course",
+        "uq_persona_lesson_progress",
+    ]
+
+    missing = [fragment for fragment in required_fragments if fragment not in content]
+    assert missing == []
+
+
+def test_crm_persona_backfill_migration_exists():
+    root = Path(__file__).resolve().parents[1]
+    migration = root / "alembic" / "versions" / "20260605_crm_persona_backfill.py"
+
+    assert migration.exists()
+    content = migration.read_text(encoding="utf-8")
+
+    required_fragments = [
+        "down_revision: Union[str, None] = \"20260605_academy_persona_backfill\"",
+        "_backfill(\"counseling_tickets\", \"pastor_id\", \"pastor_user_id\")",
+        "_backfill(\"consolidation_tasks\", \"assignee_id\", \"assignee_user_id\")",
+        "_backfill(\"communication_logs\", \"leader_id\", \"leader_user_id\")",
+        "fk_counseling_tickets_pastor_id",
+        "fk_consolidation_tasks_assignee_id",
+        "fk_communication_logs_leader_id",
+    ]
+
+    missing = [fragment for fragment in required_fragments if fragment not in content]
+    assert missing == []
+
+
+def test_cms_persona_backfill_migration_exists():
+    root = Path(__file__).resolve().parents[1]
+    migration = root / "alembic" / "versions" / "20260605_cms_persona_backfill.py"
+
+    assert migration.exists()
+    content = migration.read_text(encoding="utf-8")
+
+    required_fragments = [
+        "down_revision: Union[str, None] = \"20260605_crm_persona_backfill\"",
+        "(\"content_publications\", \"updated_by_persona_id\", \"updated_by\")",
+        "(\"cms_media_items\", \"created_by_persona_id\", \"created_by\")",
+        "(\"cms_pages\", \"created_by_persona_id\", \"created_by\")",
+        "(\"cms_publish_logs\", \"actor_persona_id\", \"actor_user_id\")",
+        "(\"testimonials\", \"author_persona_id\", \"author_id\")",
+    ]
+
+    missing = [fragment for fragment in required_fragments if fragment not in content]
+    assert missing == []
+
+
+def test_agents_governance_persona_backfill_migration_exists():
+    root = Path(__file__).resolve().parents[1]
+    migration = root / "alembic" / "versions" / "20260605_agents_governance_persona_backfill.py"
+
+    assert migration.exists()
+    content = migration.read_text(encoding="utf-8")
+
+    required_fragments = [
+        "down_revision: Union[str, None] = \"20260605_cms_persona_backfill\"",
+        "(\"admin_audit_logs\", \"actor_persona_id\", \"actor_user_id\")",
+        "(\"agents\", \"created_by_persona_id\", \"created_by\")",
+        "(\"agent_roles\", \"created_by_persona_id\", \"created_by\")",
+        "(\"agent_journey\", \"triggered_by_persona_id\", \"triggered_by_id\")",
+        "(\"agent_conversations\", \"persona_id\", \"user_id\")",
+    ]
+
+    missing = [fragment for fragment in required_fragments if fragment not in content]
+    assert missing == []
+
+
 def test_platform_frontend_respects_ccf_ui_contracts():
     root = Path(__file__).resolve().parents[1]
     scan_roots = [

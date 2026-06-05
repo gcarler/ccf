@@ -21,7 +21,7 @@ export default function ProjectsCommentsPage() {
     const [projects, setProjects] = useState<ProjectRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [projectId, setProjectId] = useState<number | ''>('');
+    const [projectId, setProjectId] = useState<string | ''>('');
     const [content, setContent] = useState('');
     const [viewType, setViewType] = useState<ViewType>('list');
 
@@ -51,7 +51,7 @@ export default function ProjectsCommentsPage() {
     }, [token]);
 
     const grouped = useMemo(() => {
-        return comments.reduce<Record<number, ProjectCommentItem[]>>((acc, comment) => {
+        return comments.reduce<Record<string, ProjectCommentItem[]>>((acc, comment) => {
             if (!acc[comment.project_id]) acc[comment.project_id] = [];
             acc[comment.project_id].push(comment);
             return acc;
@@ -106,7 +106,7 @@ export default function ProjectsCommentsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <select
                             value={projectId}
-                            onChange={(event) => setProjectId(Number(event.target.value))}
+                            onChange={(event) => setProjectId(event.target.value)}
                             className="md:col-span-1 rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-black/20"
                         >
                             {projects.map((project) => (
@@ -148,7 +148,7 @@ export default function ProjectsCommentsPage() {
                 ) : (
                     <div className="space-y-3">
                         {Object.entries(grouped).map(([pid, rows]) => {
-                            const project = projects.find((p) => p.id === Number(pid));
+                            const project = projects.find((p) => p.id === pid);
                             return (
                                 <section key={pid} className="space-y-2">
                                     <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{project?.title || `Proyecto #${pid}`}</h3>
@@ -177,4 +177,3 @@ export default function ProjectsCommentsPage() {
         </div>
     );
 }
-

@@ -28,7 +28,7 @@ export default function UserDetailPage() {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     
-    // Modal States
+    // Drawer state
     const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,12 +47,15 @@ export default function UserDetailPage() {
             const loadUser = async () => {
                 try {
                     const [userData, rolesData] = await Promise.all([
-                        apiFetch<any>(`/auth/users/${id}`, { token }),
-                        apiFetch<any[]>('/admin/roles', { token })
+                        apiFetch<any>(`/admin/users/${id}`, { token }),
+                        apiFetch<any[]>('/kernel/admin/platform-role-definitions', { token })
                     ]);
                     setUser(userData);
                     setEditEmail(userData.email);
-                    setRoles(rolesData || []);
+                    setRoles((rolesData || []).map((role) => ({
+                        role_id: role.id,
+                        name: role.role || role.name,
+                    })));
                     setEditRoleId(userData.role_id || null);
                 } catch (err) {
                     toast.error('Error al cargar perfil de usuario');
@@ -68,7 +71,7 @@ export default function UserDetailPage() {
     const toggleStatus = async () => {
         try {
             setIsSubmitting(true);
-            const updated = await apiFetch<any>(`/auth/users/${id}`, {
+            const updated = await apiFetch<any>(`/admin/users/${id}`, {
                 method: 'PATCH',
                 token,
                 body: { is_active: !user.is_active }
@@ -90,7 +93,7 @@ export default function UserDetailPage() {
         }
         try {
             setIsSubmitting(true);
-            await apiFetch<any>(`/auth/users/${id}`, {
+            await apiFetch<any>(`/admin/users/${id}`, {
                 method: 'PATCH',
                 token,
                 body: { password: newPassword }
@@ -108,7 +111,7 @@ export default function UserDetailPage() {
     const saveRole = async () => {
         try {
             setIsSubmitting(true);
-            const updated = await apiFetch<any>(`/auth/users/${id}`, {
+            const updated = await apiFetch<any>(`/admin/users/${id}`, {
                 method: 'PATCH',
                 token,
                 body: { role_id: editRoleId }
@@ -130,7 +133,7 @@ export default function UserDetailPage() {
         }
         try {
             setIsSubmitting(true);
-            const updated = await apiFetch<any>(`/auth/users/${id}`, {
+            const updated = await apiFetch<any>(`/admin/users/${id}`, {
                 method: 'PATCH',
                 token,
                 body: { email: editEmail }

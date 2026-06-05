@@ -19,7 +19,7 @@ export default function ProjectsGeneralPage() {
     const [activities, setActivities] = useState<ProjectActivityItem[]>([]);
     const [projects, setProjects] = useState<ProjectRecord[]>([]);
     const [loading, setLoading] = useState(true);
-    const [projectId, setProjectId] = useState<number | ''>('');
+    const [projectId, setProjectId] = useState<string | ''>('');
     const [content, setContent] = useState('');
     const [saving, setSaving] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('list');
@@ -86,7 +86,7 @@ export default function ProjectsGeneralPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <select
                             value={projectId}
-                            onChange={(event) => setProjectId(Number(event.target.value))}
+                            onChange={(event) => setProjectId(event.target.value)}
                             className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-black/20"
                         >
                             {projects.map((project) => (
@@ -140,4 +140,3 @@ export default function ProjectsGeneralPage() {
         </div>
     );
 }
-

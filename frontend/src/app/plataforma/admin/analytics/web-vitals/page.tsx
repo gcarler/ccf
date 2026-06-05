@@ -31,7 +31,7 @@ export default function WebVitalsAnalyticsPage() {
     }
     const load = async () => {
       try {
-        const data = await apiFetch("/analytics/web-vitals", {
+        const data = await apiFetch<{ records?: VitalRecord[]; summary?: Summary }>("/analytics/web-vitals", {
           query: { limit: "500" },
           cache: "no-store",
         });

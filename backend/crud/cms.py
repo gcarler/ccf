@@ -11,6 +11,33 @@ from backend import models, schemas
 from backend.content_defaults import PAGE_CONTENT_DEFAULTS
 from backend.crud._utils import _utcnow
 
+
+def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
+    if user_id is None:
+        return None
+    try:
+        persona_uuid = uuid.UUID(str(user_id))
+    except (TypeError, ValueError):
+        persona_uuid = None
+    if persona_uuid:
+        persona = (
+            db.query(models.Persona.id)
+            .filter(models.Persona.id == persona_uuid)
+            .first()
+        )
+        return persona[0] if persona else None
+    try:
+        legacy_user_id = int(user_id)
+    except (TypeError, ValueError):
+        return None
+    persona = (
+        db.query(models.Persona.id)
+        .filter(models.Persona.user_id == legacy_user_id)
+        .first()
+    )
+    return persona[0] if persona else None
+
+
 # ── Page Content ───────────────────────────────────────
 
 
@@ -151,6 +178,7 @@ def update_content_publication(
         row.notes = notes
     if updated_by is not None:
         row.updated_by = updated_by
+        row.updated_by_persona_id = resolve_persona_id_for_user(db, updated_by)
     if status == "published":
         row.last_published_at = _utcnow()
     db.commit()
@@ -184,6 +212,7 @@ def create_cms_media_item(
         section=section,
         tags=tags or [],
         created_by=created_by,
+        created_by_persona_id=resolve_persona_id_for_user(db, created_by),
         filename=filename,
         mime_type=mime_type,
         file_size=file_size or 0,
@@ -396,6 +425,7 @@ def create_cms_theme(
         status=status,
         version=int(version) + 1,
         created_by=created_by,
+        created_by_persona_id=resolve_persona_id_for_user(db, created_by),
     )
     db.add(row)
     if row.is_active:
@@ -638,6 +668,8 @@ def create_cms_page(
         seo_json=payload.seo_json or {},
         created_by=user_id,
         updated_by=user_id,
+        created_by_persona_id=resolve_persona_id_for_user(db, user_id),
+        updated_by_persona_id=resolve_persona_id_for_user(db, user_id),
     )
     db.add(row)
     db.commit()
@@ -662,6 +694,7 @@ def update_cms_page(
         row.seo_json = data["seo_json"]
     if user_id is not None:
         row.updated_by = user_id
+        row.updated_by_persona_id = resolve_persona_id_for_user(db, user_id)
     db.commit()
     db.refresh(row)
     return row
@@ -798,6 +831,7 @@ def create_cms_page_version(
         snapshot_json=snapshot,
         notes=notes,
         created_by=user_id,
+        created_by_persona_id=resolve_persona_id_for_user(db, user_id),
     )
     db.add(row)
     db.commit()
@@ -851,6 +885,7 @@ def restore_cms_page_version(
         page.seo_json = page_data.get("seo_json") or {}
     page.status = "draft"
     page.updated_by = user_id
+    page.updated_by_persona_id = resolve_persona_id_for_user(db, user_id)
     db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(
         synchronize_session=False
     )
@@ -897,6 +932,8 @@ def transition_cms_page_status(
         page.published_version_id = version.id
     page.status = next_status
     page.updated_by = user_id
+    actor_persona_id = resolve_persona_id_for_user(db, user_id)
+    page.updated_by_persona_id = actor_persona_id
     db.add(
         models.CmsPublishLog(
             site_id=page.site_id,
@@ -906,6 +943,7 @@ def transition_cms_page_status(
             action=action,
             from_status=previous_status,
             to_status=next_status,
+            actor_persona_id=actor_persona_id,
             actor_user_id=user_id,
             metadata_json={"notes": notes} if notes else {},
         )
@@ -997,6 +1035,9 @@ def create_testimonial(
     db: Session, payload: schemas.TestimonialCreate
 ) -> models.Testimonial:
     status = payload.status or ("approved" if payload.is_approved else "pending")
+    author_persona_id = payload.author_persona_id or resolve_persona_id_for_user(
+        db, payload.author_id
+    )
     row = models.Testimonial(
         content=payload.content.strip(),
         emotion=payload.emotion,
@@ -1009,6 +1050,7 @@ def create_testimonial(
         show_on_home=payload.show_on_home,
         status=status,
         author_id=payload.author_id,
+        author_persona_id=author_persona_id,
     )
     db.add(row)
     db.commit()

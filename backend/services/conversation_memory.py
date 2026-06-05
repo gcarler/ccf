@@ -13,7 +13,7 @@ from typing import Any, Dict, List
 
 from sqlalchemy import (
     Boolean, Column, DateTime, ForeignKey,
-    Index, Integer, String, Text,
+    Index, Integer, String, Text, UUID,
 )
 from sqlalchemy.orm import relationship
 
@@ -35,6 +35,7 @@ class AgentConversation(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     title = Column(String(300), nullable=True)
     agent_name = Column(String(100), nullable=False, server_default="Optimus")
@@ -80,7 +81,10 @@ def create_conversation(
     """Crea una nueva conversación y retorna su ID."""
     db = SessionLocal()
     try:
+        from backend.models_crm import Persona
+        persona = db.query(Persona).filter(Persona.user_id == user_id).first()
         conv = AgentConversation(
+            persona_id=persona.id if persona else None,
             user_id=user_id,
             title=title or f"Conversación con {agent_name}",
             agent_name=agent_name,

@@ -56,7 +56,7 @@ export default function StudentProgressPage() {
                 setLoading(true);
                 // Simulamos una carga suave para la animación
                 await new Promise(r => setTimeout(r, 600));
-                const data = await apiFetch<CourseProgress[]>(`/academy/users/${user?.id}/progress`, { token });
+                const data = await apiFetch<CourseProgress[]>('/academy/me/progress', { token });
                 const arr = Array.isArray(data) ? data : [];
                 setProgress(arr);
                 
@@ -322,4 +322,3 @@ function HeaderStat({ label, value, icon: Icon, color, bg }: any) {
         </div>
     );
 }
-

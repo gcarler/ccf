@@ -58,6 +58,59 @@ def _lesson_progress_identity_filter(user_id):
     return models.LessonProgress.user_id == coerce_user_id(user_id)
 
 
+def _current_role(current_user) -> str:
+    role = normalize_role(str(getattr(current_user, "role", "") or ""))
+    rol_plataforma = getattr(current_user, "rol_plataforma", None)
+    if not role and rol_plataforma:
+        role = normalize_role(str(rol_plataforma.nombre))
+    return role
+
+
+def _can_access_identity(current_user, identity: str) -> bool:
+    current_id = coerce_user_id(getattr(current_user, "id", 0))
+    role = _current_role(current_user)
+    return str(current_id) == str(identity) or role in {"admin", "administrador", "coordinador"}
+
+
+def _serialize_enrollment(row) -> dict:
+    course = getattr(row, "course", None)
+    data = {
+        "id": row.id,
+        "user_id": row.user_id,
+        "persona_id": str(row.persona_id) if row.persona_id else None,
+        "course_id": row.course_id,
+        "status": row.status,
+        "progress_percent": row.progress_percent,
+        "final_grade": row.final_grade,
+        "attendance_percent": row.attendance_percent,
+        "approved": row.approved,
+        "acta_closed": row.acta_closed,
+        "certificate_issued": row.certificate_issued,
+        "enrolled_at": str(row.enrolled_at) if getattr(row, "enrolled_at", None) else None,
+        "created_at": str(row.created_at) if getattr(row, "created_at", None) else None,
+    }
+    if course:
+        data["course"] = {
+            "id": course.id,
+            "code": getattr(course, "code", "") or f"course-{course.id}",
+            "title": getattr(course, "title", None) or getattr(course, "name", None) or f"Curso #{course.id}",
+            "description": getattr(course, "description", None),
+            "modality": getattr(course, "modality", None) or "formal",
+            "duration_hours": getattr(course, "duration_hours", 0) or 0,
+            "is_self_paced": bool(getattr(course, "is_self_paced", False)),
+            "cohort_name": getattr(course, "cohort_name", None),
+            "certificate_type": getattr(course, "certificate_type", None),
+        }
+    return data
+
+
+def _enrollments_for_identity(db: Session, identity: str):
+    return (
+        db.query(models.Enrollment)
+        .filter(_enrollment_identity_filter(identity))
+        .all()
+    )
+
 
 def _serialize_submission_review(
     row: tuple[models.AssignmentSubmission, str, str],
@@ -325,6 +378,9 @@ def close_formal_acta(
         db,
         course_id=course_id,
         closed_by_user_id=coerce_user_id(getattr(current_user, "id", 0)),
+        closed_by_persona_id=crud.resolve_persona_id_for_user(
+            db, getattr(current_user, "id", None)
+        ),
         min_grade=payload.min_grade,
         min_attendance=payload.min_attendance,
     )
@@ -469,13 +525,13 @@ def read_my_certificates(
     return crud.get_certificates_by_user(db, current_user.id)
 
 
-@router.get("/me/enrollments", response_model=List[schemas.Enrollment])
+@router.get("/me/enrollments", response_model=List[dict])
 def read_my_enrollments(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     """Obtiene inscripciones del usuario actual (IDOR protegido)."""
-    return crud.get_enrollments_by_user(db, current_user.id)
+    return [_serialize_enrollment(row) for row in _enrollments_for_identity(db, str(current_user.id))]
 
 
 @router.get("/enrollments", response_model=List[dict])
@@ -497,6 +553,86 @@ def list_all_enrollments(
             }
         )
     return result
+
+
+@router.get("/me/progress", response_model=List[dict])
+def get_my_course_progress(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
+):
+    """Devuelve progreso academico del usuario actual sin exponer user_id legacy."""
+    return get_user_course_progress(str(current_user.id), db, current_user)
+
+
+@router.get("/personas", response_model=List[dict])
+def list_academy_personas(
+    role: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_coordinator_or_admin),
+):
+    """Lista personas academicas con identidad UUID."""
+    from backend.models_auth import RolPlataforma, Usuario
+
+    query = (
+        db.query(models.Persona, Usuario, RolPlataforma)
+        .outerjoin(Usuario, Usuario.id == models.Persona.id)
+        .outerjoin(RolPlataforma, RolPlataforma.id == Usuario.rol_plataforma_id)
+    )
+    if role:
+        role_value = role.lower()
+        aliases = {
+            "student": {"student", "estudiante", "lector"},
+            "teacher": {"teacher", "docente", "facilitador", "editor"},
+        }.get(role_value, {role_value})
+        rows = [
+            row for row in query.all()
+            if (row[2] and str(row[2].nombre).lower() in aliases)
+            or (row[1] and getattr(row[1], "platform_role", None) and str(row[1].platform_role.role).lower() in aliases)
+        ]
+    else:
+        rows = query.all()
+
+    return [
+        {
+            "id": str(persona.id),
+            "persona_id": str(persona.id),
+            "name": persona.full_name,
+            "full_name": persona.full_name,
+            "email": persona.email or getattr(user, "email", None),
+            "role": getattr(rol, "nombre", None) or getattr(getattr(user, "platform_role", None), "role", None),
+            "status": getattr(persona, "activity_status", None) or "active",
+            "course_count": 0,
+            "progress": 0,
+            "active_students": 0,
+        }
+        for persona, user, rol in rows
+    ]
+
+
+@router.get("/personas/{persona_id}/enrollments", response_model=List[dict])
+def get_persona_enrollments(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
+):
+    """Obtiene inscripciones por persona UUID."""
+    if not _is_uuid_like(persona_id):
+        raise HTTPException(status_code=400, detail="persona_id invalido")
+    if not _can_access_identity(current_user, persona_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    return [_serialize_enrollment(row) for row in _enrollments_for_identity(db, persona_id)]
+
+
+@router.get("/personas/{persona_id}/progress", response_model=List[dict])
+def get_persona_course_progress(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
+):
+    """Devuelve progreso academico por persona UUID."""
+    if not _is_uuid_like(persona_id):
+        raise HTTPException(status_code=400, detail="persona_id invalido")
+    return get_user_course_progress(persona_id, db, current_user)
 
 
 @router.get("/users/{user_id}/enrollments", response_model=List[dict])
@@ -529,17 +665,8 @@ def get_user_enrollments(
             for m in matriculas
         ]
     # Fallback: legacy Integer enrollment model
-    enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
-    return [
-        {
-            "id": e.id,
-            "user_id": e.user_id,
-            "course_id": e.course_id,
-            "progress_percent": e.progress_percent,
-            "enrolled_at": str(e.enrolled_at) if e.enrolled_at else None,
-        }
-        for e in enrollments
-    ]
+    enrollments = db.query(models.Enrollment).filter(_enrollment_identity_filter(user_id)).all()
+    return [_serialize_enrollment(e) for e in enrollments]
 
 
 @router.get("/users", response_model=List[dict])

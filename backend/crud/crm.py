@@ -15,6 +15,46 @@ from backend.schemas.legacy import CommunityBoardCardUpdate
 from backend.schemas.notifications import CommunicationLogUpdate
 
 
+def _is_uuid_like(value) -> bool:
+    try:
+        uuid.UUID(str(value))
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
+    if user_id is None:
+        return None
+    try:
+        legacy_user_id = int(user_id)
+    except (TypeError, ValueError):
+        return None
+    persona = (
+        db.query(models.Persona.id)
+        .filter(models.Persona.user_id == legacy_user_id)
+        .first()
+    )
+    return persona[0] if persona else None
+
+
+def resolve_persona_id_from_identity(db: Session, identity: int | str | None):
+    if identity is None:
+        return None
+    if _is_uuid_like(identity):
+        return uuid.UUID(str(identity))
+    return resolve_persona_id_for_user(db, identity)
+
+
+def legacy_user_id_from_identity(identity: int | str | None):
+    if identity is None or _is_uuid_like(identity):
+        return None
+    try:
+        return int(identity)
+    except (TypeError, ValueError):
+        return None
+
+
 def get_user_sede_id(db: Session, user_id: str) -> str | None:
     """Obtiene el sede_id de la Persona vinculada al usuario actual.
 
@@ -515,7 +555,11 @@ def get_crm_tasks(
 
 
 def create_crm_task(db: Session, payload: schemas.CrmTaskCreate) -> models.CrmTask:
-    row = models.CrmTask(**payload.model_dump())
+    data = payload.model_dump()
+    assignee_identity = data.pop("assignee_id", None)
+    data["assignee_id"] = resolve_persona_id_from_identity(db, assignee_identity)
+    data["assignee_user_id"] = legacy_user_id_from_identity(assignee_identity)
+    row = models.CrmTask(**data)
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -609,6 +653,9 @@ def create_counseling_ticket(db: Session, payload: schemas.CounselingTicketCreat
 
     try:
         data = payload.model_dump()
+        pastor_identity = data.pop("pastor_id", None)
+        data["pastor_id"] = resolve_persona_id_from_identity(db, pastor_identity)
+        data["pastor_user_id"] = legacy_user_id_from_identity(pastor_identity)
         raw_notes = data.get("notes", "")
 
         data["priority_level"] = analyze_pastoral_priority(raw_notes)
@@ -867,8 +914,9 @@ def get_persona_timeline(db: Session, persona_id: str):
 
 def create_communication_log(db: Session, payload: schemas.CommunicationLogCreate):
     data = payload.model_dump()
-    # leader_id → leader_id (UUID FK to personas.id) — do NOT map to legacy leader_user_id
-    data.pop("leader_user_id", None)
+    leader_identity = data.pop("leader_id", None)
+    data["leader_id"] = resolve_persona_id_from_identity(db, leader_identity)
+    data["leader_user_id"] = legacy_user_id_from_identity(leader_identity)
     row = models.CommunicationLog(**{k: v for k, v in data.items()
                                      if hasattr(models.CommunicationLog, k)})
     db.add(row)
@@ -1137,7 +1185,12 @@ def update_counseling_ticket(
     row = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not row:
         return None
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    data = payload.model_dump(exclude_unset=True)
+    if "pastor_id" in data:
+        pastor_identity = data.pop("pastor_id")
+        row.pastor_id = resolve_persona_id_from_identity(db, pastor_identity)
+        row.pastor_user_id = legacy_user_id_from_identity(pastor_identity)
+    for key, value in data.items():
         if key == "notes" and value:
             setattr(row, key, encrypt_data(value))
         else:

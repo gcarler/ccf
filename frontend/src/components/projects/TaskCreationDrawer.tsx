@@ -11,14 +11,14 @@ interface Props {
     isOpen: boolean;
     defaultStatus?: string;
     onClose: () => void;
-    onSubmit: (data: { title: string; description: string; priority: string; status: string; assignee_id?: number | null }) => Promise<void>;
+    onSubmit: (data: { title: string; description: string; priority: string; status: string; assignee_id?: string | null }) => Promise<void>;
 }
 
 interface FormValues {
     title: string;
     description: string;
     priority: string;
-    assignee_id: number | null;
+    assignee_id: string | null;
 }
 
 const PRIORITIES = [

@@ -25,12 +25,21 @@ Migración paso a paso:
 from __future__ import annotations
 
 from typing import Optional
+from datetime import timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend import models, schemas
 from backend.core.security import get_password_hash
+
+
+def _utc_compare(value):
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 # ── Identity / Auth ───────────────────────────────────────────────────
 
@@ -103,7 +112,8 @@ async def get_valid_refresh_token_async(db: AsyncSession, token: str):
         return None
     if row.revoked:
         return None
-    if row.expires_at <= _utcnow():
+    expires_at = _utc_compare(row.expires_at)
+    if expires_at is None or expires_at <= _utcnow():
         return None
     return row
 
@@ -151,7 +161,8 @@ async def use_verification_token_async(db: AsyncSession, token: str) -> Optional
         select(VerificationToken).where(VerificationToken.token == token)
     )
     row = result.scalar_one_or_none()
-    if not row or row.used or row.expires_at <= _utcnow():
+    expires_at = _utc_compare(row.expires_at) if row else None
+    if not row or row.used or expires_at is None or expires_at <= _utcnow():
         return None
     row.used = True
     await db.commit()
@@ -193,7 +204,8 @@ async def use_reset_token_async(
 
     result = await db.execute(select(ResetToken).where(ResetToken.token == token))
     row = result.scalar_one_or_none()
-    if not row or row.used or row.expires_at <= _utcnow():
+    expires_at = _utc_compare(row.expires_at) if row else None
+    if not row or row.used or expires_at is None or expires_at <= _utcnow():
         return False
     row.used = True
 

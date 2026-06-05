@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import os
 import uuid as _uuid
+import asyncio
 
 os.environ.setdefault("ENV", "test")
 
 import pytest
-from fastapi.testclient import TestClient
+import anyio.to_thread as _anyio_to_thread
+import httpx
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
@@ -53,6 +55,19 @@ def _patch_sqlite_uuid():
 
 _patch_sqlite_uuid()
 
+
+if os.getenv("CCF_TEST_INLINE_SYNC_HANDLERS", "1") != "0":
+    async def _run_sync_inline(
+        func,
+        *args,
+        abandon_on_cancel=False,
+        cancellable=None,
+        limiter=None,
+    ):
+        return func(*args)
+
+    _anyio_to_thread.run_sync = _run_sync_inline
+
 from backend.app import app
 from backend.core.database import Base, get_db
 import backend.models  # noqa: F401 — register all models (incl. auth_v2) so create_all works
@@ -85,6 +100,53 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 
+class LocalASGITestClient:
+    """Small synchronous test client that avoids Starlette TestClient's portal.
+
+    The installed Starlette/httpx/anyio combination hangs in this sandbox when
+    TestClient starts its blocking portal. ASGITransport works correctly when
+    driven directly from asyncio.
+    """
+
+    def __init__(self, app):
+        self.app = app
+        self.base_url = "http://testserver"
+        self.cookies = httpx.Cookies()
+
+    def request(self, method: str, url: str, **kwargs):
+        return asyncio.run(self._request(method, url, **kwargs))
+
+    async def _request(self, method: str, url: str, **kwargs):
+        transport = httpx.ASGITransport(app=self.app)
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url=self.base_url,
+            cookies=self.cookies,
+            follow_redirects=True,
+        ) as client:
+            response = await client.request(method, url, **kwargs)
+            self.cookies.update(response.cookies)
+            return response
+
+    def get(self, url: str, **kwargs):
+        return self.request("GET", url, **kwargs)
+
+    def post(self, url: str, **kwargs):
+        return self.request("POST", url, **kwargs)
+
+    def put(self, url: str, **kwargs):
+        return self.request("PUT", url, **kwargs)
+
+    def patch(self, url: str, **kwargs):
+        return self.request("PATCH", url, **kwargs)
+
+    def delete(self, url: str, **kwargs):
+        return self.request("DELETE", url, **kwargs)
+
+    def close(self):
+        return None
+
+
 @pytest.fixture(scope="function")
 def db_session():
     if engine.dialect.name == "postgresql":
@@ -105,8 +167,11 @@ def db_session():
 
 @pytest.fixture(scope="function")
 def client(db_session):
-    with TestClient(app) as test_client:
+    test_client = LocalASGITestClient(app)
+    try:
         yield test_client
+    finally:
+        test_client.close()
     app.dependency_overrides = {get_db: override_get_db}
 
 

@@ -184,8 +184,8 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
 }
 
 // ─── Inline User Cell ──────────────────────────────────────────────────────────
-type UserRecord = { id: number; username: string; email?: string };
-function InlineUserCell({ value, token, onChange }: { value?: number | null; token: string | null; onChange: (userId: number | null, name: string | null) => void }) {
+type UserRecord = { id: string; username: string; email?: string };
+function InlineUserCell({ value, token, onChange }: { value?: string | null; token: string | null; onChange: (userId: string | null, name: string | null) => void }) {
     const [open, setOpen] = useState(false);
     const [query, setQuery]   = useState('');
     const [users, setUsers]   = useState<UserRecord[]>([]);
@@ -197,7 +197,7 @@ function InlineUserCell({ value, token, onChange }: { value?: number | null; tok
         apiFetch('/crm/personas/', { method: 'GET', token: token ?? undefined })
             .then((data: any) => {
                 const list: UserRecord[] = Array.isArray(data)
-                    ? data.map((m: any) => ({ id: m.user?.id ?? m.id, username: m.nombre_completo || m.user?.username || m.username || `#${m.id}`, email: m.user?.email ?? m.email }))
+                    ? data.map((m: any) => ({ id: String(m.user?.id ?? m.id), username: m.nombre_completo || m.user?.username || m.username || `#${m.id}`, email: m.user?.email ?? m.email }))
                     : [];
                 setUsers(list);
                 if (value) { const found = list.find(u => u.id === value); if (found) setDisplayName(found.username); }
@@ -325,7 +325,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     const { token } = useAuth();
     const gridRef = useRef<AgGridReact>(null);
     const [isDark, setIsDark] = useState(false);
-    const [overrides, setOverrides] = useState<Record<number, Partial<ProjectTaskRecord>>>({});
+    const [overrides, setOverrides] = useState<Record<string, Partial<ProjectTaskRecord>>>({});
     const [groupBy, setGroupBy]     = useState<GroupKey>('status');
     const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
     const [visibleCols, setVisibleCols] = useState<Set<ColumnId>>(new Set<ColumnId>(['title','status','priority','assignee','due_date']));
@@ -382,7 +382,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     useEffect(() => { applyChangeRef.current = applyChange; }, [applyChange]);
 
     // Resolve optimistic overrides
-    const resolveTask = useCallback((t: ProjectTaskRecord): ProjectTaskRecord => ({ ...t, ...(overrides[Number(t.id)] ?? {}) }), [overrides]);
+    const resolveTask = useCallback((t: ProjectTaskRecord): ProjectTaskRecord => ({ ...t, ...(overrides[t.id] ?? {}) }), [overrides]);
 
     // Process: filter
     const processed = useMemo(() => {

@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 interface Leader {
-    id: number;
+    id: string;
     username: string;
     role: string;
 }
@@ -58,7 +58,7 @@ export default function TaskAssignment() {
         setLoading(true);
         try {
             const [usersData, membersData] = await Promise.all([
-                apiFetch<any[]>('/auth/user-list', { token }),
+                apiFetch<any[]>('/admin/users', { token }),
                 apiFetch<any[]>('/crm/personas', { token })
             ]);
             
@@ -98,7 +98,7 @@ export default function TaskAssignment() {
                     title: taskTitle,
                     description: taskDescription,
                     persona_id: selectedMemberId,
-                    assignee_id: parseInt(selectedLeaderId),
+                    assignee_id: selectedLeaderId,
                     priority: 'normal',
                     due_date: new Date(Date.now() + 86400000 * 2).toISOString() // Default 2 days
                 }
@@ -312,4 +312,3 @@ export default function TaskAssignment() {
         </CrmShell>
     );
 }
-

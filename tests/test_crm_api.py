@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 import pytest
-from backend import models
+from backend import crud, models, schemas
 from tests.conftest import seed_admin_v2, auth_headers_legacy, seed_user_with_role_v2
 
 
@@ -46,6 +46,22 @@ def seed_sede(db_session):
 def seed_user_with_role(db_session, role: str, email: str, password: str = "secret123"):
     user_obj, _, _ = seed_user_with_role_v2(db_session, role, email, password)
     return user_obj.legacy_user
+
+
+def seed_persona_for_user(db_session, user, email="persona@example.com"):
+    existing = db_session.query(models.Persona).filter(models.Persona.user_id == user.id).first()
+    if existing:
+        return existing
+    persona = models.Persona(
+        user_id=user.id,
+        first_name="Persona",
+        last_name="Vinculada",
+        email=email,
+    )
+    db_session.add(persona)
+    db_session.commit()
+    db_session.refresh(persona)
+    return persona
 
 
 async def _failing_send_whatsapp(db, member_id, content, sender_user_id):
@@ -100,6 +116,74 @@ def test_create_crm_task_hides_invalid_date_details(client, db_session):
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Formato de fecha o identificador invalido"
+
+
+def test_crm_task_dual_writes_assignee_persona_id(db_session):
+    user = seed_admin(db_session)
+    assignee = seed_persona_for_user(db_session, user)
+
+    task = crud.create_crm_task(
+        db_session,
+        schemas.CrmTaskCreate(
+            title="Seguimiento UUID",
+            assignee_id=user.id,
+        ),
+    )
+
+    assert task.assignee_user_id == user.id
+    assert task.assignee_id == assignee.id
+
+
+def test_counseling_ticket_dual_writes_pastor_persona_id(db_session):
+    user = seed_admin(db_session)
+    pastor = seed_persona_for_user(db_session, user)
+    lead = models.Persona(
+        first_name="Lead",
+        last_name="Pastoral",
+        email="lead@example.com",
+    )
+    db_session.add(lead)
+    db_session.commit()
+    db_session.refresh(lead)
+
+    ticket = crud.create_counseling_ticket(
+        db_session,
+        schemas.CounselingTicketCreate(
+            persona_id=str(lead.id),
+            subject="Acompanamiento",
+            notes="Llamar esta semana",
+            pastor_id=user.id,
+        ),
+    )
+
+    assert ticket.pastor_user_id == user.id
+    assert ticket.pastor_id == pastor.id
+
+
+def test_communication_log_dual_writes_leader_persona_id(db_session):
+    user = seed_admin(db_session)
+    leader = seed_persona_for_user(db_session, user)
+    member = models.Persona(
+        first_name="Miembro",
+        last_name="Mensaje",
+        email="mensaje@example.com",
+    )
+    db_session.add(member)
+    db_session.commit()
+    db_session.refresh(member)
+
+    log = crud.create_communication_log(
+        db_session,
+        schemas.CommunicationLogCreate(
+            persona_id=str(member.id),
+            channel="WhatsApp",
+            content="Hola",
+            leader_id=user.id,
+        ),
+    )
+
+    assert log.leader_user_id == user.id
+    assert log.leader_id == leader.id
 
 
 def test_messaging_history_item_detail_route(client, db_session):

@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -17,7 +18,12 @@ from backend.api.crm._shared import (
 )
 from backend.auth import normalize_role, require_active_user, require_pastor_or_admin
 from backend.core.database import get_db
-from backend.crud.crm import get_user_sede_id
+from backend.crud.crm import (
+    get_user_sede_id,
+    legacy_user_id_from_identity,
+    resolve_persona_id_for_user,
+    resolve_persona_id_from_identity,
+)
 from backend.services.messaging import MessagingGateway
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
@@ -554,7 +560,16 @@ def list_crm_tasks(
     """Lista todas las tareas CRM con filtro opcional por usuario asignado."""
     q = db.query(models.CrmTask)
     if assignee_user_id:
-        q = q.filter(models.CrmTask.assignee_user_id == assignee_user_id)
+        assignee_persona_id = resolve_persona_id_for_user(db, assignee_user_id)
+        if assignee_persona_id:
+            q = q.filter(
+                or_(
+                    models.CrmTask.assignee_id == assignee_persona_id,
+                    models.CrmTask.assignee_user_id == assignee_user_id,
+                )
+            )
+        else:
+            q = q.filter(models.CrmTask.assignee_user_id == assignee_user_id)
     tasks = q.order_by(models.CrmTask.created_at.desc()).all()
     return [_serialize_task(t) for t in tasks]
 
@@ -577,12 +592,14 @@ def create_crm_task(
         except ValueError:
             raise HTTPException(status_code=400, detail="Formato de fecha o identificador invalido")
 
+    assignee_identity = payload.get("assignee_id") or current_user.id
     task = models.CrmTask(
         title=title,
         description=payload.get("description"),
         category=payload.get("category") or "Pastoral",
         persona_id=payload.get("persona_id"),
-        assignee_user_id=payload.get("assignee_id") or current_user.id,
+        assignee_id=resolve_persona_id_from_identity(db, assignee_identity),
+        assignee_user_id=legacy_user_id_from_identity(assignee_identity),
         due_date=due_date,
         status=payload.get("status") or "pending",
         priority=payload.get("priority") or "medium",
@@ -598,9 +615,13 @@ def list_my_crm_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
+    owner_conditions = [models.CrmTask.assignee_user_id == current_user.id]
+    my_persona_id = resolve_persona_id_for_user(db, current_user.id)
+    if my_persona_id:
+        owner_conditions.append(models.CrmTask.assignee_id == my_persona_id)
     tasks = (
         db.query(models.CrmTask)
-        .filter(models.CrmTask.assignee_user_id == current_user.id)
+        .filter(or_(*owner_conditions))
         .order_by(models.CrmTask.created_at.desc())
         .all()
     )
@@ -658,7 +679,11 @@ def update_crm_task(
                     val = datetime.fromisoformat(val.replace("Z", "+00:00"))
                 except ValueError:
                     raise HTTPException(status_code=400, detail="Formato de fecha inválido")
-            setattr(task, field, val)
+            if field == "assignee_id":
+                task.assignee_id = resolve_persona_id_from_identity(db, val)
+                task.assignee_user_id = legacy_user_id_from_identity(val)
+            else:
+                setattr(task, field, val)
     db.commit()
     db.refresh(task)
     return _serialize_task(task)

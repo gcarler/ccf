@@ -11,12 +11,17 @@ import {
 } from "@/lib/cms/testimonialMedia";
 
 interface TestimonialFormProps {
-  userId: number;
+  userId?: number | string | null;
+  authorPersonaId?: string | null;
   token: string;
   onSubmitted?: () => void;
 }
 
-export default function TestimonialForm({ userId, token, onSubmitted }: TestimonialFormProps) {
+const isUuid = (value: unknown) =>
+  typeof value === "string" &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+export default function TestimonialForm({ userId, authorPersonaId, token, onSubmitted }: TestimonialFormProps) {
   const [content, setContent] = useState("");
   const [emotion, setEmotion] = useState("Feliz");
   const [mediaType, setMediaType] = useState<TestimonialMediaType>("text");
@@ -80,6 +85,10 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
     const submittedMediaUrl = submittedMediaType === "text" ? null : activeMediaUrl.trim();
 
     try {
+      const authorPayload = {
+        ...(authorPersonaId || isUuid(userId) ? { author_persona_id: authorPersonaId || String(userId) } : {}),
+        ...(typeof userId === "number" && userId > 0 ? { author_id: userId } : {}),
+      };
       await apiFetch("/cms/testimonials", {
         method: "POST",
         token,
@@ -91,7 +100,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
           image_url: submittedMediaType === "image" ? submittedMediaUrl : null,
           video_url: submittedMediaType === "video" ? submittedMediaUrl : null,
           podcast_url: submittedMediaType === "podcast" ? submittedMediaUrl : null,
-          author_id: userId,
+          ...authorPayload,
         },
       });
 
@@ -247,4 +256,3 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
     </div>
   );
 }
-

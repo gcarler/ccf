@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from backend.schemas._common import orm_config
 
@@ -395,7 +395,13 @@ class TestimonialCreate(BaseModel):
     is_approved: bool = False
     show_on_home: bool = False
     status: Optional[TestimonialStatus] = None
+    author_persona_id: Optional[str] = None
     author_id: Optional[int] = None
+
+    @field_validator("author_persona_id", mode="before")
+    @classmethod
+    def _author_persona_id_to_str(cls, value):
+        return str(value) if value is not None else None
 
 
 class TestimonialUpdate(BaseModel):
@@ -429,10 +435,16 @@ class TestimonialRead(BaseModel):
     is_approved: bool
     show_on_home: bool
     status: TestimonialStatus = "pending"
+    author_persona_id: Optional[str] = None
     author_id: Optional[int] = None
     author: Optional[TestimonialAuthorRead] = None
     created_at: datetime
     model_config = orm_config
+
+    @field_validator("author_persona_id", mode="before")
+    @classmethod
+    def _author_persona_id_to_str(cls, value):
+        return str(value) if value is not None else None
 
 
 class NewsletterSubscriptionCreate(BaseModel):

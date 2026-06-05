@@ -48,7 +48,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
     const [viewType, setViewType] = useState<ViewType>('grid');
     const [search, setSearch] = useState('');
     const [isCreating, setIsCreating] = useState(false);
-    const [newProjectOwner, setNewProjectOwner] = useState<number | null>(null);
+    const [newProjectOwner, setNewProjectOwner] = useState<string | null>(null);
     const [newProjectTitle, setNewProjectTitle] = useState('');
     const [showCreateForm, setShowCreateForm] = useState(false);
 

@@ -41,7 +41,7 @@ const MINISTRIES = ['APOSTOL', 'PROFETA', 'EVANGELISTA', 'PASTOR', 'MAESTRO'];
 const PLATFORM_ROLES = ['admin', 'pastor', 'coordinador', 'docente', 'estudiante', 'aspirante'];
 
 interface UserSummary {
-    id: number;
+    id: string;
     username: string;
     email: string;
     role: string;
@@ -216,7 +216,7 @@ export default function IdentityManagementPage() {
         }
         setSaving(true);
         try {
-            await apiFetch(`/auth/users/${selectedUser.id}`, {
+            await apiFetch(`/admin/users/${selectedUser.id}`, {
                 method: 'PATCH', token,
                 body: { password: newPassword },
             });

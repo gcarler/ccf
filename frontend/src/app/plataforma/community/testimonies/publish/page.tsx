@@ -9,6 +9,10 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
 
+const isUuid = (value: unknown) =>
+    typeof value === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
 export default function PublishTestimony() {
     const { isAuthenticated, user, token } = useAuth();
     const router = useRouter();
@@ -29,11 +33,15 @@ export default function PublishTestimony() {
 
         setIsSubmitting(true);
         try {
+            const authorPayload = {
+                ...(isUuid(user.id) ? { author_persona_id: user.id } : {}),
+                ...(typeof user.id === 'number' && user.id > 0 ? { author_id: user.id } : {}),
+            };
             await apiFetch('/cms/testimonials', {
                 method: 'POST',
                 token: token || undefined,
                 body: {
-                    author_id: user.id,
+                    ...authorPayload,
                     content: testimonyText,
                     emotion: selectedCategory,
                     is_approved: false // Default to unapproved for moderation
@@ -181,4 +189,3 @@ export default function PublishTestimony() {
         </div>
     );
 }
-

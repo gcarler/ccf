@@ -1,11 +1,11 @@
 export interface ProjectRecord {
-  id: number;
+  id: string;
   title: string;
   description?: string | null;
   status: string;
   color?: string | null;
   icon?: string | null;
-  owner_id?: number | null;
+  owner_id?: string | null;
   created_at: string;
   updated_at?: string | null;
   tasks?: ProjectTaskRecord[];
@@ -15,8 +15,8 @@ export interface ProjectRecord {
 }
 
 export interface ProjectMilestoneRecord {
-  id: number;
-  project_id: number;
+  id: string;
+  project_id: string;
   title: string;
   description?: string | null;
   target_date?: string | null;
@@ -25,7 +25,7 @@ export interface ProjectMilestoneRecord {
 
 export interface ProjectAttachment {
   id: number;
-  task_id: number;
+  task_id: string;
   filename: string;
   file_url: string;
   file_size?: number | null;
@@ -37,15 +37,15 @@ export interface ProjectAttachment {
 }
 
 export interface ProjectTaskRecord {
-  id: number;
-  project_id: number;
+  id: string;
+  project_id: string;
   title: string;
   description?: string | null;
   created_at?: string;
   status: string;
   priority: string;
-  assignee_id?: number | null;
-  parent_id?: number | null;
+  assignee_id?: string | null;
+  parent_id?: string | null;
   start_date?: string | null;
   due_date?: string | null;
   labels?: string[];
@@ -58,7 +58,7 @@ export interface ProjectTaskRecord {
 
 export interface TaskSupplyRecord {
   id: number;
-  task_id: number;
+  task_id: string;
   item_name: string;
   quantity: number;
   status: string;
@@ -70,8 +70,8 @@ export interface ProjectInboxItem {
   user: string;
   content: string;
   project: string;
-  project_id: number;
-  task_id?: number | null;
+  project_id: string;
+  task_id?: string | null;
   task_title?: string | null;
   is_read: boolean;
   created_at: string;
@@ -80,9 +80,9 @@ export interface ProjectInboxItem {
 export interface ProjectActivityItem {
   id: string;
   kind: string;
-  project_id: number;
+  project_id: string;
   project_title: string;
-  task_id?: number | null;
+  task_id?: string | null;
   task_title?: string | null;
   description: string;
   created_at: string;
@@ -90,8 +90,8 @@ export interface ProjectActivityItem {
 
 export interface ProjectCommentItem {
   id: number;
-  project_id: number;
-  task_id?: number | null;
+  project_id: string;
+  task_id?: string | null;
   content: string;
   author_id: number;
   author_name: string;
@@ -110,7 +110,7 @@ export interface ProjectPortfolioSummaryRow {
 }
 
 export interface ProjectWorkloadSummaryRow {
-  assignee_id?: number | null;
+  assignee_id?: string | null;
   open_tasks: number;
   in_review: number;
   overdue_tasks: number;

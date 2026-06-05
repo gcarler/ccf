@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -30,9 +31,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger("QualityGate")
 
+DEFAULT_STEP_TIMEOUT_SECONDS = int(os.getenv("QUALITY_GATE_STEP_TIMEOUT", "120"))
+FRONTEND_STEP_TIMEOUT_SECONDS = int(os.getenv("QUALITY_GATE_FRONTEND_TIMEOUT", "240"))
 
-def run_step(name, command, cwd=None):
+
+def run_step(name, command, cwd=None, timeout_seconds=None):
     logger.info(f"--- INICIANDO: {name} ---")
+    timeout = timeout_seconds or DEFAULT_STEP_TIMEOUT_SECONDS
     try:
         result = subprocess.run(
             command,
@@ -40,6 +45,7 @@ def run_step(name, command, cwd=None):
             capture_output=True,
             text=True,
             check=False,
+            timeout=timeout,
         )
         if result.returncode == 0:
             logger.info(f"✅ {name} PASÓ.")
@@ -48,6 +54,16 @@ def run_step(name, command, cwd=None):
             logger.error(f"❌ {name} FALLÓ.")
             logger.error(f"Salida de error:\n{result.stdout}\n{result.stderr}")
             return False
+    except subprocess.TimeoutExpired as e:
+        logger.error(f"❌ {name} AGOTÓ TIEMPO ({timeout}s).")
+        stdout = e.stdout or ""
+        stderr = e.stderr or ""
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", errors="replace")
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", errors="replace")
+        logger.error(f"Salida parcial:\n{stdout}\n{stderr}")
+        return False
     except Exception as e:
         logger.error(f"❌ Error crítico ejecutando {name}: {e}")
         return False
@@ -106,6 +122,9 @@ def check_db_indices():
                 )
                 all_passed = False
         return all_passed
+    except Exception as exc:
+        logger.error("❌ No se pudieron verificar índices de DB: %s", exc)
+        return False
     finally:
         db.close()
 
@@ -174,15 +193,21 @@ def main():
                 "tests/test_reglas_plataforma.py",
             ],
         ),
-        ("Frontend Typecheck", ["npm", "run", "typecheck"], ROOT / "frontend"),
+        (
+            "Frontend Typecheck",
+            ["npm", "run", "typecheck"],
+            ROOT / "frontend",
+            FRONTEND_STEP_TIMEOUT_SECONDS,
+        ),
     ]
 
     overall_success = True
 
     # 1. Pruebas Automatizadas
-    for name, cmd, *cwd in steps:
-        work_dir = cwd[0] if cwd else None
-        if not run_step(name, cmd, work_dir):
+    for name, cmd, *extra in steps:
+        work_dir = extra[0] if extra else None
+        timeout = extra[1] if len(extra) > 1 else None
+        if not run_step(name, cmd, work_dir, timeout):
             overall_success = False
 
     # 2. Verificaciones Estructurales

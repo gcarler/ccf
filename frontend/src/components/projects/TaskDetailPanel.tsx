@@ -74,7 +74,7 @@ interface TaskDetailPanelProps {
     projectTitle?: string;
     onClose: () => void;
     onUpdate?: (updated: ProjectTaskRecord) => void;
-    onDelete?: (taskId: number) => void;
+    onDelete?: (taskId: string) => void;
     onActivityCreated?: () => void;
     onVerRutaClick?: () => void; // abre S3 con el árbol
 }
@@ -569,12 +569,12 @@ export default function TaskDetailPanel({
             try {
                 const formData = new FormData();
                 formData.append('file', file);
-                const updated = await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/attachments`, {
+                const updated = await apiFetch<Record<string, unknown>>(`/projects/${task.project_id}/tasks/${task.id}/attachments`, {
                     method: 'POST',
                     token,
                     body: formData,
                 });
-                onUpdate?.({ ...task, ...updated });
+                onUpdate?.({ ...task, ...(updated || {}) });
                 onActivityCreated?.();
             } catch (err) {
                 console.error('Error uploading file', err);
@@ -672,7 +672,7 @@ export default function TaskDetailPanel({
         } catch { /* optimistic */ }
     };
 
-    const handleAssigneeChange = async (newAssigneeId: number | null) => {
+    const handleAssigneeChange = async (newAssigneeId: string | null) => {
         if (!task || !token) return;
         const updated = { ...task, assignee_id: newAssigneeId as any };
         onUpdate?.(updated);
