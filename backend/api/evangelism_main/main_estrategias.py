@@ -1,18 +1,14 @@
 from __future__ import annotations
-import datetime
 from datetime import timezone as _tz
 import logging
-import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from backend import crud, models, schemas
-from backend.api.evangelism_shared import utc_now
-from backend.auth import require_active_user, require_admin, require_module_access, require_pastor_or_admin
+from backend import crud, models
+from backend.auth import require_pastor_or_admin
 from backend.core.database import get_db
-from backend.core.tenant import require_user_sede_id
 from backend.crud.evangelism import (
     create_estrategia as create_evangelism_strategy,
     update_estrategia as update_evangelism_strategy,
@@ -23,7 +19,6 @@ from backend.schemas.crm import (
     EvangelismStrategyCreate,
     EvangelismStrategyUpdate,
 )
-from backend.mesh_websockets import manager
 
 estrategias_router = APIRouter(tags=["Evangelismo - Estrategias"])
 
@@ -224,14 +219,14 @@ def delete_strategy(
 def _project_phases_as_tasks(db, strategy_id: str, strategy_name: str, phases: list[dict], start_date=None):
     """Create N1 tasks in Projects module for each phase of a mass event."""
     from backend.models_projects import Project, ProjectTask
-    from datetime import datetime
+    from datetime import datetime as dt
 
     # Create a project linked to the strategy
     project = Project(
         title=f"[MASIVO] {strategy_name}",
         description=f"Evento masivo generado desde estrategia de evangelismo #{strategy_id}",
         status="active",
-        created_at=datetime.now(_tz.utc),
+        created_at=dt.now(_tz.utc),
     )
     # Store strategy link in description
     db.add(project)
@@ -244,11 +239,11 @@ def _project_phases_as_tasks(db, strategy_id: str, strategy_name: str, phases: l
         phase_end = phase.get("end_date")
 
         try:
-            sd = datetime.fromisoformat(phase_start.replace("Z", "+00:00")) if phase_start else None
+            sd = dt.fromisoformat(phase_start.replace("Z", "+00:00")) if phase_start else None
         except Exception:
             sd = None
         try:
-            dd = datetime.fromisoformat(phase_end.replace("Z", "+00:00")) if phase_end else None
+            dd = dt.fromisoformat(phase_end.replace("Z", "+00:00")) if phase_end else None
         except Exception:
             dd = None
 
@@ -262,7 +257,7 @@ def _project_phases_as_tasks(db, strategy_id: str, strategy_name: str, phases: l
             due_date=dd,
             order_index=i,
             labels=["N1", "Evangelismo", phase_type] if phase_type else ["N1", "Evangelismo"],
-            created_at=datetime.now(_tz.utc),
+            created_at=dt.now(_tz.utc),
         )
         db.add(task)
 

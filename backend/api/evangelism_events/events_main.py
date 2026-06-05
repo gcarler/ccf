@@ -15,16 +15,12 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.evangelism_events._shared import (
-    is_event_admin_or_pastor,
-    is_event_assignee,
     _get_persona_for_user,
     require_event_access,
 )
 from backend.api.evangelism_shared import (
-    ABSENTEES_PREVIEW_LIMIT,
     get_expected_members_for_event,
     normalize_role_scope_payload,
-    parse_session_date,
     utc_now,
 )
 from backend.auth import (
@@ -36,7 +32,6 @@ from backend.auth import (
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
-from backend.crud._utils import _utcnow
 
 router = APIRouter()
 

@@ -12,11 +12,9 @@ from backend.models_evangelism import ParticipanteGrupo, SesionGrupo as SessionM
 from backend.api.evangelism_shared import (
     FIRST_TIME_STATES,
     expected_group_rows,
-    is_absent_status,
-    member_payload,
     utc_now,
 )
-from backend.auth import get_current_user, normalize_role, require_active_user, require_pastor_or_admin
+from backend.auth import get_current_user, normalize_role, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 
@@ -631,7 +629,6 @@ def toggle_session_habilitacion(
 ):
     """Admin: habilita o deshabilita manualmente una sesion para recibir reportes."""
     from backend.models_evangelism import HabilitacionSesionEnum
-    from backend.models_auth import Usuario
 
     session = db.query(SesionGrupo).filter(SesionGrupo.id == session_id).first()
     if not session:
@@ -681,7 +678,6 @@ def habilitar_todas_sesiones(
     if not grupo_ids:
         raise HTTPException(status_code=404, detail="Estrategia sin grupos")
 
-    from backend.models import Persona
     persona = _get_persona_for_user(db, current_user.id)
 
     updated = db.query(SesionGrupo).filter(
