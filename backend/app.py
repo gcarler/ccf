@@ -110,7 +110,7 @@ async def lifespan(_: FastAPI):
         logger.info("Skipping Alembic migrations during tests.")
         yield
         return
-    else:
+    if settings.run_startup_schema_fixes:
         # Run outstanding Alembic migrations (idempotent, fast when up-to-date)
         # FAIL HARD: if migrations cannot run, the app must not start
         from pathlib import Path
@@ -127,6 +127,10 @@ async def lifespan(_: FastAPI):
         else:
             logger.error("alembic.ini not found — cannot verify schema. App will not start.")
             raise RuntimeError("alembic.ini not found; database migrations cannot run")
+    else:
+        logger.info(
+            "Startup schema fixes disabled; skipping Alembic migration check on boot."
+        )
 
     # Register all agent tools after the schema is migrated.
     try:
