@@ -19,6 +19,7 @@ from sqlalchemy import func as _func
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.api.evangelism_shared import ATTENDED_STATES
 from backend.auth import require_active_user
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
@@ -28,9 +29,6 @@ router = APIRouter()
 # ────────────────────────────────────────────────────────────────────
 # helpers
 # ────────────────────────────────────────────────────────────────────
-
-_ATTENDED_STATES = {"Presente", "ASISTIO", "present"}
-
 
 def _month_range(year: int, month: int):
     """Return (start, end) datetimes for *month* (1-indexed)."""
@@ -93,31 +91,30 @@ def rankings_groups(
 
 
 def _rank_by_attendance(db: Session, groups, start, end):
+    group_ids = [g.id for g in groups]
+    attendance_rows = []
+    if group_ids:
+        attendance_rows = (
+            db.query(models.SesionGrupo.grupo_id, models.Asistencia.estado)
+            .join(models.Asistencia, models.Asistencia.sesion_id == models.SesionGrupo.id)
+            .filter(
+                models.SesionGrupo.grupo_id.in_(group_ids),
+                models.SesionGrupo.fecha_sesion >= start,
+                models.SesionGrupo.fecha_sesion < end,
+            )
+            .all()
+        )
+    present_by_group = {group_id: 0 for group_id in group_ids}
+    expected_by_group = {group_id: 0 for group_id in group_ids}
+    for group_id, estado in attendance_rows:
+        expected_by_group[group_id] = expected_by_group.get(group_id, 0) + 1
+        if estado in ATTENDED_STATES:
+            present_by_group[group_id] = present_by_group.get(group_id, 0) + 1
+
     rows = []
     for g in groups:
-        # total present = asistencias with estado IN attended states this month
-        present = (
-            db.query(_func.count(models.Asistencia.id))
-            .join(models.SesionGrupo)
-            .filter(
-                models.SesionGrupo.grupo_id == g.id,
-                models.Asistencia.estado.in_(_ATTENDED_STATES),
-                models.SesionGrupo.fecha_sesion >= start,
-                models.SesionGrupo.fecha_sesion < end,
-            )
-            .scalar()
-        )
-        # total expected = total asistencia rows for this group's sessions this month
-        expected = (
-            db.query(_func.count(models.Asistencia.id))
-            .join(models.SesionGrupo)
-            .filter(
-                models.SesionGrupo.grupo_id == g.id,
-                models.SesionGrupo.fecha_sesion >= start,
-                models.SesionGrupo.fecha_sesion < end,
-            )
-            .scalar()
-        )
+        present = present_by_group.get(g.id, 0)
+        expected = expected_by_group.get(g.id, 0)
         rate = round((present / expected) * 100, 1) if expected else 0.0
         rows.append(
             {
@@ -133,29 +130,32 @@ def _rank_by_attendance(db: Session, groups, start, end):
 
 
 def _rank_by_growth(db: Session, groups, this_start, this_end, last_start, last_end):
+    group_ids = [g.id for g in groups]
+    this_map = dict(
+        db.query(models.ParticipanteGrupo.grupo_id, _func.count(models.ParticipanteGrupo.id))
+        .filter(models.ParticipanteGrupo.grupo_id.in_(group_ids) if group_ids else False)
+        .filter(
+            models.ParticipanteGrupo.activo,
+            models.ParticipanteGrupo.fecha_ingreso < this_end,
+        )
+        .group_by(models.ParticipanteGrupo.grupo_id)
+        .all()
+    )
+    last_map = dict(
+        db.query(models.ParticipanteGrupo.grupo_id, _func.count(models.ParticipanteGrupo.id))
+        .filter(models.ParticipanteGrupo.grupo_id.in_(group_ids) if group_ids else False)
+        .filter(
+            models.ParticipanteGrupo.activo,
+            models.ParticipanteGrupo.fecha_ingreso < last_end,
+        )
+        .group_by(models.ParticipanteGrupo.grupo_id)
+        .all()
+    )
     rows = []
     for g in groups:
-        # members this month = active ParticipanteGrupo created before this month's end
-        this_count = (
-            db.query(_func.count(models.ParticipanteGrupo.id))
-            .filter(
-                models.ParticipanteGrupo.grupo_id == g.id,
-                models.ParticipanteGrupo.activo,
-                models.ParticipanteGrupo.fecha_ingreso < this_end,
-            )
-            .scalar()
-        )
-        # members last month = active ParticipanteGrupo created before last month's end
-        last_count = (
-            db.query(_func.count(models.ParticipanteGrupo.id))
-            .filter(
-                models.ParticipanteGrupo.grupo_id == g.id,
-                models.ParticipanteGrupo.activo,
-                models.ParticipanteGrupo.fecha_ingreso < last_end,
-            )
-            .scalar()
-        )
-        growth = (this_count or 0) - (last_count or 0)
+        this_count = this_map.get(g.id, 0)
+        last_count = last_map.get(g.id, 0)
+        growth = this_count - last_count
         rows.append(
             {
                 "group_id": g.id,
@@ -170,18 +170,21 @@ def _rank_by_growth(db: Session, groups, this_start, this_end, last_start, last_
 
 
 def _rank_by_visitors(db: Session, groups, start, end):
+    group_ids = [g.id for g in groups]
+    visitors_map = dict(
+        db.query(models.ParticipanteGrupo.grupo_id, _func.count(models.ParticipanteGrupo.id))
+        .filter(models.ParticipanteGrupo.grupo_id.in_(group_ids) if group_ids else False)
+        .filter(
+            models.ParticipanteGrupo.rol_base == "visitante",
+            models.ParticipanteGrupo.fecha_ingreso >= start,
+            models.ParticipanteGrupo.fecha_ingreso < end,
+        )
+        .group_by(models.ParticipanteGrupo.grupo_id)
+        .all()
+    )
     rows = []
     for g in groups:
-        visitors = (
-            db.query(_func.count(models.ParticipanteGrupo.id))
-            .filter(
-                models.ParticipanteGrupo.grupo_id == g.id,
-                models.ParticipanteGrupo.rol_base == "visitante",
-                models.ParticipanteGrupo.fecha_ingreso >= start,
-                models.ParticipanteGrupo.fecha_ingreso < end,
-            )
-            .scalar()
-        )
+        visitors = visitors_map.get(g.id, 0)
         rows.append(
             {
                 "group_id": g.id,
@@ -234,7 +237,7 @@ def monthly_comparison(
             .join(models.GrupoEvangelismo)
             .filter(
                 base_filter,
-                models.Asistencia.estado.in_(_ATTENDED_STATES),
+                models.Asistencia.estado.in_(ATTENDED_STATES),
                 models.SesionGrupo.fecha_sesion >= start,
                 models.SesionGrupo.fecha_sesion < end,
             )
@@ -318,66 +321,70 @@ def rankings_leaders(
     this_start, this_end = _this_month_range()
 
     groups = _active_groups_query(db, strategy_id, sede_id).all()
+    group_ids = [g.id for g in groups]
+    leader_ids = [g.lider_persona_id for g in groups if g.lider_persona_id]
+    leader_map = {}
+    if leader_ids:
+        leader_map = {
+            persona.id: persona
+            for persona in db.query(models.Persona).filter(models.Persona.id.in_(leader_ids)).all()
+        }
+    attendance_rows = []
+    if group_ids:
+        attendance_rows = (
+            db.query(models.SesionGrupo.grupo_id, models.Asistencia.estado)
+            .join(models.Asistencia, models.Asistencia.sesion_id == models.SesionGrupo.id)
+            .filter(
+                models.SesionGrupo.grupo_id.in_(group_ids),
+                models.SesionGrupo.fecha_sesion >= this_start,
+                models.SesionGrupo.fecha_sesion < this_end,
+            )
+            .all()
+        )
+    present_by_group = {group_id: 0 for group_id in group_ids}
+    expected_by_group = {group_id: 0 for group_id in group_ids}
+    for group_id, estado in attendance_rows:
+        expected_by_group[group_id] = expected_by_group.get(group_id, 0) + 1
+        if estado in ATTENDED_STATES:
+            present_by_group[group_id] = present_by_group.get(group_id, 0) + 1
+    members_by_group = dict(
+        db.query(models.ParticipanteGrupo.grupo_id, _func.count(models.ParticipanteGrupo.id))
+        .filter(models.ParticipanteGrupo.grupo_id.in_(group_ids) if group_ids else False)
+        .filter(models.ParticipanteGrupo.activo)
+        .group_by(models.ParticipanteGrupo.grupo_id)
+        .all()
+    )
+    visitors_by_group = dict(
+        db.query(models.ParticipanteGrupo.grupo_id, _func.count(models.ParticipanteGrupo.id))
+        .filter(models.ParticipanteGrupo.grupo_id.in_(group_ids) if group_ids else False)
+        .filter(
+            models.ParticipanteGrupo.rol_base == "visitante",
+            models.ParticipanteGrupo.fecha_ingreso >= this_start,
+            models.ParticipanteGrupo.fecha_ingreso < this_end,
+        )
+        .group_by(models.ParticipanteGrupo.grupo_id)
+        .all()
+    )
     rows: list[dict] = []
 
     for g in groups:
         # leader name
-        leader_name = (
-            db.query(models.Persona)
-            .filter(models.Persona.id == g.lider_persona_id)
-            .first()
-        )
+        leader_name = leader_map.get(g.lider_persona_id)
         leader_display = (
             f"{leader_name.first_name} {leader_name.last_name}"
             if leader_name
             else "Sin líder"
         )
 
-        # attendance rate for this group this month
-        present = (
-            db.query(_func.count(models.Asistencia.id))
-            .join(models.SesionGrupo)
-            .filter(
-                models.SesionGrupo.grupo_id == g.id,
-                models.Asistencia.estado.in_(_ATTENDED_STATES),
-                models.SesionGrupo.fecha_sesion >= this_start,
-                models.SesionGrupo.fecha_sesion < this_end,
-            )
-            .scalar()
-        ) or 0
-        expected = (
-            db.query(_func.count(models.Asistencia.id))
-            .join(models.SesionGrupo)
-            .filter(
-                models.SesionGrupo.grupo_id == g.id,
-                models.SesionGrupo.fecha_sesion >= this_start,
-                models.SesionGrupo.fecha_sesion < this_end,
-            )
-            .scalar()
-        ) or 0
+        present = present_by_group.get(g.id, 0)
+        expected = expected_by_group.get(g.id, 0)
         attendance_pct = round((present / expected) * 100, 1) if expected else 0.0
 
         # total members
-        members = (
-            db.query(_func.count(models.ParticipanteGrupo.id))
-            .filter(
-                models.ParticipanteGrupo.grupo_id == g.id,
-                models.ParticipanteGrupo.activo,
-            )
-            .scalar()
-        ) or 0
+        members = members_by_group.get(g.id, 0)
 
         # visitors this month
-        visitors = (
-            db.query(_func.count(models.ParticipanteGrupo.id))
-            .filter(
-                models.ParticipanteGrupo.grupo_id == g.id,
-                models.ParticipanteGrupo.rol_base == "visitante",
-                models.ParticipanteGrupo.fecha_ingreso >= this_start,
-                models.ParticipanteGrupo.fecha_ingreso < this_end,
-            )
-            .scalar()
-        ) or 0
+        visitors = visitors_by_group.get(g.id, 0)
 
         rows.append(
             {

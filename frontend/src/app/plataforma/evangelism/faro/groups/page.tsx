@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import {
   Home,
   Plus,
@@ -159,6 +160,7 @@ function FaroGroupsContent() {
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [memberRoleFilter, setMemberRoleFilter] = useState('');
   const [memberAssignmentFilter, setMemberAssignmentFilter] = useState('all');
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
   const [quickAssignmentTargets, setQuickAssignmentTargets] = useState<
     Record<string, number>
   >({});
@@ -298,7 +300,6 @@ function FaroGroupsContent() {
   };
 
   const handleDeleteHouse = async (house: Grupo) => {
-    if (!confirm(`¿Está seguro que desea eliminar "${house.name}"?\n\nEsta acción no se puede deshacer.`)) return;
     try {
       await apiFetch(`/evangelism/grupos/${house.id}`, {
         method: 'DELETE',
@@ -314,6 +315,16 @@ function FaroGroupsContent() {
       const msg = error?.message || 'Error al eliminar grupo';
       toast.error(msg);
     }
+  };
+
+  const requestDeleteHouse = (house: Grupo) => {
+    setConfirmAction({
+      title: 'Eliminar grupo',
+      description: `Se eliminará "${house.name}" y dejará de estar disponible para reportes nuevos.`,
+      confirmLabel: 'Eliminar',
+      destructive: true,
+      onConfirm: () => handleDeleteHouse(house),
+    });
   };
 
   const handleQuickAssignMember = async (personaId: string) => {
@@ -648,7 +659,7 @@ function FaroGroupsContent() {
                     </td>
                     <td className="px-4 py-2.5 text-right">
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteHouse(h); }}
+                        onClick={(e) => { e.stopPropagation(); requestDeleteHouse(h); }}
                         className="p-1 rounded text-slate-300 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                         title="Eliminar"
                       >
@@ -769,7 +780,7 @@ function FaroGroupsContent() {
                       </div>
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteHouse(h); }}
+                      onClick={(e) => { e.stopPropagation(); requestDeleteHouse(h); }}
                       className="shrink-0 p-1 rounded text-slate-300 dark:text-slate-600 hover:text-[hsl(var(--destructive))] dark:hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                       title="Eliminar grupo"
                     >
@@ -831,7 +842,7 @@ function FaroGroupsContent() {
                 )}
                 {!isCreating && selectedHouse && (
                   <button
-                    onClick={() => handleDeleteHouse(selectedHouse)}
+                    onClick={() => requestDeleteHouse(selectedHouse)}
                     className="size-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-[hsl(var(--destructive))] hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
                     title="Eliminar grupo"
                   >
@@ -1127,7 +1138,7 @@ function FaroGroupsContent() {
                         </p>
                       </div>
                       <a
-                        href={`/evangelism/faro/${selectedHouse.id}`}
+                        href={`/plataforma/evangelism/faro/${selectedHouse.id}`}
                         className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2 shrink-0"
                       >
                         <Calendar size={14} /> Registrar Asistencia
@@ -1328,6 +1339,7 @@ function FaroGroupsContent() {
           </>
         )}
       </div>
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </EvangelismShell>
   );
 }

@@ -25,7 +25,7 @@ interface Grupo {
     members_count: number;
     status: string;
     evangelism_strategy_id: string | null;
-    base_attendees?: { persona_id: string; role: string; member?: { nombre_completo: string; telefono?: string } }[];
+    base_attendees?: { persona_id: string; name?: string; role: string; phone?: string; member?: { nombre_completo: string; telefono?: string } }[];
 }
 
 interface SessionPerson {
@@ -71,22 +71,22 @@ export default function SessionReportPage() {
 
             if (data.leader_id) {
                 const m = baseMembers.find(x => x.persona_id === data.leader_id);
-                ppl.push({ persona_id: data.leader_id, name: m?.member?.nombre_completo || data.leader_name || 'Líder', role: 'Líder', phone: m?.member?.telefono, status: 'present' });
+                ppl.push({ persona_id: data.leader_id, name: m?.name || m?.member?.nombre_completo || data.leader_name || 'Líder', role: 'Líder', phone: m?.phone || m?.member?.telefono, status: 'present' });
                 roleIds.add(data.leader_id);
             }
             if (data.assistant_id) {
                 const m = baseMembers.find(x => x.persona_id === data.assistant_id);
-                ppl.push({ persona_id: data.assistant_id, name: m?.member?.nombre_completo || 'Asistente del Líder', role: 'Asistente del Líder', phone: m?.member?.telefono, status: 'present' });
+                ppl.push({ persona_id: data.assistant_id, name: m?.name || m?.member?.nombre_completo || 'Asistente del Líder', role: 'Asistente del Líder', phone: m?.phone || m?.member?.telefono, status: 'present' });
                 roleIds.add(data.assistant_id);
             }
             if (data.host_id) {
                 const m = baseMembers.find(x => x.persona_id === data.host_id);
-                ppl.push({ persona_id: data.host_id, name: m?.member?.nombre_completo || 'Anfitrión', role: 'Anfitrión', phone: m?.member?.telefono, status: 'present' });
+                ppl.push({ persona_id: data.host_id, name: m?.name || m?.member?.nombre_completo || 'Anfitrión', role: 'Anfitrión', phone: m?.phone || m?.member?.telefono, status: 'present' });
                 roleIds.add(data.host_id);
             }
             for (const m of baseMembers) {
                 if (!roleIds.has(m.persona_id)) {
-                    ppl.push({ persona_id: m.persona_id, name: m.member?.nombre_completo || `Persona #${m.persona_id}`, role: 'Asistente', phone: m.member?.telefono, status: 'absent' });
+                    ppl.push({ persona_id: m.persona_id, name: m.name || m.member?.nombre_completo || `Persona #${m.persona_id}`, role: 'Asistente', phone: m.phone || m.member?.telefono, status: 'absent' });
                 }
             }
             setPeople(ppl);
@@ -137,6 +137,11 @@ export default function SessionReportPage() {
             });
 
             const sessionId = sessionData.id;
+            await apiFetch(`/evangelism/sessions/${sessionId}/habilitacion`, {
+                method: 'PATCH',
+                token,
+                body: { accion: 'HABILITAR' },
+            });
             const attPayload = people.map(p => ({
                 session_id: sessionId, persona_id: p.persona_id, status: p.status, notes: null,
             }));
@@ -162,7 +167,7 @@ export default function SessionReportPage() {
             }
 
             toast.success(`Reporte: ${stats.present} presentes, ${stats.absent} ausentes, ${stats.firstTime} nuevos`);
-            router.push(`/evangelism/faro/groups`);
+            router.push(`/plataforma/evangelism/faro/groups`);
         } catch (error: any) {
             toast.error(error?.message || 'Error al guardar');
         } finally {

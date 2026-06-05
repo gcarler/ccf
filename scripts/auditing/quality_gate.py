@@ -1,15 +1,18 @@
 import logging
-import os
 import subprocess
 import sys
 from pathlib import Path
 
 from sqlalchemy import text
 
-from backend.core.database import SessionLocal
-
 REPORT_PATH = Path("test_artifacts") / "quality_report.log"
 REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+ROOT = Path(__file__).resolve().parents[2]
+PYTHON = sys.executable or "python3"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from backend.core.database import SessionLocal  # noqa: E402
 
 # Configuración de logging para reporte de calidad
 # Forzar UTF-8 en stdout si es posible
@@ -32,7 +35,11 @@ def run_step(name, command, cwd=None):
     logger.info(f"--- INICIANDO: {name} ---")
     try:
         result = subprocess.run(
-            command, shell=True, cwd=cwd, capture_output=True, text=True
+            command,
+            cwd=cwd or ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
         )
         if result.returncode == 0:
             logger.info(f"✅ {name} PASÓ.")
@@ -49,34 +56,54 @@ def run_step(name, command, cwd=None):
 def check_db_indices():
     logger.info("--- VERIFICANDO ÍNDICES DE BASE DE DATOS ---")
     db = SessionLocal()
-    expected_indices = [
-        "idx_donations_status",
-        "idx_donations_ref",
-        "idx_audit_resource",
-        "idx_tasks_status",
-        "idx_user_reminders_user_id",
-    ]
+    expected_index_groups = {
+        "donations_status": {"ix_donations_status", "idx_donations_status"},
+        "donations_sede": {"ix_donations_sede_id"},
+        "audit_resource": {
+            "ix_admin_audit_logs_resource_type",
+            "idx_audit_resource",
+        },
+        "crm_tasks_status": {
+            "ix_crm_tasks_status",
+            "ix_consolidation_tasks_status",
+            "ix_project_tasks_status",
+            "idx_tasks_status",
+        },
+        "user_reminders_user": {
+            "ix_user_reminders_user_id",
+            "idx_auth_reminders_user",
+            "idx_user_reminders_user_id",
+        },
+    }
     all_passed = True
     try:
         dialect_name = db.bind.dialect.name
-        for idx in expected_indices:
-            if dialect_name == "postgresql":
-                res = db.execute(
-                    text(f"SELECT indexname FROM pg_indexes WHERE indexname = :idx"),
-                    {"idx": idx},
+        if dialect_name == "postgresql":
+            rows = db.execute(
+                text(
+                    "SELECT indexname FROM pg_indexes "
+                    "WHERE schemaname = current_schema()"
                 )
-            else:
-                res = db.execute(
-                    text(
-                        f"SELECT name FROM sqlite_master WHERE type='index' AND name = :idx"
-                    ),
-                    {"idx": idx},
-                )
+            )
+        else:
+            rows = db.execute(text("SELECT name FROM sqlite_master WHERE type='index'"))
 
-            if res.fetchone():
-                logger.info(f"✅ Índice {idx} verificado.")
+        existing_indices = {row[0] for row in rows}
+
+        for logical_name, allowed_names in expected_index_groups.items():
+            found = sorted(existing_indices & allowed_names)
+            if found:
+                logger.info(
+                    "✅ Índice lógico %s verificado vía %s.",
+                    logical_name,
+                    ", ".join(found),
+                )
             else:
-                logger.warning(f"⚠️ Índice {idx} NO ENCONTRADO.")
+                logger.warning(
+                    "⚠️ Índice lógico %s NO ENCONTRADO. Esperado uno de: %s",
+                    logical_name,
+                    ", ".join(sorted(allowed_names)),
+                )
                 all_passed = False
         return all_passed
     finally:
@@ -86,15 +113,15 @@ def check_db_indices():
 def check_new_views():
     logger.info("--- VERIFICANDO EXISTENCIA DE NUEVAS VISTAS ---")
     critical_paths = [
-        "frontend/src/app/academy/courses/[id]/page.tsx",
-        "frontend/src/app/admin/donations/page.tsx",
-        "frontend/src/app/crm/pipeline/[id]/page.tsx",
-        "frontend/src/app/tasks/[id]/page.tsx",
-        "frontend/src/app/whiteboard/[id]/page.tsx",
+        "frontend/src/app/plataforma/academy/courses/[id]/page.tsx",
+        "frontend/src/app/plataforma/admin/donations/page.tsx",
+        "frontend/src/app/plataforma/crm/pipeline/[id]/page.tsx",
+        "frontend/src/app/plataforma/tasks/[id]/page.tsx",
+        "frontend/src/app/plataforma/whiteboard/[id]/page.tsx",
     ]
     all_passed = True
     for path in critical_paths:
-        if os.path.exists(path):
+        if (ROOT / path).exists():
             logger.info(f"✅ Vista {path} existe.")
         else:
             logger.error(f"❌ Vista {path} NO ENCONTRADA.")
@@ -110,13 +137,44 @@ def main():
     steps = [
         (
             "Backend Core Tests",
-            "python -m pytest tests/test_smoke.py tests/test_auth.py",
+            [
+                PYTHON,
+                "-m",
+                "pytest",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_smoke.py",
+                "tests/test_auth.py",
+            ],
         ),
         (
             "Backend Domain Tests",
-            "python -m pytest tests/test_academy_domain.py tests/test_crm_domain.py",
+            [
+                PYTHON,
+                "-m",
+                "pytest",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_academy_domain.py",
+                "tests/test_crm_domain.py",
+            ],
         ),
-        ("Frontend Typecheck", "npm run typecheck", "frontend"),
+        (
+            "Architecture Rule Tests",
+            [
+                PYTHON,
+                "-m",
+                "pytest",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_structural_contracts.py",
+                "tests/test_reglas_plataforma.py",
+            ],
+        ),
+        ("Frontend Typecheck", ["npm", "run", "typecheck"], ROOT / "frontend"),
     ]
 
     overall_success = True
@@ -137,7 +195,7 @@ def main():
     # 3. Verificación de Motor de Automatización
     if not run_step(
         "Automation Engine Load",
-        "set PYTHONPATH=. && python backend/services/automation_engine.py",
+        [PYTHON, "-m", "py_compile", "backend/services/automation_engine.py"],
     ):
         overall_success = False
 

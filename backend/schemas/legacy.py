@@ -2,27 +2,28 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from typing import Optional
+from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from backend.schemas._common import orm_config
 
 
 class MilestoneCreate(BaseModel):
-    person_id: int
+    person_id: UUID
     type: str
     event_date: date
-    minister_id: Optional[int] = None
+    minister_id: Optional[UUID] = None
 
 
 class Milestone(BaseModel):
     id: int
-    person_id: int
+    person_id: UUID = Field(validation_alias="persona_id")
     type: str
     event_date: date
-    minister_id: Optional[int] = None
+    minister_id: Optional[UUID] = None
     created_at: datetime
-    model_config = orm_config
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class SupportTicketCreate(BaseModel):

@@ -6,6 +6,7 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import { Shield, Plus, Check, Save, Trash2 } from 'lucide-react';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
@@ -23,6 +24,7 @@ export default function RolesPage() {
     const [loading, setLoading] = useState(true);
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
     const [editingRole, setEditingRole] = useState<Partial<Role>>({
         name: '',
         permissions: []
@@ -109,17 +111,24 @@ export default function RolesPage() {
 
     const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (!window.confirm("¿Seguro que deseas eliminar este rol?")) return;
-        try {
-            await apiFetch(`/admin/auth-role-definitions/${id}`, {
-                method: 'DELETE',
-                token
-            });
-            addToast("Rol eliminado", "success");
-            fetchData();
-        } catch (e: any) {
-            addToast(e.message || "Error al eliminar", "error");
-        }
+        setConfirmAction({
+            title: 'Eliminar rol',
+            description: 'Esta acción elimina la definición del rol y puede afectar permisos ya asignados.',
+            destructive: true,
+            confirmLabel: 'Eliminar rol',
+            onConfirm: async () => {
+                try {
+                    await apiFetch(`/admin/auth-role-definitions/${id}`, {
+                        method: 'DELETE',
+                        token
+                    });
+                    addToast("Rol eliminado", "success");
+                    fetchData();
+                } catch (e: any) {
+                    addToast(e.message || "Error al eliminar", "error");
+                }
+            },
+        });
     };
 
     // Agrupar permisos para UI
@@ -270,6 +279,8 @@ export default function RolesPage() {
                     </div>
                 </div>
             </WorkspaceDrawer>
+
+            <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </AdminShell>
     );
 }

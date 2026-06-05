@@ -27,6 +27,7 @@ import ProjectActivityFeed from '@/components/projects/ProjectActivityFeed';
 import ProjectWikiEditor from '@/components/projects/ProjectWikiEditor';
 import ProjectWhiteboard from '@/components/projects/ProjectWhiteboard';
 import ProjectChatPanel from '@/components/projects/ProjectChatPanel';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import { DSCard } from '@/design/components/DSCard';
 import { DSBadge } from '@/design/components/DSBadge';
 import { DSMetric } from '@/design/components/DSMetric';
@@ -69,6 +70,7 @@ export default function ProjectDetailPage() {
     const [milestoneDraftDate, setMilestoneDraftDate] = useState('');
     const [phases, setPhases] = useState<PhaseDef[]>([]);
     const [showPhaseManager, setShowPhaseManager] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const loadProject = useCallback(async () => {
         if (!token || !id) return;
@@ -181,14 +183,22 @@ export default function ProjectDetailPage() {
     };
 
     const handleDeleteProject = async () => {
-        if (!token || !id || !confirm('¿Eliminar este proyecto y todas sus tareas?')) return;
-        try {
-            await apiFetch(`/projects/${id}`, { method: 'DELETE', token });
-            toast.success('Proyecto eliminado');
-            router.push('/plataforma/projects');
-        } catch (err) {
-            toast.error('Error al eliminar proyecto');
-        }
+        if (!token || !id) return;
+        setConfirmAction({
+            title: 'Eliminar proyecto',
+            description: 'Esta acción eliminará el proyecto y todas sus tareas asociadas.',
+            destructive: true,
+            confirmLabel: 'Eliminar proyecto',
+            onConfirm: async () => {
+                try {
+                    await apiFetch(`/projects/${id}`, { method: 'DELETE', token });
+                    toast.success('Proyecto eliminado');
+                    router.push('/plataforma/projects');
+                } catch (err) {
+                    toast.error('Error al eliminar proyecto');
+                }
+            },
+        });
     };
 
     const handleCreateMilestone = async () => {
@@ -612,6 +622,8 @@ export default function ProjectDetailPage() {
                 }}
             />
             </div>
+
+            <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
 
             <TaskCreationDrawer
                 isOpen={showTaskModal}

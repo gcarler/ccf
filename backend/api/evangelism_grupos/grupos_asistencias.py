@@ -1,0 +1,606 @@
+from __future__ import annotations
+
+import collections
+from datetime import datetime as _datetime, timezone as _timezone
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
+from sqlalchemy.orm import Session, joinedload
+
+from backend import crud, models, schemas
+from backend.models import SesionGrupo, GrupoEvangelismo, Asistencia
+from backend.models_evangelism import ParticipanteGrupo, SesionGrupo as SessionModel
+from backend.api.evangelism_shared import (
+    FIRST_TIME_STATES,
+    expected_group_rows,
+    is_absent_status,
+    member_payload,
+    utc_now,
+)
+from backend.auth import get_current_user, normalize_role, require_active_user, require_pastor_or_admin
+from backend.core.database import get_db
+from backend.core.tenant import require_user_sede_id
+
+router = APIRouter()
+
+
+def _is_crm_admin_or_pastor(user: models.User) -> bool:
+    role = normalize_role(str(getattr(user, "role", "")))
+    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
+        role = normalize_role(user.rol_plataforma.nombre)
+    return role in {"admin", "administrador", "pastor"}
+
+
+def _get_persona_for_user(db: Session, user_id) -> Optional[models.Persona]:
+    import uuid as _uuid
+
+    # UUID-based user (v3): persona.id == user.id
+    if isinstance(user_id, _uuid.UUID) or (isinstance(user_id, str) and "-" in str(user_id)):
+        try:
+            uid = _uuid.UUID(str(user_id))
+            return db.query(models.Persona).filter(models.Persona.id == uid).first()
+        except (ValueError, AttributeError):
+            pass
+    # Integer user (legacy): persona.user_id == user.id
+    return db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
+
+
+def _can_manage_grupo(db: Session, user: models.User, house) -> bool:
+    if _is_crm_admin_or_pastor(user):
+        return True
+    persona = _get_persona_for_user(db, user.id)
+    if not persona:
+        return False
+    return persona.id in {house.leader_persona_id, house.assistant_persona_id}
+
+
+# ── Session Attendance ──
+
+
+@router.get("/grupos/sessions/{session_id}/attendance")
+@router.get("/faro/sessions/{session_id}/attendance")
+def get_faro_session_attendance(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    session = db.query(SesionGrupo).filter(
+        models.SesionGrupo.id == session_id,
+        models.SesionGrupo.deleted_at.is_(None),
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    house = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == session.grupo_id).first()
+    if not house:
+        raise HTTPException(status_code=404, detail="Grupo no encontrado")
+    if not _can_manage_grupo(db, current_user, house):
+        raise HTTPException(status_code=403, detail="No autorizado para este grupo")
+
+    attendances = (
+        db.query(Asistencia)
+        .filter(models.Asistencia.sesion_id == session_id)
+        .options(joinedload(models.Asistencia.persona))
+        .all()
+    )
+
+    expected_rows = expected_group_rows(db, session.grupo_id)
+    attendance_map = {attendance.persona_id: attendance for attendance in attendances}
+    present = []
+    absent = []
+    expected_members = []
+    for _, member in expected_rows:
+        attendance = attendance_map.get(member.id)
+        attended = (
+            bool(
+                attendance.attended
+                if hasattr(attendance, "attended")
+                else (attendance.estado == "ASISTIO" if attendance else False)
+            )
+            if attendance
+            else False
+        )
+        payload = member_payload(
+            member,
+            attended=attended,
+            scanned_at=getattr(attendance, "scanned_at", None) if attendance else None,
+            absence_reason=getattr(attendance, "absence_reason", None) if attendance else None,
+            absence_reason_detail=(
+                getattr(attendance, "absence_reason_detail", None) or getattr(attendance, "detalle_excusa", None)
+            )
+            if attendance
+            else None,
+            estado=attendance.estado if attendance else None,
+            es_primera_vez=attendance.es_primera_vez if attendance else False,
+        )
+        expected_members.append(payload)
+        if attended:
+            present.append(payload)
+        else:
+            absent.append(payload)
+
+    return {
+        "session_id": session_id,
+        "session_date": session.session_date.isoformat(),
+        "cell_group_id": session.grupo_id,
+        "status": session.status,
+        "topic": session.topic,
+        "offering_amount": (float(session.offering_amount) if session.offering_amount is not None else None),
+        "report_notes": session.report_notes,
+        "novelty_type": session.novelty_type,
+        "novelty_detail": session.novelty_detail,
+        "cancellation_reason": session.cancellation_reason,
+        "reported_by_persona_id": session.reported_by_persona_id,
+        "total": len(present),
+        "present_count": len(present),
+        "absent_count": len(absent),
+        "attendees": present,
+        "absentees": absent,
+        "expected_members": expected_members,
+    }
+
+
+@router.post("/grupos/sessions/{session_id}/attendance", response_model=dict)
+@router.post("/faro/sessions/{session_id}/attendance", response_model=dict)
+def add_faro_attendance(
+    session_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    member_ids = payload.get("persona_ids") or payload.get("member_ids", [])
+    attendees = payload.get("attendees")
+
+    session = db.query(SesionGrupo).filter(
+        models.SesionGrupo.id == session_id,
+        models.SesionGrupo.deleted_at.is_(None),
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    house = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == session.grupo_id).first()
+    if not house:
+        raise HTTPException(status_code=404, detail="Grupo no encontrado")
+    if not _can_manage_grupo(db, current_user, house):
+        raise HTTPException(status_code=403, detail="No autorizado para este grupo")
+
+    from backend.models_evangelism import HabilitacionSesionEnum
+    if session.estado_habilitacion != HabilitacionSesionEnum.HABILITADO.value:
+        raise HTTPException(
+            status_code=403,
+            detail=f"La sesión está {session.estado_habilitacion.lower()} y no acepta reportes de asistencia.",
+        )
+
+    from datetime import datetime, timezone
+
+    if session.report_deadline:
+        current_time = datetime.now(timezone.utc)
+        deadline = session.report_deadline
+        if deadline.tzinfo is None:
+            deadline = deadline.replace(tzinfo=timezone.utc)
+        if current_time > deadline:
+            raise HTTPException(
+                status_code=403,
+                detail="El plazo para reportar asistencia en esta sesión ha vencido.",
+            )
+
+    import uuid
+
+    if attendees and not isinstance(attendees, list):
+        raise HTTPException(status_code=400, detail="attendees must be a list")
+
+    if attendees:
+        processed = 0
+        for item in attendees:
+            member_id = item.get("persona_id") or item.get("member_id")
+            if not member_id:
+                continue
+            if isinstance(member_id, str):
+                try:
+                    member_id = uuid.UUID(member_id)
+                except ValueError:
+                    raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {member_id}")
+            attended = bool(item.get("attended", True))
+            absence_reason = item.get("absence_reason")
+            absence_reason_detail = item.get("absence_reason_detail")
+
+            if not attended and not absence_reason:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Razón de ausencia requerida para el miembro {member_id}.",
+                )
+
+            row = (
+                db.query(Asistencia)
+                .filter(
+                    models.Asistencia.sesion_id == session_id,
+                    models.Asistencia.persona_id == member_id,
+                )
+                .first()
+            )
+            if row:
+                row.attended = attended
+                row.absence_reason = absence_reason
+                row.absence_reason_detail = absence_reason_detail
+                row.scanned_at = utc_now() if attended else row.scanned_at
+            else:
+                db.add(
+                    Asistencia(
+                        session_id=session_id,
+                        persona_id=member_id,
+                        attended=attended,
+                        absence_reason=absence_reason,
+                        absence_reason_detail=absence_reason_detail,
+                    )
+                )
+            processed += 1
+    else:
+        if not member_ids:
+            raise HTTPException(status_code=400, detail="member_ids or attendees is required")
+        processed = 0
+        for member_id in member_ids:
+            if isinstance(member_id, str):
+                try:
+                    member_id = uuid.UUID(member_id)
+                except ValueError:
+                    raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {member_id}")
+            exists = (
+                db.query(Asistencia)
+                .filter(
+                    models.Asistencia.sesion_id == session_id,
+                    models.Asistencia.persona_id == member_id,
+                )
+                .first()
+            )
+            if not exists:
+                db.add(Asistencia(session_id=session_id, persona_id=member_id, attended=True))
+                processed += 1
+
+    new_status = payload.get("status", session.status)
+    new_cancellation_reason = payload.get("cancellation_reason", session.cancellation_reason)
+
+    if new_status in ["Cancelada", "No realizada"] and not new_cancellation_reason:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Motivo de cancelación es requerido cuando el estado es {new_status}.",
+        )
+
+    new_offering_amount = payload.get("offering_amount", session.offering_amount)
+    if new_offering_amount is not None and float(new_offering_amount) < 0:
+        raise HTTPException(status_code=400, detail="La ofrenda no puede ser un valor negativo.")
+
+    session.topic = payload.get("topic", session.topic)
+    session.offering_amount = new_offering_amount
+    session.report_notes = payload.get("report_notes", session.report_notes)
+    session.novelty_type = payload.get("novelty_type", session.novelty_type)
+    session.novelty_detail = payload.get("novelty_detail", session.novelty_detail)
+    session.cancellation_reason = new_cancellation_reason
+    session.status = new_status
+    session.reported_by_persona_id = payload.get("reported_by_persona_id", session.reported_by_persona_id)
+    session.reported_at = utc_now()
+
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return {"status": "success", "processed": processed, "session_id": session_id}
+
+
+# ── Attendance ──
+
+
+@router.post("/sessions/{session_id}/attendance", response_model=dict)
+def submit_attendance(
+    session_id: int,
+    attendance_data: List[schemas.AsistenciaGrupoCreate],
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Submit attendance for a session. Checks automation triggers."""
+
+    user_sede = require_user_sede_id(db, current_user)
+    session = (
+        db.query(SesionGrupo)
+        .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id)
+        .filter(models.SesionGrupo.id == session_id)
+        .filter(models.GrupoEvangelismo.sede_id == user_sede)
+        .filter(models.SesionGrupo.deleted_at.is_(None))
+        .first()
+    )
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Protección IDOR: solo sesiones habilitadas aceptan reportes
+    from backend.models_evangelism import HabilitacionSesionEnum
+    if session.estado_habilitacion != HabilitacionSesionEnum.HABILITADO.value:
+        raise HTTPException(
+            status_code=403,
+            detail=f"La sesión está {session.estado_habilitacion.lower()} y no acepta reportes de asistencia."
+        )
+
+    # Soft-delete existing attendance for this session
+    db.query(Asistencia).filter(Asistencia.sesion_id == session_id).update(
+        {Asistencia.deleted_at: utc_now()}, synchronize_session=False
+    )
+
+    submitted = []
+    for att in attendance_data:
+        # Map schema fields (status/notes) to model fields
+        absence_reason_detail = None
+        if att.status == "absent":
+            absence_reason_detail = att.notes
+
+        # Mapear estado nuevo (EstadoAsistenciaEnum)
+        nuevo_estado = "presente"
+        if att.status == "absent":
+            nuevo_estado = "ausente"
+        elif att.status == "first_time":
+            nuevo_estado = "primera_vez"
+
+        import uuid as _uuid
+
+        persona_uuid = att.persona_id
+        if isinstance(persona_uuid, str):
+            persona_uuid = _uuid.UUID(persona_uuid)
+
+        db_att = Asistencia(
+            session_id=session_id,
+            persona_id=persona_uuid,
+            detalle_excusa=absence_reason_detail,
+            estado=nuevo_estado,
+            es_primera_vez=(att.status == "first_time"),
+        )
+        db.add(db_att)
+        submitted.append(db_att)
+
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    for att in submitted:
+        db.refresh(att)
+
+    # ── Automation triggers ──
+    _check_absence_trigger(db, session_id, user_sede)
+    _check_first_time_lead_trigger(db, session_id)
+
+    # ── CRM Bridge: first-time / seguimiento ──
+    from backend.services.evangelism_crm_bridge import crear_caso_desde_asistencia
+    from backend.models_personas import Persona
+
+    evento = None
+    for att in submitted:
+        if att.es_primera_vez or att.requiere_seguimiento:
+            persona = db.query(Persona).filter(Persona.id == att.persona_id).first()
+            if not persona:
+                continue
+            grupo = session.grupo
+            if not grupo:
+                continue
+            sede_id = grupo.sede_id
+            if not sede_id:
+                continue
+            caso = crear_caso_desde_asistencia(db, att, persona, grupo, session, sede_id)
+            if caso:
+                estrategia = grupo.estrategia
+                tags_nuevos = [
+                    f"VISITANTE_ESTRATEGIA_{estrategia.id}" if estrategia else "VISITANTE_ESTRATEGIA_NONE",
+                    f"GRUPO_{grupo.nombre}",
+                    f"SESION_{session.fecha_sesion.date().isoformat()}"
+                    if session.fecha_sesion
+                    else f"SESION_{session.id}",
+                ]
+                persona.tags = list(set((persona.tags or []) + tags_nuevos))
+                if estrategia:
+                    persona.origen_estrategia_id = estrategia.id
+                persona.origen_grupo_id = grupo.id
+                persona.origen_fecha = _datetime.now(_timezone.utc)
+                persona.spiritual_status = "VISITANTE_EVANGELISMO"
+                db.commit()
+                db.refresh(persona)
+                db.refresh(caso)
+
+                evento = {
+                    "origen_modulo": "EVANGELISMO",
+                    "grupo_id": str(grupo.id),
+                    "sesion_id": str(session.id),
+                    "visitante_kernel": {
+                        "persona_id": str(persona.id),
+                        "nombre": f"{persona.first_name} {persona.last_name}",
+                        "rol_iglesia": persona.spiritual_status,
+                        "tags_aplicados": persona.tags,
+                    },
+                    "crm_consolidacion": {
+                        "caso_id": str(caso.id),
+                        "pipeline": "NUEVOS_VISITANTES",
+                        "etapa_inicial": caso.etapa_actual.nombre if caso.etapa_actual else "NUEVO_CONTACTO",
+                        "SLA_limite_horas": 48,
+                        "sla_deadline": caso.sla_vencimiento_contacto.isoformat()
+                        if caso.sla_vencimiento_contacto
+                        else None,
+                    },
+                }
+                break
+
+    return {
+        "evento_integracion": evento,
+        "metadata": {
+            "engine": "Mesh CCF",
+            "trazabilidad": "AUTOMATIC_EVENT_TRIGGER_SUCCESS",
+        },
+    }
+
+
+def _check_absence_trigger(db: Session, session_id: int, sede_id):
+    """If a member has 3 consecutive absences, create N2 task in Consolidation."""
+    from backend.models import (
+        Asistencia,
+        SesionGrupo,
+        GrupoEvangelismo,
+        ParticipanteGrupo,
+    )
+    from backend.models_personas import Persona
+
+    session = (
+        db.query(SesionGrupo)
+        .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id)
+        .filter(
+            SesionGrupo.id == session_id,
+            models.GrupoEvangelismo.sede_id == sede_id,
+            models.GrupoEvangelismo.deleted_at.is_(None),
+            SesionGrupo.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not session:
+        return
+
+    house = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.id == session.grupo_id).first()
+    if not house:
+        return
+
+    # Get last 3 sessions for this house
+    recent_sessions = (
+        db.query(SesionGrupo)
+        .filter(
+            SesionGrupo.grupo_id == house.id,
+            SesionGrupo.deleted_at.is_(None),
+        )
+        .order_by(SesionGrupo.fecha_sesion.desc())
+        .limit(3)
+        .all()
+    )
+
+    if len(recent_sessions) < 3:
+        return  # Not enough data
+
+    expected_members = (
+        db.query(ParticipanteGrupo.persona_id)
+        .filter(
+            ParticipanteGrupo.grupo_id == house.id,
+            ParticipanteGrupo.deleted_at.is_(None),
+            ParticipanteGrupo.activo.is_(True),
+        )
+        .all()
+    )
+    for (member_id,) in expected_members:
+        absent_count = 0
+        for s in recent_sessions:
+            att = (
+                db.query(Asistencia)
+                .filter(
+                    Asistencia.sesion_id == s.id,
+                    Asistencia.persona_id == member_id,
+                    Asistencia.estado == "ausente",
+                )
+                .first()
+            )
+            if att:
+                absent_count += 1
+
+        if absent_count >= 3:
+            # Create N2 task in Consolidation
+            p = db.query(Persona).filter(Persona.id == member_id).first()
+            if not p:
+                continue
+            from backend.models_crm import SupportTicket
+
+            ticket = SupportTicket(
+                persona_id=member_id,
+                ticket_type="consolidation",
+                title=f"Inasistencia recurrente: {p.nombre_completo}",
+                description=f"{p.nombre_completo} ha faltado 3 sesiones consecutivas en {house.name}. Requiere contacto pastoral.",
+                status="open",
+                priority="high",
+                severity="N2",
+            )
+            db.add(ticket)
+            db.commit()
+
+
+def _check_first_time_lead_trigger(db: Session, session_id: int):
+    """If a first_time attendee is recorded, mark as LEAD_NUEVO in CRM."""
+    from backend.models_personas import Persona
+    from backend.models_evangelism import Asistencia
+
+    first_timers = (
+        db.query(Asistencia)
+        .filter(
+            Asistencia.sesion_id == session_id,
+            Asistencia.estado.in_(FIRST_TIME_STATES),
+        )
+        .all()
+    )
+
+    for att in first_timers:
+        p = db.query(Persona).filter(Persona.id == att.persona_id).first()
+        if p and str(getattr(p, "church_role", "")).lower() not in ("lead", "lead_nuevo"):
+            try:
+                p.church_role = "lead_nuevo"
+                db.commit()
+            except Exception:
+                pass
+
+
+# ──────────────────────────────────────────────
+# SEGUIMIENTO (FOLLOW-UP)
+# ──────────────────────────────────────────────
+
+
+@router.get("/follow-up/pending", response_model=List[schemas.RegistroSeguimientoResponse])
+def list_pending_follow_ups(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Lista todos los seguimientos pendientes (no completados)."""
+    from backend.crud.evangelism import get_pendientes_seguimiento
+
+    return get_pendientes_seguimiento(db, limit=limit)
+
+
+@router.get("/follow-up/{asistencia_id}", response_model=List[schemas.RegistroSeguimientoResponse])
+def list_seguimientos_for_attendance(
+    asistencia_id: int,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Lista los seguimientos de una asistencia."""
+    from backend.crud.evangelism import get_seguimientos
+
+    return get_seguimientos(db, asistencia_id)
+
+
+@router.post("/follow-up/{asistencia_id}", response_model=schemas.RegistroSeguimientoResponse)
+def create_seguimiento(
+    asistencia_id: int,
+    payload: schemas.RegistroSeguimientoCreate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Crea un registro de seguimiento para una asistencia."""
+    from backend.crud.evangelism import create_seguimiento
+
+    asistencia = db.query(Asistencia).filter(models.Asistencia.id == asistencia_id).first()
+    if not asistencia:
+        raise HTTPException(status_code=404, detail="Asistencia no encontrada")
+
+    payload.asistencia_id = asistencia_id
+    return create_seguimiento(db, payload)
+
+
+@router.patch("/follow-up/{seguimiento_id}", response_model=schemas.RegistroSeguimientoResponse)
+def update_seguimiento(
+    seguimiento_id: int,
+    payload: schemas.RegistroSeguimientoUpdate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Actualiza un seguimiento (marcar completado, agregar resultado, etc.)."""
+    from backend.crud.evangelism import update_seguimiento
+
+    result = update_seguimiento(db, seguimiento_id, payload)
+    if not result:
+        raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
+    return result

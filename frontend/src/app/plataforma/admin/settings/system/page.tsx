@@ -29,6 +29,7 @@ import { apiUrl } from '@/lib/api';
 import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 
@@ -67,6 +68,7 @@ export default function SystemSettings() {
         feature: '',
         actor: '',
     });
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const fetchConfig = useCallback(async () => {
         if (!token) return;
@@ -185,13 +187,19 @@ export default function SystemSettings() {
     useEffect(() => { if (isAuthenticated) fetchConfig(); }, [isAuthenticated, fetchConfig]);
 
     const handleCriticalAction = async (action: string, label: string) => {
-        if (!confirm(`¿Estás seguro de que deseas ejecutar: ${label}? Esta acción es crítica para el sistema.`)) return;
-        
-        setActionLoading(action);
-        setTimeout(() => {
-            addToast(`${label} ejecutado con éxito`, 'success');
-            setActionLoading(null);
-        }, 2000);
+        setConfirmAction({
+            title: label,
+            description: `Esta acción es crítica para el sistema: ${label}. Verifica el impacto antes de continuar.`,
+            destructive: true,
+            confirmLabel: 'Ejecutar',
+            onConfirm: async () => {
+                setActionLoading(action);
+                setTimeout(() => {
+                    addToast(`${label} ejecutado con éxito`, 'success');
+                    setActionLoading(null);
+                }, 2000);
+            },
+        });
     };
 
     const toggleFeature = async (key: string) => {
@@ -1229,6 +1237,7 @@ export default function SystemSettings() {
                     </section>
                 </aside>
             </div>
+        <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </AdminShell>
     </WorkspaceLayout>
     );

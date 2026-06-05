@@ -12,6 +12,7 @@ ScanValidationResult,
 } from '@/app/plataforma/evangelism/types';
 import { ViewType,getStoredView } from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import Skeleton from '@/components/ui/Skeleton';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
@@ -77,6 +78,7 @@ export default function EventsPage() {
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [isAttendanceDrawerOpen, setIsAttendanceDrawerOpen] = useState(false);
     const [isQrDrawerOpen, setIsQrDrawerOpen] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
     const [selectedEvent, setSelectedEvent] = useState<MinistryEvent | null>(null);
 
     // Scanner
@@ -525,18 +527,22 @@ export default function EventsPage() {
         loadAttendanceSession();
     }, [addToast, attendanceDate, isAttendanceDrawerOpen, selectedEvent, token]);
 
-    const saveAttendance = async () => {
+    const saveAttendance = async (forceEmpty = false) => {
         if (!selectedEvent) return;
         const normalizedStatus = String(selectedEvent.status || '').toUpperCase();
         if (normalizedStatus === 'CANCELLED' || normalizedStatus === 'CANCELED') {
             addToast("No se puede registrar asistencia en eventos cancelados", "error");
             return;
         }
-        if (expectedUniverseMembers.length > 0 && attendedMemberIds.length === 0) {
-            const confirmed = window.confirm(
-                "Vas a guardar 0 presentes y marcar pendientes como ausentes para esta fecha. ¿Deseas continuar?"
-            );
-            if (!confirmed) return;
+        if (!forceEmpty && expectedUniverseMembers.length > 0 && attendedMemberIds.length === 0) {
+            setConfirmAction({
+                title: 'Guardar asistencia en cero',
+                description: 'Vas a guardar 0 presentes y marcar pendientes como ausentes para esta fecha.',
+                confirmLabel: 'Guardar',
+                destructive: true,
+                onConfirm: () => saveAttendance(true),
+            });
+            return;
         }
         setSavingAttendance(true);
         try {
@@ -774,7 +780,7 @@ export default function EventsPage() {
                             return (
                         <div 
                             key={ev.id} 
-                            onClick={() => router.push(`/evangelism/events/${ev.id}`)}
+                            onClick={() => router.push(`/plataforma/evangelism/events/${ev.id}`)}
                             className="p-4 rounded-md border border-slate-100 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10 transition-all group flex flex-col justify-between cursor-pointer"
                         >
                             <div>
@@ -860,7 +866,7 @@ export default function EventsPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p 
-                                    onClick={() => router.push(`/evangelism/events/${ev.id}`)}
+                                    onClick={() => router.push(`/plataforma/evangelism/events/${ev.id}`)}
                                     className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate cursor-pointer hover:text-[hsl(var(--primary))] transition-colors"
                                 >
                                     {ev.name}
@@ -916,7 +922,7 @@ export default function EventsPage() {
                                 return (
                                     <tr key={event.id} className="border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                                         <td className="px-3 py-2">
-                                            <button onClick={() => router.push(`/evangelism/events/${event.id}`)} className="font-bold text-slate-800 dark:text-slate-100 hover:text-[hsl(var(--primary))]">
+                                            <button onClick={() => router.push(`/plataforma/evangelism/events/${event.id}`)} className="font-bold text-slate-800 dark:text-slate-100 hover:text-[hsl(var(--primary))]">
                                                 {event.name}
                                             </button>
                                         </td>
@@ -950,7 +956,7 @@ export default function EventsPage() {
                                     return (
                                         <button
                                             key={event.id}
-                                            onClick={() => router.push(`/evangelism/events/${event.id}`)}
+                                            onClick={() => router.push(`/plataforma/evangelism/events/${event.id}`)}
                                             className="w-full rounded-lg border border-slate-100 p-4 text-left transition-all hover:border-blue-500/30 hover:shadow-lg dark:border-white/5"
                                         >
                                             <p className="text-sm font-semibold text-slate-900 dark:text-white">{event.name}</p>
@@ -1289,7 +1295,7 @@ export default function EventsPage() {
                         Cancelar
                     </button>
                     <button
-                        onClick={saveAttendance}
+                        onClick={() => saveAttendance()}
                         disabled={savingAttendance || attendanceLoading || String(selectedEvent?.status || '').toUpperCase() === 'CANCELLED' || String(selectedEvent?.status || '').toUpperCase() === 'CANCELED'}
                         className="px-3 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100"
                     >
@@ -1652,6 +1658,7 @@ export default function EventsPage() {
                     </div>
                 )}
             </WorkspaceDrawer>
+            <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </EvangelismShell>
     );
 }

@@ -281,6 +281,7 @@ from backend.crud.crm_extended import (
     get_role_definitions,
     get_unread_count_for_conversation,
     get_user_conversations,
+    get_user_conversations_by_persona,
     get_volunteer_skill,
     get_volunteer_skills,
     mark_conversation_read,

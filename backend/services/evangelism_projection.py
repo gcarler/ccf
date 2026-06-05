@@ -13,6 +13,7 @@ FRECUENCIAS = {
     FrecuenciaEnum.TRIMESTRAL.value: "Trimestral",
     FrecuenciaEnum.SEMESTRAL.value: "Semestral",
     FrecuenciaEnum.ANUAL.value: "Anual",
+    FrecuenciaEnum.EVENTO_UNICO.value: "Evento unico",
 }
 
 proyectar_sesiones = calcular_sesiones

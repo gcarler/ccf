@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import EmptyState from '@/components/ui/EmptyState';
 import Skeleton from '@/components/ui/Skeleton';
 import ViewSwitcher from '@/components/ViewSwitcher';
@@ -49,6 +50,7 @@ export default function FaroPage() {
     const [loading, setLoading] = useState(true);
     const [showNewSeason, setShowNewSeason] = useState(false);
     const [showNewSession, setShowNewSession] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
     const [savingSession, setSavingSession] = useState(false);
     const [savingSeason, setSavingSeason] = useState(false);
     const [sessionForm, setSessionForm] = useState({ grupo_id: '', session_date: new Date().toISOString().split('T')[0], topic: 'S1', report_deadline: '' });
@@ -106,8 +108,11 @@ export default function FaroPage() {
         try {
             const bodyPayload: any = { ...sessionForm, season_id: activeSeason.id };
             if (sessionForm.grupo_id !== 'all') {
-                bodyPayload.grupo_id = Number(sessionForm.grupo_id);
+                bodyPayload.cell_group_id = Number(sessionForm.grupo_id);
+            } else {
+                bodyPayload.cell_group_id = 'all';
             }
+            delete bodyPayload.grupo_id;
             if (sessionForm.report_deadline) {
                 bodyPayload.report_deadline = sessionForm.report_deadline + ':00Z';
             } else {
@@ -128,11 +133,20 @@ export default function FaroPage() {
         finally { setSavingSession(false); }
     };
 
-    const handleCloseSeason = async (id: number) => {
-        if (!confirm('¿Finalizar esta temporada?')) return;
+    const closeSeason = async (id: number) => {
         await apiFetch(`/evangelism/faro/seasons/${id}`, { method: 'PATCH', body: { status: 'Finalizada' }, token });
         toast.success('Temporada finalizada');
         load();
+    };
+
+    const handleCloseSeason = (id: number) => {
+        setConfirmAction({
+            title: 'Finalizar temporada',
+            description: 'La temporada quedará finalizada y dejará de aparecer como activa para nuevos reportes.',
+            confirmLabel: 'Finalizar',
+            destructive: true,
+            onConfirm: () => closeSeason(id),
+        });
     };
 
     if (loading) {
@@ -198,7 +212,7 @@ export default function FaroPage() {
                                     {houses.map((h) => (
                                         <button
                                             key={h.id}
-                                            onClick={() => router.push(`/evangelism/faro/${h.id}`)}
+                                            onClick={() => router.push(`/plataforma/evangelism/faro/${h.id}`)}
                                             className="text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:border-blue-500/30 transition-all group"
                                         >
                                             <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -268,7 +282,7 @@ export default function FaroPage() {
                                                 {analytics!.per_faro.map((row) => {
                                                     const house = houses.find(h => h.id === row.grupo_id);
                                                     return (
-                                                        <tr key={row.grupo_id} onClick={() => router.push(`/evangelism/faro/${row.grupo_id}`)} className="group hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors cursor-pointer">
+                                                        <tr key={row.grupo_id} onClick={() => router.push(`/plataforma/evangelism/faro/${row.grupo_id}`)} className="group hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors cursor-pointer">
                                                             <td className="px-4 py-2">
                                                                 <div className="flex items-center gap-4">
                                                                     <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Home size={18} /></div>
@@ -385,8 +399,7 @@ export default function FaroPage() {
                     </div>
                 </div>
             </WorkspaceDrawer>
+            <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </EvangelismShell>
     );
 }
-
-

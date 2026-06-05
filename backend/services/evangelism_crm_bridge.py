@@ -98,3 +98,37 @@ def crear_caso_desde_asistencia(
     db.commit()
     db.refresh(caso)
     return caso
+
+
+def crear_caso_nuevo_visitante(
+    db: Session,
+    persona: Persona,
+    sede_id: uuid.UUID,
+    titulo_prefix: str = "Seguimiento",
+) -> Optional[CasoCRM]:
+    """Crea un caso CRM de nuevos visitantes usando el pipeline canonico por sede."""
+    pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db, sede_id)
+    etapa = (
+        db.query(EtapaPipeline)
+        .filter(EtapaPipeline.pipeline_id == pipeline.id)
+        .order_by(EtapaPipeline.orden.asc())
+        .first()
+    )
+    if not etapa:
+        return None
+
+    caso = CasoCRM(
+        persona_id=persona.id,
+        sede_id=sede_id,
+        pipeline_id=pipeline.id,
+        etapa_actual_id=etapa.id,
+        titulo_caso=f"{titulo_prefix}: {persona.first_name} {persona.last_name}".strip(),
+        prioridad=PrioridadCasoEnum.ALTA,
+        estado=EstadoCasoEnum.ABIERTO,
+        origen_canal=CanalOrigenEnum.EVANGELISMO,
+        sla_vencimiento_contacto=datetime.now(timezone.utc) + timedelta(hours=48),
+    )
+    db.add(caso)
+    db.commit()
+    db.refresh(caso)
+    return caso

@@ -7,12 +7,147 @@ BACKEND_PID_FILE="$RUN_DIR/backend.pid"
 FRONTEND_PID_FILE="$RUN_DIR/frontend.pid"
 BACKEND_LOG="$RUN_DIR/backend-dev.log"
 FRONTEND_LOG="$RUN_DIR/frontend-dev.log"
+BACKEND_PORT="${BACKEND_PORT:-8000}"
+FRONTEND_PORT="${FRONTEND_PORT:-3000}"
 
 mkdir -p "$RUN_DIR"
+
+# ── Trap: cleanup children on exit ──
+CLEANUP_PIDS=""
+trap 'cleanup_exit' EXIT
+trap 'cleanup_exit' INT TERM
+
+cleanup_exit() {
+  local pids_file="$RUN_DIR/.started_pids"
+  if [[ -f "$pids_file" ]]; then
+    while IFS= read -r pid; do
+      [[ -z "$pid" ]] && continue
+      kill "$pid" >/dev/null 2>&1 || true
+    done < "$pids_file"
+    rm -f "$pids_file"
+  fi
+}
+
+resolve_python() {
+  if [[ -n "${PYTHON_BIN:-}" ]]; then
+    printf '%s\n' "$PYTHON_BIN"
+    return
+  fi
+
+  if [[ -x /usr/local/bin/python3.12 ]]; then
+    printf '%s\n' "/usr/local/bin/python3.12"
+    return
+  fi
+
+  if command -v python3.12 >/dev/null 2>&1; then
+    command -v python3.12
+    return
+  fi
+
+  command -v python3
+}
 
 is_running() {
   local pid="$1"
   kill -0 "$pid" >/dev/null 2>&1
+}
+
+is_port_listening() {
+  local port="$1"
+
+  if command -v lsof >/dev/null 2>&1; then
+    timeout 3 lsof -iTCP:"$port" -sTCP:LISTEN -P -n >/dev/null 2>&1 && return 0
+  fi
+
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltn "sport = :$port" | grep -q LISTEN && return 0
+  fi
+
+  timeout 1 bash -c ":</dev/tcp/127.0.0.1/$port" >/dev/null 2>&1
+}
+
+# Launches a process completely detached from the shell so it survives
+# session end. Uses setsid when available; falls back to nohup + double
+# fork + disown. Prints the PID of the launched process.
+_launch_detached() {
+  local log_file="$1"; shift
+  local pid
+
+  if command -v setsid >/dev/null 2>&1; then
+    nohup setsid "$@" >"$log_file" 2>&1 </dev/null &
+    printf '%s\n' "$!"
+    return
+  fi
+
+  # Fallback without setsid: double-fork + disown so the process
+  # survives the parent shell exiting.
+  #
+  # Use a temp file to pass the grandchild PID back because the
+  # double-fork makes it impossible to capture via $! alone.
+  local pid_tmp
+  pid_tmp="$(mktemp "$RUN_DIR/.launch_pid.XXXXXX")"
+  (
+    nohup "$@" >"$log_file" 2>&1 </dev/null &
+    printf '%s\n' "$!" > "$pid_tmp"
+    disown >/dev/null 2>&1 || true
+  ) &
+  # Wait for the grandchild PID to be written
+  local waited=0
+  while [[ ! -s "$pid_tmp" && $waited -lt 5 ]]; do
+    sleep 0.2
+    waited=$((waited + 1))
+  done
+  pid="$(cat "$pid_tmp" 2>/dev/null || printf '')"
+  rm -f "$pid_tmp"
+  if [[ -z "$pid" ]]; then
+    echo "ERROR: could not determine PID of launched process (no setsid)" >&2
+    return 1
+  fi
+  printf '%s\n' "$pid"
+}
+
+ensure_started() {
+  local name="$1"
+  local pid="$2"
+  local log_file="$3"
+  local port="${4:-}"
+
+  # Poll with increasing intervals up to a total of ~12 seconds.
+  # This catches the case where the process starts, then crashes
+  # between checks (the next poll would detect the absence).
+  local waited=0
+  local interval=1
+  while [[ $waited -lt 12 ]]; do
+    if ! is_running "$pid"; then
+      echo "ERROR: $name (PID $pid) died after ${waited}s. Last log lines:" >&2
+      tail -n 40 "$log_file" 2>/dev/null || true
+      exit 1
+    fi
+    # Once the PID exists, also check the port if provided
+    if [[ -n "$port" ]] && is_port_listening "$port"; then
+      return 0
+    fi
+    if [[ -z "$port" ]] && [[ $waited -ge 5 ]]; then
+      # Without a port to verify, just ensure the PID survived the
+      # initial startup window
+      return 0
+    fi
+    sleep "$interval"
+    waited=$((waited + interval))
+    # Grow interval up to 3 seconds
+    if [[ $interval -lt 3 ]]; then
+      interval=$((interval + 1))
+    fi
+  done
+
+  # Timeout: process is running but port never came up
+  if [[ -n "$port" ]]; then
+    echo "ERROR: $name (PID $pid) is running but port $port never started listening (${waited}s). Last log lines:" >&2
+  else
+    echo "ERROR: $name (PID $pid) startup timed out after ${waited}s. Last log lines:" >&2
+  fi
+  tail -n 40 "$log_file" 2>/dev/null || true
+  exit 1
 }
 
 start_backend() {
@@ -23,16 +158,24 @@ start_backend() {
       echo "Backend already running (PID $pid)"
       return
     fi
+    rm -f "$BACKEND_PID_FILE"
+  fi
+
+  if is_port_listening "$BACKEND_PORT"; then
+    echo "Backend port $BACKEND_PORT already has a listener"
+    return
   fi
 
   (
     cd "$ROOT_DIR"
-    # Ensure backend/.env is picked up by pydantic-settings
     export ENV_FILE="backend/.env"
-    /usr/local/bin/python3.12 -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 >"$BACKEND_LOG" 2>&1 &
-    echo $! >"$BACKEND_PID_FILE"
+    local pid
+    pid="$(_launch_detached "$BACKEND_LOG" "$(resolve_python)" -m uvicorn backend.main:app --host 0.0.0.0 --port "$BACKEND_PORT")"
+    echo "$pid" > "$BACKEND_PID_FILE"
+    echo "$pid" >> "$RUN_DIR/.started_pids"
   )
-  echo "Backend started on http://localhost:8000"
+  ensure_started "Backend" "$(cat "$BACKEND_PID_FILE")" "$BACKEND_LOG" "$BACKEND_PORT"
+  echo "Backend started on http://localhost:$BACKEND_PORT"
 }
 
 start_frontend() {
@@ -43,14 +186,23 @@ start_frontend() {
       echo "Frontend already running (PID $pid)"
       return
     fi
+    rm -f "$FRONTEND_PID_FILE"
+  fi
+
+  if is_port_listening "$FRONTEND_PORT"; then
+    echo "Frontend port $FRONTEND_PORT already has a listener"
+    return
   fi
 
   (
     cd "$ROOT_DIR/frontend"
-    npm run dev -- --hostname 0.0.0.0 --port 3000 >"$FRONTEND_LOG" 2>&1 &
-    echo $! >"$FRONTEND_PID_FILE"
+    local pid
+    pid="$(_launch_detached "$FRONTEND_LOG" npm run dev -- --hostname 0.0.0.0 --port "$FRONTEND_PORT")"
+    echo "$pid" > "$FRONTEND_PID_FILE"
+    echo "$pid" >> "$RUN_DIR/.started_pids"
   )
-  echo "Frontend started on http://localhost:3000"
+  ensure_started "Frontend" "$(cat "$FRONTEND_PID_FILE")" "$FRONTEND_LOG" "$FRONTEND_PORT"
+  echo "Frontend started on http://localhost:$FRONTEND_PORT"
 }
 
 start_backend
@@ -58,8 +210,8 @@ start_frontend
 
 echo
 echo "CCF running:"
-echo "- Frontend: http://localhost:3000"
-echo "- Backend:  http://localhost:8000/docs"
+echo "- Frontend: http://localhost:$FRONTEND_PORT"
+echo "- Backend:  http://localhost:$BACKEND_PORT/docs"
 echo
 echo "Logs:"
 echo "- $BACKEND_LOG"

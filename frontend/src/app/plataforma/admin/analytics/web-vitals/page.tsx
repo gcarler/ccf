@@ -31,7 +31,7 @@ export default function WebVitalsAnalyticsPage() {
     }
     const load = async () => {
       try {
-        const data = await apiFetch("/api/analytics/web-vitals", {
+        const data = await apiFetch("/analytics/web-vitals", {
           query: { limit: "500" },
           cache: "no-store",
         });
@@ -135,4 +135,3 @@ function VitalCard({ metric, unit, summary }: { metric: string; unit: string; su
     </article>
   );
 }
-

@@ -738,7 +738,12 @@ def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpda
     db.flush()
     if members_updated:
         house.members_count = (
-            db.query(models.CellGroupMember).filter(models.CellGroupMember.cell_group_id == house_id).count()
+            db.query(models.CellGroupMember)
+            .filter(
+                models.CellGroupMember.cell_group_id == house_id,
+                models.CellGroupMember.deleted_at.is_(None),
+            )
+            .count()
         )
 
     db.commit()
@@ -936,10 +941,14 @@ def get_total_donations_amount(db: Session) -> float:
 # ── Spiritual Milestones ─────────────────────────────────
 
 
-def get_milestones(db: Session, person_id: int) -> List[models.SpiritualMilestone]:
+def get_milestones(db: Session, persona_id) -> List[models.SpiritualMilestone]:
+    persona_uuid = uuid.UUID(str(persona_id))
     return (
         db.query(models.SpiritualMilestone)
-        .filter(models.SpiritualMilestone.person_id == person_id)
+        .filter(
+            models.SpiritualMilestone.persona_id == persona_uuid,
+            models.SpiritualMilestone.deleted_at.is_(None),
+        )
         .order_by(models.SpiritualMilestone.event_date.desc())
         .all()
     )
@@ -947,16 +956,18 @@ def get_milestones(db: Session, person_id: int) -> List[models.SpiritualMileston
 
 def create_milestone(
     db: Session,
-    person_id: int,
+    persona_id,
     type: str,
     event_date,
-    minister_id: Optional[int] = None,
+    minister_id: Optional[str] = None,
 ) -> models.SpiritualMilestone:
+    persona_uuid = uuid.UUID(str(persona_id))
+    minister_uuid = uuid.UUID(str(minister_id)) if minister_id else None
     row = models.SpiritualMilestone(
-        person_id=person_id,
+        persona_id=persona_uuid,
         type=type,
         event_date=event_date,
-        minister_id=minister_id,
+        minister_id=minister_uuid,
     )
     db.add(row)
     db.commit()

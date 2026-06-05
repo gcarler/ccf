@@ -116,6 +116,7 @@ def test_asistencia_primera_vez_crea_caso_crm(db_session):
         grupo_id=grupo.id,
         fecha_sesion=datetime(2026, 6, 1, 10, 0, tzinfo=timezone.utc),
         estado="PENDIENTE",
+        estado_habilitacion="HABILITADO",
     )
     db_session.add(sesion)
     db_session.commit()
@@ -352,8 +353,7 @@ def test_pipeline_reutilizado_si_ya_existe(db_session):
 
 
 def test_respuesta_json_estructura_correcta(client, db_session):
-    admin = seed_admin_v2(db_session)
-    sede = _seed_sede(db_session)
+    admin, _admin_persona, sede = seed_admin_v2(db_session)
     cat = _seed_categoria(db_session)
 
     persona = models.Persona(first_name="Visitante", last_name="Nuevo", sede_id=sede.id)
@@ -384,6 +384,7 @@ def test_respuesta_json_estructura_correcta(client, db_session):
         grupo_id=grupo.id,
         fecha_sesion=datetime(2026, 6, 1, 10, 0, tzinfo=timezone.utc),
         estado="PENDIENTE",
+        estado_habilitacion="HABILITADO",
     )
     db_session.add(sesion)
     db_session.commit()

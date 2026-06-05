@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import io
 import logging
+from collections import defaultdict
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -21,7 +22,14 @@ from sqlalchemy.orm import Session
 
 from backend.auth import require_active_user
 from backend.core.database import get_db
+from backend.core.tenant import require_user_sede_id
 from backend import models
+from backend.api.evangelism_shared import (
+    ATTENDED_STATES,
+    is_absent_status,
+    is_attended_status,
+    is_excused_status,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -71,24 +79,22 @@ def _build_session_rows(
     )
 
     total_participants = _count_participants(db, grupo_id)
+    session_ids = [sesion.id for sesion in sessions]
+    asistencia_by_session = defaultdict(list)
+    if session_ids:
+        for asistencia in (
+            db.query(models.Asistencia)
+            .filter(models.Asistencia.sesion_id.in_(session_ids))
+            .all()
+        ):
+            asistencia_by_session[asistencia.sesion_id].append(asistencia)
     rows: list[dict] = []
     for sesion in sessions:
-        asistencias = db.query(models.Asistencia).filter(
-            models.Asistencia.sesion_id == sesion.id
-        ).all()
+        asistencias = asistencia_by_session.get(sesion.id, [])
 
-        asistentes = sum(
-            1 for a in asistencias
-            if a.estado in ("ASISTIO", "Presente", "present")
-        )
-        ausentes = sum(
-            1 for a in asistencias
-            if a.estado in ("FALTO", "Ausente", "absent")
-        )
-        excusas = sum(
-            1 for a in asistencias
-            if a.estado in ("EXCUSA", "Excusa")
-        )
+        asistentes = sum(1 for a in asistencias if is_attended_status(a.estado))
+        ausentes = sum(1 for a in asistencias if is_absent_status(a.estado))
+        excusas = sum(1 for a in asistencias if is_excused_status(a.estado))
         # porcentaje: asistentes / total_participants * 100
         if total_participants > 0:
             pct = round(asistentes / total_participants * 100, 1)
@@ -206,6 +212,8 @@ def attendance_pdf(
 ):
     """Genera PDF de asistencia del grupo con tabla de sesiones y línea de firma."""
     grupo = _get_group_or_404(db, grupo_id)
+    if grupo.sede_id and str(grupo.sede_id) != str(require_user_sede_id(db, current_user)):
+        raise HTTPException(status_code=403, detail="Grupo no pertenece a tu sede")
     leader_name = _get_leader_name(db, grupo)
     rows = _build_session_rows(db, grupo_id)
 
@@ -312,6 +320,8 @@ def attendance_excel(
 ):
     """Genera Excel de asistencia del grupo con tabla de sesiones."""
     grupo = _get_group_or_404(db, grupo_id)
+    if grupo.sede_id and str(grupo.sede_id) != str(require_user_sede_id(db, current_user)):
+        raise HTTPException(status_code=403, detail="Grupo no pertenece a tu sede")
     leader_name = _get_leader_name(db, grupo)
     rows = _build_session_rows(db, grupo_id)
 
@@ -336,43 +346,71 @@ def strategy_summary(
     current_user=Depends(require_active_user),
 ):
     """Resumen de todos los grupos de una estrategia de evangelismo."""
+    user_sede = require_user_sede_id(db, current_user)
     estrategia = db.query(models.EstrategiaEvangelismo).filter(
-        models.EstrategiaEvangelismo.id == strategy_id
+        models.EstrategiaEvangelismo.id == strategy_id,
+        models.EstrategiaEvangelismo.sede_id == user_sede,
     ).first()
     if not estrategia:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
 
     grupos = db.query(models.GrupoEvangelismo).filter(
-        models.GrupoEvangelismo.estrategia_id == strategy_id
+        models.GrupoEvangelismo.estrategia_id == strategy_id,
+        models.GrupoEvangelismo.sede_id == user_sede,
     ).all()
+    grupo_ids = [grupo.id for grupo in grupos]
+
+    participantes_map = dict(
+        db.query(models.ParticipanteGrupo.grupo_id, func.count(models.ParticipanteGrupo.id))
+        .filter(models.ParticipanteGrupo.grupo_id.in_(grupo_ids) if grupo_ids else False)
+        .filter(models.ParticipanteGrupo.activo)
+        .group_by(models.ParticipanteGrupo.grupo_id)
+        .all()
+    )
+    sesiones_map = dict(
+        db.query(models.SesionGrupo.grupo_id, func.count(models.SesionGrupo.id))
+        .filter(models.SesionGrupo.grupo_id.in_(grupo_ids) if grupo_ids else False)
+        .group_by(models.SesionGrupo.grupo_id)
+        .all()
+    )
+    realizadas_map = dict(
+        db.query(models.SesionGrupo.grupo_id, func.count(models.SesionGrupo.id))
+        .filter(models.SesionGrupo.grupo_id.in_(grupo_ids) if grupo_ids else False)
+        .filter(models.SesionGrupo.estado == "REALIZADA")
+        .group_by(models.SesionGrupo.grupo_id)
+        .all()
+    )
+    present_by_group_session = defaultdict(dict)
+    if grupo_ids:
+        for grupo_id, sesion_id, total in (
+            db.query(
+                models.SesionGrupo.grupo_id,
+                models.SesionGrupo.id,
+                func.count(models.Asistencia.id),
+            )
+            .outerjoin(
+                models.Asistencia,
+                (models.Asistencia.sesion_id == models.SesionGrupo.id)
+                & (models.Asistencia.estado.in_(ATTENDED_STATES)),
+            )
+            .filter(models.SesionGrupo.grupo_id.in_(grupo_ids))
+            .group_by(models.SesionGrupo.grupo_id, models.SesionGrupo.id)
+            .all()
+        ):
+            present_by_group_session[grupo_id][sesion_id] = total
 
     grupos_resumen = []
     for grupo in grupos:
         leader_name = _get_leader_name(db, grupo)
-        total_participantes = _count_participants(db, grupo.id)
-
-        total_sesiones = db.query(func.count(models.SesionGrupo.id)).filter(
-            models.SesionGrupo.grupo_id == grupo.id
-        ).scalar() or 0
-
-        sesiones_realizadas = db.query(func.count(models.SesionGrupo.id)).filter(
-            models.SesionGrupo.grupo_id == grupo.id,
-            models.SesionGrupo.estado == "REALIZADA",
-        ).scalar() or 0
-
-        # Average attendance
-        sessions = db.query(models.SesionGrupo).filter(
-            models.SesionGrupo.grupo_id == grupo.id
-        ).all()
+        total_participantes = participantes_map.get(grupo.id, 0)
+        total_sesiones = sesiones_map.get(grupo.id, 0)
+        sesiones_realizadas = realizadas_map.get(grupo.id, 0)
         avg_pct = 0.0
-        if sessions and total_participantes > 0:
-            pcts = []
-            for ses in sessions:
-                asis = db.query(func.count(models.Asistencia.id)).filter(
-                    models.Asistencia.sesion_id == ses.id,
-                    models.Asistencia.estado.in_(["ASISTIO", "Presente", "present"]),
-                ).scalar() or 0
-                pcts.append(asis / total_participantes * 100)
+        if total_sesiones and total_participantes > 0:
+            pcts = [
+                present / total_participantes * 100
+                for present in present_by_group_session.get(grupo.id, {}).values()
+            ]
             avg_pct = round(sum(pcts) / len(pcts), 1)
 
         grupos_resumen.append({

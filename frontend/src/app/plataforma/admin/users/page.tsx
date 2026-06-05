@@ -14,6 +14,7 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import { useRouter } from 'next/navigation';
 
 export default function AdminUsersPage() {
@@ -25,6 +26,7 @@ export default function AdminUsersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedUser] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -59,14 +61,21 @@ export default function AdminUsersPage() {
     };
 
     const handleDeleteUser = async (userId: number) => {
-        if (!window.confirm("¿Estás seguro de eliminar este acceso ministerial?")) return;
-        try {
-            await apiFetch(`/auth/users/${userId}`, { method: 'DELETE', token });
-            addToast("Acceso revocado permanentemente", "success");
-            fetchUsers();
-        } catch (err) {
-            addToast("Error al eliminar acceso", "error");
-        }
+        setConfirmAction({
+            title: 'Eliminar acceso ministerial',
+            description: 'Se revocará este acceso de forma permanente y el usuario deberá solicitar uno nuevo.',
+            destructive: true,
+            confirmLabel: 'Revocar acceso',
+            onConfirm: async () => {
+                try {
+                    await apiFetch(`/auth/users/${userId}`, { method: 'DELETE', token });
+                    addToast("Acceso revocado permanentemente", "success");
+                    fetchUsers();
+                } catch (err) {
+                    addToast("Error al eliminar acceso", "error");
+                }
+            },
+        });
     };
 
     const filteredUsers = users.filter(u => 
@@ -227,7 +236,8 @@ export default function AdminUsersPage() {
                     </div>
                 )}
             </WorkspaceDrawer>
+
+            <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </div>
     );
 }
-

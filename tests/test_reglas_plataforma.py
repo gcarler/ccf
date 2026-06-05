@@ -74,6 +74,8 @@ CATALOG_CLASSES = {
     "CmsSection", "SavedView", "AutomationRule",
 }
 
+ALLOWED_LEGACY_PERSON_INT_REFS = set()
+
 
 # ── Tests ──────────────────────────────────────────────────────────────────
 
@@ -143,6 +145,37 @@ def test_persona_id_is_str():
     else:
         print("✅ Todos los persona_id en schemas son str")
     
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        assert len(violations) == 0
+        return
+    return len(violations)
+
+
+def test_no_new_person_identity_int_params():
+    """UUID guardrail: no nuevas identidades persona como int."""
+    violations = []
+    pattern = re.compile(r"\b(persona_id|person_id)\s*:\s*int\b")
+
+    for base_dir in (API_DIR, SCHEMAS_DIR):
+        for fpath in sorted(base_dir.rglob("*.py")):
+            content = fpath.read_text()
+            rel = fpath.relative_to(ROOT).as_posix()
+            for i, line in enumerate(content.split("\n"), 1):
+                match = pattern.search(line)
+                if not match:
+                    continue
+                identity_name = match.group(1)
+                if (rel, i, identity_name) in ALLOWED_LEGACY_PERSON_INT_REFS:
+                    continue
+                violations.append(f"  {fpath}:{i}: {line.strip()}")
+
+    if violations:
+        print(f"❌ {len(violations)} nuevas identidades persona como int:")
+        for v in violations:
+            print(v)
+    else:
+        print("✅ No hay nuevas identidades persona como int")
+
     if "PYTEST_CURRENT_TEST" in os.environ:
         assert len(violations) == 0
         return
@@ -336,6 +369,7 @@ def main():
     tests = [
         ("Axioma 3 - sede_id en queries", test_sede_id_in_all_queries),
         ("Regla 2 - persona_id: str", test_persona_id_is_str),
+        ("Regla UUID - sin nuevas identidades persona int", test_no_new_person_identity_int_params),
         ("Regla 4 - Soft deletes", test_no_hard_deletes),
         ("Regla 4 - Campos soft delete", test_soft_delete_fields_exist),
         ("Regla 6 - DateTime timezone", test_datetime_timezone),

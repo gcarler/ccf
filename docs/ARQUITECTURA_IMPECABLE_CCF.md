@@ -102,6 +102,17 @@ Estos numeros no autorizan correcciones masivas. Sirven para ordenar el saneamie
 | `.replace(tzinfo=None)` en APIs y CRUDs | ✅ 9 arreglados | finance (2), crud/audit, auth_v3, evangelism_shared, cms, evangelism, crm/_shared, crm/pastoral |
 | Texto "MIEMBRO" en UI | ✅ 2 reemplazos | `admin/members/page.tsx` (label), `crm/my-card/page.tsx` (nombre tarjeta) |
 
+### Hallazgos resueltos en tanda 2026-06-04 (bis — post-split evangelism.py)
+
+| Hallazgo | Resuelto | Detalle |
+|---|---|---|
+| `evangelism.py` monolítico (1080+ líneas) | ✅ Split completado | Estrategias → `evangelism_main/main_estrategias.py`, Roles/Excusas → `main_roles.py`, utils → `main_utils.py`. Endpoints viejos reemplazados por comentario. 4 sub-routers montados. |
+| Scanner token sin validación real | ✅ SHA-256 + timing-safe | `/scanner/generate/{persona_id}` con `secrets.compare_digest`. Fix UUID parsing (`.removeprefix` en vez de `.split("-")`). |
+| `startccf` sin setsid ni limpiza de PIDs | ✅ `_launch_detached()` | Fallback setsid → double-fork + disown. `trap cleanup_exit EXIT INT TERM`. `.started_pids` file. |
+| `stopccf` no verificaba muerte de procesos | ✅ `_kill_with_verify()` | Espera 10s, SIGKILL si persiste. `timeout 3` en lsof. |
+| Tests xfail con `strict=True` | ✅ 0 restantes | Todos los xfail tienen `strict=False` o fueron removidos. |
+| Tests `test_crm_api.py` 403 en evangelismo/eventos | ✅ Resuelto (en tanda anterior) | Verificado: fix `persona.user_id` ya aplicado en `seed_admin_v2` y `seed_user_with_role_v2`. |
+
 ---
 
 ## 4. Orden de Saneamiento

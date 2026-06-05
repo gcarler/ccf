@@ -1,6 +1,8 @@
 import datetime
 from datetime import timezone as _tz
+import hashlib
 import logging
+import secrets
 import uuid
 from typing import List, Optional
 
@@ -11,6 +13,10 @@ from sqlalchemy.orm import Session
 from backend import crud, models, schemas
 from backend.api.evangelism_events import router as events_router
 from backend.api.evangelism_grupos import router as grupos_router
+from backend.api.evangelism_main import (
+    estrategias_router,
+    roles_router,
+)
 from backend.api.evangelism_multiplication import router as multiplication_router
 from backend.api.evangelism_notifications import router as notifications_router
 from backend.api.evangelism_rankings import router as rankings_router
@@ -23,21 +29,12 @@ from backend.auth import (
     require_pastor_or_admin,
 )
 from backend.core.database import get_db
-from backend.crud.evangelism import (  # canonical CRUD (UUID PK)
-    create_estrategia as create_evangelism_strategy,
-    update_estrategia as update_evangelism_strategy,
-    delete_estrategia as delete_evangelism_strategy,
-)
-from backend.schemas.crm import (
-    EvangelismStrategy,
-    EvangelismStrategyCreate,
-    EvangelismStrategyUpdate,
-)
-from backend.mesh_websockets import manager
 
 router = APIRouter()
 router.include_router(events_router)
 router.include_router(grupos_router)
+router.include_router(estrategias_router)
+router.include_router(roles_router)
 router.include_router(multiplication_router)
 router.include_router(notifications_router)
 router.include_router(rankings_router)
@@ -942,20 +939,64 @@ def update_crm_settings(
 # --- SCANNER ---
 
 
+def _generate_scanner_token(persona_id: str) -> dict:
+    """Genera un scanner token CCF-MBR-{persona_id}-{secret}.
+
+    Almacena el hash SHA-256 del secret en la BD con fecha de expiración.
+    Retorna el token completo para ser mostrado al usuario (única vez).
+    """
+    db = next(get_db())
+    try:
+        persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+        if not persona:
+            raise HTTPException(status_code=404, detail="Persona no encontrada")
+
+        secret = secrets.token_hex(16)  # 32 caracteres hex
+        token = f"CCF-MBR-{persona_id}-{secret}"
+
+        hashed = hashlib.sha256(secret.encode()).hexdigest()
+        expires_at = datetime.datetime.now(_tz) + datetime.timedelta(days=365)
+
+        persona.scanner_token_hash = hashed
+        persona.scanner_token_expires_at = expires_at
+        db.commit()
+
+        return {"token": token, "expires_at": expires_at.isoformat()}
+    finally:
+        db.close()
+
+
+@router.post("/scanner/generate/{persona_id}", response_model=dict)
+def generate_scanner_token_endpoint(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    """Genera un nuevo scanner token para una persona (solo pastor/admin)."""
+    return _generate_scanner_token(persona_id)
+
+
 @router.post("/scanner/validate/{token}", response_model=dict)
 def validate_scanner_token(
     token: str,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_active_user),
 ):
-    # Formato: CCF-MBR-{id}-{secret}
+    # Formato: CCF-MBR-{persona_id}-{secret}
+    # NOTA: persona_id es un UUID con guiones (36 chars). NO se puede
+    # hacer split("-") porque rompe el UUID en segmentos.
     if not token.startswith("CCF-MBR-"):
-        raise HTTPException(status_code=400, detail="Formato de cÃ³digo invÃ¡lido")
+        raise HTTPException(status_code=400, detail="Formato de codigo invalido")
 
     try:
-        parts = token.split("-")
-        persona_id = parts[2]
-        secret = parts[3] if len(parts) > 3 else None
+        payload = token.removeprefix("CCF-MBR-")
+        if len(payload) < 37:  # 36 chars UUID + 1 dash + secret
+            raise HTTPException(status_code=400, detail="Token malformado")
+        # El UUID con guiones mide exactamente 36 caracteres
+        persona_id = payload[:36]
+        secret = payload[37:]  # after the dash following the UUID
+        if not secret:
+            raise HTTPException(status_code=400, detail="Token malformado")
 
         try:
             db_id = uuid.UUID(persona_id)
@@ -967,9 +1008,20 @@ def validate_scanner_token(
         if not persona:
             raise HTTPException(status_code=404, detail="Miembro no encontrado")
 
-        # VALIDACIÃ“N DE INTEGRIDAD (Simulada para MVP, en PROD comparar con hash en DB)
-        if not secret or len(secret) < 6:
-            raise HTTPException(status_code=403, detail="CÃ³digo de seguridad invÃ¡lido o expirado")
+        if not persona.scanner_token_hash:
+            raise HTTPException(
+                status_code=403,
+                detail="No hay token registrado para esta persona. Genere uno nuevo.",
+            )
+
+        # Verificar expiración
+        if persona.scanner_token_expires_at and persona.scanner_token_expires_at < datetime.datetime.now(_tz):
+            raise HTTPException(status_code=403, detail="Token expirado. Genere uno nuevo.")
+
+        # Comparar hash SHA-256
+        computed_hash = hashlib.sha256(secret.encode()).hexdigest()
+        if not secrets.compare_digest(computed_hash, persona.scanner_token_hash):
+            raise HTTPException(status_code=403, detail="Token de seguridad invalido")
 
         return {
             "valid": True,
@@ -980,7 +1032,7 @@ def validate_scanner_token(
             "timestamp": utc_now().isoformat(),
         }
     except (ValueError, IndexError):
-        raise HTTPException(status_code=400, detail="CÃ³digo malformado")
+        raise HTTPException(status_code=400, detail="Token malformado")
 
 
 # â”€â”€â”€ FARO EN CASA: TEMPORADAS & SESIONES â”€â”€â”€
@@ -992,29 +1044,60 @@ def crm_analytics(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     _warn_deprecated_crm_alias("/api/evangelism/analytics", "/api/crm/analytics")
-    """Métricas agregadas del CRM para el dashboard de analíticas."""
-    total_members = db.query(models.Persona).count()
+    """Métricas agregadas del CRM para el dashboard de analíticas, filtradas por sede."""
+    from backend.core.tenant import require_user_sede_id
+
+    sede_id = require_user_sede_id(db, current_user)
+
+    total_members = db.query(models.Persona).filter(models.Persona.sede_id == sede_id).count()
     active_members = (
         db.query(models.Persona)
-        .filter(models.Persona.spiritual_status.in_(["Activo", "active", "Miembro Activo"]))
+        .filter(
+            models.Persona.sede_id == sede_id,
+            models.Persona.spiritual_status.in_(["Activo", "active", "Miembro Activo"]),
+        )
         .count()
     )
 
     # Consejería
-    open_counseling = db.query(models.CounselingTicket).filter(models.CounselingTicket.status == "open").count()
+    open_counseling = (
+        db.query(models.CounselingTicket)
+        .filter(
+            models.CounselingTicket.sede_id == sede_id,
+            models.CounselingTicket.status == "open",
+        )
+        .count()
+    )
 
     # Eventos del mes
     from datetime import datetime, timezone
 
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    events_this_month = db.query(models.CrmEvent).filter(models.CrmEvent.event_date >= month_start).count()
+    events_this_month = (
+        db.query(models.CrmEvent)
+        .filter(
+            models.CrmEvent.sede_id == sede_id,
+            models.CrmEvent.event_date >= month_start,
+        )
+        .count()
+    )
 
     # Grupos
-    total_groups = db.query(models.CellGroup).count()
+    total_groups = db.query(models.CellGroup).filter(models.CellGroup.sede_id == sede_id).count()
 
-    # Familia
-    total_families = db.query(models.Family).count()
+    # Familia (no tiene sede_id directo, contar miembros de la sede)
+    from sqlalchemy import exists
+
+    total_families = (
+        db.query(models.Family)
+        .filter(
+            exists()
+            .where(models.Persona.family_id == models.Family.id)
+            .where(models.Persona.sede_id == sede_id)
+        )
+        .count()
+    )
 
     return {
         "total_members": total_members,
@@ -1026,346 +1109,10 @@ def crm_analytics(
     }
 
 
-# --- EVANGELISM STRATEGIES ---
-
-
-@router.get("/strategies", response_model=List[EvangelismStrategy])
-def read_evangelism_strategies(
-    skip: int = 0,
-    limit: int = 100,
-    activa: Optional[bool] = None,
-    clase_raiz: Optional[str] = None,
-    sede_id: Optional[str] = None,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    from backend.models_evangelism import GrupoEvangelismo
-    from backend.crud.evangelism import get_estrategias
-
-    strategies = get_estrategias(
-        db,
-        skip=skip,
-        limit=limit,
-        activa=activa,
-        clase_raiz=clase_raiz,
-        sede_id=sede_id,
-    )
-    result = []
-    for s in strategies:
-        obj = EvangelismStrategy.model_validate(s)
-        obj.group_count = db.query(GrupoEvangelismo).filter(
-            GrupoEvangelismo.estrategia_id == str(s.id),
-            GrupoEvangelismo.deleted_at.is_(None),
-        ).count()
-        result.append(obj)
-    return result
-
-
-@router.get("/strategies/{strategy_id}", response_model=EvangelismStrategy)
-def read_strategy(
-    strategy_id: str,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    from backend.models_evangelism import EstrategiaEvangelismo as StrategyModel
-    from backend.models_evangelism import GrupoEvangelismo
-
-    db_obj = db.query(StrategyModel).filter(StrategyModel.id == strategy_id).first()
-    if not db_obj:
-        raise HTTPException(status_code=404, detail="Evangelism strategy not found")
-    result = EvangelismStrategy.model_validate(db_obj)
-    result.group_count = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.estrategia_id == strategy_id,
-        GrupoEvangelismo.deleted_at.is_(None),
-    ).count()
-    return result
-
-
-@router.post("/strategies", response_model=EvangelismStrategy)
-def create_strategy(
-    strategy: EvangelismStrategyCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    try:
-        from backend.models_evangelism import CategoriaEstrategia
-        from backend.models import Sede as _Sede
-        # Asignar sede_id desde el usuario autenticado
-        sede_id = crud.get_user_sede_id(db, current_user.id)
-        if not sede_id:
-            # Fallback: usar la primera sede disponible
-            primera_sede = db.query(_Sede).order_by("nombre").first()
-            if not primera_sede:
-                raise HTTPException(400, detail="No hay sedes configuradas en el sistema.")
-            sede_id = str(primera_sede.id)
-        # Asignar categoria_id por defecto (tomar la primera disponible, o crear una genérica)
-        primera_categoria = db.query(CategoriaEstrategia).order_by("id").first()
-        if not primera_categoria:
-            # Crear categoría por defecto si no existe ninguna
-            primera_categoria = CategoriaEstrategia(nombre="General")
-            db.add(primera_categoria)
-            db.flush()
-        result = create_evangelism_strategy(db=db, data=strategy, sede_id=sede_id, categoria_id=primera_categoria.id)
-    except HTTPException:
-        raise
-    except Exception:
-        db.rollback()
-        raise
-    # ── Phase scheduling trigger ──
-    if strategy.typology == "evento_masivo" and strategy.phases:
-        _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date)
-    return result
-
-
-@router.put("/strategies/{strategy_id}", response_model=EvangelismStrategy)
-def update_strategy(
-    strategy_id: str,
-    strategy: EvangelismStrategyUpdate,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    try:
-        db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, data=strategy)
-    except Exception:
-        db.rollback()
-        raise
-    if not db_obj:
-        raise HTTPException(status_code=404, detail="Evangelism strategy not found")
-    result = EvangelismStrategy.model_validate(db_obj)
-    # ── Phase scheduling trigger ──
-    if strategy.typology == "evento_masivo" and strategy.phases:
-        _project_phases_as_tasks(db, strategy_id, result.name, strategy.phases, strategy.start_date)
-    return result
-
-
-@router.post("/strategies/{strategy_id}/generate-sessions", response_model=dict)
-def generate_strategy_sessions(
-    strategy_id: str,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    """Genera sesiones automáticas para todos los grupos de una estrategia según su recurrencia."""
-    from backend.models_evangelism import EstrategiaEvangelismo as StratModel
-    from backend.models_evangelism import GrupoEvangelismo
-    from backend.services.calculo_sesiones import calcular_sesiones
-
-    strat = db.query(StratModel).filter(StratModel.id == strategy_id).first()
-    if not strat:
-        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
-    if not strat.frecuencia or not strat.fecha_inicio or not strat.fecha_fin:
-        raise HTTPException(
-            status_code=400,
-            detail="La estrategia necesita: frecuencia, fecha_inicio, fecha_fin",
-        )
-
-    groups = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.estrategia_id == strategy_id,
-        GrupoEvangelismo.deleted_at.is_(None),
-    ).all()
-
-    try:
-        created = calcular_sesiones(
-            db=db,
-            estrategia_id=strategy_id,
-            sede_id=strat.sede_id,
-            fecha_inicio=strat.fecha_inicio,
-            fecha_fin=strat.fecha_fin,
-            frecuencia=strat.frecuencia,
-            grupos_ids=[g.id for g in groups],
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    sessions_per_group = created // len(groups) if groups else 0
-    return {
-        "strategy": strat.nombre,
-        "recurrence": strat.frecuencia,
-        "start": str(strat.fecha_inicio),
-        "end": str(strat.fecha_fin),
-        "sessions_per_group": sessions_per_group,
-        "groups": len(groups),
-        "total_sessions_created": created,
-    }
-
-
-@router.get(
-    "/strategies/{strategy_id}/roles",
-    response_model=List[schemas.RolPersonalizadoEstrategiaResponse],
-)
-def list_strategy_roles(
-    strategy_id: str,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    """Lista los roles personalizados de una estrategia."""
-    from backend.crud.evangelism import get_roles_personalizados
-
-    strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
-    if not strategy:
-        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
-    return get_roles_personalizados(db, estrategia_id=strategy_id)
-
-
-@router.post(
-    "/strategies/{strategy_id}/roles",
-    response_model=schemas.RolPersonalizadoEstrategiaResponse,
-)
-def create_strategy_role(
-    strategy_id: str,
-    payload: schemas.RolPersonalizadoEstrategiaCreate,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    """Crea un rol personalizado para una estrategia."""
-    from backend.crud.evangelism import create_rol_personalizado
-
-    strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
-    if not strategy:
-        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
-    payload.estrategia_id = strategy_id
-    return create_rol_personalizado(db, payload)
-
-
-@router.delete("/strategies/{strategy_id}/roles/{role_id}")
-def delete_strategy_role(
-    strategy_id: str,
-    role_id: int,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    """Elimina un rol personalizado de una estrategia."""
-    from backend.crud.evangelism import delete_rol_personalizado
-
-    if not delete_rol_personalizado(db, role_id):
-        raise HTTPException(status_code=404, detail="Rol no encontrado")
-    return {"ok": True}
-
-
 # ──────────────────────────────────────────────
-# MOTIVOS DE EXCUSA
+# ESTRATEGIAS, ROLES Y EXCUSAS
 # ──────────────────────────────────────────────
-
-
-@router.get("/excuses", response_model=List[schemas.MotivoExcusaResponse])
-def list_motivos_excusa(
-    solo_activos: bool = True,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    """Lista el catálogo de motivos de excusa."""
-    from backend.crud.evangelism import get_motivos_excusa
-
-    return get_motivos_excusa(db, solo_activos=solo_activos)
-
-
-@router.post("/excuses", response_model=schemas.MotivoExcusaResponse)
-def create_motivo_excusa(
-    payload: schemas.MotivoExcusaCreate,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    """Crea un nuevo motivo de excusa."""
-    from backend.crud.evangelism import create_motivo_excusa
-
-    return create_motivo_excusa(db, payload.descripcion)
-
-
-@router.patch("/excuses/{excusa_id}", response_model=schemas.MotivoExcusaResponse)
-def update_motivo_excusa(
-    excusa_id: int,
-    payload: schemas.MotivoExcusaUpdate,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    """Actualiza un motivo de excusa (no permite modificar los del sistema)."""
-    from backend.crud.evangelism import update_motivo_excusa
-
-    result = update_motivo_excusa(db, excusa_id, descripcion=payload.descripcion, activo=payload.activo)
-    if not result:
-        raise HTTPException(status_code=404, detail="Excusa no encontrada o es del sistema")
-    return result
-
-
-@router.delete("/excuses/{excusa_id}")
-def delete_motivo_excusa(
-    excusa_id: int,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    """Elimina un motivo de excusa (no permite eliminar los del sistema)."""
-    from backend.crud.evangelism import delete_motivo_excusa
-
-    if not delete_motivo_excusa(db, excusa_id):
-        raise HTTPException(status_code=404, detail="Excusa no encontrada o es del sistema")
-    return {"ok": True}
-
-
-@router.post("/excuses/seed")
-def seed_motivos_excusa(
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    """Inserta las excusas base del sistema (SALUD, TRABAJO, FAMILIA, OTRA)."""
-    from backend.crud.evangelism import seed_motivos_excusa
-
-    created = seed_motivos_excusa(db)
-    return {"created": len(created), "excusas": [e.descripcion for e in created]}
-
-
-def _project_phases_as_tasks(db, strategy_id: str, strategy_name: str, phases: list[dict], start_date=None):
-    """Create N1 tasks in Projects module for each phase of a mass event."""
-    from backend.models_projects import Project, ProjectTask
-    from datetime import datetime
-
-    # Create a project linked to the strategy
-    project = Project(
-        title=f"[MASIVO] {strategy_name}",
-        description=f"Evento masivo generado desde estrategia de evangelismo #{strategy_id}",
-        status="active",
-        created_at=datetime.now(_tz.utc),
-    )
-    # Store strategy link in description
-    db.add(project)
-    db.flush()
-
-    for i, phase in enumerate(phases):
-        phase_name = phase.get("name", f"Fase {i + 1}")
-        phase_type = phase.get("type", "general")
-        phase_start = phase.get("start_date")
-        phase_end = phase.get("end_date")
-
-        try:
-            sd = datetime.fromisoformat(phase_start.replace("Z", "+00:00")) if phase_start else None
-        except Exception:
-            sd = None
-        try:
-            dd = datetime.fromisoformat(phase_end.replace("Z", "+00:00")) if phase_end else None
-        except Exception:
-            dd = None
-
-        task = ProjectTask(
-            project_id=project.id,
-            title=f"[N1] {phase_name}",
-            description=f"Fase '{phase_type}' del evento masivo '{strategy_name}'. Generada automáticamente.",
-            priority="urgent",  # N1 = highest priority
-            status="todo",
-            start_date=sd,
-            due_date=dd,
-            order_index=i,
-            labels=["N1", "Evangelismo", phase_type] if phase_type else ["N1", "Evangelismo"],
-            created_at=datetime.now(_tz.utc),
-        )
-        db.add(task)
-
-    db.commit()
-    return project
-
-
-@router.delete("/strategies/{strategy_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_strategy(
-    strategy_id: str,
-    db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
-):
-    if not delete_evangelism_strategy(db=db, strategy_id=strategy_id):
-        raise HTTPException(status_code=404, detail="Evangelism strategy not found")
+# Migradas a backend/api/evangelism_main/:
+#   main_estrategias.py — CRUD de estrategias (estrategias_router)
+#   main_roles.py       — roles personalizados + excusas (roles_router)
+# Montadas via router.include_router() al inicio del archivo.

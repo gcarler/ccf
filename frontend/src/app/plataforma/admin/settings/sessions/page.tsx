@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import { motion } from 'framer-motion';
 import { AlertCircle,Clock,Globe,LogOut,MapPin,Monitor,RefreshCw,Smartphone,Trash2 } from 'lucide-react';
 import React,{ useCallback,useEffect,useState } from 'react';
@@ -22,6 +23,7 @@ export default function AdminSettingsSessionsPage() {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
     const [revoking, setRevokeing] = useState<number | null>(null);
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const fetchSessions = useCallback(async () => {
         try {
@@ -61,17 +63,24 @@ export default function AdminSettingsSessionsPage() {
     };
 
     const handleRevokeAll = async () => {
-        if (!window.confirm('¿Revocar todas las demás sesiones? Esto cerrará todos los demás dispositivos.')) return;
-        try {
-            const nonCurrent = sessions.filter(s => !s.is_current);
-            for (const s of nonCurrent) {
-                await apiFetch(`/auth/sessions/${s.id}/revoke`, { method: 'POST', token });
-            }
-            toast.success('Todas las demás sesiones fueron revocadas');
-            fetchSessions();
-        } catch {
-            toast.error('Error al revocar sesiones');
-        }
+        setConfirmAction({
+            title: 'Revocar otras sesiones',
+            description: 'Se cerrarán todos los demás dispositivos conectados con esta cuenta.',
+            destructive: true,
+            confirmLabel: 'Revocar sesiones',
+            onConfirm: async () => {
+                try {
+                    const nonCurrent = sessions.filter(s => !s.is_current);
+                    for (const s of nonCurrent) {
+                        await apiFetch(`/auth/sessions/${s.id}/revoke`, { method: 'POST', token });
+                    }
+                    toast.success('Todas las demás sesiones fueron revocadas');
+                    fetchSessions();
+                } catch {
+                    toast.error('Error al revocar sesiones');
+                }
+            },
+        });
     };
 
     const parseDevice = (userAgent: string | null): { icon: React.ElementType; label: string } => {
@@ -241,6 +250,8 @@ export default function AdminSettingsSessionsPage() {
                     })
                 )}
             </div>
+
+            <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </div>
     );
 }

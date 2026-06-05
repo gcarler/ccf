@@ -321,6 +321,10 @@ class Persona(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
+    # Scanner token para validación de códigos QR (producción)
+    scanner_token_hash = Column(String(128), nullable=True, index=True, comment="SHA-256 hash del scanner token")
+    scanner_token_expires_at = Column(DateTime(timezone=True), nullable=True, comment="Fecha de expiración del scanner token")
+
     # Computed aliases used by evangelism module
     @hybrid_property
     def nombre_completo(self):

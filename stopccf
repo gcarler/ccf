@@ -5,13 +5,73 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUN_DIR="$ROOT_DIR/.run"
 BACKEND_PID_FILE="$RUN_DIR/backend.pid"
 FRONTEND_PID_FILE="$RUN_DIR/frontend.pid"
+BACKEND_PORT="${BACKEND_PORT:-8000}"
+FRONTEND_PORT="${FRONTEND_PORT:-3000}"
+
+pids_listening_on_port() {
+  local port="$1"
+
+  if command -v lsof >/dev/null 2>&1; then
+    timeout 3 lsof -tiTCP:"$port" -sTCP:LISTEN -P -n 2>/dev/null || true
+    return
+  fi
+
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltnp "sport = :$port" 2>/dev/null \
+      | sed -n 's/.*pid=\([0-9]\+\).*/\1/p' \
+      | sort -u
+  fi
+}
+
+_kill_with_verify() {
+  local name="$1"
+  local pid="$2"
+  local port="${3:-}"
+
+  kill "$pid" 2>/dev/null || true
+  # Esperar a que el proceso realmente muera
+  local waited=0
+  while kill -0 "$pid" >/dev/null 2>&1; do
+    sleep 1
+    waited=$((waited + 1))
+    if [[ $waited -ge 10 ]]; then
+      echo "WARNING: $name (PID $pid) did not die after SIGTERM, sending SIGKILL" >&2
+      kill -9 "$pid" 2>/dev/null || true
+      break
+    fi
+  done
+  # Si aun asi no murio y tenemos puerto, matar por puerto
+  if kill -0 "$pid" >/dev/null 2>&1 && [[ -n "$port" ]]; then
+    stop_from_port "$name" "$port"
+  fi
+  echo "Stopped $name (PID $pid)"
+}
+
+stop_from_port() {
+  local name="$1"
+  local port="$2"
+  local pids
+
+  pids="$(pids_listening_on_port "$port")"
+  if [[ -z "$pids" ]]; then
+    echo "$name not running on port $port"
+    return
+  fi
+
+  while read -r pid; do
+    [[ -z "$pid" ]] && continue
+    _kill_with_verify "$name" "$pid" ""
+  done <<< "$pids"
+}
 
 stop_from_pid_file() {
   local name="$1"
   local pid_file="$2"
+  local port="$3"
 
   if [[ ! -f "$pid_file" ]]; then
     echo "$name not running (no PID file)"
+    stop_from_port "$name" "$port"
     return
   fi
 
@@ -19,14 +79,14 @@ stop_from_pid_file() {
   pid="$(cat "$pid_file")"
 
   if kill -0 "$pid" >/dev/null 2>&1; then
-    kill "$pid"
-    echo "Stopped $name (PID $pid)"
+    _kill_with_verify "$name" "$pid" "$port"
   else
     echo "$name not running (stale PID $pid)"
+    stop_from_port "$name" "$port"
   fi
 
   rm -f "$pid_file"
 }
 
-stop_from_pid_file "backend" "$BACKEND_PID_FILE"
-stop_from_pid_file "frontend" "$FRONTEND_PID_FILE"
+stop_from_pid_file "backend" "$BACKEND_PID_FILE" "$BACKEND_PORT"
+stop_from_pid_file "frontend" "$FRONTEND_PID_FILE" "$FRONTEND_PORT"

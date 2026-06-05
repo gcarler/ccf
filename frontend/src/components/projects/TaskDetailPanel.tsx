@@ -569,7 +569,7 @@ export default function TaskDetailPanel({
             try {
                 const formData = new FormData();
                 formData.append('file', file);
-                const updated = await apiFetch(`/api/projects/${task.project_id}/tasks/${task.id}/attachments`, {
+                const updated = await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/attachments`, {
                     method: 'POST',
                     token,
                     body: formData,

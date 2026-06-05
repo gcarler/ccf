@@ -21,7 +21,7 @@ interface HouseDetail {
     sessions: SessionRow[]; total_sessions: number; total_attendance: number;
     monitoring?: HouseMonitoring;
 }
-interface SessionRow { id: number; session_date: string; status: string; season_name?: string; attendance_count: number; topic?: string; report_deadline?: string; }
+interface SessionRow { id: number; session_date: string; status: string; estado_habilitacion?: string; season_name?: string; attendance_count: number; topic?: string; report_deadline?: string; }
 interface MonitoringTrendRow {
     session_id: number;
     session_date: string;
@@ -111,6 +111,7 @@ export default function FaroDetailPage() {
     const [creatingMember, setCreatingMember] = useState(false);
     const role = String(user?.role || '').toLowerCase();
     const isPrivileged = ['admin', 'administrador', 'pastor'].includes(role);
+    const activeSessionEnabled = activeSession?.estado_habilitacion === 'HABILITADO';
 
     // Load house detail
     useEffect(() => {
@@ -145,24 +146,31 @@ export default function FaroDetailPage() {
                         </h2>
                         {/* New Session Action */}
                         {isPrivileged && <button 
-                            onClick={() => {
-                                apiFetch(`/evangelism/faro/sessions`, {
-                                    method: 'POST',
-                                    body: {
-                                        grupo_id: house.id,
-                                        session_date: new Date().toISOString().split('T')[0],
-                                        season_id: house.sessions[0]?.season_name ? null : undefined // Backend automatically grabs active season if we omit or pass null if properly wired, but let's just make it simple.
-                                    },
-                                    token
-                                }).then(() => {
-                                    toast.success('Nueva sesiÃ³n creada');
-                                    // Trigger reload by mutating house
+                            onClick={async () => {
+                                try {
+                                    const session = await apiFetch<{ id: number }>(`/evangelism/sessions`, {
+                                        method: 'POST',
+                                        body: {
+                                            grupo_id: house.id,
+                                            session_date: new Date().toISOString(),
+                                            status: 'Realizada',
+                                        },
+                                        token
+                                    });
+                                    await apiFetch(`/evangelism/sessions/${session.id}/habilitacion`, {
+                                        method: 'PATCH',
+                                        body: { accion: 'HABILITAR' },
+                                        token
+                                    });
+                                    toast.success('Nueva sesion creada y habilitada');
                                     window.location.reload();
-                                }).catch(() => toast.error('Error al crear sesiÃ³n. Puede que ya exista para hoy.'));
+                                } catch {
+                                    toast.error('Error al crear sesion. Puede que ya exista para hoy.');
+                                }
                             }}
                             className="mt-3 w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 rounded-lg text-[10px] font-semibold uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5"
                         >
-                            <Plus size={12} /> Registrar sesiÃ³n de esta semana
+                            <Plus size={12} /> Registrar sesion de esta semana
                         </button>}
                     </div>
                     <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1 scrollbar-thin">
@@ -189,6 +197,7 @@ export default function FaroDetailPage() {
                                             </p>
                                             {s.topic && <p className="text-[10px] font-medium text-slate-400 mt-0.5">{new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}</p>}
                                             {s.season_name && !s.topic && <p className="text-[10px] font-medium text-slate-400 mt-0.5">{s.season_name}</p>}
+                                            {s.estado_habilitacion !== 'HABILITADO' && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-500 mt-0.5">Bloqueada</p>}
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className={`px-2 py-0.5 rounded-lg font-semibold ${isActive ? 'bg-blue-100 dark:bg-blue-900/50 text-[hsl(var(--primary))] dark:text-blue-300' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
@@ -276,12 +285,16 @@ export default function FaroDetailPage() {
 
     const handleSaveAttendance = async () => {
         if (!activeSession || selectedIds.size === 0) return;
+        if (!activeSessionEnabled) {
+            toast.error('La sesion esta bloqueada. Debe habilitarse antes de reportar asistencia.');
+            return;
+        }
         setSaving(true);
         try {
-            const res = await apiFetch<{ added: number }>(`/evangelism/faro/sessions/${activeSession.id}/attendance`, {
+            const res = await apiFetch<{ processed: number }>(`/evangelism/faro/sessions/${activeSession.id}/attendance`, {
                 method: 'POST', body: { persona_ids: Array.from(selectedIds) }, token
             });
-            toast.success(`${res.added} asistente(s) registrados`);
+            toast.success(`${res.processed} asistente(s) registrados`);
             setShowAddAttendee(false);
             setSelectedIds(new Set());
             setMemberQuery('');
@@ -324,6 +337,10 @@ export default function FaroDetailPage() {
 
     const handleSaveReport = async () => {
         if (!activeSession) return;
+        if (!activeSessionEnabled) {
+            toast.error('La sesion esta bloqueada. Debe habilitarse antes de guardar el reporte.');
+            return;
+        }
         setSavingReport(true);
         try {
             const attendees = reportMembers.map((row) => ({
@@ -447,6 +464,7 @@ export default function FaroDetailPage() {
                                     </div>
                                     <button
                                         onClick={() => setShowAddAttendee(true)}
+                                        disabled={!activeSessionEnabled}
                                         className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20"
                                     >
                                         <UserPlus size={14} /> AÃ±adir Asistentes
@@ -718,7 +736,7 @@ export default function FaroDetailPage() {
                                         ) : (
                                             <button
                                                 onClick={handleSaveReport}
-                                                disabled={savingReport || !activeSession}
+                                                disabled={savingReport || !activeSession || !activeSessionEnabled}
                                                 className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                                             >
                                                 {savingReport ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />}
@@ -789,7 +807,7 @@ export default function FaroDetailPage() {
                             {!isCreatingMember && (
                                 <button
                                     onClick={handleSaveAttendance}
-                                    disabled={saving || selectedIds.size === 0}
+                                    disabled={saving || selectedIds.size === 0 || !activeSessionEnabled}
                                     className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
                                     {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
@@ -886,4 +904,3 @@ export default function FaroDetailPage() {
         </EvangelismShell>
     );
 }
-
