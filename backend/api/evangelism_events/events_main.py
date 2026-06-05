@@ -17,6 +17,7 @@ from backend import crud, models, schemas
 from backend.api.evangelism_events._shared import (
     is_event_admin_or_pastor,
     is_event_assignee,
+    _get_persona_for_user,
     require_event_access,
 )
 from backend.api.evangelism_shared import (
@@ -615,7 +616,8 @@ def get_persona_attendance_history(
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
-    is_self = persona.user_id == current_user.id
+    current_persona = _get_persona_for_user(db, current_user.id)
+    is_self = bool(current_persona and current_persona.id == persona.id)
     is_staff = normalize_role(str(current_user.role)) in [
         "admin",
         "pastor",

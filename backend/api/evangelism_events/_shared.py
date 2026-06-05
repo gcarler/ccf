@@ -1,4 +1,6 @@
 """Permission helpers for evangelism events."""
+import uuid
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -13,11 +15,29 @@ def is_event_admin_or_pastor(user: models.User) -> bool:
     return role in {"admin", "pastor"}
 
 
+def _get_persona_for_user(db: Session, user_id):
+    if user_id is None:
+        return None
+    try:
+        user_uuid = uuid.UUID(str(user_id))
+    except (TypeError, ValueError, AttributeError):
+        user_uuid = None
+    if user_uuid:
+        persona = db.query(models.Persona).filter(models.Persona.id == user_uuid).first()
+        if persona:
+            return persona
+    try:
+        legacy_user_id = int(user_id)
+    except (TypeError, ValueError):
+        return None
+    return db.query(models.Persona).filter(models.Persona.user_id == legacy_user_id).first()
+
+
 def is_event_assignee(db: Session, user: models.User, event_id: int) -> bool:
     """Check if user is assigned to this event (MC, preacher, offering, etc.)."""
     if is_event_admin_or_pastor(user):
         return True
-    persona = db.query(models.Persona).filter(models.Persona.user_id == user.id).first()
+    persona = _get_persona_for_user(db, user.id)
     if not persona:
         return False
     assignment = (

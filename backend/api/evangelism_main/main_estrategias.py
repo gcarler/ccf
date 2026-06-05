@@ -117,7 +117,19 @@ def create_strategy(
         raise
     # ── Phase scheduling trigger ──
     if strategy.typology == "evento_masivo" and strategy.phases:
-        _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date)
+        try:
+            _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date)
+        except Exception:
+            db.rollback()
+            if not delete_evangelism_strategy(db=db, strategy_id=result.id):
+                logger.error(
+                    "Failed to clean up strategy after phase generation error",
+                    extra={"strategy_id": str(result.id)},
+                )
+            raise HTTPException(
+                status_code=500,
+                detail="No se pudieron generar las tareas del evento masivo",
+            )
     return result
 
 
@@ -138,7 +150,14 @@ def update_strategy(
     result = EvangelismStrategy.model_validate(db_obj)
     # ── Phase scheduling trigger ──
     if strategy.typology == "evento_masivo" and strategy.phases:
-        _project_phases_as_tasks(db, strategy_id, result.name, strategy.phases, strategy.start_date)
+        try:
+            _project_phases_as_tasks(db, strategy_id, result.name, strategy.phases, strategy.start_date)
+        except Exception:
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail="No se pudieron generar las tareas del evento masivo",
+            )
     return result
 
 

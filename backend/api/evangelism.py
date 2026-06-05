@@ -35,6 +35,7 @@ from backend.crud.crm import (
     resolve_persona_id_for_user,
     resolve_persona_id_from_identity,
 )
+from backend.mesh_websockets import manager
 
 router = APIRouter()
 router.include_router(events_router)
@@ -887,11 +888,11 @@ def apply_volunteer(
         from datetime import timedelta
 
         # Crear un turno pendiente como postulaciÃ³n
-        persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
-        if not persona:
+        persona_id = resolve_persona_id_for_user(db, current_user.id)
+        if not persona_id:
             raise HTTPException(404, "Perfil de miembro no encontrado")
         shift = models.VolunteerShift(
-            persona_id=persona.id,
+            persona_id=persona_id,
             role_name=payload.get("team", "General"),
             team_name=payload.get("team", "General"),
             shift_start=utc_now(),

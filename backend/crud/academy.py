@@ -15,6 +15,17 @@ def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
     if user_id is None:
         return None
     try:
+        persona_uuid = uuid.UUID(str(user_id))
+    except (TypeError, ValueError, AttributeError):
+        persona_uuid = None
+    if persona_uuid:
+        persona = (
+            db.query(models.Persona.id)
+            .filter(models.Persona.id == persona_uuid)
+            .first()
+        )
+        return persona[0] if persona else None
+    try:
         legacy_user_id = int(user_id)
     except (TypeError, ValueError):
         return None

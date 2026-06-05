@@ -648,8 +648,7 @@ def toggle_session_habilitacion(
     }[accion]
 
     # Resolver persona del usuario actual
-    from backend.models import Persona
-    persona = db.query(Persona).filter(Persona.user_id == current_user.id).first()
+    persona = _get_persona_for_user(db, current_user.id)
 
     session.estado_habilitacion = nuevo_estado
     session.habilitado_por = persona.id if persona else None
