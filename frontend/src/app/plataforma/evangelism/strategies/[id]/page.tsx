@@ -1,6 +1,13 @@
 "use client";
 
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import type {
+    BulkHabilitacionResponse,
+    GenerateSessionsResponse,
+    GroupDetailResponse,
+    SessionDetailResponse,
+    StrategyMetrics,
+} from '../../types';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -316,7 +323,7 @@ export default function StrategyDetailPage() {
 
     const fetchMetrics = useCallback(async () => {
         try {
-            const m = await apiFetch<any>(`/evangelism/strategies/${id}/metrics`, { token });
+            const m = await apiFetch<StrategyMetrics>(`/evangelism/strategies/${id}/metrics`, { token });
             setMetrics(m);
         } catch { toast.error('Error al cargar métricas'); }
     }, [id, token]);
@@ -430,7 +437,7 @@ export default function StrategyDetailPage() {
         setMemberSearch('');
         setAllMembers([]);
         try {
-            const house = await apiFetch<any>(`/evangelism/grupos/${group.id}`, { token });
+            const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${group.id}`, { token });
             setGroupMembers(house?.base_attendees?.map((a: any) => ({
                 id: a.persona_id,
                 name: a.name || a.member?.nombre_completo || '',
@@ -534,8 +541,8 @@ export default function StrategyDetailPage() {
         }
         try {
             // Get house members to build attendance list
-            const house = await apiFetch<any>(`/evangelism/grupos/${session.grupo_id}`, { token });
-            const existing = await apiFetch<any>(`/evangelism/sessions/${session.id}`, { token }).catch(() => null);
+            const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${session.grupo_id}`, { token });
+            const existing = await apiFetch<SessionDetailResponse>(`/evangelism/sessions/${session.id}`, { token }).catch(() => null);
             const existingMap: Record<string, { status: string; notes: string }> = {};
             if (existing?.attendance) {
                 for (const a of existing.attendance) {
@@ -652,7 +659,7 @@ export default function StrategyDetailPage() {
             destructive: true,
             onConfirm: async () => {
                 try {
-                    const res = await apiFetch<any>(`/evangelism/strategies/${id}/deshabilitar-todas`, { method: 'POST', token });
+                    const res = await apiFetch<BulkHabilitacionResponse>(`/evangelism/strategies/${id}/deshabilitar-todas`, { method: 'POST', token });
                     toast.success(`${res.sesiones_deshabilitadas} sesiones bloqueadas`);
                     fetchSessions();
                 } catch (e: any) { toast.error('Error al deshabilitar sesiones'); }
@@ -1190,7 +1197,7 @@ export default function StrategyDetailPage() {
                                     <button onClick={async () => {
                                         const btn = toast.loading('Generando sesiones...');
                                         try {
-                                            const res = await apiFetch<any>(`/evangelism/strategies/${id}/generate-sessions`, { method: 'POST', token });
+                                            const res = await apiFetch<GenerateSessionsResponse>(`/evangelism/strategies/${id}/generate-sessions`, { method: 'POST', token });
                                             toast.dismiss(btn);
                                             if (res.message) {
                                                 toast.info(res.message);
@@ -1209,7 +1216,7 @@ export default function StrategyDetailPage() {
                                 )}
                                 <button onClick={async () => {
                                     try {
-                                        const res = await apiFetch<any>(`/evangelism/strategies/${id}/habilitar-todas`, { method: 'POST', token });
+                                        const res = await apiFetch<BulkHabilitacionResponse>(`/evangelism/strategies/${id}/habilitar-todas`, { method: 'POST', token });
                                         toast.success(`${res.sesiones_habilitadas} sesiones habilitadas`);
                                         fetchSessions();
                                     } catch (e: any) { toast.error('Error al habilitar sesiones'); }
