@@ -3,7 +3,7 @@ from datetime import datetime
 
 import pytest
 from backend import crud, models, schemas
-from tests.conftest import seed_admin_v2, auth_headers_legacy, seed_user_with_role_v2
+from tests.conftest import seed_admin_v2, auth_headers_legacy, auth_headers_v2, seed_user_with_role_v2
 
 
 def seed_admin(db_session, email="admin@example.com", password="secret123", role="admin"):
@@ -130,8 +130,8 @@ def test_crm_task_dual_writes_assignee_persona_id(db_session):
         ),
     )
 
-    assert task.assignee_user_id == user.id
     assert task.assignee_id == assignee.id
+    assert task.assignee_user_id is None
 
 
 def test_counseling_ticket_dual_writes_pastor_persona_id(db_session):
@@ -156,8 +156,8 @@ def test_counseling_ticket_dual_writes_pastor_persona_id(db_session):
         ),
     )
 
-    assert ticket.pastor_user_id == user.id
     assert ticket.pastor_id == pastor.id
+    assert ticket.pastor_user_id is None
 
 
 def test_communication_log_dual_writes_leader_persona_id(db_session):
@@ -182,8 +182,8 @@ def test_communication_log_dual_writes_leader_persona_id(db_session):
         ),
     )
 
-    assert log.leader_user_id == user.id
     assert log.leader_id == leader.id
+    assert log.leader_user_id is None
 
 
 def test_messaging_history_item_detail_route(client, db_session):
@@ -192,7 +192,6 @@ def test_messaging_history_item_detail_route(client, db_session):
         first_name="Ana",
         last_name="Perez",
         email="ana@example.com",
-        user_id=admin.id,
     )
     db_session.add(member)
     db_session.flush()
@@ -237,7 +236,6 @@ def test_crm_campaign_send_groups_history(client, db_session):
         phone="+573001112234",
         church_role="Miembro",
         spiritual_status="Nuevo",
-        user_id=admin.id,
     )
     group_member = models.Member(
         first_name="Maria",
@@ -404,7 +402,6 @@ def test_crm_counseling_detail_route(client, db_session):
         first_name="Elena",
         last_name="Gomez",
         email="elena@example.com",
-        user_id=admin.id,
     )
     db_session.add(member)
     db_session.flush()
@@ -431,7 +428,7 @@ def test_crm_counseling_detail_route(client, db_session):
 
     response = client.get(
         f"/api/evangelism/counseling/{ticket.id}",
-        headers=auth_headers(client),
+        headers=auth_headers_v2(client, password="secret123"),
     )
 
     assert response.status_code == 200
@@ -481,7 +478,7 @@ def test_crm_cell_group_detail_route(client, db_session):
     db_session.refresh(house)
 
     response = client.get(
-        f"/api/evangelism/grupos/{house.id}", headers=auth_headers(client)
+        f"/api/evangelism/grupos/{house.id}", headers=auth_headers_v2(client, password="secret123")
     )
     print("CELL_GROUP_DETAIL_RESPONSE:", response.json() if response.status_code == 200 else response.text)
     assert response.status_code == 200
@@ -502,7 +499,6 @@ def test_faro_weekly_report_records_attendance_absence_and_offering(client, db_s
         first_name="David",
         last_name="Leader",
         email="leader@example.com",
-        user_id=admin.id,
     )
     assistant = models.Member(
         first_name="Laura", last_name="Coleader", email="assistant@example.com"
@@ -573,6 +569,9 @@ def test_faro_weekly_report_records_attendance_absence_and_offering(client, db_s
         .first()
     )
     assert session is not None
+    from backend.models_evangelism import HabilitacionSesionEnum
+    session.estado_habilitacion = HabilitacionSesionEnum.HABILITADO.value
+    db_session.commit()
 
     response = client.post(
         f"/api/evangelism/faro/sessions/{session.id}/attendance",
@@ -591,14 +590,14 @@ def test_faro_weekly_report_records_attendance_absence_and_offering(client, db_s
                 },
             ],
         },
-        headers=auth_headers(client),
+        headers=auth_headers_v2(client, password="secret123"),
     )
     print("FARO_WEEKLY_REPORT_RESPONSE:", response.json() if response.status_code == 200 else response.text)
     assert response.status_code == 200
 
     data = client.get(
         f"/api/evangelism/faro/sessions/{session.id}/attendance",
-        headers=auth_headers(client),
+        headers=auth_headers_v2(client, password="secret123"),
     ).json()
     assert data["topic"] == "Unidad en casa"
     assert data["offering_amount"] == 125000.0
@@ -610,14 +609,13 @@ def test_faro_weekly_report_records_attendance_absence_and_offering(client, db_s
 def test_faro_leader_can_manage_own_house_attendance(client, db_session):
     seed_admin(db_session)
     sede = seed_sede(db_session)
-    leader_user = seed_user_with_role(
-        db_session, role="coordinador", email="leaderfaro@example.com"
+    _leader_user, leader_persona, _ = seed_user_with_role_v2(
+        db_session, role_name="coordinador", email="leaderfaro@example.com", password="secret123"
     )
     leader_member = models.Member(
         first_name="Lider",
         last_name="Faro",
         email="leaderfaro@example.com",
-        user_id=leader_user.id,
     )
     attendee = models.Member(
         first_name="Asistente", last_name="Uno", email="asistente1@example.com"
@@ -635,7 +633,7 @@ def test_faro_leader_can_manage_own_house_attendance(client, db_session):
 
     strategy = seed_strategy(db_session)
     house = models.CellGroup(
-        code="FARO-LDR", name="Faro Lider", leader_id=leader_member.id, status="Activo",
+        code="FARO-LDR", name="Faro Lider", leader_id=leader_persona.id, status="Activo",
         evangelism_strategy_id=strategy.id, sede_id=sede.id,
     )
     db_session.add(house)
@@ -660,6 +658,9 @@ def test_faro_leader_can_manage_own_house_attendance(client, db_session):
         .filter(models.CellGroupSession.grupo_id == house.id)
         .first()
     )
+    from backend.models_evangelism import HabilitacionSesionEnum
+    session.estado_habilitacion = HabilitacionSesionEnum.HABILITADO.value
+    db_session.commit()
 
     response = client.post(
         f"/api/evangelism/faro/sessions/{session.id}/attendance",
@@ -667,14 +668,14 @@ def test_faro_leader_can_manage_own_house_attendance(client, db_session):
             "attendees": [{"member_id": str(attendee.id), "attended": True}],
             "status": "Realizada",
         },
-        headers=auth_headers(client, email="leaderfaro@example.com"),
+        headers=auth_headers_v2(client, password="secret123", email="leaderfaro@example.com"),
     )
     print("LEADER_MANAGE_ATTENDANCE_RESPONSE:", response.json() if response.status_code == 200 else response.text)
     assert response.status_code == 200
 
     detail = client.get(
         f"/api/evangelism/faro/sessions/{session.id}/attendance",
-        headers=auth_headers(client, email="leaderfaro@example.com"),
+        headers=auth_headers_v2(client, password="secret123", email="leaderfaro@example.com"),
     )
     assert detail.status_code == 200
     assert detail.json()["cell_group_id"] == house.id
@@ -683,14 +684,13 @@ def test_faro_leader_can_manage_own_house_attendance(client, db_session):
 def test_faro_leader_cannot_manage_other_house_attendance(client, db_session):
     seed_admin(db_session)
     sede = seed_sede(db_session)
-    leader_user = seed_user_with_role(
-        db_session, role="coordinador", email="leaderx@example.com"
+    _leader_user, leader_persona, _ = seed_user_with_role_v2(
+        db_session, role_name="coordinador", email="leaderx@example.com", password="secret123"
     )
     leader_member = models.Member(
         first_name="Lider",
         last_name="X",
         email="leaderx@example.com",
-        user_id=leader_user.id,
     )
     attendee = models.Member(
         first_name="Asistente", last_name="Dos", email="asistente2@example.com"
@@ -708,7 +708,7 @@ def test_faro_leader_cannot_manage_other_house_attendance(client, db_session):
 
     strategy = seed_strategy(db_session)
     my_house = models.CellGroup(
-        code="FARO-MIO", name="Faro Mio", leader_id=leader_member.id, status="Activo",
+        code="FARO-MIO", name="Faro Mio", leader_id=leader_persona.id, status="Activo",
         evangelism_strategy_id=strategy.id, sede_id=sede.id,
     )
     other_house = models.CellGroup(code="FARO-OTRO", name="Faro Otro", status="Activo",
@@ -736,11 +736,14 @@ def test_faro_leader_cannot_manage_other_house_attendance(client, db_session):
         .filter(models.CellGroupSession.grupo_id == other_house.id)
         .first()
     )
+    from backend.models_evangelism import HabilitacionSesionEnum
+    session.estado_habilitacion = HabilitacionSesionEnum.HABILITADO.value
+    db_session.commit()
 
     response = client.post(
         f"/api/evangelism/faro/sessions/{session.id}/attendance",
         json={"attendees": [{"member_id": str(attendee.id), "attended": True}]},
-        headers=auth_headers(client, email="leaderx@example.com"),
+        headers=auth_headers_v2(client, password="secret123", email="leaderx@example.com"),
     )
     assert response.status_code == 403
 
@@ -748,14 +751,13 @@ def test_faro_leader_cannot_manage_other_house_attendance(client, db_session):
 def test_faro_assistant_can_update_own_house_attendees_only(client, db_session):
     seed_admin(db_session)
     sede = seed_sede(db_session)
-    assistant_user = seed_user_with_role(
-        db_session, role="coordinador", email="assistantfaro@example.com"
+    _assistant_user, assistant_persona, _ = seed_user_with_role_v2(
+        db_session, role_name="coordinador", email="assistantfaro@example.com", password="secret123"
     )
     assistant_member = models.Member(
         first_name="Co",
         last_name="Lider",
         email="assistantfaro@example.com",
-        user_id=assistant_user.id,
     )
     attendee = models.Member(
         first_name="Nueva", last_name="Persona", email="nueva@example.com"
@@ -769,7 +771,7 @@ def test_faro_assistant_can_update_own_house_attendees_only(client, db_session):
     house = models.CellGroup(
         code="FARO-AST",
         name="Faro Assistant",
-        assistant_id=assistant_member.id,
+        assistant_id=assistant_persona.id,
         status="Activo",
         evangelism_strategy_id=strategy.id,
         sede_id=sede.id,
@@ -781,14 +783,14 @@ def test_faro_assistant_can_update_own_house_attendees_only(client, db_session):
     ok_response = client.put(
         f"/api/evangelism/grupos/{house.id}",
         json={"base_attendee_ids": [str(attendee.id)]},
-        headers=auth_headers(client, email="assistantfaro@example.com"),
+        headers=auth_headers_v2(client, password="secret123", email="assistantfaro@example.com"),
     )
     assert ok_response.status_code == 200
 
     forbidden_response = client.put(
         f"/api/evangelism/grupos/{house.id}",
         json={"name": "Cambio no permitido"},
-        headers=auth_headers(client, email="assistantfaro@example.com"),
+        headers=auth_headers_v2(client, password="secret123", email="assistantfaro@example.com"),
     )
     assert forbidden_response.status_code == 403
 
@@ -820,7 +822,7 @@ def test_evangelism_event_detail_route(client, db_session):
     db_session.refresh(event)
 
     response = client.get(
-        f"/api/evangelism/events/{event.id}", headers=auth_headers(client)
+        f"/api/evangelism/events/{event.id}", headers=auth_headers_v2(client, password="secret123")
     )
 
     assert response.status_code == 200
@@ -877,7 +879,7 @@ def test_evangelism_bulk_attendance_syncs_present_and_absent_members(
 
     response = client.post(
         "/api/evangelism/attendance/bulk",
-        headers=auth_headers(client),
+        headers=auth_headers_v2(client, password="secret123"),
         json={
             "event_id": event.id,
             "persona_ids": [str(member_two.id)],
@@ -927,7 +929,7 @@ def test_evangelism_bulk_attendance_rejects_cancelled_event(client, db_session):
 
     response = client.post(
         "/api/evangelism/attendance/bulk",
-        headers=auth_headers(client),
+        headers=auth_headers_v2(client, password="secret123"),
         json={
             "event_id": event.id,
             "persona_ids": [str(member.id)],
@@ -960,7 +962,7 @@ def test_evangelism_bulk_attendance_rejects_invalid_session_date(client, db_sess
 
     response = client.post(
         "/api/evangelism/attendance/bulk",
-        headers=auth_headers(client),
+        headers=auth_headers_v2(client, password="secret123"),
         json={
             "event_id": event.id,
             "persona_ids": [str(member.id)],
@@ -986,7 +988,7 @@ def test_evangelism_bulk_attendance_rejects_member_ids_not_list(client, db_sessi
 
     response = client.post(
         "/api/evangelism/attendance/bulk",
-        headers=auth_headers(client),
+        headers=auth_headers_v2(client, password="secret123"),
         json={
             "event_id": event.id,
             "persona_ids": "1,2,3",
@@ -1054,7 +1056,7 @@ def test_evangelism_event_session_supports_multiple_expected_roles(client, db_se
 
     response = client.get(
         f"/api/evangelism/events/{event.id}/sessions/{event.event_date.date().isoformat()}",
-        headers=auth_headers(client),
+        headers=auth_headers_v2(client, password="secret123"),
     )
 
     assert response.status_code == 200
@@ -1112,7 +1114,7 @@ def test_evangelism_event_session_supports_manual_expected_members(client, db_se
 
     response = client.get(
         f"/api/evangelism/events/{event.id}/sessions/{event.event_date.date().isoformat()}",
-        headers=auth_headers(client),
+        headers=auth_headers_v2(client, password="secret123"),
     )
 
     assert response.status_code == 200
@@ -1137,7 +1139,7 @@ def test_crm_prayer_request_detail_route(client, db_session):
     db_session.refresh(prayer)
 
     response = client.get(
-        f"/api/evangelism/prayer-requests/{prayer.id}", headers=auth_headers(client)
+        f"/api/evangelism/prayer-requests/{prayer.id}", headers=auth_headers_v2(client, password="secret123")
     )
 
     assert response.status_code == 200
@@ -1159,7 +1161,6 @@ def test_crm_volunteer_detail_route(client, db_session):
         church_role="Lider de Alabanza",
         spiritual_status="Activo",
         is_baptized=True,
-        user_id=admin.id,
     )
     db_session.add(member)
     db_session.flush()
@@ -1194,7 +1195,7 @@ def test_crm_volunteer_detail_route(client, db_session):
     db_session.commit()
 
     response = client.get(
-        f"/api/evangelism/volunteers/{member.id}", headers=auth_headers(client)
+        f"/api/evangelism/volunteers/{member.id}", headers=auth_headers_v2(client, password="secret123")
     )
 
     assert response.status_code == 200
@@ -1252,7 +1253,7 @@ def test_evangelism_events_requires_pastor_or_admin(client, db_session):
     seed_user_with_role(db_session, role="estudiante", email=email)
 
     response = client.get(
-        "/api/evangelism/events/", headers=auth_headers(client, email=email)
+        "/api/evangelism/events/", headers=auth_headers_v2(client, password="secret123", email=email)
     )
 
     assert response.status_code == 403
@@ -1264,10 +1265,10 @@ def test_evangelism_scanner_requires_pastor_or_admin(client, db_session):
 
     response = client.post(
         "/api/evangelism/scanner/validate/CCF-MBR-1-INVALID",
-        headers=auth_headers(client, email=email),
+        headers=auth_headers_v2(client, password="secret123", email=email),
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 400
 
 
 @pytest.mark.xfail(reason="relation 'users' missing in test DB — schema drift pre-existente")
@@ -1276,7 +1277,7 @@ def test_evangelism_events_allows_pastor_role(client, db_session):
 
     response = client.get(
         "/api/evangelism/events/",
-        headers=auth_headers(client, email="pastor@example.com"),
+        headers=auth_headers_v2(client, password="secret123", email="pastor@example.com"),
     )
 
     assert response.status_code == 200
@@ -1284,21 +1285,27 @@ def test_evangelism_events_allows_pastor_role(client, db_session):
 
 
 def test_evangelism_scanner_allows_pastor_role(client, db_session):
+    seed_admin(db_session)
     pastor = seed_user_with_role(db_session, role="pastor", email="pastor2@example.com")
     member = models.Member(
         first_name="Luis",
         last_name="Diaz",
         email="luis.diaz@example.com",
-        user_id=pastor.id,
     )
     db_session.add(member)
     db_session.commit()
     db_session.refresh(member)
 
+    generate_response = client.post(
+        f"/api/evangelism/scanner/generate/{member.id}",
+        headers=auth_headers_v2(client, password="secret123"),
+    )
+    assert generate_response.status_code == 200
+    token = generate_response.json()["token"]
+
     response = client.post(
-        f"/api/evangelism/scanner/validate/CCF-MBR-{member.id}-INVALID",
-        headers=auth_headers(client, email="pastor2@example.com"),
+        f"/api/evangelism/scanner/validate/{token}",
+        headers=auth_headers_v2(client, password="secret123", email="pastor2@example.com"),
     )
 
-    # Con permiso correcto, ya no debe ser 403. Puede ser 200/400 según validación del token.
-    assert response.status_code != 403
+    assert response.status_code == 200

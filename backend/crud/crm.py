@@ -549,17 +549,11 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
 def get_crm_tasks(
     db: Session,
     assignee_persona_id: Optional[str] = None,
-    assignee_user_id: Optional[int] = None,  # DEPRECATED: use assignee_persona_id
     persona_id: Optional[str] = None,
 ) -> List[models.CrmTask]:
     query = db.query(models.CrmTask)
     if assignee_persona_id:
         query = query.filter(models.CrmTask.assignee_id == assignee_persona_id)
-    elif assignee_user_id:
-        # Legacy fallback: resolve user→persona then filter by assignee_id
-        persona = db.query(models.Persona).filter(models.Persona.user_id == assignee_user_id).first()
-        if persona:
-            query = query.filter(models.CrmTask.assignee_id == persona.id)
     if persona_id:
         query = query.filter(models.CrmTask.persona_id == persona_id)
     return query.order_by(models.CrmTask.due_date.asc()).all()
@@ -569,7 +563,6 @@ def create_crm_task(db: Session, payload: schemas.CrmTaskCreate) -> models.CrmTa
     data = payload.model_dump()
     assignee_identity = data.pop("assignee_id", None)
     data["assignee_id"] = resolve_persona_id_from_identity(db, assignee_identity)
-    data["assignee_user_id"] = legacy_user_id_from_identity(assignee_identity)
     row = models.CrmTask(**data)
     db.add(row)
     db.commit()
@@ -666,7 +659,6 @@ def create_counseling_ticket(db: Session, payload: schemas.CounselingTicketCreat
         data = payload.model_dump()
         pastor_identity = data.pop("pastor_id", None)
         data["pastor_id"] = resolve_persona_id_from_identity(db, pastor_identity)
-        data["pastor_user_id"] = legacy_user_id_from_identity(pastor_identity)
         raw_notes = data.get("notes", "")
 
         data["priority_level"] = analyze_pastoral_priority(raw_notes)
@@ -927,7 +919,6 @@ def create_communication_log(db: Session, payload: schemas.CommunicationLogCreat
     data = payload.model_dump()
     leader_identity = data.pop("leader_id", None)
     data["leader_id"] = resolve_persona_id_from_identity(db, leader_identity)
-    data["leader_user_id"] = legacy_user_id_from_identity(leader_identity)
     row = models.CommunicationLog(**{k: v for k, v in data.items()
                                      if hasattr(models.CommunicationLog, k)})
     db.add(row)
@@ -1200,7 +1191,6 @@ def update_counseling_ticket(
     if "pastor_id" in data:
         pastor_identity = data.pop("pastor_id")
         row.pastor_id = resolve_persona_id_from_identity(db, pastor_identity)
-        row.pastor_user_id = legacy_user_id_from_identity(pastor_identity)
     for key, value in data.items():
         if key == "notes" and value:
             setattr(row, key, encrypt_data(value))

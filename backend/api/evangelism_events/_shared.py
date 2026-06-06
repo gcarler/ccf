@@ -9,9 +9,16 @@ from backend.auth import normalize_role
 from backend.core.tenant import require_user_sede_id
 
 
+def _get_user_role(user: models.User) -> str:
+    role = normalize_role(str(getattr(user, "role", "")))
+    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
+        role = normalize_role(user.rol_plataforma.nombre)
+    return role
+
+
 def is_event_admin_or_pastor(user: models.User) -> bool:
     """Check if user has admin or pastor role (normalized comparison)."""
-    role = normalize_role(str(user.role))
+    role = _get_user_role(user)
     return role in {"admin", "pastor"}
 
 

@@ -1,24 +1,20 @@
 from __future__ import annotations
 
-import collections
 from datetime import datetime as _datetime, timezone as _timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from backend import crud, models, schemas
+from backend import models, schemas
 from backend.models import SesionGrupo, GrupoEvangelismo, Asistencia
-from backend.models_evangelism import ParticipanteGrupo, SesionGrupo as SessionModel
 from backend.api.evangelism_shared import (
     FIRST_TIME_STATES,
-    expected_group_rows,
-    is_absent_status,
     member_payload,
+    expected_group_rows,
     utc_now,
 )
-from backend.auth import get_current_user, normalize_role, require_active_user, require_pastor_or_admin
+from backend.auth import get_current_user, normalize_role, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 

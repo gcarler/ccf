@@ -972,13 +972,13 @@ def update_crm_settings(
 # --- SCANNER ---
 
 
-def _generate_scanner_token(persona_id: str) -> dict:
+def _generate_scanner_token(persona_id: str, db: Session | None = None) -> dict:
     """Genera un scanner token CCF-MBR-{persona_id}-{secret}.
 
     Almacena el hash SHA-256 del secret en la BD con fecha de expiración.
     Retorna el token completo para ser mostrado al usuario (única vez).
     """
-    db = next(get_db())
+    db = db or next(get_db())
     try:
         persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
         if not persona:
@@ -988,7 +988,7 @@ def _generate_scanner_token(persona_id: str) -> dict:
         token = f"CCF-MBR-{persona_id}-{secret}"
 
         hashed = hashlib.sha256(secret.encode()).hexdigest()
-        expires_at = datetime.datetime.now(_tz) + datetime.timedelta(days=365)
+        expires_at = datetime.datetime.now(_tz.utc) + datetime.timedelta(days=365)
 
         persona.scanner_token_hash = hashed
         persona.scanner_token_expires_at = expires_at
@@ -1006,7 +1006,7 @@ def generate_scanner_token_endpoint(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     """Genera un nuevo scanner token para una persona (solo pastor/admin)."""
-    return _generate_scanner_token(persona_id)
+    return _generate_scanner_token(persona_id, db=db)
 
 
 @router.post("/scanner/validate/{token}", response_model=dict)
@@ -1048,7 +1048,10 @@ def validate_scanner_token(
             )
 
         # Verificar expiración
-        if persona.scanner_token_expires_at and persona.scanner_token_expires_at < datetime.datetime.now(_tz):
+        token_expires_at = persona.scanner_token_expires_at
+        if token_expires_at and getattr(token_expires_at, "tzinfo", None) is None:
+            token_expires_at = token_expires_at.replace(tzinfo=_tz.utc)
+        if token_expires_at and token_expires_at < datetime.datetime.now(_tz.utc):
             raise HTTPException(status_code=403, detail="Token expirado. Genere uno nuevo.")
 
         # Comparar hash SHA-256

@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from backend import crud, models, schemas
 from backend.api.evangelism_events._shared import (
     _get_persona_for_user,
+    _get_user_role,
     require_event_access,
 )
 from backend.api.evangelism_shared import (
@@ -62,7 +63,7 @@ def list_events(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    if normalize_role(str(current_user.role)) not in {"admin", "pastor"}:
+    if _get_user_role(current_user) not in {"admin", "pastor"}:
         raise HTTPException(status_code=403, detail="Permisos insuficientes. Se requiere: crm:manage")
     user_sede = require_user_sede_id(db, current_user)
     return (
@@ -181,8 +182,13 @@ def get_event_detail(
 
     attendees_count = db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).count()
     event_status = event.status or "SCHEDULED"
-    if event_status == "SCHEDULED" and event.event_date and event.event_date < utc_now():
-        event_status = "COMPLETED"
+    if event_status == "SCHEDULED" and event.event_date:
+        event_date = event.event_date
+        now = utc_now()
+        if getattr(event_date, "tzinfo", None) is None:
+            event_date = event_date.replace(tzinfo=now.tzinfo)
+        if event_date < now:
+            event_status = "COMPLETED"
 
     return {
         "id": event.id,
@@ -613,7 +619,7 @@ def get_persona_attendance_history(
 
     current_persona = _get_persona_for_user(db, current_user.id)
     is_self = bool(current_persona and current_persona.id == persona.id)
-    is_staff = normalize_role(str(current_user.role)) in [
+    is_staff = _get_user_role(current_user) in [
         "admin",
         "pastor",
         "coordinador",
