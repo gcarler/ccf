@@ -21,16 +21,8 @@ def _get_persona_for_user(db: Session, user_id):
     try:
         user_uuid = uuid.UUID(str(user_id))
     except (TypeError, ValueError, AttributeError):
-        user_uuid = None
-    if user_uuid:
-        persona = db.query(models.Persona).filter(models.Persona.id == user_uuid).first()
-        if persona:
-            return persona
-    try:
-        legacy_user_id = int(user_id)
-    except (TypeError, ValueError):
         return None
-    return db.query(models.Persona).filter(models.Persona.user_id == legacy_user_id).first()
+    return db.query(models.Persona).filter(models.Persona.id == user_uuid).first()
 
 
 def is_event_assignee(db: Session, user: models.User, event_id: int) -> bool:

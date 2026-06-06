@@ -8,7 +8,6 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -30,11 +29,6 @@ from backend.auth import (
     require_pastor_or_admin,
 )
 from backend.core.database import get_db
-from backend.crud.crm import (
-    legacy_user_id_from_identity,
-    resolve_persona_id_for_user,
-    resolve_persona_id_from_identity,
-)
 from backend.mesh_websockets import manager
 
 router = APIRouter()
@@ -48,6 +42,25 @@ router.include_router(rankings_router)
 router.include_router(reports_router)
 logger = logging.getLogger(__name__)
 _DEPRECATED_ALIAS_HITS: set[str] = set()
+
+
+def _as_uuid(value) -> uuid.UUID | None:
+    try:
+        return uuid.UUID(str(value))
+    except (TypeError, ValueError, AttributeError):
+        return None
+
+
+def _persona_id_for_user(db: Session, user_id) -> uuid.UUID | None:
+    user_uuid = _as_uuid(user_id)
+    if not user_uuid:
+        return None
+    persona = db.query(models.Persona.id).filter(models.Persona.id == user_uuid).first()
+    return persona[0] if persona else None
+
+
+def _persona_id_from_identity(identity) -> uuid.UUID | None:
+    return _as_uuid(identity)
 
 
 def _warn_deprecated_crm_alias(alias_path: str, canonical_path: str) -> None:
@@ -505,8 +518,7 @@ async def send_crm_message(
                         campaign_name=campaign_name,
                         recipient_phone=persona.phone,
                         content=content,
-                        leader_id=resolve_persona_id_for_user(db, current_user.id),
-                        leader_user_id=current_user.id,
+                        leader_id=_persona_id_for_user(db, current_user.id),
                         outcome="failed",
                         external_id=campaign_id,
                     )
@@ -598,7 +610,7 @@ def _serialize_crm_task(
 @router.get("/tasks", response_model=List[dict])
 def list_crm_tasks(
     status: Optional[str] = None,
-    assignee_user_id: Optional[int] = None,
+    assignee_persona_id: Optional[str] = None,
     persona_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -609,19 +621,16 @@ def list_crm_tasks(
         from sqlalchemy.orm import joinedload
 
         q = db.query(models.CrmTask).options(joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee))
-        if assignee_user_id:
-            assignee_persona_id = resolve_persona_id_for_user(db, assignee_user_id)
-            if assignee_persona_id:
-                q = q.filter(
-                    or_(
-                        models.CrmTask.assignee_id == assignee_persona_id,
-                        models.CrmTask.assignee_user_id == assignee_user_id,
-                    )
-                )
-            else:
-                q = q.filter(models.CrmTask.assignee_user_id == assignee_user_id)
+        if assignee_persona_id:
+            assignee_uuid = _as_uuid(assignee_persona_id)
+            if not assignee_uuid:
+                raise HTTPException(status_code=400, detail="assignee_persona_id must be a UUID")
+            q = q.filter(models.CrmTask.assignee_id == assignee_uuid)
         if persona_id:
-            q = q.filter(models.CrmTask.persona_id == persona_id)
+            persona_uuid = _as_uuid(persona_id)
+            if not persona_uuid:
+                raise HTTPException(status_code=400, detail="persona_id must be a UUID")
+            q = q.filter(models.CrmTask.persona_id == persona_uuid)
 
         tasks = q.all()
         result = [_serialize_crm_task(t) for t in tasks]
@@ -635,7 +644,7 @@ def list_crm_tasks(
             "Failed to list CRM tasks",
             extra={
                 "status": status,
-                "assignee_user_id": assignee_user_id,
+                "assignee_persona_id": assignee_persona_id,
                 "persona_id": persona_id,
             },
         )
@@ -652,14 +661,13 @@ def list_my_crm_tasks(
     try:
         from sqlalchemy.orm import joinedload
 
-        owner_conditions = [models.CrmTask.assignee_user_id == current_user.id]
-        my_persona_id = resolve_persona_id_for_user(db, current_user.id)
-        if my_persona_id:
-            owner_conditions.append(models.CrmTask.assignee_id == my_persona_id)
+        my_persona_id = _persona_id_for_user(db, current_user.id)
+        if not my_persona_id:
+            raise HTTPException(status_code=404, detail="Perfil de miembro no encontrado")
         q = (
             db.query(models.CrmTask)
             .options(joinedload(models.CrmTask.persona), joinedload(models.CrmTask.assignee))
-            .filter(or_(*owner_conditions))
+            .filter(models.CrmTask.assignee_id == my_persona_id)
         )
         tasks = q.order_by(models.CrmTask.created_at.desc()).all()
         result = [_serialize_crm_task(task) for task in tasks]
@@ -713,14 +721,16 @@ async def create_crm_task(
         if due_date_value:
             due_date = datetime.datetime.fromisoformat(str(due_date_value))
         assignee_identity = payload.get("assignee_id") or current_user.id
+        assignee_persona_id = _persona_id_from_identity(assignee_identity)
+        if not assignee_persona_id:
+            raise HTTPException(status_code=400, detail="assignee_id must be a UUID")
         task = models.CrmTask(
             title=title,
             description=payload.get("description"),
             status=payload.get("status", "pending"),
             priority=payload.get("priority", "medium"),
             category=payload.get("category", "Pastoral"),
-            assignee_id=resolve_persona_id_from_identity(db, assignee_identity),
-            assignee_user_id=legacy_user_id_from_identity(assignee_identity),
+            assignee_id=assignee_persona_id,
             persona_id=payload["persona_id"] if payload.get("persona_id") else None,
             due_date=due_date,
             created_at=utc_now(),
@@ -888,7 +898,7 @@ def apply_volunteer(
         from datetime import timedelta
 
         # Crear un turno pendiente como postulaciÃ³n
-        persona_id = resolve_persona_id_for_user(db, current_user.id)
+        persona_id = _persona_id_for_user(db, current_user.id)
         if not persona_id:
             raise HTTPException(404, "Perfil de miembro no encontrado")
         shift = models.VolunteerShift(

@@ -31,15 +31,11 @@ def _is_crm_admin_or_pastor(user: models.User) -> bool:
 def _get_persona_for_user(db: Session, user_id) -> Optional[models.Persona]:
     import uuid as _uuid
 
-    # UUID-based user (v3): persona.id == user.id
-    if isinstance(user_id, _uuid.UUID) or (isinstance(user_id, str) and "-" in str(user_id)):
-        try:
-            uid = _uuid.UUID(str(user_id))
-            return db.query(models.Persona).filter(models.Persona.id == uid).first()
-        except (ValueError, AttributeError):
-            pass
-    # Integer user (legacy): persona.user_id == user.id
-    return db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
+    try:
+        uid = _uuid.UUID(str(user_id))
+    except (TypeError, ValueError, AttributeError):
+        return None
+    return db.query(models.Persona).filter(models.Persona.id == uid).first()
 
 
 # ── Sessions listing & creation ──
