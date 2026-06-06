@@ -455,7 +455,7 @@ export default function StrategyDetailPage() {
             try {
                 const params: Record<string, any> = query.length >= 1
                     ? { limit: 50, search: query }
-                    : { limit: 2000, sort_by: 'first_name', sort_dir: 'asc' };
+                    : { limit: 100, sort_by: 'first_name', sort_dir: 'asc' };
                 const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
                 setAllMembers(res || []);
             } catch { /* silently keep previous results */ }

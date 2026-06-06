@@ -187,7 +187,7 @@ function FaroGroupsContent() {
     setLoading(true);
     Promise.all([
       apiFetch<Grupo[]>('/evangelism/grupos', { token }),
-      apiFetch<Member[]>('/crm/personas', { token }),
+      apiFetch<Member[]>('/crm/personas', { token, query: { limit: 200 } }),
       apiFetch<AssignmentSummary>('/evangelism/faro/assignment-summary', {
         token,
       }).catch(() => null),
