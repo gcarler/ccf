@@ -264,7 +264,6 @@ export default function StrategyDetailPage() {
             setEditEndDate(result.end_date ? result.end_date.substring(0, 10) : '');
             setEditRecurrence(result.recurrence || null);
         } catch (e: any) {
-            console.error('[StrategyDetail] fetch error:', e);
             toast.error('Error al cargar la estrategia');
         } finally {
             setLoading(false);
@@ -530,7 +529,7 @@ export default function StrategyDetailPage() {
         if (allMembers.length === 0) {
             apiFetch<any[]>('/crm/personas', { token, query: { limit: 200, sort_by: 'first_name', sort_dir: 'asc' } }).then(res => {
                 if (Array.isArray(res)) setAllMembers(res);
-            }).catch((err) => { console.error('[StrategyDetailPage] Failed to load members for attendance:', err); toast.error('Error al cargar personas'); });
+            }).catch(() => { toast.error('Error al cargar personas'); });
         }
         try {
             // Get house members to build attendance list
@@ -616,7 +615,6 @@ export default function StrategyDetailPage() {
             fetchStrategy();
             fetchCustomRoles();
         } catch (e: any) {
-            console.error('[StrategyDetail] Save error:', e);
             toast.error('Error al guardar: ' + (e?.message || 'Error desconocido'));
         }
         finally { setSaving(false); }
@@ -630,7 +628,6 @@ export default function StrategyDetailPage() {
             window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
             router.push('/plataforma/evangelism');
         } catch (e: any) {
-            console.error('[StrategyDetail] Delete error:', e);
             toast.error('Error al eliminar: ' + (e?.message || 'Intente de nuevo'));
         }
     };

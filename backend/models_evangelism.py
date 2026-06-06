@@ -12,7 +12,7 @@ import uuid as _uuid
 
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Integer,
-    String, Text, JSON,
+    String, Text, JSON, Numeric,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -62,6 +62,7 @@ class FrecuenciaEnum(str, enum.Enum):
 class EstadoSesionEnum(str, enum.Enum):
     PENDIENTE = "PENDIENTE"
     REALIZADA = "REALIZADA"
+    CANCELADA = "CANCELADA"
 
 class HabilitacionSesionEnum(str, enum.Enum):
     DESHABILITADO = "DESHABILITADO"
@@ -343,7 +344,7 @@ class SesionGrupo(Base):
     motivo_cancelacion = Column(String(255), nullable=True)
     tema_estudio = Column(String(200), nullable=True)
     notas_lider = Column(Text, nullable=True)
-    offering_amount = Column(Float, nullable=True)
+    offering_amount = Column(Numeric(12, 2), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 

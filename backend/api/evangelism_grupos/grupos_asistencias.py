@@ -13,38 +13,17 @@ from backend.api.evangelism_shared import (
     member_payload,
     expected_group_rows,
     utc_now,
+    _is_crm_admin_or_pastor,
+    _get_persona_for_user,
+    _can_manage_grupo,
+    _check_absence_trigger,
+    _check_first_time_lead_trigger,
 )
 from backend.auth import get_current_user, normalize_role, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
-
-
-def _is_crm_admin_or_pastor(user: models.User) -> bool:
-    role = normalize_role(str(getattr(user, "role", "")))
-    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
-        role = normalize_role(user.rol_plataforma.nombre)
-    return role in {"admin", "administrador", "pastor"}
-
-
-def _get_persona_for_user(db: Session, user_id) -> Optional[models.Persona]:
-    import uuid as _uuid
-
-    try:
-        uid = _uuid.UUID(str(user_id))
-    except (TypeError, ValueError, AttributeError):
-        return None
-    return db.query(models.Persona).filter(models.Persona.id == uid).first()
-
-
-def _can_manage_grupo(db: Session, user: models.User, house) -> bool:
-    if _is_crm_admin_or_pastor(user):
-        return True
-    persona = _get_persona_for_user(db, user.id)
-    if not persona:
-        return False
-    return persona.id in {house.leader_persona_id, house.assistant_persona_id}
 
 
 # ── Session Attendance ──
@@ -422,117 +401,6 @@ def submit_attendance(
             "trazabilidad": "AUTOMATIC_EVENT_TRIGGER_SUCCESS",
         },
     }
-
-
-def _check_absence_trigger(db: Session, session_id: int, sede_id):
-    """If a member has 3 consecutive absences, create N2 task in Consolidation."""
-    from backend.models import (
-        Asistencia,
-        SesionGrupo,
-        GrupoEvangelismo,
-        ParticipanteGrupo,
-    )
-    from backend.models_personas import Persona
-
-    session = (
-        db.query(SesionGrupo)
-        .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id)
-        .filter(
-            SesionGrupo.id == session_id,
-            models.GrupoEvangelismo.sede_id == sede_id,
-            models.GrupoEvangelismo.deleted_at.is_(None),
-            SesionGrupo.deleted_at.is_(None),
-        )
-        .first()
-    )
-    if not session:
-        return
-
-    house = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.id == session.grupo_id).first()
-    if not house:
-        return
-
-    # Get last 3 sessions for this house
-    recent_sessions = (
-        db.query(SesionGrupo)
-        .filter(
-            SesionGrupo.grupo_id == house.id,
-            SesionGrupo.deleted_at.is_(None),
-        )
-        .order_by(SesionGrupo.fecha_sesion.desc())
-        .limit(3)
-        .all()
-    )
-
-    if len(recent_sessions) < 3:
-        return  # Not enough data
-
-    expected_members = (
-        db.query(ParticipanteGrupo.persona_id)
-        .filter(
-            ParticipanteGrupo.grupo_id == house.id,
-            ParticipanteGrupo.deleted_at.is_(None),
-            ParticipanteGrupo.activo.is_(True),
-        )
-        .all()
-    )
-    for (member_id,) in expected_members:
-        absent_count = 0
-        for s in recent_sessions:
-            att = (
-                db.query(Asistencia)
-                .filter(
-                    Asistencia.sesion_id == s.id,
-                    Asistencia.persona_id == member_id,
-                    Asistencia.estado == "ausente",
-                )
-                .first()
-            )
-            if att:
-                absent_count += 1
-
-        if absent_count >= 3:
-            # Create N2 task in Consolidation
-            p = db.query(Persona).filter(Persona.id == member_id).first()
-            if not p:
-                continue
-            from backend.models_crm import SupportTicket
-
-            ticket = SupportTicket(
-                persona_id=member_id,
-                ticket_type="consolidation",
-                title=f"Inasistencia recurrente: {p.nombre_completo}",
-                description=f"{p.nombre_completo} ha faltado 3 sesiones consecutivas en {house.name}. Requiere contacto pastoral.",
-                status="open",
-                priority="high",
-                severity="N2",
-            )
-            db.add(ticket)
-            db.commit()
-
-
-def _check_first_time_lead_trigger(db: Session, session_id: int):
-    """If a first_time attendee is recorded, mark as LEAD_NUEVO in CRM."""
-    from backend.models_personas import Persona
-    from backend.models_evangelism import Asistencia
-
-    first_timers = (
-        db.query(Asistencia)
-        .filter(
-            Asistencia.sesion_id == session_id,
-            Asistencia.estado.in_(FIRST_TIME_STATES),
-        )
-        .all()
-    )
-
-    for att in first_timers:
-        p = db.query(Persona).filter(Persona.id == att.persona_id).first()
-        if p and str(getattr(p, "church_role", "")).lower() not in ("lead", "lead_nuevo"):
-            try:
-                p.church_role = "lead_nuevo"
-                db.commit()
-            except Exception:
-                pass
 
 
 # ──────────────────────────────────────────────

@@ -64,6 +64,13 @@ class EstadoSesionEnum(str, Enum):
     CANCELADA = "CANCELADA"
 
 
+class HabilitacionSesionEnum(str, Enum):
+    DESHABILITADO = "DESHABILITADO"
+    HABILITADO = "HABILITADO"
+    CERRADO = "CERRADO"
+    CANCELADA = "CANCELADA"
+
+
 # ──────────────────────────────────────────────
 # ESTRATEGIA DE EVANGELISMO
 # ──────────────────────────────────────────────

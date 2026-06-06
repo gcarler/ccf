@@ -64,7 +64,9 @@ def get_estrategias(
     sede_id: Optional[str] = None,
 ) -> List[EstrategiaEvangelismo]:
     """Lista estrategias con filtros opcionales."""
-    q = db.query(EstrategiaEvangelismo).order_by(EstrategiaEvangelismo.created_at.desc())
+    q = db.query(EstrategiaEvangelismo).filter(
+        EstrategiaEvangelismo.deleted_at.is_(None)
+    ).order_by(EstrategiaEvangelismo.created_at.desc())
     if activa is not None:
         q = q.filter(EstrategiaEvangelismo.activa == activa)
     if clase_raiz is not None:
@@ -77,7 +79,10 @@ def get_estrategias(
 def get_estrategia(db: Session, strategy_id: str) -> Optional[EstrategiaEvangelismo]:
     return (
         db.query(EstrategiaEvangelismo)
-        .filter(EstrategiaEvangelismo.id == strategy_id)
+        .filter(
+            EstrategiaEvangelismo.id == strategy_id,
+            EstrategiaEvangelismo.deleted_at.is_(None),
+        )
         .first()
     )
 
@@ -336,7 +341,10 @@ def get_seguimientos(
 ) -> List[RegistroSeguimiento]:
     return (
         db.query(RegistroSeguimiento)
-        .filter(RegistroSeguimiento.asistencia_id == asistencia_id)
+        .filter(
+            RegistroSeguimiento.asistencia_id == asistencia_id,
+            RegistroSeguimiento.deleted_at.is_(None),
+        )
         .order_by(RegistroSeguimiento.created_at.desc())
         .all()
     )
@@ -391,7 +399,10 @@ def get_pendientes_seguimiento(
     """Retorna todos los seguimientos pendientes (no completados)."""
     return (
         db.query(RegistroSeguimiento)
-        .filter(RegistroSeguimiento.estado_completado == False)  # noqa: E712
+        .filter(
+            RegistroSeguimiento.estado_completado == False,  # noqa: E712
+            RegistroSeguimiento.deleted_at.is_(None),
+        )
         .order_by(RegistroSeguimiento.fecha_seguimiento.asc().nullsfirst())
         .limit(limit)
         .all()

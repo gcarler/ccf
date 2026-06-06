@@ -291,7 +291,6 @@ function FaroGroupsContent() {
         toast.success('Grupo actualizado');
       }
     } catch (error: any) {
-      console.error("Error saving group:", error);
       const msg = error?.message || 'Error al guardar grupo';
       toast.error(msg);
     } finally {

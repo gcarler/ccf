@@ -28,7 +28,6 @@ export default function GlobalEventAnalyticsPage() {
                 });
                 setData(res);
             } catch (error) {
-                console.error(error);
                 toast.error("Error al cargar la analítica");
             } finally {
                 setLoading(false);

@@ -145,7 +145,6 @@ export default function StrategyCreationDrawer({
             onCreated?.();
             onClose();
         } catch (e: any) {
-            console.error(e);
             toast.error('Error al crear: ' + (e.message || 'Intente de nuevo más tarde'));
         }
     };

@@ -205,7 +205,6 @@ export default function EventDetailPage() {
                 setEvent(data);
                 if (data.event_date) setSessionDate(new Date(data.event_date).toISOString().split('T')[0]);
             } catch (err) {
-                console.error(err);
                 toast.error("Error al cargar detalle del evento");
             } finally {
                 setLoading(false);
@@ -216,7 +215,7 @@ export default function EventDetailPage() {
 
     useEffect(() => {
         if (activeTab === 'session' && token) {
-            apiFetch<Member[]>('/crm/personas', { token }).then(setMembers).catch(console.error);
+            apiFetch<Member[]>('/crm/personas', { token }).then(setMembers).catch(() => toast.error('Error al cargar personas'));
         }
     }, [activeTab, token]);
 
@@ -242,7 +241,7 @@ export default function EventDetailPage() {
                         offering: off?.persona_id || null,
                     }));
                 } catch (err) {
-                    console.error(err);
+                    toast.error("Error al cargar datos de la sesión");
                 } finally {
                     setSessionLoading(false);
                 }
@@ -316,7 +315,6 @@ export default function EventDetailPage() {
             setInitialSessionFingerprint(currentSessionFingerprint);
             toast.success("Agenda configurada correctamente");
         } catch (err) {
-            console.error(err);
             toast.error("Error al guardar la agenda");
         } finally {
             setSavingSession(false);

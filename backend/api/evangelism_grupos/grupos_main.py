@@ -10,38 +10,17 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.models import SesionGrupo, GrupoEvangelismo
-from backend.api.evangelism_shared import utc_now
+from backend.api.evangelism_shared import (
+    utc_now,
+    _is_crm_admin_or_pastor,
+    _get_persona_for_user,
+    _can_manage_grupo,
+)
 from backend.auth import get_current_user, normalize_role, require_active_user, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
-
-
-def _is_crm_admin_or_pastor(user: models.User) -> bool:
-    role = normalize_role(str(getattr(user, "role", "")))
-    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
-        role = normalize_role(user.rol_plataforma.nombre)
-    return role in {"admin", "administrador", "pastor"}
-
-
-def _get_persona_for_user(db: Session, user_id) -> Optional[models.Persona]:
-    import uuid as _uuid
-
-    try:
-        uid = _uuid.UUID(str(user_id))
-    except (TypeError, ValueError, AttributeError):
-        return None
-    return db.query(models.Persona).filter(models.Persona.id == uid).first()
-
-
-def _can_manage_grupo(db: Session, user: models.User, house) -> bool:
-    if _is_crm_admin_or_pastor(user):
-        return True
-    persona = _get_persona_for_user(db, user.id)
-    if not persona:
-        return False
-    return persona.id in {house.leader_persona_id, house.assistant_persona_id}
 
 
 # ── Cell Group CRUD ──

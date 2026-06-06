@@ -431,7 +431,6 @@ export default function EventsPage() {
             setNewEvent({ name: '', description: '', event_type: 'PERMANENT', target_audience: 'ALL', target_role_id: '', target_role_ids: [], target_persona_ids: [], day_of_week: '0', month_day: '', fixed_date: '', start_time: '', end_time: '' });
             fetchData();
         } catch (error: any) {
-            console.error("Error creating event:", error);
             const msg = error?.message || "Error de conexión";
             addToast(msg, "error");
         } finally {
@@ -738,7 +737,6 @@ export default function EventsPage() {
             toast.success('Evento actualizado');
             setEditingEvent(null);
         } catch (error: any) {
-            console.error("Error updating event:", error);
             const msg = error?.message || 'Error al actualizar el evento';
             toast.error(msg);
         } finally {
