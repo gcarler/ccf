@@ -299,9 +299,10 @@ def submit_attendance(
             absence_reason_detail = att.notes
 
         # Mapear estado nuevo (EstadoAsistenciaEnum)
+        from backend.models_evangelism import EstadoAsistenciaEnum
         nuevo_estado = "presente"
         if att.status == "absent":
-            nuevo_estado = "ausente"
+            nuevo_estado = EstadoAsistenciaEnum.FALTO.value
         elif att.status == "first_time":
             nuevo_estado = "primera_vez"
 

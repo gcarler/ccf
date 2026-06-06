@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime as _datetime, timezone as _timezone
 from typing import List, Optional
 
@@ -18,6 +19,8 @@ from backend.api.evangelism_shared import (
 from backend.auth import get_current_user, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -204,6 +207,7 @@ def create_faro_session(
         try:
             report_deadline = datetime.fromisoformat(report_deadline_str.replace("Z", "+00:00"))
         except ValueError:
+            logger.warning("report_deadline inválido: %s", report_deadline_str)
             pass
 
     # Gather houses

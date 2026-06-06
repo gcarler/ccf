@@ -4,6 +4,7 @@ import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalTableView, { type TableColumn } from '@/components/ui/UniversalTableView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import ViewSwitcher from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -841,98 +842,132 @@ export default function StrategyDetailPage() {
                     </div>
                 )}
 
-                {/* ── View: Table (tab-aware) ── */}
+                {/* ── View: Table (ag-grid) ── */}
                 {viewType === 'table' && (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-xs">
-                            <thead><tr className="border-b border-slate-200 dark:border-white/10 text-slate-500">
-                                <th className="text-left py-2 px-3 font-semibold">Tipo</th>
-                                <th className="text-left py-2 px-3 font-semibold">Nombre</th>
-                                <th className="text-left py-2 px-3 font-semibold">Fecha</th>
-                                <th className="text-left py-2 px-3 font-semibold">Estado</th>
-                                <th className="text-left py-2 px-3 font-semibold">Habilitación</th>
-                                <th className="text-left py-2 px-3 font-semibold">Acciones</th>
-                            </tr></thead>
-                            <tbody>
-                                {(activeTab === 'groups' || activeTab === 'overview') && groups.map(g => (
-                                    <tr key={`g-${g.id}`} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
-                                        <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300">Grupo</span></td>
-                                        <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{g.name}</td>
-                                        <td className="py-2 px-3 text-slate-400">—</td>
-                                        <td className="py-2 px-3 text-slate-400">Activo</td>
-                                        <td className="py-2 px-3 text-slate-400">{g.members_count}</td>
-                                        <td className="py-2 px-3">—</td>
-                                    </tr>
-                                ))}
-                                {(activeTab === 'sessions' || activeTab === 'overview') && sessions.map(s => (
-                                    <tr key={`s-${s.id}`} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
-                                        <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300">Sesión</span></td>
-                                        <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{s.topic || `Sesión #${s.id}`}</td>
-                                        <td className="py-2 px-3 text-slate-400">{formatDate(s.session_date)}</td>
-                                        <td className="py-2 px-3">
-                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? '#10B98120' : '#3B82F620', color: s.status === 'Realizada' ? '#10B981' : '#3B82F6' }}>{s.status}</span>
-                                            <div className="mt-1">
-                                                {s.estado_habilitacion === 'HABILITADO' && (
-                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Abierta</span>
-                                                )}
-                                                {s.estado_habilitacion === 'CERRADO' && (
-                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-500">Cerrada</span>
-                                                )}
-                                                {(!s.estado_habilitacion || s.estado_habilitacion === 'DESHABILITADO') && (
-                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">Bloqueada</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="py-2 px-3">
-                                            <button
-                                                onClick={async () => {
-                                                    const accion = s.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
-                                                    try {
-                                                        await apiFetch(`/evangelism/sessions/${s.id}/habilitacion`, {
-                                                            method: 'PATCH', token,
-                                                            body: JSON.stringify({ accion }),
-                                                        });
-                                                        fetchSessions();
-                                                    } catch { toast.error('Error al cambiar estado'); }
-                                                }}
-                                                title={s.estado_habilitacion === 'HABILITADO' ? 'Deshabilitar' : 'Habilitar'}
-                                                className={`w-7 h-7 inline-flex items-center justify-center rounded-lg transition-colors text-[11px] font-bold ${
-                                                    s.estado_habilitacion === 'HABILITADO'
-                                                        ? 'bg-emerald-100 text-emerald-700 hover:bg-rose-100 hover:text-rose-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                        : 'bg-amber-50 text-amber-600 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-amber-900/20 dark:text-amber-400'
-                                                }`}
-                                            >
-                                                {s.estado_habilitacion === 'HABILITADO' ? '✓' : '○'}
+                    <UniversalTableView
+                        data={[
+                            ...((activeTab === 'groups' || activeTab === 'overview') ? groups.map(g => ({ __type: 'group' as const, ...g })) : []),
+                            ...((activeTab === 'sessions' || activeTab === 'overview') ? sessions.map(s => ({ __type: 'session' as const, ...s })) : []),
+                        ]}
+                        columns={[
+                            {
+                                key: '__type',
+                                label: 'Tipo',
+                                type: 'text',
+                                width: '80',
+                                render: (v: any) => (
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${v === 'group' ? 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300' : 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300'}`}>
+                                        {v === 'group' ? 'Grupo' : 'Sesión'}
+                                    </span>
+                                ),
+                            },
+                            {
+                                key: 'name',
+                                label: 'Nombre',
+                                type: 'text',
+                                render: (_v: any, item: any) => {
+                                    if (item.__type === 'group') return <span className="font-medium text-slate-900 dark:text-white">{item.name}</span>;
+                                    return <span className="text-slate-900 dark:text-white">{item.topic || `Sesión #${item.id}`}</span>;
+                                },
+                            },
+                            {
+                                key: 'session_date',
+                                label: 'Fecha',
+                                type: 'date',
+                                render: (_v: any, item: any) => {
+                                    if (item.__type === 'group') return <span className="text-slate-400">—</span>;
+                                    return <span className="text-slate-500 dark:text-slate-400">{formatDate(item.session_date)}</span>;
+                                },
+                            },
+                            {
+                                key: 'status',
+                                label: 'Estado',
+                                type: 'status',
+                                render: (_v: any, item: any) => {
+                                    if (item.__type === 'group') return <span className="text-slate-400">Activo</span>;
+                                    const bg = item.status === 'Realizada' ? '#10B98120' : '#3B82F620';
+                                    const color = item.status === 'Realizada' ? '#10B981' : '#3B82F6';
+                                    return (
+                                        <div className="flex flex-col gap-1">
+                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold inline-block w-fit" style={{ backgroundColor: bg, color }}>
+                                                {item.status}
+                                            </span>
+                                            {item.estado_habilitacion === 'HABILITADO' && (
+                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 inline-block w-fit">Abierta</span>
+                                            )}
+                                            {item.estado_habilitacion === 'CERRADO' && (
+                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-500 inline-block w-fit">Cerrada</span>
+                                            )}
+                                            {(!item.estado_habilitacion || item.estado_habilitacion === 'DESHABILITADO') && (
+                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 inline-block w-fit">Bloqueada</span>
+                                            )}
+                                        </div>
+                                    );
+                                },
+                            },
+                            {
+                                key: 'habilitacion',
+                                label: 'Habilitación',
+                                type: 'status',
+                                render: (_v: any, item: any) => {
+                                    if (item.__type === 'group') return <span className="text-slate-400">—</span>;
+                                    return (
+                                        <button
+                                            onClick={async () => {
+                                                const accion = item.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
+                                                try {
+                                                    await apiFetch(`/evangelism/sessions/${item.id}/habilitacion`, {
+                                                        method: 'PATCH', token,
+                                                        body: JSON.stringify({ accion }),
+                                                    });
+                                                    fetchSessions();
+                                                } catch { toast.error('Error al cambiar estado'); }
+                                            }}
+                                            title={item.estado_habilitacion === 'HABILITADO' ? 'Deshabilitar' : 'Habilitar'}
+                                            className={`w-7 h-7 inline-flex items-center justify-center rounded-lg transition-colors text-[11px] font-bold ${
+                                                item.estado_habilitacion === 'HABILITADO'
+                                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-rose-100 hover:text-rose-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                    : 'bg-amber-50 text-amber-600 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-amber-900/20 dark:text-amber-400'
+                                            }`}
+                                        >
+                                            {item.estado_habilitacion === 'HABILITADO' ? '✓' : '○'}
+                                        </button>
+                                    );
+                                },
+                            },
+                            {
+                                key: 'acciones',
+                                label: 'Acciones',
+                                type: 'text',
+                                render: (_v: any, item: any) => {
+                                    if (item.__type === 'group') return <span className="text-slate-400">—</span>;
+                                    return (
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={() => openAttendanceDrawer(item)}
+                                                className="inline-flex items-center gap-1 px-2 h-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+                                                <Users size={11} />Asistencia
                                             </button>
-                                        </td>
-                                        <td className="py-2 px-3">
-                                            <div className="flex items-center gap-1">
-                                                <button onClick={() => openAttendanceDrawer(s)}
-                                                    className="inline-flex items-center gap-1 px-2 h-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
-                                                    <Users size={11} />Asistencia
+                                            <div className="relative">
+                                                <button onClick={() => setSessionMenuId(sessionMenuId === item.id ? null : item.id)}
+                                                    className="w-7 h-7 inline-flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-600 dark:hover:text-white transition-colors">
+                                                    <span className="text-base leading-none">⋯</span>
                                                 </button>
-                                                <div className="relative">
-                                                    <button onClick={() => setSessionMenuId(sessionMenuId === s.id ? null : s.id)}
-                                                        className="w-7 h-7 inline-flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-600 dark:hover:text-white transition-colors">
-                                                        <span className="text-base leading-none">⋯</span>
-                                                    </button>
-                                                    {sessionMenuId === s.id && (
-                                                        <div className="absolute right-0 top-8 z-20 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-slate-200 dark:border-white/10 rounded-lg shadow-lg py-1 min-w-[130px]">
-                                                            <button
-                                                                onClick={() => requestDeleteSession(s.id)}
-                                                                className="w-full text-left px-3 py-2 text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
-                                                                <Trash2 size={12} />Eliminar sesión
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                {sessionMenuId === item.id && (
+                                                    <div className="absolute right-0 top-8 z-20 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-slate-200 dark:border-white/10 rounded-lg shadow-lg py-1 min-w-[130px]">
+                                                        <button
+                                                            onClick={() => requestDeleteSession(item.id)}
+                                                            className="w-full text-left px-3 py-2 text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                                                            <Trash2 size={12} />Eliminar sesión
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                        </div>
+                                    );
+                                },
+                            },
+                        ]}
+                    />
                 )}
 
                 {/* ── View: List (tab-aware) ── */}

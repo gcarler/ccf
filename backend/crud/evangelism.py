@@ -190,7 +190,10 @@ def get_roles_personalizados(
 ) -> List[RolPersonalizadoEstrategia]:
     return (
         db.query(RolPersonalizadoEstrategia)
-        .filter(RolPersonalizadoEstrategia.estrategia_id == estrategia_id)
+        .filter(
+            RolPersonalizadoEstrategia.estrategia_id == estrategia_id,
+            RolPersonalizadoEstrategia.deleted_at.is_(None),
+        )
         .order_by(RolPersonalizadoEstrategia.id)
         .all()
     )
@@ -229,7 +232,8 @@ def get_participantes(
     solo_activos: bool = True,
 ) -> List[ParticipanteGrupo]:
     q = db.query(ParticipanteGrupo).filter(
-        ParticipanteGrupo.grupo_id == grupo_id
+        ParticipanteGrupo.grupo_id == grupo_id,
+        ParticipanteGrupo.deleted_at.is_(None),
     )
     if solo_activos:
         q = q.filter(ParticipanteGrupo.activo == True)  # noqa: E712
@@ -294,8 +298,7 @@ def submit_asistencia(
 ) -> Asistencia:
     """Crea o actualiza un registro de asistencia.
 
-    Auto-detecta es_primera_vez: si la persona no tiene asistencias previas
-    en el mismo grupo, marca como primera_vez.
+    El valor es_primera_vez se toma del payload.
     """
     # Verificar si ya existe
     existing = (
