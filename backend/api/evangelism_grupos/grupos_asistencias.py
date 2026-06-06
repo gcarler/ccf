@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime as _datetime, timezone as _timezone
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
@@ -9,12 +9,9 @@ from sqlalchemy.orm import Session, joinedload
 from backend import models, schemas
 from backend.models import SesionGrupo, GrupoEvangelismo, Asistencia
 from backend.api.evangelism_shared import (
-    FIRST_TIME_STATES,
     member_payload,
     expected_group_rows,
     utc_now,
-    _is_crm_admin_or_pastor,
-    _get_persona_for_user,
     _can_manage_grupo,
     _check_absence_trigger,
     _check_first_time_lead_trigger,

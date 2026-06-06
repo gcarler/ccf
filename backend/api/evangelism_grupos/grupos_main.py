@@ -11,7 +11,8 @@ from sqlalchemy.orm import Session
 from backend import crud, models, schemas
 from backend.models import SesionGrupo, GrupoEvangelismo
 from backend.api.evangelism_shared import (
-    utc_now,
+    FIRST_TIME_STATES,
+    is_absent_status,
     _is_crm_admin_or_pastor,
     _get_persona_for_user,
     _can_manage_grupo,

@@ -10,13 +10,10 @@ from backend import models, schemas
 from backend.models import SesionGrupo, GrupoEvangelismo, Asistencia
 from backend.models_evangelism import ParticipanteGrupo, SesionGrupo as SessionModel
 from backend.api.evangelism_shared import (
-    FIRST_TIME_STATES,
     expected_group_rows,
     utc_now,
     _is_crm_admin_or_pastor,
     _get_persona_for_user,
-    _check_absence_trigger,
-    _check_first_time_lead_trigger,
 )
 from backend.auth import get_current_user, require_pastor_or_admin
 from backend.core.database import get_db
