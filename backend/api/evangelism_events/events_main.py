@@ -63,7 +63,7 @@ def list_events(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    if _get_user_role(current_user) not in {"admin", "pastor"}:
+    if _get_user_role(current_user) not in {"admin", "administrador", "pastor"}:
         raise HTTPException(status_code=403, detail="Permisos insuficientes. Se requiere: crm:manage")
     user_sede = require_user_sede_id(db, current_user)
     return (
@@ -621,6 +621,7 @@ def get_persona_attendance_history(
     is_self = bool(current_persona and current_persona.id == persona.id)
     is_staff = _get_user_role(current_user) in [
         "admin",
+        "administrador",
         "pastor",
         "coordinador",
     ]

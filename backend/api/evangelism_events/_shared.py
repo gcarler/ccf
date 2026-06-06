@@ -19,7 +19,7 @@ def _get_user_role(user: models.User) -> str:
 def is_event_admin_or_pastor(user: models.User) -> bool:
     """Check if user has admin or pastor role (normalized comparison)."""
     role = _get_user_role(user)
-    return role in {"admin", "pastor"}
+    return role in {"admin", "administrador", "pastor"}
 
 
 def _get_persona_for_user(db: Session, user_id):
