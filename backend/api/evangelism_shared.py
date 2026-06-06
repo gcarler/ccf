@@ -85,10 +85,7 @@ def _check_absence_trigger(db: Session, session_id: int, sede_id):
         ParticipanteGrupo,
     )
     from backend.models_personas import Persona
-    from backend.models_evangelism import (
-        EstadoAsistenciaEnum,
-        Asistencia as EvAsistencia,
-    )
+    from backend.models_evangelism import EstadoAsistenciaEnum
 
     session = (
         db.query(SesionGrupo)

@@ -18,7 +18,7 @@ from backend.api.evangelism_shared import (
     _check_absence_trigger,
     _check_first_time_lead_trigger,
 )
-from backend.auth import get_current_user, normalize_role, require_pastor_or_admin
+from backend.auth import get_current_user, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 
@@ -87,7 +87,6 @@ def list_my_pending_faro_sessions(
 ):
     house_ids: list[int]
     if _is_crm_admin_or_pastor(current_user):
-        from backend.core.tenant import require_user_sede_id
         sede_id = require_user_sede_id(db, current_user)
         house_ids = [
             row[0] for row in
@@ -506,8 +505,6 @@ def toggle_session_habilitacion(
 ):
     """Admin: habilita o deshabilita manualmente una sesion para recibir reportes."""
     from backend.models_evangelism import HabilitacionSesionEnum
-
-    from backend.core.tenant import require_user_sede_id
 
     session = (
         db.query(SesionGrupo)

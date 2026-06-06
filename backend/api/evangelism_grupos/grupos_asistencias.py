@@ -19,7 +19,7 @@ from backend.api.evangelism_shared import (
     _check_absence_trigger,
     _check_first_time_lead_trigger,
 )
-from backend.auth import get_current_user, normalize_role, require_pastor_or_admin
+from backend.auth import get_current_user, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 
