@@ -933,11 +933,8 @@ export default function StrategyDetailPage() {
                     </div>
                 )}
 
-                {/* ── Dashboard view: show tabs ── */}
-                {viewType !== 'dashboard' && activeTab === 'overview' && (
-                    <p className="text-xs text-slate-400 text-center py-4">Cambia a vista "Resumen" para ver los detalles de la estrategia.</p>
-                )}
-                {viewType === 'dashboard' && activeTab === 'overview' && (
+                {/* ── Overview ── */}
+                {activeTab === 'overview' && (
                     <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-4">
                         <div>
                             <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Nombre</label>
@@ -1038,7 +1035,7 @@ export default function StrategyDetailPage() {
                 )}
 
                 {/* ── Grupos ── */}
-                {viewType === 'dashboard' && activeTab === 'groups' && (
+                {activeTab === 'groups' && (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <div>
@@ -1090,7 +1087,7 @@ export default function StrategyDetailPage() {
                 )}
 
                 {/* ── Sesiones ── */}
-                {viewType === 'dashboard' && activeTab === 'sessions' && (
+                {activeTab === 'sessions' && (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Registro de sesiones</h2>
@@ -1247,7 +1244,7 @@ export default function StrategyDetailPage() {
                 )}
 
                 {/* ── Métricas ── */}
-                {viewType === 'dashboard' && activeTab === 'metrics' && (
+                {activeTab === 'metrics' && (
                     <div className="space-y-3">
                         <h2 className="text-sm font-bold text-slate-900 dark:text-white">Métricas de la estrategia</h2>
                         {!metrics ? (
