@@ -97,7 +97,7 @@ class EstrategiaEvangelismoCreate(EstrategiaEvangelismoBase):
 class EstrategiaEvangelismoUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    clase_raiz: Optional[ClaseEstrategiaEnum] = None
+    clase_raiz: Optional[str] = None  # string, no enum — el frontend envía minúsculas
     activa: Optional[bool] = None
 
     # Campos legacy

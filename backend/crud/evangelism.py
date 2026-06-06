@@ -87,12 +87,12 @@ def create_estrategia(
 ) -> EstrategiaEvangelismo:
     valid_cols = {c.key for c in EstrategiaEvangelismo.__table__.columns}
     dump = data.model_dump()
-    # Mapear clase_raiz a string si viene como enum
+    # Mapear clase_raiz a string si viene como enum; normalizar a mayúsculas
     if "clase_raiz" in dump and dump["clase_raiz"] is not None:
         dump["clase_raiz"] = (
             dump["clase_raiz"].value
             if hasattr(dump["clase_raiz"], "value")
-            else dump["clase_raiz"]
+            else dump["clase_raiz"].upper()
         )
     # Map English schema fields to Spanish model columns (via synonym — no field_map needed)
     FIELD_MAP = {"name": "nombre", "description": "descripcion", "start_date": "fecha_inicio", "end_date": "fecha_fin", "day_of_week": "dia_reunion", "start_time": "hora_reunion", "recurrence": "frecuencia"}
@@ -144,12 +144,12 @@ def update_estrategia(
         "description": "descripcion",
     }
     dump = data.model_dump(exclude_unset=True)
-    # Mapear clase_raiz enum a string
+    # Mapear clase_raiz: normalizar a mayúsculas si viene en minúsculas
     if "clase_raiz" in dump and dump["clase_raiz"] is not None:
         dump["clase_raiz"] = (
             dump["clase_raiz"].value
             if hasattr(dump["clase_raiz"], "value")
-            else dump["clase_raiz"]
+            else dump["clase_raiz"].upper()
         )
     update_data = {k: v for k, v in dump.items() if k in valid_cols}
     # Agregar synonyms mapeados a sus columnas reales
