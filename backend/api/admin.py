@@ -34,16 +34,18 @@ def _serialize_automation(rule: models.AutomationRule) -> schemas.AutomationRule
 def list_roles(
     db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
 ):
-    """Lista todos los roles y el conteo de usuarios vinculados."""
-    roles = db.query(models.Role).all()
+    """Lista todos los roles de plataforma y el conteo de usuarios vinculados."""
+    from backend.models_auth import RolPlataforma, Usuario
+
+    roles = db.query(RolPlataforma).all()
     result = []
     for r in roles:
-        count = db.query(models.User).filter(models.User.role_id == r.role_id).count()
+        count = db.query(Usuario).filter(Usuario.rol_plataforma_id == r.id).count()
         result.append(
             {
-                "id": r.role_id,
-                "name": r.name,
-                "permissions": r.permissions or {},
+                "id": str(r.id),
+                "name": r.nombre,
+                "permissions": r.permisos or {},
                 "users_count": count,
             }
         )
@@ -65,46 +67,62 @@ def create_role(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Crea un nuevo rol ministerial."""
-    role = models.Role(name=payload.name, permissions=payload.permissions)
+    """Crea un nuevo rol de plataforma."""
+    from backend.models_auth import RolPlataforma
+
+    role = RolPlataforma(nombre=payload.name, permisos=payload.permissions)
     db.add(role)
     db.commit()
     db.refresh(role)
-    return {"id": role.role_id, "name": role.name}
+    return {"id": str(role.id), "name": role.nombre}
 
 
 @router.patch("/roles/{role_id}")
 def update_role(
-    role_id: int,
+    role_id: str,
     payload: UpdateRoleBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Actualiza los permisos de un rol."""
-    role = db.query(models.Role).filter(models.Role.role_id == role_id).first()
+    """Actualiza los permisos de un rol de plataforma."""
+    import uuid as _uuid
+    from backend.models_auth import RolPlataforma
+
+    try:
+        rid = _uuid.UUID(str(role_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Role not found")
+    role = db.query(RolPlataforma).filter(RolPlataforma.id == rid).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
-    role.permissions = payload.permissions
+    role.permisos = payload.permissions
     db.commit()
     return {"status": "success"}
 
 
 @router.delete("/roles/{role_id}", status_code=204)
 def delete_role(
-    role_id: int,
+    role_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Elimina un rol ministerial (no usado por usuarios activos)."""
-    role = db.query(models.Role).filter(models.Role.role_id == role_id).first()
+    """Elimina un rol de plataforma (no usado por usuarios activos)."""
+    import uuid as _uuid
+    from backend.models_auth import RolPlataforma, Usuario
+
+    try:
+        rid = _uuid.UUID(str(role_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Role not found")
+    role = db.query(RolPlataforma).filter(RolPlataforma.id == rid).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
-    assigned = db.query(models.User).filter(models.User.role_id == role_id).count()
+    assigned = db.query(Usuario).filter(Usuario.rol_plataforma_id == rid).count()
     if assigned > 0:
         raise HTTPException(
             status_code=409, detail=f"Cannot delete role with {assigned} assigned users"
         )
-    role.deleted_at = _utcnow()
+    db.delete(role)
     db.commit()
 
 
@@ -350,8 +368,8 @@ def set_variable(
 def list_admin_members(
     db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
 ):
-    """Lista miembros para administracion."""
-    personas = db.query(models.Persona).filter(models.Persona.sede_id == get_user_sede_id(db, current_user.id)).all()
+    """Lista todas las personas para administracion."""
+    personas = db.query(models.Persona).order_by(models.Persona.created_at.desc()).all()
     return [
         {
             "id": m.id,
@@ -636,26 +654,43 @@ def delete_admin_user(
 
 @router.patch("/users/{user_id}/role")
 def change_user_role(
-    user_id: int,
-    role_id: int,
+    user_id: str,
+    platform_role_id: int | None = None,
+    role_id: int | None = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
-    """Asigna un rol de sistema a un usuario."""
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    """Asigna un rol de plataforma a un usuario auth por UUID."""
+    import uuid as _uuid
+    from backend.models_auth import Usuario
+    from backend.models_kernel import PlatformRoleDefinition
+
+    try:
+        uid = _uuid.UUID(str(user_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="user_id invalido")
+
+    selected_role_id = platform_role_id if platform_role_id is not None else role_id
+    if selected_role_id is None:
+        raise HTTPException(status_code=400, detail="platform_role_id requerido")
+
+    user = db.query(Usuario).filter(Usuario.id == uid).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    role = db.query(models.Role).filter(models.Role.role_id == role_id).first()
+    role = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == int(selected_role_id)).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
-    user.role_id = role_id
-    user.role = role.name.lower().replace(
-        " ", "_"
-    )  # Keep the flat role field aligned with the role catalog
+    user.platform_role_id = role.id
     db.commit()
-    return {"status": "success", "new_role": role.name}
+    db.refresh(user)
+    return {
+        "status": "success",
+        "new_role": role.role.value if hasattr(role.role, "value") else str(role.role),
+        "platform_role_id": role.id,
+        "user": _serialize_auth_user_row(user),
+    }
 
 
 # --- AUDIT & SECURITY ---
@@ -744,11 +779,11 @@ def delete_comment(
 @router.get("/milestones", response_model=List[Dict[str, Any]])
 def list_milestones(db: Session = Depends(get_db), _user=Depends(require_active_user)):
     """Lista hitos espirituales (insignias) y estadísticas de obtención."""
-    badges = db.query(models.Badge).all()
+    badges = db.query(models.Medalla).all()
     result = []
     for b in badges:
         count = (
-            db.query(models.UserBadge).filter(models.UserBadge.badge_id == b.id).count()
+            db.query(models.MedallaUsuario).filter(models.MedallaUsuario.badge_id == b.id).count()
         )
         result.append(
             {
@@ -781,18 +816,19 @@ def award_milestone_bulk(
         except (ValueError, AttributeError):
             continue
         persona = db.query(models.Persona).filter(models.Persona.id == pid).first()
-        if persona and persona.user_id:
+        user = db.query(models.Usuario).filter(models.Usuario.id == pid).first()
+        if persona and user:
             exists = (
-                db.query(models.UserBadge)
+                db.query(models.MedallaUsuario)
                 .filter(
-                    models.UserBadge.user_id == persona.user_id,
-                    models.UserBadge.badge_id == badge_id,
+                    models.MedallaUsuario.user_id == user.id,
+                    models.MedallaUsuario.badge_id == badge_id,
                 )
                 .first()
             )
 
             if not exists:
-                ub = models.UserBadge(user_id=persona.user_id, badge_id=badge_id)
+                ub = models.MedallaUsuario(user_id=user.id, badge_id=badge_id)
                 db.add(ub)
                 awarded_count += 1
 

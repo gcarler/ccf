@@ -27,6 +27,7 @@ const SIDEBAR_SECTIONS = [
             { id: 'dashboard', label: 'Dashboard', href: '/plataforma/admin', icon: LayoutDashboard },
             { id: 'access', label: 'Acceso', href: '/plataforma/admin/access', icon: Lock },
             { id: 'users', label: 'Usuarios & Permisos', href: '/plataforma/admin/users', icon: Shield },
+            { id: 'personas', label: 'Personas', href: '/plataforma/admin/personas', icon: Users },
             { id: 'radar', label: 'Radar del Pastor', href: '/plataforma/admin/dashboard/radar', icon: BarChart3 },
             { id: 'comunidad', label: 'Comunidad', href: '/plataforma/admin/members', icon: Users },
         ]
@@ -93,4 +94,3 @@ export default function AdminLayout({
         </ModuleErrorBoundary>
     );
 }
-

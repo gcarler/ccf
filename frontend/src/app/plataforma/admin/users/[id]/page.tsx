@@ -53,10 +53,10 @@ export default function UserDetailPage() {
                     setUser(userData);
                     setEditEmail(userData.email);
                     setRoles((rolesData || []).map((role) => ({
-                        role_id: role.id,
+                        platform_role_id: role.id,
                         name: role.role || role.name,
                     })));
-                    setEditRoleId(userData.role_id || null);
+                    setEditRoleId(userData.platform_role_id || null);
                 } catch (err) {
                     toast.error('Error al cargar perfil de usuario');
                 } finally {
@@ -114,7 +114,7 @@ export default function UserDetailPage() {
             const updated = await apiFetch<any>(`/admin/users/${id}`, {
                 method: 'PATCH',
                 token,
-                body: { role_id: editRoleId }
+                body: { platform_role_id: editRoleId }
             });
             setUser(updated);
             toast.success('Rol actualizado');
@@ -220,14 +220,14 @@ export default function UserDetailPage() {
                                                     onChange={e => setEditRoleId(e.target.value ? parseInt(e.target.value) : null)}
                                                     className="bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-w-[200px]"
                                                 >
-                                                    <option value="">Rol Legacy ({user.role})</option>
+                                                    <option value="">Sin rol asignado</option>
                                                     {roles.map(r => (
-                                                        <option key={r.role_id} value={r.role_id}>{r.name}</option>
+                                                        <option key={r.platform_role_id} value={r.platform_role_id}>{r.name}</option>
                                                     ))}
                                                 </select>
                                             ) : (
                                                 <span className="text-sm font-bold text-slate-800 dark:text-white">
-                                                    {user.role_id ? roles.find(r => r.role_id === user.role_id)?.name : `Legacy: ${user.role}`}
+                                                    {user.platform_role_id ? roles.find(r => r.platform_role_id === user.platform_role_id)?.name : (user.role_name || user.role || 'Sin rol')}
                                                 </span>
                                             )}
                                         </div>

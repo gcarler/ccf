@@ -1,15 +1,15 @@
 from fastapi.testclient import TestClient
 
-from tests.conftest import seed_admin_v2, auth_headers_legacy
+from tests.conftest import auth_headers_v2, seed_admin_v2
 
 
 def seed_admin(db_session, email="admin@example.com", password="secret123"):
     user_obj, _, _ = seed_admin_v2(db_session, email, password)
-    return user_obj.legacy_user
+    return user_obj
 
 
 def auth_headers(client, email="admin@example.com", password="secret123"):
-    return auth_headers_legacy(email)
+    return auth_headers_v2(client, email=email, password=password)
 
 
 def test_admin_automation_crud_roundtrip(client: TestClient, db_session):
