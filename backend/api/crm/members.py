@@ -9,6 +9,7 @@ from backend.auth import (normalize_role, require_admin,
                           require_module_access, require_pastor_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
+from backend.crud.crm import resolve_persona_id_for_user
 
 router = APIRouter(tags=["CRM"])
 
@@ -17,6 +18,13 @@ def _parse_uuid(val: str | uuid.UUID) -> uuid.UUID:
     if isinstance(val, uuid.UUID):
         return val
     return uuid.UUID(str(val))
+
+
+def _get_user_role(user: models.User) -> str:
+    role = normalize_role(str(getattr(user, "role", "")))
+    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
+        role = normalize_role(user.rol_plataforma.nombre)
+    return role
 
 
 
@@ -82,9 +90,8 @@ def get_my_crm_card(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Devuelve la tarjeta de miembro del usuario actual vinculada por user_id."""
-    persona = (
-        db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
-    )
+    persona_id = resolve_persona_id_for_user(db, current_user.id)
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first() if persona_id else None
     if persona:
         return {
             "id": persona.id,
@@ -93,13 +100,13 @@ def get_my_crm_card(
             "church_role": persona.church_role,
             "qr_code": f"PRS-{persona.id}-{uuid.uuid4().hex[:6]}",
         }
-    return {
-        "id": 0,
-        "first_name": current_user.username,
-        "last_name": "Usuario",
-        "church_role": current_user.role,
-        "qr_code": f"USR-{current_user.id}-{uuid.uuid4().hex[:6]}",
-    }
+        return {
+            "id": 0,
+            "first_name": current_user.username,
+            "last_name": "Usuario",
+            "church_role": _get_user_role(current_user),
+            "qr_code": f"USR-{current_user.id}-{uuid.uuid4().hex[:6]}",
+        }
 
 
 @router.get("/personas-legacy/me/profile", response_model=dict)
@@ -108,9 +115,8 @@ def get_my_ministry_profile(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Perfil ministerial completo del usuario autenticado: datos del miembro, oficios, habilidades, badges y nivel."""
-    persona = (
-        db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
-    )
+    persona_id = resolve_persona_id_for_user(db, current_user.id)
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first() if persona_id else None
 
     # ── Positions (Oficios Eclesiásticos) ──────────────────────────
     positions = []
@@ -196,7 +202,7 @@ def get_my_ministry_profile(
             "id": persona.id if persona else None,
             "first_name": persona.first_name if persona else current_user.username,
             "last_name": persona.last_name if persona else "",
-            "church_role": persona.church_role if persona else current_user.role,
+            "church_role": persona.church_role if persona else _get_user_role(current_user),
             "spiritual_status": persona.spiritual_status if persona else None,
             "registration_date": (
                 persona.registration_date.isoformat() if persona and persona.registration_date else None
@@ -258,12 +264,9 @@ def get_persona(
         raise HTTPException(status_code=404, detail="Persona not found")
 
     # Check if user is looking at their own profile OR is a pastor/admin
-    is_self = persona.user_id == current_user.id
-    is_staff = normalize_role(str(current_user.role)) in [
-        "admin",
-        "pastor",
-        "coordinador",
-    ]
+    my_persona_id = resolve_persona_id_for_user(db, current_user.id)
+    is_self = bool(my_persona_id and my_persona_id == persona.id)
+    is_staff = _get_user_role(current_user) in {"admin", "administrador", "pastor", "coordinador"}
 
     if not is_self and not is_staff:
         raise HTTPException(

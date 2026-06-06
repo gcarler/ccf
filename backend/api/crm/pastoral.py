@@ -31,6 +31,13 @@ router = APIRouter(tags=["CRM"])
 logger = logging.getLogger(__name__)
 
 
+def _get_user_role(user: models.User) -> str:
+    role = normalize_role(str(getattr(user, "role", "")))
+    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
+        role = normalize_role(user.rol_plataforma.nombre)
+    return role
+
+
 def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]):
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
     case = (
@@ -637,15 +644,10 @@ def get_crm_task_detail(
     task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    is_staff = normalize_role(str(current_user.role)) in {
-        "admin",
-        "pastor",
-        "coordinador",
-    }
-    my_user_id = getattr(current_user, "id", None)
-    my_persona = db.query(models.Persona).filter(models.Persona.user_id == my_user_id).first()
-    my_persona_id = my_persona.id if my_persona else None
+    is_staff = _get_user_role(current_user) in {"admin", "administrador", "pastor", "coordinador"}
+    my_persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
     is_persona_owner = task.assignee_id is not None and task.assignee_id == my_persona_id
+    my_user_id = getattr(current_user, "id", None)
     is_legacy_owner = task.assignee_user_id is not None and task.assignee_user_id == my_user_id
     if not is_staff and not (is_persona_owner or is_legacy_owner):
         raise HTTPException(status_code=403, detail="No autorizado para ver esta tarea")

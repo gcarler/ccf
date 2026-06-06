@@ -19,7 +19,6 @@ def test_consolidation_flow_creates_case_assignment_and_follow_up(client, db_ses
         first_name="Pedro",
         last_name="Pastor",
         email="pedro@example.com",
-        user_id=admin.id,
     )
     leader = models.Member(
         first_name="Laura", last_name="Leader", email="laura@example.com"
