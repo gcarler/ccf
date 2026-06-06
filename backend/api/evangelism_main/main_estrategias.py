@@ -52,6 +52,17 @@ def read_evangelism_strategies(
     result = []
     for s in strategies:
         obj = EvangelismStrategy.model_validate(s)
+        # Asegurar synonyms: Pydantic v2 puede fallar con synonyms de SQLAlchemy
+        if obj.recurrence is None and s.frecuencia is not None:
+            obj.recurrence = s.frecuencia
+        if obj.day_of_week is None and s.dia_reunion is not None:
+            obj.day_of_week = s.dia_reunion
+        if obj.start_time is None and s.hora_reunion is not None:
+            obj.start_time = s.hora_reunion
+        if obj.start_date is None and s.fecha_inicio is not None:
+            obj.start_date = s.fecha_inicio
+        if obj.end_date is None and s.fecha_fin is not None:
+            obj.end_date = s.fecha_fin
         obj.group_count = db.query(GrupoEvangelismo).filter(
             GrupoEvangelismo.estrategia_id == str(s.id),
             GrupoEvangelismo.deleted_at.is_(None),
@@ -73,6 +84,17 @@ def read_strategy(
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
+    # Asegurar synonyms
+    if result.recurrence is None and db_obj.frecuencia is not None:
+        result.recurrence = db_obj.frecuencia
+    if result.day_of_week is None and db_obj.dia_reunion is not None:
+        result.day_of_week = db_obj.dia_reunion
+    if result.start_time is None and db_obj.hora_reunion is not None:
+        result.start_time = db_obj.hora_reunion
+    if result.start_date is None and db_obj.fecha_inicio is not None:
+        result.start_date = db_obj.fecha_inicio
+    if result.end_date is None and db_obj.fecha_fin is not None:
+        result.end_date = db_obj.fecha_fin
     result.group_count = db.query(GrupoEvangelismo).filter(
         GrupoEvangelismo.estrategia_id == strategy_id,
         GrupoEvangelismo.deleted_at.is_(None),
@@ -162,7 +184,13 @@ def generate_strategy_sessions(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Genera sesiones automáticas para todos los grupos de una estrategia según su recurrencia."""
+    """Genera sesiones automáticas para todos los grupos de una estrategia según su recurrencia.
+
+    Si la estrategia tiene ``dia_reunion`` configurado, la fecha de inicio se ajusta
+    automáticamente al primer día de reunión — así las sesiones siempre caen en el
+    día correcto de la semana aunque la fecha_inicio esté en otro día.
+    """
+    from datetime import timedelta
     from backend.models_evangelism import EstrategiaEvangelismo as StratModel
     from backend.models_evangelism import GrupoEvangelismo
     from backend.services.calculo_sesiones import calcular_sesiones
@@ -181,12 +209,44 @@ def generate_strategy_sessions(
         GrupoEvangelismo.deleted_at.is_(None),
     ).all()
 
+    if not groups:
+        return {
+            "strategy": strat.nombre,
+            "recurrence": strat.frecuencia,
+            "start": str(strat.fecha_inicio),
+            "end": str(strat.fecha_fin),
+            "sessions_per_group": 0,
+            "groups": 0,
+            "total_sessions_created": 0,
+            "message": "No hay grupos en esta estrategia. Crea grupos primero."
+        }
+
+    # ── Ajustar fecha_inicio al primer día de reunión ──
+    fecha_inicio = strat.fecha_inicio
+    if strat.dia_reunion:
+        DAY_MAP = {
+            "domingo": 6, "lunes": 0, "martes": 1, "miércoles": 2,
+            "miercoles": 2, "jueves": 3, "viernes": 4, "sábado": 5, "sabado": 5,
+            "Domingo": 6, "Lunes": 0, "Martes": 1, "Miércoles": 2,
+            "Jueves": 3, "Viernes": 4, "Sábado": 5,
+        }
+        target = DAY_MAP.get(strat.dia_reunion)
+        if target is not None:
+            current_weekday = fecha_inicio.weekday()
+            diff = (target - current_weekday) % 7
+            if diff > 0:
+                fecha_inicio = fecha_inicio + timedelta(days=diff)
+                logger.info(
+                    "Ajustando fecha_inicio de %s a %s (día=%s)",
+                    strat.fecha_inicio, fecha_inicio, strat.dia_reunion,
+                )
+
     try:
         created = calcular_sesiones(
             db=db,
             estrategia_id=strategy_id,
             sede_id=strat.sede_id,
-            fecha_inicio=strat.fecha_inicio,
+            fecha_inicio=fecha_inicio,
             fecha_fin=strat.fecha_fin,
             frecuencia=strat.frecuencia,
             grupos_ids=[g.id for g in groups],
@@ -198,7 +258,7 @@ def generate_strategy_sessions(
     return {
         "strategy": strat.nombre,
         "recurrence": strat.frecuencia,
-        "start": str(strat.fecha_inicio),
+        "start": str(fecha_inicio),
         "end": str(strat.fecha_fin),
         "sessions_per_group": sessions_per_group,
         "groups": len(groups),

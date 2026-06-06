@@ -5,12 +5,13 @@ Maneja el inicio de sesion, registro y gestion de tokens con UUID.
 
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import List
+from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -604,7 +605,7 @@ def get_current_user_permissions(
     return {"permissions": perms}
 
 
-@router.get("/user-list", response_model=List[schemas.User])
+@router.get("/user-list", response_model=List[dict[str, Any]])
 def list_ministerial_users(
     skip: int = 0,
     limit: int = 100,
@@ -612,7 +613,60 @@ def list_ministerial_users(
     current_user: models.User = Depends(require_active_user),
 ):
     """Lista de usuarios. Requiere autenticación."""
-    return crud.get_users(db, skip=skip, limit=limit)
+    from sqlalchemy.orm import joinedload
+    from backend.models_auth import Usuario
+
+    def _serialize_usuario(user: Any) -> dict[str, Any]:
+        rol_plataforma = getattr(user, "rol_plataforma", None)
+        platform_role = getattr(user, "platform_role", None)
+        role_name = "estudiante"
+        role_id = None
+
+        if rol_plataforma and getattr(rol_plataforma, "nombre", None):
+            role_name = str(rol_plataforma.nombre)
+            role_id = str(rol_plataforma.id)
+        elif platform_role and getattr(platform_role, "role", None):
+            role_name = str(platform_role.role)
+            role_id = str(platform_role.id)
+
+        return {
+            "id": str(user.id),
+            "username": user.username,
+            "email": user.email,
+            "role": role_name.lower(),
+            "role_id": role_id,
+            "xp": int(getattr(user, "xp", 0) or 0),
+            "is_active": bool(getattr(user, "is_active", True)),
+            "is_email_verified": bool(getattr(user, "is_email_verified", False)),
+            "created_at": getattr(user, "created_at", None),
+        }
+
+    try:
+        users = (
+            db.query(Usuario)
+            .options(joinedload(Usuario.rol_plataforma), joinedload(Usuario.platform_role))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+        return [_serialize_usuario(user) for user in users]
+    except ProgrammingError:
+        db.rollback()
+        legacy_users = crud.get_users(db, skip=skip, limit=limit)
+        return [
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": getattr(user, "role", "estudiante"),
+                "role_id": getattr(user, "role_id", None),
+                "xp": int(getattr(user, "xp", 0) or 0),
+                "is_active": bool(getattr(user, "is_active", True)),
+                "is_email_verified": bool(getattr(user, "is_email_verified", False)),
+                "created_at": getattr(user, "created_at", None),
+            }
+            for user in legacy_users
+        ]
 
 
 @router.get("/users/{user_id}", response_model=schemas.User)

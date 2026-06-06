@@ -28,6 +28,8 @@ interface FormValues {
     description: string;
     typology: string;
     recurrence: string;
+    dayOfWeek: string;
+    startTime: string;
     eventFormat: string;
     nicheObjective: string;
     phases: Phase[];
@@ -49,6 +51,8 @@ export default function StrategyCreationDrawer({
             description: '',
             typology: '',
             recurrence: 'SEMANAL',
+            dayOfWeek: '',
+            startTime: '',
             eventFormat: 'UNICA_LOCACION',
             nicheObjective: '',
             phases: [],
@@ -68,6 +72,8 @@ export default function StrategyCreationDrawer({
                 description: '',
                 typology: '',
                 recurrence: 'SEMANAL',
+                dayOfWeek: '',
+                startTime: '',
                 eventFormat: 'UNICA_LOCACION',
                 nicheObjective: '',
                 phases: [],
@@ -88,6 +94,22 @@ export default function StrategyCreationDrawer({
             toast.error('El nombre de la estrategia es obligatorio');
             return;
         }
+        if (!data.typology) {
+            toast.error('Selecciona una tipología (Relacional, Evento Masivo o Sectorial)');
+            return;
+        }
+        if (data.typology === 'relacional' && !data.recurrence) {
+            toast.error('Selecciona la recurrencia para estrategias relacionales');
+            return;
+        }
+        if (data.typology === 'relacional' && !data.dayOfWeek) {
+            toast.error('Selecciona el día de reunión para estrategias relacionales');
+            return;
+        }
+        if (data.startDate && data.endDate && new Date(data.startDate) > new Date(data.endDate)) {
+            toast.error('La fecha de inicio no puede ser posterior a la fecha de fin');
+            return;
+        }
         if (!token) {
             toast.error('No hay sesión activa');
             return;
@@ -103,6 +125,8 @@ export default function StrategyCreationDrawer({
                     typology: data.typology || null,
                     clase_raiz: data.typology || null,
                     recurrence: data.typology === 'relacional' ? data.recurrence : null,
+                    day_of_week: data.typology === 'relacional' ? data.dayOfWeek || null : null,
+                    start_time: data.typology === 'relacional' ? data.startTime || null : null,
                     event_format: data.typology === 'evento_masivo' ? data.eventFormat : null,
                     phases: data.typology === 'evento_masivo' && data.phases.length > 0
                         ? data.phases.map(p => ({ name: p.name, type: p.type, start_date: p.start_date, end_date: p.end_date }))
@@ -199,6 +223,7 @@ export default function StrategyCreationDrawer({
 
                 {/* ── Relacional fields ── */}
                 {typology === 'relacional' && (
+                    <>
                     <div>
                         <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
                             Recurrencia
@@ -221,6 +246,41 @@ export default function StrategyCreationDrawer({
                             ))}
                         </div>
                     </div>
+
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                            Día de reunión <span className="text-red-400">*</span>
+                        </label>
+                        <div className="flex gap-1.5 flex-wrap">
+                            {['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map(d => (
+                                <button
+                                    key={d}
+                                    type="button"
+                                    onClick={() => setValue('dayOfWeek', d)}
+                                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                                        watch('dayOfWeek') === d
+                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-blue-200 dark:border-blue-800'
+                                            : 'bg-slate-50 dark:bg-white/5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
+                                    }`}
+                                >
+                                    {d}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                            Hora de reunión
+                        </label>
+                        <input
+                            type="time"
+                            value={watch('startTime')}
+                            onChange={e => setValue('startTime', e.target.value)}
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        />
+                    </div>
+                    </>
                 )}
 
                 {/* ── Evento Masivo fields ── */}

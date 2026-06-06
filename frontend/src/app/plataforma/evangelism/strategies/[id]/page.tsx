@@ -1097,11 +1097,18 @@ export default function StrategyDetailPage() {
                             <div className="flex items-center gap-2 flex-wrap">
                                 {strategy.recurrence && strategy.start_date && strategy.end_date && (
                                     <button onClick={async () => {
+                                        const btn = toast.loading('Generando sesiones...');
                                         try {
                                             const res = await apiFetch<any>(`/evangelism/strategies/${id}/generate-sessions`, { method: 'POST', token });
-                                            toast.success(`Sesiones generadas: ${res.sessions_per_group || ''} por grupo`);
+                                            toast.dismiss(btn);
+                                            if (res.message) {
+                                                toast.info(res.message);
+                                            } else {
+                                                toast.success(`Sesiones generadas: ${res.sessions_per_group || ''} por grupo (${res.total_sessions_created} totales)`);
+                                            }
                                             fetchSessions();
                                         } catch (e: any) {
+                                            toast.dismiss(btn);
                                             toast.error('Error: ' + (e.message || 'Verifica fechas y frecuencia'));
                                         }
                                     }}
