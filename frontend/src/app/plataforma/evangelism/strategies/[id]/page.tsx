@@ -303,8 +303,8 @@ export default function StrategyDetailPage() {
 
     const fetchGroups = useCallback(async () => {
         try {
-            const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token });
-            setGroups((all || []).filter(g => (g as any).evangelism_strategy_id === id));
+            const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token, query: { estrategia_id: id } });
+            setGroups(all || []);
         } catch { toast.error('Error al cargar grupos'); }
     }, [id, token]);
 
@@ -815,7 +815,7 @@ export default function StrategyDetailPage() {
                 )}
 
                 {/* ── View: Kanban ── */}
-                {viewType === 'kanban' && (
+                {viewType === 'kanban' && (activeTab === 'sessions' || activeTab === 'overview') && (
                     <div className="flex gap-3 overflow-x-auto pb-4">
                         {['Pendiente', 'Programada', 'Realizada'].map(label => {
                             const colors: Record<string, string> = { 'Pendiente': '#F59E0B', 'Programada': '#3B82F6', 'Realizada': '#10B981' };
@@ -841,7 +841,7 @@ export default function StrategyDetailPage() {
                     </div>
                 )}
 
-                {/* ── View: Table ── */}
+                {/* ── View: Table (tab-aware) ── */}
                 {viewType === 'table' && (
                     <div className="overflow-x-auto">
                         <table className="w-full text-xs">
@@ -853,7 +853,7 @@ export default function StrategyDetailPage() {
                                 <th className="text-left py-2 px-3 font-semibold">Personas</th>
                             </tr></thead>
                             <tbody>
-                                {groups.map(g => (
+                                {(activeTab === 'groups' || activeTab === 'overview') && groups.map(g => (
                                     <tr key={`g-${g.id}`} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
                                         <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300">Grupo</span></td>
                                         <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{g.name}</td>
@@ -862,7 +862,7 @@ export default function StrategyDetailPage() {
                                         <td className="py-2 px-3 text-slate-400">{g.members_count}</td>
                                     </tr>
                                 ))}
-                                {sessions.map(s => (
+                                {(activeTab === 'sessions' || activeTab === 'overview') && sessions.map(s => (
                                     <tr key={`s-${s.id}`} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
                                         <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300">Sesión</span></td>
                                         <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{s.topic || `Sesión #${s.id}`}</td>
@@ -876,10 +876,10 @@ export default function StrategyDetailPage() {
                     </div>
                 )}
 
-                {/* ── View: List ── */}
+                {/* ── View: List (tab-aware) ── */}
                 {viewType === 'list' && (
                     <div className="space-y-1">
-                        {groups.map(g => (
+                        {(activeTab === 'groups' || activeTab === 'overview') && groups.map(g => (
                             <div key={`g-${g.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
                                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Users size={14} className="text-[hsl(var(--primary))] dark:text-blue-400" /></div>
                                 <div className="flex-1 min-w-0">
@@ -889,7 +889,7 @@ export default function StrategyDetailPage() {
                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-green-300">Grupo</span>
                             </div>
                         ))}
-                        {sessions.map(s => (
+                        {(activeTab === 'sessions' || activeTab === 'overview') && sessions.map(s => (
                             <div key={`s-${s.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
                                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Calendar size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
                                 <div className="flex-1 min-w-0">
@@ -902,10 +902,10 @@ export default function StrategyDetailPage() {
                     </div>
                 )}
 
-                {/* ── View: Grid ── */}
+                {/* ── View: Grid (tab-aware) ── */}
                 {viewType === 'grid' && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {groups.map(g => (
+                        {(activeTab === 'groups' || activeTab === 'overview') && groups.map(g => (
                             <div key={`g-${g.id}`} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><Users size={12} className="text-[hsl(var(--primary))] dark:text-blue-400" /></div>
@@ -916,7 +916,7 @@ export default function StrategyDetailPage() {
                                 <span className="text-xs font-medium text-slate-500 mt-3 block">{g.members_count} personas</span>
                             </div>
                         ))}
-                        {sessions.map(s => (
+                        {(activeTab === 'sessions' || activeTab === 'overview') && sessions.map(s => (
                             <div key={`s-${s.id}`} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><Calendar size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
@@ -934,7 +934,10 @@ export default function StrategyDetailPage() {
                 )}
 
                 {/* ── Dashboard view: show tabs ── */}
-                {activeTab === 'overview' && (
+                {viewType !== 'dashboard' && activeTab === 'overview' && (
+                    <p className="text-xs text-slate-400 text-center py-4">Cambia a vista "Resumen" para ver los detalles de la estrategia.</p>
+                )}
+                {viewType === 'dashboard' && activeTab === 'overview' && (
                     <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-4">
                         <div>
                             <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Nombre</label>
@@ -1035,7 +1038,7 @@ export default function StrategyDetailPage() {
                 )}
 
                 {/* ── Grupos ── */}
-                {activeTab === 'groups' && (
+                {viewType === 'dashboard' && activeTab === 'groups' && (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <div>
@@ -1087,7 +1090,7 @@ export default function StrategyDetailPage() {
                 )}
 
                 {/* ── Sesiones ── */}
-                {activeTab === 'sessions' && (
+                {viewType === 'dashboard' && activeTab === 'sessions' && (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Registro de sesiones</h2>
@@ -1244,7 +1247,7 @@ export default function StrategyDetailPage() {
                 )}
 
                 {/* ── Métricas ── */}
-                {activeTab === 'metrics' && (
+                {viewType === 'dashboard' && activeTab === 'metrics' && (
                     <div className="space-y-3">
                         <h2 className="text-sm font-bold text-slate-900 dark:text-white">Métricas de la estrategia</h2>
                         {!metrics ? (
