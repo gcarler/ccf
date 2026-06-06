@@ -179,7 +179,7 @@ def create_faro_session(
 
         session_date = date_type.fromisoformat(payload["session_date"])
     except (KeyError, ValueError):
-        raise HTTPException(status_code=400, detail="session_date required in YYYY-MM-DD format")
+        raise HTTPException(status_code=400, detail="Fecha de sesión requerida en formato YYYY-MM-DD")
 
     season_id = payload.get("season_id")
     cell_group_id = payload.get("cell_group_id") or payload.get("grupo_id")
@@ -187,7 +187,7 @@ def create_faro_session(
     report_deadline_str = payload.get("report_deadline")
 
     if not season_id or not cell_group_id:
-        raise HTTPException(status_code=400, detail="season_id and cell_group_id required")
+        raise HTTPException(status_code=400, detail="Faltan datos: temporada y grupo son requeridos")
     user_sede = require_user_sede_id(db, current_user)
 
     season = db.query(models.CampaignSeason).filter(models.CampaignSeason.id == season_id).first()
@@ -388,7 +388,7 @@ def get_session_detail(
         .first()
     )
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
 
     attendance_rows = db.query(Asistencia).filter(models.Asistencia.sesion_id == session_id).all()
 
@@ -455,7 +455,7 @@ def update_session(
         .first()
     )
     if not db_session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
 
     update_data = update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -484,7 +484,7 @@ def delete_session(
         .first()
     )
     if not db_session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
 
     # Soft-delete: marcar como cancelada en lugar de borrar
     from backend.models_evangelism import EstadoSesionEnum

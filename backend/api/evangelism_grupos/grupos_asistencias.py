@@ -38,7 +38,7 @@ def get_faro_session_attendance(
         models.SesionGrupo.deleted_at.is_(None),
     ).first()
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
     house = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == session.grupo_id).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
@@ -124,7 +124,7 @@ def add_faro_attendance(
         models.SesionGrupo.deleted_at.is_(None),
     ).first()
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
     house = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == session.grupo_id).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
@@ -154,7 +154,7 @@ def add_faro_attendance(
     import uuid
 
     if attendees and not isinstance(attendees, list):
-        raise HTTPException(status_code=400, detail="attendees must be a list")
+        raise HTTPException(status_code=400, detail="La lista de asistentes debe ser un arreglo")
 
     if attendees:
         processed = 0
@@ -203,7 +203,7 @@ def add_faro_attendance(
             processed += 1
     else:
         if not member_ids:
-            raise HTTPException(status_code=400, detail="member_ids or attendees is required")
+            raise HTTPException(status_code=400, detail="Se requiere lista de miembros o asistentes")
         processed = 0
         for member_id in member_ids:
             if isinstance(member_id, str):
@@ -276,7 +276,7 @@ def submit_attendance(
         .first()
     )
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
 
     # Protección IDOR: solo sesiones habilitadas aceptan reportes
     from backend.models_evangelism import HabilitacionSesionEnum
