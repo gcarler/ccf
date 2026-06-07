@@ -217,6 +217,15 @@ def delete_rol_personalizado(db: Session, role_id: int) -> bool:
     )
     if not db_obj:
         return False
+    strategy = None
+    if db_obj.estrategia_id:
+        strategy = (
+            db.query(EstrategiaEvangelismo)
+            .filter(EstrategiaEvangelismo.id == db_obj.estrategia_id)
+            .first()
+        )
+    if strategy and strategy.default_role_id == db_obj.id:
+        strategy.default_role_id = None
     db_obj.deleted_at = _utcnow()
     db.commit()
     return True

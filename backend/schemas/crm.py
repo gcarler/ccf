@@ -619,6 +619,7 @@ class EvangelismStrategyBase(BaseModel):
     phase_count: Optional[int] = None
     niche_objective: Optional[str] = None
     strategy_type: Optional[str] = None
+    default_role_id: Optional[int] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: str = "active"

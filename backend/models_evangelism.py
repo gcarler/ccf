@@ -159,6 +159,7 @@ class EstrategiaEvangelismo(Base):
     # General
     strategy_type = Column(String(100), nullable=True)
     status = Column(String(50), default="active")
+    default_role_id = Column(Integer, ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True)
 
     # Fechas
     fecha_inicio = Column(DateTime(timezone=True), nullable=True)
@@ -176,6 +177,7 @@ class EstrategiaEvangelismo(Base):
     sede = relationship("Sede")
     grupos = relationship("GrupoEvangelismo", back_populates="estrategia", cascade="all, delete-orphan")
     roles_personalizados = relationship("RolPersonalizadoEstrategia", back_populates="estrategia")
+    default_role = relationship("RolPersonalizadoEstrategia", foreign_keys=[default_role_id])
 
     # English aliases for backward compatibility
     name = synonym("nombre")

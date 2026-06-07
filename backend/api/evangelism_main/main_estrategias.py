@@ -158,6 +158,23 @@ def update_strategy(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     try:
+        if strategy.default_role_id is not None:
+            from backend.models_evangelism import RolPersonalizadoEstrategia
+
+            default_role = (
+                db.query(RolPersonalizadoEstrategia)
+                .filter(
+                    RolPersonalizadoEstrategia.id == strategy.default_role_id,
+                    RolPersonalizadoEstrategia.estrategia_id == strategy_id,
+                    RolPersonalizadoEstrategia.deleted_at.is_(None),
+                )
+                .first()
+            )
+            if not default_role:
+                raise HTTPException(
+                    status_code=400,
+                    detail="El rol por defecto debe pertenecer a esta estrategia",
+                )
         db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, data=strategy)
     except Exception:
         db.rollback()

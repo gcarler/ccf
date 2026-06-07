@@ -106,6 +106,7 @@ class EstrategiaEvangelismoUpdate(BaseModel):
     description: Optional[str] = None
     clase_raiz: Optional[str] = None  # string, no enum — el frontend envía minúsculas
     activa: Optional[bool] = None
+    default_role_id: Optional[int] = None
 
     # Campos legacy
     typology: Optional[str] = None
@@ -124,6 +125,7 @@ class EstrategiaEvangelismoUpdate(BaseModel):
 class EstrategiaEvangelismoResponse(EstrategiaEvangelismoBase):
     id: str
     codigo: Optional[str] = None
+    default_role_id: Optional[int] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = orm_config

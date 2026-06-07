@@ -70,6 +70,8 @@ def delete_strategy_role(
     strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+    if strategy.default_role_id == role_id:
+        strategy.default_role_id = None
     if not delete_rol_personalizado(db, role_id):
         raise HTTPException(status_code=404, detail="Rol no encontrado")
     return {"ok": True}

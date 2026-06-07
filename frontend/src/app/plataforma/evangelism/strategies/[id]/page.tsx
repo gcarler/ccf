@@ -52,6 +52,7 @@ interface Strategy {
     codigo?: string;
     clase_raiz?: string;
     activa: boolean;
+    default_role_id?: number | null;
     typology: string;
     recurrence: string | null;
     day_of_week: string | null;
@@ -205,6 +206,7 @@ export default function StrategyDetailPage() {
     const [editStatus, setEditStatus] = useState<'active' | 'pending' | 'done'>('pending');
     const [editActiva, setEditActiva] = useState(true);
     const [editClaseRaiz, setEditClaseRaiz] = useState('');
+    const [editDefaultRoleId, setEditDefaultRoleId] = useState<number | null | undefined>(undefined);
     const [editStartDate, setEditStartDate] = useState('');
     const [editEndDate, setEditEndDate] = useState('');
     const [editRecurrence, setEditRecurrence] = useState<string | null>(null);
@@ -287,6 +289,14 @@ export default function StrategyDetailPage() {
         ]
         : FALLBACK_MEMBER_ROLES;
 
+    const selectedDefaultRole = customRoles.find(role => role.id === editDefaultRoleId) || null;
+    const defaultMemberRoleValue = selectedDefaultRole
+        ? customRoleValue(selectedDefaultRole)
+        : memberRoleOptions[0]?.value || 'persona';
+    const defaultMemberRoleLabel = selectedDefaultRole?.nombre_rol
+        || memberRoleOptions[0]?.label
+        || 'Persona';
+
     const getRoleLabel = (value: string, fallback?: string) => {
         const customId = value?.startsWith('custom:') ? Number(value.split(':')[1]) : null;
         if (customId) {
@@ -341,6 +351,7 @@ export default function StrategyDetailPage() {
             setEditStatus(result.status || 'pending');
             setEditActiva(result.activa !== undefined ? result.activa : true);
             setEditClaseRaiz(result.clase_raiz || result.typology || '');
+            setEditDefaultRoleId(result.default_role_id ?? null);
             setEditStartDate(result.start_date ? result.start_date.substring(0, 10) : '');
             setEditEndDate(result.end_date ? result.end_date.substring(0, 10) : '');
             setEditRecurrence(result.recurrence || null);
@@ -567,8 +578,8 @@ export default function StrategyDetailPage() {
             id: member.id,
             name: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(),
             email: member.email || '',
-            role: memberRoleOptions[0]?.value || 'persona',
-            role_label: memberRoleOptions[0]?.label,
+            role: defaultMemberRoleValue,
+            role_label: defaultMemberRoleLabel,
         }]);
     };
 
@@ -692,6 +703,7 @@ export default function StrategyDetailPage() {
                     status: editStatus,
                     activa: editActiva,
                     clase_raiz: editClaseRaiz || null,
+                    default_role_id: editDefaultRoleId ?? null,
                     recurrence: editRecurrence,
                     start_date: editStartDate ? new Date(editStartDate).toISOString() : null,
                     end_date: editEndDate ? new Date(editEndDate).toISOString() : null,
@@ -757,6 +769,7 @@ export default function StrategyDetailPage() {
                     await apiFetch(`/evangelism/strategies/${id}/roles/${role.id}`, { method: 'DELETE', token });
                     toast.success('Rol eliminado');
                     fetchCustomRoles();
+                    fetchStrategy();
                 } catch { toast.error('Error al eliminar rol'); }
             },
         });
@@ -1569,6 +1582,26 @@ export default function StrategyDetailPage() {
                             </button>
                         </div>
 
+                        <div className="mb-3">
+                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Rol por defecto</label>
+                            <select
+                                value={editDefaultRoleId ?? ''}
+                                onChange={e => setEditDefaultRoleId(e.target.value ? Number(e.target.value) : null)}
+                                disabled={customRoles.length === 0}
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors disabled:opacity-60"
+                            >
+                                <option value="">Sin rol por defecto</option>
+                                {customRoles.map(role => (
+                                    <option key={role.id} value={role.id}>
+                                        {role.nombre_rol}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="mt-1 text-[10px] text-slate-400">
+                                Este rol se usa como base al agregar personas al grupo.
+                            </p>
+                        </div>
+
                         {showRoleForm && (
                             <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg space-y-2">
                                 <input value={newRoleName} onChange={e => setNewRoleName(e.target.value)}
@@ -1604,7 +1637,14 @@ export default function StrategyDetailPage() {
                                 {customRoles.map(r => (
                                     <div key={r.id} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
                                         <div>
-                                            <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{r.nombre_rol}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{r.nombre_rol}</span>
+                                                {editDefaultRoleId === r.id && (
+                                                    <span className="px-1.5 py-0.5 rounded bg-blue-100 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300">
+                                                        Defecto
+                                                    </span>
+                                                )}
+                                            </div>
                                             {r.descripcion && <p className="text-[10px] text-slate-400">{r.descripcion}</p>}
                                         </div>
                                         <button onClick={() => requestDeleteRole(r)} className="p-1 text-slate-400 hover:text-[hsl(var(--destructive))] rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
