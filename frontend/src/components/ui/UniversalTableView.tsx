@@ -195,7 +195,6 @@ export default function UniversalTableView<T extends { id: string | number }>({
                     minWidth: 80,
                     resizable: true,
                     sortable: col.sortable !== false,
-                    filter: 'agTextColumnFilter',
                 };
 
                 // Editable logic:
@@ -390,7 +389,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                         theme={isDark ? darkTheme : lightTheme}
                         rowData={rowData as any[]}
                         columnDefs={colDefs}
-                        defaultColDef={{ resizable: true, sortable: true, filter: true, minWidth: 80 }}
+                        defaultColDef={{ resizable: true, sortable: true, filter: true, floatingFilter: true, minWidth: 80 }}
                         getRowId={getRowId}
                         getRowHeight={getRowHeight}
                         isFullWidthRow={groupBy ? isFullWidthRow : undefined}
