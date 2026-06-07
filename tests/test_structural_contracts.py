@@ -315,7 +315,7 @@ def test_crm_persona_backfill_migration_exists():
     content = migration.read_text(encoding="utf-8")
 
     required_fragments = [
-        "down_revision: Union[str, None] = \"20260605_academy_persona_backfill\"",
+        "down_revision: Union[str, None] = \"20260605_acad_pers_backfill\"",
         "_backfill(\"counseling_tickets\", \"pastor_id\", \"pastor_user_id\")",
         "_backfill(\"consolidation_tasks\", \"assignee_id\", \"assignee_user_id\")",
         "_backfill(\"communication_logs\", \"leader_id\", \"leader_user_id\")",
