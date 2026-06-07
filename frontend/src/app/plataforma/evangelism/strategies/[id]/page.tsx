@@ -873,18 +873,18 @@ export default function StrategyDetailPage() {
                                 ...sessions.map(s => ({ __type: 'session' as const, ...s })),
                             ];
                             const item = allItems.find(d => d.id === id) as any;
-                            if (!item) return;
+                            if (!item) return false; // return false = reject edit visually
 
                             // Map display fields to actual model fields per type
                             let actualField: string = field;
                             if (field === '__displayName') {
                                 actualField = item.__type === 'session' ? 'topic' : 'name';
                             } else if (field === '__displayType') {
-                                return; // synthetic, not editable
+                                return false; // synthetic, not editable
                             }
 
-                            // For groups — skip editing name for now (no PUT endpoint)
-                            if (item.__type === 'group') return;
+                            // Groups are not editable yet (no PUT endpoint)
+                            if (item.__type === 'group') return false;
 
                             if (item.__type === 'session') {
                                 try {
@@ -894,8 +894,13 @@ export default function StrategyDetailPage() {
                                     });
                                     fetchSessions();
                                     toast.success('Sesión actualizada');
-                                } catch { toast.error('Error al actualizar sesión'); }
+                                    return true;
+                                } catch {
+                                    toast.error('Error al actualizar sesión');
+                                    return false;
+                                }
                             }
+                            return false;
                         }}
                         columns={[
                             {
@@ -960,6 +965,7 @@ export default function StrategyDetailPage() {
                                 label: 'Habilitación',
                                 type: 'status',
                                 editable: false,
+                                filter: false,
                                 render: (_v: any, item: any) => {
                                     if (item.__type === 'group') return <span className="text-slate-400">—</span>;
                                     return (
@@ -991,6 +997,7 @@ export default function StrategyDetailPage() {
                                 label: 'Acciones',
                                 type: 'text',
                                 editable: false,
+                                filter: false,
                                 render: (_v: any, item: any) => {
                                     if (item.__type === 'group') return <span className="text-slate-400">—</span>;
                                     return (

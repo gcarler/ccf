@@ -195,7 +195,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                     minWidth: 80,
                     resizable: true,
                     sortable: col.sortable !== false,
-                    filter: 'agTextColumnFilter',
+                    filter: (col as any).filter !== undefined ? (col as any).filter : 'agTextColumnFilter',
                 };
 
                 // Editable logic:
@@ -220,8 +220,12 @@ export default function UniversalTableView<T extends { id: string | number }>({
                         base.cellEditor = 'agTextCellEditor';
                         base.valueSetter = (params: any) => {
                             if (params.oldValue === params.newValue) return false;
-                            onUpdateItem(params.data.id, field, params.newValue);
-                            return true;
+                            const result = onUpdateItem(params.data.id, field, params.newValue);
+                            if (result instanceof Promise) {
+                                result.then(ok => { if (ok === false) params.api.applyTransaction({ update: [params.data] }); });
+                                return true; // optimistic — revert on failure
+                            }
+                            return result !== false;
                         };
                     } else {
                         base.editable = false;
@@ -232,8 +236,12 @@ export default function UniversalTableView<T extends { id: string | number }>({
                     base.cellEditor = 'agTextCellEditor';
                     base.valueSetter = (params: any) => {
                         if (params.oldValue === params.newValue) return false;
-                        onUpdateItem(params.data.id, field, params.newValue);
-                        return true;
+                        const result = onUpdateItem(params.data.id, field, params.newValue);
+                        if (result instanceof Promise) {
+                            result.then(ok => { if (ok === false) params.api.applyTransaction({ update: [params.data] }); });
+                            return true; // optimistic — revert on failure
+                        }
+                        return result !== false;
                     };
                 }
 
