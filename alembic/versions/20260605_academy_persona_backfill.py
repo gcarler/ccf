@@ -85,6 +85,8 @@ def _pg_add_fk_if_missing(table: str, column: str, constraint_name: str) -> None
     bind = op.get_bind()
     if bind.dialect.name != "postgresql" or _constraint_exists(constraint_name):
         return
+    if not (_has_table(table) and _has_col(table, column)):
+        return
     bind.execute(
         sa.text(
             f"ALTER TABLE {table} ADD CONSTRAINT {constraint_name} "
@@ -114,6 +116,8 @@ def _duplicate_count(table: str, left: str, right: str) -> int:
 def _pg_add_unique_if_clean(table: str, columns: tuple[str, str], constraint_name: str) -> None:
     bind = op.get_bind()
     if bind.dialect.name != "postgresql" or _constraint_exists(constraint_name):
+        return
+    if not (_has_table(table) and all(_has_col(table, col) for col in columns)):
         return
     if _duplicate_count(table, columns[0], columns[1]) > 0:
         return
