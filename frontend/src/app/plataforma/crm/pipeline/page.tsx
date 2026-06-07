@@ -77,8 +77,9 @@ export default function ConsolidationPipelinePage() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/crm/consolidation/cases', { token });
-            if (Array.isArray(data)) setLeads(data);
+            const data = await apiFetch<any>('/crm/consolidation/cases', { token, cache: 'no-store' });
+            const items = Array.isArray(data) ? data : Array.isArray(data?.cases) ? data.cases : [];
+            setLeads(items);
         } catch (err) {
             console.error(err);
         } finally {
@@ -626,4 +627,3 @@ export default function ConsolidationPipelinePage() {
         </CrmShell>
     );
 }
-
