@@ -176,8 +176,16 @@ class EstrategiaEvangelismo(Base):
     categoria = relationship("CategoriaEstrategia")
     sede = relationship("Sede")
     grupos = relationship("GrupoEvangelismo", back_populates="estrategia", cascade="all, delete-orphan")
-    roles_personalizados = relationship("RolPersonalizadoEstrategia", back_populates="estrategia")
-    default_role = relationship("RolPersonalizadoEstrategia", foreign_keys=[default_role_id])
+    roles_personalizados = relationship(
+        "RolPersonalizadoEstrategia",
+        back_populates="estrategia",
+        foreign_keys="RolPersonalizadoEstrategia.estrategia_id",
+    )
+    default_role = relationship(
+        "RolPersonalizadoEstrategia",
+        foreign_keys=[default_role_id],
+        uselist=False,
+    )
 
     # English aliases for backward compatibility
     name = synonym("nombre")
@@ -199,7 +207,11 @@ class RolPersonalizadoEstrategia(Base):
     descripcion = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    estrategia = relationship("EstrategiaEvangelismo", back_populates="roles_personalizados")
+    estrategia = relationship(
+        "EstrategiaEvangelismo",
+        back_populates="roles_personalizados",
+        foreign_keys=[estrategia_id],
+    )
 
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
