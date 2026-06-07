@@ -133,13 +133,13 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         <AnimatePresence>
             {isOpen && (
                 <>
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9500] bg-slate-900/40 backdrop-blur-md" onClick={onClose} />
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-x-0 bottom-0 top-10 z-[9500] bg-slate-900/40 backdrop-blur-md" onClick={onClose} />
                             <motion.div 
                                 initial={{ x: '100%' }} 
                                 animate={{ x: 0 }} 
                                 exit={{ x: '100%' }}
                                 transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                                className="fixed right-0 top-0 z-[9501] h-screen w-[90vw] bg-[#f8fafc] dark:bg-[#0f1115] shadow-2xl border-l border-white/10 flex flex-col overflow-hidden"
+                                className="fixed right-0 top-10 z-[9501] h-[calc(100vh-2.5rem)] w-[90vw] bg-[#f8fafc] dark:bg-[#0f1115] shadow-2xl border-l border-white/10 flex flex-col overflow-hidden"
                                 role="complementary"
                                 aria-label="Pizarra Infinita Ministerial"
                             >

@@ -141,10 +141,10 @@ export default function CommunityGruposPage() {
       {drawer.open && drawer.group && (
         <>
           <div
-            className="fixed inset-0 bg-black/40 z-40"
+            className="fixed inset-x-0 bottom-0 top-10 bg-black/40 z-40"
             onClick={closeDrawer}
           />
-          <div className="fixed top-0 right-0 h-full w-full max-w-xl bg-[hsl(var(--surface-1))] border-l border-[hsl(var(--border))] z-50 shadow-2xl animate-in slide-in-from-right duration-300 overflow-y-auto">
+          <div className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] w-full max-w-xl bg-[hsl(var(--surface-1))] border-l border-[hsl(var(--border))] z-50 shadow-2xl animate-in slide-in-from-right duration-300 overflow-y-auto">
             <div className="p-4 space-y-6">
               <div className="flex items-center justify-between">
                 <button

@@ -69,10 +69,10 @@ function RightPanel({
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
             style={{ width, minWidth: width, maxWidth: width }}
             className={clsx(
-                'h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border-l border-slate-100 dark:border-white/5',
+                'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border-l border-slate-100 dark:border-white/5',
                 isControlled || rightMode === 'overlay'
-                    ? 'fixed right-0 top-0 z-[35] shadow-[-24px_0_60px_rgba(0,0,0,0.12)]'
-                    : 'relative z-[25] shadow-[-8px_0_24px_rgba(0,0,0,0.06)]'
+                    ? 'fixed right-0 top-10 h-[calc(100vh-2.5rem)] z-[35] shadow-[-24px_0_60px_rgba(0,0,0,0.12)]'
+                    : 'relative h-full z-[25] shadow-[-8px_0_24px_rgba(0,0,0,0.06)]'
             )}
             tabIndex={-1}
             role="complementary"
@@ -117,7 +117,7 @@ function RightPanel({
                                 transition={{ duration: 0.2 }}
                                 className={clsx(
                                     'z-[34] bg-slate-950/20 backdrop-blur-[1px]',
-                                    isControlled ? 'fixed inset-0' : 'absolute inset-0'
+                                    isControlled ? 'fixed inset-x-0 bottom-0 top-10' : 'absolute inset-0'
                                 )}
                                 onClick={handleClose}
                                 aria-hidden="true"

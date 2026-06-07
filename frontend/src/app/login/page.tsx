@@ -33,7 +33,7 @@ export default function LoginPage() {
             const res = await apiFetch<any>(`/v3/auth/check-email?email=${encodeURIComponent(email)}`);
             if (res.is_gmail) {
                 // Google SSO — go direct
-                window.location.href = '/v3/auth/google';
+                window.location.href = '/api/v3/auth/google';
                 return;
             }
             if (res.needs_password_init) {

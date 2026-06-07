@@ -66,14 +66,14 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                     <motion.div 
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 z-[1000] bg-slate-900/10 backdrop-blur-[2px]"
+                        className="fixed inset-x-0 bottom-0 top-10 z-[1000] bg-slate-900/10 backdrop-blur-[2px]"
                     />
                     <motion.div 
                         initial={{ opacity: 0, x: 400 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 400 }}
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                        className="fixed top-0 right-0 h-screen w-full max-w-[480px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[-20px_0_60px_rgba(0,0,0,0.1)] border-l border-slate-200 dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
+                        className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] w-full max-w-[480px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[-20px_0_60px_rgba(0,0,0,0.1)] border-l border-slate-200 dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
                     >
                         {/* Header */}
                         <header className="h-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-3 bg-slate-50/50 dark:bg-white/5 shrink-0">

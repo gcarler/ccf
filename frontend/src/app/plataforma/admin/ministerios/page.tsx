@@ -314,13 +314,13 @@ export default function MinisteriosPage() {
                 {drawerOpen && (
                     <>
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-[90] bg-black/30 backdrop-blur-sm"
+                            className="fixed inset-x-0 bottom-0 top-10 z-[90] bg-black/30 backdrop-blur-sm"
                             onClick={() => setDrawerOpen(false)} />
                         <motion.aside
                             initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                            className="fixed top-0 right-0 h-screen z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col">
+                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col">
 
                             <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100 dark:border-white/5 flex-shrink-0">
                                 <div className="flex items-center gap-3">

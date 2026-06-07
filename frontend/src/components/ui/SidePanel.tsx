@@ -37,7 +37,7 @@ export default function SidePanel({
                     exit={{ x: "100%", opacity: 0 }}
                     transition={{ type: "spring", damping: 25, stiffness: 200 }}
                     className={clsx(
-                        "fixed top-0 right-0 h-screen z-[100] bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col",
+                        "fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col",
                         width
                     )}
                 >

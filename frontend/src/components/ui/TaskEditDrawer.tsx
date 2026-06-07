@@ -226,7 +226,7 @@ export default function TaskEditDrawer({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed inset-0 z-[100] bg-slate-950/30 backdrop-blur-[3px]"
+                        className="fixed inset-x-0 bottom-0 top-10 z-[100] bg-slate-950/30 backdrop-blur-[3px]"
                         onClick={onClose}
                         aria-hidden
                     />
@@ -238,7 +238,7 @@ export default function TaskEditDrawer({
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: '100%', opacity: 0 }}
                         transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-                        className="fixed right-0 top-0 bottom-0 w-full max-w-[460px] z-[101] flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#18191c] shadow-[-32px_0_80px_rgba(0,0,0,0.14)] dark:shadow-[-32px_0_80px_rgba(0,0,0,0.5)]"
+                        className="fixed right-0 top-10 bottom-0 w-full max-w-[460px] z-[101] flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#18191c] shadow-[-32px_0_80px_rgba(0,0,0,0.14)] dark:shadow-[-32px_0_80px_rgba(0,0,0,0.5)]"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Priority accent bar — top */}

@@ -29,7 +29,7 @@ export default function WorkspaceDrawer({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-900/20 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
+                        className="fixed inset-x-0 bottom-0 top-10 bg-slate-900/20 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
                         onClick={onClose}
                     />
 
@@ -38,7 +38,7 @@ export default function WorkspaceDrawer({
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 h-screen w-full max-w-[600px] lg:max-w-[800px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
+                        className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] w-full max-w-[600px] lg:max-w-[800px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
                         role="complementary"
                         aria-label={title}
                     >
