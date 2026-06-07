@@ -1,14 +1,12 @@
 import uuid
-from typing import List, Optional
+from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.auth import normalize_role, require_module_access
-from backend.core.audit import record_admin_action
 from backend.core.database import get_db
-from backend.crud.crm import resolve_persona_id_for_user
 
 router = APIRouter(tags=["CRM"])
 
