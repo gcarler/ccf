@@ -24,35 +24,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import { Grupo } from '@/types/crm';
 
 const ZONE_COLORS = ['from-blue-500 to-sky-600', 'from-blue-500 to-sky-600', 'from-emerald-500 to-teal-600', 'from-orange-500 to-amber-600', 'from-rose-500 to-pink-600', 'from-sky-500 to-cyan-600'];
 
 function getZoneColor(id: number) {
     return ZONE_COLORS[id % ZONE_COLORS.length];
-}
-
-interface Grupo {
-    id: number;
-    name: string;
-    zone?: string;
-    address?: string;
-    leader_name?: string;
-    members_count?: number;
-    capacity?: number;
-    schedule?: string;
-    status?: string;
-    created_at?: string;
-    latitude?: number;
-    longitude?: number;
-    code?: string;
-    leader_id?: number;
-    assistant_id?: number;
-    host_id?: number;
-    day_of_week?: string;
-    start_time?: string;
-    end_time?: string;
-    base_attendee_ids?: number[];
-    base_attendees?: Array<{ persona_id: string }>;
 }
 
 interface Member {
@@ -93,9 +70,54 @@ export default function CrmGroupsPage() {
 
     useEffect(() => {
         if (!token || !inviteGroup) return;
-        apiFetch<Member[]>('/crm/personas/', { token })
-            .then(data => setMembers(Array.isArray(data) ? data : []))
-            .catch(() => toast.error('No se pudo cargar la lista de personas'));
+
+        let cancelled = false;
+
+        const loadMembers = async () => {
+            try {
+                const pageSize = 250;
+                let skip = 0;
+                const allMembers: Member[] = [];
+
+                while (true) {
+                    const data = await apiFetch<unknown>('/crm/personas/', {
+                        token,
+                        query: {
+                            skip,
+                            limit: pageSize,
+                            sort_by: 'nombre_completo',
+                            sort_dir: 'asc',
+                        },
+                    });
+
+                    const page = Array.isArray(data)
+                        ? data
+                        : Array.isArray((data as { items?: Member[] })?.items)
+                            ? (data as { items: Member[] }).items
+                            : [];
+
+                    allMembers.push(...page);
+
+                    if (page.length < pageSize) break;
+                    skip += pageSize;
+                }
+
+                if (!cancelled) {
+                    setMembers(allMembers);
+                }
+            } catch {
+                if (!cancelled) {
+                    toast.error('No se pudo cargar la lista de personas');
+                }
+            }
+        };
+
+        setMembers([]);
+        loadMembers();
+
+        return () => {
+            cancelled = true;
+        };
     }, [inviteGroup, token]);
 
     const filtered = useMemo(() => {
@@ -118,8 +140,14 @@ export default function CrmGroupsPage() {
 
     const filteredMembers = useMemo(() => {
         const term = memberQuery.trim().toLowerCase();
-        if (!term) return members;
-        return members.filter(member =>
+        const base = [...members].sort((a, b) => {
+            const nameA = (a.nombre_completo || `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim()).toLowerCase();
+            const nameB = (b.nombre_completo || `${b.first_name ?? ''} ${b.last_name ?? ''}`.trim()).toLowerCase();
+            return nameA.localeCompare(nameB, 'es');
+        });
+
+        if (!term) return base;
+        return base.filter(member =>
             (member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()).toLowerCase().includes(term) ||
             member.church_role?.toLowerCase().includes(term)
         );
