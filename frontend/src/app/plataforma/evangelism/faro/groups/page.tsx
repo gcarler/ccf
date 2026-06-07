@@ -185,20 +185,63 @@ function FaroGroupsContent() {
   useEffect(() => {
     if (!token) return;
     setLoading(true);
+
+    let cancelled = false;
+
+    const loadMembers = async () => {
+      const pageSize = 250;
+      let skip = 0;
+      const allMembers: Member[] = [];
+
+      while (true) {
+        const data = await apiFetch<unknown>('/crm/personas', {
+          token,
+          query: {
+            skip,
+            limit: pageSize,
+            sort_by: 'nombre_completo',
+            sort_dir: 'asc',
+          },
+        });
+
+        const page = Array.isArray(data)
+          ? data
+          : Array.isArray((data as { items?: Member[] })?.items)
+            ? (data as { items: Member[] }).items
+            : [];
+
+        allMembers.push(...page);
+
+        if (page.length < pageSize) break;
+        skip += pageSize;
+      }
+
+      return allMembers;
+    };
+
     Promise.all([
       apiFetch<Grupo[]>('/evangelism/grupos', { token }),
-      apiFetch<Member[]>('/crm/personas', { token, query: { limit: 200 } }),
+      loadMembers(),
       apiFetch<AssignmentSummary>('/evangelism/faro/assignment-summary', {
         token,
       }).catch(() => null),
     ])
       .then(([housesData, membersData, summaryData]) => {
+        if (cancelled) return;
         setHouses(housesData);
         setMembers(membersData);
         setSummary(summaryData);
       })
-      .catch(() => toast.error('Error al cargar datos'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) toast.error('Error al cargar datos');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -407,7 +450,11 @@ function FaroGroupsContent() {
   }, [members]);
 
   const filteredMembersList = useMemo(() => {
-    return members.filter(m => {
+    const base = [...members].sort((a, b) =>
+      (a.nombre_completo || '').localeCompare(b.nombre_completo || '', 'es')
+    );
+
+    return base.filter(m => {
       if (memberSearchQuery && !(m.nombre_completo || '').toLowerCase().includes(memberSearchQuery.toLowerCase())) {
         return false;
       }
