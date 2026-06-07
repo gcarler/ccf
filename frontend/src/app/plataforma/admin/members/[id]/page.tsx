@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 import MemberDetailSidebar from '@/components/crm/MemberDetailSidebar';
 import {
     User, Phone, Mail, MapPin, LayoutDashboard, Briefcase, Zap,
@@ -84,22 +84,20 @@ export default function MemberDetailPage() {
     const initials = (member.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? member.first_name?.charAt(0) ?? '') + (member.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? member.last_name?.charAt(0) ?? '');
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
-            <WorkspaceToolbar
-                breadcrumbs={[
-                    { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
-                    { label: 'Participación', icon: User, href: '/plataforma/admin/members' },
-                    { label: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(), icon: User },
-                ]}
-                rightActions={
-                    <button
-                        onClick={() => setSidebarOpen(true)}
-                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
-                        <PencilLine size={14} /> Editar Expediente
-                    </button>
-                }
-            />
-
+        <WorkspaceLayout
+            breadcrumbs={[
+                { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
+                { label: 'Participación', icon: User, href: '/plataforma/admin/members' },
+                { label: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(), icon: User },
+            ]}
+            rightActions={
+                <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                    <PencilLine size={14} /> Editar Expediente
+                </button>
+            }
+        >
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4">
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
  className="w-full space-y-3">
@@ -231,6 +229,6 @@ export default function MemberDetailPage() {
                     </>
                 )}
             </AnimatePresence>
-        </div>
+        </WorkspaceLayout>
     );
 }

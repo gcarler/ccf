@@ -27,6 +27,19 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+def _resolve_persona(db: Session, user_id: Any):
+    persona_id = get_user_persona_id(db, user_id)
+    if not persona_id:
+        return None
+    return db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+
+
+def _author_name(persona) -> str:
+    if not persona:
+        return "Usuario"
+    return getattr(persona, "nombre_completo", None) or getattr(persona, "full_name", None) or "Usuario"
+
+
 @router.get("/tasks", response_model=List[schemas.ProjectTask])
 def list_all_my_tasks(
     db: Session = Depends(get_db),
@@ -352,8 +365,8 @@ def list_all_comments(
     author_ids = {row.author_id for row in rows if row.author_id}
     authors_map = {}
     if author_ids:
-        authors = db.query(models.User).filter(models.User.id.in_(author_ids)).all()
-        authors_map = {u.id: u.username for u in authors}
+        authors = db.query(models.Persona).filter(models.Persona.id.in_(author_ids)).all()
+        authors_map = {p.id: _author_name(p) for p in authors}
     result = []
     for row in rows:
         result.append(
@@ -565,7 +578,7 @@ def list_inbox(
     inbox_items: list[schemas.ProjectInboxItem] = []
 
     # Obtener persona_id (UUID) desde current_user.id (Integer)
-    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    persona = _resolve_persona(db, current_user.id)
     persona_id = persona.id if persona else None
 
     # Comentarios no leídos en proyectos del usuario
@@ -594,12 +607,12 @@ def list_inbox(
         )
         is_read = state.is_read if state else False
 
-        author = db.query(models.User).filter(models.User.id == comment.author_id).first()
+        author = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()
         inbox_items.append(
             schemas.ProjectInboxItem(
                 id=f"comment-{comment.id}",
                 type="comment",
-                user=author.username if author else "Usuario",
+                user=_author_name(author),
                 content=comment.content[:120],
                 project=project.title,
                 project_id=project.id,
@@ -619,7 +632,7 @@ def mark_inbox_read(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Marca un item del inbox como leído."""
-    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    persona = _resolve_persona(db, current_user.id)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
     state = (
@@ -698,7 +711,7 @@ def update_project_wiki(
         doc.title = title
         doc.content = content
         doc.author_id = author_persona_id
-        doc.last_edited_at = datetime.now()
+        doc.last_edited_at = datetime.now(timezone.utc)
 
     # Registrar cambio en la bitacora
     _log_project_activity(
@@ -745,7 +758,7 @@ def update_project_whiteboard(
         db.add(board)
     else:
         board.elements_json = elements
-        board.updated_at = datetime.now()
+        board.updated_at = datetime.now(timezone.utc)
 
     board.title = title
     if payload.thumbnail_url is not None:
@@ -1037,7 +1050,7 @@ def create_comment(
         task_id=comment.task_id,
         content=comment.content,
         author_id=comment.author_id,
-        author_name=getattr(current_user, "username", "Usuario"),
+        author_name=_author_name(db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()),
         is_resolved=comment.is_resolved,
         created_at=comment.created_at,
         updated_at=comment.updated_at,
@@ -1076,7 +1089,7 @@ def create_project_comment(
         task_id=comment.task_id,
         content=comment.content,
         author_id=comment.author_id,
-        author_name=getattr(current_user, "username", "Usuario"),
+        author_name=_author_name(db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()),
         is_resolved=comment.is_resolved,
         created_at=comment.created_at,
         updated_at=comment.updated_at,
@@ -1100,14 +1113,14 @@ def update_project_comment(
         comment.is_resolved = payload.is_resolved
     db.commit()
     db.refresh(comment)
-    author = db.query(models.User).filter(models.User.id == comment.author_id).first()
+    author = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()
     return schemas.ProjectCommentItem(
         id=comment.id,
         project_id=comment.project_id,
         task_id=comment.task_id,
         content=comment.content,
         author_id=comment.author_id,
-        author_name=author.username if author else "Usuario",
+        author_name=_author_name(author),
         is_resolved=comment.is_resolved,
         created_at=comment.created_at,
         updated_at=comment.updated_at,
@@ -1247,8 +1260,8 @@ def list_project_messages(
     sender_ids = {r.sender_id for r in rows}
     users_map = {}
     if sender_ids:
-        users = db.query(models.User).filter(models.User.id.in_(sender_ids)).all()
-        users_map = {u.id: u.username for u in users}
+        personas = db.query(models.Persona).filter(models.Persona.id.in_(sender_ids)).all()
+        users_map = {p.id: _author_name(p) for p in personas}
     return [
         schemas.ProjectMessageItem(
             id=r.id,
@@ -1275,7 +1288,7 @@ def send_project_message(
 ):
     """Send a message to the project chat room."""
     _ensure_project(db, project_id)
-    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    persona = _resolve_persona(db, current_user.id)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
     msg = models.ChatMessage(
@@ -1298,7 +1311,7 @@ def send_project_message(
                         "message": {
                             "id": msg.id,
                             "sender_id": msg.sender_id,
-                            "sender_name": getattr(current_user, "username", "Usuario"),
+                            "sender_name": _author_name(persona),
                             "content": msg.content,
                             "created_at": str(msg.created_at),
                         },
@@ -1312,7 +1325,7 @@ def send_project_message(
     return schemas.ProjectMessageItem(
         id=msg.id,
         sender_id=msg.sender_id,
-        sender_name=getattr(current_user, "username", "Usuario"),
+        sender_name=_author_name(persona),
         content=msg.content,
         created_at=msg.created_at,
     )

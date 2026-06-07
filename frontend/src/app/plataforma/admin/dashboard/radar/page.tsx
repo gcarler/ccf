@@ -52,7 +52,7 @@ export default function PastorRadarPage() {
     if (!isAuthenticated) return null;
 
     return (
- <div className="p-4 lg:p-4 space-y-3 w-full font-display overflow-hidden relative">
+ <div className="p-4 lg:p-4 space-y-3 w-full font-display overflow-y-auto scrollbar-thin relative">
             <style jsx global>{`
                 .radar-aura {
                     position: relative;

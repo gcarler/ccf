@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.crud.crm import get_user_sede_id
+from backend.crud.crm import resolve_persona_id_for_user as resolve_persona_uuid_for_user
 from backend.auth import (normalize_role, require_admin,
                           require_coordinator_or_admin, require_module_access,
                           require_teacher_or_admin)
@@ -32,10 +33,11 @@ def coerce_user_id(user_id):
         return str(user_id)
     if isinstance(user_id, str) and _is_uuid_like(user_id):
         return user_id
-    try:
-        return int(user_id)
-    except (ValueError, TypeError):
+    if isinstance(user_id, int):
         return user_id
+    if isinstance(user_id, str) and user_id.isdigit():
+        return int(user_id)
+    return user_id
 
 
 def _is_uuid_like(value) -> bool:
@@ -130,6 +132,30 @@ def _serialize_submission_review(
     )
 
 
+def _resolve_persona_for_user(db: Session, user_id: object):
+    persona_id = resolve_persona_uuid_for_user(db, user_id)
+    return (
+        db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+        if persona_id
+        else None
+    )
+
+
+def _resolve_academy_account(db: Session, persona: models.Persona):
+    from backend.models_auth import Usuario
+
+    return db.query(Usuario).filter(Usuario.id == persona.id).first()
+
+
+def _enrollment_matches_current_user(db: Session, current_user, enrollment) -> bool:
+    current_identity = coerce_user_id(getattr(current_user, "id", None))
+    enrollment_user_id = coerce_user_id(getattr(enrollment, "user_id", None))
+    if current_identity is not None and str(enrollment_user_id) == str(current_identity):
+        return True
+    persona = _resolve_persona_for_user(db, current_identity)
+    return bool(persona and getattr(enrollment, "persona_id", None) == persona.id)
+
+
 @router.get("/courses/", response_model=List[schemas.Course])
 def read_courses(
     skip: int = 0,
@@ -200,7 +226,7 @@ def submit_assessment_direct(
     enrollment = (
         db.query(models.Enrollment)
         .filter(
-            models.Enrollment.user_id == current_user.id,
+            _enrollment_identity_filter(getattr(current_user, "id", None)),
             models.Enrollment.course_id == assessment.course_id,
         )
         .first()
@@ -312,7 +338,7 @@ def record_bulk_attendance(
         )
 
         if enrollment:
-            persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+            persona = _resolve_persona_for_user(db, getattr(current_user, "id", None))
             db_attendance = models.CourseAttendance(
                 enrollment_id=record.enrollment_id,
                 status=record.status,
@@ -422,10 +448,9 @@ def create_enrollment(
     from backend.core.permissions import get_user_effective_permissions
 
     user_id = coerce_user_id(getattr(current_user, "id", 0))
+    requested_user_id = coerce_user_id(enrollment.user_id)
     # Obtener role correcto tanto en auth v1 como v2
-    role = normalize_role(str(getattr(current_user, "role", "") or ""))
-    if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
-        role = normalize_role(current_user.rol_plataforma.nombre)
+    role = _current_role(current_user)
 
     # Verificar access_level usando el modelo correcto (academy_courses)
     curso = db.query(Curso).filter(Curso.id == enrollment.course_id).first()
@@ -449,8 +474,8 @@ def create_enrollment(
     # access == "open": cualquier registrado con academy:read puede inscribirse
 
     if (
-        normalize_role(str(current_user.role)) != "admin"
-        and str(user_id) != str(enrollment.user_id)
+        role != "admin"
+        and str(user_id) != str(requested_user_id)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -474,9 +499,7 @@ def check_in_attendance(
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     enrollment = crud.get_enrollment(db, enrollment_id)
-    if not enrollment or int(getattr(enrollment, "user_id", 0)) != int(
-        getattr(current_user, "id", 0)
-    ):
+    if not enrollment or not _enrollment_matches_current_user(db, current_user, enrollment):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return crud.record_activity_attendance(db, enrollment_id)
 
@@ -496,8 +519,7 @@ def submit_assessment(
     assessment = crud.get_assessment(db, assessment_id)
     if not enrollment or not assessment:
         raise HTTPException(status_code=404, detail="Not found")
-    current_id = coerce_user_id(getattr(current_user, "id", 0))
-    if coerce_user_id(getattr(enrollment, "user_id", 0)) != current_id:
+    if not _enrollment_matches_current_user(db, current_user, enrollment):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     if payload.answers:
@@ -642,7 +664,7 @@ def get_user_enrollments(
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     """Obtiene las inscripciones de un usuario. Usa Matricula (UUID) si existe persona vinculada."""
-    persona = db.query(models.Persona).filter(models.Persona.user_id == coerce_user_id(user_id)).first()
+    persona = _resolve_persona_for_user(db, user_id)
     if persona:
         matriculas = (
             db.query(models.Matricula)
@@ -676,16 +698,25 @@ def list_academy_users(
     current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     """Lista usuarios de la academia con filtro opcional por rol."""
-    q = db.query(models.User)
+    from backend.models_auth import Usuario
+
+    q = db.query(Usuario)
     if role:
-        q = q.filter(models.User.role == role)
+        role_norm = normalize_role(role)
+        q = q.join(Usuario.rol_plataforma, isouter=True)
+        q = q.filter(
+            (models.func.lower(Usuario.username) == role_norm)
+            | (models.func.lower(Usuario.email) == role_norm)
+        )
     users = q.all()
     return [
         {
-            "id": u.id,
+            "id": str(u.id),
             "username": u.username,
             "email": u.email,
-            "role": u.role,
+            "role": (
+                str(getattr(getattr(u, "rol_plataforma", None), "nombre", "") or getattr(getattr(u, "platform_role", None), "role", "") or "estudiante")
+            ),
             "is_active": u.is_active,
         }
         for u in users
@@ -744,11 +775,8 @@ async def submit_assignment_file(
     enrollment = crud.get_enrollment(db, enrollment_id)
     if not enrollment:
         raise HTTPException(status_code=404, detail="Enrollment not found")
-    current_id = coerce_user_id(getattr(current_user, "id", 0))
-    if (
-        coerce_user_id(getattr(enrollment, "user_id", 0)) != current_id
-        and normalize_role(str(current_user.role)) != "admin"
-    ):
+    role = _current_role(current_user)
+    if not _enrollment_matches_current_user(db, current_user, enrollment) and role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     lesson = db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
@@ -981,30 +1009,30 @@ def get_member_academy_profile(
     current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     """Obtiene el perfil academico de un miembro del CRM."""
-    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    try:
+        persona_uuid = uuid.UUID(persona_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="persona_id invalido")
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
-    if not persona.user_id:
+    account = _resolve_academy_account(db, persona)
+    if not account:
         return {"is_linked": False, "message": "No tiene cuenta de academia vinculada"}
 
-    user_id = persona.user_id
-    enrollments = (
-        db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
-    )
+    enrollments = db.query(models.Enrollment).filter(_enrollment_identity_filter(persona.id)).all()
     certificates = (
         db.query(models.Certificate)
         .join(models.Enrollment)
-        .filter(models.Enrollment.user_id == user_id)
+        .filter(_enrollment_identity_filter(persona.id))
         .all()
     )
 
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-
     return {
         "is_linked": True,
-        "user_id": user_id,
-        "username": user.username if user else "Unknown",
+        "user_id": str(persona.id),
+        "username": getattr(account, "username", "Unknown"),
         "enrollments": enrollments,
         "certificates": certificates,
         "total_progress": (
@@ -1027,11 +1055,16 @@ def create_academy_account(
     current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     """Crea una cuenta de usuario (Academia) para un miembro del CRM."""
-    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    try:
+        persona_uuid = uuid.UUID(persona_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="persona_id invalido")
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
-    if persona.user_id:
+    existing_account = _resolve_academy_account(db, persona)
+    if existing_account:
         raise HTTPException(
             status_code=400, detail="La persona ya tiene una cuenta vinculada"
         )
@@ -1041,19 +1074,38 @@ def create_academy_account(
             status_code=400, detail="La persona debe tener un email para crear cuenta"
         )
 
-    # Crear Usuario
     from backend.core.security import get_password_hash
+    from backend.models_auth import RolPlataforma, Usuario
+    from backend.models_kernel import PlatformRole as PlatformRoleEnum
+    from backend.models_kernel import PlatformRoleDefinition
 
-    new_user = models.User(
+    existing_auth_user = db.query(Usuario).filter(Usuario.id == persona.id).first()
+    if existing_auth_user:
+        raise HTTPException(status_code=400, detail="La persona ya tiene una cuenta vinculada")
+
+    lector_role = (
+        db.query(PlatformRoleDefinition)
+        .filter(PlatformRoleDefinition.role == PlatformRoleEnum.LECTOR)
+        .first()
+    )
+    legacy_role = (
+        db.query(RolPlataforma)
+        .filter(RolPlataforma.nombre.ilike("lector"))
+        .first()
+    )
+
+    new_user = Usuario(
+        id=persona.id,
+        sede_id=persona.sede_id or getattr(current_user, "sede_id", None) or db.query(models.Sede.id).first()[0],
         username=persona.email.split("@")[0],
         email=persona.email,
         password_hash=get_password_hash(payload.password),
-        role="estudiante",
+        platform_role_id=lector_role.id if lector_role else None,
+        rol_plataforma_id=legacy_role.id if legacy_role else None,
+        is_active=True,
+        is_email_verified=bool(persona.email),
     )
     db.add(new_user)
-    db.flush()
-
-    persona.user_id = new_user.id
     db.commit()
 
     record_admin_action(
@@ -1065,7 +1117,7 @@ def create_academy_account(
         metadata={"persona_id": persona_id},
     )
 
-    return {"status": "success", "user_id": new_user.id, "username": new_user.username}
+    return {"status": "success", "user_id": str(new_user.id), "username": new_user.username}
 
 
 @router.get("/forum/threads", response_model=List[schemas.ForumThread])
@@ -1082,9 +1134,11 @@ def create_thread(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    persona = _resolve_persona_for_user(db, getattr(current_user, "id", None))
+    if not persona:
+        raise HTTPException(status_code=400, detail="No se pudo resolver la persona del autor")
     thread_data = schemas.ForumThreadCreate(
-        **thread.model_dump(), author_persona_id=str(persona.id) if persona else ""
+        **thread.model_dump(), author_persona_id=str(persona.id)
     )
     return crud.create_forum_thread(db, thread_data)
 
@@ -1167,14 +1221,17 @@ def get_course_students_admin(
     )
     result = []
     for enrollment in enrollments:
-        user = (
-            db.query(models.User).filter(models.User.id == enrollment.user_id).first()
+        persona = (
+            db.query(models.Persona).filter(models.Persona.id == enrollment.persona_id).first()
+            if getattr(enrollment, "persona_id", None)
+            else _resolve_persona_for_user(db, getattr(enrollment, "user_id", None))
         )
+        account = _resolve_academy_account(db, persona) if persona else None
         result.append(
             {
                 "id": enrollment.id,
-                "user_id": enrollment.user_id,
-                "username": user.username if user else "N/A",
+                "user_id": str(enrollment.persona_id) if enrollment.persona_id else enrollment.user_id,
+                "username": getattr(account, "username", "N/A") if account else "N/A",
                 "status": enrollment.status,
                 "progress_percent": enrollment.progress_percent,
                 "approved": enrollment.approved,
@@ -1246,28 +1303,6 @@ def create_assessment_admin(
         "title": assessment.title,
         "min_score": float(assessment.min_score),
     }
-
-
-# ═══════════════════════════════════════════════════════════════════
-# REDIRECTS — legacy academy → Academy 2.0
-# ═══════════════════════════════════════════════════════════════════
-from fastapi.responses import RedirectResponse  # noqa: E402
-
-
-@router.get("/courses/legacy")
-def _redirect_academy_courses():
-    return RedirectResponse(url="/api/v2/academy/courses", status_code=307)
-
-
-@router.get("/courses/legacy/{course_id}")
-def _redirect_academy_course(course_id: int):
-    return RedirectResponse(url=f"/api/v2/academy/courses/{course_id}", status_code=307)
-
-
-@router.post("/enrollments/legacy")
-def _redirect_academy_enrollments():
-    return RedirectResponse(url="/api/v2/academy/enrollments", status_code=307)
-
 
 
 @router.patch("/admin/assessments/{assessment_id}")

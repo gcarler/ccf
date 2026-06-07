@@ -18,6 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from backend.core.database import Base, SessionLocal
+from backend.crud.crm import resolve_persona_id_for_user
 
 log = logging.getLogger(__name__)
 
@@ -82,7 +83,8 @@ def create_conversation(
     db = SessionLocal()
     try:
         from backend.models_crm import Persona
-        persona = db.query(Persona).filter(Persona.user_id == user_id).first()
+        persona_id = resolve_persona_id_for_user(db, user_id)
+        persona = db.query(Persona).filter(Persona.id == persona_id).first() if persona_id else None
         conv = AgentConversation(
             persona_id=persona.id if persona else None,
             user_id=user_id,

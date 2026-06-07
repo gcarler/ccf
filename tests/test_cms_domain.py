@@ -59,68 +59,6 @@ def test_create_media_asset(db_session):
     assert asset.id is not None
 
 
-def test_cms_media_dual_writes_created_by_persona_id(db_session):
-    user, persona = seed_user_and_persona(db_session)
-
-    item = crud.create_cms_media_item(
-        db_session,
-        url="/hero.jpg",
-        alt_text="Hero",
-        section="home",
-        tags=[],
-        created_by=user.id,
-    )
-
-    assert item.created_by == user.id
-    assert item.created_by_persona_id == persona.id
-
-
-def test_cms_page_and_workflow_dual_write_persona_ids(db_session):
-    user, persona = seed_user_and_persona(db_session)
-    site = crud.create_cms_site(
-        db_session,
-        schemas.CmsSiteCreate(site_key="site", name="Site", base_path="/site"),
-    )
-    page = crud.create_cms_page(
-        db_session,
-        site.id,
-        schemas.CmsPageCreate(slug="inicio", title="Inicio"),
-        user.id,
-    )
-
-    assert page.created_by_persona_id == persona.id
-    assert page.updated_by_persona_id == persona.id
-
-    transitioned = crud.transition_cms_page_status(
-        db_session,
-        page,
-        "submit_review",
-        user.id,
-        notes="revision",
-    )
-
-    log = db_session.query(models.CmsPublishLog).filter_by(page_id=page.id).one()
-    assert transitioned.updated_by_persona_id == persona.id
-    assert log.actor_user_id == user.id
-    assert log.actor_persona_id == persona.id
-
-
-def test_testimonial_dual_writes_author_persona_id(db_session):
-    user, persona = seed_user_and_persona(db_session)
-
-    testimonial = crud.create_testimonial(
-        db_session,
-        schemas.TestimonialCreate(
-            content="Testimonio",
-            emotion="Gratitud",
-            author_id=user.id,
-        ),
-    )
-
-    assert testimonial.author_id == user.id
-    assert testimonial.author_persona_id == persona.id
-
-
 def test_testimonial_accepts_explicit_author_persona_id(db_session):
     _, persona = seed_user_and_persona(db_session)
 

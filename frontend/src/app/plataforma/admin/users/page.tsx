@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { 
+import {
     Users, Shield, UserPlus,
     ShieldCheck, Zap,
     Trash2, CheckCircle2, XCircle,
-    Key, Star
+    Key, Star, Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -23,6 +23,7 @@ export default function AdminUsersPage() {
     const { addToast } = useToast();
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [provisioning, setProvisioning] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedUser] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -44,6 +45,22 @@ export default function AdminUsersPage() {
         fetchUsers();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
+
+    const handleBulkProvision = async () => {
+        setProvisioning(true);
+        try {
+            const result = await apiFetch<any>('/admin/provision-accounts', {
+                method: 'POST',
+                token,
+            });
+            addToast(result.message, "success");
+            fetchUsers();
+        } catch (err) {
+            addToast("Error al provisionar cuentas", "error");
+        } finally {
+            setProvisioning(false);
+        }
+    };
 
     const handleUpdateUser = async (userId: string, payload: any) => {
         try {
@@ -99,9 +116,19 @@ export default function AdminUsersPage() {
                 breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Gestión de Accesos', icon: Users }]}
                 onSearch={setSearchTerm}
                 rightActions={
-                    <button className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
-                        <UserPlus size={14} /> Nuevo Acceso
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleBulkProvision}
+                            disabled={provisioning}
+                            className="flex items-center gap-2 px-3 py-2.5 bg-emerald-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-emerald-500/20 hover:bg-emerald-500 active:scale-95 transition-all disabled:opacity-50"
+                        >
+                            {provisioning ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+                            {provisioning ? 'Provisionando...' : 'Provisionar Todos'}
+                        </button>
+                        <button className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                            <UserPlus size={14} /> Nuevo Acceso
+                        </button>
+                    </div>
                 }
             />
 

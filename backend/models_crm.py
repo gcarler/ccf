@@ -645,7 +645,7 @@ class CrmTask(Base):
     assignee_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
     assignee_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # DEPRECATED: usar assignee_id (UUID→personas.id)
     due_date = Column(DateTime(timezone=True), nullable=True)
-    status = Column(String(20), default="pending")
+    status = Column(String(20), default="pending", index=True)
     priority = Column(String(20), default="medium")
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 

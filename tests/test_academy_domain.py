@@ -1,20 +1,16 @@
 import pytest
 
 from backend import crud, models, schemas
-from backend.core.security import get_password_hash
+from tests.conftest import seed_user_with_role_v2
 
 
 def seed_user(db_session, email="student@example.com"):
-    user = models.User(
-        username="student",
+    user, persona, _ = seed_user_with_role_v2(
+        db_session,
+        role_name="estudiante",
         email=email,
-        password_hash=get_password_hash("secret123"),
-        role="estudiante",
-        is_active=True,
+        password="secret123",
     )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
     return user
 
 
@@ -32,8 +28,11 @@ def seed_course(db_session, code="COURSE-1"):
 
 
 def seed_persona(db_session, user):
+    persona = db_session.query(models.Persona).filter(models.Persona.id == user.id).first()
+    if persona:
+        return persona
     persona = models.Persona(
-        user_id=user.id,
+        id=user.id,
         first_name="Student",
         last_name="Academy",
         email=user.email,
@@ -47,7 +46,7 @@ def seed_persona(db_session, user):
 def test_create_enrollment_prevents_duplicates(db_session):
     user = seed_user(db_session)
     course = seed_course(db_session)
-    payload = schemas.EnrollmentCreate(user_id=user.id, course_id=course.id)
+    payload = schemas.EnrollmentCreate(user_id=str(user.id), course_id=course.id)
     crud.create_enrollment(db_session, payload)
 
     with pytest.raises(ValueError):
@@ -58,18 +57,18 @@ def test_create_enrollment_dual_writes_persona_id(db_session):
     user = seed_user(db_session)
     persona = seed_persona(db_session, user)
     course = seed_course(db_session)
-    payload = schemas.EnrollmentCreate(user_id=user.id, course_id=course.id)
+    payload = schemas.EnrollmentCreate(user_id=str(user.id), course_id=course.id)
 
     enrollment = crud.create_enrollment(db_session, payload)
 
-    assert enrollment.user_id == user.id
+    assert enrollment.user_id is None
     assert enrollment.persona_id == persona.id
 
     log = db_session.query(models.AcademyActivityLog).filter_by(
         event_type="enrollment",
         course_id=course.id,
     ).one()
-    assert log.user_id == user.id
+    assert log.user_id is None
     assert log.persona_id == persona.id
 
 
@@ -96,13 +95,13 @@ def test_lesson_progress_dual_writes_and_updates_enrollment_by_persona(db_sessio
 
     progress = crud.update_lesson_progress(
         db_session,
-        user_id=user.id,
+        user_id=str(user.id),
         lesson_id=lesson.id,
         progress_percent=100,
         last_position=45,
     )
 
-    assert progress.user_id == user.id
+    assert progress.user_id == str(user.id)
     assert progress.persona_id == persona.id
     db_session.refresh(enrollment)
     assert enrollment.progress_percent == 100
@@ -112,7 +111,8 @@ def test_issue_pending_certificates(db_session):
     user = seed_user(db_session)
     course = seed_course(db_session, code="COURSE-2")
     enrollment = models.Enrollment(
-        user_id=user.id,
+        user_id=None,
+        persona_id=seed_persona(db_session, user).id,
         course_id=course.id,
         status="completed",
         approved=True,
@@ -130,7 +130,7 @@ def test_issue_pending_certificates(db_session):
 def test_pilot_readiness_returns_checklist(db_session):
     user = seed_user(db_session, email="other@example.com")
     course = seed_course(db_session, code="COURSE-3")
-    enrollment = models.Enrollment(user_id=user.id, course_id=course.id)
+    enrollment = models.Enrollment(user_id=None, persona_id=seed_persona(db_session, user).id, course_id=course.id)
     db_session.add(enrollment)
     db_session.commit()
 

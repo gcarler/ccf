@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from backend import crud, models, schemas
 from backend.auth import require_pastor_or_admin
 from backend.core.database import get_db
+from backend.crud.crm import resolve_persona_id_for_user
 
 router = APIRouter(tags=["CRM"])
 
@@ -44,7 +45,8 @@ def my_ministry_profile(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Perfil ministerial del usuario autenticado."""
-    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    persona_id = resolve_persona_id_for_user(db, current_user.id)
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first() if persona_id else None
     if not persona:
         raise HTTPException(status_code=404, detail="No tienes un perfil ministerial vinculado")
     return schemas.PersonaResponse.model_validate(persona)

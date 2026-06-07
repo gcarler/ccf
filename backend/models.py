@@ -38,7 +38,7 @@ from backend.models_crm import (
     PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
     VolunteerShift, VolunteerSkill, member_volunteer_skills)
 
-# Projects (legacy English design — used by crud/projects.py)
+# Projects (canonical)
 from backend.models_projects import (
     Project, ProjectActivityLog, ProjectAttachment, ProjectComment,
     ProjectDocument, ProjectInboxState, ProjectMilestone, ProjectPhase,
@@ -80,10 +80,7 @@ from backend.models_auth import (
     RecordatorioUsuario, RolPlataforma, TokenResetContrasena,
     TokenSesion, TokenVerificacionEmail, Usuario, UsuarioRolModulo)
 
-# Project v2 — WBS, Critical Path & Digital Twins
-from backend.models_proyectos import (
-    ComentarioTarea, DependenciaTarea, DocumentoProyecto,
-    EquipoProyecto, Proyecto, TareaProyecto)
+# Project legacy aliases removed; canonical projects live in models_projects.
 
 # Agenda — Calendario Unificado, Recursos, Participantes
 from backend.models_agenda import (
@@ -118,4 +115,3 @@ CellGroup = GrupoEvangelismo
 CellGroupMember = ParticipanteGrupo
 CellGroupSession = SesionGrupo
 CellGroupAttendance = Asistencia
-

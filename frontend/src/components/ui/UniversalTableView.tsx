@@ -34,7 +34,10 @@ export interface TableColumn<T> {
     width?: string;
     sortable?: boolean;
     hidden?: boolean;
+    editable?: boolean;  // new: per-column override for editability
     render?: (value: any, item: T) => React.ReactNode;
+    /** Optional: transform the display value (e.g. combine fields). When set, the column shows this value but editing still writes to `key`. */
+    displayValue?: (item: T) => string;
 }
 
 interface UniversalTableViewProps<T> {
@@ -45,7 +48,7 @@ interface UniversalTableViewProps<T> {
     viewName?: string;
     onRowClick?: (item: T) => void;
     onAddItem?: (groupValue?: string) => void;
-    onUpdateItem?: (id: string, field: keyof T, value: any) => void;
+    onUpdateItem?: (id: string | number, field: string, value: any) => Promise<void> | void;
     isLoading?: boolean;
     emptyMessage?: string;
     renderDetailPanel?: (item: T, onClose: () => void) => React.ReactNode;
@@ -152,7 +155,7 @@ const GROUP_ROW_ID_PREFIX = '__group__';
 
 export default function UniversalTableView<T extends { id: string | number }>({
     data, columns, groupBy, onRowClick, onAddItem,
-    isLoading, emptyMessage = 'No hay registros para mostrar',
+    onUpdateItem, isLoading, emptyMessage = 'No hay registros para mostrar',
     renderDetailPanel,
 }: UniversalTableViewProps<T>) {
     const gridRef = useRef<AgGridReact>(null);
@@ -183,38 +186,73 @@ export default function UniversalTableView<T extends { id: string | number }>({
         return columns
             .filter(c => !c.hidden && !hiddenCols.has(String(c.key)))
             .map((col): ColDef => {
+                const field = String(col.key);
                 const base: ColDef = {
-                    field: String(col.key),
+                    field,
                     headerName: col.label,
                     width: col.width ? parseInt(col.width) : undefined,
                     flex: col.width ? undefined : 1,
                     minWidth: 80,
                     resizable: true,
                     sortable: col.sortable !== false,
-                    filter: true,
-                    editable: false,
+                    filter: 'agTextColumnFilter',
                 };
 
+                // Editable logic:
+                // A column is editable when it has an onUpdateItem handler AND is not explicitly disabled.
+                // Columns with custom render CAN be editable — the render is just visual (like Airtable).
+                // The __isGroup synthetic column is never editable.
+                const isExplicitlyDisabled = col.editable === false;
+                const isGroupRow = field === '__isGroup'; // synthetic group header rows – never editable
+                const canEdit = !isExplicitlyDisabled && !isGroupRow && !!onUpdateItem;
+
+                // If there's a custom render, use it for display
                 if (col.render) {
                     const renderFn = col.render;
                     base.cellRenderer = ({ value, data: rowData }: any) => {
                         if (rowData?.__isGroup) return null;
                         return <>{renderFn(value, rowData as T)}</>;
                     };
-                    return base;
+                    // But still allow editing if not disabled
+                    if (canEdit) {
+                        base.editable = true;
+                        base.singleClickEdit = true;
+                        base.cellEditor = 'agTextCellEditor';
+                        base.valueSetter = (params: any) => {
+                            if (params.oldValue === params.newValue) return false;
+                            onUpdateItem(params.data.id, field, params.newValue);
+                            return true;
+                        };
+                    } else {
+                        base.editable = false;
+                    }
+                } else if (canEdit) {
+                    base.editable = true;
+                    base.singleClickEdit = true;
+                    base.cellEditor = 'agTextCellEditor';
+                    base.valueSetter = (params: any) => {
+                        if (params.oldValue === params.newValue) return false;
+                        onUpdateItem(params.data.id, field, params.newValue);
+                        return true;
+                    };
                 }
 
-                switch (col.type) {
-                    case 'status':   return { ...base, cellRenderer: StatusCellRenderer };
-                    case 'priority': return { ...base, cellRenderer: PriorityCellRenderer };
-                    case 'date':     return { ...base, cellRenderer: DateCellRenderer };
-                    case 'user':     return { ...base, cellRenderer: UserCellRenderer };
-                    case 'id':       return { ...base, cellRenderer: IdCellRenderer };
-                    case 'progress': return { ...base, cellRenderer: ProgressCellRenderer };
-                    default:         return { ...base, cellStyle: { fontSize: '13px', fontWeight: '500' } };
+                // Apply default cell renderers only for non-custom-render columns
+                if (!col.render) {
+                    switch (col.type) {
+                        case 'status':   base.cellRenderer = StatusCellRenderer; break;
+                        case 'priority': base.cellRenderer = PriorityCellRenderer; break;
+                        case 'date':     base.cellRenderer = DateCellRenderer; break;
+                        case 'user':     base.cellRenderer = UserCellRenderer; break;
+                        case 'id':       base.cellRenderer = IdCellRenderer; break;
+                        case 'progress': base.cellRenderer = ProgressCellRenderer; break;
+                        default:         base.cellStyle = { fontSize: '13px', fontWeight: '500' }; break;
+                    }
                 }
+                return base;
             });
-    }, [columns, hiddenCols]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [columns, hiddenCols, onUpdateItem]);
 
     // Handle groupBy by pre-processing rows
     const rowData = useMemo(() => {
@@ -351,9 +389,12 @@ export default function UniversalTableView<T extends { id: string | number }>({
                         fullWidthCellRenderer={groupBy ? fullWidthCellRenderer : undefined}
                         onRowClicked={handleRowClick}
                         rowStyle={{ cursor: onRowClick ? 'pointer' : 'default' }}
-                        suppressCellFocus
                         animateRows
                         enableCellTextSelection
+                        singleClickEdit={!!onUpdateItem}
+                        stopEditingWhenCellsLoseFocus={true}
+                        enterNavigatesVertically={true}
+                        enterNavigatesVerticallyAfterEdit={true}
                     />
                 )}
             </div>

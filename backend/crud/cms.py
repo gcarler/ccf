@@ -10,32 +10,12 @@ from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend.content_defaults import PAGE_CONTENT_DEFAULTS
 from backend.crud._utils import _utcnow
+from backend.crud.crm import resolve_persona_id_for_user as resolve_persona_uuid_for_user
 
 
 def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
-    if user_id is None:
-        return None
-    try:
-        persona_uuid = uuid.UUID(str(user_id))
-    except (TypeError, ValueError):
-        persona_uuid = None
-    if persona_uuid:
-        persona = (
-            db.query(models.Persona.id)
-            .filter(models.Persona.id == persona_uuid)
-            .first()
-        )
-        return persona[0] if persona else None
-    try:
-        legacy_user_id = int(user_id)
-    except (TypeError, ValueError):
-        return None
-    persona = (
-        db.query(models.Persona.id)
-        .filter(models.Persona.user_id == legacy_user_id)
-        .first()
-    )
-    return persona[0] if persona else None
+    persona_id = resolve_persona_uuid_for_user(db, user_id)
+    return persona_id
 
 
 # ── Page Content ───────────────────────────────────────

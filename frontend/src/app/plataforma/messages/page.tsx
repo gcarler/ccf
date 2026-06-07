@@ -20,7 +20,7 @@ UserPlus
 import React,{ useCallback,useEffect,useRef,useState } from "react";
 
 interface SearchedUser {
-    id: number;
+    id: string;
     username: string;
     email: string;
     avatar_url: string | null;
@@ -57,7 +57,7 @@ export default function MessagesPage() {
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [conversationFilter, setConversationFilter] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
-    const userId = user?.id;
+    const userId = user?.id ? String(user.id) : "";
     const inputRef = useRef<HTMLInputElement>(null);
 
     // ── New conversation drawer ──────────────────────────────────────────
@@ -169,7 +169,7 @@ export default function MessagesPage() {
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, []);
 
-    const handleCreateConversation = async (participantId: number) => {
+    const handleCreateConversation = async (participantId: string) => {
         if (!token) return;
         setCreatingConv(true);
         try {
@@ -489,7 +489,7 @@ export default function MessagesPage() {
                             searchResults.map((u) => (
                                 <button
                                     key={u.id}
-                                    onClick={() => handleCreateConversation(u.id)}
+                                    onClick={() => handleCreateConversation(String(u.id))}
                                     disabled={creatingConv}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50 text-left"
                                 >

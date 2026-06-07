@@ -61,13 +61,13 @@ def _get_persona_or_404(db: Session, persona_ref: str, user_sede: Optional[int] 
         persona_uuid = uuid.UUID(str(persona_ref))
         persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
     except (TypeError, ValueError):
-        persona = None
-        if str(persona_ref).isdigit():
-            persona = (
-                db.query(models.Persona)
-                .filter(models.Persona.user_id == int(str(persona_ref)))
-                .first()
-            )
+        from backend.crud.crm import resolve_persona_id_for_user
+        persona_id = resolve_persona_id_for_user(db, persona_ref)
+        persona = (
+            db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+            if persona_id
+            else None
+        )
 
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
@@ -1713,24 +1713,3 @@ def export_newsletter_leads_csv(
         )
 
     return {"rows": rows, "count": len(rows)}
-
-
-# ═══════════════════════════════════════════════════════════════════
-# REDIRECTS — legacy consolidation → CRM Core 2.0
-# ═══════════════════════════════════════════════════════════════════
-from fastapi.responses import RedirectResponse  # noqa: E402
-
-
-@router.get("/consolidation/cases/legacy")
-def _redirect_consolidation_cases():
-    return RedirectResponse(url="/api/v2/crm/casos", status_code=307)
-
-
-@router.get("/consolidation/cases/legacy/{case_id}")
-def _redirect_consolidation_case(case_id: str):
-    return RedirectResponse(url=f"/api/v2/crm/casos/{case_id}", status_code=307)
-
-
-@router.post("/consolidation/cases/legacy")
-def _redirect_create_consolidation_case():
-    return RedirectResponse(url="/api/v2/crm/casos", status_code=307)

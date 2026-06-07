@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.models_shared import _utcnow
@@ -1177,3 +1178,95 @@ def list_users_with_roles(
             ],
         })
     return result
+
+
+# ── PROVISIONAMIENTO MASIVO DE CUENTAS ─────────────────────────────────────
+
+
+@router.post("/provision-accounts", response_model=Dict[str, Any])
+def provision_personas_sin_cuenta(
+    db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
+):
+    """Crea cuentas de plataforma para todas las personas con email que aún no tienen auth_user.
+    - username = prefijo del email
+    - password por defecto = 1234567
+    - rol = LECTOR
+    """
+    from backend.core.permissions import hash_password
+    from backend.models_auth import Usuario
+    from backend.models_kernel import PlatformRoleDefinition, PlatformRole
+
+    lector = db.query(PlatformRoleDefinition).filter(
+        PlatformRoleDefinition.role == PlatformRole.LECTOR
+    ).first()
+
+    sede = db.query(models.Sede).order_by(models.Sede.nombre).first()
+    if not sede:
+        raise HTTPException(status_code=500, detail="No hay sedes configuradas")
+
+    rows = db.execute(
+        text("""
+            SELECT p.id, p.email, p.nombre_completo, p.first_name, p.last_name
+            FROM personas p
+            WHERE (p.email IS NOT NULL AND p.email != '')
+              AND NOT EXISTS (SELECT 1 FROM auth_users u WHERE u.id = p.id)
+            ORDER BY p.created_at ASC
+        """)
+    ).fetchall()
+
+    created = 0
+    skipped = 0
+    errors = []
+
+    for row in rows:
+        pid, email, full_name, first_name, last_name = row
+        email_prefix = email.split("@")[0].lower().replace(".", "_").replace("-", "_")
+        base_username = email_prefix[:60]
+        username = base_username
+
+        attempt = 0
+        while True:
+            existing = db.execute(
+                text("SELECT 1 FROM auth_users WHERE username = :u LIMIT 1"),
+                {"u": username},
+            ).scalar()
+            if not existing:
+                break
+            attempt += 1
+            username = f"{base_username[:55]}_{attempt}"
+
+        if db.execute(
+            text("SELECT 1 FROM auth_users WHERE email = :e LIMIT 1"),
+            {"e": email},
+        ).scalar():
+            skipped += 1
+            continue
+
+        try:
+            usuario = Usuario(
+                id=pid,
+                sede_id=sede.id,
+                username=username,
+                email=email,
+                password_hash=hash_password("1234567"),
+                platform_role_id=lector.id if lector else None,
+                is_active=True,
+                is_email_verified=False,
+            )
+            db.add(usuario)
+            db.flush()
+            created += 1
+        except Exception as e:
+            db.rollback()
+            skipped += 1
+            errors.append({"email": email, "error": str(e)})
+            continue
+
+    db.commit()
+    return {
+        "created": created,
+        "skipped": skipped,
+        "errors": errors,
+        "message": f"{created} cuentas creadas. {skipped} omitidas.",
+    }

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import Enum
+from uuid import UUID
 from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -87,6 +88,7 @@ class AgendaEventCreate(AgendaEventBase):
 
 class AgendaEvent(AgendaEventBase):
     id: int
+    created_by_persona_id: Optional[UUID] = None
     created_by_user_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime

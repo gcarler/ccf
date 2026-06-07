@@ -29,21 +29,10 @@ def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
     try:
         persona_uuid = uuid.UUID(str(user_id))
     except (TypeError, ValueError, AttributeError):
-        persona_uuid = None
-    if persona_uuid:
-        persona = (
-            db.query(models.Persona.id)
-            .filter(models.Persona.id == persona_uuid)
-            .first()
-        )
-        return persona[0] if persona else None
-    try:
-        legacy_user_id = int(user_id)
-    except (TypeError, ValueError):
         return None
     persona = (
         db.query(models.Persona.id)
-        .filter(models.Persona.user_id == legacy_user_id)
+        .filter(models.Persona.id == persona_uuid)
         .first()
     )
     return persona[0] if persona else None
@@ -934,10 +923,14 @@ def get_communication_logs(db: Session, limit: int = 50):
 # ── Notifications ────────────────────────────────────────
 
 
-def get_user_notifications(db: Session, user_id: int, limit: int = 20) -> List[models.Notification]:
+def get_user_notifications(db: Session, user_id: int | str, limit: int = 20) -> List[models.Notification]:
+    notification_user_id = resolve_persona_id_for_user(db, user_id)
+    if notification_user_id is None:
+        return []
+    notification_user_key = str(notification_user_id)
     return (
         db.query(models.Notification)
-        .filter(models.Notification.user_id == user_id)
+        .filter(models.Notification.user_id == notification_user_key)
         .order_by(models.Notification.created_at.desc())
         .limit(limit)
         .all()
@@ -954,9 +947,13 @@ def mark_notification_as_read(db: Session, notification_id: int):
     return notification
 
 
-def mark_all_notifications_read(db: Session, user_id: int):
+def mark_all_notifications_read(db: Session, user_id: int | str):
+    notification_user_id = resolve_persona_id_for_user(db, user_id)
+    if notification_user_id is None:
+        return
+    notification_user_key = str(notification_user_id)
     db.query(models.Notification).filter(
-        models.Notification.user_id == user_id,
+        models.Notification.user_id == notification_user_key,
         models.Notification.is_read.is_(False),
     ).update({models.Notification.is_read: True})
     db.commit()

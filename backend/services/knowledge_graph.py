@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional, Set, cast
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.crud.crm import resolve_persona_id_for_user
 
 
 def _course_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -167,11 +168,12 @@ def build_graph_snapshot(
     for enrollment in enrollments:
         person_id = None
         if enrollment.user_id is not None:
+            persona_id = resolve_persona_id_for_user(db, enrollment.user_id)
             person = (
                 db.query(models.Persona)
-                .filter(models.Persona.user_id == enrollment.user_id)
+                .filter(models.Persona.id == persona_id)
                 .first()
-            )
+            ) if persona_id else None
             if person:
                 person_id = f"person-{person.id}"
         if person_id and f"course-{enrollment.course_id}" in seen:

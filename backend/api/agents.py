@@ -1,5 +1,4 @@
 from typing import List, Optional
-import uuid as _uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -10,39 +9,19 @@ from backend.agents.orchestrator import AgentOrchestrator
 from backend.auth import require_active_user, require_admin
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
+from backend.crud.crm import resolve_persona_id_for_user
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 analytics_router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
-def _resolve_user_id(user, db) -> int | None:
-    """Extract a stable integer user ID from current_user (legacy or auth_v2).
-
-    Legacy User has Integer .id; auth_v2 Usuario has UUID .id.
-    If the user is an auth_v2 UUID identity, we resolve via Persona.user_id.
-    """
-    if isinstance(user.id, int):
-        return user.id
-    if isinstance(user.id, (_uuid.UUID, str)):
-        # Auth v2 user: look up the legacy user_id from their Persona record
-        from backend.models_crm import Persona
-        persona = db.query(Persona).filter(Persona.id == user.id).first()
-        if persona and persona.user_id:
-            return persona.user_id
-    return None
+def _resolve_legacy_user_id(user) -> int | None:
+    return user.id if isinstance(user.id, int) else None
 
 
 def _resolve_persona_id(user, db):
-    if isinstance(user.id, (_uuid.UUID, str)):
-        from backend.models_crm import Persona
-        persona = db.query(Persona).filter(Persona.id == user.id).first()
-        return persona.id if persona else None
-    legacy_user_id = _resolve_user_id(user, db)
-    if legacy_user_id is None:
-        return None
-    from backend.models_crm import Persona
-    persona = db.query(Persona).filter(Persona.user_id == legacy_user_id).first()
-    return persona.id if persona else None
+    persona_id = resolve_persona_id_for_user(db, getattr(user, "id", None))
+    return str(persona_id) if persona_id else None
 
 
 @analytics_router.get("/summary")
@@ -354,7 +333,16 @@ def add_agent_role(agent_id: int, role: AgentRoleCreate, db=Depends(get_db), cur
     agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
     if not agent:
         raise HTTPException(404, "Agent not found")
-    new_role = AgentRole(agent_id=agent_id, role_type=role.role_type, role_value=role.role_value, context_id=role.context_id, context_type=role.context_type, is_primary=role.is_primary, created_by=_resolve_user_id(current_user, db), created_by_persona_id=_resolve_persona_id(current_user, db))
+    new_role = AgentRole(
+        agent_id=agent_id,
+        role_type=role.role_type,
+        role_value=role.role_value,
+        context_id=role.context_id,
+        context_type=role.context_type,
+        is_primary=role.is_primary,
+        created_by=_resolve_legacy_user_id(current_user),
+        created_by_persona_id=_resolve_persona_id(current_user, db),
+    )
     db.add(new_role)
     db.commit()
     db.refresh(new_role)
@@ -364,7 +352,17 @@ def add_agent_role(agent_id: int, role: AgentRoleCreate, db=Depends(get_db), cur
 @router.post("", response_model=AgentResponse)
 def create_agent(data: AgentCreate, db=Depends(get_db), current_user: models.User = Depends(require_admin)):
     code = _generate_agent_code(db)
-    agent = AgentModel(code=code, first_name=data.first_name, last_name=data.last_name, email=data.email, phone=data.phone, avatar_url=data.avatar_url, spiritual_stage=data.spiritual_stage, created_by=_resolve_user_id(current_user, db), created_by_persona_id=_resolve_persona_id(current_user, db))
+    agent = AgentModel(
+        code=code,
+        first_name=data.first_name,
+        last_name=data.last_name,
+        email=data.email,
+        phone=data.phone,
+        avatar_url=data.avatar_url,
+        spiritual_stage=data.spiritual_stage,
+        created_by=_resolve_legacy_user_id(current_user),
+        created_by_persona_id=_resolve_persona_id(current_user, db),
+    )
     db.add(agent)
     db.commit()
     db.refresh(agent)
@@ -378,7 +376,7 @@ def update_agent(agent_id: int, data: AgentUpdate, db=Depends(get_db), current_u
         raise HTTPException(404, "Agent not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(agent, field, value)
-    agent.updated_by = _resolve_user_id(current_user, db)
+    agent.updated_by = _resolve_legacy_user_id(current_user)
     agent.updated_by_persona_id = _resolve_persona_id(current_user, db)
     db.commit()
     db.refresh(agent)
@@ -392,10 +390,18 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
         raise HTTPException(404, "Agent not found")
     from_stage = agent.spiritual_stage
     agent.spiritual_stage = data.to_stage
-    agent.updated_by = _resolve_user_id(current_user, db)
+    agent.updated_by = _resolve_legacy_user_id(current_user)
     actor_persona_id = _resolve_persona_id(current_user, db)
     agent.updated_by_persona_id = actor_persona_id
-    journey = AgentJourney(agent_id=agent_id, from_stage=from_stage, to_stage=data.to_stage, reason=data.reason, triggered_by="manual", triggered_by_id=_resolve_user_id(current_user, db), triggered_by_persona_id=actor_persona_id)
+    journey = AgentJourney(
+        agent_id=agent_id,
+        from_stage=from_stage,
+        to_stage=data.to_stage,
+        reason=data.reason,
+        triggered_by="manual",
+        triggered_by_id=_resolve_legacy_user_id(current_user),
+        triggered_by_persona_id=actor_persona_id,
+    )
     db.add(journey)
     db.commit()
     return {"from": from_stage, "to": data.to_stage, "agent_id": agent_id}

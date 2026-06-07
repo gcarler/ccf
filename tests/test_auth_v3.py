@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.core.security import get_password_hash
+from backend.api.auth_v3 import _build_public_welcome_redirect
 from backend.models_auth import Usuario, RolPlataforma, TokenSesion
 
 
@@ -187,6 +188,17 @@ class TestAuthV3Flow:
         assert response.status_code == 200
         data = response.json()
         assert data["is_gmail"] is True
+
+    def test_welcome_redirect_builder(self):
+        url = _build_public_welcome_redirect(
+            "https://elfarocc.tech/",
+            name="G. Carler",
+            email="gscarler@gmail.com",
+        )
+        assert url.startswith("https://elfarocc.tech/bienvenida?")
+        assert "reason=no_account" in url
+        assert "name=G.+Carler" in url
+        assert "email=gscarler%40gmail.com" in url
 
 
 class TestAuthV1V3Compat:

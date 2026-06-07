@@ -4,53 +4,23 @@ import datetime as dt
 import uuid
 from typing import Optional
 
-from sqlalchemy import func, or_
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from backend import models, schemas
 from backend.crud._utils import _utcnow
+from backend.crud.crm import resolve_persona_id_for_user as resolve_persona_uuid_for_user
 
 
 def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
-    if user_id is None:
-        return None
-    try:
-        persona_uuid = uuid.UUID(str(user_id))
-    except (TypeError, ValueError, AttributeError):
-        persona_uuid = None
-    if persona_uuid:
-        persona = (
-            db.query(models.Persona.id)
-            .filter(models.Persona.id == persona_uuid)
-            .first()
-        )
-        return persona[0] if persona else None
-    try:
-        legacy_user_id = int(user_id)
-    except (TypeError, ValueError):
-        return None
-    persona = (
-        db.query(models.Persona.id)
-        .filter(models.Persona.user_id == legacy_user_id)
-        .first()
-    )
-    return persona[0] if persona else None
+    return resolve_persona_uuid_for_user(db, user_id)
 
 
 def _identity_conditions(db: Session, model, user_id: int | str | None):
     persona_id = resolve_persona_id_for_user(db, user_id)
-    try:
-        legacy_user_id = int(user_id) if user_id is not None else None
-    except (TypeError, ValueError):
-        legacy_user_id = None
-    conditions = []
-    if legacy_user_id is not None:
-        conditions.append(model.user_id == legacy_user_id)
     if persona_id is not None:
-        conditions.append(model.persona_id == persona_id)
-    if not conditions:
-        conditions.append(model.user_id == user_id)
-    return or_(*conditions)
+        return model.persona_id == persona_id
+    return model.user_id == user_id
 
 # ── Courses ────────────────────────────────────────────
 
@@ -157,6 +127,9 @@ def get_enrollments_by_user(db: Session, user_id: int):
 
 def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> models.Enrollment:
     persona_id = resolve_persona_id_for_user(db, enrollment.user_id)
+    if persona_id is None:
+        raise ValueError("No se pudo resolver la identidad del estudiante")
+
     existing = (
         db.query(models.Enrollment)
         .filter(
@@ -178,7 +151,7 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
 
     try:
         row = models.Enrollment(
-            user_id=enrollment.user_id,
+            user_id=None,
             persona_id=persona_id,
             course_id=enrollment.course_id,
             access_window_end=access_end,
@@ -189,7 +162,7 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
             event_type="enrollment",
             course_id=enrollment.course_id,
             persona_id=persona_id,
-            user_id=enrollment.user_id,
+            user_id=None,
             modality=db_course.modality if db_course else None,
         )
         db.add(log)
@@ -410,7 +383,12 @@ def update_lesson_progress(
 
 
 def get_certificates_by_user(db: Session, user_id: int):
-    return db.query(models.Certificate).join(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    return (
+        db.query(models.Certificate)
+        .join(models.Enrollment)
+        .filter(_identity_conditions(db, models.Enrollment, user_id))
+        .all()
+    )
 
 
 def get_certificate_by_code(db: Session, code: str):

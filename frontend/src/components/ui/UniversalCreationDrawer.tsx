@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X, CheckSquare, FileText, Bell, LayoutDashboard, Layers,
@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import type { ProjectRecord } from '@/types/projects';
 import { RightPanel } from '@/components/ui/RightPanel';
 
-type CreationType = 'task' | 'event' | 'doc' | 'reminder' | 'whiteboard' | 'panel';
+type CreationType = 'task' | 'event' | 'project' | 'doc' | 'reminder' | 'whiteboard' | 'panel';
 
 interface Props {
     isOpen: boolean;
@@ -25,10 +25,13 @@ interface Props {
     initialType?: CreationType;
 }
 
+type CreationPreset = 'general' | 'meeting' | 'activity' | 'project' | 'evangelism' | 'consolidation';
+
 // ── Tab config ─────────────────────────────────────────────────────────────
 const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: string; activeColor?: string }[] = [
     { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' },
     { id: 'event',      label: 'Evento',       icon: Calendar,       color: 'text-emerald-500', activeColor: 'text-emerald-600 dark:text-emerald-400' },
+    { id: 'project',    label: 'Proyecto',     icon: Layers,         color: 'text-amber-500', activeColor: 'text-amber-600 dark:text-amber-400' },
     { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-blue-400' },
     { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-rose-500', activeColor: 'text-rose-600 dark:text-rose-400' },
     { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-blue-400' },
@@ -73,6 +76,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
     const [showDescription, setShowDescription] = useState(false);
     const [status, setStatus] = useState('PENDIENTE');
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+    const [generalProjectId, setGeneralProjectId] = useState<string | null>(null);
     const [priority, setPriority] = useState('normal');
     const [dueDate, setDueDate] = useState('');
     const [tags, setTags] = useState<string[]>([]);
@@ -81,6 +85,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
     const [eventDate, setEventDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
     const [eventEndDate, setEventEndDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
     const [eventLocation, setEventLocation] = useState('');
+    const [projectColor, setProjectColor] = useState('#7c3aed');
     
     // Interactivity & dropdown states
     const [showProjectDropdown, setShowProjectDropdown] = useState(false);
@@ -110,7 +115,16 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
 
     useEffect(() => {
         if (isOpen) {
-            setType(initialType);
+            const preset = initialData?.preset as CreationPreset | undefined;
+            const presetType: CreationType =
+                preset === 'project' ? 'project'
+                : preset === 'activity' ? 'task'
+                : preset === 'meeting' ? 'event'
+                : preset === 'evangelism' ? 'event'
+                : preset === 'consolidation' ? 'task'
+                : initialType;
+
+            setType(presetType);
             setTitle('');
             setDescription('');
             setShowDescription(false);
@@ -122,15 +136,25 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
             setAssignedToMe(false);
             setWhiteboardBg('grid');
             setPanelLayout('board');
+            setProjectColor('#7c3aed');
+            setEventType(
+                preset === 'meeting' ? 'Reunión'
+                : preset === 'evangelism' ? 'Celebración'
+                : preset === 'consolidation' ? 'Reunión'
+                : 'Reunión'
+            );
+            if (preset === 'activity' || preset === 'consolidation') {
+                setSelectedProjectId(null);
+            }
             if (initialData?.initialDate) {
                 setEventDate(initialData.initialDate);
                 setEventEndDate(initialData.initialDate);
             }
-            fetchProjects();
+            fetchProjects(preset);
             setTimeout(() => titleRef.current?.focus(), 100);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, initialType]);
+    }, [isOpen, initialType, initialData?.preset]);
 
     useEffect(() => {
         const closeAllDropdowns = () => {
@@ -156,16 +180,41 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
         };
     }, [showProjectDropdown, showSubmitDropdown, showEventTypeDropdown, showTagsDropdown, onClose]);
 
-    const fetchProjects = async () => {
+    const fetchProjects = async (preset?: CreationPreset) => {
         if (!token) return;
         try {
             const data = await apiFetch<ProjectRecord[]>('/projects', { token });
             setProjects(data);
-            if (data.length > 0 && !selectedProjectId) {
-                setSelectedProjectId(data[0].id);
+            const general = data.find((project) => /proyecto general|general/i.test(project.title));
+            setGeneralProjectId(general?.id ?? null);
+            if (preset === 'activity' || preset === 'consolidation') {
+                setSelectedProjectId(general?.id ?? null);
+            } else if (data.length > 0 && !selectedProjectId) {
+                setSelectedProjectId(general?.id ?? data[0].id);
             }
         } catch { }
     };
+
+    const ensureGeneralProject = useCallback(async (): Promise<string | null> => {
+        if (!token) return null;
+        if (generalProjectId) return generalProjectId;
+        const title = 'Proyecto general';
+        const created = await apiFetch<ProjectRecord>('/projects', {
+            method: 'POST',
+            token,
+            body: {
+                title,
+                description: 'Canal general para actividades sin proyecto específico',
+                status: 'planning',
+                color: '#7c3aed',
+                icon: 'layers',
+            },
+        });
+        setProjects((prev) => [created, ...prev]);
+        setGeneralProjectId(created.id);
+        setSelectedProjectId((prev) => prev ?? created.id);
+        return created.id;
+    }, [generalProjectId, token]);
 
     const handleAiWrite = async () => {
         if (!title.trim()) { toast.error('Escribe un título primero'); return; }
@@ -184,12 +233,14 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
         if (!title.trim()) return;
         setLoading(true);
         try {
+            const preset = initialData?.preset as CreationPreset | undefined;
             if (type === 'task') {
-                if (!selectedProjectId) {
+                const projectId = selectedProjectId || await ensureGeneralProject();
+                if (!projectId) {
                     toast.info('Se requiere un proyecto para crear una tarea');
                     return;
                 }
-                await apiFetch(`/projects/${selectedProjectId}/tasks`, {
+                await apiFetch(`/projects/${projectId}/tasks`, {
                     method: 'POST', token,
                     body: { title: title.trim(), description, status: 'todo', priority }
                 });
@@ -199,14 +250,29 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                     method: 'POST', token,
                     body: {
                         title: title.trim(),
-                        description,
+                        description: description || (preset === 'evangelism' ? 'Evento evangelístico' : ''),
                         start_at: new Date(eventDate).toISOString(),
                         end_at: new Date(eventEndDate).toISOString(),
-                        location: eventLocation,
+                        location: eventLocation || (preset === 'evangelism' ? 'Casa de paz' : ''),
                         is_all_day: true,
                     }
                 });
                 toast.success('Evento creado');
+            } else if (type === 'project') {
+                const created = await apiFetch<ProjectRecord>('/projects', {
+                    method: 'POST',
+                    token,
+                    body: {
+                        title: title.trim(),
+                        description: description || 'Proyecto creado desde el calendario',
+                        status: 'planning',
+                        color: projectColor,
+                        icon: preset === 'evangelism' ? 'sparkles' : preset === 'consolidation' ? 'users' : 'layers',
+                    },
+                });
+                setProjects((prev) => [created, ...prev]);
+                setSelectedProjectId(created.id);
+                toast.success('Proyecto creado');
             } else if (type === 'doc') {
                 // Endpoint referencial, depende de los docs del sistema
                 await apiFetch('/plataforma/cms/pages', {
@@ -255,7 +321,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                 {/* ── TAB BAR ─────────────────────────────── */}
                 <div className="flex items-center border-b border-slate-100 dark:border-white/5 px-2 justify-between">
                     <div className="flex items-center overflow-x-auto hide-scrollbar flex-1 mr-2 scroll-smooth">
-                        {TABS.map(tab => (
+                                        {TABS.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setType(tab.id)}
@@ -673,6 +739,46 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-slate-200 dark:border-white/10 rounded p-2 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 placeholder:text-slate-400 resize-none"
                                             />
                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ─── PROYECTO ─── */}
+                            {type === 'project' && (
+                                <div className="flex flex-col py-2">
+                                    <div className="flex items-center gap-2 px-3 pt-2 pb-3">
+                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300">
+                                            <Layers size={12} />
+                                            Proyecto
+                                            <ChevronDown size={11} />
+                                        </button>
+                                    </div>
+                                    <input
+                                        ref={titleRef as React.RefObject<HTMLInputElement>}
+                                        value={title}
+                                        onChange={e => setTitle(e.target.value)}
+                                        placeholder="Nombre del proyecto..."
+                                        className="px-3 py-1.5 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                    />
+                                    <div className="px-3 py-3 space-y-3 border-t border-slate-100 dark:border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Color</span>
+                                            <input
+                                                type="color"
+                                                value={projectColor}
+                                                onChange={(e) => setProjectColor(e.target.value)}
+                                                className="size-9 rounded-md border border-slate-200 dark:border-white/10 bg-transparent p-0"
+                                            />
+                                        </div>
+                                        <textarea
+                                            value={description}
+                                            onChange={e => setDescription(e.target.value)}
+                                            placeholder="Describe el propósito del proyecto..."
+                                            className="w-full min-h-[90px] text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                        />
+                                        <p className="text-[11px] text-slate-400 leading-snug">
+                                            Si no seleccionas un proyecto al crear una actividad, se usará el proyecto general.
+                                        </p>
                                     </div>
                                 </div>
                             )}

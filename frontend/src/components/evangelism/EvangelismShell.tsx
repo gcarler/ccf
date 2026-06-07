@@ -158,7 +158,7 @@ export default function EvangelismShell({
             onGroup={onGroup}
             onMore={onMore}
         >
-            <main className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "flex-1 overflow-hidden h-full" : "flex-1 overflow-y-auto scrollbar-thin animate-fade-in"}>
+            <main className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "flex-1 overflow-hidden h-full" : "flex-1 h-full"}>
                 {children}
             </main>
         </WorkspaceLayout>

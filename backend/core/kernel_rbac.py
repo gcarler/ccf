@@ -113,7 +113,6 @@ def _resolve_legacy_permissions(db: Session, user) -> Set[str]:
         if value == "allow":
             result.add(perm_key)
 
-    # Fallback: legacy role string
     if not result:
         role = normalize_role(getattr(user, "role", ""))
         for role_def in DEFAULT_ROLES:

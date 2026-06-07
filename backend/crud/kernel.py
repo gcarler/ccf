@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud._utils import _utcnow
+from backend.crud.crm import resolve_persona_id_for_user as resolve_persona_uuid_for_user
 
 
 def _enum_val(e):
@@ -351,8 +352,8 @@ def persona_has_permission(db: Session, persona_id: str, module: str, action: st
 
 
 def _persona_id_for_user(db: Session, user_id: int) -> Optional[str]:
-    persona = db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
-    return str(persona.id) if persona else None
+    persona_id = resolve_persona_uuid_for_user(db, user_id)
+    return str(persona_id) if persona_id else None
 
 
 def get_user_ministries(db: Session, user_id: int) -> List[dict]:

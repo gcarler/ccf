@@ -396,7 +396,6 @@ def get_user_effective_permissions(db: Session, user) -> dict:
             for k, v in override.items():
                 user_perms[k] = v if isinstance(v, str) else "allow"
 
-    # 3. Fallback: legacy role string
     if not user_perms:
         for role_def in DEFAULT_ROLES:
             if role_def["name"].lower() == role:

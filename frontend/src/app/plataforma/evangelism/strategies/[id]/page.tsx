@@ -11,7 +11,7 @@ import type {
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
-import UniversalTableView, { type TableColumn } from '@/components/ui/UniversalTableView';
+import UniversalTableView from '@/components/ui/UniversalTableView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import ViewSwitcher from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -849,38 +849,80 @@ export default function StrategyDetailPage() {
                     </div>
                 )}
 
-                {/* ── View: Table (ag-grid) ── */}
+                {/* ── View: Table (ag-grid, editable como Airtable) ── */}
                 {viewType === 'table' && (
                     <UniversalTableView
                         data={[
-                            ...((activeTab === 'groups' || activeTab === 'overview') ? groups.map(g => ({ __type: 'group' as const, ...g })) : []),
-                            ...((activeTab === 'sessions' || activeTab === 'overview') ? sessions.map(s => ({ __type: 'session' as const, ...s })) : []),
+                            ...((activeTab === 'groups' || activeTab === 'overview') ? groups.map(g => ({
+                                __type: 'group' as const,
+                                __displayType: 'Grupo',
+                                __displayName: g.name,
+                                ...g,
+                            })) : []),
+                            ...((activeTab === 'sessions' || activeTab === 'overview') ? sessions.map(s => ({
+                                __type: 'session' as const,
+                                __displayType: 'Sesión',
+                                __displayName: s.topic || `Sesión #${s.id}`,
+                                ...s,
+                            })) : []),
                         ]}
+                        onUpdateItem={async (id, field, value) => {
+                            // Find the item to know its type
+                            const allItems = [
+                                ...groups.map(g => ({ __type: 'group' as const, ...g })),
+                                ...sessions.map(s => ({ __type: 'session' as const, ...s })),
+                            ];
+                            const item = allItems.find(d => d.id === id) as any;
+                            if (!item) return;
+
+                            // Map display fields to actual model fields per type
+                            let actualField: string = field;
+                            if (field === '__displayName') {
+                                actualField = item.__type === 'session' ? 'topic' : 'name';
+                            } else if (field === '__displayType') {
+                                return; // synthetic, not editable
+                            }
+
+                            // For groups — skip editing name for now (no PUT endpoint)
+                            if (item.__type === 'group') return;
+
+                            if (item.__type === 'session') {
+                                try {
+                                    await apiFetch(`/evangelism/sessions/${id}`, {
+                                        method: 'PUT', token,
+                                        body: JSON.stringify({ [actualField]: value }),
+                                    });
+                                    fetchSessions();
+                                    toast.success('Sesión actualizada');
+                                } catch { toast.error('Error al actualizar sesión'); }
+                            }
+                        }}
                         columns={[
                             {
-                                key: '__type',
+                                key: '__displayType',
                                 label: 'Tipo',
                                 type: 'text',
                                 width: '80',
+                                editable: false,
                                 render: (v: any) => (
-                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${v === 'group' ? 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300' : 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300'}`}>
-                                        {v === 'group' ? 'Grupo' : 'Sesión'}
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300">
+                                        {v}
                                     </span>
                                 ),
                             },
                             {
-                                key: 'name',
+                                key: '__displayName',
                                 label: 'Nombre',
                                 type: 'text',
-                                render: (_v: any, item: any) => {
-                                    if (item.__type === 'group') return <span className="font-medium text-slate-900 dark:text-white">{item.name}</span>;
-                                    return <span className="text-slate-900 dark:text-white">{item.topic || `Sesión #${item.id}`}</span>;
-                                },
+                                render: (v: any) => (
+                                    <span className="font-medium text-slate-900 dark:text-white">{v}</span>
+                                ),
                             },
                             {
                                 key: 'session_date',
                                 label: 'Fecha',
                                 type: 'date',
+                                editable: false,
                                 render: (_v: any, item: any) => {
                                     if (item.__type === 'group') return <span className="text-slate-400">—</span>;
                                     return <span className="text-slate-500 dark:text-slate-400">{formatDate(item.session_date)}</span>;
@@ -890,6 +932,7 @@ export default function StrategyDetailPage() {
                                 key: 'status',
                                 label: 'Estado',
                                 type: 'status',
+                                editable: false,
                                 render: (_v: any, item: any) => {
                                     if (item.__type === 'group') return <span className="text-slate-400">Activo</span>;
                                     const bg = item.status === 'Realizada' ? '#10B98120' : '#3B82F620';
@@ -916,6 +959,7 @@ export default function StrategyDetailPage() {
                                 key: 'habilitacion',
                                 label: 'Habilitación',
                                 type: 'status',
+                                editable: false,
                                 render: (_v: any, item: any) => {
                                     if (item.__type === 'group') return <span className="text-slate-400">—</span>;
                                     return (
@@ -946,6 +990,7 @@ export default function StrategyDetailPage() {
                                 key: 'acciones',
                                 label: 'Acciones',
                                 type: 'text',
+                                editable: false,
                                 render: (_v: any, item: any) => {
                                     if (item.__type === 'group') return <span className="text-slate-400">—</span>;
                                     return (

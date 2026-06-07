@@ -38,8 +38,8 @@ export default function CrmShell({
             onSearch={onSearch}
             rightActions={rightActions}
         >
-            <main className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "flex-1 overflow-hidden h-full" : "flex-1 overflow-y-auto scrollbar-thin"}>
-                <div className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "h-full animate-fade-in" : "p-4 lg:p-4 space-y-3 animate-fade-in"}>
+            <main className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "flex-1 overflow-hidden h-full" : "flex-1 h-full"}>
+                <div className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "h-full animate-fade-in" : "p-4 lg:p-4 space-y-3 animate-fade-in h-full"}>
                     {children}
                 </div>
             </main>

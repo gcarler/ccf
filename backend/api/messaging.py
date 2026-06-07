@@ -9,6 +9,7 @@ from backend import crud, models, schemas
 from backend.auth import require_module_access, require_staff_or_admin
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
+from backend.crud.crm import resolve_persona_id_for_user
 
 
 class NotificationPayload(BaseModel):
@@ -66,8 +67,11 @@ def get_notifications(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
+    user_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
+    if user_id is None:
+        return []
     return crud.get_user_notifications(
-        db, user_id=int(getattr(current_user, "id", 0)), limit=limit
+        db, user_id=user_id, limit=limit
     )
 
 
@@ -90,7 +94,9 @@ def mark_all_read(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
-    crud.mark_all_notifications_read(db, user_id=int(getattr(current_user, "id", 0)))
+    user_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
+    if user_id is not None:
+        crud.mark_all_notifications_read(db, user_id=user_id)
     return {"status": "success"}
 
 
@@ -116,7 +122,8 @@ def messaging_send(
             persona_id=payload.persona_id,
             channel=payload.channel,
             content=payload.content,
-            leader_id=current_user.id,
+            leader_id=resolve_persona_id_for_user(db, getattr(current_user, "id", None))
+            or getattr(current_user, "id", None),
             outcome="sent",
         ),
     )

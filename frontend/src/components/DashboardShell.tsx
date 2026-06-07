@@ -373,7 +373,7 @@ export default function DashboardShell({
 
     // ── Render ──
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-transparent overflow-y-auto scrollbar-thin p-4 font-sans">
+        <div className="flex flex-col h-full bg-slate-50 dark:bg-transparent p-4 font-sans">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">

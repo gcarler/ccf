@@ -435,7 +435,7 @@ function WorkspaceLayoutInner({
                         </div>
 
                         <div className="flex-1 flex flex-col min-w-0 bg-[hsl(var(--bg-primary))] dark:bg-[#141517] shadow-[inset_1px_0_0_rgba(0,0,0,0.03)] dark:shadow-none relative z-10 border-l border-slate-100 dark:border-white/5 overflow-hidden">
-                            <div className="flex-1 overflow-hidden relative">
+                            <div className="flex-1 overflow-y-auto scrollbar-thin relative">
                                 <ErrorBoundary moduleName={displayTitle}>
                                     {children}
                                 </ErrorBoundary>

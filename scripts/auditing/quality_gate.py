@@ -9,6 +9,7 @@ from sqlalchemy import text
 REPORT_PATH = Path("test_artifacts") / "quality_report.log"
 REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
 ROOT = Path(__file__).resolve().parents[2]
+os.chdir(ROOT)
 PYTHON = sys.executable or "python3"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -98,7 +99,7 @@ def check_db_indices():
             rows = db.execute(
                 text(
                     "SELECT indexname FROM pg_indexes "
-                    "WHERE schemaname = current_schema()"
+                    "WHERE schemaname NOT IN ('pg_catalog', 'information_schema')"
                 )
             )
         else:

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import text
+from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -64,7 +64,18 @@ def get_global_calendar(
 ):
     events = []
     sede_id = get_user_sede_id(db, current_user.id)
-    agenda_events = db.query(models.AgendaEvent).all()
+    agenda_events = (
+        db.query(models.AgendaEvent)
+        .outerjoin(models.Persona, models.AgendaEvent.created_by_persona_id == models.Persona.id)
+        .filter(
+            models.AgendaEvent.deleted_at.is_(None),
+            or_(
+                models.AgendaEvent.created_by_persona_id.is_(None),
+                models.Persona.sede_id == sede_id,
+            ),
+        )
+        .all()
+    )
     for event in agenda_events:
         events.append(
             {
@@ -100,8 +111,15 @@ def get_global_calendar(
         )
     tasks = (
         db.query(models.ProjectTask)
-        .filter(models.ProjectTask.due_date.isnot(None))
-        .all()  # 🛡️ TODO: filtrar por sede_id si los proyectos son multi-sede
+        .join(models.Project, models.ProjectTask.project_id == models.Project.id)
+        .filter(
+            models.ProjectTask.due_date.isnot(None),
+            or_(
+                models.Project.sede_id.is_(None),
+                models.Project.sede_id == sede_id,
+            ),
+        )
+        .all()
     )
     for t in tasks:
         events.append(
@@ -112,6 +130,61 @@ def get_global_calendar(
                 "type": "task",
                 "color": "blue",
                 "href": f"/projects/{t.project_id}",
+            }
+        )
+
+    consolidation_cases = (
+        db.query(models.ConsolidationCase)
+        .filter(
+            models.ConsolidationCase.deleted_at.is_(None),
+            models.ConsolidationCase.next_contact_at.isnot(None),
+            or_(
+                models.ConsolidationCase.sede_id.is_(None),
+                models.ConsolidationCase.sede_id == sede_id,
+            ),
+        )
+        .all()
+    )
+    for case in consolidation_cases:
+        events.append(
+            {
+                "id": f"consolidation-case-{case.id}",
+                "title": f"Seguimiento: {case.persona.nombre_completo if case.persona else 'Caso de consolidación'}",
+                "start": case.next_contact_at.isoformat(),
+                "end": None,
+                "type": "consolidation_case",
+                "color": "orange",
+                "allDay": False,
+                "href": f"/plataforma/crm/pipeline/{case.id}",
+                "location": None,
+            }
+        )
+
+    consolidation_tasks = (
+        db.query(models.ConsolidationTask)
+        .join(models.ConsolidationCase, models.ConsolidationTask.case_id == models.ConsolidationCase.id)
+        .filter(
+            models.ConsolidationTask.due_date.isnot(None),
+            models.ConsolidationCase.deleted_at.is_(None),
+            or_(
+                models.ConsolidationCase.sede_id.is_(None),
+                models.ConsolidationCase.sede_id == sede_id,
+            ),
+        )
+        .all()
+    )
+    for task in consolidation_tasks:
+        events.append(
+            {
+                "id": f"consolidation-task-{task.id}",
+                "title": task.title,
+                "start": task.due_date.isoformat(),
+                "end": None,
+                "type": "consolidation_task",
+                "color": "fuchsia",
+                "allDay": False,
+                "href": f"/plataforma/crm/pipeline/{task.case_id}",
+                "location": None,
             }
         )
 
@@ -148,8 +221,8 @@ def get_global_calendar(
                     "title": f"🎂 {m.first_name} {m.last_name or ''} — {age} años".strip(),
                     "start": event_date.isoformat(),
                     "end": None,
-                    "type": "reminder",
-                    "color": "purple",
+                    "type": "birthday",
+                    "color": "pink",
                     "allDay": True,
                     "href": f"/crm/members/{m.id}",
                 }

@@ -1,5 +1,6 @@
 """Projects CRUD — corregido para cumplir los 3 axiomas del Kernel CCF."""
 
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
@@ -8,20 +9,15 @@ from sqlalchemy.orm import Session, selectinload
 
 from backend.models_shared import _utcnow
 from backend import models, schemas
+from backend.crud.crm import resolve_persona_id_for_user
 
 
 # ── Helper ──────────────────────────────────────────────
 
-def get_user_persona_id(db: Session, user_id: UUID) -> Optional[UUID]:
-    """Obtiene persona.id desde user_id.
-
-    En auth v1, user_id = Persona.user_id (Integer FK users.id).
-    En auth v2, current_user.id es UUID de auth_users.Usuario,
-    y Usuario.id == Persona.id (comparten el mismo UUID).
-    Por lo tanto buscamos por Persona.id directamente.
-    """
-    persona = db.query(models.Persona).filter(models.Persona.id == user_id).first()
-    return persona.id if persona else None
+def get_user_persona_id(db: Session, user_id: UUID | str | int | None) -> Optional[UUID]:
+    """Obtiene persona.id desde el identificador canónico del usuario."""
+    persona_id = resolve_persona_id_for_user(db, user_id)
+    return UUID(str(persona_id)) if persona_id else None
 
 
 # ── Projects ────────────────────────────────────────────

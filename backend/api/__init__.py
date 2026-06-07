@@ -7,7 +7,7 @@ from backend.api import (academy, academy_core, admin, agenda, agenda_core, agen
                          crm_core, dashboard, donations, evangelism, evangelism_multiplication,
                          evangelism_notifications, evangelism_rankings, evangelism_reports,
                          finance, governance,
-                         graph, kernel, messaging, prayer, projects, proyectos,
+                         graph, kernel, messaging, prayer, projects,
                          public, spiritual_life, support, system, tables, workspace)
 
 __all__ = [
@@ -42,7 +42,6 @@ __all__ = [
     "messaging",
     "prayer",
     "projects",
-    "proyectos",
     "public",
     "spiritual_life",
     "support",

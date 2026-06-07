@@ -46,7 +46,7 @@ export default function PrayerWall() {
     const tabs = ['Recientes', 'Urgentes', 'Mis Pedidos'];
 
     return (
- <div className="p-4 lg:p-4 space-y-3 w-full font-display overflow-hidden">
+ <div className="p-4 lg:p-4 space-y-3 w-full font-display overflow-y-auto scrollbar-thin">
             <style jsx global>{`
                 .ethereal-aura {
                     position: relative;

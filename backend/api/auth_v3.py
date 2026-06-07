@@ -16,6 +16,7 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
@@ -46,6 +47,14 @@ ALGORITHM = "HS256"
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _as_aware(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 def _create_access_token(user_id: str, platform_role: str, sede_id: str = "") -> str:
@@ -114,6 +123,16 @@ def _set_cookies(response: Response, access_token: str, refresh_token: str):
         samesite="lax",
         max_age=settings.refresh_token_expire_days * 86400,
     )
+
+
+def _build_public_welcome_redirect(frontend_url: str, *, name: str | None = None, email: str | None = None) -> str:
+    base = frontend_url.rstrip("/")
+    params: dict[str, str] = {"reason": "no_account"}
+    if name:
+        params["name"] = name
+    if email:
+        params["email"] = email
+    return f"{base}/bienvenida?{urlencode(params)}"
 
 
 # ─── Schemas ──────────────────────────────────────────────────────────────
@@ -251,9 +270,13 @@ def google_callback(
 
         persona = db.query(models.Persona).filter(models.Persona.email == google_email).first()
         if not persona:
-            raise HTTPException(
-                status_code=404,
-                detail="No tienes una cuenta registrada en la plataforma. Contacta a un administrador.",
+            frontend_url = getattr(settings, "frontend_url", "http://localhost:3000")
+            return RedirectResponse(
+                url=_build_public_welcome_redirect(
+                    frontend_url,
+                    name=google_user.get("name") or google_email.split("@")[0],
+                    email=google_email,
+                )
             )
 
         from backend.models_kernel import PlatformRole as PlatformRoleEnum
@@ -643,7 +666,8 @@ def refresh_token(
     if not rt:
         raise HTTPException(status_code=401, detail="Refresh token inválido")
 
-    if rt.expires_at < datetime.now(timezone.utc):
+    expires_at = _as_aware(rt.expires_at)
+    if expires_at is None or expires_at < _utcnow():
         rt.revoked = True
         db.commit()
         raise HTTPException(status_code=401, detail="Refresh token expirado")

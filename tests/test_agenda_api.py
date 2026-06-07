@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime, timezone
 
-import pytest
 from backend import models
 from tests.conftest import seed_admin_v2 as _seed_admin
 from tests.conftest import auth_headers_v2 as _auth_headers
@@ -17,7 +16,6 @@ def _seed_sede(db_session):
     return sede
 
 
-@pytest.mark.xfail(reason="AgendaEvent model lacks sede_id column; endpoint crashes")
 def test_list_agenda_events(client, db_session):
     _seed_admin(db_session)
     headers = _auth_headers(client)

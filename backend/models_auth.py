@@ -76,7 +76,7 @@ class UsuarioRolModulo(Base):
     __tablename__ = "auth_user_module_roles"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False, index=True)
     modulo = Column(String(50), nullable=False)
     rol_id = Column(UUID(as_uuid=True), ForeignKey("auth_roles.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)

@@ -27,301 +27,7 @@ def _get_user_role(user: models.User) -> str:
     return role
 
 
-
-# --- MEMBERS ENDPOINTS ---
-
-
-@router.get("/personas-legacy", response_model=List[schemas.Persona], deprecated=True)
-def list_personas(
-    search: Optional[str] = None,
-    role: Optional[str] = None,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    sort_by: Optional[str] = Query(None, description="Campo de ordenamiento: first_name, last_name, email, church_role, spiritual_status, created_at"),
-    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    """Lista miembros con búsqueda, paginación y ordenamiento. Filtrado por sede del usuario."""
-    sede_id = crud.get_user_sede_id(db, current_user.id)
-    return crud.search_members(db, search=search, role=role, sede_id=sede_id, skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir)
-
-
-@router.get("/personas-legacy/paginated")
-def list_members_paginated(
-    search: Optional[str] = None,
-    role: Optional[str] = None,
-    spiritual_status: Optional[str] = None,
-    offset: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
-    sort_by: Optional[str] = Query(None),
-    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    """Endpoint paginado para AG Grid server-side. Retorna { items: [...], total: N }. Filtrado por sede."""
-    sede_id = crud.get_user_sede_id(db, current_user.id)
-    return crud.search_members_paginated(
-        db,
-        search=search,
-        role=role,
-        spiritual_status=spiritual_status,
-        sede_id=sede_id,
-        offset=offset,
-        limit=limit,
-        sort_by=sort_by,
-        sort_dir=sort_dir,
-    )
-
-
-@router.post("/personas-legacy/", response_model=schemas.Persona)
-def create_persona(
-    payload: schemas.PersonaCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    """Registra un nuevo miembro en el CRM."""
-    return crud.create_persona(db, payload)
-
-
-@router.get("/personas-legacy/me", response_model=dict)
-def get_my_crm_card(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "read")),
-):
-    """Devuelve la tarjeta de miembro del usuario actual vinculada por user_id."""
-    persona_id = resolve_persona_id_for_user(db, current_user.id)
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first() if persona_id else None
-    if persona:
-        return {
-            "id": persona.id,
-            "first_name": persona.first_name,
-            "last_name": persona.last_name,
-            "church_role": persona.church_role,
-            "qr_code": f"PRS-{persona.id}-{uuid.uuid4().hex[:6]}",
-        }
-        return {
-            "id": 0,
-            "first_name": current_user.username,
-            "last_name": "Usuario",
-            "church_role": _get_user_role(current_user),
-            "qr_code": f"USR-{current_user.id}-{uuid.uuid4().hex[:6]}",
-        }
-
-
-@router.get("/personas-legacy/me/profile", response_model=dict)
-def get_my_ministry_profile(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "read")),
-):
-    """Perfil ministerial completo del usuario autenticado: datos del miembro, oficios, habilidades, badges y nivel."""
-    persona_id = resolve_persona_id_for_user(db, current_user.id)
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first() if persona_id else None
-
-    # ── Positions (Oficios Eclesiásticos) ──────────────────────────
-    positions = []
-    if persona:
-        member_positions = (
-            db.query(models.MemberPosition, models.Position)
-            .join(models.Position, models.Position.id == models.MemberPosition.position_id)
-            .filter(models.MemberPosition.persona_id == persona.id)
-            .order_by(models.MemberPosition.is_active.desc(), models.MemberPosition.start_date.desc())
-            .all()
-        )
-        for mp, pos in member_positions:
-            positions.append({
-                "id": mp.id,
-                "position_name": pos.name,
-                "category": pos.category,
-                "is_active": mp.is_active,
-                "start_date": mp.start_date.isoformat() if mp.start_date else None,
-                "end_date": mp.end_date.isoformat() if mp.end_date else None,
-            })
-
-    # ── Skills (Habilidades) ──────────────────────────────────────
-    skills = []
-    if persona:
-        skills = sorted(
-            row.name
-            for row in (
-                db.query(models.VolunteerSkill)
-                .join(
-                    models.member_volunteer_skills,
-                    models.member_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
-                )
-                .filter(models.member_volunteer_skills.c.persona_id == persona.id)
-                .all()
-            )
-            if row.name
-        )
-
-    # ── Badges (Logros) ────────────────────────────────────────────
-    badges = []
-    user_badges = (
-        db.query(models.UserBadge)
-        .filter(models.UserBadge.user_id == current_user.id)
-        .all()
-    )
-    for ub in user_badges:
-        badge = db.query(models.Badge).filter(models.Badge.id == ub.badge_id).first()
-        if badge:
-            badges.append({
-                "id": badge.id,
-                "name": badge.name,
-                "description": badge.description,
-                "icon_key": badge.icon_key,
-                "xp_reward": badge.xp_reward,
-                "earned_at": ub.earned_at.isoformat() if ub.earned_at else None,
-            })
-
-    # ── Level & XP ─────────────────────────────────────────────────
-    level_info = {"title": None, "min_xp": 0, "next_title": None, "next_min_xp": None}
-    if current_user.current_level_id:
-        current_level = (
-            db.query(models.Level)
-            .filter(models.Level.id == current_user.current_level_id)
-            .first()
-        )
-        if current_level:
-            next_level = (
-                db.query(models.Level)
-                .filter(models.Level.min_xp > current_level.min_xp)
-                .order_by(models.Level.min_xp.asc())
-                .first()
-            )
-            level_info = {
-                "title": current_level.title,
-                "min_xp": current_level.min_xp,
-                "icon_key": current_level.icon_key,
-                "next_title": next_level.title if next_level else None,
-                "next_min_xp": next_level.min_xp if next_level else None,
-            }
-
-    return {
-        "member": {
-            "id": persona.id if persona else None,
-            "first_name": persona.first_name if persona else current_user.username,
-            "last_name": persona.last_name if persona else "",
-            "church_role": persona.church_role if persona else _get_user_role(current_user),
-            "spiritual_status": persona.spiritual_status if persona else None,
-            "registration_date": (
-                persona.registration_date.isoformat() if persona and persona.registration_date else None
-            ),
-        },
-        "positions": positions,
-        "skills": skills,
-        "badges": badges,
-        "xp": current_user.xp or 0,
-        "level": level_info,
-    }
-
-
-@router.get("/personas-legacy/donations", response_model=List[dict])
-def list_all_member_donations(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    from backend.crud.crm import get_user_sede_id
-    user_sede = get_user_sede_id(db, current_user.id)
-    q = db.query(models.Donation).filter(models.Donation.deleted_at.is_(None))
-    if user_sede:
-        q = q.join(models.Persona, models.Donation.persona_id == models.Persona.id).filter(
-            models.Persona.sede_id == user_sede
-        )
-    donations = q.order_by(models.Donation.created_at.desc()).all()
-    result = []
-    for donation in donations:
-        donor_name = donation.donor_name
-        if not donor_name and donation.persona:
-            donor_name = f"{donation.persona.first_name} {donation.persona.last_name}"
-        result.append(
-            {
-                "id": donation.id,
-                "donor": donor_name or "Donante anonimo",
-                "amount": donation.amount,
-                "type": donation.donation_type,
-                "date": (
-                    donation.created_at.isoformat() if donation.created_at else None
-                ),
-                "status": donation.status,
-                "reference_code": donation.reference_code,
-                "persona_id": donation.persona_id,
-            }
-        )
-    return result
-
-
-@router.get("/personas-legacy/{persona_id}", response_model=schemas.Persona)
-def get_persona(
-    persona_id: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "read")),
-):
-    """Obtiene el detalle de un miembro con validacion de propiedad (IDOR)."""
-    persona_uuid = _parse_uuid(persona_id)
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
-    if not persona:
-        raise HTTPException(status_code=404, detail="Persona not found")
-
-    # Check if user is looking at their own profile OR is a pastor/admin
-    my_persona_id = resolve_persona_id_for_user(db, current_user.id)
-    is_self = bool(my_persona_id and my_persona_id == persona.id)
-    is_staff = _get_user_role(current_user) in {"admin", "administrador", "pastor", "coordinador"}
-
-    if not is_self and not is_staff:
-        raise HTTPException(
-            status_code=403, detail="No autorizado para ver este perfil"
-        )
-
-    return persona
-
-
-@router.patch("/personas-legacy/{persona_id}", response_model=schemas.Persona)
-def update_persona(
-    persona_id: str,
-    payload: schemas.PersonaUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    """Actualiza datos de un miembro con persistencia y auditoria."""
-    persona_uuid = _parse_uuid(persona_id)
-    persona = crud.update_persona(db, persona_id=persona_uuid, payload=payload)
-    if not persona:
-        raise HTTPException(status_code=404, detail="Persona not found")
-
-    record_admin_action(
-        db,
-        current_user,
-        action="update_persona",
-        resource_type="persona",
-        resource_id=str(persona.id),
-        metadata=payload.model_dump(exclude_unset=True),
-    )
-    return persona
-
-
-@router.delete("/personas-legacy/{persona_id}", status_code=204)
-def delete_persona(
-    persona_id: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
-):
-    """Soft-delete: marca estado_vital = INACTIVO. Nunca eliminar físicamente."""
-    persona_uuid = _parse_uuid(persona_id)
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
-    if not persona:
-        raise HTTPException(status_code=404, detail="Persona not found")
-
-    persona.estado_vital = "INACTIVO"
-    from datetime import date
-    persona.unregistration_date = date.today()
-    db.commit()
-    return None
-
-
-@router.get(
-    "/personas-legacy/{persona_id}/communications", response_model=List[schemas.CommunicationLog]
-)
+@router.get("/personas/{persona_id}/communications", response_model=List[schemas.CommunicationLog])
 def get_persona_communications(
     persona_id: str,
     db: Session = Depends(get_db),
@@ -335,28 +41,7 @@ def get_persona_communications(
     )
 
 
-@router.get("/personas-legacy/{persona_id}/donations", response_model=List[schemas.Donation])
-def list_persona_donations(
-    persona_id: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    persona_uuid = _parse_uuid(persona_id)
-    return crud.get_member_donations(db, persona_id=persona_uuid)
-
-
-@router.get("/personas-legacy/{persona_id}/timeline", response_model=List[dict])
-def get_persona_growth_timeline(
-    persona_id: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    """Devuelve la línea de tiempo unificada (Academia, Consejería, Comunicaciones)."""
-    persona_uuid = _parse_uuid(persona_id)
-    return crud.get_member_timeline(db, persona_id=persona_uuid)
-
-
-@router.get("/personas-legacy/{persona_id}/ministries", response_model=List[dict])
+@router.get("/personas/{persona_id}/ministries", response_model=List[dict])
 def get_persona_ministries(
     persona_id: str,
     db: Session = Depends(get_db),
@@ -399,7 +84,7 @@ def get_persona_ministries(
     return result
 
 
-@router.get("/personas-legacy/{persona_id}/consolidation", response_model=dict)
+@router.get("/personas/{persona_id}/consolidation", response_model=dict)
 def get_persona_consolidation_profile(
     persona_id: str,
     db: Session = Depends(get_db),
@@ -559,7 +244,7 @@ def update_position(
     return row
 
 
-@router.post("/personas-legacy/{persona_id}/positions", response_model=dict)
+@router.post("/personas/{persona_id}/positions", response_model=dict)
 def assign_persona_position(
     persona_id: str,
     payload: schemas.MemberPositionCreate,
@@ -609,9 +294,7 @@ def assign_persona_position(
     return {"id": row.id, "created": True, "position": position.name}
 
 
-@router.patch(
-    "/personas-legacy/{persona_id}/positions/{member_position_id}", response_model=dict
-)
+@router.patch("/personas/{persona_id}/positions/{member_position_id}", response_model=dict)
 def update_persona_position(
     persona_id: str,
     member_position_id: int,
@@ -637,7 +320,7 @@ def update_persona_position(
     return {"id": row.id, "updated": True}
 
 
-@router.post("/personas-legacy/{persona_id}/ministries", response_model=dict)
+@router.post("/personas/{persona_id}/ministries", response_model=dict)
 def assign_persona_ministry(
     persona_id: str,
     payload: schemas.MemberMinistryCreate,
@@ -674,7 +357,7 @@ def assign_persona_ministry(
     return {"id": mm.id, "created": True}
 
 
-@router.patch("/personas-legacy/{persona_id}/ministries/{mm_id}", response_model=dict)
+@router.patch("/personas/{persona_id}/ministries/{mm_id}", response_model=dict)
 def update_persona_ministry(
     persona_id: str,
     mm_id: int,

@@ -2,10 +2,12 @@
 Ejecuta pytest inline e importa los módulos para verificación estructural.
 """
 import logging
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+os.chdir(ROOT)
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -56,7 +58,16 @@ def check_db_indices():
     }
     all_passed = True
     try:
-        rows = db.execute(text("SELECT name FROM sqlite_master WHERE type='index'"))
+        dialect_name = db.bind.dialect.name
+        if dialect_name == "postgresql":
+            rows = db.execute(
+                text(
+                    "SELECT indexname FROM pg_indexes "
+                    "WHERE schemaname NOT IN ('pg_catalog', 'information_schema')"
+                )
+            )
+        else:
+            rows = db.execute(text("SELECT name FROM sqlite_master WHERE type='index'"))
         existing_indices = {row[0] for row in rows}
         for logical_name, allowed_names in expected_index_groups.items():
             found = sorted(existing_indices & allowed_names)

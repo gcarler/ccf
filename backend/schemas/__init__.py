@@ -188,13 +188,18 @@ from backend.schemas.projects import (InboxReadToggle, Project,
                                       TaskSupplyBase, TaskSupplyCreate,
                                       TaskSupplyUpdate)
 
-# ── Proyectos (nuevo módulo) ────────────────────────────────────────────────
-from backend.schemas.proyectos import (  # noqa: F401
-    ComentarioTareaCreate, ComentarioTareaSchema, DependenciaTareaCreate,
-    DependenciaTareaSchema, DocumentoCreate, DocumentoSchema,
-    EquipoProyectoCreate, EquipoProyectoSchema, ProyectoCreate, ProyectoSchema,
-    ProyectoUpdate, TareaProyectoCreate, TareaProyectoSchema,
-    TareaProyectoUpdate)
+# ── Projects (canonical) ────────────────────────────────────────────────────
+from backend.schemas.projects import (  # noqa: F401
+    InboxReadToggle, Project, ProjectActivityItem, ProjectActivityLog,
+    ProjectAttachment, ProjectBase, ProjectCommentBase, ProjectCommentCreate,
+    ProjectCommentItem, ProjectCommentUpdate, ProjectCreate, ProjectDocument,
+    ProjectDocumentUpdate, ProjectInboxItem, ProjectMilestone,
+    ProjectMilestoneBase, ProjectMilestoneUpdate, ProjectMessageCreate,
+    ProjectMessageItem, ProjectPhaseInput, ProjectPhaseSchema,
+    ProjectPortfolioSummaryRow, ProjectTask, ProjectTaskBase,
+    ProjectTaskCreate, ProjectTaskUpdate, ProjectUpdate, ProjectWhiteboard,
+    ProjectWhiteboardUpdate, ProjectWorkloadSummaryRow, TaskSupply,
+    TaskSupplyBase, TaskSupplyCreate, TaskSupplyUpdate)
 
 # ── Chat / Direct Messages ───────────────────────────────────────────
 from backend.schemas.chat import (ConversationCreate, ConversationRead,

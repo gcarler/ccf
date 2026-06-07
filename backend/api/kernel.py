@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
 from backend.crud._utils import _utcnow
+from backend.crud.crm import resolve_persona_id_for_user
 from backend.core.kernel_rbac import (
     require_kernel_permission,
     require_active_for_assignment,
@@ -81,11 +82,15 @@ def _resolve_persona_id(db: Session, current_user, persona_id: str) -> str:
     if not target:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
 
-    # Acceso propio: solo si la persona está vinculada al usuario actual
-    if target.user_id is not None and target.user_id == current_user.id:
+    current_persona_id = resolve_persona_id_for_user(db, current_user.id)
+
+    # Acceso propio: solo si la persona corresponde al usuario actual
+    if current_persona_id and str(target.id) == str(current_persona_id):
         return persona_id
 
     role = str(getattr(current_user, "role", "")).lower()
+    if not role and getattr(current_user, "rol_plataforma", None):
+        role = str(getattr(current_user.rol_plataforma, "nombre", "")).lower()
     if role not in ("admin", "pastor"):
         raise HTTPException(
             status_code=403,
@@ -95,12 +100,10 @@ def _resolve_persona_id(db: Session, current_user, persona_id: str) -> str:
 
 
 def _my_persona_id(db: Session, current_user) -> str:
-    from backend import models
-
-    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
-    if not persona:
+    persona_id = resolve_persona_id_for_user(db, current_user.id)
+    if not persona_id:
         raise HTTPException(status_code=404, detail="No tiene un perfil de persona asociado")
-    return str(persona.id)
+    return str(persona_id)
 
 
 # ──────────────────────────────────────────────
@@ -200,13 +203,15 @@ def add_ministry(
     from backend import models
     from backend.crud import kernel as kernel_crud
 
-    persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
+    persona_id = resolve_persona_id_for_user(db, current_user.id)
+    if not persona_id:
+        raise HTTPException(status_code=404, detail="No tiene un perfil de persona asociado")
     result = kernel_crud.add_persona_ministry(
         db,
         persona_id=persona_id,
         ministry=payload.ministry,
         is_primary=payload.is_primary,
-        recognized_by_persona_id=str(persona.id) if persona else None,
+        recognized_by_persona_id=str(persona_id) if persona_id else None,
         notes=payload.notes,
     )
     if not result:

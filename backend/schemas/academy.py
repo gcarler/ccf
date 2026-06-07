@@ -106,7 +106,7 @@ class AssessmentAttemptSubmit(BaseModel):
 
 
 class EnrollmentCreate(BaseModel):
-    user_id: int
+    user_id: int | str
     course_id: int
 
 

@@ -15,25 +15,28 @@ from backend.auth import require_module_access
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
 from backend.models_shared import _utcnow
+from backend.crud.crm import resolve_persona_id_for_user
 
 router = APIRouter()
 
 
 def _get_persona_id(db: Session, current_user: models.User):
-    """Resuelve Persona.id (UUID) desde current_user.
+    """Resuelve Persona.id (UUID) desde el usuario autenticado."""
+    persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
+    return persona_id
 
-    Legacy User (Integer id): Persona.user_id == current_user.id.
-    Auth v2 Usuario (UUID id): Persona.id == current_user.id.
-    Retorna None si no hay persona asociada.
-    """
-    if isinstance(current_user.id, int):
-        persona = db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
-    elif isinstance(current_user.id, (_uuid.UUID, str)):
-        uid = _uuid.UUID(str(current_user.id))
-        persona = db.query(models.Persona).filter(models.Persona.id == uid).first()
-    else:
+
+def _get_persona(db: Session, current_user: models.User):
+    persona_id = _get_persona_id(db, current_user)
+    if not persona_id:
         return None
-    return persona.id if persona else None
+    return db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+
+
+def _persona_display_name(persona: models.Persona | None) -> str:
+    if not persona:
+        return "Usuario"
+    return persona.nombre_completo or getattr(persona, "full_name", None) or "Usuario"
 
 
 @router.get("/chat/users/search")
@@ -43,33 +46,43 @@ def search_chat_users(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
-    """Search users to start a conversation with (excludes self).
+    """Search personas with auth account to start a conversation with (excludes self).
 
     Axioma 3: filtra por sede_id del usuario autenticado.
     """
     from backend.crud.crm import get_user_sede_id
 
     user_sede = get_user_sede_id(db, current_user.id)
+    current_persona_id = _get_persona_id(db, current_user)
 
     # Escape LIKE wildcards to prevent unintended pattern matching
     safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     pattern = f"%{safe_q}%"
-    query = db.query(models.User).filter(
-        models.User.id != current_user.id,
-        models.User.is_active.is_(True),
-        (models.User.username.ilike(pattern)) | (models.User.email.ilike(pattern)),
+    query = (
+        db.query(models.Persona, models.Usuario)
+        .join(models.Usuario, models.Usuario.id == models.Persona.id)
+        .filter(models.Usuario.is_active.is_(True))
+        .filter(
+            (models.Persona.first_name.ilike(pattern))
+            | (models.Persona.last_name.ilike(pattern))
+            | (models.Persona.email.ilike(pattern))
+            | (models.Usuario.username.ilike(pattern))
+            | (models.Usuario.email.ilike(pattern))
+        )
     )
     if user_sede is not None:
-        query = query.filter(models.User.sede_id == user_sede)
-    users = query.order_by(models.User.username).limit(limit).all()
+        query = query.filter(models.Persona.sede_id == user_sede)
+    if current_persona_id:
+        query = query.filter(models.Persona.id != current_persona_id)
+    users = query.order_by(models.Persona.first_name, models.Persona.last_name).limit(limit).all()
     return [
         {
-            "id": u.id,
-            "username": u.username,
-            "email": u.email,
-            "avatar_url": getattr(u, "avatar_url", None),
+            "id": str(persona.id),
+            "username": persona.nombre_completo,
+            "email": persona.email or usuario.email or "",
+            "avatar_url": None,
         }
-        for u in users
+        for persona, usuario in users
     ]
 
 
@@ -78,7 +91,7 @@ def _serialize_conversation(db: Session, conv: models.Conversation, current_user
     participant_user_ids = [cp.user_id for cp in conv.participants]
     user_map: dict = {}
     if participant_user_ids:
-        # Participant user_ids are UUID (personas.id), but we need User info
+        # Participant ids are UUID (personas.id).
         personas = db.query(models.Persona).filter(models.Persona.id.in_(participant_user_ids)).all()
         for p in personas:
             user_map[p.id] = p
@@ -88,7 +101,7 @@ def _serialize_conversation(db: Session, conv: models.Conversation, current_user
         participants.append(
             schemas.ConversationParticipantRead(
                 user_id=cp.user_id,
-                username=persona.first_name + " " + persona.last_name if persona else "Usuario",
+                username=_persona_display_name(persona),
                 last_read_at=cp.last_read_at,
             )
         )
@@ -157,7 +170,11 @@ def create_conversation(
     persona_id = _get_persona_id(db, current_user)
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found for current user")
-    all_ids = list(set(payload.participant_ids + [persona_id]))
+    all_ids = [persona_id]
+    for participant_id in payload.participant_ids:
+        uid = _uuid.UUID(str(participant_id))
+        if uid not in all_ids:
+            all_ids.append(uid)
     if len(all_ids) < 2:
         raise HTTPException(
             status_code=400,
@@ -255,6 +272,8 @@ def send_direct_message(
     if not is_participant:
         raise HTTPException(status_code=403, detail="Not a participant")
     msg = crud.create_direct_message_by_persona(db, conv_id, persona_id, payload.content)
+    persona = _get_persona(db, current_user)
+    sender_name = _persona_display_name(persona)
     # Broadcast via WebSocket (safe no-op if no event loop available)
     try:
         loop = asyncio.get_event_loop()
@@ -267,7 +286,7 @@ def send_direct_message(
                         "message": {
                             "id": msg.id,
                             "sender_id": msg.sender_id,
-                            "sender_name": getattr(current_user, "username", "Usuario"),
+                            "sender_name": sender_name,
                             "content": msg.content,
                             "created_at": str(msg.created_at),
                         },
@@ -280,7 +299,7 @@ def send_direct_message(
     return schemas.DirectMessageItem(
         id=msg.id,
         sender_id=msg.sender_id,
-        sender_name=getattr(current_user, "username", "Usuario"),
+        sender_name=sender_name,
         content=msg.content,
         created_at=msg.created_at,
     )

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -10,7 +11,7 @@ from backend.schemas._common import orm_config
 
 class Notification(BaseModel):
     id: int
-    user_id: int
+    user_id: UUID
     title: str
     content: Optional[str] = None
     is_read: bool = False
@@ -19,10 +20,10 @@ class Notification(BaseModel):
 
 
 class CommunicationLogCreate(BaseModel):
-    persona_id: str
+    persona_id: UUID
     channel: str
     content: str
-    leader_id: Optional[int] = None
+    leader_id: Optional[UUID | int] = None
     outcome: str = "sent"
 
 
@@ -34,10 +35,10 @@ class CommunicationLogUpdate(BaseModel):
 
 class CommunicationLog(BaseModel):
     id: int
-    persona_id: str
+    persona_id: UUID
     channel: str
     content: str
-    leader_id: Optional[int] = None
+    leader_id: Optional[UUID | int] = None
     outcome: str = "sent"
     created_at: datetime
     model_config = orm_config

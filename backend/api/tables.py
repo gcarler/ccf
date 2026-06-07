@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from backend.models_shared import _utcnow
 from backend import models
+from backend.crud.crm import resolve_persona_id_for_user
 from backend.core.database import get_db
 from backend.core.permissions import require_active_user
 
@@ -17,17 +18,10 @@ router = APIRouter(prefix="/api/tables", tags=["tables"])
 
 
 def _resolve_persona(db: Session, user) -> models.Persona | None:
-    """Resolve the Persona record for the current user.
-
-    Legacy User: has Integer .id, we look up Persona.user_id.
-    Auth v2 Usuario: has UUID .id == Persona.id (PK FK relationship).
-    """
-    if isinstance(user.id, int):
-        return db.query(models.Persona).filter(models.Persona.user_id == user.id).first()
-    if isinstance(user.id, (_uuid.UUID, str)):
-        uid = _uuid.UUID(str(user.id))
-        return db.query(models.Persona).filter(models.Persona.id == uid).first()
-    return None
+    persona_id = resolve_persona_id_for_user(db, getattr(user, "id", None))
+    if not persona_id:
+        return None
+    return db.query(models.Persona).filter(models.Persona.id == persona_id).first()
 
 
 # ── Models ──────────────────────────────────────────────────────────────────────

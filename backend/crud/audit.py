@@ -6,6 +6,7 @@ import uuid
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.crud.crm import resolve_persona_id_for_user
 
 
 def create_admin_audit_log(
@@ -18,22 +19,18 @@ def create_admin_audit_log(
     ip_address: str | None = None,
     actor_user_id: int | None = None,
 ):
-    # If actor_persona_id is not a valid UUID, treat it as a legacy user_id
-    # and resolve the linked persona UUID.
     resolved_persona_id = actor_persona_id
     if not resolved_persona_id and actor_user_id is not None:
-        persona = db.query(models.Persona).filter(models.Persona.user_id == actor_user_id).first()
-        resolved_persona_id = str(persona.id) if persona else None
+        resolved_persona_id = (
+            str(resolve_persona_id_for_user(db, actor_user_id))
+            if resolve_persona_id_for_user(db, actor_user_id)
+            else None
+        )
     if actor_persona_id:
         try:
             uuid.UUID(actor_persona_id)
         except ValueError:
-            try:
-                user_id = int(actor_persona_id)
-                persona = db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
-                resolved_persona_id = str(persona.id) if persona else None
-            except ValueError:
-                resolved_persona_id = None
+            resolved_persona_id = None
     now = dt.datetime.now(dt.timezone.utc)
     row = models.AdminAuditLog(
         actor_persona_id=resolved_persona_id,

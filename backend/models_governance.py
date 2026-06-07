@@ -9,7 +9,7 @@ class AdminAuditLog(Base):
     actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     action = Column(String(120), nullable=False, index=True)
     resource_type = Column(String(120), nullable=True, index=True)
-    resource_id = Column(String(120), nullable=True)
+    resource_id = Column(String(120), nullable=True, index=True)
     ip_address = Column(String(45), nullable=True)
     severity = Column(String(20), default="info")
     metadata_json = Column("metadata", JSON, default={})
