@@ -37,6 +37,18 @@ def _has_col(table: str, column: str) -> bool:
     return _has_table(table) and column in _cols(table)
 
 
+def _col_type(table: str, column: str) -> str:
+    bind = op.get_bind()
+    row = bind.execute(
+        sa.text(
+            "SELECT data_type FROM information_schema.columns "
+            "WHERE table_schema='public' AND table_name=:table AND column_name=:column"
+        ),
+        {"table": table, "column": column},
+    ).fetchone()
+    return (row[0] if row else "").lower()
+
+
 def _uuid_type():
     bind = op.get_bind()
     if bind.dialect.name == "postgresql":
@@ -44,12 +56,50 @@ def _uuid_type():
     return sa.String(36)
 
 
-def _add_uuid_column(table: str, column: str, *, index: bool = True) -> None:
-    if not _has_table(table) or _has_col(table, column):
+def _index_exists(table: str, index_name: str) -> bool:
+    if not _has_table(table):
+        return False
+    return any(index["name"] == index_name for index in sa.inspect(op.get_bind()).get_indexes(table))
+
+
+def _drop_fk_constraints_for_column(table: str, column: str) -> None:
+    bind = op.get_bind()
+    if bind.dialect.name != "postgresql" or not _has_table(table):
         return
-    with op.batch_alter_table(table, schema=None) as batch_op:
-        batch_op.add_column(sa.Column(column, _uuid_type(), nullable=True))
-    if index:
+    rows = bind.execute(
+        sa.text(
+            "SELECT tc.constraint_name "
+            "FROM information_schema.table_constraints tc "
+            "JOIN information_schema.key_column_usage kcu "
+            "ON tc.constraint_name = kcu.constraint_name "
+            "AND tc.table_schema = kcu.table_schema "
+            "WHERE tc.constraint_type = 'FOREIGN KEY' "
+            "AND tc.constraint_schema = 'public' "
+            "AND tc.table_name = :table "
+            "AND kcu.column_name = :column"
+        ),
+        {"table": table, "column": column},
+    ).fetchall()
+    for (constraint_name,) in rows:
+        bind.execute(sa.text(f"ALTER TABLE {table} DROP CONSTRAINT IF EXISTS {constraint_name}"))
+
+
+def _normalize_uuid_column(table: str, column: str, *, index: bool = True) -> None:
+    if not _has_table(table):
+        return
+    current_type = _col_type(table, column)
+    if not current_type:
+        with op.batch_alter_table(table, schema=None) as batch_op:
+            batch_op.add_column(sa.Column(column, _uuid_type(), nullable=True))
+    elif "uuid" not in current_type:
+        bind = op.get_bind()
+        _drop_fk_constraints_for_column(table, column)
+        if bind.dialect.name == "postgresql":
+            bind.execute(sa.text(f"ALTER TABLE {table} ALTER COLUMN {column} DROP DEFAULT"))
+            bind.execute(sa.text(f"ALTER TABLE {table} ALTER COLUMN {column} DROP NOT NULL"))
+            bind.execute(sa.text(f"UPDATE {table} SET {column} = NULL"))
+            bind.execute(sa.text(f"ALTER TABLE {table} ALTER COLUMN {column} TYPE UUID USING NULL"))
+    if index and not _index_exists(table, f"ix_{table}_{column}"):
         op.create_index(f"ix_{table}_{column}", table, [column], unique=False)
 
 
@@ -151,10 +201,10 @@ def _backfill(table: str, target_col: str, source_col: str = "user_id") -> None:
 
 
 def upgrade() -> None:
-    _add_uuid_column("enrollments", "persona_id")
-    _add_uuid_column("lesson_progress", "persona_id")
-    _add_uuid_column("academy_activity_logs", "persona_id")
-    _add_uuid_column("formal_actas", "closed_by_persona_id", index=False)
+    _normalize_uuid_column("enrollments", "persona_id")
+    _normalize_uuid_column("lesson_progress", "persona_id")
+    _normalize_uuid_column("academy_activity_logs", "persona_id")
+    _normalize_uuid_column("formal_actas", "closed_by_persona_id", index=False)
     _create_index_if_missing("formal_actas", "closed_by_persona_id")
 
     _backfill("enrollments", "persona_id")
