@@ -110,6 +110,7 @@ interface AttendanceMember {
     persona_id: string;
     name: string;
     role: string;
+    role_label?: string;
     status: 'present' | 'absent' | 'first_time';
     notes?: string;
 }
@@ -144,9 +145,7 @@ const TYPOLOGY_LABELS: Record<string, string> = {
     cells: 'Células',
 };
 
-const MEMBER_ROLES = [
-    { value: 'lider', label: 'Líder' },
-    { value: 'colider', label: 'Colíder' },
+const FALLBACK_MEMBER_ROLES = [
     { value: 'persona', label: 'Persona' },
     { value: 'visitante', label: 'Visitante' },
 ];
@@ -157,6 +156,32 @@ const ROLE_COLORS: Record<string, string> = {
     persona: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
     visitante: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
     asistente: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
+    personalizado: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
+};
+
+const normalizeRoleText = (value: string) =>
+    value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+const customRoleValue = (role: CustomRole) => `custom:${role.id}`;
+
+const roleMatches = (role: CustomRole, keywords: string[]) => {
+    const tokens = normalizeRoleText(role.nombre_rol).split('-');
+    return keywords.some(keyword => tokens.includes(keyword));
+};
+
+const isPrimaryLeaderRole = (role: CustomRole) => {
+    const tokens = normalizeRoleText(role.nombre_rol).split('-');
+    return tokens.includes('lider') && !tokens.includes('co') && !tokens.includes('colider') && !tokens.includes('asistente');
+};
+
+const isAssistantLeaderRole = (role: CustomRole) => {
+    const tokens = normalizeRoleText(role.nombre_rol).split('-');
+    return tokens.includes('asistente') || tokens.includes('colider') || (tokens.includes('co') && tokens.includes('lider'));
 };
 
 const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
@@ -200,26 +225,24 @@ export default function StrategyDetailPage() {
     const [groups, setGroups] = useState<StrategyGroup[]>([]);
     const [metrics, setMetrics] = useState<any>(null);
     const [memberCache, setMemberCache] = useState<Record<string, any>>({});
-    const [roleResults, setRoleResults] = useState<Record<'leader_id'|'assistant_id'|'host_id', any[]>>({ leader_id: [], assistant_id: [], host_id: [] });
-    const [roleLoading, setRoleLoading] = useState<Record<'leader_id'|'assistant_id'|'host_id', boolean>>({ leader_id: false, assistant_id: false, host_id: false });
+    const [roleResults, setRoleResults] = useState<Record<string, any[]>>({});
+    const [roleLoading, setRoleLoading] = useState<Record<string, boolean>>({});
 
     // Group creation drawer
     const [isGroupDrawerOpen, setIsGroupDrawerOpen] = useState(false);
     const [groupForm, setGroupForm] = useState({
         name: '', zone: '', address: '', capacity: 15,
         day_of_week: '', start_time: '', end_time: '',
-        leader_id: null as string | null,
-        assistant_id: null as string | null,
-        host_id: null as string | null,
     });
+    const [groupRoleAssignments, setGroupRoleAssignments] = useState<Record<string, string | null>>({});
     const [groupSaving, setGroupSaving] = useState(false);
-    const [roleSearch, setRoleSearch] = useState({ leader_id: '', assistant_id: '', host_id: '' });
-    const [roleDropdown, setRoleDropdown] = useState<'leader_id' | 'assistant_id' | 'host_id' | null>(null);
+    const [roleSearch, setRoleSearch] = useState<Record<string, string>>({});
+    const [roleDropdown, setRoleDropdown] = useState<string | null>(null);
 
     // Member management drawer
     const [isMemberDrawerOpen, setIsMemberDrawerOpen] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<StrategyGroup | null>(null);
-    const [groupMembers, setGroupMembers] = useState<{ id: string; name: string; email: string; role: string }[]>([]);
+    const [groupMembers, setGroupMembers] = useState<{ id: string; name: string; email: string; role: string; role_label?: string }[]>([]);
     const [allMembers, setAllMembers] = useState<any[]>([]);
     const [memberSearch, setMemberSearch] = useState('');
     const [memberSaving, setMemberSaving] = useState(false);
@@ -256,6 +279,56 @@ export default function StrategyDetailPage() {
         document.addEventListener('click', close);
         return () => document.removeEventListener('click', close);
     }, [sessionMenuId]);
+
+    const memberRoleOptions = customRoles.length > 0
+        ? [
+            ...customRoles.map(role => ({ value: customRoleValue(role), label: role.nombre_rol })),
+            { value: 'visitante', label: 'Visitante' },
+        ]
+        : FALLBACK_MEMBER_ROLES;
+
+    const getRoleLabel = (value: string, fallback?: string) => {
+        const customId = value?.startsWith('custom:') ? Number(value.split(':')[1]) : null;
+        if (customId) {
+            return customRoles.find(role => role.id === customId)?.nombre_rol || fallback || value;
+        }
+        return memberRoleOptions.find(role => role.value === value)?.label || fallback || value;
+    };
+
+    const getRoleColor = (value: string) => {
+        if (value?.startsWith('custom:')) return ROLE_COLORS.personalizado;
+        return ROLE_COLORS[value] || ROLE_COLORS.persona;
+    };
+
+    const buildRoleDrivenGroupAssignments = () => {
+        const assigned = customRoles
+            .map(role => ({
+                role,
+                personaId: groupRoleAssignments[customRoleValue(role)],
+            }))
+            .filter((item): item is { role: CustomRole; personaId: string } => Boolean(item.personaId));
+
+        const fixed = {
+            leader_id: null as string | null,
+            assistant_id: null as string | null,
+            host_id: null as string | null,
+        };
+
+        assigned.forEach(({ role, personaId }) => {
+            if (isPrimaryLeaderRole(role)) fixed.leader_id ||= personaId;
+            if (isAssistantLeaderRole(role)) fixed.assistant_id ||= personaId;
+            if (roleMatches(role, ['anfitrion'])) fixed.host_id ||= personaId;
+        });
+
+        return {
+            fixed,
+            base_attendees_with_roles: assigned.map(({ role, personaId }) => ({
+                persona_id: personaId,
+                role: customRoleValue(role),
+                rol_personalizado_id: role.id,
+            })),
+        };
+    };
 
     const fetchStrategy = useCallback(async () => {
         setLoading(true);
@@ -347,7 +420,7 @@ export default function StrategyDetailPage() {
     useEffect(() => {
         if (!roleDropdown) return;
         const field = roleDropdown;
-        const query = roleSearch[field].trim();
+        const query = (roleSearch[field] || '').trim();
         setRoleLoading(l => ({ ...l, [field]: true }));
         const timer = setTimeout(async () => {
             try {
@@ -371,11 +444,11 @@ export default function StrategyDetailPage() {
             day_of_week: strategy?.typology === 'relacional' ? strategy.day_of_week || '' : '',
             start_time: strategy?.typology === 'relacional' ? strategy.start_time || '' : '',
             end_time: '',
-            leader_id: null, assistant_id: null, host_id: null,
         });
-        setRoleSearch({ leader_id: '', assistant_id: '', host_id: '' });
-        setRoleResults({ leader_id: [], assistant_id: [], host_id: [] });
-        setRoleLoading({ leader_id: false, assistant_id: false, host_id: false });
+        setGroupRoleAssignments(Object.fromEntries(customRoles.map(role => [customRoleValue(role), null])));
+        setRoleSearch({});
+        setRoleResults({});
+        setRoleLoading({});
         setRoleDropdown(null);
         setIsGroupDrawerOpen(true);
     };
@@ -384,6 +457,7 @@ export default function StrategyDetailPage() {
         if (!groupForm.name.trim()) { toast.error('El nombre del grupo es obligatorio'); return; }
         setGroupSaving(true);
         try {
+            const roleDrivenAssignments = buildRoleDrivenGroupAssignments();
             await apiFetch('/evangelism/grupos', {
                 method: 'POST', token,
                 body: {
@@ -393,15 +467,16 @@ export default function StrategyDetailPage() {
                     address: groupForm.address || null,
                     latitude: null, longitude: null,
                     leader_name: null,
-                    leader_id: groupForm.leader_id,
-                    assistant_id: groupForm.assistant_id,
-                    host_id: groupForm.host_id,
+                    leader_id: roleDrivenAssignments.fixed.leader_id,
+                    assistant_id: roleDrivenAssignments.fixed.assistant_id,
+                    host_id: roleDrivenAssignments.fixed.host_id,
                     estrategia_id: id,
                     members_count: 0, capacity: groupForm.capacity,
                     status: 'Activo',
                     day_of_week: groupForm.day_of_week || null,
                     start_time: groupForm.start_time || null,
                     end_time: groupForm.end_time || null,
+                    base_attendees_with_roles: roleDrivenAssignments.base_attendees_with_roles,
                 },
             });
             toast.success('Grupo creado');
@@ -443,6 +518,7 @@ export default function StrategyDetailPage() {
                 name: a.name || a.member?.nombre_completo || '',
                 email: a.member?.email || '',
                 role: a.role || 'persona',
+                role_label: a.role_label,
             })) || []);
         } catch { setGroupMembers([]); }
     };
@@ -473,6 +549,7 @@ export default function StrategyDetailPage() {
                     base_attendees_with_roles: groupMembers.map(m => ({
                         persona_id: m.id,
                         role: m.role,
+                        rol_personalizado_id: m.role.startsWith('custom:') ? Number(m.role.split(':')[1]) : null,
                     })),
                 },
             });
@@ -490,12 +567,13 @@ export default function StrategyDetailPage() {
             id: member.id,
             name: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(),
             email: member.email || '',
-            role: 'persona',
+            role: memberRoleOptions[0]?.value || 'persona',
+            role_label: memberRoleOptions[0]?.label,
         }]);
     };
 
     const updateMemberRole = (memberId: string, role: string) => {
-        setGroupMembers(prev => prev.map(m => m.id === memberId ? { ...m, role } : m));
+        setGroupMembers(prev => prev.map(m => m.id === memberId ? { ...m, role, role_label: getRoleLabel(role) } : m));
     };
 
     const removeMemberFromGroup = (memberId: string) => {
@@ -553,6 +631,7 @@ export default function StrategyDetailPage() {
                 persona_id: a.persona_id,
                 name: a.name || a.member?.nombre_completo || '',
                 role: a.role || 'persona',
+                role_label: a.role_label,
                 status: (existingMap[a.persona_id]?.status as any) || 'present',
                 notes: existingMap[a.persona_id]?.notes || '',
             })) || [];
@@ -1635,19 +1714,21 @@ export default function StrategyDetailPage() {
                                 className="w-full px-2 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none" />
                         </div>
                     </div>
-                    {([
-                        { label: 'Líder', field: 'leader_id' as const },
-                        { label: 'Colíder', field: 'assistant_id' as const },
-                        { label: 'Anfitrión', field: 'host_id' as const },
-                    ]).map(({ label, field }) => {
-                        const selectedId = (groupForm as any)[field] as string | null;
+                    {customRoles.length === 0 ? (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+                            Esta estrategia no tiene roles definidos. El grupo se creará sin cargos de servicio por defecto.
+                        </div>
+                    ) : customRoles.map((role) => {
+                        const field = customRoleValue(role);
+                        const label = role.nombre_rol;
+                        const selectedId = groupRoleAssignments[field] || null;
                         const selectedMember = selectedId ? memberCache[selectedId] : null;
                         const selectedName = selectedMember
                             ? (selectedMember.nombre_completo || `${selectedMember.first_name ?? ''} ${selectedMember.last_name ?? ''}`.trim())
                             : '';
-                        const query = roleSearch[field];
-                        const results = roleResults[field];
-                        const isLoading = roleLoading[field];
+                        const query = roleSearch[field] || '';
+                        const results = roleResults[field] || [];
+                        const isLoading = Boolean(roleLoading[field]);
                         return (
                             <div key={field} className="relative">
                                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">{label}</label>
@@ -1668,7 +1749,7 @@ export default function StrategyDetailPage() {
                                     {selectedId && (
                                         <button
                                             type="button"
-                                            onClick={() => { setGroupForm(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}
+                                            onClick={() => { setGroupRoleAssignments(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}
                                             className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                                         >
                                             <X size={13} />
@@ -1679,7 +1760,7 @@ export default function StrategyDetailPage() {
                                     <div className="absolute z-50 mt-1 w-full bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl max-h-48 overflow-y-auto">
                                         <button
                                             type="button"
-                                            onMouseDown={() => { setGroupForm(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}
+                                            onMouseDown={() => { setGroupRoleAssignments(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}
                                             className="w-full text-left px-3 py-2 text-[12px] text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 border-b border-slate-100 dark:border-white/5"
                                         >
                                             Sin asignar
@@ -1696,7 +1777,7 @@ export default function StrategyDetailPage() {
                                                     type="button"
                                                     onMouseDown={() => {
                                                         setMemberCache(c => ({ ...c, [m.id]: m }));
-                                                        setGroupForm(f => ({ ...f, [field]: m.id }));
+                                                        setGroupRoleAssignments(f => ({ ...f, [field]: m.id }));
                                                         setRoleDropdown(null);
                                                         setRoleSearch(s => ({ ...s, [field]: '' }));
                                                     }}
@@ -1743,8 +1824,8 @@ export default function StrategyDetailPage() {
                                             <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate block">{m.name}</span>
                                         </div>
                                         <select value={m.role} onChange={e => updateMemberRole(m.id, e.target.value)}
-                                            className={`text-[11px] font-semibold px-2 py-1 rounded border-0 outline-none cursor-pointer ${ROLE_COLORS[m.role] || ROLE_COLORS.persona}`}>
-                                            {MEMBER_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                            className={`text-[11px] font-semibold px-2 py-1 rounded border-0 outline-none cursor-pointer ${getRoleColor(m.role)}`}>
+                                            {memberRoleOptions.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                                         </select>
                                         <button onClick={() => removeMemberFromGroup(m.id)}
                                             className="p-1 text-slate-400 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
@@ -1869,8 +1950,8 @@ export default function StrategyDetailPage() {
                                                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{m.name}</p>
                                                 {m.status === 'first_time' && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[hsl(var(--primary))] text-white">1ª vez</span>}
                                             </div>
-                                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${ROLE_COLORS[m.role] || ROLE_COLORS.persona}`}>
-                                                {MEMBER_ROLES.find(r => r.value === m.role)?.label || m.role}
+                                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${getRoleColor(m.role)}`}>
+                                                {getRoleLabel(m.role, m.role_label)}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-1">
@@ -1939,6 +2020,7 @@ export default function StrategyDetailPage() {
                                                             persona_id: m.id,
                                                             name: m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim(),
                                                             role: 'visitante',
+                                                            role_label: 'Visitante',
                                                             status: 'first_time',
                                                             notes: '',
                                                         }]);

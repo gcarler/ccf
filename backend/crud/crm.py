@@ -701,8 +701,20 @@ def get_cell_groups(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.CellGroup).offset(skip).limit(limit).all()
 
 
+def _group_member_role_values(item):
+    role = str(getattr(item, "role", "") or "participante").strip()
+    custom_role_id = getattr(item, "rol_personalizado_id", None)
+    if role.startswith("custom:"):
+        try:
+            custom_role_id = int(role.split(":", 1)[1])
+        except (TypeError, ValueError):
+            custom_role_id = None
+        role = "personalizado"
+    return role or "participante", custom_role_id
+
+
 def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: str | None = None):
-    data = payload.model_dump(exclude={"base_attendee_ids"})
+    data = payload.model_dump(exclude={"base_attendee_ids", "base_attendees_with_roles"})
     # Map evangelism_strategy_id -> estrategia_id (CellGroup = GrupoEvangelismo uses estrategia_id)
     if data.get("evangelism_strategy_id") and not data.get("estrategia_id"):
         data["estrategia_id"] = data.pop("evangelism_strategy_id")
@@ -721,7 +733,19 @@ def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: st
     db_obj = models.CellGroup(**data)
     db.add(db_obj)
 
-    if payload.base_attendee_ids:
+    base_attendees_with_roles = getattr(payload, "base_attendees_with_roles", None)
+    if base_attendees_with_roles is not None:
+        db.flush()  # Get the ID without committing
+        for item in base_attendees_with_roles:
+            role, custom_role_id = _group_member_role_values(item)
+            attendee = models.CellGroupMember(
+                cell_group_id=db_obj.id,
+                persona_id=uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id,
+                role=role,
+                rol_personalizado_id=custom_role_id,
+            )
+            db.add(attendee)
+    elif payload.base_attendee_ids:
         db.flush()  # Get the ID without committing
         for persona_id in payload.base_attendee_ids:
             attendee = models.CellGroupMember(cell_group_id=db_obj.id, persona_id=persona_id, role="asistente")
@@ -752,11 +776,13 @@ def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpda
             {models.CellGroupMember.deleted_at: _utcnow()}, synchronize_session=False
         )
         for item in payload.base_attendees_with_roles:
+            role, custom_role_id = _group_member_role_values(item)
             db.add(
                 models.CellGroupMember(
                     cell_group_id=house_id,
                     persona_id=uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id,
-                    role=item.role,
+                    role=role,
+                    rol_personalizado_id=custom_role_id,
                 )
             )
         members_updated = True

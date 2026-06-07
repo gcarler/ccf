@@ -848,10 +848,12 @@ class CellGroupCreate(BaseModel):
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     base_attendee_ids: Optional[List[str]] = None
+    base_attendees_with_roles: Optional[List["CellGroupMemberWithRole"]] = None
 
 class CellGroupMemberWithRole(BaseModel):
     persona_id: str
     role: str = "participante"  # lider | colider | participante | visitante
+    rol_personalizado_id: Optional[int] = None
 
 class CellGroupUpdate(BaseModel):
     code: Optional[str] = None

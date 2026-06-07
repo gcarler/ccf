@@ -26,6 +26,87 @@ router = APIRouter()
 
 # ── Cell Group CRUD ──
 
+def _slug_role_name(value: str | None) -> str:
+    import unicodedata
+
+    text = unicodedata.normalize("NFD", str(value or "").strip().lower())
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+    cleaned = []
+    previous_dash = False
+    for ch in text:
+        if ch.isalnum():
+            cleaned.append(ch)
+            previous_dash = False
+        elif not previous_dash:
+            cleaned.append("-")
+            previous_dash = True
+    return "".join(cleaned).strip("-")
+
+
+def _strategy_role_catalog(db: Session, strategy_id: str | None) -> tuple[set[int], set[str]]:
+    if not strategy_id:
+        return set(), set()
+    rows = (
+        db.query(models.RolPersonalizadoEstrategia)
+        .filter(
+            models.RolPersonalizadoEstrategia.estrategia_id == strategy_id,
+            models.RolPersonalizadoEstrategia.deleted_at.is_(None),
+        )
+        .all()
+    )
+    return {r.id for r in rows}, {_slug_role_name(r.nombre_rol) for r in rows}
+
+
+def _role_slug_tokens(slug: str) -> set[str]:
+    return {token for token in slug.split("-") if token}
+
+
+def _is_primary_leader_slug(slug: str) -> bool:
+    tokens = _role_slug_tokens(slug)
+    return "lider" in tokens and "co" not in tokens and "colider" not in tokens and "asistente" not in tokens
+
+
+def _is_assistant_leader_slug(slug: str) -> bool:
+    tokens = _role_slug_tokens(slug)
+    return "asistente" in tokens or "colider" in tokens or ("co" in tokens and "lider" in tokens)
+
+
+def _role_slug_has(slug: str, keyword: str) -> bool:
+    return keyword in _role_slug_tokens(slug)
+
+
+def _validate_strategy_group_roles(db: Session, strategy_id: str | None, body: dict) -> None:
+    if not strategy_id:
+        return
+
+    allowed_custom_ids, allowed_slugs = _strategy_role_catalog(db, strategy_id)
+    if body.get("leader_id") and not any(_is_primary_leader_slug(slug) for slug in allowed_slugs):
+        raise HTTPException(status_code=400, detail="La estrategia no tiene un rol de líder configurado")
+    if body.get("assistant_id") and not any(_is_assistant_leader_slug(slug) for slug in allowed_slugs):
+        raise HTTPException(status_code=400, detail="La estrategia no tiene un rol de colíder/asistente configurado")
+    if body.get("host_id") and not any(_role_slug_has(slug, "anfitrion") for slug in allowed_slugs):
+        raise HTTPException(status_code=400, detail="La estrategia no tiene un rol de anfitrión configurado")
+
+    base_roles = {"persona", "participante", "miembro", "visitante"}
+    for item in body.get("base_attendees_with_roles") or []:
+        role = str(item.get("role") or "").strip()
+        custom_id = item.get("rol_personalizado_id")
+        if role.startswith("custom:"):
+            try:
+                custom_id = int(role.split(":", 1)[1])
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail=f"Rol inválido para participante: {role}")
+        if custom_id is not None:
+            try:
+                custom_id_int = int(custom_id)
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail="Rol personalizado inválido")
+            if custom_id_int not in allowed_custom_ids:
+                raise HTTPException(status_code=400, detail="El rol del participante no pertenece a esta estrategia")
+            continue
+        if _slug_role_name(role) not in base_roles:
+            raise HTTPException(status_code=400, detail=f"Rol no configurado en la estrategia: {role}")
+
 
 @router.get("/grupos", response_model=List[dict])
 @router.get("/faro", response_model=List[dict])
@@ -218,7 +299,13 @@ def get_cell_group(
         {
             "persona_id": str(persona.id),
             "name": persona.nombre_completo,
-            "role": row.role or "miembro",
+            "role": f"custom:{row.rol_personalizado_id}" if row.rol_personalizado_id else (row.role or "miembro"),
+            "role_label": (
+                row.rol_personalizado.nombre_rol
+                if row.rol_personalizado_id and row.rol_personalizado
+                else (row.role or "miembro")
+            ),
+            "rol_personalizado_id": row.rol_personalizado_id,
             "church_role": persona.church_role,
             "phone": persona.telefono,
         }
@@ -421,6 +508,7 @@ async def create_cell_group(
     body = _json.loads(await request.body())
     if body.get("estrategia_id") and not payload.evangelism_strategy_id:
         object.__setattr__(payload, "evangelism_strategy_id", body["estrategia_id"])
+    _validate_strategy_group_roles(db, payload.evangelism_strategy_id, body)
     # Infer sede_id from user's profile, fallback to first sede
     user_sede = crud.get_user_sede_id(db, current_user.id)
     if not user_sede:
@@ -458,6 +546,11 @@ def update_cell_group(
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house_db):
         raise HTTPException(status_code=403, detail="No autorizado para este grupo")
+    _validate_strategy_group_roles(
+        db,
+        str(house_db.estrategia_id) if house_db.estrategia_id else None,
+        payload.model_dump(exclude_unset=True),
+    )
     if not _is_crm_admin_or_pastor(current_user):
         allowed_fields = {"base_attendee_ids", "base_attendees_with_roles"}
         incoming_fields = set(payload.model_dump(exclude_unset=True).keys())

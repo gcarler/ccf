@@ -376,12 +376,14 @@ class GrupoCreate(BaseModel):
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     base_attendee_ids: Optional[List[str]] = None
+    base_attendees_with_roles: Optional[List["ParticipanteGrupoConRol"]] = None
 
 
 # Schema para participantes de grupo
 class ParticipanteGrupoConRol(BaseModel):
     persona_id: str
     role: str = "participante"
+    rol_personalizado_id: Optional[int] = None
 
 
 class GrupoUpdate(BaseModel):

@@ -25,7 +25,15 @@ interface Grupo {
     members_count: number;
     status: string;
     evangelism_strategy_id: string | null;
-    base_attendees?: { persona_id: string; name?: string; role: string; phone?: string; member?: { nombre_completo: string; telefono?: string } }[];
+    base_attendees?: {
+        persona_id: string;
+        name?: string;
+        role: string;
+        role_label?: string;
+        rol_personalizado_id?: number | null;
+        phone?: string;
+        member?: { nombre_completo: string; telefono?: string };
+    }[];
 }
 
 interface SessionPerson {
@@ -65,31 +73,37 @@ export default function SessionReportPage() {
             const data = await apiFetch<Grupo>(`/evangelism/grupos/${houseId}`, { token: token || '' });
             setHouse(data);
 
-            const ppl: SessionPerson[] = [];
             const baseMembers = data.base_attendees || [];
-            const roleIds = new Set<string>();
+            const peopleById = new Map<string, SessionPerson>();
+            const addPerson = (
+                personaId: string | null | undefined,
+                fallbackName: string,
+                fallbackRole: string,
+                status: SessionPerson['status'] = 'absent',
+            ) => {
+                if (!personaId || peopleById.has(personaId)) return;
+                const m = baseMembers.find(x => x.persona_id === personaId);
+                peopleById.set(personaId, {
+                    persona_id: personaId,
+                    name: m?.name || m?.member?.nombre_completo || fallbackName,
+                    role: m?.role_label || m?.role || fallbackRole,
+                    phone: m?.phone || m?.member?.telefono,
+                    status,
+                });
+            };
 
-            if (data.leader_id) {
-                const m = baseMembers.find(x => x.persona_id === data.leader_id);
-                ppl.push({ persona_id: data.leader_id, name: m?.name || m?.member?.nombre_completo || data.leader_name || 'Líder', role: 'Líder', phone: m?.phone || m?.member?.telefono, status: 'present' });
-                roleIds.add(data.leader_id);
-            }
-            if (data.assistant_id) {
-                const m = baseMembers.find(x => x.persona_id === data.assistant_id);
-                ppl.push({ persona_id: data.assistant_id, name: m?.name || m?.member?.nombre_completo || 'Asistente del Líder', role: 'Asistente del Líder', phone: m?.phone || m?.member?.telefono, status: 'present' });
-                roleIds.add(data.assistant_id);
-            }
-            if (data.host_id) {
-                const m = baseMembers.find(x => x.persona_id === data.host_id);
-                ppl.push({ persona_id: data.host_id, name: m?.name || m?.member?.nombre_completo || 'Anfitrión', role: 'Anfitrión', phone: m?.phone || m?.member?.telefono, status: 'present' });
-                roleIds.add(data.host_id);
-            }
             for (const m of baseMembers) {
-                if (!roleIds.has(m.persona_id)) {
-                    ppl.push({ persona_id: m.persona_id, name: m.name || m.member?.nombre_completo || `Persona #${m.persona_id}`, role: 'Asistente', phone: m.phone || m.member?.telefono, status: 'absent' });
-                }
+                addPerson(
+                    m.persona_id,
+                    m.name || m.member?.nombre_completo || `Persona #${m.persona_id}`,
+                    m.role_label || m.role || 'Participante',
+                );
             }
-            setPeople(ppl);
+
+            addPerson(data.leader_id, data.leader_name || 'Persona asignada', 'Asignado', 'present');
+            addPerson(data.assistant_id, 'Persona asignada', 'Asignado', 'present');
+            addPerson(data.host_id, 'Persona asignada', 'Asignado', 'present');
+            setPeople(Array.from(peopleById.values()));
         } catch {
             toast.error('Error al cargar el grupo');
         } finally {
@@ -179,7 +193,8 @@ export default function SessionReportPage() {
         'Líder': { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]', border: 'border-blue-200 dark:border-blue-800', icon: Shield },
         'Asistente del Líder': { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-[hsl(var(--primary))] dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800', icon: User },
         'Anfitrión': { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800', icon: Home },
-        'Asistente': { bg: 'bg-slate-50 dark:bg-white/5', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-200 dark:border-white/10', icon: Users },
+        'Participante': { bg: 'bg-slate-50 dark:bg-white/5', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-200 dark:border-white/10', icon: Users },
+        'Asignado': { bg: 'bg-slate-50 dark:bg-white/5', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-200 dark:border-white/10', icon: Users },
     };
 
     if (loading) return (
@@ -237,7 +252,7 @@ export default function SessionReportPage() {
                     </div>
                     <div className="divide-y divide-slate-100 dark:divide-white/5 max-h-[400px] overflow-y-auto scrollbar-thin">
                         {filtered.map(person => {
-                            const rs = ROLE_STYLES[person.role] || ROLE_STYLES['Asistente'];
+                            const rs = ROLE_STYLES[person.role] || ROLE_STYLES['Participante'];
                             const Icon = rs.icon;
                             return (
                                 <div key={person.persona_id} className={`px-4 py-3 flex items-center gap-3 ${rs.bg}`}>
