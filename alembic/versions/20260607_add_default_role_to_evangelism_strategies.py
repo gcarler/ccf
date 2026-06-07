@@ -1,7 +1,7 @@
 """Add default role to evangelism strategies
 
 Revision ID: 20260607_evangelism_default_role
-Revises: 20260605_agents_governance_persona_backfill
+Revises: 20260605_agents_gov_backfill
 Create Date: 2026-06-07 00:00:00.000000
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "20260607_evangelism_default_role"
-down_revision: Union[str, None] = "20260605_agents_governance_persona_backfill"
+down_revision: Union[str, None] = "20260605_agents_gov_backfill"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

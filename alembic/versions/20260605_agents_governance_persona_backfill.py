@@ -1,6 +1,6 @@
 """Backfill Agents/Governance persona UUID columns
 
-Revision ID: 20260605_agents_governance_persona_backfill
+Revision ID: 20260605_agents_gov_backfill
 Revises: 20260605_cms_persona_backfill
 Create Date: 2026-06-05
 """
@@ -12,7 +12,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 
-revision: str = "20260605_agents_governance_persona_backfill"
+revision: str = "20260605_agents_gov_backfill"
 down_revision: Union[str, None] = "20260605_cms_persona_backfill"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
