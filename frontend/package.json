@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev -H 0.0.0.0",
-        "build": "node scripts/with-next-lock.mjs next build",
+        "build": "rm -rf .next && node scripts/with-next-lock.mjs next build",
         "start": "next start",
         "lint": "eslint src --ext .ts,.tsx",
         "lint:strict": "eslint src --ext .ts,.tsx --max-warnings 0",

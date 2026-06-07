@@ -195,7 +195,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                     minWidth: 80,
                     resizable: true,
                     sortable: col.sortable !== false,
-                    filter: (col as any).filter !== undefined ? (col as any).filter : 'agTextColumnFilter',
+                    filter: 'agTextColumnFilter',
                 };
 
                 // Editable logic:

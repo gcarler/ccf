@@ -857,12 +857,16 @@ export default function StrategyDetailPage() {
                                 __type: 'group' as const,
                                 __displayType: 'Grupo',
                                 __displayName: g.name,
+                                _habilitacion: '—',
+                                _acciones: '—',
                                 ...g,
                             })) : []),
                             ...((activeTab === 'sessions' || activeTab === 'overview') ? sessions.map(s => ({
                                 __type: 'session' as const,
                                 __displayType: 'Sesión',
                                 __displayName: s.topic || `Sesión #${s.id}`,
+                                _habilitacion: s.estado_habilitacion || 'DESHABILITADO',
+                                _acciones: 'Asistencia · Eliminar',
                                 ...s,
                             })) : []),
                         ]}
@@ -873,7 +877,7 @@ export default function StrategyDetailPage() {
                                 ...sessions.map(s => ({ __type: 'session' as const, ...s })),
                             ];
                             const item = allItems.find(d => d.id === id) as any;
-                            if (!item) return false; // return false = reject edit visually
+                            if (!item) return false;
 
                             // Map display fields to actual model fields per type
                             let actualField: string = field;
@@ -883,9 +887,23 @@ export default function StrategyDetailPage() {
                                 return false; // synthetic, not editable
                             }
 
-                            // Groups are not editable yet (no PUT endpoint)
-                            if (item.__type === 'group') return false;
+                            // Edit Group name via PUT /grupos/{id}
+                            if (item.__type === 'group' && actualField === 'name') {
+                                try {
+                                    await apiFetch(`/evangelism/grupos/${id}`, {
+                                        method: 'PUT', token,
+                                        body: JSON.stringify({ name: value }),
+                                    });
+                                    fetchGroups();
+                                    toast.success('Grupo actualizado');
+                                    return true;
+                                } catch {
+                                    toast.error('Error al actualizar grupo');
+                                    return false;
+                                }
+                            }
 
+                            // Edit Session field via PUT /sessions/{id}
                             if (item.__type === 'session') {
                                 try {
                                     await apiFetch(`/evangelism/sessions/${id}`, {
@@ -926,8 +944,7 @@ export default function StrategyDetailPage() {
                             {
                                 key: 'session_date',
                                 label: 'Fecha',
-                                type: 'date',
-                                editable: false,
+                                type: 'text',
                                 render: (_v: any, item: any) => {
                                     if (item.__type === 'group') return <span className="text-slate-400">—</span>;
                                     return <span className="text-slate-500 dark:text-slate-400">{formatDate(item.session_date)}</span>;
@@ -936,8 +953,7 @@ export default function StrategyDetailPage() {
                             {
                                 key: 'status',
                                 label: 'Estado',
-                                type: 'status',
-                                editable: false,
+                                type: 'text',
                                 render: (_v: any, item: any) => {
                                     if (item.__type === 'group') return <span className="text-slate-400">Activo</span>;
                                     const bg = item.status === 'Realizada' ? '#10B98120' : '#3B82F620';
@@ -961,13 +977,15 @@ export default function StrategyDetailPage() {
                                 },
                             },
                             {
-                                key: 'habilitacion',
+                                key: '_habilitacion',
                                 label: 'Habilitación',
-                                type: 'status',
+                                type: 'text',
                                 editable: false,
-                                filter: false,
                                 render: (_v: any, item: any) => {
                                     if (item.__type === 'group') return <span className="text-slate-400">—</span>;
+                                    // Estados terminales: no se puede togglear
+                                    if (item.estado_habilitacion === 'CERRADO') return <span className="text-[10px] font-semibold text-slate-400">Cerrada</span>;
+                                    if (item.estado_habilitacion === 'CANCELADA') return <span className="text-[10px] font-semibold text-rose-400">Cancelada</span>;
                                     return (
                                         <button
                                             onClick={async () => {
@@ -993,11 +1011,10 @@ export default function StrategyDetailPage() {
                                 },
                             },
                             {
-                                key: 'acciones',
+                                key: '_acciones',
                                 label: 'Acciones',
                                 type: 'text',
                                 editable: false,
-                                filter: false,
                                 render: (_v: any, item: any) => {
                                     if (item.__type === 'group') return <span className="text-slate-400">—</span>;
                                     return (
