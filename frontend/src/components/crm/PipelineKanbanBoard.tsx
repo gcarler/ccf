@@ -21,9 +21,10 @@ interface PipelineKanbanBoardProps {
     onLeadClick: (lead: any) => void;
     onDropLead: (leadId: string, stage: string) => void;
     onNewLead: (stage?: string) => void;
+    allowEditing?: boolean;
 }
 
-export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead }: PipelineKanbanBoardProps) {
+export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead, allowEditing = true }: PipelineKanbanBoardProps) {
     const [activeLead, setActiveLead] = useState<any | null>(null);
     const [optimisticLeads, setOptimisticLeads] = useState<any[] | null>(null);
 
@@ -44,6 +45,10 @@ export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead 
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
+        if (!allowEditing) {
+            setActiveLead(null);
+            return;
+        }
         const { active, over } = event;
         
         setActiveLead(null);
@@ -83,7 +88,7 @@ export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead 
                         stage={stage}
                         leads={displayLeads.filter(l => l.stage === stage.value)}
                         onLeadClick={onLeadClick}
-                        onNewLead={() => onNewLead(stage.value)}
+                        onNewLead={() => allowEditing ? onNewLead(stage.value) : undefined}
                     />
                 ))}
             </div>

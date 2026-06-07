@@ -40,9 +40,10 @@ interface DroppablePipelineColumnProps {
     leads: any[];
     onLeadClick: (lead: any) => void;
     onNewLead: () => void;
+    allowEditing?: boolean;
 }
 
-export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }: DroppablePipelineColumnProps) {
+export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, allowEditing = true }: DroppablePipelineColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: stage.value,
     });
@@ -71,12 +72,14 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                 </div>
                 
                 <div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-all">
-                    <button 
-                        onClick={onNewLead}
-                        className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:shadow-lg transition-all"
-                    >
-                        <UserPlus size={12} />
-                    </button>
+                    {allowEditing && (
+                        <button
+                            onClick={onNewLead}
+                            className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:shadow-lg transition-all"
+                        >
+                            <UserPlus size={12} />
+                        </button>
+                    )}
                     <button className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">
                         <MoreHorizontal size={12} />
                     </button>
@@ -134,7 +137,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide leading-normal">
                                     {isOver ? '¡Suelta para asignar!' : `Sin ${stage.label.toLowerCase()}`}
                                 </p>
-                                {!isOver && (
+                                {allowEditing && !isOver && (
                                     <button 
                                         onClick={onNewLead}
                                         className="mt-3 text-[10px] font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] underline"
@@ -148,15 +151,17 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                 </motion.div>
 
                 {/* Footer Add Button */}
-                <button
-                    onClick={onNewLead}
-                    className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
-                >
-                    <div className="size-5 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                        <UserPlus size={10} />
-                    </div>
-                    AGREGAR PROSPECTO
-                </button>
+                {allowEditing && (
+                    <button
+                        onClick={onNewLead}
+                        className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
+                    >
+                        <div className="size-5 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                            <UserPlus size={10} />
+                        </div>
+                        AGREGAR PROSPECTO
+                    </button>
+                )}
             </div>
         </div>
     );

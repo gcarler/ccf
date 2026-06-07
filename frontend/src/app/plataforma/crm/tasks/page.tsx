@@ -17,6 +17,7 @@ import {
     Heart
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
@@ -62,7 +63,7 @@ const PRIORITY_STYLES: Record<string, string> = {
 };
 
 // ─── Sub-components ──────────────────────────────────────
-function TaskCard({ task, onStatusChange }: { task: ConsolidationTask; onStatusChange: (id: number, status: string) => void }) {
+function TaskCard({ task, onStatusChange, allowEditing = true }: { task: ConsolidationTask; onStatusChange: (id: number, status: string) => void; allowEditing?: boolean }) {
     return (
         <motion.div
             layout
@@ -74,17 +75,28 @@ function TaskCard({ task, onStatusChange }: { task: ConsolidationTask; onStatusC
             className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group"
         >
             <div className="flex items-start gap-3">
-                <button
-                    onClick={e => { e.stopPropagation(); onStatusChange(task.id, task.status === 'done' ? 'pending' : 'done'); }}
-                    className={clsx(
-                        "mt-0.5 size-5 rounded-full border-2 flex-shrink-0 transition-all",
-                        task.status === 'done'
-                            ? 'bg-emerald-500 border-emerald-500 text-white flex items-center justify-center'
-                            : 'border-slate-300 dark:border-white/20 group-hover:border-blue-400'
-                    )}
-                >
-                    {task.status === 'done' && <CheckCircle2 size={12} strokeWidth={3} />}
-                </button>
+                {allowEditing ? (
+                    <button
+                        onClick={e => { e.stopPropagation(); onStatusChange(task.id, task.status === 'done' ? 'pending' : 'done'); }}
+                        className={clsx(
+                            "mt-0.5 size-5 rounded-full border-2 flex-shrink-0 transition-all",
+                            task.status === 'done'
+                                ? 'bg-emerald-500 border-emerald-500 text-white flex items-center justify-center'
+                                : 'border-slate-300 dark:border-white/20 group-hover:border-blue-400'
+                        )}
+                    >
+                        {task.status === 'done' && <CheckCircle2 size={12} strokeWidth={3} />}
+                    </button>
+                ) : (
+                    <div
+                        className={clsx(
+                            "mt-0.5 size-5 rounded-full border-2 flex-shrink-0",
+                            task.status === 'done'
+                                ? 'bg-emerald-500 border-emerald-500'
+                                : 'border-slate-300 dark:border-white/20'
+                        )}
+                    />
+                )}
                 <div className="flex-1 min-w-0 space-y-2">
                     <p className={clsx("text-xs font-bold leading-tight", task.status === 'done' && "line-through text-slate-400")}>
                         {task.title}
@@ -115,6 +127,7 @@ function TaskCard({ task, onStatusChange }: { task: ConsolidationTask; onStatusC
 export default function CrmTasksPage() {
     const router = useRouter();
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const { addToast } = useToast();
     const [tasks, setTasks] = useState<ConsolidationTask[]>([]);
     const [loading, setLoading] = useState(true);
@@ -160,13 +173,14 @@ export default function CrmTasksPage() {
 
 
     const updateTaskStatus = useCallback(async (id: number, status: string) => {
+        if (!canEditCrm) return;
         setTasks(prev => prev.map(t => t.id === id ? { ...t, status: status as any } : t));
         try {
             await apiFetch(`/crm/tasks/${id}`, { method: 'PATCH', token, body: { status } });
         } catch {
             addToast('Error al actualizar estado', 'error');
         }
-    }, [token, addToast]);
+    }, [token, addToast, canEditCrm]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -185,9 +199,9 @@ export default function CrmTasksPage() {
         }
     };
 
-    useRegisterCommands('crm-tasks', [
+    useRegisterCommands('crm-tasks', canEditCrm ? [
         { id: 'crm-task-new', label: 'Nueva tarea de consolidación', group: 'Tareas', action: () => setIsCreateOpen(true) },
-    ]);
+    ] : []);
 
     const tasksByStatus = useMemo(() => {
         const map: Record<string, ConsolidationTask[]> = {};
@@ -225,14 +239,14 @@ export default function CrmTasksPage() {
             viewOptions={['board', 'list', 'table', 'grid', 'kanban', 'calendar', 'gantt', 'wiki']}
             viewType={viewType}
             onViewChange={setViewType}
-            rightActions={
+            rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCreateOpen(true)}
                     className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Tarea
                 </button>
-            }
+            ) : undefined}
         >
             {/* ─── Stats strip ─── */}
             <div className="px-4 pt-4 pb-0 flex items-center gap-3">
@@ -270,9 +284,9 @@ export default function CrmTasksPage() {
                                                     {colTasks.length}
                                                 </span>
                                             </div>
-                                            <button onClick={() => setIsCreateOpen(true)} className="p-1.5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all">
+                                            {canEditCrm && <button onClick={() => setIsCreateOpen(true)} className="p-1.5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all">
                                                 <Plus size={14} />
-                                            </button>
+                                            </button>}
                                         </div>
                                         {/* Cards */}
                                         <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin min-h-[200px]">
@@ -282,6 +296,7 @@ export default function CrmTasksPage() {
                                                     key={task.id}
                                                     task={task}
                                                     onStatusChange={updateTaskStatus}
+                                                    allowEditing={canEditCrm}
                                                 />
                                                 ))}
                                             </AnimatePresence>
@@ -310,9 +325,11 @@ export default function CrmTasksPage() {
                             <div className="py-1.5 flex flex-col items-center gap-4">
                                 <CheckSquare size={48} strokeWidth={1} className="text-slate-200" />
                                 <p className="text-slate-400 font-bold uppercase text-sm">Sin tareas registradas</p>
-                                <button onClick={() => setIsCreateOpen(true)} className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20">
-                                    Crear primera tarea
-                                </button>
+                                {canEditCrm && (
+                                    <button onClick={() => setIsCreateOpen(true)} className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20">
+                                        Crear primera tarea
+                                    </button>
+                                )}
                             </div>
                         ) : tasks.map(task => (
                             <div
@@ -320,15 +337,22 @@ export default function CrmTasksPage() {
                                 onClick={() => router.push(`/plataforma/crm/tasks/${task.id}`)}
                                 className="flex items-center gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group"
                             >
-                                <button
-                                    onClick={e => { e.stopPropagation(); updateTaskStatus(task.id, task.status === 'done' ? 'pending' : 'done'); }}
-                                    className={clsx(
-                                        "size-5 rounded-full border-2 flex-shrink-0 transition-all flex items-center justify-center",
-                                        task.status === 'done' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 group-hover:border-blue-400'
-                                    )}
-                                >
-                                    {task.status === 'done' && <CheckCircle2 size={12} strokeWidth={3} />}
-                                </button>
+                                {canEditCrm ? (
+                                    <button
+                                        onClick={e => { e.stopPropagation(); updateTaskStatus(task.id, task.status === 'done' ? 'pending' : 'done'); }}
+                                        className={clsx(
+                                            "size-5 rounded-full border-2 flex-shrink-0 transition-all flex items-center justify-center",
+                                            task.status === 'done' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 group-hover:border-blue-400'
+                                        )}
+                                    >
+                                        {task.status === 'done' && <CheckCircle2 size={12} strokeWidth={3} />}
+                                    </button>
+                                ) : (
+                                    <div className={clsx(
+                                        "size-5 rounded-full border-2 flex-shrink-0",
+                                        task.status === 'done' ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'
+                                    )} />
+                                )}
                                 <div className="flex-1">
                                     <p className={clsx("text-sm font-bold", task.status === 'done' && "line-through text-slate-400")}>{task.title}</p>
                                     {task.member_name && <p className="text-[10px] text-slate-400 font-bold">{task.member_name}</p>}
@@ -621,4 +645,3 @@ export default function CrmTasksPage() {
         </CrmShell>
     );
 }
-

@@ -5,8 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import (normalize_role, require_admin,
-                          require_module_access, require_pastor_or_admin)
+from backend.auth import normalize_role, require_module_access
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.crud.crm import resolve_persona_id_for_user
@@ -31,7 +30,7 @@ def _get_user_role(user: models.User) -> str:
 def get_persona_communications(
     persona_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     persona_uuid = _parse_uuid(persona_id)
     return (
@@ -45,7 +44,7 @@ def get_persona_communications(
 def get_persona_ministries(
     persona_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Devuelve todas las vinculaciones ministeriales de una persona con su rol."""
     persona_uuid = _parse_uuid(persona_id)
@@ -88,7 +87,7 @@ def get_persona_ministries(
 def get_persona_consolidation_profile(
     persona_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Devuelve el perfil de consolidación de una persona: roles, casos y seguimiento."""
     persona_uuid = _parse_uuid(persona_id)
@@ -200,7 +199,7 @@ def get_persona_consolidation_profile(
 @router.get("/positions", response_model=List[schemas.Position])
 def list_positions(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     return (
         db.query(models.Position)
@@ -213,7 +212,7 @@ def list_positions(
 def create_position(
     payload: schemas.PositionCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     existing = (
         db.query(models.Position).filter(models.Position.name == payload.name).first()
@@ -232,7 +231,7 @@ def update_position(
     position_id: int,
     payload: schemas.PositionUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     row = db.query(models.Position).filter(models.Position.id == position_id).first()
     if not row:
@@ -249,7 +248,7 @@ def assign_persona_position(
     persona_id: str,
     payload: schemas.MemberPositionCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     persona_uuid = _parse_uuid(persona_id)
     persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
@@ -300,7 +299,7 @@ def update_persona_position(
     member_position_id: int,
     payload: schemas.MemberPositionUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     persona_uuid = _parse_uuid(persona_id)
     row = (
@@ -325,7 +324,7 @@ def assign_persona_ministry(
     persona_id: str,
     payload: schemas.MemberMinistryCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Vincula a un miembro a un ministerio con un rol especifico."""
     persona_uuid = _parse_uuid(persona_id)
@@ -363,7 +362,7 @@ def update_persona_ministry(
     mm_id: int,
     payload: schemas.MemberMinistryUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Actualiza el rol o estado de una vinculacion ministerial."""
     persona_uuid = _parse_uuid(persona_id)
@@ -435,7 +434,7 @@ def list_families(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     return crud.get_families(db, skip=skip, limit=limit)
 
@@ -444,7 +443,7 @@ def list_families(
 def create_new_family(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     name = payload.get("name")
     if not name:
@@ -457,6 +456,6 @@ def create_new_family(
 def get_family(
     family_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     return crud.get_family_members(db, family_id=family_id)

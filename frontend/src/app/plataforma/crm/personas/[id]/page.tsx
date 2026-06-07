@@ -17,6 +17,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import CrmShell from '@/components/crm/CrmShell';
@@ -315,6 +316,7 @@ export default function MemberDetailPage() {
     const id = Array.isArray(params?.id) ? params.id[0] : (params?.id ?? '');
     const router = useRouter();
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const [member, setMember] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('overview');
@@ -540,13 +542,13 @@ export default function MemberDetailPage() {
                 { label: 'Personas', icon: Users, href: '/plataforma/crm/personas' },
                 { label: fullName, icon: User }
             ]}
-            rightActions={
+            rightActions={canEditCrm ? (
                 <div className="flex gap-2">
                     <button title="Editar" onClick={() => setIsEditOpen(true)} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
                     <button title="Compartir" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
                     <button title="Más acciones" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
                 </div>
-            }
+            ) : undefined}
         >
  <div className="w-full space-y-3 pb-4 p-4 lg:p-4">
 

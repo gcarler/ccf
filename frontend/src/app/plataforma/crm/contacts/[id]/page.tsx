@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import {
@@ -47,6 +48,7 @@ const STAGE_LABELS: Record<string, string> = {
 
 export default function LeadDetail() {
     const { isAuthenticated, token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const { addToast } = useToast();
     const router = useRouter();
     const params = useParams<{ id: string }>();
@@ -173,11 +175,11 @@ export default function LeadDetail() {
                 { label: 'Consolidación', icon: Users },
                 { label: lead ? (lead.nombre_completo || '') : 'Contacto', icon: Users }
             ]}
-            rightActions={
+            rightActions={canEditCrm ? (
                 <button className="flex size-8 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white transition-all">
                     <MoreVertical size={20} />
                 </button>
-            }
+            ) : undefined}
         >
             <AdminHero
                 eyebrow="Contacto"
@@ -186,7 +188,7 @@ export default function LeadDetail() {
                 tags={[`Etapa: ${STAGE_LABELS[lead?.stage] ?? '...'}`, `Origen: ${lead?.source ?? '...'}`]}
                 watchers={heroWatchers}
                 primaryAction={{ label: 'Ver pipeline', icon: Link2, onClick: () => router.push('/plataforma/crm/pipeline') }}
-                secondaryAction={{ label: 'Registrar llamada', icon: Plus, onClick: () => setIsCallDrawerOpen(true) }}
+                secondaryAction={canEditCrm ? { label: 'Registrar llamada', icon: Plus, onClick: () => setIsCallDrawerOpen(true) } : undefined}
             />
 
             <div className="space-y-4">
@@ -305,26 +307,30 @@ export default function LeadDetail() {
                             </div>
                         </div>
                         <div className="flex gap-4 relative z-10">
-                            <button
-                                onClick={() => setIsCallDrawerOpen(true)}
-                                className="flex-1 bg-primary hover:bg-primary-600 text-white py-2 rounded-lg font-bold uppercase tracking-wide text-[10px] shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-2 border border-primary-400/20"
-                            >
-                                <Phone size={16} />
-                                Registrar Llamada
-                            </button>
+                            {canEditCrm && (
+                                <button
+                                    onClick={() => setIsCallDrawerOpen(true)}
+                                    className="flex-1 bg-primary hover:bg-primary-600 text-white py-2 rounded-lg font-bold uppercase tracking-wide text-[10px] shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-2 border border-primary-400/20"
+                                >
+                                    <Phone size={16} />
+                                    Registrar Llamada
+                                </button>
+                            )}
                             {/* Stage change dropdown */}
                             <div className="relative">
-                                <button
-                                    onClick={() => setIsStageOpen(s => !s)}
-                                    disabled={isSavingStage}
-                                    className="size-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-                                    title="Cambiar etapa"
-                                >
-                                    {isSavingStage
-                                        ? <Loader2 size={20} className="animate-spin" />
-                                        : <ChevronDown size={20} />
-                                    }
-                                </button>
+                                {canEditCrm && (
+                                    <button
+                                        onClick={() => setIsStageOpen(s => !s)}
+                                        disabled={isSavingStage}
+                                        className="size-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                                        title="Cambiar etapa"
+                                    >
+                                        {isSavingStage
+                                            ? <Loader2 size={20} className="animate-spin" />
+                                            : <ChevronDown size={20} />
+                                        }
+                                    </button>
+                                )}
                                 {isStageOpen && (
                                     <div className="absolute bottom-16 right-0 w-48 bg-slate-900 border border-white/10 rounded-lg overflow-hidden shadow-2xl z-50">
                                         {STAGES.map(s => (

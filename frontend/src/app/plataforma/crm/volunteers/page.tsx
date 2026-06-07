@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -59,6 +60,7 @@ interface Volunteer {
 
 export default function VolunteersPage() {
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const router = useRouter();
     const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -124,6 +126,7 @@ export default function VolunteersPage() {
     }, [filtered]);
 
     const handleSave = async () => {
+        if (!canEditCrm) return;
         if (!form.name.trim()) return toast.error('El nombre es obligatorio');
         setSaving(true);
         try {
@@ -161,12 +164,14 @@ export default function VolunteersPage() {
                             <h1 className="text-lg font-bold text-white tracking-tight mb-1">Cuerpo de Servidores</h1>
                             <p className="text-blue-200 text-sm font-medium">Gestión de equipos de servicio ministerial</p>
                         </div>
-                        <button
-                            onClick={() => setShowAddForm(true)}
-                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 shrink-0"
-                        >
-                            <Plus size={16} /> Registrar Servidor
-                        </button>
+                        {canEditCrm && (
+                            <button
+                                onClick={() => setShowAddForm(true)}
+                                className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 shrink-0"
+                            >
+                                <Plus size={16} /> Registrar Servidor
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -288,7 +293,7 @@ export default function VolunteersPage() {
                             <p className="text-sm text-slate-400 font-medium mb-3">
                                 {query ? `No se encontraron servidores con "${query}"` : 'Registra el primer servidor de la comunidad.'}
                             </p>
-                            {!query && (
+                            {!query && canEditCrm && (
                                 <button onClick={() => setShowAddForm(true)} className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] transition-all active:scale-95">
                                     <Plus size={14} /> Registrar Primer Servidor
                                 </button>

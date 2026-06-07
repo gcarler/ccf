@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useCrmAccess } from "@/hooks/useCrmAccess";
 import { apiFetch } from "@/lib/http";
 import CrmShell from "@/components/crm/CrmShell";
 import {
@@ -44,6 +45,7 @@ export default function VolunteerDetailPage() {
     const router = useRouter();
     const id = params?.id as string;
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
 
     const [volunteer, setVolunteer] = useState<Volunteer | null>(null);
     const [loading, setLoading] = useState(true);
@@ -146,16 +148,18 @@ export default function VolunteerDetailPage() {
                                 <Badge label={(volunteer.status || "inactive").toUpperCase()} tone="emerald" />
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                            <button onClick={openEdit}
-                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all">
-                                <PencilLine size={13} /> Editar
-                            </button>
-                            <button onClick={() => setDeleteConfirm(true)}
-                                className="size-10 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition-all border border-rose-200/50">
-                                <Trash2 size={15} />
-                            </button>
-                        </div>
+                        {canEditCrm && (
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                <button onClick={openEdit}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all">
+                                    <PencilLine size={13} /> Editar
+                                </button>
+                                <button onClick={() => setDeleteConfirm(true)}
+                                    className="size-10 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition-all border border-rose-200/50">
+                                    <Trash2 size={15} />
+                                </button>
+                            </div>
+                        )}
                     </header>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">

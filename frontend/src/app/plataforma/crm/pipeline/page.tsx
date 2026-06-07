@@ -16,6 +16,7 @@ import {
     ArrowRight
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
@@ -46,6 +47,7 @@ import { PipelineKanbanBoard } from '@/components/crm/PipelineKanbanBoard';
 
 export default function ConsolidationPipelinePage() {
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const { addToast } = useToast();
     const router = useRouter();
 
@@ -107,6 +109,7 @@ export default function ConsolidationPipelinePage() {
     };
 
     const handleUpdateStage = useCallback(async (leadId: string, newStage: string) => {
+        if (!canEditCrm) return;
         // Optimistic update
         setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
         try {
@@ -118,7 +121,7 @@ export default function ConsolidationPipelinePage() {
             addToast('Error al actualizar etapa', 'error');
             fetchPipeline(); // Revert
         }
-    }, [token, addToast, fetchPipeline]);
+    }, [token, addToast, fetchPipeline, canEditCrm]);
 
     // Table columns with proper labels
     const columns = useMemo<ColumnDef<any>[]>(() => [
@@ -294,7 +297,7 @@ export default function ConsolidationPipelinePage() {
             viewOptions={ALL_VIEWS}
             viewType={viewType}
             onViewChange={setViewType}
-            rightActions={
+            rightActions={canEditCrm ? (
                 <SplitDropdownButton
                     mainLabel="Nuevo Lead"
                     icon={UserPlus}
@@ -305,7 +308,7 @@ export default function ConsolidationPipelinePage() {
                         { id: 'mail', label: 'Enviar Email', icon: Mail, onClick: () => router.push('/plataforma/crm/messaging') }
                     ]}
                 />
-            }
+            ) : undefined}
         >
             <div className="flex flex-col md:flex-row h-full w-full overflow-hidden">
                 {/* ── Main Board ── */}
@@ -319,9 +322,11 @@ export default function ConsolidationPipelinePage() {
                                         onLeadClick={handleLeadSelect}
                                         onDropLead={handleUpdateStage}
                                         onNewLead={(s) => {
+                                            if (!canEditCrm) return;
                                             if (s) setNewLeadForm(prev => ({ ...prev, stage: s }));
                                             setIsNewLeadDrawerOpen(true);
                                         }}
+                                        allowEditing={canEditCrm}
                                     />
                                 </motion.div>
                             ) : viewType === 'grid' ? (
@@ -621,5 +626,4 @@ export default function ConsolidationPipelinePage() {
         </CrmShell>
     );
 }
-
 

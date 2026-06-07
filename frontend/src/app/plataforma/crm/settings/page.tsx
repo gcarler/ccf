@@ -11,12 +11,14 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 
 export default function CrmSettingsPage() {
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const { addToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveTab] = useState('general');
@@ -76,6 +78,7 @@ export default function CrmSettingsPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!canEditCrm) return;
         setIsSaving(true);
         try {
             await apiFetch('/crm/settings', {
@@ -102,7 +105,7 @@ export default function CrmSettingsPage() {
     };
 
     const handleSavePosition = async () => {
-        if (!token || !positionForm.name.trim()) return;
+        if (!canEditCrm || !token || !positionForm.name.trim()) return;
         setIsCreatingPosition(true);
         try {
             const payload = {
@@ -161,7 +164,7 @@ export default function CrmSettingsPage() {
                 { label: 'Consolidación', icon: Users },
                 { label: 'Configuración de Sistema', icon: SettingsIcon }
             ]}
-            rightActions={
+            rightActions={canEditCrm ? (
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
@@ -170,7 +173,7 @@ export default function CrmSettingsPage() {
                     {isSaving ? <SpinnerIcon className="animate-spin" size={14} /> : <Save size={14} />}
                     {isSaving ? 'Sincronizando...' : 'Guardar Cambios'}
                 </button>
-            }
+            ) : undefined}
         >
             <div className="max-w-[1000px] mx-auto space-y-3 pb-4 pt-6 px-4 font-sans">
                 
@@ -190,11 +193,11 @@ export default function CrmSettingsPage() {
                     
                     {/* Navigation Sidebar */}
                     <motion.aside variants={containerVariants} initial="hidden" animate="show" className="space-y-1">
-                        <SettingsNavButton active={activeSection === 'general'} onClick={() => setActiveTab('general')} icon={Globe} label="Información General" />
-                        <SettingsNavButton active={activeSection === 'integrations'} onClick={() => setActiveTab('integrations')} icon={Zap} label="Integraciones" />
-                        <SettingsNavButton active={activeSection === 'notifications'} onClick={() => setActiveTab('notifications')} icon={Bell} label="Notificaciones" />
-                        <SettingsNavButton active={activeSection === 'consolidation'} onClick={() => setActiveTab('consolidation')} icon={Users} label="Consolidación" />
-                        <SettingsNavButton active={activeSection === 'security'} onClick={() => setActiveTab('security')} icon={Lock} label="Seguridad & Datos" />
+                        <SettingsNavButton active={activeSection === 'general'} onClick={() => canEditCrm && setActiveTab('general')} icon={Globe} label="Información General" />
+                        <SettingsNavButton active={activeSection === 'integrations'} onClick={() => canEditCrm && setActiveTab('integrations')} icon={Zap} label="Integraciones" />
+                        <SettingsNavButton active={activeSection === 'notifications'} onClick={() => canEditCrm && setActiveTab('notifications')} icon={Bell} label="Notificaciones" />
+                        <SettingsNavButton active={activeSection === 'consolidation'} onClick={() => canEditCrm && setActiveTab('consolidation')} icon={Users} label="Consolidación" />
+                        <SettingsNavButton active={activeSection === 'security'} onClick={() => canEditCrm && setActiveTab('security')} icon={Lock} label="Seguridad & Datos" />
                     </motion.aside>
 
                     {/* Main Settings Form */}
@@ -208,11 +211,11 @@ export default function CrmSettingsPage() {
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-4">
-                                        <SettingInput label="Nombre de la Iglesia" value={config.churchName} onChange={(val: string) => setConfig({...config, churchName: val})} />
-                                        <SettingInput label="Email de Respuesta Público" value={config.contactEmail} onChange={(val: string) => setConfig({...config, contactEmail: val})} />
+                                        <SettingInput disabled={!canEditCrm} label="Nombre de la Iglesia" value={config.churchName} onChange={(val: string) => setConfig({...config, churchName: val})} />
+                                        <SettingInput disabled={!canEditCrm} label="Email de Respuesta Público" value={config.contactEmail} onChange={(val: string) => setConfig({...config, contactEmail: val})} />
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide pl-1">Zona Horaria Base</label>
-                                            <select className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
+                                            <select disabled={!canEditCrm} className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer disabled:opacity-50" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
                                                 <option value="America/Bogota">Bogotá (GMT-5)</option>
                                                 <option value="America/New_York">New York (GMT-4)</option>
                                                 <option value="Europe/Madrid">Madrid (GMT+2)</option>
@@ -231,23 +234,25 @@ export default function CrmSettingsPage() {
 
                                     <div className="space-y-4">
                                         <ToggleSetting 
+                                            disabled={!canEditCrm}
                                             icon={Smartphone} color="text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10" title="Canal de WhatsApp Business" 
                                             desc="Habilita envío de notificaciones y seguimiento automático."
                                             active={config.enableWhatsApp} onToggle={(v: boolean) => setConfig({...config, enableWhatsApp: v})}
                                         />
                                         <ToggleSetting 
+                                            disabled={!canEditCrm}
                                             icon={Smartphone} color="text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10" title="Notificaciones SMS (Twilio)" 
                                             desc="Para alertas urgentes cuando no hay internet."
                                             active={config.enableSMS} onToggle={(v: boolean) => setConfig({...config, enableSMS: v})}
                                         />
                                         {config.enableSMS && (
                                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="pl-4 ml-4 border-l-2 border-slate-100 dark:border-white/10 py-2 space-y-4">
-                                                <SettingInput label="Twilio Account SID" value={config.twilioApiKey} onChange={(v: string) => setConfig({...config, twilioApiKey: v})} placeholder="ACxxxxxxxxxxxxxxxx" />
-                                                <SettingInput label="Auth Token" value="••••••••••••••••" onChange={() => {}} type="password" />
+                                                <SettingInput disabled={!canEditCrm} label="Twilio Account SID" value={config.twilioApiKey} onChange={(v: string) => setConfig({...config, twilioApiKey: v})} placeholder="ACxxxxxxxxxxxxxxxx" />
+                                                <SettingInput disabled={!canEditCrm} label="Auth Token" value="••••••••••••••••" onChange={() => {}} type="password" />
                                             </motion.div>
                                         )}
                                         <div className="pt-4 mt-2 border-t border-slate-100 dark:border-white/5">
-                                            <SettingInput label="Servidor SMTP Principal" value={config.smtpServer} onChange={(v: string) => setConfig({...config, smtpServer: v})} placeholder="smtp.mail.faro.org" />
+                                            <SettingInput disabled={!canEditCrm} label="Servidor SMTP Principal" value={config.smtpServer} onChange={(v: string) => setConfig({...config, smtpServer: v})} placeholder="smtp.mail.faro.org" />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -321,11 +326,12 @@ export default function CrmSettingsPage() {
                                                     </button>
                                                 )}
                                             </div>
-                                            <SettingInput label="Nombre" value={positionForm.name} onChange={(v: string) => setPositionForm({ ...positionForm, name: v })} placeholder="Pastor de consolidación" />
-                                            <SettingInput label="Categoría" value={positionForm.category} onChange={(v: string) => setPositionForm({ ...positionForm, category: v })} placeholder="consolidation" />
+                                            <SettingInput disabled={!canEditCrm} label="Nombre" value={positionForm.name} onChange={(v: string) => setPositionForm({ ...positionForm, name: v })} placeholder="Pastor de consolidación" />
+                                            <SettingInput disabled={!canEditCrm} label="Categoría" value={positionForm.category} onChange={(v: string) => setPositionForm({ ...positionForm, category: v })} placeholder="consolidation" />
                                             <div className="space-y-1.5">
                                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide pl-1">Descripción</label>
                                                 <textarea
+                                                    disabled={!canEditCrm}
                                                     value={positionForm.description}
                                                     onChange={(e) => setPositionForm({ ...positionForm, description: e.target.value })}
                                                     rows={4}
@@ -334,6 +340,7 @@ export default function CrmSettingsPage() {
                                             </div>
                                             <label className="flex items-center gap-3 text-xs font-medium text-slate-700 dark:text-slate-200">
                                                 <input
+                                                    disabled={!canEditCrm}
                                                     type="checkbox"
                                                     checked={positionForm.is_active}
                                                     onChange={(e) => setPositionForm({ ...positionForm, is_active: e.target.checked })}
@@ -341,15 +348,17 @@ export default function CrmSettingsPage() {
                                                 />
                                                 Activo
                                             </label>
-                                            <button
-                                                type="button"
-                                                onClick={handleSavePosition}
-                                                disabled={isCreatingPosition || !positionForm.name.trim()}
-                                                className="inline-flex items-center justify-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-50"
-                                            >
-                                                {isCreatingPosition ? <SpinnerIcon className="animate-spin" size={14} /> : <Plus size={14} />}
-                                                {editingPositionId ? 'Guardar cambios' : 'Crear cargo'}
-                                            </button>
+                                            {canEditCrm && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSavePosition}
+                                                    disabled={isCreatingPosition || !positionForm.name.trim()}
+                                                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-50"
+                                                >
+                                                    {isCreatingPosition ? <SpinnerIcon className="animate-spin" size={14} /> : <Plus size={14} />}
+                                                    {editingPositionId ? 'Guardar cambios' : 'Crear cargo'}
+                                                </button>
+                                            )}
                                         </div>
 
                                         <div className="space-y-4 p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
@@ -386,14 +395,16 @@ export default function CrmSettingsPage() {
                                                                     <p className="text-[12px] text-slate-400 mt-1 line-clamp-2">{position.description}</p>
                                                                 )}
                                                             </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => startEditPosition(position)}
-                                                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
-                                                            >
-                                                                <Pencil size={12} />
-                                                                Editar
-                                                            </button>
+                                                            {canEditCrm && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => startEditPosition(position)}
+                                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                                >
+                                                                    <Pencil size={12} />
+                                                                    Editar
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -429,7 +440,7 @@ function SettingsNavButton({ active, onClick, icon: Icon, label }: any) {
     );
 }
 
-function SettingInput({ label, value, onChange, placeholder, type = "text" }: any) {
+function SettingInput({ label, value, onChange, placeholder, type = "text", disabled = false }: any) {
     return (
         <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide pl-1">{label}</label>
@@ -438,13 +449,14 @@ function SettingInput({ label, value, onChange, placeholder, type = "text" }: an
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                disabled={disabled}
+                className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400 disabled:opacity-50"
             />
         </div>
     );
 }
 
-function ToggleSetting({ icon: Icon, color, title, desc, active, onToggle }: any) {
+function ToggleSetting({ icon: Icon, color, title, desc, active, onToggle, disabled = false }: any) {
     return (
         <div className="flex items-center justify-between p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 transition-colors group">
             <div className="flex items-center gap-4">
@@ -457,9 +469,10 @@ function ToggleSetting({ icon: Icon, color, title, desc, active, onToggle }: any
                 </div>
             </div>
             <button 
-                onClick={() => onToggle(!active)}
+                disabled={disabled}
+                onClick={() => !disabled && onToggle(!active)}
                 className={clsx(
-                    "relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 outline-none",
+                    "relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 outline-none disabled:opacity-50",
                     active ? "bg-[hsl(var(--primary))]" : "bg-slate-300 dark:bg-slate-600"
                 )}
             >
@@ -475,4 +488,3 @@ function ToggleSetting({ icon: Icon, color, title, desc, active, onToggle }: any
 function SpinnerIcon({ className, size = 24 }: any) {
     return <Activity size={size} className={clsx("animate-spin", className)} />;
 }
-

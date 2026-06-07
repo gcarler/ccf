@@ -16,6 +16,7 @@ import {
     Send
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
@@ -41,6 +42,7 @@ const PRAYER_PROGRESS: Record<string, number> = { pending: 20, active: 40, prayi
 export default function PrayerSupportCenter() {
     const router = useRouter();
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const { addToast } = useToast();
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -79,6 +81,7 @@ export default function PrayerSupportCenter() {
 
 
     const updateRequestStatus = useCallback(async (id: number, newStatus: string) => {
+        if (!canEditCrm) return;
         setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
         // Sync selected request if open
         setSelectedRequest((prev: any) => prev?.id === id ? { ...prev, status: newStatus } : prev);
@@ -91,10 +94,11 @@ export default function PrayerSupportCenter() {
         } catch {
             addToast('Error al actualizar estado', 'error');
         }
-    }, [token, addToast]);
+    }, [token, addToast, canEditCrm]);
 
     const handleCreatePrayer = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!canEditCrm) return;
         if (!newPrayer.request.trim()) return;
         setIsSaving(true);
         try {
@@ -136,7 +140,11 @@ export default function PrayerSupportCenter() {
         {
             accessorKey: 'status',
             header: 'Estado',
-            cell: ({ row }) => <StatusPicker currentValue={row.original.status} options={PRAYER_STATUS_OPTIONS} onSelect={(val) => updateRequestStatus(row.original.id, val)} />
+            cell: ({ row }) => canEditCrm ? (
+                <StatusPicker currentValue={row.original.status} options={PRAYER_STATUS_OPTIONS} onSelect={(val) => updateRequestStatus(row.original.id, val)} />
+            ) : (
+                <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{row.original.status}</span>
+            )
         },
         {
             accessorKey: 'category',
@@ -206,14 +214,14 @@ export default function PrayerSupportCenter() {
             onViewChange={setViewType}
             viewOptions={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
             onSearch={setSearch}
-            rightActions={
+            rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCreateDrawerOpen(true)}
                     className="flex items-center gap-2 px-4 py-1.5 bg-rose-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-rose-500/20 active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Petición
                 </button>
-            }
+            ) : undefined}
         >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#f43f5e05_0%,_transparent_50%)] pointer-events-none" />
 
@@ -364,12 +372,14 @@ export default function PrayerSupportCenter() {
                 actions={
                     <>
                         <button onClick={() => setIsDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500">Cerrar</button>
-                        <button
-                            onClick={() => selectedRequest && updateRequestStatus(selectedRequest.id, 'answered')}
-                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-bold shadow-lg shadow-emerald-500/20"
-                        >
-                            Marcar Contestada
-                        </button>
+                        {canEditCrm && (
+                            <button
+                                onClick={() => selectedRequest && updateRequestStatus(selectedRequest.id, 'answered')}
+                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-bold shadow-lg shadow-emerald-500/20"
+                            >
+                                Marcar Contestada
+                            </button>
+                        )}
                     </>
                 }
             >
@@ -404,22 +414,26 @@ export default function PrayerSupportCenter() {
                         <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
                             <Flame size={14} className="text-rose-500" /> Actualizar Estado
                         </h4>
-                        <div className="flex gap-2">
-                            {PRAYER_STATUS_OPTIONS.map(opt => (
-                                <button
-                                    key={opt.value}
-                                    onClick={() => selectedRequest && updateRequestStatus(selectedRequest.id, opt.value)}
-                                    className={clsx(
-                                        "flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all border",
-                                        selectedRequest?.status === opt.value
-                                            ? `${opt.bg} ${opt.text} border-current`
-                                            : 'bg-slate-50 dark:bg-white/5 text-slate-400 border-transparent hover:border-slate-200'
-                                    )}
-                                >
-                                    {opt.label}
-                                </button>
-                            ))}
-                        </div>
+                        {canEditCrm ? (
+                            <div className="flex gap-2">
+                                {PRAYER_STATUS_OPTIONS.map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => selectedRequest && updateRequestStatus(selectedRequest.id, opt.value)}
+                                        className={clsx(
+                                            "flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all border",
+                                            selectedRequest?.status === opt.value
+                                                ? `${opt.bg} ${opt.text} border-current`
+                                                : 'bg-slate-50 dark:bg-white/5 text-slate-400 border-transparent hover:border-slate-200'
+                                        )}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Solo lectura</div>
+                        )}
                     </section>
                 </div>
             </WorkspaceDrawer>
@@ -435,15 +449,17 @@ export default function PrayerSupportCenter() {
                         <button type="button" onClick={() => setIsCreateDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
                             Cancelar
                         </button>
-                        <button
-                            form="create-prayer-form"
-                            type="submit"
-                            disabled={isSaving}
-                            className="px-3 py-2 bg-rose-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-rose-500/20 hover:bg-rose-700 active:scale-95 transition-all flex items-center gap-2"
-                        >
-                            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                            Registrar
-                        </button>
+                        {canEditCrm && (
+                            <button
+                                form="create-prayer-form"
+                                type="submit"
+                                disabled={isSaving}
+                                className="px-3 py-2 bg-rose-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-rose-500/20 hover:bg-rose-700 active:scale-95 transition-all flex items-center gap-2"
+                            >
+                                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                Registrar
+                            </button>
+                        )}
                     </>
                 }
             >
@@ -451,6 +467,7 @@ export default function PrayerSupportCenter() {
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre del Solicitante</label>
                         <input
+                            disabled={!canEditCrm}
                             value={newPrayer.name}
                             onChange={e => setNewPrayer({ ...newPrayer, name: e.target.value })}
                             placeholder="Nombre o 'Anónimo'"
@@ -461,6 +478,7 @@ export default function PrayerSupportCenter() {
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Petición *</label>
                         <textarea
                             required
+                            disabled={!canEditCrm}
                             value={newPrayer.request}
                             onChange={e => setNewPrayer({ ...newPrayer, request: e.target.value })}
                             placeholder="Describe la petición de oración..."
@@ -472,6 +490,7 @@ export default function PrayerSupportCenter() {
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Categoría</label>
                             <select
+                                disabled={!canEditCrm}
                                 value={newPrayer.category}
                                 onChange={e => setNewPrayer({ ...newPrayer, category: e.target.value })}
                                 className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-rose-500/20 font-bold text-sm dark:text-white appearance-none"
@@ -483,9 +502,10 @@ export default function PrayerSupportCenter() {
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Urgencia</label>
                             <button
                                 type="button"
-                                onClick={() => setNewPrayer({ ...newPrayer, is_urgent: !newPrayer.is_urgent })}
+                                onClick={() => canEditCrm && setNewPrayer({ ...newPrayer, is_urgent: !newPrayer.is_urgent })}
+                                disabled={!canEditCrm}
                                 className={clsx(
-                                    "w-full px-4 py-1.5 rounded-lg border font-bold text-sm transition-all",
+                                    "w-full px-4 py-1.5 rounded-lg border font-bold text-sm transition-all disabled:opacity-50",
                                     newPrayer.is_urgent
                                         ? "bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700 text-rose-600"
                                         : "bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-400"
@@ -500,4 +520,3 @@ export default function PrayerSupportCenter() {
         </CrmShell>
     );
 }
-

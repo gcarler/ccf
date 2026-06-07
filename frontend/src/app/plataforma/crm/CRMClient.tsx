@@ -9,6 +9,7 @@ import { DSCard } from '@/design/components/DSCard';
 import { DSChart } from '@/design/components/DSChart';
 import { DSMetric } from '@/design/components/DSMetric';
 import { apiFetch } from '@/lib/http';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import {
 ArrowUpRight,
 Calendar,
@@ -29,6 +30,7 @@ import { toast } from 'sonner';
 
 export default function CRMClient() {
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const router = useRouter();
     const [dashboard, setDashboard] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function CRMClient() {
     return (
         <WorkspaceLayout
             breadcrumbs={[{ label: 'Consolidación', icon: Users }, { label: 'Dashboard Pastoral', icon: Heart }]}
-            rightActions={
+            rightActions={canEditCrm ? (
                 <SplitDropdownButton
                     mainLabel="Nuevo"
                     icon={UserPlus}
@@ -67,7 +69,7 @@ export default function CRMClient() {
                         { id: 'sms', label: 'SMS', icon: MessageCircle, onClick: () => router.push('/plataforma/crm/pipeline') }
                     ]}
                 />
-            }
+            ) : undefined}
         >
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />

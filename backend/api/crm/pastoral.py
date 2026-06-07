@@ -16,7 +16,7 @@ from backend.api.crm._shared import (
     _serialize_task,
     utc_now,
 )
-from backend.auth import normalize_role, require_active_user, require_pastor_or_admin
+from backend.auth import normalize_role, require_module_access
 from backend.core.database import get_db
 from backend.crud.crm import (
     get_user_sede_id,
@@ -85,7 +85,7 @@ def _get_persona_or_404(db: Session, persona_ref: str, user_sede: Optional[int] 
 def get_consolidation_case(
     case_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     case = _get_case_or_404(db, case_id, user_sede)
@@ -96,7 +96,7 @@ def get_consolidation_case(
 def create_consolidation_case(
     payload: schemas.CasoCRMCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     p_uuid = uuid.UUID(payload.persona_id) if isinstance(payload.persona_id, str) else payload.persona_id
     persona = db.query(models.Persona).filter(models.Persona.id == p_uuid).first()
@@ -121,7 +121,7 @@ def update_consolidation_case(
     case_id: str,
     payload: schemas.CasoCRMUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     case = _get_case_or_404(db, case_id, user_sede)
@@ -139,7 +139,7 @@ def create_consolidation_assignment(
     case_id: str,
     payload: schemas.ConsolidationAssignmentCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     case = _get_case_or_404(db, case_id, user_sede)
@@ -172,7 +172,7 @@ def create_consolidation_interaction(
     case_id: str,
     payload: schemas.ConsolidationInteractionCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     case = _get_case_or_404(db, case_id, user_sede)
@@ -201,7 +201,7 @@ def create_consolidation_task(
     case_id: str,
     payload: schemas.ConsolidationTaskCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _get_case_or_404(db, case_id, user_sede)
@@ -234,7 +234,7 @@ def list_consolidation_cases(
     page: int = 1,
     page_size: int = 50,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista casos de consolidación con paginación y filtros."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -267,7 +267,7 @@ def list_consolidation_cases(
 def delete_consolidation_case(
     case_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Archiva un caso de consolidación (soft delete)."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -282,7 +282,7 @@ def list_consolidation_tasks(
     case_id: str,
     status_filter: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista las tareas de seguimiento de un caso."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -315,7 +315,7 @@ def update_consolidation_task(
     task_id: str,
     payload: schemas.ConsolidationTaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Actualiza una tarea de seguimiento (ej. marcar como completada)."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -352,7 +352,7 @@ def update_consolidation_task(
 def list_consolidation_interactions(
     case_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista las interacciones de un caso de consolidación."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -385,7 +385,7 @@ def update_consolidation_assignment(
     assignment_id: int,
     payload: schemas.ConsolidationAssignmentUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Actualiza una asignación de consolidación."""
     assignment = (
@@ -416,7 +416,7 @@ def update_consolidation_assignment(
 async def send_crm_message(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     channel = str(payload.get("channel") or "").strip().lower()
     content = str(payload.get("content") or "").strip()
@@ -523,7 +523,7 @@ async def send_crm_message(
 @router.get("/messaging/history", response_model=List[dict])
 def list_messaging_history(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     q = db.query(models.CommunicationLog).join(models.Persona, models.CommunicationLog.persona_id == models.Persona.id)
@@ -541,7 +541,7 @@ def list_messaging_history(
 def get_messaging_history_item(
     log_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     log = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
     if not log:
@@ -562,7 +562,7 @@ def get_messaging_history_item(
 def list_crm_tasks(
     assignee_user_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista todas las tareas CRM con filtro opcional por usuario asignado."""
     q = db.query(models.CrmTask)
@@ -585,7 +585,7 @@ def list_crm_tasks(
 def create_crm_task(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     title = str(payload.get("title") or "").strip()
     if not title:
@@ -620,7 +620,7 @@ def create_crm_task(
 @router.get("/tasks/mine", response_model=List[dict])
 def list_my_crm_tasks(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     owner_conditions = [models.CrmTask.assignee_user_id == current_user.id]
     my_persona_id = resolve_persona_id_for_user(db, current_user.id)
@@ -639,7 +639,7 @@ def list_my_crm_tasks(
 def get_crm_task_detail(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not task:
@@ -659,7 +659,7 @@ def update_crm_task(
     task_id: int,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not task:
@@ -695,7 +695,7 @@ def update_crm_task(
 def delete_crm_task(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Elimina una tarea del CRM."""
     task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
@@ -710,7 +710,7 @@ def delete_crm_task(
 def get_counseling_detail(
     ticket_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not ticket:
@@ -748,7 +748,7 @@ def get_counseling_detail(
 def get_grupo_detail(
     grupo_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     grupo = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
     if not grupo:
@@ -782,7 +782,7 @@ def get_grupo_detail(
 @router.get("/grupos", response_model=List[dict])
 def list_grupos(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     q = db.query(models.GrupoEvangelismo)
@@ -809,7 +809,7 @@ def update_grupo(
     grupo_id: int,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     grupo = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
     if not grupo:
@@ -887,7 +887,7 @@ def update_grupo(
 def get_prayer_request_detail(
     request_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     prayer = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
     if not prayer:
@@ -908,7 +908,7 @@ def get_prayer_request_detail(
 def list_counseling_tickets(
     status: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     tickets = crud.get_counseling_tickets(db, status=status, sede_id=user_sede)
@@ -932,7 +932,7 @@ def list_counseling_tickets(
 def create_counseling_ticket(
     payload: schemas.CounselingTicketCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     ticket = crud.create_counseling_ticket(db, payload)
     return {
@@ -952,7 +952,7 @@ def create_counseling_ticket(
 def get_counseling_by_lead(
     lead_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     tickets = (
         db.query(models.CounselingTicket)
@@ -980,7 +980,7 @@ def update_counseling_ticket(
     ticket_id: int,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not ticket:
@@ -1013,7 +1013,7 @@ def update_counseling_ticket(
 @router.get("/settings", response_model=dict)
 def get_crm_settings(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     row = crud.get_or_create_page_content(db, "crm_settings")
     import json
@@ -1028,7 +1028,7 @@ def get_crm_settings(
 def save_crm_settings(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     import json
 
@@ -1043,7 +1043,7 @@ def save_crm_settings(
 @router.get("/roles", response_model=List[dict])
 def list_crm_roles(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     rows = (
         db.query(models.RoleDefinition)
@@ -1065,7 +1065,7 @@ def list_crm_roles(
 def create_crm_role(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     name = str(payload.get("name") or "").strip()
     color = str(payload.get("color") or "").strip()
@@ -1095,7 +1095,7 @@ def update_crm_role(
     role_id: int,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     row = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
     if not row:
@@ -1139,7 +1139,7 @@ def delete_crm_role(
     role_id: int,
     fallback_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     if fallback_id == role_id:
         raise HTTPException(
@@ -1164,7 +1164,7 @@ def delete_crm_role(
 @router.get("/analytics", response_model=dict)
 def get_crm_analytics_summary(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
 
@@ -1273,7 +1273,7 @@ def create_public_prayer_request(
 def list_prayer_requests(
     source: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista pedidos de oracion. Opcionalmente filtra por source (web, crm)."""
     q = db.query(models.PrayerRequest).order_by(models.PrayerRequest.created_at.desc())
@@ -1299,7 +1299,7 @@ def list_prayer_requests(
 def create_prayer_request(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Crea un pedido de oracion desde el CRM (staff/pastor)."""
     prayer = models.PrayerRequest(
@@ -1329,7 +1329,7 @@ def update_prayer_request(
     request_id: int,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     prayer = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
     if not prayer:
@@ -1354,7 +1354,7 @@ def update_prayer_request(
 def create_volunteer(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Registra un nuevo servidor/voluntario."""
     name = str(payload.get("name") or "").strip()
@@ -1414,7 +1414,7 @@ def create_volunteer(
 @router.get("/volunteers", response_model=List[dict])
 def list_volunteers(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista todos los voluntarios con sus horas y ministerios."""
     from collections import defaultdict
@@ -1454,7 +1454,7 @@ def list_volunteers(
 def get_volunteer_detail(
     persona_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     persona = _get_persona_or_404(db, persona_id, user_sede)
@@ -1499,7 +1499,7 @@ def update_volunteer(
     persona_id: str,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     persona = _get_persona_or_404(db, persona_id, user_sede)
@@ -1520,7 +1520,7 @@ def update_volunteer(
 def delete_volunteer(
     persona_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Soft-delete: desactiva turnos de voluntario y marca persona como INACTIVA."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1540,7 +1540,7 @@ def delete_volunteer(
 @router.get("/groups", response_model=List[dict])
 def list_crm_groups(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista grupos/ministerios para vistas comunitarias."""
     ministries = db.query(models.Ministry).all()
@@ -1559,7 +1559,7 @@ def list_crm_groups(
 @router.get("/radar", response_model=dict)
 def get_crm_radar(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Datos del radar ministerial para dashboard."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1610,7 +1610,7 @@ def get_newsletter_leads(
     page: int = 1,
     page_size: int = 50,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """
     CRM view para ver todos los leads originados desde suscripción al newsletter.
@@ -1673,7 +1673,7 @@ def export_newsletter_leads_csv(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """
     Exporta leads de newsletter como lista de dicts (para generar CSV en frontend).

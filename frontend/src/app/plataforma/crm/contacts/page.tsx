@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { Search, UserPlus, Phone, MessageSquare, Link2, Users, Plus, Loader2, Send, Calendar, BarChart3, BookOpen } from 'lucide-react';
@@ -47,6 +48,7 @@ function getStatusDot(stage: string) {
 
 export default function ContactsPage() {
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const { addToast } = useToast();
     const router = useRouter();
 
@@ -146,14 +148,14 @@ export default function ContactsPage() {
             viewOptions={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
             viewType={viewType}
             onViewChange={setViewType}
-            rightActions={
+            rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCreateOpen(true)}
                     className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nuevo Contacto
                 </button>
-            }
+            ) : undefined}
         >
             <div className="flex flex-col h-full overflow-hidden">
                 {/* Toolbar */}
@@ -198,12 +200,14 @@ export default function ContactsPage() {
                             </div>
                             <h4 className="text-slate-800 dark:text-white font-bold text-sm">No hay contactos</h4>
                             <p className="text-slate-400 text-sm max-w-[200px]">Agrega un nuevo contacto o ajusta los filtros.</p>
-                            <button
-                                onClick={() => setIsCreateOpen(true)}
-                                className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
-                            >
-                                Agregar Contacto
-                            </button>
+                            {canEditCrm && (
+                                <button
+                                    onClick={() => setIsCreateOpen(true)}
+                                    className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
+                                >
+                                    Agregar Contacto
+                                </button>
+                            )}
                         </div>
                     ) : ['list', 'grid'].includes(viewType) ? filtered.map(lead => (
                         <div
@@ -450,4 +454,3 @@ export default function ContactsPage() {
         </CrmShell>
     );
 }
-

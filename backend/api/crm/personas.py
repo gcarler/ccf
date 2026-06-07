@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_pastor_or_admin
+from backend.auth import require_module_access
 from backend.core.database import get_db
 from backend.crud.crm import resolve_persona_id_for_user
 
@@ -27,7 +27,7 @@ def list_personas(
     sort_by: Optional[str] = Query(None, description="Campo de ordenamiento"),
     sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista personas con búsqueda, paginación y ordenamiento. Filtrado por sede."""
     sede_id = crud.get_user_sede_id(db, current_user.id)
@@ -42,7 +42,7 @@ def list_personas(
 @router.get("/personas/me/profile")
 def my_ministry_profile(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Perfil ministerial del usuario autenticado."""
     persona_id = resolve_persona_id_for_user(db, current_user.id)
@@ -56,7 +56,7 @@ def my_ministry_profile(
 def get_persona(
     persona_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Obtiene una persona por UUID."""
     persona = crud.get_persona(db, persona_id)
@@ -69,7 +69,7 @@ def get_persona(
 def create_persona(
     payload: schemas.PersonaCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Crea una nueva persona."""
     return crud.create_persona(db, payload)
@@ -80,7 +80,7 @@ def update_persona(
     persona_id: str,
     payload: schemas.PersonaUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Actualiza una persona existente."""
     persona = crud.update_persona(db, persona_id, payload)
@@ -93,7 +93,7 @@ def update_persona(
 def delete_persona(
     persona_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Soft-delete: marca estado_vital = INACTIVO. Nunca eliminar físicamente."""
     if not crud.delete_persona(db, persona_id):
@@ -105,7 +105,7 @@ def delete_persona(
 def persona_timeline(
     persona_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Obtiene la línea de tiempo de una persona."""
     timeline = crud.get_persona_timeline(db, persona_id)
@@ -118,7 +118,7 @@ def persona_timeline(
 def persona_donations(
     persona_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Obtiene las donaciones de una persona."""
     return crud.get_persona_donations(db, persona_id)

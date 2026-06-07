@@ -5,6 +5,7 @@ import TableView from '@/components/ui/TableView';
 import ViewSwitcher from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { useAuth } from '@/context/AuthContext';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { FULL_VIEWS,useViewType } from '@/hooks/useViewType';
 import { apiFetch } from '@/lib/http';
 import clsx from 'clsx';
@@ -162,6 +163,7 @@ function MemberField({ label, value, onChange, placeholder, type = 'text', requi
 
 export default function MembersPage() {
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const router = useRouter();
     const { viewType, setViewType } = useViewType('crm_members', 'grid');
     const [members, setMembers] = useState<any[]>([]);
@@ -309,12 +311,14 @@ export default function MembersPage() {
                             <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Personas</h1>
                             <p className="text-xs text-slate-400 font-medium">Directorio completo de la comunidad</p>
                         </div>
-                        <button
-                            onClick={() => setIsCreateOpen(true)}
-                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:bg-slate-100 dark:hover:bg-white/10 transition-all shrink-0"
-                        >
-                            <Plus size={16} /> Nueva Persona
-                        </button>
+                        {canEditCrm && (
+                            <button
+                                onClick={() => setIsCreateOpen(true)}
+                                className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:bg-slate-100 dark:hover:bg-white/10 transition-all shrink-0"
+                            >
+                                <Plus size={16} /> Nueva Persona
+                            </button>
+                        )}
                     </div>
                 </div>
 

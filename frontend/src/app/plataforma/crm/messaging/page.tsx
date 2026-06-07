@@ -23,6 +23,7 @@ import {
     BarChart3
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
@@ -69,6 +70,7 @@ function normalizeHistoryRow(row: any): MessagingHistoryRow {
 export default function MessagingCampaignCenter() {
     const router = useRouter();
     const { token } = useAuth();
+    const { canEditCrm } = useCrmAccess();
     const { addToast } = useToast();
     const [channel, setChannel] = useState<Channel>('whatsapp');
     const [campaignName, setCampaignName] = useState('');
@@ -97,6 +99,7 @@ export default function MessagingCampaignCenter() {
 
 
     const handleSendCampaign = async () => {
+        if (!canEditCrm) return;
         if (!message || !campaignName || segments.length === 0) {
             addToast('Completa todos los campos antes de enviar', 'warning');
             return;
@@ -125,6 +128,7 @@ export default function MessagingCampaignCenter() {
     };
 
     const toggleSegment = (id: string) => {
+        if (!canEditCrm) return;
         setSegments(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
     };
 
@@ -156,11 +160,11 @@ export default function MessagingCampaignCenter() {
             viewOptions={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
             viewType={viewType}
             onViewChange={setViewType}
-            rightActions={
+            rightActions={canEditCrm ? (
                 <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-slate-50 rounded-md text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 shadow-sm transition-all active:scale-95">
                     <History size={14} /> Historial Detallado
                 </button>
-            }
+            ) : undefined}
         >
             <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display rounded-lg">
                 <div className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4">
@@ -308,17 +312,18 @@ export default function MessagingCampaignCenter() {
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Crea mensajes de alto impacto</p>
                                 </div>
                                 <div className="flex bg-slate-100 dark:bg-white/5 p-1.5 rounded-lg border border-slate-200 dark:border-white/10">
-                                    <ChannelButton active={channel === 'whatsapp'} onClick={() => setChannel('whatsapp')} icon={MessageSquare} label="WhatsApp" />
-                                    <ChannelButton active={channel === 'email'} onClick={() => setChannel('email')} icon={Mail} label="Email" />
-                                    <ChannelButton active={channel === 'sms'} onClick={() => setChannel('sms')} icon={Smartphone} label="SMS" />
+                                    <ChannelButton active={channel === 'whatsapp'} onClick={() => canEditCrm && setChannel('whatsapp')} icon={MessageSquare} label="WhatsApp" disabled={!canEditCrm} />
+                                    <ChannelButton active={channel === 'email'} onClick={() => canEditCrm && setChannel('email')} icon={Mail} label="Email" disabled={!canEditCrm} />
+                                    <ChannelButton active={channel === 'sms'} onClick={() => canEditCrm && setChannel('sms')} icon={Smartphone} label="SMS" disabled={!canEditCrm} />
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-4">Nombre de la Campaña</label>
-                                    <input 
-                                        value={campaignName} onChange={(e) => setCampaignName(e.target.value)}
+                                        <input 
+                                            disabled={!canEditCrm}
+                                            value={campaignName} onChange={(e) => setCampaignName(e.target.value)}
                                         placeholder="Ej: Invitación Asamblea de Personas"
                                         className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-lg py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                                     />
@@ -328,13 +333,14 @@ export default function MessagingCampaignCenter() {
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-4">Mensaje (Personalización con {`{nombre}`})</label>
                                     <div className="relative">
                                         <textarea 
+                                            disabled={!canEditCrm}
                                             value={message} onChange={(e) => setMessage(e.target.value)}
                                             placeholder="Hola {nombre}, te escribimos de CCF para..."
                                             className="w-full h-48 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-md p-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"
                                         />
                                         <div className="absolute bottom-4 right-4 flex gap-2">
-                                            <button className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-colors shadow-sm"><Bot size={18} /></button>
-                                            <button className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-colors shadow-sm"><ImageIcon size={18} /></button>
+                                            <button disabled={!canEditCrm} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-colors shadow-sm disabled:opacity-50"><Bot size={18} /></button>
+                                            <button disabled={!canEditCrm} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-colors shadow-sm disabled:opacity-50"><ImageIcon size={18} /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -342,12 +348,12 @@ export default function MessagingCampaignCenter() {
 
                             <div className="pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
                                 <div className="flex gap-2">
-                                    <button className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-colors">
+                                    <button disabled={!canEditCrm} className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50">
                                         <FileText size={14} /> Guardar Borrador
                                     </button>
                                 </div>
                                 <button 
-                                    onClick={handleSendCampaign} disabled={isSending}
+                                    onClick={handleSendCampaign} disabled={isSending || !canEditCrm}
                                     className="flex items-center gap-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
                                 >
                                     {isSending ? <Clock size={18} className="animate-spin" /> : <Zap size={18} fill="currentColor" />}
@@ -375,12 +381,12 @@ export default function MessagingCampaignCenter() {
                                 <Filter size={18} className="text-slate-300" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <SegmentTag label="Personas Activos" active={segments.includes('active')} onClick={() => toggleSegment('active')} />
-                                <SegmentTag label="Nuevos Visitantes" active={segments.includes('new')} onClick={() => toggleSegment('new')} />
-                                <SegmentTag label="Pastores & Staff" active={segments.includes('staff')} onClick={() => toggleSegment('staff')} />
-                                <SegmentTag label="Grupos" active={segments.includes('groups')} onClick={() => toggleSegment('groups')} />
-                                <SegmentTag label="Baja Asistencia" active={segments.includes('low')} onClick={() => toggleSegment('low')} />
-                                <SegmentTag label="Donantes Pro" active={segments.includes('vip')} onClick={() => toggleSegment('vip')} />
+                                <SegmentTag label="Personas Activos" active={segments.includes('active')} onClick={() => toggleSegment('active')} disabled={!canEditCrm} />
+                                <SegmentTag label="Nuevos Visitantes" active={segments.includes('new')} onClick={() => toggleSegment('new')} disabled={!canEditCrm} />
+                                <SegmentTag label="Pastores & Staff" active={segments.includes('staff')} onClick={() => toggleSegment('staff')} disabled={!canEditCrm} />
+                                <SegmentTag label="Grupos" active={segments.includes('groups')} onClick={() => toggleSegment('groups')} disabled={!canEditCrm} />
+                                <SegmentTag label="Baja Asistencia" active={segments.includes('low')} onClick={() => toggleSegment('low')} disabled={!canEditCrm} />
+                                <SegmentTag label="Donantes Pro" active={segments.includes('vip')} onClick={() => toggleSegment('vip')} disabled={!canEditCrm} />
                             </div>
                             <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
@@ -448,12 +454,13 @@ export default function MessagingCampaignCenter() {
     );
 }
 
-function ChannelButton({ active, onClick, icon: Icon, label }: any) {
+function ChannelButton({ active, onClick, icon: Icon, label, disabled }: any) {
     return (
         <button 
             onClick={onClick}
+            disabled={disabled}
             className={clsx(
-                "flex items-center gap-2.5 px-4 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all",
+                "flex items-center gap-2.5 px-4 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all disabled:opacity-50",
                 active ? "bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-xl shadow-blue-500/10" : "text-slate-400 hover:text-slate-600"
             )}
         >
@@ -462,12 +469,13 @@ function ChannelButton({ active, onClick, icon: Icon, label }: any) {
     );
 }
 
-function SegmentTag({ label, active, onClick }: any) {
+function SegmentTag({ label, active, onClick, disabled }: any) {
     return (
         <button 
             onClick={onClick}
+            disabled={disabled}
             className={clsx(
-                "py-1.5 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider text-left transition-all border",
+                "py-1.5 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider text-left transition-all border disabled:opacity-50",
                 active 
                     ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-lg shadow-blue-500/20" 
                     : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:border-blue-500/30"
@@ -477,4 +485,3 @@ function SegmentTag({ label, active, onClick }: any) {
         </button>
     );
 }
-
