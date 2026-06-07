@@ -25,7 +25,7 @@ export default function AdminUsersPage() {
     const [loading, setLoading] = useState(true);
     const [provisioning, setProvisioning] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedUser] = useState<any>(null);
+    const [selectedUser, setSelectedUser] = useState<any | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
@@ -64,14 +64,14 @@ export default function AdminUsersPage() {
 
     const handleUpdateUser = async (userId: string, payload: any) => {
         try {
-            await apiFetch(`/admin/users/${userId}`, {
+            const updated = await apiFetch(`/admin/users/${userId}`, {
                 method: 'PATCH',
                 token,
                 body: payload
             });
             addToast("Usuario actualizado con éxito", "success");
+            if (selectedUser?.id === userId) setSelectedUser(updated);
             fetchUsers();
-            if (selectedUser?.id === userId) setIsDrawerOpen(false);
         } catch (err) {
             addToast("Error al actualizar usuario", "error");
         }
@@ -165,7 +165,7 @@ export default function AdminUsersPage() {
                                         <tr 
                                             key={user.id} 
                                             className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer" 
-                                            onClick={() => router.push(`/plataforma/admin/users/${user.id}`)}
+                                            onClick={() => { setSelectedUser(user); setIsDrawerOpen(true); }}
                                         >
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-4">
@@ -225,10 +225,20 @@ export default function AdminUsersPage() {
                 title={selectedUser?.username || 'Control de Acceso'}
                 subtitle="Ajustes de Seguridad y Rol"
                 actions={
-                    <>
+                    <div className="flex items-center gap-2">
+                        {selectedUser && (
+                            <button
+                                className="px-3 py-2.5 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                                onClick={() => {
+                                    router.push(`/plataforma/admin/users/${selectedUser.id}`);
+                                    setIsDrawerOpen(false);
+                                }}
+                            >
+                                Ver detalle
+                            </button>
+                        )}
                         <button className="px-3 py-2.5 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors" onClick={() => setIsDrawerOpen(false)}>Cancelar</button>
-                        <button className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">Confirmar Cambios</button>
-                    </>
+                    </div>
                 }
             >
                 {selectedUser && (

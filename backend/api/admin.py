@@ -578,6 +578,7 @@ def update_admin_user(
     import uuid as _uuid
     from backend.core.permissions import hash_password
     from backend.models_auth import Usuario
+    from backend.models_crm import Persona
     from sqlalchemy.orm import joinedload
 
     try:
@@ -597,7 +598,11 @@ def update_admin_user(
     if "username" in payload and payload["username"] is not None:
         user.username = str(payload["username"]).strip()
     if "email" in payload and payload["email"] is not None:
-        user.email = str(payload["email"]).strip()
+        new_email = str(payload["email"]).strip()
+        user.email = new_email
+        persona = db.query(Persona).filter(Persona.id == user.id).first()
+        if persona:
+            persona.email = new_email
     if "password" in payload and payload["password"]:
         user.password_hash = hash_password(str(payload["password"]))
     if "is_active" in payload and payload["is_active"] is not None:
