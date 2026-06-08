@@ -9,20 +9,7 @@ import { Home, MapPin, Users, Calendar, LayoutDashboard, Shield, History } from 
 import { DSCard } from "@/design/components/DSCard";
 import { DSBadge } from "@/design/components/DSBadge";
 import { toast } from "sonner";
-
-type GrupoDetail = {
-    id: number;
-    name: string;
-    zone: string | null;
-    address: string | null;
-    latitude: number | null;
-    longitude: number | null;
-    leader_name: string | null;
-    members_count: number | null;
-    capacity: number | null;
-    status: string | null;
-    created_at: string | null;
-};
+import { GrupoDetail } from '@/types/crm';
 
 export default function GroupDetailPage() {
     const params = useParams();

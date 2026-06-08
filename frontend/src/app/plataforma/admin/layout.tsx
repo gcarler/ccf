@@ -30,6 +30,7 @@ const SIDEBAR_SECTIONS = [
             { id: 'personas', label: 'Personas', href: '/plataforma/admin/personas', icon: Users },
             { id: 'radar', label: 'Radar del Pastor', href: '/plataforma/admin/dashboard/radar', icon: BarChart3 },
             { id: 'comunidad', label: 'Comunidad', href: '/plataforma/admin/members', icon: Users },
+            { id: 'crm', label: 'CRM Pastoral', href: '/plataforma/crm', icon: Heart },
         ]
     },
     {

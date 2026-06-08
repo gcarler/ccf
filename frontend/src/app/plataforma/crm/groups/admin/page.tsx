@@ -7,13 +7,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
-import AdminShell from "@/components/admin/AdminShell";
+import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
-
-type Grupo = { id: number; name: string; zone?: string; leader_name?: string; total_personas?: number; status?: string };
-type GrupoApi = Grupo & { members_count?: number };
-type Season = { id: number; name: string; status: string };
-type Attendee = { persona_id: string; name: string };
+import { Grupo, GrupoApi, Season, Attendee } from "@/types/crm";
 
 export default function GrupoAdmin() {
     const { token, isAuthenticated } = useAuth();
@@ -115,7 +111,12 @@ export default function GrupoAdmin() {
     if (!isAuthenticated) return null;
 
     return (
-        <AdminShell breadcrumbs={[{ label: "Operacion de Campo", icon: Home }, { label: "Grupos", icon: Star }]}>
+        <CrmShell
+            breadcrumbs={[
+                { label: 'CRM', icon: Home, href: '/plataforma/crm' },
+                { label: 'Grupos Admin', icon: Star },
+            ]}
+        >
             <AdminHero
                 eyebrow="Gestion de Redes"
                 title="Consola de Grupos"
@@ -192,7 +193,7 @@ export default function GrupoAdmin() {
                     </button>
                 </div>
             </WorkspaceDrawer>
-        </AdminShell>
+        </CrmShell>
     );
 }
 

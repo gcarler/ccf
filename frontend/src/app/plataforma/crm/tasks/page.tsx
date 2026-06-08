@@ -29,22 +29,9 @@ import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+import { ConsolidationTask } from '@/types/crm';
 
 const STATUS_PROGRESS: Record<string, number> = { urgent: 15, pending: 35, in_progress: 70, done: 100 };
-
-// ─── Types ───────────────────────────────────────────────
-interface ConsolidationTask {
-    id: number;
-    title: string;
-    description?: string;
-    status: 'pending' | 'in_progress' | 'done' | 'urgent';
-    priority: 'low' | 'medium' | 'high';
-    assigned_to?: string;
-    member_name?: string;
-    due_date?: string;
-    category: string;
-    created_at: string;
-}
 
 // ─── Constants ───────────────────────────────────────────
 const STATUS_COLUMNS = [
@@ -62,66 +49,7 @@ const PRIORITY_STYLES: Record<string, string> = {
     low: 'bg-slate-50 text-slate-500 dark:bg-white/5',
 };
 
-// ─── Sub-components ──────────────────────────────────────
-function TaskCard({ task, onStatusChange, allowEditing = true }: { task: ConsolidationTask; onStatusChange: (id: number, status: string) => void; allowEditing?: boolean }) {
-    return (
-        <motion.div
-            layout
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            whileHover={{ y: -2 }}
-            onClick={() => window.location.href = `/crm/tasks/${task.id}`}
-            className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-        >
-            <div className="flex items-start gap-3">
-                {allowEditing ? (
-                    <button
-                        onClick={e => { e.stopPropagation(); onStatusChange(task.id, task.status === 'done' ? 'pending' : 'done'); }}
-                        className={clsx(
-                            "mt-0.5 size-5 rounded-full border-2 flex-shrink-0 transition-all",
-                            task.status === 'done'
-                                ? 'bg-emerald-500 border-emerald-500 text-white flex items-center justify-center'
-                                : 'border-slate-300 dark:border-white/20 group-hover:border-blue-400'
-                        )}
-                    >
-                        {task.status === 'done' && <CheckCircle2 size={12} strokeWidth={3} />}
-                    </button>
-                ) : (
-                    <div
-                        className={clsx(
-                            "mt-0.5 size-5 rounded-full border-2 flex-shrink-0",
-                            task.status === 'done'
-                                ? 'bg-emerald-500 border-emerald-500'
-                                : 'border-slate-300 dark:border-white/20'
-                        )}
-                    />
-                )}
-                <div className="flex-1 min-w-0 space-y-2">
-                    <p className={clsx("text-xs font-bold leading-tight", task.status === 'done' && "line-through text-slate-400")}>
-                        {task.title}
-                    </p>
-                    {task.member_name && (
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold">
-                            <UserCircle size={11} /> {task.member_name}
-                        </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                        <span className={clsx("px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide", PRIORITY_STYLES[task.priority])}>
-                            {task.priority}
-                        </span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">{task.category}</span>
-                        {task.due_date && (
-                            <span className="flex items-center gap-0.5 text-[9px] font-bold text-slate-400">
-                                <Calendar size={9} /> {new Date(task.due_date).toLocaleDateString()}
-                            </span>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </motion.div>
-    );
-}
+import { TaskCard } from '@/components/crm/ui';
 
 // ─── Main ────────────────────────────────────────────────
 export default function CrmTasksPage() {

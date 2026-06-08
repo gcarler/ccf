@@ -179,7 +179,7 @@ function MentorAssignmentDrawer({
     );
 }
 
-type Tab = 'overview' | 'spiritual' | 'academy' | 'financial' | 'history';
+import { Tab } from '@/types/crm';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -200,114 +200,18 @@ function getDeptName(departments: any[], id: number | null | undefined): string 
     return d ? d.name : String(id);
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-const ID_TYPES = ['Cédula de Ciudadanía', 'Cédula de Extranjería', 'Pasaporte', 'Tarjeta de Identidad', 'NIT', 'Otro'];
-const MARITAL_STATUSES = ['Soltero(a)', 'Casado(a)', 'Unión Libre', 'Divorciado(a)', 'Viudo(a)', 'Separado(a)'];
-const SEX_OPTIONS = ['Masculino', 'Femenino'];
-const EDUCATION_LEVELS = ['Primaria', 'Secundaria', 'Técnico', 'Tecnólogo', 'Universitario', 'Postgrado', 'Maestría', 'Doctorado'];
-const EDUCATION_STATUSES = ['Cursando', 'Completado', 'Incompleto'];
-const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-const HOUSING_TYPES = ['Propia', 'Arriendo', 'Familiar', 'Otro'];
-const MEMBERSHIP_TYPES = ['Activo', 'Inactivo', 'Transferido', 'Fallecido'];
-const ATTENDANCE_TYPES = ['Regular', 'Constante', 'Irregular', 'Ausente'];
-
-function FormSection({ title, defaultOpen, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
-    const [open, setOpen] = useState(defaultOpen ?? false);
-    return (
-        <div className="border border-slate-100 dark:border-white/10 rounded-lg overflow-hidden">
-            <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-white/5 text-[10px] font-bold uppercase tracking-wide text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
-                <span>{title}</span>
-                <ChevronDown size={14} className={clsx("transition-transform", open && "rotate-180")} />
-            </button>
-            <AnimatePresence initial={false}>
-                {open && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="px-3 py-2 space-y-2">
-                        {children}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-}
-
-function SelectField({ label, value, onChange, options, placeholder }: { label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder?: string }) {
-    return (
-        <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</label>
-            <select value={value} onChange={e => onChange(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
-                <option value="">{placeholder ?? 'Seleccionar...'}</option>
-                {options.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
-        </div>
-    );
-}
-
-function EditField({ label, value, onChange, placeholder, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string }) {
-    return (
-        <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</label>
-            <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white" />
-        </div>
-    );
-}
-
-function QuickStat({ label, value, icon: Icon, color }: any) {
-    return (
-        <div className="px-4 py-2 bg-slate-50 dark:bg-black/20 rounded-lg flex items-center gap-4 border border-slate-100 dark:border-white/5 min-w-[180px]">
-            <Icon size={20} className={color} />
-            <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{label}</p>
-                <p className="text-sm font-bold text-slate-800 dark:text-white leading-none mt-1">{value ?? '—'}</p>
-            </div>
-        </div>
-    );
-}
-
-function HealthIndicator({ label, value, color }: { label: string; value: number; color: string }) {
-    return (
-        <div className="space-y-2">
-            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                <span>{label}</span>
-                <span className="font-bold text-slate-800 dark:text-white">{value}%</span>
-            </div>
-            <div className="h-1.5 w-full bg-slate-50 dark:bg-white/5 rounded-full overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} className={clsx("h-full rounded-full", color)} />
-            </div>
-        </div>
-    );
-}
-
-function EmptyState({ icon: Icon, title, description, action }: { icon: any; title: string; description: string; action?: React.ReactNode }) {
-    return (
-        <div className="lg:col-span-12 py-1.5 flex flex-col items-center gap-4 text-center">
-            <div className="size-10 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-                <Icon size={36} className="text-slate-300" />
-            </div>
-            <div className="space-y-2">
-                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-tight">{title}</p>
-                <p className="text-sm text-slate-400 max-w-xs">{description}</p>
-            </div>
-            {action}
-        </div>
-    );
-}
-
-function InfoGrid({ items }: { items: { label: string; value: string | React.ReactNode; icon?: any }[] }) {
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {items.map((item, i) => (
-                <div key={i} className="space-y-1">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{item.label}</p>
-                    <p className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                        {item.icon && <item.icon size={16} className="text-[hsl(var(--primary))] shrink-0" />}
-                        {item.value || '—'}
-                    </p>
-                </div>
-            ))}
-        </div>
-    );
-}
+import {
+  ID_TYPES,
+  MARITAL_STATUSES,
+  SEX_OPTIONS,
+  EDUCATION_LEVELS,
+  EDUCATION_STATUSES,
+  BLOOD_TYPES,
+  HOUSING_TYPES,
+  MEMBERSHIP_TYPES,
+  ATTENDANCE_TYPES,
+} from '@/types/crm';
+import { FormSection, SelectField, EditField, QuickStat, HealthIndicator, EmptyState, InfoGrid } from '@/components/crm/ui';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 

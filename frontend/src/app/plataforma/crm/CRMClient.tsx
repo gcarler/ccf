@@ -3,7 +3,6 @@
 import DashboardEmbed from '@/components/DashboardEmbed';
 import DSSkeleton from '@/components/ui/Skeleton';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { useAuth } from '@/context/AuthContext';
 import { DSCard } from '@/design/components/DSCard';
 import { DSChart } from '@/design/components/DSChart';
@@ -53,24 +52,7 @@ export default function CRMClient() {
     }, [token]);
 
     return (
-        <WorkspaceLayout
-            breadcrumbs={[{ label: 'Consolidación', icon: Users }, { label: 'Dashboard Pastoral', icon: Heart }]}
-            rightActions={canEditCrm ? (
-                <SplitDropdownButton
-                    mainLabel="Nuevo"
-                    icon={UserPlus}
-                    onMainClick={() => router.push('/plataforma/crm/personas')}
-                    options={[
-                        { id: 'member', label: 'Persona', icon: User, onClick: () => router.push('/plataforma/crm/personas') },
-                        { id: 'family', label: 'Familia', icon: FamilyIcon, onClick: () => router.push('/plataforma/crm/personas') },
-                        { id: 'appointment', label: 'Cita', icon: Calendar, onClick: () => router.push('/plataforma/crm/counseling') },
-                        { id: 'call', label: 'Llamada', icon: Phone, onClick: () => router.push('/plataforma/crm/pipeline') },
-                        { id: 'mail', label: 'Email', icon: Mail, onClick: () => router.push('/plataforma/crm/pipeline') },
-                        { id: 'sms', label: 'SMS', icon: MessageCircle, onClick: () => router.push('/plataforma/crm/pipeline') }
-                    ]}
-                />
-            ) : undefined}
-        >
+        <>
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
 
@@ -172,8 +154,8 @@ export default function CRMClient() {
                         </>
                     )}
                 </div>
+                <div className="px-6 pb-4"><DashboardEmbed module="crm" label="CRM Pastoral" /></div>
             </main>
-            <div className="px-6 pb-4"><DashboardEmbed module="crm" label="CRM Pastoral" /></div>
-        </WorkspaceLayout>
+        </>
     );
 }

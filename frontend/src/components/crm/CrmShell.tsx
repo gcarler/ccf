@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { ViewType } from '@/components/ViewSwitcher';
 
 export interface BreadcrumbOption {
@@ -30,19 +30,20 @@ export default function CrmShell({
     children
 }: CrmShellProps) {
     return (
-        <WorkspaceLayout
-            breadcrumbs={breadcrumbs}
-            availableViews={viewOptions}
-            viewType={viewType}
-            setViewType={onViewChange}
-            onSearch={onSearch}
-            rightActions={rightActions}
-        >
-            <main className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "flex-1 overflow-hidden h-full" : "flex-1 h-full"}>
-                <div className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "h-full animate-fade-in" : "p-4 lg:p-4 space-y-3 animate-fade-in h-full"}>
+        <>
+            <WorkspaceToolbar
+                breadcrumbs={breadcrumbs}
+                viewType={viewType}
+                setViewType={onViewChange}
+                availableViews={viewOptions}
+                onSearch={onSearch}
+                rightActions={rightActions}
+            />
+            <main className="flex-1 overflow-hidden h-full">
+                <div className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "h-full animate-fade-in overflow-y-auto" : "p-4 lg:p-4 space-y-3 animate-fade-in h-full overflow-y-auto"}>
                     {children}
                 </div>
             </main>
-        </WorkspaceLayout>
+        </>
     );
 }

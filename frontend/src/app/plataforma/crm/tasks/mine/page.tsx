@@ -12,17 +12,7 @@ import { formatDueLabel } from '@/lib/community/utils';
 import { apiFetch } from '@/lib/http';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-
-interface CrmTask {
-    id: number;
-    title: string;
-    description: string;
-    contact_name: string;
-    due_date: string | null;
-    status: string;
-    priority: string;
-    created_at: string;
-}
+import { CrmTask } from '@/types/crm';
 
 const priorityTone: Record<string, string> = {
     'urgent': 'bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800',

@@ -29,135 +29,22 @@ X
 import { useRouter } from 'next/navigation';
 import React,{ useEffect,useMemo,useState } from 'react';
 import { toast } from 'sonner';
-
-interface Department {
-    id: number;
-    name: string;
-    code: string;
-}
-
-interface City {
-    id: number;
-    department_id: number;
-    name: string;
-}
-
-const ID_TYPES = ['Cédula de Ciudadanía', 'Cédula de Extranjería', 'Pasaporte', 'Tarjeta de Identidad', 'NIT', 'Otro'];
-const MARITAL_STATUSES = ['Soltero(a)', 'Casado(a)', 'Unión Libre', 'Divorciado(a)', 'Viudo(a)', 'Separado(a)'];
-const SEX_OPTIONS = ['Masculino', 'Femenino'];
-const EDUCATION_LEVELS = ['Primaria', 'Secundaria', 'Técnico', 'Tecnólogo', 'Universitario', 'Postgrado', 'Maestría', 'Doctorado'];
-const EDUCATION_STATUSES = ['Cursando', 'Completado', 'Incompleto'];
-const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-const HOUSING_TYPES = ['Propia', 'Arriendo', 'Familiar', 'Otro'];
-const MEMBERSHIP_TYPES = ['Activo', 'Inactivo', 'Transferido', 'Fallecido'];
-const ATTENDANCE_TYPES = ['Regular', 'Constante', 'Irregular', 'Ausente'];
-
-type MemberFormData = {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-    church_role: string;
-    second_name: string;
-    second_last_name: string;
-    id_type: string;
-    id_number: string;
-    birth_country: string;
-    sex: string;
-    marital_status: string;
-    birthday: string;
-    landline_phone: string;
-    other_phone: string;
-    mobile_phone: string;
-    address: string;
-    housing_type: string;
-    colombian_department_id: number | null;
-    city: string;
-    education_level: string;
-    education_status: string;
-    profession: string;
-    economic_sector: string;
-    blood_type: string;
-    medical_notes: string;
-    membership_type: string;
-    attendance_type: string;
-    group_name: string;
-    campus: string;
-    church_join_date: string;
-    baptism_date: string;
-    responsible_adult_name: string;
-    responsible_adult_contact: string;
-    guardian_name: string;
-    guardian_contact: string;
-    talents: string;
-    spiritual_gifts: string;
-    pastoral_notes: string;
-    registration_reason: string;
-    unregistration_reason: string;
-    registration_date: string;
-    unregistration_date: string;
-    optional_info: string;
-    last_group_attendance: string;
-    last_meeting_attendance: string;
-};
-
-const INITIAL_MEMBER: MemberFormData = {
-    first_name: '', last_name: '', email: '', phone: '', church_role: 'Persona',
-    second_name: '', second_last_name: '', id_type: '', id_number: '',
-    birth_country: '', sex: '', marital_status: '', birthday: '',
-    landline_phone: '', other_phone: '', mobile_phone: '', address: '', housing_type: '',
-    colombian_department_id: null, city: '',
-    education_level: '', education_status: '', profession: '', economic_sector: '',
-    blood_type: '', medical_notes: '',
-    membership_type: '', attendance_type: '', group_name: '', campus: '',
-    church_join_date: '', baptism_date: '',
-    responsible_adult_name: '', responsible_adult_contact: '', guardian_name: '', guardian_contact: '',
-    talents: '', spiritual_gifts: '', pastoral_notes: '',
-    registration_reason: '', unregistration_reason: '', registration_date: '', unregistration_date: '',
-    optional_info: '', last_group_attendance: '', last_meeting_attendance: '',
-};
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function FormSection({ title, defaultOpen, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
-    const [open, setOpen] = useState(defaultOpen ?? false);
-    return (
-        <div className="border border-slate-100 dark:border-white/10 rounded-lg overflow-hidden">
-            <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-white/5 text-[10px] font-bold uppercase tracking-wide text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
-                <span>{title}</span>
-                <ChevronDown size={14} className={clsx("transition-transform", open && "rotate-180")} />
-            </button>
-            <AnimatePresence initial={false}>
-                {open && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="px-3 py-2 space-y-2">
-                        {children}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-}
-
-function SelectField({ label, value, onChange, options, placeholder }: { label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder?: string }) {
-    return (
-        <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</label>
-            <select value={value} onChange={e => onChange(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
-                <option value="">{placeholder ?? 'Seleccionar...'}</option>
-                {options.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
-        </div>
-    );
-}
-
-function MemberField({ label, value, onChange, placeholder, type = 'text', required = false }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string; required?: boolean }) {
-    return (
-        <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</label>
-            <input required={required} type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white" />
-        </div>
-    );
-}
+import {
+  Department,
+  City,
+  MemberFormData,
+  ID_TYPES,
+  MARITAL_STATUSES,
+  SEX_OPTIONS,
+  EDUCATION_LEVELS,
+  EDUCATION_STATUSES,
+  BLOOD_TYPES,
+  HOUSING_TYPES,
+  MEMBERSHIP_TYPES,
+  ATTENDANCE_TYPES,
+  INITIAL_MEMBER,
+} from '@/types/crm';
+import { FormSection, SelectField, MemberField } from '@/components/crm/ui';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 

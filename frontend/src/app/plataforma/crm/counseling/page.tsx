@@ -17,23 +17,10 @@ import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import CounselingDetailSidebar from '@/components/crm/CounselingDetailSidebar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { useRouter } from 'next/navigation';
+import { CounselingSession } from '@/types/crm';
 
 const STATUS_ORDER = ['Pendiente', 'Realizada', 'Cancelada'];
 const STATUS_PROGRESS: Record<string, number> = { Pendiente: 30, Realizada: 100, Cancelada: 0 };
-
-interface CounselingSession {
-    id: number;
-    pastor_id: number;
-    persona_id?: string;
-    lead_id?: number;
-    scheduled_at: string;
-    duration_minutes: number;
-    status: string;
-    topic?: string;
-    summary?: string;
-    confidential_notes?: string;
-    created_at: string;
-}
 
 export default function CounselingPage() {
     const { token, user } = useAuth();

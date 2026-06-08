@@ -32,21 +32,10 @@ import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 import CrmShell from '@/components/crm/CrmShell';
 
-type Channel = 'whatsapp' | 'email' | 'sms';
-const STATUS_PROGRESS: Record<string, number> = { failed: 20, sent: 75, delivered: 100 };
+import { Channel, MessagingHistoryRow } from '@/types/crm';
+import { ChannelButton, SegmentTag } from '@/components/crm/ui';
 
-type MessagingHistoryRow = {
-    id: number;
-    name: string;
-    campaign_name?: string;
-    channel: Channel;
-    status: string;
-    count: number;
-    date: string;
-    target_count: number;
-    delivered_count: number;
-    failed_count: number;
-};
+const STATUS_PROGRESS: Record<string, number> = { failed: 20, sent: 75, delivered: 100 };
 
 function normalizeHistoryRow(row: any): MessagingHistoryRow {
     const sentAt = row?.sent_at ? new Date(row.sent_at) : null;
@@ -451,37 +440,5 @@ export default function MessagingCampaignCenter() {
                 </div>
             </div>
         </CrmShell>
-    );
-}
-
-function ChannelButton({ active, onClick, icon: Icon, label, disabled }: any) {
-    return (
-        <button 
-            onClick={onClick}
-            disabled={disabled}
-            className={clsx(
-                "flex items-center gap-2.5 px-4 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all disabled:opacity-50",
-                active ? "bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-xl shadow-blue-500/10" : "text-slate-400 hover:text-slate-600"
-            )}
-        >
-            <Icon size={14} /> {label}
-        </button>
-    );
-}
-
-function SegmentTag({ label, active, onClick, disabled }: any) {
-    return (
-        <button 
-            onClick={onClick}
-            disabled={disabled}
-            className={clsx(
-                "py-1.5 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider text-left transition-all border disabled:opacity-50",
-                active 
-                    ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                    : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:border-blue-500/30"
-            )}
-        >
-            {label}
-        </button>
     );
 }

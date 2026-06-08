@@ -24,6 +24,7 @@ import {
     Filter,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Volunteer } from '@/types/crm';
 
 const TEAMS = ['Alabanza', 'Ujieres', 'Niños', 'Cocina', 'Medios', 'Oración', 'Evangelismo', 'Limpieza', 'Logística', 'Otro'];
 const VOLUNTEER_ROLES = ['Líder de Equipo', 'Asistente de Líder', 'Servidor', 'Apoyo'];
@@ -45,18 +46,6 @@ function getTeamColor(team: string) {
     return TEAM_COLORS[team] || 'from-slate-500 to-gray-600';
 }
 
-interface Volunteer {
-    id: number;
-    member_id?: string;
-    name?: string;
-    role?: string;
-    team?: string;
-    status?: string;
-    shift_start?: string;
-    shift_end?: string;
-    created_at?: string;
-    notes?: string;
-}
 
 export default function VolunteersPage() {
     const { token } = useAuth();

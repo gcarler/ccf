@@ -73,7 +73,9 @@ export default function PrayerSupportCenter() {
                     time: new Date(r.created_at).toLocaleDateString()
                 })));
             }
-        } catch { /* silent */ }
+        } catch {
+            addToast('Error al cargar peticiones', 'error');
+        }
         finally { setLoading(false); }
     }, [token]);
 

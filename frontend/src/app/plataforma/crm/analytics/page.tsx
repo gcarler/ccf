@@ -21,26 +21,10 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { STAGE_LABEL } from '@/app/plataforma/crm/pipeline/constants';
-import type { CrmAnalyticsSummary } from '@/app/plataforma/crm/types';
+import type { CrmAnalyticsSummary, KpiTone, KpiRow, FunnelRow } from '@/types/crm';
 
 const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
 const NUMBER_FORMATTER = new Intl.NumberFormat('es-CO');
-
-type KpiTone = 'neutral' | 'positive' | 'warning';
-
-interface KpiRow {
-    label: string;
-    value: string;
-    context: string;
-    tone: KpiTone;
-}
-
-interface FunnelRow {
-    stage: string;
-    label: string;
-    value: number;
-    percent: number;
-}
 
 export default function CrmAnalyticsPage() {
     const { token } = useAuth();
