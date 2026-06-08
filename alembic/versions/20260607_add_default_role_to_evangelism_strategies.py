@@ -30,7 +30,7 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_foreign_key(
-        "fk_estrategias_evangelismo_default_role_id_estrategia_roles_personalizados",
+        "fk_estrategias_evangelismo_default_role",
         "estrategias_evangelismo",
         "estrategia_roles_personalizados",
         ["default_role_id"],
@@ -41,7 +41,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_constraint(
-        "fk_estrategias_evangelismo_default_role_id_estrategia_roles_personalizados",
+        "fk_estrategias_evangelismo_default_role",
         "estrategias_evangelismo",
         type_="foreignkey",
     )
