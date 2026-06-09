@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import ProjectsShell from '@/components/projects/ProjectsShell';
 
 const INITIAL_RULES = [
     { id: 1, name: 'Alerta de Sobrecarga',        trigger: 'Carga > 8 tareas activas',   active: true,  icon: ShieldAlert, color: 'text-rose-500',  bg: 'bg-rose-50 dark:bg-rose-900/20' },
@@ -23,8 +24,11 @@ export default function AutomationsPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
-            <div className="w-full mx-auto p-3 space-y-3 pb-4">
+        <ProjectsShell
+            breadcrumbs={[{ label: 'Proyectos', icon: Sparkles }, { label: 'Automation', icon: Sparkles }]}
+        >
+            <div className="flex flex-col h-full font-display">
+                <div className="w-full mx-auto p-3 space-y-3 pb-4">
 
                 {/* Sub-header */}
                 <div className="flex items-center justify-between">
@@ -127,8 +131,8 @@ export default function AutomationsPage() {
                         </div>
                     </motion.div>
                 </div>
+                </div>
             </div>
-        </div>
+        </ProjectsShell>
     );
 }
-

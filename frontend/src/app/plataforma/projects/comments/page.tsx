@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import ProjectsShell from '@/components/projects/ProjectsShell';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -12,6 +12,7 @@ import type { ProjectCommentItem, ProjectRecord } from '@/types/projects';
 import { Layout, MessageCircle } from 'lucide-react';
 import Skeleton from '@/components/ui/Skeleton';
 import clsx from 'clsx';
+import { toast } from 'sonner';
 
 const COMMENT_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -40,6 +41,7 @@ export default function ProjectsCommentsPage() {
             }
         } catch (error) {
             console.error(error);
+            toast.error('Error al cargar comentarios');
         } finally {
             setLoading(false);
         }
@@ -73,6 +75,7 @@ export default function ProjectsCommentsPage() {
             setContent('');
         } catch (error) {
             console.error(error);
+            toast.error('Error al publicar comentario');
         } finally {
             setSaving(false);
         }
@@ -93,13 +96,12 @@ export default function ProjectsCommentsPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Comentarios asignados', icon: MessageCircle }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={COMMENT_VIEWS}
-            />
+        <ProjectsShell
+            breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Comentarios asignados', icon: MessageCircle }]}
+            viewType={viewType}
+            onViewChange={setViewType}
+            viewOptions={COMMENT_VIEWS}
+        >
             <main className="flex-1 overflow-y-auto p-4 space-y-3">
                 <section className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/5">
                     <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 mb-2">Nuevo comentario</h2>
@@ -174,6 +176,6 @@ export default function ProjectsCommentsPage() {
                     </div>
                 )}
             </main>
-        </div>
+        </ProjectsShell>
     );
 }

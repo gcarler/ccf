@@ -1,7 +1,6 @@
 "use client";
 
 import {
-ArrowUpRight,
 Folder,
 Layers,
 Plus
@@ -10,7 +9,9 @@ import { useRouter } from 'next/navigation';
 import React,{ useEffect,useMemo,useState } from 'react';
 
 import type { ViewType } from '@/components/ViewSwitcher';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import ProjectsShell from '@/components/projects/ProjectsShell';
+import ProjectCard from '@/components/projects/ProjectCard';
+import { formatDate } from '@/components/projects/utils';
 import { DataTable } from '@/components/ui/DataTable';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -28,17 +29,6 @@ import { AnimatePresence,motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 const PROJECT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
-
-function formatDate(dateStr: string) {
-    if (!dateStr) return '—';
-    try {
-        return new Date(dateStr).toLocaleDateString('es-PE', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        });
-    } catch { return dateStr; }
-}
 
 export default function ProjectsClient({ initialProjects }: { initialProjects: ProjectRecord[] }) {
     const { token } = useAuth();
@@ -202,29 +192,26 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
     }), [filtered]);
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Proyectos', icon: Folder }, { label: 'Centro de Comando', icon: Layers }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={PROJECT_VIEWS}
-                onSearch={setSearch}
-                rightActions={
-                    <button
-                        onClick={() => setShowCreateForm(!showCreateForm)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:scale-105 ${
-                            showCreateForm
-                                ? 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'
-                                : 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20'
-                        }`}
-                    >
-                        <Plus size={14} />
-                        {isCreating ? 'Creando...' : 'Nuevo Proyecto'}
-                    </button>
-                }
-            />
-
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3">
+        <ProjectsShell
+            breadcrumbs={[{ label: 'Proyectos', icon: Folder }, { label: 'Centro de Comando', icon: Layers }]}
+            viewType={viewType}
+            onViewChange={setViewType}
+            viewOptions={PROJECT_VIEWS}
+            onSearch={setSearch}
+            rightActions={
+                <button
+                    onClick={() => setShowCreateForm(!showCreateForm)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:scale-105 ${
+                        showCreateForm
+                            ? 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'
+                            : 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20'
+                    }`}
+                >
+                    <Plus size={14} />
+                    {isCreating ? 'Creando...' : 'Nuevo Proyecto'}
+                </button>
+            }
+        >
                 {showCreateForm && (
                     <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-4 border border-slate-200 dark:border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                         <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Nuevo Proyecto</h3>
@@ -301,7 +288,18 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
 
                 <div className="relative">
                     <AnimatePresence mode="wait">
-                        {viewType === 'grid' ? (
+                        {filtered.length === 0 ? (
+                            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-16 text-center">
+                                <Folder size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
+                                <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">No hay proyectos</h3>
+                                <p className="text-sm text-slate-500 mt-1 mb-4 max-w-md">{search ? 'Ningún proyecto coincide con tu búsqueda.' : 'Crea tu primer proyecto para empezar.'}</p>
+                                {!search && (
+                                    <button onClick={() => setShowCreateForm(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide shadow-lg">
+                                        <Plus size={16} /> Crear proyecto
+                                    </button>
+                                )}
+                            </motion.div>
+                        ) : viewType === 'grid' ? (
                             <motion.div key="grid" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
                                 {filtered.map((p, idx) => <ProjectCard key={p.id} project={p} index={idx} />)}
                             </motion.div>
@@ -353,110 +351,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         )}
                     </AnimatePresence>
                 </div>
-            </main>
-        </div>
+        </ProjectsShell>
     );
 }
 
-function ProjectCard({ project, index }: { project: ProjectRecord; index: number }) {
-    const router = useRouter();
-    const tasks = Array.isArray(project.tasks) ? project.tasks : [];
-    const completed = tasks.filter(t => ['completed', 'completed'].includes((t.status || '').toLowerCase())).length;
-    const inProgress = tasks.filter(t => ['in_progress'].includes((t.status || '').toLowerCase())).length;
-    const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
-    const color = project.color || '#2563eb';
-
-    const statusMap: Record<string, { label: string; cls: string }> = {
-        active:   { label: 'Activo',     cls: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' },
-        on_hold:  { label: 'Pausado',    cls: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' },
-        archived: { label: 'Archivado',  cls: 'bg-slate-100 dark:bg-white/5 text-slate-500' },
-    };
-    const statusCfg = statusMap[project.status ?? 'active'] ?? statusMap.active;
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.04, duration: 0.3 }}
-            onClick={() => router.push(`/plataforma/projects/${project.id}`)}
-            className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]"
-            style={{ '--card-color': color } as React.CSSProperties}
-        >
-            {/* Color accent bar top */}
-            <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl opacity-80 group-hover:opacity-100 transition-opacity"
-                style={{ background: `linear-gradient(90deg, ${color}, ${color}88)` }} />
-
-            <div className="space-y-4">
-                {/* Header row */}
-                <div className="flex items-start justify-between gap-3">
-                    <div
-                        className="size-6 rounded-md flex items-center justify-center text-white font-black text-lg shadow-lg transition-transform group-hover:scale-105 shrink-0"
-                        style={{ backgroundColor: color }}
-                    >
-                        {project.title.charAt(0)}
-                    </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${statusCfg.cls}`}>
-                        {statusCfg.label}
-                    </span>
-                </div>
-
-                {/* Title + description */}
-                <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug truncate">
-                        {project.title}
-                    </h3>
-                    <p className="text-[12px] text-slate-400 font-medium line-clamp-2 mt-1 min-h-[32px]">
-                        {project.description || 'Sin descripción.'}
-                    </p>
-                </div>
-
-                {/* Task stats */}
-                {tasks.length > 0 && (
-                    <div className="flex items-center gap-3 text-[11px] font-medium">
-                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                            <span className="size-1.5 rounded-full bg-emerald-500 inline-block" />
-                            {completed} completadas
-                        </span>
-                        {inProgress > 0 && (
-                            <span className="flex items-center gap-1 text-[hsl(var(--primary))]">
-                                <span className="size-1.5 rounded-full bg-[hsl(var(--primary))] inline-block" />
-                                {inProgress} en curso
-                            </span>
-                        )}
-                        <span className="text-slate-300 ml-auto">{tasks.length} tareas</span>
-                    </div>
-                )}
-
-                {/* Progress bar */}
-                <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
-                        <span>Progreso</span>
-                        <span style={{ color }}>{progress}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                        <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progress}%` }}
-                            transition={{ duration: 0.8, delay: index * 0.04 + 0.2, ease: 'easeOut' }}
-                            className="h-full rounded-full"
-                            style={{ backgroundColor: color }}
-                        />
-                    </div>
-                </div>
-
-                {/* Footer: date + arrow */}
-                <div className="flex items-center justify-between pt-1">
-                    {project.created_at && (
-                        <span className="text-[10px] text-slate-300 dark:text-slate-600">
-                            {new Date(project.created_at).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' })}
-                        </span>
-                    )}
-                    <ArrowUpRight
-                        size={16}
-                        className="text-slate-300 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors ml-auto"
-                    />
-                </div>
-            </div>
-        </motion.div>
-    );
-}

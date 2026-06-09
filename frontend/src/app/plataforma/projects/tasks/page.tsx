@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import ProjectsShell from '@/components/projects/ProjectsShell';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -12,6 +12,7 @@ import type { ProjectTaskRecord } from '@/types/projects';
 import { CheckCircle2, Layout } from 'lucide-react';
 import clsx from 'clsx';
 import Skeleton from '@/components/ui/Skeleton';
+import { toast } from 'sonner';
 
 const STATUS_FLOW = ['todo', 'in_progress', 'review', 'completed'];
 const PROJECT_TASK_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
@@ -31,6 +32,7 @@ export default function ProjectsTasksPage() {
                 setTasks(Array.isArray(data) ? data : []);
             } catch (error) {
                 console.error(error);
+                toast.error('Error al cargar tareas');
             } finally {
                 setLoading(false);
             }
@@ -78,17 +80,17 @@ export default function ProjectsTasksPage() {
             setTasks((prev) => prev.map((row) => (row.id === task.id ? updated : row)));
         } catch (error) {
             console.error(error);
+            toast.error('Error al cambiar estado de tarea');
         }
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Mis tareas', icon: CheckCircle2 }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={PROJECT_TASK_VIEWS}
-            />
+        <ProjectsShell
+            breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Mis tareas', icon: CheckCircle2 }]}
+            viewType={viewType}
+            onViewChange={setViewType}
+            viewOptions={PROJECT_TASK_VIEWS}
+        >
 
             <div className="px-3 py-3 border-b border-slate-200 dark:border-white/10 flex flex-wrap gap-2">
                 {['all', 'todo', 'in_progress', 'review', 'completed'].map((value) => (
@@ -183,7 +185,7 @@ export default function ProjectsTasksPage() {
                     </div>
                 )}
             </main>
-        </div>
+        </ProjectsShell>
     );
 }
 

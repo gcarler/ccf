@@ -3,17 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import ProjectsShell from '@/components/projects/ProjectsShell';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import type { ProjectInboxItem } from '@/types/projects';
 import { useRouter } from 'next/navigation';
-import { 
+import {
     Inbox, AtSign, Layout,
     MessageCircle
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import Skeleton from '@/components/ui/Skeleton';
@@ -33,7 +34,7 @@ export default function ProjectsInboxPage() {
             try {
                 const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox', { token, cache: 'no-store' });
                 setMessages(Array.isArray(data) ? data : []);
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error(err); toast.error('Error al cargar inbox'); }
             finally { setLoading(false); }
         };
         fetchInbox();
@@ -70,6 +71,7 @@ export default function ProjectsInboxPage() {
             setMessages((prev) => prev.map((row) => (row.id === msg.id ? { ...row, is_read: true } : row)));
         } catch (err) {
             console.error(err);
+            toast.error('Error al resolver elemento');
         } finally {
             setResolvingId(null);
         }
@@ -82,13 +84,12 @@ export default function ProjectsInboxPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar 
-                breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Inbox / Respuestas', icon: Inbox }]}
-                viewType={viewType} setViewType={setViewType}
-                availableViews={['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
-            />
-
+        <ProjectsShell
+            breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Inbox / Respuestas', icon: Inbox }]}
+            viewType={viewType}
+            onViewChange={setViewType}
+            viewOptions={['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
+        >
             <div className="flex px-3 py-1.5 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0">
                 <Tab active={filter === 'all'} onClick={() => setFilter('all')} label="Todo" />
                 <Tab active={filter === 'unread'} onClick={() => setFilter('unread')} label="No leídos" />
@@ -99,6 +100,14 @@ export default function ProjectsInboxPage() {
                 {loading ? (
                     <div className="p-4 space-y-3">
                         {[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}
+                    </div>
+                ) : filteredMessages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center p-4">
+                        <div className="size-12 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-4">
+                            <Inbox size={28} className="text-slate-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">Inbox vacío</h3>
+                        <p className="text-sm text-slate-500 mt-1 max-w-md">No hay mensajes ni notificaciones pendientes en esta vista.</p>
                     </div>
                 ) : viewType === 'table' ? (
                     <div className="p-3"><div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Usuario</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Proyecto</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Estado</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{filteredMessages.map((msg) => <tr key={msg.id}><td className="px-3 py-2 text-sm font-medium">{msg.user}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{msg.project}</td><td className="px-3 py-2 text-[11px] text-slate-500">{msg.is_read ? 'Leído' : 'Pendiente'}</td></tr>)}</tbody></table></div></div>
@@ -162,7 +171,7 @@ export default function ProjectsInboxPage() {
                     </div>
                 )}
             </main>
-        </div>
+        </ProjectsShell>
     );
 }
 

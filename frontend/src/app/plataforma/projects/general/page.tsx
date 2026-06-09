@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import ProjectsShell from '@/components/projects/ProjectsShell';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -11,6 +11,7 @@ import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import type { ProjectActivityItem, ProjectRecord } from '@/types/projects';
 import { Hash, Layout } from 'lucide-react';
 import Skeleton from '@/components/ui/Skeleton';
+import { toast } from 'sonner';
 
 const GENERAL_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -37,6 +38,7 @@ export default function ProjectsGeneralPage() {
             if (!projectId && projectsList.length > 0) setProjectId(projectsList[0].id);
         } catch (error) {
             console.error(error);
+            toast.error('Error al cargar el canal general');
         } finally {
             setLoading(false);
         }
@@ -60,6 +62,7 @@ export default function ProjectsGeneralPage() {
             await load();
         } catch (error) {
             console.error(error);
+            toast.error('Error al publicar en el canal');
         } finally {
             setSaving(false);
         }
@@ -73,13 +76,12 @@ export default function ProjectsGeneralPage() {
     const ganttItems = activities.map((activity) => ({ id: activity.id, title: activity.task_title || activity.project_title, subtitle: activity.description, start_date: activity.created_at, end_date: activity.created_at, color: 'blue' as const, progress: 65 }));
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Canal General', icon: Hash }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={GENERAL_VIEWS}
-            />
+        <ProjectsShell
+            breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Canal General', icon: Hash }]}
+            viewType={viewType}
+            onViewChange={setViewType}
+            viewOptions={GENERAL_VIEWS}
+        >
             <main className="flex-1 overflow-y-auto p-4">
                 <section className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/5 mb-3">
                     <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-2">Publicar en canal</p>
@@ -137,6 +139,6 @@ export default function ProjectsGeneralPage() {
                     </div>
                 )}
             </main>
-        </div>
+        </ProjectsShell>
     );
 }

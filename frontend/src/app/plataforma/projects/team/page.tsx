@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
+import ProjectsShell from '@/components/projects/ProjectsShell';
 import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import RightPanel from '@/components/ui/RightPanel';
@@ -50,8 +51,10 @@ export default function TeamPage() {
     };
 
     return (
-        <div className="flex h-full overflow-hidden">
-            <div className="flex-1 flex flex-col bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
+        <ProjectsShell
+            breadcrumbs={[{ label: 'Proyectos', icon: Users }, { label: 'Equipo', icon: Users }]}
+        >
+            <div className="flex-1 flex flex-col font-display">
                 <div className="w-full mx-auto p-3 space-y-3 pb-4">
 
                     {/* Sub-header */}
@@ -84,8 +87,6 @@ export default function TeamPage() {
                             </button>
                         </div>
                     </div>
-
-                    {/* Team Grid */}
                     {loading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 rounded-lg" />)}
@@ -211,7 +212,7 @@ export default function TeamPage() {
                     </div>
                 </RightPanel>
             )}
-        </div>
+        </ProjectsShell>
     );
 }
 

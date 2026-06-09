@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { useRouter } from 'next/navigation';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import ProjectsShell from '@/components/projects/ProjectsShell';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectRecord } from '@/types/projects';
 import { Hash, Layout, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ProjectsWelcomePage() {
     const { token } = useAuth();
@@ -37,19 +38,19 @@ export default function ProjectsWelcomePage() {
             router.push(`/plataforma/projects/${project.id}`);
         } catch (error) {
             console.error(error);
+            toast.error('Error al crear proyecto');
         } finally {
             setCreating(false);
         }
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Welcome', icon: Hash }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={['grid', 'list', 'table']}
-            />
+        <ProjectsShell
+            breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Welcome', icon: Hash }]}
+            viewType={viewType}
+            onViewChange={setViewType}
+            viewOptions={['grid', 'list', 'table']}
+        >
             <main className="flex-1 overflow-y-auto p-3">
                 {viewType === 'list' && (
                     <div className="max-w-3xl space-y-3">
@@ -93,7 +94,7 @@ export default function ProjectsWelcomePage() {
                 </section>
                 )}
             </main>
-        </div>
+        </ProjectsShell>
     );
 }
 

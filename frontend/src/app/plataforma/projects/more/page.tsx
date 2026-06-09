@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import ProjectsShell from '@/components/projects/ProjectsShell';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -11,6 +11,7 @@ import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import type { ProjectPortfolioSummaryRow, ProjectWorkloadSummaryRow } from '@/types/projects';
 import { BarChart3, Layout, MoreHorizontal } from 'lucide-react';
 import Skeleton from '@/components/ui/Skeleton';
+import { toast } from 'sonner';
 
 export default function ProjectsMorePage() {
     const { token } = useAuth();
@@ -31,6 +32,7 @@ export default function ProjectsMorePage() {
                 setWorkload(Array.isArray(workloadRows) ? workloadRows : []);
             } catch (error) {
                 console.error(error);
+                toast.error('Error al cargar resumen');
             } finally {
                 setLoading(false);
             }
@@ -64,16 +66,21 @@ export default function ProjectsMorePage() {
     });
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Mas', icon: MoreHorizontal }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
-            />
+        <ProjectsShell
+            breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Mas', icon: MoreHorizontal }]}
+            viewType={viewType}
+            onViewChange={setViewType}
+            viewOptions={['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
+        >
             <main className="flex-1 overflow-y-auto p-3">
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((idx) => <Skeleton key={idx} className="h-32 rounded-lg" />)}</div>
+                ) : summary.length === 0 && workload.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <BarChart3 size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
+                        <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">Sin datos de resumen</h3>
+                        <p className="text-sm text-slate-500 mt-1 max-w-md">Aún no hay suficiente información de proyectos para mostrar métricas.</p>
+                    </div>
                 ) : viewType === 'list' ? (
                     <div className="space-y-3">{summary.map((row) => <article key={row.project_status} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5"><h3 className="font-bold uppercase">{row.project_status}</h3><p className="text-sm text-slate-500 mt-1">{row.total_projects} proyectos · {row.total_tasks} tareas · {row.completed_tasks} completadas</p></article>)}</div>
                 ) : viewType === 'table' ? (
@@ -101,7 +108,7 @@ export default function ProjectsMorePage() {
                     </>
                 )}
             </main>
-        </div>
+        </ProjectsShell>
     );
 }
 

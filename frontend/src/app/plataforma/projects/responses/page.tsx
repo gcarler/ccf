@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import ProjectsShell from '@/components/projects/ProjectsShell';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -13,6 +13,7 @@ import type { ProjectInboxItem } from '@/types/projects';
 import { useRouter } from 'next/navigation';
 import { Inbox, Layout } from 'lucide-react';
 import clsx from 'clsx';
+import { toast } from 'sonner';
 
 const RESPONSE_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -32,6 +33,7 @@ export default function ProjectsResponsesPage() {
                 setItems(Array.isArray(data) ? data : []);
             } catch (error) {
                 console.error(error);
+                toast.error('Error al cargar respuestas');
             } finally {
                 setLoading(false);
             }
@@ -66,19 +68,19 @@ export default function ProjectsResponsesPage() {
             setItems((prev) => prev.map((row) => (row.id === item.id ? { ...row, is_read: true } : row)));
         } catch (error) {
             console.error(error);
+            toast.error('Error al resolver respuesta');
         } finally {
             setResolvingId(null);
         }
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Respuestas', icon: Inbox }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={RESPONSE_VIEWS}
-            />
+        <ProjectsShell
+            breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Respuestas', icon: Inbox }]}
+            viewType={viewType}
+            onViewChange={setViewType}
+            viewOptions={RESPONSE_VIEWS}
+        >
 
             <main className="flex-1 overflow-y-auto p-4">
                 {loading ? (
@@ -124,7 +126,7 @@ export default function ProjectsResponsesPage() {
                     </div>
                 )}
             </main>
-        </div>
+        </ProjectsShell>
     );
 }
 
