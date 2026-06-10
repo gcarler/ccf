@@ -42,7 +42,7 @@ Users,
 X
 } from 'lucide-react';
 import { useParams,useRouter } from 'next/navigation';
-import { useCallback,useEffect,useState } from 'react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 import { toast } from 'sonner';
 
 interface Strategy {
@@ -248,6 +248,25 @@ export default function StrategyDetailPage() {
     const [allMembers, setAllMembers] = useState<any[]>([]);
     const [memberSearch, setMemberSearch] = useState('');
     const [memberSaving, setMemberSaving] = useState(false);
+    const [memberSplitHeight, setMemberSplitHeight] = useState(200);
+    const memberSplitRef = useRef<HTMLDivElement>(null);
+
+    const handleMemberSplitDrag = (e: React.MouseEvent) => {
+        e.preventDefault();
+        const startY = e.clientY;
+        const startHeight = memberSplitHeight;
+        const onMouseMove = (ev: MouseEvent) => {
+            const containerH = memberSplitRef.current?.clientHeight ?? 600;
+            const next = Math.max(60, Math.min(startHeight + ev.clientY - startY, containerH - 140));
+            setMemberSplitHeight(next);
+        };
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    };
 
     // Sessions
     const [sessions, setSessions] = useState<SessionRow[]>([]);
@@ -1847,17 +1866,16 @@ export default function StrategyDetailPage() {
                         {memberSaving ? <><Sparkles size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar ({groupMembers.length})</>}
                     </button>
                 </>}>
-                <div className="space-y-4">
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                                Personas ({groupMembers.length})
-                            </label>
-                        </div>
+                <div ref={memberSplitRef} className="flex flex-col" style={{ height: 'calc(100vh - 16rem)' }}>
+                    {/* Panel superior: miembros actuales */}
+                    <div className="overflow-y-auto shrink-0 pb-2" style={{ height: memberSplitHeight }}>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                            Personas ({groupMembers.length})
+                        </label>
                         {groupMembers.length === 0 ? (
                             <p className="text-xs text-slate-400 italic py-2">Sin personas asignados</p>
                         ) : (
-                            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                            <div className="space-y-1.5">
                                 {groupMembers.map(m => (
                                     <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 dark:bg-white/5 rounded-md">
                                         <div className="flex-1 min-w-0">
@@ -1876,15 +1894,26 @@ export default function StrategyDetailPage() {
                             </div>
                         )}
                     </div>
-                    <div className="border-t border-slate-100 dark:border-white/5 pt-4">
-                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Agregar personas</label>
-                        <div className="relative mb-2">
+
+                    {/* Divisor arrastrable */}
+                    <div
+                        onMouseDown={handleMemberSplitDrag}
+                        className="shrink-0 h-4 flex items-center justify-center cursor-row-resize group select-none border-y border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/40 transition-colors"
+                        title="Arrastra para ajustar el espacio"
+                    >
+                        <div className="w-12 h-1 rounded-full bg-slate-300 dark:bg-white/20 group-hover:bg-blue-400 dark:group-hover:bg-blue-500 transition-colors" />
+                    </div>
+
+                    {/* Panel inferior: agregar personas */}
+                    <div className="flex-1 min-h-0 flex flex-col pt-3">
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block shrink-0">Agregar personas</label>
+                        <div className="relative mb-2 shrink-0">
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)}
                                 placeholder="Buscar por nombre o email..."
                                 className="w-full pl-9 pr-3 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
                         </div>
-                        <div className="space-y-1 max-h-[calc(100vh-28rem)] overflow-y-auto">
+                        <div className="flex-1 min-h-0 overflow-y-auto space-y-1">
                             {allMembers.length === 0 && (
                                 <p className="text-[11px] text-slate-400 text-center py-3">
                                     {memberSearch ? 'Sin resultados para esta búsqueda' : 'Cargando personas...'}
