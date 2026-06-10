@@ -271,7 +271,7 @@ export default function FaroDetailPage() {
     // Load members for selector
     useEffect(() => {
         if (!token || !showAddAttendee) return;
-        apiFetch<Member[]>('/crm/personas', { token, query: { limit: 200, sort_by: 'first_name', sort_dir: 'asc' } }).then(setMembers).catch(() => { toast.error('Error al cargar personas'); });
+        apiFetch<Member[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(setMembers).catch(() => { toast.error('Error al cargar personas'); });
     }, [showAddAttendee, token]);
 
     const filteredMembers = useMemo(() => {

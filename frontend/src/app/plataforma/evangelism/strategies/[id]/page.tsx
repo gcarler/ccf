@@ -436,8 +436,8 @@ export default function StrategyDetailPage() {
         const timer = setTimeout(async () => {
             try {
                 const params: Record<string, any> = query.length >= 1
-                    ? { limit: 50, search: query }
-                    : { limit: 100, sort_by: 'first_name', sort_dir: 'asc' };
+                    ? { limit: 200, search: query }
+                    : { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' };
                 const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
                 setRoleResults(r => ({ ...r, [field]: res || [] }));
             } catch {
@@ -541,8 +541,8 @@ export default function StrategyDetailPage() {
         const timer = setTimeout(async () => {
             try {
                 const params: Record<string, any> = query.length >= 1
-                    ? { limit: 50, search: query }
-                    : { limit: 100, sort_by: 'first_name', sort_dir: 'asc' };
+                    ? { limit: 200, search: query }
+                    : { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' };
                 const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
                 setAllMembers(res || []);
             } catch { /* silently keep previous results */ }
@@ -624,7 +624,7 @@ export default function StrategyDetailPage() {
         setVisitorSearch('');
         // Pre-load all members for visitor search if not already loaded
         if (allMembers.length === 0) {
-            apiFetch<any[]>('/crm/personas', { token, query: { limit: 200, sort_by: 'first_name', sort_dir: 'asc' } }).then(res => {
+            apiFetch<any[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(res => {
                 if (Array.isArray(res)) setAllMembers(res);
             }).catch(() => { toast.error('Error al cargar personas'); });
         }

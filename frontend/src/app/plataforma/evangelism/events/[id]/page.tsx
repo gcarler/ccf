@@ -215,7 +215,7 @@ export default function EventDetailPage() {
 
     useEffect(() => {
         if (activeTab === 'session' && token) {
-            apiFetch<Member[]>('/crm/personas', { token, query: { limit: 200 } }).then(setMembers).catch(() => toast.error('Error al cargar personas'));
+            apiFetch<Member[]>('/crm/personas', { token, query: { limit: 1000 } }).then(setMembers).catch(() => toast.error('Error al cargar personas'));
         }
     }, [activeTab, token]);
 
