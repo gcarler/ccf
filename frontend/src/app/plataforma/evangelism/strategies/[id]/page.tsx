@@ -1867,7 +1867,7 @@ export default function StrategyDetailPage() {
                     </button>
                 </>}>
                 <div ref={memberSplitRef} className="flex flex-col" style={{ height: 'calc(100vh - 16rem)' }}>
-                    {/* Panel superior: miembros actuales */}
+                    {/* Panel superior: personas asignadas */}
                     <div className="overflow-y-auto shrink-0 pb-2" style={{ height: memberSplitHeight }}>
                         <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
                             Personas ({groupMembers.length})
