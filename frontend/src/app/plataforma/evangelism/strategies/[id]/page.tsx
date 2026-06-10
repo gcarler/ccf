@@ -1857,7 +1857,7 @@ export default function StrategyDetailPage() {
                         {groupMembers.length === 0 ? (
                             <p className="text-xs text-slate-400 italic py-2">Sin personas asignados</p>
                         ) : (
-                            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto">
                                 {groupMembers.map(m => (
                                     <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 dark:bg-white/5 rounded-md">
                                         <div className="flex-1 min-w-0">
@@ -1884,7 +1884,7 @@ export default function StrategyDetailPage() {
                                 placeholder="Buscar por nombre o email..."
                                 className="w-full pl-9 pr-3 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
                         </div>
-                        <div className="space-y-1 max-h-48 overflow-y-auto">
+                        <div className="space-y-1 max-h-[calc(100vh-28rem)] overflow-y-auto">
                             {allMembers.length === 0 && (
                                 <p className="text-[11px] text-slate-400 text-center py-3">
                                     {memberSearch ? 'Sin resultados para esta búsqueda' : 'Cargando personas...'}
