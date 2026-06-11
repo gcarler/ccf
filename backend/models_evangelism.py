@@ -12,7 +12,7 @@ import uuid as _uuid
 
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Integer,
-    String, Text, JSON, Numeric,
+    String, Text, JSON, Numeric, UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -326,6 +326,9 @@ class GrupoEvangelismo(Base):
 
 class ParticipanteGrupo(Base):
     __tablename__ = "grupo_participantes"
+    __table_args__ = (
+        UniqueConstraint("grupo_id", "persona_id", name="uq_participante_grupo_persona"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)

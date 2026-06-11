@@ -221,8 +221,12 @@ def create_faro_session(
         ).all()
         houses_to_process = [h.id for h in houses]
     else:
+        try:
+            parsed_uuid = UUID(str(cell_group_id))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Identificador de grupo inválido")
         house = db.query(GrupoEvangelismo).filter(
-            models.GrupoEvangelismo.id == int(cell_group_id),
+            models.GrupoEvangelismo.id == parsed_uuid,
             models.GrupoEvangelismo.sede_id == user_sede,
             models.GrupoEvangelismo.deleted_at.is_(None),
         ).first()
