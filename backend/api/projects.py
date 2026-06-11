@@ -310,6 +310,8 @@ def set_project_phases(
     _project = _ensure_project(db, project_id)
     # Only admins/staff can modify phases
     user_role = normalize_role(getattr(current_user, "role", ""))
+    if not user_role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+        user_role = normalize_role(current_user.rol_plataforma.nombre)
     if user_role not in ("admin", "gestor", "coordinador", "docente", "pastor"):
         raise HTTPException(
             status_code=403,
@@ -495,7 +497,7 @@ def workload_summary(
         )
         result.append(
             schemas.ProjectWorkloadSummaryRow(
-                assignee_id=row[0],
+                assignee_id=str(row[0]) if row[0] else None,
                 open_tasks=row[1] or 0,
                 in_review=row[2] or 0,
                 overdue_tasks=overdue,
@@ -982,7 +984,7 @@ def update_subtask(
     _ensure_project(db, project_id)
     _ensure_task_in_project(db, project_id, task_id)
     subtask = _ensure_task_in_project(db, project_id, subtask_id)
-    if subtask.parent_id != task_id:
+    if str(subtask.parent_id) != str(task_id):
         raise HTTPException(status_code=404, detail="Subtask not found under task")
     update_data = payload.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -1004,7 +1006,7 @@ def delete_subtask(
     _ensure_project(db, project_id)
     _ensure_task_in_project(db, project_id, task_id)
     subtask = _ensure_task_in_project(db, project_id, subtask_id)
-    if subtask.parent_id != task_id:
+    if str(subtask.parent_id) != str(task_id):
         raise HTTPException(status_code=404, detail="Subtask not found under task")
     subtask.deleted_at = datetime.now(timezone.utc)
     db.commit()
@@ -1328,7 +1330,7 @@ def send_project_message(
 
     return schemas.ProjectMessageItem(
         id=msg.id,
-        sender_id=msg.sender_id,
+        sender_id=str(msg.sender_id),
         sender_name=_author_name(persona),
         content=msg.content,
         created_at=msg.created_at,
@@ -1348,6 +1350,8 @@ def delete_project_message(
         raise HTTPException(404, detail="Message not found")
     if msg.sender_id != current_user.id:
         role = normalize_role(getattr(current_user, "role", ""))
+        if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+            role = normalize_role(current_user.rol_plataforma.nombre)
         if role not in ("admin", "pastor", "coordinador"):
             raise HTTPException(403, detail="Cannot delete another user's message")
     msg.deleted_at = datetime.now(timezone.utc)
