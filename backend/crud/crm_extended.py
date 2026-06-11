@@ -754,7 +754,7 @@ def delete_chat_message(db: Session, message_id: int) -> bool:
 import uuid
 
 
-def create_conversation(db: Session, participant_ids: list[int]) -> models.Conversation:
+def create_conversation(db: Session, participant_ids: list[uuid.UUID]) -> models.Conversation:
     conv = models.Conversation()
     db.add(conv)
     db.flush()
@@ -768,18 +768,10 @@ def create_conversation(db: Session, participant_ids: list[int]) -> models.Conve
 
 def create_conversation_by_persona(db: Session, persona_ids: list[uuid.UUID]) -> models.Conversation:
     """Versión de create_conversation que acepta UUID de personas (FK personas.id)."""
-    conv = models.Conversation()
-    db.add(conv)
-    db.flush()
-    for pid in persona_ids:
-        cp = models.ConversationParticipant(conversation_id=conv.id, user_id=pid)
-        db.add(cp)
-    db.commit()
-    db.refresh(conv)
-    return conv
+    return create_conversation(db, persona_ids)
 
 
-def get_user_conversations(db: Session, user_id: int) -> list[models.Conversation]:
+def get_user_conversations(db: Session, user_id: uuid.UUID) -> list[models.Conversation]:
     return (
         db.query(models.Conversation)
         .join(models.ConversationParticipant)
@@ -794,16 +786,7 @@ def get_user_conversations(db: Session, user_id: int) -> list[models.Conversatio
 
 def get_user_conversations_by_persona(db: Session, persona_id: uuid.UUID) -> list[models.Conversation]:
     """Versión de get_user_conversations que acepta persona_id UUID (FK personas.id)."""
-    return (
-        db.query(models.Conversation)
-        .join(models.ConversationParticipant)
-        .filter(
-            models.ConversationParticipant.user_id == persona_id,
-            models.ConversationParticipant.is_archived.is_(False),
-        )
-        .order_by(models.Conversation.last_message_at.desc().nullslast())
-        .all()
-    )
+    return get_user_conversations(db, persona_id)
 
 
 def get_conversation(db: Session, conversation_id: int) -> Optional[models.Conversation]:
@@ -830,7 +813,7 @@ def get_conversation_messages(
 
 
 def create_direct_message(
-    db: Session, conversation_id: int, sender_id: int, content: str
+    db: Session, conversation_id: int, sender_id: uuid.UUID, content: str
 ) -> models.ChatMessage:
     msg = models.ChatMessage(
         sender_id=sender_id,
@@ -852,24 +835,11 @@ def create_direct_message_by_persona(
     db: Session, conversation_id: int, sender_id: uuid.UUID, content: str
 ) -> models.ChatMessage:
     """Versión de create_direct_message que acepta sender_id UUID (FK personas.id)."""
-    msg = models.ChatMessage(
-        sender_id=sender_id,
-        room_id=f"dm_{conversation_id}",
-        content=content,
-    )
-    db.add(msg)
-    conv = get_conversation(db, conversation_id)
-    if conv:
-        conv.last_message_content = content
-        conv.last_message_at = _utcnow()
-        conv.last_sender_id = sender_id
-    db.commit()
-    db.refresh(msg)
-    return msg
+    return create_direct_message(db, conversation_id, sender_id, content)
 
 
 def mark_conversation_read(
-    db: Session, conversation_id: int, user_id: int
+    db: Session, conversation_id: int, user_id: uuid.UUID
 ) -> None:
     cp = (
         db.query(models.ConversationParticipant)
@@ -895,28 +865,11 @@ def mark_conversation_read_by_persona(
     db: Session, conversation_id: int, persona_id: uuid.UUID
 ) -> None:
     """Versión de mark_conversation_read que acepta persona_id UUID (FK personas.id)."""
-    cp = (
-        db.query(models.ConversationParticipant)
-        .filter(
-            models.ConversationParticipant.conversation_id == conversation_id,
-            models.ConversationParticipant.user_id == persona_id,
-        )
-        .first()
-    )
-    if cp:
-        cp.last_read_at = _utcnow()
-    else:
-        cp = models.ConversationParticipant(
-            conversation_id=conversation_id,
-            user_id=persona_id,
-            last_read_at=_utcnow(),
-        )
-        db.add(cp)
-    db.commit()
+    return mark_conversation_read(db, conversation_id, persona_id)
 
 
 def get_unread_count_for_conversation(
-    db: Session, conversation_id: int, user_id: int
+    db: Session, conversation_id: int, user_id: uuid.UUID
 ) -> int:
     cp = (
         db.query(models.ConversationParticipant)
@@ -942,21 +895,4 @@ def get_unread_count_for_conversation_by_persona(
     db: Session, conversation_id: int, persona_id: uuid.UUID
 ) -> int:
     """Versión de get_unread_count_for_conversation que acepta persona_id UUID (FK personas.id)."""
-    cp = (
-        db.query(models.ConversationParticipant)
-        .filter(
-            models.ConversationParticipant.conversation_id == conversation_id,
-            models.ConversationParticipant.user_id == persona_id,
-        )
-        .first()
-    )
-    since = (cp.last_read_at if cp and cp.last_read_at else _utcnow())
-    return (
-        db.query(models.ChatMessage)
-        .filter(
-            models.ChatMessage.room_id == f"dm_{conversation_id}",
-            models.ChatMessage.sender_id != persona_id,
-            models.ChatMessage.created_at > since,
-        )
-        .count()
-    )
+    return get_unread_count_for_conversation(db, conversation_id, persona_id)

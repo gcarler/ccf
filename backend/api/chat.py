@@ -86,41 +86,43 @@ def search_chat_users(
     ]
 
 
-def _serialize_conversation(db: Session, conv: models.Conversation, current_user_id: int, current_persona_id) -> schemas.ConversationRead:
-    # Batch-fetch all participant users in one query (avoid N+1)
+def _serialize_conversation(db: Session, conv: models.Conversation, current_user_id: _uuid.UUID, current_persona_id) -> schemas.ConversationRead:
+    # Batch-fetch all participant personas in one query (avoid N+1)
     participant_user_ids = [cp.user_id for cp in conv.participants]
     user_map: dict = {}
     if participant_user_ids:
-        # Participant ids are UUID (personas.id).
         personas = db.query(models.Persona).filter(models.Persona.id.in_(participant_user_ids)).all()
         for p in personas:
             user_map[p.id] = p
+            
     participants = []
     for cp in conv.participants:
         persona = user_map.get(cp.user_id)
         participants.append(
             schemas.ConversationParticipantRead(
-                user_id=cp.user_id,
+                user_id=cp.user_id, # Return Persona UUID
                 username=_persona_display_name(persona),
                 last_read_at=cp.last_read_at,
             )
         )
-    unread = crud.get_unread_count_for_conversation_by_persona(db, conv.id, current_persona_id)
+        
+    unread = crud.get_unread_count_for_conversation(db, conv.id, current_user_id)
+    
     return schemas.ConversationRead(
         id=conv.id,
         participants=participants,
         last_message_content=conv.last_message_content,
         last_message_at=conv.last_message_at,
-        last_sender_id=conv.last_sender_id,
+        last_sender_id=conv.last_sender_id, # Return Persona UUID
         unread_count=unread,
         created_at=conv.created_at,
     )
 
 
-def _find_existing_dm(db: Session, persona_id1: _uuid.UUID, persona_id2: _uuid.UUID):
+def _find_existing_dm(db: Session, user_id1: _uuid.UUID, user_id2: _uuid.UUID):
     """Check if a 2-person DM conversation already exists."""
     cps = (
-        db.query(models.ConversationParticipant).filter(models.ConversationParticipant.user_id.in_([persona_id1, persona_id2])).all()
+        db.query(models.ConversationParticipant).filter(models.ConversationParticipant.user_id.in_([user_id1, user_id2])).all()
     )
     conv_ids = {cp.conversation_id for cp in cps}
     counts: Counter = Counter()
@@ -135,7 +137,7 @@ def _find_existing_dm(db: Session, persona_id1: _uuid.UUID, persona_id2: _uuid.U
     for conv_id, cnt in counts.items():
         if cnt == 2:
             pids = {cp.user_id for cp in all_cps if cp.conversation_id == conv_id}
-            if pids == {persona_id1, persona_id2}:
+            if pids == {user_id1, user_id2}:
                 return db.query(models.Conversation).filter(models.Conversation.id == conv_id).first()
     return None
 
@@ -152,7 +154,7 @@ def list_conversations(
     persona_id = _get_persona_id(db, current_user)
     if not persona_id:
         return []
-    convs = crud.get_user_conversations_by_persona(db, persona_id)
+    convs = crud.get_user_conversations(db, current_user.id)
     return [_serialize_conversation(db, c, current_user.id, persona_id) for c in convs]
 
 
@@ -170,22 +172,24 @@ def create_conversation(
     persona_id = _get_persona_id(db, current_user)
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found for current user")
-    all_ids = [persona_id]
-    for participant_id in payload.participant_ids:
-        uid = _uuid.UUID(str(participant_id))
-        if uid not in all_ids:
-            all_ids.append(uid)
-    if len(all_ids) < 2:
+    
+    # Resolve all participant user_ids (UUIDs) from their persona UUIDs
+    payload_personas = db.query(models.Persona).filter(models.Persona.id.in_(payload.participant_ids)).all()
+    participant_user_ids = [p.id for p in payload_personas]
+    if current_user.id not in participant_user_ids:
+        participant_user_ids.append(current_user.id)
+        
+    if len(participant_user_ids) < 2:
         raise HTTPException(
             status_code=400,
             detail="A conversation needs at least 2 participants",
         )
     # Deduplicate for 2-person DMs
-    if len(all_ids) == 2:
-        existing = _find_existing_dm(db, all_ids[0], all_ids[1])
+    if len(participant_user_ids) == 2:
+        existing = _find_existing_dm(db, participant_user_ids[0], participant_user_ids[1])
         if existing:
             return _serialize_conversation(db, existing, current_user.id, persona_id)
-    conv = crud.create_conversation_by_persona(db, all_ids)
+    conv = crud.create_conversation(db, participant_user_ids)
     return _serialize_conversation(db, conv, current_user.id, persona_id)
 
 
@@ -211,7 +215,7 @@ def list_direct_messages(
         db.query(models.ConversationParticipant)
         .filter(
             models.ConversationParticipant.conversation_id == conv_id,
-            models.ConversationParticipant.user_id == persona_id,
+            models.ConversationParticipant.user_id == current_user.id,
         )
         .first()
     )
@@ -219,25 +223,20 @@ def list_direct_messages(
         raise HTTPException(status_code=403, detail="Not a participant of this conversation")
     rows = crud.get_conversation_messages(db, conv_id, limit=limit, before_id=before)
     sender_ids = {r.sender_id for r in rows}
+    
+    # Map sender UUIDs to Personas
     personas = db.query(models.Persona).filter(models.Persona.id.in_(sender_ids)).all() if sender_ids else []
-    persona_map = {p.id: p.first_name + " " + p.last_name for p in personas}
-    participant = (
-        db.query(models.ConversationParticipant)
-        .filter(
-            models.ConversationParticipant.conversation_id == conv_id,
-            models.ConversationParticipant.user_id == persona_id,
-        )
-        .first()
-    )
-    last_read = participant.last_read_at if participant else None
+    persona_map = {p.id: p for p in personas}
+    
+    last_read = is_participant.last_read_at
     return [
         schemas.DirectMessageItem(
             id=r.id,
-            sender_id=r.sender_id,
-            sender_name=persona_map.get(r.sender_id, "Usuario"),
+            sender_id=r.sender_id, # Return Persona UUID
+            sender_name=_persona_display_name(persona_map.get(r.sender_id)),
             content=r.content,
             created_at=r.created_at,
-            is_read=(r.sender_id == persona_id or (last_read is not None and r.created_at <= last_read)),
+            is_read=(r.sender_id == current_user.id or (last_read is not None and r.created_at <= last_read)),
         )
         for r in rows
     ]
@@ -265,13 +264,13 @@ def send_direct_message(
         db.query(models.ConversationParticipant)
         .filter(
             models.ConversationParticipant.conversation_id == conv_id,
-            models.ConversationParticipant.user_id == persona_id,
+            models.ConversationParticipant.user_id == current_user.id,
         )
         .first()
     )
     if not is_participant:
         raise HTTPException(status_code=403, detail="Not a participant")
-    msg = crud.create_direct_message_by_persona(db, conv_id, persona_id, payload.content)
+    msg = crud.create_direct_message(db, conv_id, current_user.id, payload.content)
     persona = _get_persona(db, current_user)
     sender_name = _persona_display_name(persona)
     # Broadcast via WebSocket (safe no-op if no event loop available)
@@ -285,7 +284,7 @@ def send_direct_message(
                         "conversation_id": conv_id,
                         "message": {
                             "id": msg.id,
-                            "sender_id": msg.sender_id,
+                            "sender_id": str(current_user.id), # Return Persona UUID
                             "sender_name": sender_name,
                             "content": msg.content,
                             "created_at": str(msg.created_at),
@@ -298,7 +297,7 @@ def send_direct_message(
         pass
     return schemas.DirectMessageItem(
         id=msg.id,
-        sender_id=msg.sender_id,
+        sender_id=current_user.id, # Return Persona UUID
         sender_name=sender_name,
         content=msg.content,
         created_at=msg.created_at,
@@ -315,7 +314,7 @@ def mark_conversation_read_endpoint(
     persona_id = _get_persona_id(db, current_user)
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found")
-    crud.mark_conversation_read_by_persona(db, conv_id, persona_id)
+    crud.mark_conversation_read(db, conv_id, current_user.id)
     return {"ok": True}
 
 
@@ -332,7 +331,7 @@ def delete_chat_message_endpoint(
     persona_id = _get_persona_id(db, current_user)
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found")
-    if msg.sender_id != persona_id:
+    if msg.sender_id != current_user.id:
         raise HTTPException(status_code=403, detail="Cannot delete another user's message")
     msg.deleted_at = _utcnow()
     msg.content = "[Mensaje eliminado]"

@@ -39,6 +39,7 @@ class ProjectMilestone(Base):
     description = Column(Text, nullable=True)
     target_date = Column(DateTime(timezone=True), nullable=True)
     is_completed = Column(Boolean, default=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     project = relationship("Project", back_populates="milestones")
@@ -108,6 +109,7 @@ class ProjectAttachment(Base):
     file_type = Column(String(100), nullable=True)
     file_size = Column(Integer, nullable=True)
     uploader_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     task = relationship("ProjectTask", back_populates="attachments")
@@ -121,6 +123,7 @@ class TaskSupply(Base):
     item_name = Column(String(200), nullable=False)
     quantity = Column(Integer, default=1)
     status = Column(String(20), default="pending")
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     task = relationship("ProjectTask", back_populates="supplies")
 
@@ -133,6 +136,7 @@ class ProjectComment(Base):
     author_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     content = Column(Text, nullable=False)
     is_resolved = Column(Boolean, default=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 

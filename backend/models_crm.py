@@ -14,7 +14,7 @@ from backend.models_shared import _utcnow
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
-    sender_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    sender_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False, index=True)
     room_id = Column(String(100), nullable=True, index=True)
     content = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False, index=True)
@@ -29,7 +29,7 @@ class Conversation(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     last_message_content = Column(Text, nullable=True)
     last_message_at = Column(DateTime(timezone=True), nullable=True, index=True)
-    last_sender_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    last_sender_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=True)
 
 
 class ConversationParticipant(Base):
@@ -43,7 +43,7 @@ class ConversationParticipant(Base):
         nullable=False, index=True,
     )
     user_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"),
+        UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"),
         nullable=False, index=True,
     )
     last_read_at = Column(DateTime(timezone=True), nullable=True)
@@ -51,7 +51,7 @@ class ConversationParticipant(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     conversation = relationship("Conversation", backref="participants")
-    user = relationship("Persona")
+    user = relationship("Usuario")
 
 
 class AgendaEvent(Base):

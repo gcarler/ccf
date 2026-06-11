@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -216,7 +216,7 @@ class CrmTaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     persona_id: Optional[str] = None
-    assignee_id: int
+    assignee_id: Optional[Union[str, int, UUID]] = None
     due_date: Optional[datetime] = None
     status: str = "todo"
     priority: str = "normal"

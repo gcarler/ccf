@@ -165,7 +165,7 @@ def test_flujo_estrategia_triple7_geografica_relacional_semanal(client, db_sessi
             )
             assert len(attendance_rows) == 10
             assert sum(1 for row in attendance_rows if row.estado == "presente") == 9
-            assert sum(1 for row in attendance_rows if row.estado == "ausente") == 1
+            assert sum(1 for row in attendance_rows if row.estado == "FALTO") == 1
 
     strategy_detail = client.get(f"/api/evangelism/strategies/{strategy['id']}", headers=headers)
     assert strategy_detail.status_code == 200, strategy_detail.text

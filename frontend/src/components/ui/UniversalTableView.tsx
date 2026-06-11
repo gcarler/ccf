@@ -48,7 +48,7 @@ interface UniversalTableViewProps<T> {
     viewName?: string;
     onRowClick?: (item: T) => void;
     onAddItem?: (groupValue?: string) => void;
-    onUpdateItem?: (id: string | number, field: string, value: any) => Promise<void> | void;
+    onUpdateItem?: (id: string | number, field: string, value: any) => Promise<boolean | void> | boolean | void;
     isLoading?: boolean;
     emptyMessage?: string;
     renderDetailPanel?: (item: T, onClose: () => void) => React.ReactNode;

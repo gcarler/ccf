@@ -127,7 +127,7 @@ def delete_project_task(db: Session, task_id) -> bool:
 def get_project_phases(db: Session, project_id):
     return (
         db.query(models.ProjectPhase)
-        .filter(models.ProjectPhase.project_id == project_id)
+        .filter(models.ProjectPhase.project_id == project_id, models.ProjectPhase.deleted_at.is_(None))
         .order_by(models.ProjectPhase.order_index)
         .all()
     )
@@ -165,7 +165,7 @@ def create_default_phases(db: Session, project_id):
 # ── Project Comments ───────────────────────────────────
 
 def get_project_comments(db: Session, project_id=None, task_id=None):
-    q = db.query(models.ProjectComment)
+    q = db.query(models.ProjectComment).filter(models.ProjectComment.deleted_at.is_(None))
     if project_id is not None:
         q = q.filter(models.ProjectComment.project_id == project_id)
     if task_id is not None:
@@ -214,7 +214,7 @@ def delete_comment(db: Session, comment_id: int) -> bool:
 def get_project_milestones(db: Session, project_id):
     return (
         db.query(models.ProjectMilestone)
-        .filter(models.ProjectMilestone.project_id == project_id)
+        .filter(models.ProjectMilestone.project_id == project_id, models.ProjectMilestone.deleted_at.is_(None))
         .order_by(models.ProjectMilestone.target_date.asc())
         .all()
     )
@@ -262,7 +262,7 @@ def delete_milestone(db: Session, milestone_id) -> bool:
 def get_task_attachments(db: Session, task_id):
     return (
         db.query(models.ProjectAttachment)
-        .filter(models.ProjectAttachment.task_id == task_id)
+        .filter(models.ProjectAttachment.task_id == task_id, models.ProjectAttachment.deleted_at.is_(None))
         .order_by(models.ProjectAttachment.created_at.desc())
         .all()
     )
@@ -344,7 +344,7 @@ def update_project_wiki(db: Session, project_id, content: str, author_id=None) -
 # ── Task Supplies ───────────────────────────────────────
 
 def get_task_supplies(db: Session, task_id):
-    return db.query(models.TaskSupply).filter(models.TaskSupply.task_id == task_id).all()
+    return db.query(models.TaskSupply).filter(models.TaskSupply.task_id == task_id, models.TaskSupply.deleted_at.is_(None)).all()
 
 
 def get_supply(db: Session, supply_id: int):
@@ -414,18 +414,18 @@ def create_activity_log(db: Session, project_id, persona_id, action_type: str, d
 
 # ── Inbox State ───────────────────────────────────────
 
-def get_inbox_state(db: Session, user_id: int, item_id: str) -> Optional[models.ProjectInboxState]:
+def get_inbox_state(db: Session, persona_id: UUID | str, item_id: str) -> Optional[models.ProjectInboxState]:
     return (
         db.query(models.ProjectInboxState)
-        .filter(models.ProjectInboxState.user_id == user_id, models.ProjectInboxState.item_id == item_id)
+        .filter(models.ProjectInboxState.persona_id == persona_id, models.ProjectInboxState.item_id == item_id)
         .first()
     )
 
 
-def update_inbox_state(db: Session, user_id: int, item_id: str, is_read: bool) -> models.ProjectInboxState:
-    row = get_inbox_state(db, user_id, item_id)
+def update_inbox_state(db: Session, persona_id: UUID | str, item_id: str, is_read: bool) -> models.ProjectInboxState:
+    row = get_inbox_state(db, persona_id, item_id)
     if not row:
-        row = models.ProjectInboxState(user_id=user_id, item_id=item_id, is_read=is_read)
+        row = models.ProjectInboxState(persona_id=persona_id, item_id=item_id, is_read=is_read)
         db.add(row)
     else:
         row.is_read = is_read

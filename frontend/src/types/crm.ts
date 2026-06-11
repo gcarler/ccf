@@ -128,6 +128,7 @@ export interface Grupo {
   end_time?: string;
   base_attendee_ids?: number[];
   base_attendees?: Array<{ persona_id: string }>;
+  total_personas?: number;
 }
 
 export interface GrupoDetail extends Grupo {

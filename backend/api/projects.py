@@ -353,7 +353,7 @@ def list_all_comments(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Lista todos los comentarios de proyectos con filtros opcionales."""
-    q = db.query(models.ProjectComment)
+    q = db.query(models.ProjectComment).filter(models.ProjectComment.deleted_at.is_(None))
     if unresolved_only:
         q = q.filter(models.ProjectComment.is_resolved.is_(False))
     if project_id:
@@ -1146,7 +1146,7 @@ def list_project_tasks(
             selectinload(models.ProjectTask.supplies),
             selectinload(models.ProjectTask.subtasks),
         )
-        .filter(models.ProjectTask.project_id == _to_uuid(project_id))
+        .filter(models.ProjectTask.project_id == _to_uuid(project_id), models.ProjectTask.deleted_at.is_(None))
     )
 
     if status_filter:
@@ -1166,10 +1166,14 @@ def list_project_tasks(
                     "file_type": a.file_type,
                     "file_size": a.file_size,
                 }
-                for a in t.attachments
+                for a in t.attachments if a.deleted_at is None
             ]
         else:
             t.__dict__.setdefault("attachments", [])
+        if hasattr(t, "supplies") and t.supplies:
+            t.supplies = [s for s in t.supplies if s.deleted_at is None]
+        if hasattr(t, "subtasks") and t.subtasks:
+            t.subtasks = [sub for sub in t.subtasks if sub.deleted_at is None]
 
     return tasks
 
@@ -1364,7 +1368,10 @@ def list_project_milestones(
     _ensure_project(db, project_id)
     milestones = (
         db.query(models.ProjectMilestone)
-        .filter(models.ProjectMilestone.project_id == _to_uuid(project_id))
+        .filter(
+            models.ProjectMilestone.project_id == _to_uuid(project_id),
+            models.ProjectMilestone.deleted_at.is_(None),
+        )
         .order_by(models.ProjectMilestone.target_date.asc())
         .all()
     )

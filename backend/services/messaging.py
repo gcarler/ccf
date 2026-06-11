@@ -18,19 +18,34 @@ def _create_log(
     persona_id: str,
     channel: str,
     content: str,
-    leader_id: int,
+    leader_id: uuid.UUID | int | str | None,
     outcome: str = "sent",
     recipient_phone: str | None = None,
     campaign_name: str | None = None,
     external_id: str | None = None,
 ):
+    leader_uuid = None
+    leader_int = None
+    if leader_id is not None:
+        if isinstance(leader_id, uuid.UUID):
+            leader_uuid = leader_id
+        else:
+            try:
+                leader_uuid = uuid.UUID(str(leader_id))
+            except (ValueError, TypeError):
+                try:
+                    leader_int = int(leader_id)
+                except (ValueError, TypeError):
+                    pass
+
     log = models.CommunicationLog(
         persona_id=persona_id,
         channel=channel,
         campaign_name=campaign_name,
         recipient_phone=recipient_phone,
         content=content,
-        leader_user_id=leader_id,
+        leader_id=leader_uuid,
+        leader_user_id=leader_int,
         outcome=outcome,
         external_id=external_id or f"{channel[:2].upper()}-{uuid.uuid4().hex[:12]}",
     )
@@ -48,7 +63,7 @@ class MessagingGateway:
         db: Session,
         persona_id: str,
         content: str,
-        leader_id: int,
+        leader_id: uuid.UUID | int | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
@@ -73,7 +88,7 @@ class MessagingGateway:
         db: Session,
         persona_id: str,
         content: str,
-        leader_id: int,
+        leader_id: uuid.UUID | int | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
@@ -98,7 +113,7 @@ class MessagingGateway:
         db: Session,
         persona_id: str,
         content: str,
-        leader_id: int,
+        leader_id: uuid.UUID | int | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
