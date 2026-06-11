@@ -563,14 +563,14 @@ export default function StrategyDetailPage() {
         const timer = setTimeout(async () => {
             try {
                 const params: Record<string, any> = query.length >= 1
-                    ? { limit: 200, search: query }
+                    ? { limit: 500, search: query }
                     : { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' };
                 const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
                 setAllMembers(res || []);
             } catch { /* silently keep previous results */ }
-        }, query.length >= 1 ? 300 : 0);
+        }, query.length >= 1 ? 150 : 0);
         return () => clearTimeout(timer);
-    }, [memberSearch, isMemberDrawerOpen, token]);
+    }, [memberSearch, isMemberDrawerOpen, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleSaveMembers = async () => {
         if (!selectedGroup) return;
@@ -1917,14 +1917,19 @@ export default function StrategyDetailPage() {
                                 className="w-full pl-9 pr-3 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
                         </div>
                         <div className="flex-1 min-h-0 overflow-y-auto space-y-1">
-                            {allMembers.length === 0 && (
-                                <p className="text-[11px] text-slate-400 text-center py-3">
-                                    {memberSearch ? 'Sin resultados para esta búsqueda' : 'Cargando personas...'}
-                                </p>
-                            )}
-                            {allMembers
-                                .filter(m => !groupMembers.find(gm => gm.id === m.id))
-                                .map(m => (
+                            {(() => {
+                                const available = allMembers.filter(m => !groupMembers.find(gm => String(gm.id) === String(m.id)));
+                                if (allMembers.length === 0) return (
+                                    <p className="text-[11px] text-slate-400 text-center py-3">
+                                        {memberSearch.trim() ? 'Sin resultados para esta búsqueda' : 'Cargando personas...'}
+                                    </p>
+                                );
+                                if (available.length === 0) return (
+                                    <p className="text-[11px] text-slate-400 text-center py-3">
+                                        {memberSearch.trim() ? 'Todos los resultados ya están en el grupo' : 'Todas las personas ya están en el grupo'}
+                                    </p>
+                                );
+                                return available.map(m => (
                                     <button key={m.id} onClick={() => addMemberToGroup(m)}
                                         className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md text-xs text-left transition-colors group/add">
                                         <span className="font-medium text-slate-700 dark:text-slate-200">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}
@@ -1932,7 +1937,8 @@ export default function StrategyDetailPage() {
                                         </span>
                                         <Plus size={14} className="text-slate-300 group-hover/add:text-[hsl(var(--primary))] transition-colors" />
                                     </button>
-                                ))}
+                                ));
+                            })()}
                         </div>
                     </div>
                 </div>

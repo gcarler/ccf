@@ -191,6 +191,8 @@ def search_personas(
         like = f"%{search}%"
         query = query.filter(
             or_(
+                models.Persona.first_name.ilike(like),
+                models.Persona.last_name.ilike(like),
                 models.Persona.nombre_completo.ilike(like),
                 models.Persona.email.ilike(like),
                 models.Persona.church_role.ilike(like),
