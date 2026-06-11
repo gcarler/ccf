@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MoreHorizontal, MessageSquare, Clock, Sparkles } from 'lucide-react';
 
@@ -13,6 +13,9 @@ interface WorkspaceDrawerProps {
     actions?: React.ReactNode;
 }
 
+const DEFAULT_WIDTH = 680;
+const MIN_WIDTH = 380;
+
 export default function WorkspaceDrawer({
     isOpen,
     onClose,
@@ -21,6 +24,26 @@ export default function WorkspaceDrawer({
     children,
     actions
 }: WorkspaceDrawerProps) {
+    const [width, setWidth] = useState(DEFAULT_WIDTH);
+    const drawerRef = useRef<HTMLDivElement>(null);
+
+    const handleResizeDrag = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        const startX = e.clientX;
+        const startWidth = drawerRef.current?.offsetWidth ?? DEFAULT_WIDTH;
+
+        const onMouseMove = (ev: MouseEvent) => {
+            const next = Math.max(MIN_WIDTH, Math.min(startWidth + startX - ev.clientX, window.innerWidth));
+            setWidth(next);
+        };
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }, []);
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -34,14 +57,25 @@ export default function WorkspaceDrawer({
                     />
 
                     <motion.div
+                        ref={drawerRef}
                         initial={{ x: '100%' }}
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] w-full max-w-[600px] lg:max-w-[800px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
+                        style={{ width }}
+                        className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
                         role="complementary"
                         aria-label={title}
                     >
+                        {/* Resize handle */}
+                        <div
+                            onMouseDown={handleResizeDrag}
+                            className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize group/resize z-10 select-none"
+                            title="Arrastra para ajustar el ancho"
+                        >
+                            <div className="h-full w-full hover:bg-blue-400/30 dark:hover:bg-blue-500/20 transition-colors" />
+                        </div>
+
                         {/* Drawer Header */}
                         <header className="h-14 flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-white/10 shrink-0 bg-slate-50/50 dark:bg-white/5">
                             <div className="flex items-center gap-4 overflow-hidden">
@@ -71,17 +105,18 @@ export default function WorkspaceDrawer({
                                 <HeaderButton icon={MoreHorizontal} tooltip="Más" />
                             </div>
                         </header>
-                                {/* Drawer Body */}
-                                <main className="flex-1 overflow-y-auto scrollbar-thin px-8 py-5">
-                                    {children}
-                                </main>
 
-                                {/* Drawer Footer */}
-                                {actions && (
-                                    <footer className="px-8 py-5 border-t border-slate-200 dark:border-white/10 flex items-center justify-end gap-4 bg-slate-50/50 dark:bg-white/5">
-                                        {actions}
-                                    </footer>
-                                )}
+                        {/* Drawer Body */}
+                        <main className="flex-1 overflow-y-auto scrollbar-thin px-8 py-5">
+                            {children}
+                        </main>
+
+                        {/* Drawer Footer */}
+                        {actions && (
+                            <footer className="px-8 py-5 border-t border-slate-200 dark:border-white/10 flex items-center justify-end gap-4 bg-slate-50/50 dark:bg-white/5">
+                                {actions}
+                            </footer>
+                        )}
                     </motion.div>
                 </>
             )}
@@ -93,7 +128,7 @@ function HeaderButton({ icon: Icon, onClick, tooltip }: { icon: any, onClick?: (
     void tooltip;
     return (
         <div className="relative group/drawer-btn">
-            <button 
+            <button
                 onClick={onClick}
                 className="p-2 rounded-md text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
             >
