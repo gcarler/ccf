@@ -1919,20 +1919,21 @@ export default function StrategyDetailPage() {
  if (memberSearchLoading) return (
  <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Cargando personas...</p>
  );
- const q = memberSearch.trim().toLowerCase();
+ const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+ const q = norm(memberSearch.trim());
  const notInGroup = allMembers.filter(m => !groupMembers.find(gm => String(gm.id) === String(m.id)));
  const available = q
  ? notInGroup
  .filter(m => {
- const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
+ const name = norm(m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`);
  return name.split(/\s+/).some(word => word.startsWith(q));
  })
  .sort((a, b) => {
- const aFirst = (a.first_name || '').toLowerCase().startsWith(q);
- const bFirst = (b.first_name || '').toLowerCase().startsWith(q);
+ const aFirst = norm(a.first_name || '').startsWith(q);
+ const bFirst = norm(b.first_name || '').startsWith(q);
  if (aFirst !== bFirst) return aFirst ? -1 : 1;
- const aName = (a.nombre_completo || `${a.first_name ?? ''} ${a.last_name ?? ''}`).toLowerCase();
- const bName = (b.nombre_completo || `${b.first_name ?? ''} ${b.last_name ?? ''}`).toLowerCase();
+ const aName = norm(a.nombre_completo || `${a.first_name ?? ''} ${a.last_name ?? ''}`);
+ const bName = norm(b.nombre_completo || `${b.first_name ?? ''} ${b.last_name ?? ''}`);
  return aName.localeCompare(bName, 'es');
  })
  : notInGroup;
