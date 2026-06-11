@@ -14,8 +14,6 @@ from __future__ import annotations
 
 import datetime as _dt
 from collections import defaultdict
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func as _func
 from sqlalchemy.orm import Session
@@ -149,7 +147,7 @@ def strategy_kpis(
         )
 
     # ── Sesiones ──
-    sessions_done = sessions_total = prev_sessions_done = prev_sessions_total = 0
+    sessions_done = sessions_total = prev_sessions_done = 0
     if group_ids:
         sessions_done = (
             db.query(_func.count(models.SesionGrupo.id))
