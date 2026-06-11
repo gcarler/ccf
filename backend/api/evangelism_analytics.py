@@ -33,25 +33,34 @@ router = APIRouter()
 
 _PERIOD_DAYS = {"7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365}
 
-# Role normalization: maps any known rol_base variant to a canonical funnel key
-_ROL_TO_FUNNEL: dict[str, str] = {
-    # Visitors / entry
-    "visitante": "visitante", "VISITANTE": "visitante",
-    "invitado": "visitante", "INVITADO": "visitante",
-    "persona": "visitante",
-    # Regular attendees
-    "asistente": "asistente", "ASISTENTE": "asistente",
-    "miembro": "asistente", "MIEMBRO": "asistente",
-    # Host
-    "anfitrion": "anfitrion", "ANFITRION": "anfitrion",
-    "anfitrión": "anfitrion",
-    # Co-leader
-    "colider": "colider", "COLIDER": "colider",
-    "colíder": "colider",
-    # Leader
-    "lider": "lider", "LIDER": "lider",
-    "líder": "lider",
-}
+def _normalize_rol(name: str) -> str:
+    """Normalize a role name string for fuzzy matching (lowercase, strip accents)."""
+    import unicodedata
+    s = unicodedata.normalize("NFD", name.lower())
+    return "".join(c for c in s if unicodedata.category(c) != "Mn")
+
+
+def _rol_to_funnel_stage(nombre_rol: str) -> str:
+    """
+    Map a custom role name to a canonical funnel stage using keyword matching.
+    rol_base values like 'persona'/'miembro' are CRM categories, NOT funnel stages.
+    The actual ministry role comes from nombre_rol (estrategia_roles_personalizados).
+    """
+    n = _normalize_rol(nombre_rol)
+    if any(k in n for k in ("lider", "líder", "pastor", "director")):
+        if any(k in n for k in ("co", "asistente", "aux")):
+            return "colider"
+        return "lider"
+    if any(k in n for k in ("colider", "colíder", "co-lider")):
+        return "colider"
+    if any(k in n for k in ("anfitrion", "anfitrión", "anfitri")):
+        return "anfitrion"
+    if any(k in n for k in ("asistente", "colaborador", "apoyo", "aux")):
+        return "asistente"
+    if any(k in n for k in ("visitante", "invitado", "nuevo")):
+        return "visitante"
+    # Unknown custom role — return as-is so UI can show it
+    return "personalizado"
 
 # ─────────────────────────────────────────────────────────
 # Helpers
@@ -395,51 +404,63 @@ def strategy_funnel(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
+    """
+    Embudo ministerial basado en roles personalizados de la estrategia.
+
+    Los valores 'persona' y 'miembro' en rol_base son categorías CRM, NO roles
+    del grupo. El rol real viene de nombre_rol en estrategia_roles_personalizados
+    cuando rol_base = 'personalizado'. Para personas sin rol personalizado asignado
+    se muestran en 'Sin rol asignado'.
+    """
     sede_id = get_user_sede_id(db, current_user)
     _get_strategy_or_404(db, strategy_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
 
-    # Count active participants by rol_base (exact values from DB)
-    raw_counts: dict[str, int] = {}
-    if group_ids:
-        rows = (
-            db.query(models.ParticipanteGrupo.rol_base, _func.count(models.ParticipanteGrupo.id))
-            .filter(
-                models.ParticipanteGrupo.grupo_id.in_(group_ids),
-                models.ParticipanteGrupo.activo.is_(True),
-                models.ParticipanteGrupo.deleted_at.is_(None),
-            )
-            .group_by(models.ParticipanteGrupo.rol_base)
-            .all()
+    if not group_ids:
+        return {"total_active": 0, "stages": [], "without_role": 0, "role_breakdown": []}
+
+    # Fetch all active participants with their custom role name (if any)
+    rows = (
+        db.query(
+            models.ParticipanteGrupo.rol_base,
+            models.RolPersonalizadoEstrategia.nombre_rol,
+            _func.count(models.ParticipanteGrupo.id),
         )
-        raw_counts = {r: c for r, c in rows}
+        .outerjoin(
+            models.RolPersonalizadoEstrategia,
+            models.ParticipanteGrupo.rol_personalizado_id == models.RolPersonalizadoEstrategia.id,
+        )
+        .filter(
+            models.ParticipanteGrupo.grupo_id.in_(group_ids),
+            models.ParticipanteGrupo.activo.is_(True),
+            models.ParticipanteGrupo.deleted_at.is_(None),
+        )
+        .group_by(
+            models.ParticipanteGrupo.rol_base,
+            models.RolPersonalizadoEstrategia.nombre_rol,
+        )
+        .all()
+    )
 
-    # Map raw rol_base values to canonical funnel stages
     stage_counts: dict[str, int] = defaultdict(int)
-    unclassified = 0
-    for rol, count in raw_counts.items():
-        canonical = _ROL_TO_FUNNEL.get(rol) or _ROL_TO_FUNNEL.get(rol.lower() if rol else "")
-        if canonical:
-            stage_counts[canonical] += count
-        elif rol and rol.lower() != "personalizado":
-            # Unknown non-custom role → entry level
-            stage_counts["visitante"] += count
+    without_role = 0
+    role_breakdown: list[dict] = []
+
+    for rol_base, nombre_rol, count in rows:
+        if nombre_rol:
+            # Has a custom role — classify by role name
+            stage = _rol_to_funnel_stage(nombre_rol)
+            stage_counts[stage] += count
+            role_breakdown.append({
+                "nombre_rol": nombre_rol,
+                "stage": stage,
+                "count": count,
+            })
         else:
-            unclassified += count
+            # No custom role assigned — not a funnel stage
+            without_role += count
 
-    # Canonical funnel order (top → bottom = most common → leadership)
-    STAGES = [
-        {"key": "visitante",  "label": "Visitante / Invitado"},
-        {"key": "asistente",  "label": "Asistente / Miembro"},
-        {"key": "anfitrion",  "label": "Anfitrión"},
-        {"key": "colider",    "label": "Colíder"},
-        {"key": "lider",      "label": "Líder"},
-    ]
-
-    total_active = sum(stage_counts.values()) + unclassified
-    total_top = stage_counts.get("visitante", 0) + unclassified or total_active or 1
-
-    # Average days per role transition from HistorialEmbudo
+    # Average days per transition from HistorialEmbudo
     velocity_rows = (
         db.query(
             models.HistorialEmbudo.rol_nuevo,
@@ -449,40 +470,44 @@ def strategy_funnel(
         .group_by(models.HistorialEmbudo.rol_nuevo)
         .all()
     )
-    velocity_map = {
-        (_ROL_TO_FUNNEL.get(r) or r.lower()): round(float(d), 0)
-        for r, d in velocity_rows
-        if d is not None
-    }
+    velocity_map: dict[str, float] = {}
+    for rol, avg_days in velocity_rows:
+        if avg_days is not None:
+            stage = _rol_to_funnel_stage(rol)
+            velocity_map[stage] = round(float(avg_days), 0)
+
+    STAGES = [
+        {"key": "visitante",     "label": "Visitante / Invitado"},
+        {"key": "asistente",     "label": "Asistente"},
+        {"key": "anfitrion",     "label": "Anfitrión"},
+        {"key": "colider",       "label": "Colíder"},
+        {"key": "lider",         "label": "Líder"},
+        {"key": "personalizado", "label": "Otro rol"},
+    ]
+
+    total_with_role = sum(stage_counts.values())
+    total_active = total_with_role + without_role
+    top = total_active or 1
 
     stages = []
-    for stage in STAGES:
-        count = stage_counts.get(stage["key"], 0)
-        pct_of_top = round((count / total_top) * 100, 1) if total_top else 0.0
+    for stage_def in STAGES:
+        count = stage_counts.get(stage_def["key"], 0)
+        if count == 0 and stage_def["key"] == "personalizado":
+            continue
         stages.append({
-            "key": stage["key"],
-            "label": stage["label"],
+            "key": stage_def["key"],
+            "label": stage_def["label"],
             "count": count,
-            "pct_of_top": pct_of_top,
-            "avg_days_before": velocity_map.get(stage["key"]),
+            "pct_of_total": round((count / top) * 100, 1),
+            "avg_days_before": velocity_map.get(stage_def["key"]),
         })
-
-    # Include unclassified if any
-    unclassified_stage = None
-    if unclassified > 0:
-        unclassified_stage = {
-            "key": "personalizado",
-            "label": "Rol personalizado",
-            "count": unclassified,
-            "pct_of_top": round((unclassified / total_top) * 100, 1),
-            "avg_days_before": None,
-        }
 
     return {
         "total_active": total_active,
+        "with_role": total_with_role,
+        "without_role": without_role,
         "stages": stages,
-        "unclassified": unclassified_stage,
-        "raw_role_counts": raw_counts,
+        "role_breakdown": sorted(role_breakdown, key=lambda x: x["count"], reverse=True),
     }
 
 
