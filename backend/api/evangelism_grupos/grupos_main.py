@@ -859,7 +859,7 @@ def register_faro_visitor(
         email=visitor.email,
         address=visitor.address,
         sede_id=house.sede_id,
-        church_role="Visitante Faro",
+        church_role="Visitante",
     )
     db.add(new_persona)
     db.commit()
