@@ -236,11 +236,13 @@ function ProgressCell({ value }: any) {
 
 function FilterRow({
   filter,
+  filterIdx,
   filterableCols,
   onChange,
   onRemove,
 }: {
   filter: ActiveFilter;
+  filterIdx: number;
   filterableCols: { key: string; label: string; type: ColumnType }[];
   onChange: (updated: ActiveFilter) => void;
   onRemove: () => void;
@@ -253,7 +255,7 @@ function FilterRow({
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
       <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] w-10 text-right shrink-0">
-        {filterableCols.findIndex(c => c.key === filter.field) === 0 ? 'DONDE' : 'Y'}
+        {filterIdx === 0 ? 'DONDE' : 'Y'}
       </span>
       <select
         value={filter.field}
@@ -413,8 +415,17 @@ export default function UniversalTableView<T extends { id: string | number }>({
     }]);
   }, [filterableCols]);
 
-  // Pre-filter data
-  const filteredData = useMemo(() => applyFilters(data, activeFilters), [data, activeFilters]);
+  // Pre-filter data (includes search box text so grouping headers are rebuilt correctly)
+  const filteredData = useMemo(() => {
+    let result = applyFilters(data, activeFilters);
+    const q = quickFilter.trim().toLowerCase();
+    if (q) {
+      result = result.filter(item =>
+        Object.values(item as any).some(v => String(v ?? '').toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [data, activeFilters, quickFilter]);
 
   // Group rows
   const rowData = useMemo(() => {
@@ -544,15 +555,12 @@ export default function UniversalTableView<T extends { id: string | number }>({
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             value={quickFilter}
-            onChange={e => {
-              setQuickFilter(e.target.value);
-              gridRef.current?.api?.setGridOption('quickFilterText', e.target.value);
-            }}
+            onChange={e => setQuickFilter(e.target.value)}
             placeholder="Buscar…"
             className="w-full pl-7 pr-7 py-1.5 text-xs border border-[hsl(var(--border-primary))] rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder-slate-400 outline-none focus:ring-1 focus:ring-blue-400"
           />
           {quickFilter && (
-            <button onClick={() => { setQuickFilter(''); gridRef.current?.api?.setGridOption('quickFilterText', ''); }}
+            <button onClick={() => setQuickFilter('')}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
               <X size={11} />
             </button>
@@ -717,6 +725,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                   <FilterRow
                     key={f.id}
                     filter={{ ...f, label: filterableCols.find(c => c.key === f.field)?.label ?? f.label }}
+                    filterIdx={idx}
                     filterableCols={filterableCols}
                     onChange={updated => setActiveFilters(prev => prev.map(x => x.id === f.id ? updated : x))}
                     onRemove={() => setActiveFilters(prev => prev.filter(x => x.id !== f.id))}
