@@ -25,6 +25,7 @@ def upgrade() -> None:
     op.execute("ALTER TABLE task_supplies DROP CONSTRAINT IF EXISTS task_supplies_task_id_fkey")
     op.execute("ALTER TABLE project_comments DROP CONSTRAINT IF EXISTS project_comments_project_id_fkey")
     op.execute("ALTER TABLE project_comments DROP CONSTRAINT IF EXISTS project_comments_task_id_fkey")
+    op.execute("ALTER TABLE project_phases DROP CONSTRAINT IF EXISTS project_phases_project_id_fkey")
 
     # 2. Drop legacy inbox state constraints and column (idempotent)
     op.execute("ALTER TABLE project_inbox_state DROP CONSTRAINT IF EXISTS uq_user_project_item")
@@ -37,6 +38,7 @@ def upgrade() -> None:
     op.execute("DELETE FROM project_comments WHERE task_id IS NOT NULL AND task_id NOT IN (SELECT id FROM project_tasks)")
     op.execute("DELETE FROM project_documents WHERE project_id NOT IN (SELECT id FROM projects)")
     op.execute("DELETE FROM task_supplies WHERE task_id NOT IN (SELECT id FROM project_tasks)")
+    op.execute("DELETE FROM project_phases WHERE project_id NOT IN (SELECT id FROM projects)")
 
     # 4. Add deleted_at columns for soft deletion support (idempotent)
     op.execute("ALTER TABLE project_comments ADD COLUMN IF NOT EXISTS deleted_at timestamp with time zone")
@@ -60,6 +62,9 @@ def upgrade() -> None:
     
     op.execute("ALTER TABLE project_comments DROP CONSTRAINT IF EXISTS project_comments_task_id_fkey")
     op.create_foreign_key('project_comments_task_id_fkey', 'project_comments', 'project_tasks', ['task_id'], ['id'], ondelete='SET NULL')
+    
+    op.execute("ALTER TABLE project_phases DROP CONSTRAINT IF EXISTS project_phases_project_id_fkey")
+    op.create_foreign_key('project_phases_project_id_fkey', 'project_phases', 'projects', ['project_id'], ['id'], ondelete='CASCADE')
 
     # 6. Create new unique constraint on project_inbox_state
     op.execute("ALTER TABLE project_inbox_state DROP CONSTRAINT IF EXISTS uq_persona_project_item")
@@ -74,6 +79,7 @@ def downgrade() -> None:
     op.execute("ALTER TABLE task_supplies DROP CONSTRAINT IF EXISTS task_supplies_task_id_fkey")
     op.execute("ALTER TABLE project_comments DROP CONSTRAINT IF EXISTS project_comments_project_id_fkey")
     op.execute("ALTER TABLE project_comments DROP CONSTRAINT IF EXISTS project_comments_task_id_fkey")
+    op.execute("ALTER TABLE project_phases DROP CONSTRAINT IF EXISTS project_phases_project_id_fkey")
 
     # 2. Drop deleted_at columns
     op.execute("ALTER TABLE project_comments DROP COLUMN IF EXISTS deleted_at")
@@ -100,6 +106,9 @@ def downgrade() -> None:
     
     op.execute("ALTER TABLE project_comments DROP CONSTRAINT IF EXISTS project_comments_task_id_fkey")
     op.create_foreign_key('project_comments_task_id_fkey', 'project_comments', '_legacy_project_tasks', ['task_id'], ['id'])
+    
+    op.execute("ALTER TABLE project_phases DROP CONSTRAINT IF EXISTS project_phases_project_id_fkey")
+    op.create_foreign_key('project_phases_project_id_fkey', 'project_phases', '_legacy_projects', ['project_id'], ['id'])
     
     op.execute("ALTER TABLE project_inbox_state DROP CONSTRAINT IF EXISTS project_inbox_state_user_id_fkey")
     op.create_foreign_key('project_inbox_state_user_id_fkey', 'project_inbox_state', '_legacy_users', ['user_id'], ['id'], ondelete='CASCADE')
