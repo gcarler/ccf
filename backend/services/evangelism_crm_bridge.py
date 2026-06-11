@@ -45,11 +45,11 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
         activo=True,
     )
     try:
-        sp = db.begin_nested()  # SAVEPOINT — no afecta la transacción exterior
+        sp = db.begin_nested()  # SAVEPOINT — no destruye la transacción exterior
         db.add(pipeline)
-        sp.commit()
+        sp.commit()  # RELEASE SAVEPOINT — pipeline.id queda asignado
     except IntegrityError:
-        sp.rollback()  # ROLLBACK TO SAVEPOINT — persona/participante intactos
+        sp.rollback()  # ROLLBACK TO SAVEPOINT — objetos flusheados previamente intactos
         pipeline = (
             db.query(PipelineCRM)
             .filter(
@@ -60,9 +60,11 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
             .first()
         )
         if not pipeline:
-            logger.error("Pipeline race condition: still missing after rollback to savepoint (sede=%s)", sede_id)
+            logger.error("Pipeline race condition: still missing after savepoint rollback (sede=%s)", sede_id)
             return None
+        return pipeline  # pipeline existente ya tiene su etapa — no crear otra
 
+    # Solo se llega aquí cuando el pipeline acaba de ser creado
     etapa = EtapaPipeline(
         pipeline_id=pipeline.id,
         nombre="Nuevo Contacto",
@@ -70,8 +72,7 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
         requiere_accion=True,
     )
     db.add(etapa)
-    db.commit()
-    db.refresh(pipeline)
+    db.flush()  # flush sin commit — el caller hace el único db.commit() final
     return pipeline
 
 
@@ -91,6 +92,9 @@ def crear_caso_desde_asistencia(
         return None
 
     pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db, sede_id)
+    if pipeline is None:
+        logger.error("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
+        return None
 
     etapa = (
         db.query(EtapaPipeline)
@@ -116,6 +120,9 @@ def crear_caso_desde_asistencia(
         prioridad=PrioridadCasoEnum.ALTA,
         estado=EstadoCasoEnum.ABIERTO,
         origen_canal=CanalOrigenEnum.EVANGELISMO,
+        origen_grupo_id=grupo.id,
+        origen_estrategia_id=grupo.estrategia_id,
+        origen_sesion_id=sesion.id,
         sla_vencimiento_contacto=sla,
     )
     db.add(caso)
@@ -133,8 +140,14 @@ def crear_caso_nuevo_visitante(
     origen_estrategia_id: Optional[str] = None,
     origen_sesion_id: Optional[int] = None,
 ) -> Optional[CasoCRM]:
-    """Crea un caso CRM de nuevos visitantes usando el pipeline canonico por sede."""
+    """Crea un caso CRM de nuevos visitantes usando el pipeline canonico por sede.
+    Hace el db.commit() final — debe llamarse al final de la transacción del caller.
+    """
     pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db, sede_id)
+    if pipeline is None:
+        logger.error("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
+        return None
+
     etapa = (
         db.query(EtapaPipeline)
         .filter(EtapaPipeline.pipeline_id == pipeline.id)
@@ -163,6 +176,6 @@ def crear_caso_nuevo_visitante(
         sla_vencimiento_contacto=datetime.now(timezone.utc) + timedelta(hours=48),
     )
     db.add(caso)
-    db.commit()
+    db.commit()  # commit único: persona + participante + pipeline nuevo (si aplica) + caso
     db.refresh(caso)
     return caso
