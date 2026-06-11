@@ -1872,14 +1872,20 @@ export default function StrategyDetailPage() {
  <div ref={memberSplitRef} className="flex flex-col" style={{ height: 'calc(100vh - 16rem)' }}>
  {/* Panel superior: personas asignadas */}
  <div className="overflow-y-auto shrink-0 pb-2" style={{ height: memberSplitHeight }}>
+ {(() => {
+ const q = memberSearch.trim().toLowerCase();
+ const visibleMembers = q ? groupMembers.filter(m => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)) : groupMembers;
+ return (<>
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-2">
- Personas ({groupMembers.length})
+ {q ? `En el grupo (${visibleMembers.length}/${groupMembers.length})` : `Personas (${groupMembers.length})`}
  </label>
  {groupMembers.length === 0 ? (
  <p className="text-xs text-[hsl(var(--text-secondary))] italic py-2">Sin personas asignados</p>
+ ) : visibleMembers.length === 0 ? (
+ <p className="text-xs text-[hsl(var(--text-secondary))] italic py-2">Ningún asignado coincide</p>
  ) : (
  <div className="space-y-1.5">
- {groupMembers.map(m => (
+ {visibleMembers.map(m => (
  <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 bg-[hsl(var(--bg-muted))] rounded-md">
  <div className="flex-1 min-w-0">
  <span className="text-xs font-medium text-[hsl(var(--text-primary))] truncate block">{m.name}</span>
@@ -1896,6 +1902,8 @@ export default function StrategyDetailPage() {
  ))}
  </div>
  )}
+ </>);
+ })()}
  </div>
 
  {/* Divisor arrastrable */}
