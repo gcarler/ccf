@@ -1922,9 +1922,18 @@ export default function StrategyDetailPage() {
  const q = memberSearch.trim().toLowerCase();
  const notInGroup = allMembers.filter(m => !groupMembers.find(gm => String(gm.id) === String(m.id)));
  const available = q
- ? notInGroup.filter(m => {
+ ? notInGroup
+ .filter(m => {
  const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
  return name.split(/\s+/).some(word => word.startsWith(q));
+ })
+ .sort((a, b) => {
+ const aFirst = (a.first_name || '').toLowerCase().startsWith(q);
+ const bFirst = (b.first_name || '').toLowerCase().startsWith(q);
+ if (aFirst !== bFirst) return aFirst ? -1 : 1;
+ const aName = (a.nombre_completo || `${a.first_name ?? ''} ${a.last_name ?? ''}`).toLowerCase();
+ const bName = (b.nombre_completo || `${b.first_name ?? ''} ${b.last_name ?? ''}`).toLowerCase();
+ return aName.localeCompare(bName, 'es');
  })
  : notInGroup;
  if (allMembers.length === 0) return (
