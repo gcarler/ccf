@@ -1924,7 +1924,7 @@ export default function StrategyDetailPage() {
  const available = q
  ? notInGroup.filter(m => {
  const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
- return name.includes(q);
+ return name.split(/\s+/).some(word => word.startsWith(q));
  })
  : notInGroup;
  if (allMembers.length === 0) return (
