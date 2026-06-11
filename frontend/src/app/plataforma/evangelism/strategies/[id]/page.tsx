@@ -557,25 +557,15 @@ export default function StrategyDetailPage() {
  } catch { setGroupMembers([]); }
  };
 
- const fetchMemberSearchResults = useCallback(async (query: string) => {
- setMemberSearchLoading(true);
- try {
- const params: Record<string, any> = query.length >= 1
- ? { limit: 500, search: query }
- : { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' };
- const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
- setAllMembers(res || []);
- } catch { /* silently keep previous results */ }
- finally { setMemberSearchLoading(false); }
- }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
-
- // Búsqueda en tiempo real de personas para agregar al grupo
+ // Carga todas las personas al abrir el drawer — el filtro es client-side por nombre
  useEffect(() => {
  if (!isMemberDrawerOpen) return;
- const query = memberSearch.trim();
- const timer = setTimeout(() => fetchMemberSearchResults(query), query.length >= 1 ? 150 : 0);
- return () => clearTimeout(timer);
- }, [memberSearch, isMemberDrawerOpen, fetchMemberSearchResults]);
+ setMemberSearchLoading(true);
+ apiFetch<any[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } })
+ .then(res => setAllMembers(res || []))
+ .catch(() => {})
+ .finally(() => setMemberSearchLoading(false));
+ }, [isMemberDrawerOpen, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
  const handleSaveMembers = async () => {
  if (!selectedGroup) return;
@@ -1921,30 +1911,34 @@ export default function StrategyDetailPage() {
  : <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />}
  <input value={memberSearch}
  onChange={e => setMemberSearch(e.target.value)}
- onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); fetchMemberSearchResults(memberSearch.trim()); } }}
- placeholder="Buscar por nombre o email..."
+ placeholder="Filtrar por nombre..."
  className="w-full pl-9 pr-3 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]" />
  </div>
  <div className="flex-1 min-h-0 overflow-y-auto space-y-1">
  {(() => {
- const available = allMembers.filter(m => !groupMembers.find(gm => String(gm.id) === String(m.id)));
  if (memberSearchLoading) return (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Buscando...</p>
+ <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Cargando personas...</p>
  );
+ const q = memberSearch.trim().toLowerCase();
+ const notInGroup = allMembers.filter(m => !groupMembers.find(gm => String(gm.id) === String(m.id)));
+ const available = q
+ ? notInGroup.filter(m => {
+ const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
+ return name.includes(q);
+ })
+ : notInGroup;
  if (allMembers.length === 0) return (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">
- {memberSearch.trim() ? 'Sin resultados para esta búsqueda' : 'Cargando personas...'}
- </p>
+ <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Sin personas en el sistema</p>
  );
  if (available.length === 0) return (
  <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">
- {memberSearch.trim() ? 'Todos los resultados ya están en el grupo' : 'Todas las personas ya están en el grupo'}
+ {q ? 'Sin coincidencias' : 'Todas las personas ya están en el grupo'}
  </p>
  );
  return available.map(m => (
  <button key={m.id} onClick={() => addMemberToGroup(m)}
  className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 rounded-md text-xs text-left transition-colors group/add">
- <span className="font-medium text-[hsl(var(--text-primary))] ">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}
+ <span className="font-medium text-[hsl(var(--text-primary))]">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}
  {m.email && <span className="text-[hsl(var(--text-secondary))] ml-2">{m.email}</span>}
  </span>
  <Plus size={14} className="text-[hsl(var(--text-secondary))] group-hover/add:text-[hsl(var(--primary))] transition-colors" />
