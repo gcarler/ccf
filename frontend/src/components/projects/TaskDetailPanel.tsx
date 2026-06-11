@@ -54,7 +54,7 @@ function getLabelColor(label: string) {
 // TYPES
 // ─────────────────────────────────────────────────────────────────
 export interface Activity {
-    id: number;
+    id: string;
     title: string;
     completed: boolean;
     assignee?: { name: string; color?: string };
@@ -101,7 +101,7 @@ const DEFAULT_WIDTH = 520;
 const MAX_RATIO = 0.88;
 
 let nextId = Date.now();
-const uid = () => ++nextId;
+const uid = () => `tmp_${++nextId}`;
 
 // ─────────────────────────────────────────────────────────────────
 // RECURSIVE ACTIVITY ITEM
@@ -116,10 +116,10 @@ function ActivityItem({
 }: {
     activity: Activity;
     depth?: number;
-    onToggle: (id: number) => void;
-    onAddChild: (parentId: number) => void;
-    onUpdateTitle: (id: number, title: string) => void;
-    onDelete: (id: number) => void;
+    onToggle: (id: string) => void;
+    onAddChild: (parentId: string) => void;
+    onUpdateTitle: (id: string, title: string) => void;
+    onDelete: (id: string) => void;
 }) {
     const [expanded, setExpanded] = useState(depth === 0);
     const [editing, setEditing] = useState(false);
@@ -263,7 +263,7 @@ function ActivityItem({
 // ─────────────────────────────────────────────────────────────────
 // ACTIVITY TREE HELPERS (recursive)
 // ─────────────────────────────────────────────────────────────────
-function toggleActivity(activities: Activity[], id: number): Activity[] {
+function toggleActivity(activities: Activity[], id: string): Activity[] {
     return activities.map(a => {
         if (a.id === id) return { ...a, completed: !a.completed };
         if (a.children) return { ...a, children: toggleActivity(a.children, id) };
@@ -271,7 +271,7 @@ function toggleActivity(activities: Activity[], id: number): Activity[] {
     });
 }
 
-function addChild(activities: Activity[], parentId: number, newItem: Activity): Activity[] {
+function addChild(activities: Activity[], parentId: string, newItem: Activity): Activity[] {
     return activities.map(a => {
         if (a.id === parentId) return { ...a, children: [...(a.children ?? []), newItem] };
         if (a.children) return { ...a, children: addChild(a.children, parentId, newItem) };
@@ -279,7 +279,7 @@ function addChild(activities: Activity[], parentId: number, newItem: Activity): 
     });
 }
 
-function updateTitle(activities: Activity[], id: number, title: string): Activity[] {
+function updateTitle(activities: Activity[], id: string, title: string): Activity[] {
     return activities.map(a => {
         if (a.id === id) return { ...a, title };
         if (a.children) return { ...a, children: updateTitle(a.children, id, title) };
@@ -392,9 +392,9 @@ export default function TaskDetailPanel({
     const [activities, setActivities] = useState<Activity[]>([]);
     const [newActivityTitle, setNewActivityTitle] = useState('');
 
-    const handleToggle = async (id: number) => {
+    const handleToggle = async (id: string) => {
         if (!task || !token) return;
-        const findActivity = (items: Activity[], targetId: number): Activity | null => {
+        const findActivity = (items: Activity[], targetId: string): Activity | null => {
             for (const a of items) {
                 if (a.id === targetId) return a;
                 if (a.children) { const found = findActivity(a.children, targetId); if (found) return found; }
@@ -412,11 +412,11 @@ export default function TaskDetailPanel({
         } catch { /* optimistic */ }
     };
 
-    const handleAddChild = async (parentId: number) => {
+    const handleAddChild = async (parentId: string) => {
         if (!task || !token) return;
         try {
-            const created = await apiFetch<any>(`/projects/${task.project_id}/tasks/${parentId}/subtasks`, {
-                method: 'POST', token, body: { title: 'Nueva sub-actividad', status: 'todo', priority: 'normal' },
+            const created = await apiFetch<any>(`/projects/${task.project_id}/tasks/${task.id}/subtasks`, {
+                method: 'POST', token, body: { title: 'Nueva sub-actividad', status: 'todo', priority: 'normal', parent_id: parentId },
             });
             const item: Activity = { id: created.id || uid(), title: created.title || 'Nueva sub-actividad', completed: false };
             setActivities(prev => addChild(prev, parentId, item));
@@ -427,7 +427,7 @@ export default function TaskDetailPanel({
         }
     };
 
-    const handleUpdateTitle = async (id: number, t: string) => {
+    const handleUpdateTitle = async (id: string, t: string) => {
         setActivities(prev => updateTitle(prev, id, t));
         if (!task || !token) return;
         try {
@@ -451,7 +451,7 @@ export default function TaskDetailPanel({
         setNewActivityTitle('');
     };
 
-    const handleDeleteActivity = async (activityId: number) => {
+    const handleDeleteActivity = async (activityId: string) => {
         if (!task || !token) return;
         setActivities(prev => {
             const filterOut = (items: Activity[]): Activity[] =>
