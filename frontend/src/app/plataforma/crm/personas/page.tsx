@@ -92,7 +92,7 @@ export default function MembersPage() {
                 groups.sort();
                 setUniqueGroups(groups);
             } catch {
-                toast.error('Error al cargar participación');
+                toast.error('Error al cargar personas');
             } finally {
                 setLoading(false);
             }
@@ -175,9 +175,9 @@ export default function MembersPage() {
             setMembers(prev => [created, ...prev]);
             setNewMember({ ...INITIAL_MEMBER });
             setIsCreateOpen(false);
-            toast.success('Persona registrado');
+            toast.success('Persona registrada');
         } catch {
-            toast.error('No se pudo registrar el persona');
+            toast.error('No se pudo registrar la persona');
         } finally {
             setIsSaving(false);
         }

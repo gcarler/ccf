@@ -26,20 +26,10 @@ import Link from 'next/link';
 
 // ─── Mentor Assignment Drawer ──────────────────────────────────────────────────
 
-const MOCK_MENTORS = [
-    { id: 1, name: 'Pastor Samuel Torres', role: 'Pastor Principal', specialty: 'Liderazgo & Discipulado', available: true },
-    { id: 2, name: 'Pastora Ana Gómez', role: 'Pastora de Familia', specialty: 'Consejería Familiar', available: true },
-    { id: 3, name: 'Lider Marcos Ruiz', role: 'Líder de Jóvenes', specialty: 'Jóvenes & Vocación', available: true },
-    { id: 4, name: 'Diana Castillo', role: 'Consejera Pastoral', specialty: 'Sanidad & Restauración', available: false },
-    { id: 5, name: 'Carlos Mendoza', role: 'Diácono', specialty: 'Varones & Paternidad', available: true },
-];
-
 function MentorAssignmentDrawer({
     open,
     onClose,
     memberName,
-    token,
-    memberId,
     title = 'Asignar Mentoría',
 }: {
     open: boolean;
@@ -49,38 +39,6 @@ function MentorAssignmentDrawer({
     memberId: string;
     title?: string;
 }) {
-    const [search, setSearch] = useState('');
-    const [selected, setSelected] = useState<number | null>(null);
-    const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
-
-    const filtered = MOCK_MENTORS.filter(m =>
-        m.name.toLowerCase().includes(search.toLowerCase()) ||
-        m.specialty.toLowerCase().includes(search.toLowerCase())
-    );
-
-    const handleConfirm = async () => {
-        if (!selected) return;
-        setSaving(true);
-        try {
-            // Intenta actualizar via API; si falla, simula éxito (datos mock)
-            await apiFetch(`/crm/personas/${memberId}`, {
-                method: 'PATCH',
-                token,
-                body: JSON.stringify({ mentor_id: selected }),
-            }).catch(() => null); // silenciar error si endpoint no existe aún
-        } finally {
-            setSaving(false);
-            setSaved(true);
-            setTimeout(() => {
-                setSaved(false);
-                setSelected(null);
-                setSearch('');
-                onClose();
-            }, 2000);
-        }
-    };
-
     return (
         <WorkspaceDrawer
             isOpen={open}
@@ -88,92 +46,19 @@ function MentorAssignmentDrawer({
             title={title}
             subtitle={`Para: ${memberName}`}
             actions={
-                saved ? null : (
-                    <>
-                        <button disabled={saving} onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-50">
-                            Cancelar
-                        </button>
-                        <button disabled={!selected || saving} onClick={handleConfirm} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary)/0.85)] active:scale-95 transition-all disabled:opacity-50">
-                            {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} 
-                            {saving ? 'Guardando...' : 'Confirmar'}
-                        </button>
-                    </>
-                )
+                <button onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
+                    Cerrar
+                </button>
             }
         >
-            <div className="mt-4 flex-1 overflow-hidden flex flex-col">
-                {saved ? (
-                    <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-                        <div className="size-10 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center mb-3">
-                            <Check size={40} strokeWidth={3} />
-                        </div>
-                        <p className="text-base font-bold text-slate-800 dark:text-white">Mentor Asignado</p>
-                        <p className="text-sm text-slate-400 mt-2">El proceso de mentoría ha sido inicializado correctamente.</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="shrink-0 space-y-4 mb-4">
-                            <div className="relative">
-                                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                    placeholder="Buscar por nombre o especialidad..."
-                                    className="w-full pl-10 pr-4 py-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20"
-                                />
-                            </div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                                Mentores Sugeridos ({filtered.length})
-                            </p>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto space-y-3 pb-6">
-                            {filtered.length === 0 ? (
-                                <div className="p-4 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg">
-                                    <p className="text-sm font-bold text-slate-500">No hay mentores que coincidan.</p>
-                                </div>
-                            ) : (
-                                filtered.map(m => (
-                                    <div 
-                                        key={m.id}
-                                        onClick={() => m.available && setSelected(m.id)}
-                                        className={clsx(
-                                            "p-4 rounded-lg border-2 transition-all flex items-center gap-4",
-                                            !m.available ? "opacity-50 cursor-not-allowed border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20" :
-                                            selected === m.id ? "border-[hsl(var(--primary))] bg-blue-50 dark:bg-[hsl(var(--primary))]/10 cursor-pointer" : "border-slate-100 dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] hover:border-blue-200 cursor-pointer"
-                                        )}
-                                    >
-                                        <div className="size-9 rounded-full bg-slate-100 dark:bg-white/10 flex flex-col items-center justify-center font-bold text-slate-400">
-                                            {m.name.charAt(0)}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{m.name}</p>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-[10px] text-[hsl(var(--primary))] dark:text-blue-400 font-bold uppercase tracking-wide bg-blue-50 dark:bg-[hsl(var(--primary))]/10 px-2 py-0.5 rounded-full">
-                                                    {m.role}
-                                                </span>
-                                                {!m.available && (
-                                                    <span className="text-[9px] text-rose-500 font-bold uppercase tracking-wide bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded-full">
-                                                        Cupo Lleno
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-[11px] text-slate-500 font-medium mt-1 truncate">
-                                                Especialidad: {m.specialty}
-                                            </p>
-                                        </div>
-                                        {selected === m.id && (
-                                            <div className="size-6 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shrink-0">
-                                                <Check size={14} strokeWidth={3} />
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </>
-                )}
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 p-6 text-center">
+                <div className="size-14 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                    <Users size={28} className="text-slate-400" />
+                </div>
+                <p className="text-base font-bold text-slate-800 dark:text-white">Próximamente</p>
+                <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
+                    La asignación de mentoría pastoral estará disponible en una próxima actualización.
+                </p>
             </div>
         </WorkspaceDrawer>
     );
@@ -320,7 +205,6 @@ export default function MemberDetailPage() {
             .then(setDepartments)
             .catch((err) => {
                 if (!abortCtrl.signal.aborted) {
-                    console.error('[MemberDetailPage] Failed to load departments:', err);
                     toast.error('Error al cargar departamentos');
                 }
             });
@@ -374,9 +258,9 @@ export default function MemberDetailPage() {
             setMember((prev: any) => ({ ...prev, ...updated }));
             setEditMember((prev: any) => ({ ...prev, ...updated }));
             setIsEditOpen(false);
-            toast.success('Persona actualizado');
+            toast.success('Persona actualizada');
         } catch {
-            toast.error('No se pudo actualizar el persona');
+            toast.error('No se pudo actualizar la persona');
         } finally {
             setIsEditSaving(false);
         }
@@ -716,7 +600,7 @@ export default function MemberDetailPage() {
                                 <div className="absolute top-0 right-0 p-4 opacity-10"><Heart size={80} /></div>
                                 <div className="relative z-10 space-y-4">
                                     <h4 className="text-sm font-bold uppercase tracking-wide">Cuidado Pastoral</h4>
-                                    <p className="text-sm text-rose-100 leading-relaxed">Este persona está siendo acompañado activamente en su proceso espiritual.</p>
+                                    <p className="text-sm text-rose-100 leading-relaxed">Esta persona está siendo acompañada activamente en su proceso espiritual.</p>
                                     <button
                                         onClick={() => {
                                             setMentorDrawerConfig({

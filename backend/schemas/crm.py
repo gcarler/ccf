@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -122,7 +122,7 @@ class CounselingTicketBase(BaseModel):
     status: str = "open"
 
 class CounselingTicketCreate(CounselingTicketBase):
-    pastor_id: Optional[int] = None
+    pastor_id: Optional[str] = None  # UUID string (personas.id)
 
 class CounselingTicketUpdate(BaseModel):
     subject: Optional[str] = None
@@ -131,11 +131,11 @@ class CounselingTicketUpdate(BaseModel):
     priority_level: Optional[str] = None
     sentiment_score: Optional[float] = None
     sentiment_label: Optional[str] = None
-    pastor_id: Optional[int] = None
+    pastor_id: Optional[str] = None  # UUID string (personas.id)
 
 class CounselingTicket(CounselingTicketBase):
     id: int
-    pastor_id: Optional[int] = None
+    pastor_id: Optional[str] = None  # UUID string (personas.id)
     priority_level: Optional[str] = None
     sentiment_score: Optional[float] = None
     sentiment_label: Optional[str] = None
@@ -163,11 +163,11 @@ class PrayerRequestCreate(PrayerRequestBase):
     pass
 
 class PrayerRequestUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
+    request_text: Optional[str] = None
+    category: Optional[str] = None
     status: Optional[str] = None
     is_public: Optional[bool] = None
-    answered: Optional[bool] = None
+    source: Optional[str] = None
 
 class PrayerRequestPublicCreate(BaseModel):
     """Schema for public web prayer requests — minimal fields, no auth."""
@@ -216,7 +216,7 @@ class CrmTaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     persona_id: Optional[str] = None
-    assignee_id: Optional[Union[str, int, UUID]] = None
+    assignee_id: Optional[str] = None  # UUID string (personas.id)
     due_date: Optional[datetime] = None
     status: str = "todo"
     priority: str = "normal"
@@ -292,8 +292,51 @@ class PersonaResponse(BaseModel):
     phone: Optional[str] = None
     church_role: Optional[str] = None
     spiritual_status: Optional[str] = "Nuevo"
+    estado_vital: Optional[str] = None
+    is_baptized: Optional[bool] = None
+    baptism_date: Optional[date] = Field(None, validation_alias="fecha_bautismo")
+    birthday: Optional[date] = None
     created_at: Optional[datetime] = None
-    model_config = orm_config
+    family_id: Optional[int] = None
+    talents: Optional[str] = None
+    spiritual_gifts: Optional[str] = None
+    pastoral_notes: Optional[str] = None
+    id_type: Optional[str] = None
+    id_number: Optional[str] = None
+    second_name: Optional[str] = None
+    second_last_name: Optional[str] = None
+    marital_status: Optional[str] = None
+    birth_country: Optional[str] = None
+    landline_phone: Optional[str] = None
+    other_phone: Optional[str] = None
+    mobile_phone: Optional[str] = None
+    address: Optional[str] = None
+    housing_type: Optional[str] = None
+    education_level: Optional[str] = None
+    education_status: Optional[str] = None
+    profession: Optional[str] = None
+    economic_sector: Optional[str] = None
+    blood_type: Optional[str] = None
+    medical_notes: Optional[str] = None
+    optional_info: Optional[str] = None
+    registration_reason: Optional[str] = None
+    unregistration_reason: Optional[str] = None
+    registration_date: Optional[date] = None
+    unregistration_date: Optional[date] = None
+    responsible_adult_name: Optional[str] = None
+    responsible_adult_contact: Optional[str] = None
+    guardian_name: Optional[str] = None
+    guardian_contact: Optional[str] = None
+    sex: Optional[str] = None
+    last_group_attendance: Optional[date] = None
+    last_meeting_attendance: Optional[date] = None
+    membership_type: Optional[str] = None
+    attendance_type: Optional[str] = None
+    group_name: Optional[str] = None
+    campus: Optional[str] = None
+    church_join_date: Optional[date] = None
+    colombian_department_id: Optional[int] = None
+    city: Optional[str] = None
 
 class Persona(BaseModel):
     id: str
@@ -371,6 +414,11 @@ class PersonaCreate(BaseModel):
     phone: Optional[str] = None
     family_id: Optional[int] = None
     church_role: str = "Miembro"
+    spiritual_status: Optional[str] = None
+    estado_vital: Optional[str] = None
+    is_baptized: Optional[bool] = None
+    baptism_date: Optional[date] = None
+    birthday: Optional[date] = None
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
     pastoral_notes: Optional[str] = None
@@ -419,6 +467,10 @@ class PersonaUpdate(BaseModel):
     phone: Optional[str] = None
     church_role: Optional[str] = None
     spiritual_status: Optional[str] = None
+    estado_vital: Optional[str] = None
+    is_baptized: Optional[bool] = None
+    baptism_date: Optional[date] = None
+    birthday: Optional[date] = None
     family_id: Optional[int] = None
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
@@ -635,7 +687,7 @@ class EvangelismStrategy(EvangelismStrategyBase):
 
 class MemberEvangelismBase(BaseModel):
     persona_id: str
-    evangelism_strategy_id: int
+    evangelism_strategy_id: str  # UUID string
     role: str = "assistant"
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -646,7 +698,7 @@ class MemberEvangelismCreate(MemberEvangelismBase):
     pass
 
 class MemberEvangelismUpdate(BaseModel):
-    evangelism_strategy_id: Optional[int] = None
+    evangelism_strategy_id: Optional[str] = None  # UUID string
     role: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -839,7 +891,7 @@ class CellGroupCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
-    evangelism_strategy_id: Optional[int] = None
+    evangelism_strategy_id: Optional[str] = None  # UUID string
     leader_id: Optional[str] = None
     assistant_id: Optional[str] = None
     host_id: Optional[str] = None
@@ -922,19 +974,22 @@ class FaroSessionAttendance(BaseModel):
     model_config = orm_config
 
 class PastoralCallLogCreate(BaseModel):
-    case_id: str
+    case_id: str = ""
     persona_id: Optional[str] = None
-    pastor_id: int
+    pastor_id: Optional[str] = None  # UUID string; resolved from current_user if omitted
     outcome: str
+    notes: Optional[str] = None
+    prayer_requests: Optional[str] = None
     duration_seconds: int = 0
 
 class PastoralCallLog(BaseModel):
     id: int
     case_id: Optional[str] = None
     persona_id: Optional[str] = None
-    pastor_id: int
+    pastor_id: str  # UUID string
     outcome: str
     notes: Optional[str] = None
+    prayer_requests: Optional[str] = None
     duration_seconds: int = 0
     created_at: datetime
     model_config = orm_config

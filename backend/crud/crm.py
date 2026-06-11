@@ -101,6 +101,8 @@ def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Person
     import uuid as _uuid
 
     data = payload.model_dump(exclude_unset=True)
+    if "baptism_date" in data:
+        data["fecha_bautismo"] = data.pop("baptism_date")
     data.setdefault("qr_token", _uuid.uuid4().hex[:16].upper())
     row = models.Persona(**data)
     db.add(row)
@@ -243,7 +245,10 @@ def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate)
     old_estado_vital = row.estado_vital
     old_fecha_bautismo = row.fecha_bautismo
 
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    updates = payload.model_dump(exclude_unset=True)
+    if "baptism_date" in updates:
+        updates["fecha_bautismo"] = updates.pop("baptism_date")
+    for key, value in updates.items():
         setattr(row, key, value)
 
     # Axioma 1 — Integridad de Embudo: registrar cambios en historial_embudo

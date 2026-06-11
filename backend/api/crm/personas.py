@@ -89,6 +89,20 @@ def update_persona(
     return persona
 
 
+@router.patch("/personas/{persona_id}", response_model=schemas.PersonaResponse)
+def patch_persona(
+    persona_id: str,
+    payload: schemas.PersonaUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
+):
+    """Actualización parcial de una persona (PATCH)."""
+    persona = crud.update_persona(db, persona_id, payload)
+    if not persona:
+        raise HTTPException(404, detail="Persona no encontrada")
+    return persona
+
+
 @router.delete("/personas/{persona_id}")
 def delete_persona(
     persona_id: str,

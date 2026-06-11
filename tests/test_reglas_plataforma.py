@@ -47,6 +47,7 @@ ALLOWED_UNFILTERED = {
     "evangelism_multiplication.py", # Tiene sede_id opcional
     "evangelism_rankings.py",       # Tiene sede_id opcional
     "evangelism_reports.py",
+    "evangelism_analytics.py",     # Aplica sede_id dinámicamente (None = super-admin global)
     "workspace.py",
     "workspace_compliance.py",
     "governance.py",
