@@ -71,5 +71,4 @@ def test_testimonial_accepts_explicit_author_persona_id(db_session):
         ),
     )
 
-    assert testimonial.author_id is None
     assert testimonial.author_persona_id == persona.id

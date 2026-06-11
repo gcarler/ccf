@@ -1019,7 +1019,6 @@ def create_testimonial(
         is_approved=payload.is_approved,
         show_on_home=payload.show_on_home,
         status=status,
-        author_id=payload.author_id,
         author_persona_id=author_persona_id,
     )
     db.add(row)

@@ -349,9 +349,12 @@ export default function StrategyDetailPage() {
  const [sessionSearch, setSessionSearch] = useState('');
  const [tableSubTab, setTableSubTab] = useState<'groups' | 'sessions'>('groups');
 
- // Visitor search (in attendance drawer)
+ // Visitor search / new visitor form (in attendance drawer)
  const [showVisitorSearch, setShowVisitorSearch] = useState(false);
  const [visitorSearch, setVisitorSearch] = useState('');
+ const [showNewVisitorForm, setShowNewVisitorForm] = useState(false);
+ const [newVisitorForm, setNewVisitorForm] = useState({ first_name: '', last_name: '', phone: '', whatsapp: '', email: '', address: '' });
+ const [savingNewVisitor, setSavingNewVisitor] = useState(false);
  useEffect(() => {
  if (sessionMenuId === null) return;
  const close = () => setSessionMenuId(null);
@@ -704,6 +707,8 @@ export default function StrategyDetailPage() {
  setIsAttendanceDrawerOpen(true);
  setShowVisitorSearch(false);
  setVisitorSearch('');
+ setShowNewVisitorForm(false);
+ setNewVisitorForm({ first_name: '', last_name: '', phone: '', whatsapp: '', email: '', address: '' });
  // Pre-load all members for visitor search if not already loaded
  if (allMembers.length === 0) {
  apiFetch<any[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(res => {
@@ -751,6 +756,44 @@ export default function StrategyDetailPage() {
  } catch (e: any) {
  toast.error('Error: ' + (e.message || 'Intente de nuevo'));
  } finally { setAttendanceSaving(false); }
+ };
+
+ const handleCreateNewVisitor = async () => {
+ if (!attendanceSession) return;
+ setSavingNewVisitor(true);
+ try {
+ const res = await apiFetch<{ status: string; persona_id: string }>('/evangelism/faro/visitors', {
+ method: 'POST', token,
+ body: {
+ first_name: newVisitorForm.first_name || null,
+ last_name: newVisitorForm.last_name || null,
+ phone: newVisitorForm.phone || null,
+ whatsapp: newVisitorForm.whatsapp || null,
+ email: newVisitorForm.email || null,
+ address: newVisitorForm.address || null,
+ cell_group_id: attendanceSession.grupo_id,
+ session_id: attendanceSession.id,
+ },
+ });
+ const displayName = [newVisitorForm.first_name, newVisitorForm.last_name].filter(Boolean).join(' ') || 'Visitante';
+ if (res.status === 'duplicate') {
+ toast.info(`Ya existe una persona con ese teléfono (${displayName})`);
+ } else {
+ toast.success(`Visitante "${displayName}" registrado`);
+ }
+ setAttendanceMembers(prev => [...prev, {
+ persona_id: res.persona_id,
+ name: displayName,
+ role: 'visitante',
+ role_label: 'Visitante',
+ status: 'first_time',
+ notes: '',
+ }]);
+ setNewVisitorForm({ first_name: '', last_name: '', phone: '', whatsapp: '', email: '', address: '' });
+ setShowNewVisitorForm(false);
+ } catch (e: any) {
+ toast.error('Error al registrar visitante: ' + (e.message || 'Intente de nuevo'));
+ } finally { setSavingNewVisitor(false); }
  };
 
  const handleDeleteSession = async (sessionId: number) => {
@@ -2304,12 +2347,18 @@ export default function StrategyDetailPage() {
 
  {/* Agregar visitante */}
  <div className="pt-2 border-t border-[hsl(var(--border-primary))]">
- {!showVisitorSearch ? (
+ {!showVisitorSearch && !showNewVisitorForm ? (
+ <div className="flex gap-2">
  <button onClick={() => setShowVisitorSearch(true)}
- className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-dashed border-[hsl(var(--border-primary))] dark:border-white/20 text-xs text-[hsl(var(--text-secondary))] hover:border-blue-400 hover:text-[hsl(var(--primary))] dark:hover:border-blue-700 dark:hover:text-[hsl(var(--primary))] transition-colors">
- <UserPlus size={14} />Agregar visitante (1ª vez)
+ className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[hsl(var(--border-primary))] dark:border-white/20 text-xs text-[hsl(var(--text-secondary))] hover:border-blue-400 hover:text-[hsl(var(--primary))] dark:hover:border-blue-700 dark:hover:text-[hsl(var(--primary))] transition-colors">
+ <Search size={13} />Buscar existente
  </button>
- ) : (
+ <button onClick={() => setShowNewVisitorForm(true)}
+ className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[hsl(var(--border-primary))] dark:border-white/20 text-xs text-[hsl(var(--text-secondary))] hover:border-green-400 hover:text-green-600 dark:hover:border-green-700 dark:hover:text-green-400 transition-colors">
+ <UserPlus size={13} />Crear persona nueva
+ </button>
+ </div>
+ ) : showVisitorSearch ? (
  <div className="space-y-2">
  <div className="flex items-center gap-2">
  <div className="relative flex-1">
@@ -2364,6 +2413,59 @@ export default function StrategyDetailPage() {
  )}
  </div>
  )}
+ </div>
+ ) : (
+ /* Formulario crear persona nueva */
+ <div className="space-y-3 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-3">
+ <div className="flex items-center justify-between mb-1">
+ <span className="text-[11px] font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide">Nueva persona visitante</span>
+ <button onClick={() => { setShowNewVisitorForm(false); setNewVisitorForm({ first_name: '', last_name: '', phone: '', whatsapp: '', email: '', address: '' }); }}
+ className="w-6 h-6 flex items-center justify-center rounded text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10">
+ <X size={13} />
+ </button>
+ </div>
+ <div className="grid grid-cols-2 gap-2">
+ <div>
+ <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">Nombres</label>
+ <input value={newVisitorForm.first_name} onChange={e => setNewVisitorForm(p => ({ ...p, first_name: e.target.value }))}
+ placeholder="Opcional"
+ className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+ </div>
+ <div>
+ <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">Apellidos</label>
+ <input value={newVisitorForm.last_name} onChange={e => setNewVisitorForm(p => ({ ...p, last_name: e.target.value }))}
+ placeholder="Opcional"
+ className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+ </div>
+ <div>
+ <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">Teléfono</label>
+ <input value={newVisitorForm.phone} onChange={e => setNewVisitorForm(p => ({ ...p, phone: e.target.value }))}
+ placeholder="Opcional" type="tel"
+ className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+ </div>
+ <div>
+ <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">WhatsApp</label>
+ <input value={newVisitorForm.whatsapp} onChange={e => setNewVisitorForm(p => ({ ...p, whatsapp: e.target.value }))}
+ placeholder="Opcional" type="tel"
+ className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+ </div>
+ <div className="col-span-2">
+ <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">Email</label>
+ <input value={newVisitorForm.email} onChange={e => setNewVisitorForm(p => ({ ...p, email: e.target.value }))}
+ placeholder="Opcional" type="email"
+ className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+ </div>
+ <div className="col-span-2">
+ <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">Dirección</label>
+ <input value={newVisitorForm.address} onChange={e => setNewVisitorForm(p => ({ ...p, address: e.target.value }))}
+ placeholder="Opcional"
+ className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+ </div>
+ </div>
+ <button onClick={handleCreateNewVisitor} disabled={savingNewVisitor}
+ className="w-full py-2 rounded-lg text-[12px] font-semibold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+ {savingNewVisitor ? <><Sparkles size={13} className="animate-spin" />Guardando...</> : <><UserPlus size={13} />Registrar visitante</>}
+ </button>
  </div>
  )}
  </div>

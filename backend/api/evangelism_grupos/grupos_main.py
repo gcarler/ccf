@@ -814,9 +814,12 @@ def get_macro_despliegue(
 
 
 class FaroVisitorCreate(BaseModel):
-    first_name: str
-    last_name: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     phone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
     cell_group_id: UUID
     session_id: Optional[int] = None
 
@@ -838,19 +841,23 @@ def register_faro_visitor(
     if persona and persona.id not in {house.leader_persona_id, house.assistant_persona_id, house.host_persona_id}:
         raise HTTPException(status_code=403, detail="Solo el líder o asistente puede registrar visitantes")
 
-    # Find existing persona by phone
+    # Find existing persona by phone or whatsapp
     existing = None
-    if visitor.phone:
-        existing = db.query(models.Persona).filter(models.Persona.telefono == visitor.phone).first()
+    lookup_phone = visitor.phone or visitor.whatsapp
+    if lookup_phone:
+        existing = db.query(models.Persona).filter(models.Persona.telefono == lookup_phone).first()
 
     if existing:
         return {"status": "duplicate", "persona_id": existing.id}
 
-    # Create new persona
+    # Create new persona (name defaults to "Visitante" if not provided)
     new_persona = models.Persona(
-        first_name=visitor.first_name,
-        last_name=visitor.last_name,
+        first_name=visitor.first_name or "Visitante",
+        last_name=visitor.last_name or "",
         phone=visitor.phone,
+        mobile_phone=visitor.whatsapp,
+        email=visitor.email,
+        address=visitor.address,
         sede_id=house.sede_id,
         church_role="Visitante Faro",
     )
@@ -861,9 +868,9 @@ def register_faro_visitor(
     # Vincular al grupo
     db.add(
         models.ParticipanteGrupo(
-            cell_group_id=visitor.cell_group_id,
+            grupo_id=visitor.cell_group_id,
             persona_id=new_persona.id,
-            role="visitante",
+            rol_base="visitante",
         )
     )
 
