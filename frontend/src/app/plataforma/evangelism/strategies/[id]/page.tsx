@@ -771,7 +771,7 @@ export default function StrategyDetailPage() {
  whatsapp: newVisitorForm.whatsapp || null,
  email: newVisitorForm.email || null,
  address: newVisitorForm.address || null,
- cell_group_id: attendanceSession.grupo_id,
+ grupo_id: attendanceSession.grupo_id,
  session_id: attendanceSession.id,
  },
  });

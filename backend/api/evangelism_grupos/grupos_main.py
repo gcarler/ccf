@@ -820,7 +820,7 @@ class FaroVisitorCreate(BaseModel):
     whatsapp: Optional[str] = None
     email: Optional[str] = None
     address: Optional[str] = None
-    cell_group_id: UUID
+    grupo_id: UUID
     session_id: Optional[int] = None
 
 
@@ -832,12 +832,12 @@ def register_faro_visitor(
     current_user: models.User = Depends(require_active_user),
 ):
     """Register a new guest from a Faro session report as a Persona + CRM lead."""
-    grupo = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == visitor.cell_group_id).first()
+    grupo = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == visitor.grupo_id).first()
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
 
     persona = _get_persona_for_user(db, current_user.id)
-    if persona and persona.id not in {grupo.lider_persona_id, grupo.asistente_persona_id, grupo.anfitrion_persona_id}:
+    if persona is not None and persona.id not in {grupo.lider_persona_id, grupo.asistente_persona_id, grupo.anfitrion_persona_id}:
         raise HTTPException(status_code=403, detail="Solo el líder o asistente puede registrar visitantes")
 
     # Buscar persona existente por teléfono o whatsapp
@@ -864,20 +864,20 @@ def register_faro_visitor(
         origen_sesion_id=visitor.session_id,
     )
     db.add(new_persona)
-    db.commit()
+    db.flush()  # obtener ID sin commitear — todo en una sola transacción
     db.refresh(new_persona)
 
     # Vincular al grupo
     db.add(
         models.ParticipanteGrupo(
-            grupo_id=visitor.cell_group_id,
+            grupo_id=visitor.grupo_id,
             persona_id=new_persona.id,
             rol_base="visitante",
         )
     )
 
     from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
-    crear_caso_nuevo_visitante(
+    crear_caso_nuevo_visitante(  # hace el db.commit() final
         db, new_persona, grupo.sede_id,
         origen_grupo_id=grupo.id,
         origen_estrategia_id=grupo.estrategia_id,
