@@ -317,6 +317,8 @@ export default function StrategyDetailPage() {
  document.addEventListener('mouseup', onMouseUp);
  }, []);
 
+ // Groups + Sessions loading
+ const [groupsLoading, setGroupsLoading] = useState(false);
  // Sessions
  const [sessions, setSessions] = useState<SessionRow[]>([]);
  const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -463,10 +465,13 @@ export default function StrategyDetailPage() {
  }, [fetchStrategy, fetchCustomRoles, fetchFollowUps]);
 
  const fetchGroups = useCallback(async () => {
+ setGroupsLoading(true);
  try {
  const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token, query: { estrategia_id: id } });
  setGroups(all || []);
- } catch { toast.error('Error al cargar grupos'); }
+ } catch { toast.error('Error al cargar grupos'); } finally {
+ setGroupsLoading(false);
+ }
  }, [id, token]);
 
  // Cargar grupos al montar para que aparezcan en el sidebar
@@ -1039,7 +1044,7 @@ export default function StrategyDetailPage() {
  key="groups-table"
  viewName={`strategy_groups_${id}`}
  data={groups}
- isLoading={false}
+ isLoading={groupsLoading}
  emptyMessage="Sin grupos en esta estrategia"
  onAddItem={() => setIsGroupDrawerOpen(true)}
  onUpdateItem={async (rowId, field, value) => {
