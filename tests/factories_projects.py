@@ -97,6 +97,7 @@ def create_project_factory(db, **overrides) -> "Project":
     obj = Project(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -132,6 +133,7 @@ def create_task_factory(db, project_id: _uuid.UUID, **overrides) -> "ProjectTask
     obj = ProjectTask(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -160,6 +162,7 @@ def create_subtask_factory(db, parent_id: _uuid.UUID, project_id: _uuid.UUID, **
     obj = ProjectTask(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -184,6 +187,7 @@ def create_milestone_factory(db, project_id: _uuid.UUID, **overrides) -> "Projec
     obj = ProjectMilestone(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -211,6 +215,7 @@ def create_comment_factory(db, project_id: _uuid.UUID, author_id: _uuid.UUID, **
     obj = ProjectComment(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -232,6 +237,7 @@ def create_supply_factory(db, task_id: _uuid.UUID, **overrides) -> "TaskSupply":
     obj = TaskSupply(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -264,6 +270,7 @@ def create_default_phases_factory(db, project_id: _uuid.UUID) -> list["ProjectPh
         db.add(p)
         phases.append(p)
     db.flush()
+    db.commit()
     return phases
 
 
@@ -290,6 +297,7 @@ def create_activity_log_factory(db, project_id: _uuid.UUID, action_type: str = "
     obj = ProjectActivityLog(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -315,6 +323,7 @@ def create_wiki_factory(db, project_id: _uuid.UUID, **overrides) -> "ProjectDocu
     obj = ProjectDocument(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -336,6 +345,7 @@ def create_whiteboard_factory(db, project_id: _uuid.UUID, **overrides) -> "Proje
     obj = ProjectWhiteboard(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -362,6 +372,7 @@ def create_message_factory(db, project_id: _uuid.UUID, sender_id: _uuid.UUID, **
     obj = ChatMessage(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -389,6 +400,7 @@ def create_attachment_factory(db, task_id: _uuid.UUID, **overrides) -> "ProjectA
     obj = ProjectAttachment(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 
@@ -409,6 +421,7 @@ def create_inbox_state_factory(db, persona_id: _uuid.UUID, item_id: str, **overr
     obj = ProjectInboxState(**defaults)
     db.add(obj)
     db.flush()
+    db.commit()
     return obj
 
 

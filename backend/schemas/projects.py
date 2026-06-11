@@ -346,7 +346,7 @@ class ProjectMessageCreate(BaseModel):
 
 class ProjectMessageItem(BaseModel):
     id: int
-    sender_id: int
+    sender_id: str
     sender_name: str = ""
     content: str
     created_at: datetime
