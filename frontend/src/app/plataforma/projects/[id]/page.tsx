@@ -382,16 +382,6 @@ export default function ProjectDetailPage() {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                     <aside className="space-y-3 lg:col-span-1">
-                                        <div className="p-3 bg-blue-50/50 dark:bg-slate-900 border border-blue-100 dark:border-white/5 rounded-lg shadow-sm dark:shadow-xl space-y-2">
-                                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
-                                                <Sparkles size={14} /> Asistente Ministerial
-                                            </div>
-                                            <p className="text-[11px] font-medium leading-relaxed italic text-slate-700 dark:text-slate-300">
-                                                Basado en el ritmo actual, la campaña va por buen camino. Te sugiero revisar las actividades en consolidación para evitar bloqueos.
-                                            </p>
-                                        </div>
-
-
                                         <DSCard>
                                             <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-2">Hitos</h3>
                                             <div className="space-y-2">
