@@ -339,6 +339,7 @@ export default function StrategyDetailPage() {
  // Session menu
  const [sessionMenuId, setSessionMenuId] = useState<number | null>(null);
  const [sessionGroupFilter, setSessionGroupFilter] = useState<number | 'all'>('all');
+ const [tableSubTab, setTableSubTab] = useState<'groups' | 'sessions'>('groups');
 
  // Visitor search (in attendance drawer)
  const [showVisitorSearch, setShowVisitorSearch] = useState(false);
@@ -1006,62 +1007,150 @@ export default function StrategyDetailPage() {
 
  {/* ── View: Table (ag-grid, editable como Airtable) ── */}
  {viewType === 'table' && (
+ <div className="flex flex-col h-full gap-3">
+ {/* Sub-tab switcher */}
+ <div className="flex items-center gap-1 shrink-0">
+ <button
+ onClick={() => setTableSubTab('groups')}
+ className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+ tableSubTab === 'groups'
+ ? 'bg-blue-600 text-white'
+ : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
+ }`}
+ >
+ Grupos ({groups.length})
+ </button>
+ <button
+ onClick={() => { setTableSubTab('sessions'); if (sessions.length === 0) fetchSessions(); }}
+ className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+ tableSubTab === 'sessions'
+ ? 'bg-blue-600 text-white'
+ : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
+ }`}
+ >
+ Sesiones ({sessions.length})
+ </button>
+ </div>
+
+ {/* Groups table */}
+ {tableSubTab === 'groups' && (
+ <div className="flex-1 min-h-0">
  <UniversalTableView
- data={[
- ...((activeTab === 'groups' || activeTab === 'overview') ? groups.map(g => ({
- __type: 'group' as const,
- __displayType: 'Grupo',
- __displayName: g.name,
- _habilitacion: '—',
- _acciones: '—',
- ...g,
- })) : []),
- ...((activeTab === 'sessions' || activeTab === 'overview') ? sessions.map(s => ({
- __type: 'session' as const,
- __displayType: 'Sesión',
- __displayName: s.topic || `Sesión #${s.id}`,
- _habilitacion: s.estado_habilitacion || 'DESHABILITADO',
- _acciones: 'Asistencia · Eliminar',
- ...s,
- })) : []),
- ]}
- onUpdateItem={async (id, field, value) => {
- // Find the item to know its type
- const allItems = [
- ...groups.map(g => ({ __type: 'group' as const, ...g })),
- ...sessions.map(s => ({ __type: 'session' as const, ...s })),
- ];
- const item = allItems.find(d => d.id === id) as any;
- if (!item) return false;
-
- // Map display fields to actual model fields per type
- let actualField: string = field;
- if (field === '__displayName') {
- actualField = item.__type === 'session' ? 'topic' : 'name';
- } else if (field === '__displayType') {
- return false; // synthetic, not editable
- }
-
- // Edit Group name via PUT /grupos/{id}
- if (item.__type === 'group' && actualField === 'name') {
+ key="groups-table"
+ viewName={`strategy_groups_${id}`}
+ data={groups}
+ isLoading={false}
+ emptyMessage="Sin grupos en esta estrategia"
+ onAddItem={() => setIsGroupDrawerOpen(true)}
+ onUpdateItem={async (rowId, field, value) => {
+ const group = groups.find(g => g.id === rowId);
+ if (!group) return false;
  try {
- await apiFetch(`/evangelism/grupos/${id}`, {
+ await apiFetch(`/evangelism/grupos/${rowId}`, {
  method: 'PUT', token,
- body: JSON.stringify({ name: value }),
+ body: JSON.stringify({ [field]: value }),
  });
  fetchGroups();
  toast.success('Grupo actualizado');
  return true;
  } catch {
- toast.error('Error al actualizar grupo');
+ toast.error('Error al actualizar');
  return false;
  }
- }
+ }}
+ columns={[
+ {
+ key: 'name',
+ label: 'Nombre',
+ type: 'text',
+ editable: true,
+ },
+ {
+ key: 'members_count',
+ label: 'Personas',
+ type: 'number',
+ width: '95',
+ editable: false,
+ filterable: true,
+ render: (v: any) => (
+ <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[11px] font-semibold">
+ <Users size={10} />{v}
+ </span>
+ ),
+ },
+ {
+ key: 'leader_name',
+ label: 'Líder',
+ type: 'user',
+ editable: false,
+ },
+ {
+ key: 'zone',
+ label: 'Zona',
+ type: 'text',
+ editable: true,
+ },
+ {
+ key: 'capacity',
+ label: 'Capacidad',
+ type: 'number',
+ width: '100',
+ editable: false,
+ },
+ {
+ key: 'status',
+ label: 'Estado',
+ type: 'status',
+ width: '110',
+ editable: false,
+ },
+ {
+ key: '_acciones',
+ label: '',
+ type: 'text',
+ width: '150',
+ editable: false,
+ filterable: false,
+ hidden: false,
+ render: (_: any, item: any) => (
+ <div className="flex items-center gap-1">
+ <button
+ onClick={(e) => { e.stopPropagation(); openMemberDrawer(item); }}
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
+ >
+ <Users size={10} /> Personas
+ </button>
+ <button
+ onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/evangelism/faro/${item.id}`); }}
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
+ >
+ <Calendar size={10} /> Detalle
+ </button>
+ </div>
+ ),
+ },
+ ]}
+ />
+ </div>
+ )}
 
- // Edit Session field via PUT /sessions/{id}
- if (item.__type === 'session') {
+ {/* Sessions table */}
+ {tableSubTab === 'sessions' && (
+ <div className="flex-1 min-h-0">
+ <UniversalTableView
+ key="sessions-table"
+ viewName={`strategy_sessions_${id}`}
+ data={sessions.map(s => ({
+ ...s,
+ __displayName: s.topic || `Sesión #${s.id}`,
+ grupo_nombre: groupName(s.grupo_id),
+ }))}
+ isLoading={sessionsLoading}
+ emptyMessage="Sin sesiones registradas"
+ onUpdateItem={async (rowId, field, value) => {
+ const actualField = field === '__displayName' ? 'topic' : field;
  try {
- await apiFetch(`/evangelism/sessions/${id}`, {
+ await apiFetch(`/evangelism/sessions/${rowId}`, {
  method: 'PUT', token,
  body: JSON.stringify({ [actualField]: value }),
  });
@@ -1069,92 +1158,72 @@ export default function StrategyDetailPage() {
  toast.success('Sesión actualizada');
  return true;
  } catch {
- toast.error('Error al actualizar sesión');
+ toast.error('Error al actualizar');
  return false;
  }
- }
- return false;
  }}
  columns={[
  {
- key: '__displayType',
- label: 'Tipo',
+ key: '__displayName',
+ label: 'Tema / Sesión',
  type: 'text',
- width: '80',
- editable: false,
- render: (v: any) => (
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300">
- {v}
- </span>
- ),
+ editable: true,
  },
  {
- key: '__displayName',
- label: 'Nombre',
+ key: 'grupo_nombre',
+ label: 'Grupo',
  type: 'text',
- render: (v: any) => (
- <span className="font-medium text-[hsl(var(--text-primary))]">{v}</span>
- ),
+ width: '130',
+ editable: false,
  },
  {
  key: 'session_date',
  label: 'Fecha',
- type: 'text',
- render: (_v: any, item: any) => {
- if (item.__type === 'group') return <span className="text-[hsl(var(--text-secondary))]">—</span>;
- return <span className="text-[hsl(var(--text-secondary))]">{formatDate(item.session_date)}</span>;
- },
+ type: 'date',
+ width: '110',
+ editable: false,
  },
  {
  key: 'status',
  label: 'Estado',
- type: 'text',
- render: (_v: any, item: any) => {
- if (item.__type === 'group') return <span className="text-[hsl(var(--text-secondary))]">Activo</span>;
- const bg = item.status === 'Realizada' ? '#10B98120' : '#3B82F620';
- const color = item.status === 'Realizada' ? '#10B981' : '#3B82F6';
- return (
- <div className="flex flex-col gap-1">
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold inline-block w-fit" style={{ backgroundColor: bg, color }}>
- {item.status}
- </span>
- {item.estado_habilitacion === 'HABILITADO' && (
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 inline-block w-fit">Abierta</span>
- )}
- {item.estado_habilitacion === 'CERRADO' && (
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] inline-block w-fit">Cerrada</span>
- )}
- {(!item.estado_habilitacion || item.estado_habilitacion === 'DESHABILITADO') && (
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 inline-block w-fit">Bloqueada</span>
- )}
- </div>
- );
- },
+ type: 'status',
+ width: '120',
+ editable: false,
  },
  {
- key: '_habilitacion',
+ key: 'estado_habilitacion',
  label: 'Habilitación',
- type: 'text',
+ type: 'status',
+ width: '120',
  editable: false,
- render: (_v: any, item: any) => {
- if (item.__type === 'group') return <span className="text-[hsl(var(--text-secondary))]">—</span>;
- // Estados terminales: no se puede togglear
- if (item.estado_habilitacion === 'CERRADO') return <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))]">Cerrada</span>;
- if (item.estado_habilitacion === 'CANCELADA') return <span className="text-[10px] font-semibold text-rose-400">Cancelada</span>;
- return (
+ },
+ {
+ key: '_acciones',
+ label: '',
+ type: 'text',
+ width: '160',
+ editable: false,
+ filterable: false,
+ render: (_: any, item: any) => (
+ <div className="flex items-center gap-1">
  <button
- onClick={async () => {
+ onClick={(e) => { e.stopPropagation(); openAttendanceDrawer(item); }}
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors whitespace-nowrap"
+ >
+ <Users size={10} /> Asistencia
+ </button>
+ {item.estado_habilitacion !== 'CERRADO' && item.estado_habilitacion !== 'CANCELADA' && (
+ <button
+ onClick={async (e) => {
+ e.stopPropagation();
  const accion = item.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
  try {
- await apiFetch(`/evangelism/sessions/${item.id}/habilitacion`, {
- method: 'PATCH', token,
- body: JSON.stringify({ accion }),
- });
+ await apiFetch(`/evangelism/sessions/${item.id}/habilitacion`, { method: 'PATCH', token, body: JSON.stringify({ accion }) });
  fetchSessions();
  } catch { toast.error('Error al cambiar estado'); }
  }}
- title={item.estado_habilitacion === 'HABILITADO' ? 'Deshabilitar' : 'Habilitar'}
- className={`w-7 h-7 inline-flex items-center justify-center rounded-lg transition-colors text-[11px] font-bold ${
+ title={item.estado_habilitacion === 'HABILITADO' ? 'Cerrar sesión' : 'Abrir sesión'}
+ className={`w-6 h-6 inline-flex items-center justify-center rounded font-bold text-[11px] transition-colors ${
  item.estado_habilitacion === 'HABILITADO'
  ? 'bg-emerald-100 text-emerald-700 hover:bg-rose-100 hover:text-rose-600 dark:bg-emerald-900/30 dark:text-emerald-400'
  : 'bg-amber-50 text-amber-600 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-amber-900/20 dark:text-amber-400'
@@ -1162,43 +1231,22 @@ export default function StrategyDetailPage() {
  >
  {item.estado_habilitacion === 'HABILITADO' ? '✓' : '○'}
  </button>
- );
- },
- },
- {
- key: '_acciones',
- label: 'Acciones',
- type: 'text',
- editable: false,
- render: (_v: any, item: any) => {
- if (item.__type === 'group') return <span className="text-[hsl(var(--text-secondary))]">—</span>;
- return (
- <div className="flex items-center gap-1">
- <button onClick={() => openAttendanceDrawer(item)}
- className="inline-flex items-center gap-1 px-2 h-7 rounded-lg bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
- <Users size={11} />Asistencia
- </button>
- <div className="relative">
- <button onClick={() => setSessionMenuId(sessionMenuId === item.id ? null : item.id)}
- className="w-7 h-7 inline-flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-colors">
- <span className="text-base leading-none">⋯</span>
- </button>
- {sessionMenuId === item.id && (
- <div className="absolute right-0 top-8 z-20 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 min-w-[130px]">
- <button
- onClick={() => requestDeleteSession(item.id)}
- className="w-full text-left px-3 py-2 text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
- <Trash2 size={12} />Eliminar sesión
- </button>
- </div>
  )}
+ <button
+ onClick={(e) => { e.stopPropagation(); requestDeleteSession(item.id); }}
+ className="w-6 h-6 inline-flex items-center justify-center rounded text-[hsl(var(--text-secondary))] hover:bg-red-50 hover:text-rose-500 dark:hover:bg-red-900/20 transition-colors"
+ title="Eliminar"
+ >
+ <Trash2 size={11} />
+ </button>
  </div>
- </div>
- );
- },
+ ),
  },
  ]}
  />
+ </div>
+ )}
+ </div>
  )}
 
  {/* ── View: List (tab-aware) ── */}
