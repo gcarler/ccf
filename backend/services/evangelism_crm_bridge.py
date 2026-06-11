@@ -137,6 +137,9 @@ def crear_caso_nuevo_visitante(
     persona: Persona,
     sede_id: uuid.UUID,
     titulo_prefix: str = "Seguimiento",
+    origen_grupo_id: Optional[uuid.UUID] = None,
+    origen_estrategia_id: Optional[str] = None,
+    origen_sesion_id: Optional[int] = None,
 ) -> Optional[CasoCRM]:
     """Crea un caso CRM de nuevos visitantes usando el pipeline canonico por sede."""
     pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db, sede_id)
@@ -162,6 +165,9 @@ def crear_caso_nuevo_visitante(
         prioridad=PrioridadCasoEnum.ALTA,
         estado=EstadoCasoEnum.ABIERTO,
         origen_canal=CanalOrigenEnum.EVANGELISMO,
+        origen_grupo_id=origen_grupo_id,
+        origen_estrategia_id=origen_estrategia_id,
+        origen_sesion_id=origen_sesion_id,
         sla_vencimiento_contacto=datetime.now(timezone.utc) + timedelta(hours=48),
     )
     db.add(caso)

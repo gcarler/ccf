@@ -850,7 +850,7 @@ def register_faro_visitor(
     if existing:
         return {"status": "duplicate", "persona_id": existing.id}
 
-    # Create new persona (name defaults to "Visitante" if not provided)
+    # Create new persona — marcada con su origen evangelístico
     new_persona = models.Persona(
         first_name=visitor.first_name or "Visitante",
         last_name=visitor.last_name or "",
@@ -860,6 +860,9 @@ def register_faro_visitor(
         address=visitor.address,
         sede_id=house.sede_id,
         church_role="Visitante",
+        origen_grupo_id=house.id,
+        origen_estrategia_id=house.estrategia_id,
+        origen_sesion_id=visitor.session_id,
     )
     db.add(new_persona)
     db.commit()
@@ -875,7 +878,12 @@ def register_faro_visitor(
     )
 
     from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
-    crear_caso_nuevo_visitante(db, new_persona, house.sede_id)
+    crear_caso_nuevo_visitante(
+        db, new_persona, house.sede_id,
+        origen_grupo_id=house.id,
+        origen_estrategia_id=house.estrategia_id,
+        origen_sesion_id=visitor.session_id,
+    )
 
     return {"status": "created", "persona_id": new_persona.id}
 
