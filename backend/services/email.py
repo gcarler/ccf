@@ -28,6 +28,9 @@ def _build_message(to: str, subject: str, html: str, text: str = "") -> MIMEMult
 def send_email(to: str, subject: str, html: str, text: str = "") -> bool:
     """Envía un email vía SMTP. En local/test escribe a log en lugar de enviar.
 
+    Si ``settings.stub_comms`` es ``True``, solo entrega realmente si la
+    dirección ``to`` coincide con ``settings.test_email_override``.
+
     Returns:
         True si se envió (o se logueó), False si falló.
     """
@@ -36,6 +39,18 @@ def send_email(to: str, subject: str, html: str, text: str = "") -> bool:
         log.info("[EMAIL LOG] Subject: %s", subject)
         log.debug("[EMAIL LOG] Body: %s", html[:300])
         return True
+
+    # ── Stub mode: bloquear a menos que sea el override ─────────────
+    if settings.stub_comms:
+        override = (settings.test_email_override or "").strip()
+        if not override or to.strip().lower() != override.strip().lower():
+            log.info(
+                "[STUB EMAIL] Bloqueado por stub_comms — se habría enviado a %s (subject: %s)",
+                to, subject,
+            )
+            return True  # True porque no es un error, es comportamiento esperado
+        log.info("[STUB EMAIL] TEST_EMAIL_OVERRIDE coincide — enviando real a %s", to)
+    # ────────────────────────────────────────────────────────────────
 
     if not settings.smtp_host or settings.smtp_host == "localhost":
         log.warning(

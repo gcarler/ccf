@@ -18,9 +18,7 @@ def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
 
 def _identity_conditions(db: Session, model, user_id: int | str | None):
     persona_id = resolve_persona_id_for_user(db, user_id)
-    if persona_id is not None:
-        return model.persona_id == persona_id
-    return model.user_id == user_id
+    return model.persona_id == persona_id
 
 # ── Courses ────────────────────────────────────────────
 
@@ -151,7 +149,6 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
 
     try:
         row = models.Enrollment(
-            user_id=None,
             persona_id=persona_id,
             course_id=enrollment.course_id,
             access_window_end=access_end,
@@ -162,7 +159,6 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
             event_type="enrollment",
             course_id=enrollment.course_id,
             persona_id=persona_id,
-            user_id=None,
             modality=db_course.modality if db_course else None,
         )
         db.add(log)
@@ -330,7 +326,6 @@ def update_lesson_progress(
     )
     if not row:
         row = models.LessonProgress(
-            user_id=user_id,
             persona_id=persona_id,
             lesson_id=lesson_id,
         )
@@ -508,8 +503,7 @@ def close_formal_acta(
             log = models.AcademyActivityLog(
                 event_type="completion",
                 course_id=course_id,
-                persona_id=e.persona_id or resolve_persona_id_for_user(db, e.user_id),
-                user_id=e.user_id,
+                persona_id=e.persona_id,
                 modality="formal",
                 value=float(final_grade),
             )
@@ -518,8 +512,7 @@ def close_formal_acta(
     acta = models.FormalActa(
         course_id=course_id,
         closed_by_persona_id=closed_by_persona_id
-        or resolve_persona_id_for_user(db, closed_by_user_id),
-        closed_by_user_id=closed_by_user_id,
+        or (resolve_persona_id_for_user(db, closed_by_user_id) if closed_by_user_id else None),
         min_grade_required=min_grade,
         min_attendance_required=min_attendance,
     )
@@ -590,7 +583,8 @@ def list_assignment_submissions_with_meta(db: Session, limit: int = 100):
             models.Enrollment,
             models.AssignmentSubmission.enrollment_id == models.Enrollment.id,
         )
-        .join(models.User, models.Enrollment.user_id == models.User.id)
+        .join(models.Persona, models.Enrollment.persona_id == models.Persona.id)
+        .join(models.User, models.Persona.user_id == models.User.id)
         .limit(limit)
         .all()
     )
@@ -609,7 +603,8 @@ def get_assignment_submission_with_meta(db: Session, submission_id: int):
             models.Enrollment,
             models.AssignmentSubmission.enrollment_id == models.Enrollment.id,
         )
-        .join(models.User, models.Enrollment.user_id == models.User.id)
+        .join(models.Persona, models.Enrollment.persona_id == models.Persona.id)
+        .join(models.User, models.Persona.user_id == models.User.id)
         .first()
     )
 
@@ -636,7 +631,7 @@ def grade_assignment_submission(
 
 
 def get_academy_candidates(db: Session):
-    enrolled_user_ids = db.query(models.Enrollment.user_id).distinct()
+    enrolled_user_ids = db.query(models.Persona.user_id).join(models.Enrollment, models.Persona.id == models.Enrollment.persona_id).filter(models.Persona.user_id.is_not(None)).distinct()
     return db.query(models.User).filter(models.User.id.notin_(enrolled_user_ids)).all()
 
 
@@ -880,10 +875,11 @@ def delete_enrollment(db: Session, enrollment_id: int) -> bool:
 
 
 def get_enrollment_by_user_course(db: Session, user_id: int, course_id: int):
+    persona_id = resolve_persona_id_for_user(db, user_id)
     return (
         db.query(models.Enrollment)
         .filter(
-            models.Enrollment.user_id == user_id,
+            models.Enrollment.persona_id == persona_id,
             models.Enrollment.course_id == course_id,
         )
         .first()

@@ -16,7 +16,7 @@ import RightPanel from '@/components/ui/RightPanel';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 
 interface TeamMember {
-    user_id: number;
+    user_id: string;
     name: string;
     load_status: string;
     open: number;

@@ -189,7 +189,6 @@ def add_faro_attendance(
                 row.attended = attended
                 row.absence_reason = absence_reason
                 row.absence_reason_detail = absence_reason_detail
-                row.scanned_at = utc_now() if attended else row.scanned_at
             else:
                 db.add(
                     Asistencia(

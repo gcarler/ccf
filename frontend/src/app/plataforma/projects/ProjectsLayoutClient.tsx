@@ -32,7 +32,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                     .catch(err => console.error("Error fetching project for sidebar", err));
             } else {
                 // Contexto: Vista global de proyectos
-                apiFetch<any[]>('/projects/', { token })
+                apiFetch<any[]>('/projects', { token })
                     .then(data => setProjects(Array.isArray(data) ? data : []))
                     .catch(err => {
                         console.error("Error fetching projects for sidebar", err);

@@ -33,23 +33,16 @@ export default function LeadDetailPage() {
         const loadLead = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/consolidation/cases/${id}`, { token }).catch(() => null);
-                setLead(data || {
-                    id,
-                    nombre_completo: 'Mateo González',
-                    phone: '+57 300 123 4567',
-                    email: 'mateo@example.com',
-                    stage: 'call',
-                    source: 'Invitación Directa',
-                    notes: 'Joven universitario, interesado en el ministerio de música.'
-                });
-                
-                setHistory([
-                    { id: 1, action: 'Llamada realizada', date: '2026-04-10', actor: 'Pr. Juan' },
-                    { id: 2, action: 'Visita programada', date: '2026-04-12', actor: 'Pr. Juan' }
-                ]);
+                const data = await apiFetch<any>(`/crm/consolidation/cases/${id}`, { token });
+                if (!data) {
+                    toast.error('Expediente no encontrado');
+                    return;
+                }
+                setLead(data);
+                setHistory([]);
             } catch (err) {
                 toast.error('Error al cargar expediente del prospecto');
+                setLead(null);
             } finally {
                 setLoading(false);
             }
@@ -113,7 +106,7 @@ export default function LeadDetailPage() {
                                 {history.map(item => (
                                     <div key={item.id} className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                         <div className="flex items-center gap-4">
-                                            <div className="size-8 rounded-full bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
+                                            <div className="size-8 rounded-full bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--primary))]">
                                                 <Clock size={14} />
                                             </div>
                                             <div>
@@ -145,8 +138,8 @@ export default function LeadDetailPage() {
                             </div>
                         </DSCard>
 
-                        <div className="p-4 bg-slate-900 rounded-md text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-emerald-400">
+                        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md border border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] space-y-4">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--secondary))]">
                                 <MessageSquare size={14} /> Optimus Brain
                             </div>
                             <p className="text-[11px] font-medium leading-relaxed opacity-80">

@@ -85,7 +85,7 @@ export default function VolunteerDetailPage() {
             await apiFetch(`/crm/volunteers/${id}`, {
                 method: "PATCH",
                 token,
-                body: JSON.stringify({ church_role: fRole }),
+                body: { church_role: fRole },
             });
             toast.success("Servidor actualizado");
             setEditOpen(false);
@@ -128,7 +128,7 @@ export default function VolunteerDetailPage() {
         <CrmShell
             breadcrumbs={[
                 { label: "CRM", icon: LayoutDashboard, href: "/plataforma/crm" },
-                { label: "Voluntariado", icon: Heart, href: "/crm/volunteers" },
+                { label: "Voluntariado", icon: Heart, href: "/plataforma/crm/volunteers" },
                 { label: volunteer.name, icon: User },
             ]}
         >

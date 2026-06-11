@@ -14,14 +14,14 @@ import { apiFetch } from "@/lib/http";
 import type { ViewType } from "@/components/ViewSwitcher";
 
 interface Task {
-  id: number;
+  id: string;
   title: string;
   status: string;
   priority: string | null;
   due_date: string | null;
-  project_id: number;
+  project_id: string;
   project_title?: string;
-  assignee_id?: number | null;
+  assignee_id?: string | null;
 }
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
@@ -52,14 +52,14 @@ function priorityConfig(task: Task) {
 
 function normalizeTask(row: any): Task {
   return {
-    id: Number(row.id),
+    id: String(row.id),
     title: String(row.title || "Tarea sin titulo"),
     status: String(row.status || "todo"),
     priority: row.priority || "low",
     due_date: row.due_date || null,
-    project_id: Number(row.project_id || 0),
+    project_id: String(row.project_id || ""),
     project_title: row.project_title || row.project?.title || undefined,
-    assignee_id: row.assignee_id ?? null,
+    assignee_id: row.assignee_id ? String(row.assignee_id) : null,
   };
 }
 
@@ -70,7 +70,7 @@ export default function UserTasksPage() {
   const [query, setQuery] = useState("");
   const [filterPriority, setFilterPriority] = useState("all");
   const [loading, setLoading] = useState(true);
-  const [savingTaskId, setSavingTaskId] = useState<number | null>(null);
+  const [savingTaskId, setSavingTaskId] = useState<string | null>(null);
   const [viewType, setViewType] = useState<ViewType>("list");
   const [selectedTask, setSelectedTask] = useState<TaskDetail | null>(null);
 
@@ -131,7 +131,7 @@ export default function UserTasksPage() {
     if (normalized.status === "done") addToast("Tarea completada", "success");
   };
 
-  const handleTaskDeleted = (taskId: number) => {
+  const handleTaskDeleted = (taskId: string) => {
     setTasks(prev => prev.filter(task => task.id !== taskId));
     addToast("Tarea eliminada", "info");
   };

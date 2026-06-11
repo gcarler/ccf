@@ -48,16 +48,18 @@ def _is_uuid_like(value) -> bool:
         return False
 
 
-def _enrollment_identity_filter(user_id):
+def _enrollment_identity_filter(db: Session, user_id):
     if _is_uuid_like(user_id):
         return models.Enrollment.persona_id == uuid.UUID(str(user_id))
-    return models.Enrollment.user_id == coerce_user_id(user_id)
+    pid = resolve_persona_uuid_for_user(db, user_id)
+    return models.Enrollment.persona_id == pid
 
 
-def _lesson_progress_identity_filter(user_id):
+def _lesson_progress_identity_filter(db: Session, user_id):
     if _is_uuid_like(user_id):
         return models.LessonProgress.persona_id == uuid.UUID(str(user_id))
-    return models.LessonProgress.user_id == coerce_user_id(user_id)
+    pid = resolve_persona_uuid_for_user(db, user_id)
+    return models.LessonProgress.persona_id == pid
 
 
 def _current_role(current_user) -> str:
@@ -78,7 +80,7 @@ def _serialize_enrollment(row) -> dict:
     course = getattr(row, "course", None)
     data = {
         "id": row.id,
-        "user_id": row.user_id,
+        "user_id": row.persona.user_id if (getattr(row, "persona", None) and row.persona) else None,
         "persona_id": str(row.persona_id) if row.persona_id else None,
         "course_id": row.course_id,
         "status": row.status,
@@ -109,7 +111,7 @@ def _serialize_enrollment(row) -> dict:
 def _enrollments_for_identity(db: Session, identity: str):
     return (
         db.query(models.Enrollment)
-        .filter(_enrollment_identity_filter(identity))
+        .filter(_enrollment_identity_filter(db, identity))
         .all()
     )
 
@@ -149,9 +151,6 @@ def _resolve_academy_account(db: Session, persona: models.Persona):
 
 def _enrollment_matches_current_user(db: Session, current_user, enrollment) -> bool:
     current_identity = coerce_user_id(getattr(current_user, "id", None))
-    enrollment_user_id = coerce_user_id(getattr(enrollment, "user_id", None))
-    if current_identity is not None and str(enrollment_user_id) == str(current_identity):
-        return True
     persona = _resolve_persona_for_user(db, current_identity)
     return bool(persona and getattr(enrollment, "persona_id", None) == persona.id)
 
@@ -226,7 +225,7 @@ def submit_assessment_direct(
     enrollment = (
         db.query(models.Enrollment)
         .filter(
-            _enrollment_identity_filter(getattr(current_user, "id", None)),
+            _enrollment_identity_filter(db, getattr(current_user, "id", None)),
             models.Enrollment.course_id == assessment.course_id,
         )
         .first()
@@ -449,6 +448,8 @@ def create_enrollment(
 
     user_id = coerce_user_id(getattr(current_user, "id", 0))
     requested_user_id = coerce_user_id(enrollment.user_id)
+    persona_curr = _resolve_persona_for_user(db, user_id)
+    persona_req = _resolve_persona_for_user(db, requested_user_id)
     # Obtener role correcto tanto en auth v1 como v2
     role = _current_role(current_user)
 
@@ -475,7 +476,7 @@ def create_enrollment(
 
     if (
         role != "admin"
-        and str(user_id) != str(requested_user_id)
+        and (not persona_curr or not persona_req or persona_curr.id != persona_req.id)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -568,7 +569,7 @@ def list_all_enrollments(
         result.append(
             {
                 "id": e.id,
-                "user_id": e.user_id,
+                "user_id": e.persona.user_id if (getattr(e, "persona", None) and e.persona) else None,
                 "course_id": e.course_id,
                 "progress_percent": e.progress_percent,
                 "enrolled_at": str(e.enrolled_at) if e.enrolled_at else None,
@@ -687,7 +688,7 @@ def get_user_enrollments(
             for m in matriculas
         ]
     # Fallback: legacy Integer enrollment model
-    enrollments = db.query(models.Enrollment).filter(_enrollment_identity_filter(user_id)).all()
+    enrollments = db.query(models.Enrollment).filter(_enrollment_identity_filter(db, user_id)).all()
     return [_serialize_enrollment(e) for e in enrollments]
 
 
@@ -872,12 +873,12 @@ def get_my_academy_profile(
     db_user = None if _is_uuid_like(user_id) else crud.get_user(db, user_id)
     db_user = db_user or current_user
     enrollments = (
-        db.query(models.Enrollment).filter(_enrollment_identity_filter(user_id)).all()
+        db.query(models.Enrollment).filter(_enrollment_identity_filter(db, user_id)).all()
     )
     certificates = (
         db.query(models.Certificate)
         .join(models.Enrollment)
-        .filter(_enrollment_identity_filter(user_id))
+        .filter(_enrollment_identity_filter(db, user_id))
         .all()
     )
 
@@ -917,7 +918,7 @@ def get_user_course_progress(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     enrollments = (
-        db.query(models.Enrollment).filter(_enrollment_identity_filter(user_id)).all()
+        db.query(models.Enrollment).filter(_enrollment_identity_filter(db, user_id)).all()
     )
     if not enrollments:
         return []
@@ -939,7 +940,7 @@ def get_user_course_progress(
         )
         .join(models.Lesson, models.Lesson.id == models.LessonProgress.lesson_id)
         .filter(
-            _lesson_progress_identity_filter(user_id),
+            _lesson_progress_identity_filter(db, user_id),
             models.Lesson.course_id.in_(course_ids),
         )
         .group_by(models.Lesson.course_id)
@@ -952,7 +953,7 @@ def get_user_course_progress(
         )
         .join(models.Lesson, models.Lesson.id == models.LessonProgress.lesson_id)
         .filter(
-            _lesson_progress_identity_filter(user_id),
+            _lesson_progress_identity_filter(db, user_id),
             models.Lesson.course_id.in_(course_ids),
         )
         .group_by(models.Lesson.course_id)
@@ -1021,11 +1022,11 @@ def get_member_academy_profile(
     if not account:
         return {"is_linked": False, "message": "No tiene cuenta de academia vinculada"}
 
-    enrollments = db.query(models.Enrollment).filter(_enrollment_identity_filter(persona.id)).all()
+    enrollments = db.query(models.Enrollment).filter(_enrollment_identity_filter(db, persona.id)).all()
     certificates = (
         db.query(models.Certificate)
         .join(models.Enrollment)
-        .filter(_enrollment_identity_filter(persona.id))
+        .filter(_enrollment_identity_filter(db, persona.id))
         .all()
     )
 

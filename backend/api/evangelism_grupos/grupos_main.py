@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import collections
+import uuid as _uuid_mod
 from datetime import datetime as _datetime, timezone as _timezone
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -273,7 +275,7 @@ def get_faro_assignment_summary(
 @router.get("/faro/{grupo_id}", response_model=dict)
 @router.get("/micro/{grupo_id}", response_model=dict)
 def get_cell_group(
-    grupo_id: int,
+    grupo_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -536,7 +538,7 @@ async def create_cell_group(
 @router.put("/grupos/{grupo_id}", response_model=dict)
 @router.put("/faro/{grupo_id}", response_model=dict)
 def update_cell_group(
-    grupo_id: int,
+    grupo_id: UUID,
     payload: schemas.GrupoEvangelismoUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -570,7 +572,7 @@ def update_cell_group(
 @router.delete("/grupos/{grupo_id}", status_code=204)
 @router.delete("/faro/{grupo_id}", status_code=204)
 def delete_cell_group(
-    grupo_id: int,
+    grupo_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):

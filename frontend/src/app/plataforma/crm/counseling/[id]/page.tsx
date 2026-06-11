@@ -71,7 +71,7 @@ export default function CounselingDetailPage() {
         <CrmShell
             breadcrumbs={[
                 { label: "CRM", icon: LayoutDashboard, href: "/plataforma/crm" },
-                { label: "Consejeria", icon: Heart, href: "/crm/counseling" },
+                { label: "Consejeria", icon: Heart, href: "/plataforma/crm/counseling" },
                 { label: session.member_name, icon: User },
             ]}
         >
@@ -90,7 +90,7 @@ export default function CounselingDetailPage() {
                                 Persona: {session.member_name}
                             </p>
                         </div>
-                        <button className="px-4 py-2 bg-emerald-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all">
+                        <button className="px-4 py-2 bg-[hsl(var(--secondary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--secondary))/20] hover:scale-105 transition-all">
                             Cerrar sesion
                         </button>
                     </header>
@@ -117,7 +117,7 @@ export default function CounselingDetailPage() {
                                 <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Participantes</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
+                                        <div className="size-8 rounded-lg bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--primary))]">
                                             <User size={16} />
                                         </div>
                                         <div className="flex-1">
@@ -126,7 +126,7 @@ export default function CounselingDetailPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
+                                        <div className="size-8 rounded-lg bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--primary))]">
                                             <Shield size={16} />
                                         </div>
                                         <div className="flex-1">
@@ -135,7 +135,7 @@ export default function CounselingDetailPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                                        <div className="size-8 rounded-lg bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--secondary))]">
                                             <MessageSquare size={16} />
                                         </div>
                                         <div className="flex-1">

@@ -74,7 +74,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         if (isCreating) return;
         setIsCreating(true);
         try {
-            const created = await apiFetch<ProjectRecord>('/projects/', {
+            const created = await apiFetch<ProjectRecord>('/projects', {
                 method: 'POST',
                 token,
                 body: {

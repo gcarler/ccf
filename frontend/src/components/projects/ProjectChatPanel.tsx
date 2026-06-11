@@ -16,7 +16,7 @@ interface ChatMessage {
 }
 
 interface ProjectChatPanelProps {
-  projectId: number;
+  projectId: string;
 }
 
 export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {

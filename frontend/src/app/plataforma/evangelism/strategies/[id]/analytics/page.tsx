@@ -233,7 +233,8 @@ function Sparkline({ data }: { data: number[] }) {
 // ─── Main Page ────────────────────────────────────────────────────────
 
 export default function StrategyAnalyticsPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams();
+  const id = params?.id as string;
   const router = useRouter();
   const { token } = useAuth();
 
@@ -326,7 +327,12 @@ export default function StrategyAnalyticsPage() {
   }
 
   return (
-    <EvangelismShell>
+    <EvangelismShell breadcrumbs={[
+      { label: "Evangelismo", href: "/plataforma/evangelism" },
+      { label: "Estrategias", href: "/plataforma/evangelism" },
+      { label: strategyName || "Estrategia", href: `/plataforma/evangelism/strategies/${id}` },
+      { label: "Analíticas", icon: BarChart3 }
+    ]}>
       <div className="min-h-full bg-[hsl(var(--bg-secondary))]">
         {/* ── Header ── */}
         <div className="sticky top-0 z-20 bg-[hsl(var(--bg-primary))] border-b border-[hsl(var(--border-primary))] px-6 py-3 flex items-center justify-between gap-4">
@@ -468,7 +474,7 @@ export default function StrategyAnalyticsPage() {
                           borderRadius: "8px",
                           fontSize: "11px",
                         }}
-                        formatter={(val: number, name: string) => [`${val ?? "—"}%`, name]}
+                        formatter={(val: any, name: any) => [`${val ?? "—"}%`, String(name)]}
                       />
                       {/* Global average */}
                       <Line

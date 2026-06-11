@@ -19,7 +19,7 @@ import { apiFetch } from '@/lib/http';
 import { CommandsList } from './wiki/CommandsList';
 
 interface Props {
-    project_id: number;
+    project_id: string;
     initialContent?: string;
 }
 

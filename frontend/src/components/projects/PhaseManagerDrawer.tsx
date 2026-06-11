@@ -13,7 +13,7 @@ import { useState } from 'react';
 import type { PhaseDef } from './ProjectKanbanBoard';
 
 interface Props {
-    projectId: number;
+    projectId: string;
     phases: PhaseDef[];
     onClose: () => void;
     onSaved: (phases: PhaseDef[]) => void;

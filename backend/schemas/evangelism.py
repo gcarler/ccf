@@ -10,6 +10,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from uuid import UUID
 from pydantic import BaseModel, model_validator, computed_field
 
 from backend.schemas._common import orm_config
@@ -162,7 +163,7 @@ class ParticipanteGrupoBase(BaseModel):
 
 
 class ParticipanteGrupoCreate(ParticipanteGrupoBase):
-    grupo_id: int
+    grupo_id: UUID
     persona_id: str
 
 
@@ -174,7 +175,7 @@ class ParticipanteGrupoUpdate(BaseModel):
 
 class ParticipanteGrupoResponse(ParticipanteGrupoBase):
     id: int
-    grupo_id: int
+    grupo_id: UUID
     persona_id: str
     fecha_ingreso: Optional[datetime] = None
     model_config = orm_config
@@ -406,7 +407,7 @@ class GrupoUpdate(BaseModel):
 
 
 class SesionGrupoCreate(BaseModel):
-    grupo_id: Optional[int] = None
+    grupo_id: Optional[UUID] = None
     season_id: Optional[int] = None
     session_date: datetime
     topic: Optional[str] = None

@@ -669,7 +669,7 @@ def get_project(
         _normalize_dates(t)
     for log in p.activity_logs:
         _normalize_dates(log)
-        log.user_name = log.user.username if log.user else "Sistema"
+        log.user_name = log.persona.nombre_completo if log.persona else "Sistema"
     return p
 
 

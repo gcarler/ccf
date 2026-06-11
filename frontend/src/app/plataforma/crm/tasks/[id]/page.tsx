@@ -134,14 +134,14 @@ export default function CrmTaskDetailPage() {
                                         </div>
                                     </div>
 
-                                    <button className="w-full py-1.5 bg-emerald-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all">
+                                    <button className="w-full py-1.5 bg-[hsl(var(--secondary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--secondary))/20] hover:scale-105 transition-all">
                                         Marcar como Completada
                                     </button>
                                 </div>
                             </DSCard>
 
-                            <div className="p-4 bg-slate-900 rounded-md text-white space-y-4">
-                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-emerald-400">
+                            <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md border border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] space-y-4">
+                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--secondary))]">
                                     <AlertCircle size={14} /> Optimus Guard
                                 </div>
                                 <p className="text-[11px] font-bold leading-relaxed opacity-90 italic">

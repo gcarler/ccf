@@ -219,7 +219,7 @@ class RolPersonalizadoEstrategia(Base):
 class GrupoEvangelismo(Base):
     __tablename__ = "grupos_evangelismo"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     estrategia_id = Column(String(36), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     codigo = Column(String(30), unique=True, nullable=True, index=True)
@@ -235,7 +235,7 @@ class GrupoEvangelismo(Base):
     lider_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     asistente_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     anfitrion_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
-    parent_group_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    parent_group_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     notes_historial = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -328,7 +328,7 @@ class ParticipanteGrupo(Base):
     __tablename__ = "grupo_participantes"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    grupo_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)
+    grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
     rol_base = Column(String(20), nullable=False)
     rol_personalizado_id = Column(Integer, ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True)
@@ -351,7 +351,7 @@ class SesionGrupo(Base):
     __tablename__ = "sesiones_grupo"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    grupo_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)
+    grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)
     fecha_sesion = Column(DateTime(timezone=True), nullable=False)
     estado = Column(String(20), default=EstadoSesionEnum.PENDIENTE.value, nullable=False)
     estado_habilitacion = Column(String(20), default=HabilitacionSesionEnum.DESHABILITADO.value, nullable=False)

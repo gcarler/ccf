@@ -70,6 +70,9 @@ class TipoInteraccionEnum(str, enum.Enum):
 
 class PipelineCRM(Base):
     __tablename__ = "crm_pipelines"
+    __table_args__ = (
+        UniqueConstraint("sede_id", "tipo", name="uq_pipeline_sede_tipo"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
@@ -187,7 +190,6 @@ class InteraccionCRM(Base):
 # ──────────────────────────────────────────────
 # TAREAS CRM
 # ──────────────────────────────────────────────
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 class TareaCRM(Base):
     __tablename__ = "crm_tareas"

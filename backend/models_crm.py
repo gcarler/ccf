@@ -186,7 +186,6 @@ class CounselingTicket(Base):
         index=True,
     )
     pastor_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
-    pastor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # DEPRECATED: usar pastor_id (UUID→personas.id)
     subject = Column(String(200), nullable=False)
     notes = Column(Text, nullable=True)
     status = Column(String(50), default="open", index=True)  # open, in_progress, resolved
@@ -316,7 +315,7 @@ class Persona(Base):
     pastoral_notes = Column(Text, nullable=True)
     tags = Column(JSON, nullable=True, default=list)
     origen_estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
-    origen_grupo_id = Column(Integer, ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    origen_grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     origen_fecha = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -643,10 +642,10 @@ class CrmTask(Base):
         index=True,
     )
     assignee_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
-    assignee_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # DEPRECATED: usar assignee_id (UUID→personas.id)
     due_date = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(20), default="pending", index=True)
     priority = Column(String(20), default="medium")
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     persona = relationship("Persona", foreign_keys=[persona_id], back_populates="tasks")
@@ -668,6 +667,7 @@ class VolunteerShift(Base):
     shift_end = Column(DateTime(timezone=True), nullable=False)
     status = Column(String(20), default="confirmed")
     notes = Column(Text, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     persona = relationship("Persona", back_populates="volunteer_shifts")
@@ -715,7 +715,6 @@ class CommunicationLog(Base):
     campaign_name = Column(String(120), nullable=True, index=True)
     content = Column(Text, nullable=False)
     leader_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
-    leader_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # DEPRECATED: usar leader_id (UUID→personas.id)
     outcome = Column(String(50), default="sent", index=True)
     external_id = Column(String(120), nullable=True, index=True)
     is_read = Column(Boolean, default=False, index=True)

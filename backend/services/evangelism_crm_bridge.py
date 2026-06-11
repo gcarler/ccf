@@ -1,9 +1,11 @@
 """Bridge automático Evangelismo → CRM."""
 
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 import uuid
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.models_crm import Persona
@@ -18,10 +20,12 @@ from backend.models_crm_core import (
     TipoPipelineEnum,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def _obtener_o_crear_pipeline_nuevos_visitantes(
     db: Session, sede_id: uuid.UUID
-) -> PipelineCRM:
+) -> Optional[PipelineCRM]:
     pipeline = (
         db.query(PipelineCRM)
         .filter(
@@ -41,7 +45,31 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
         activo=True,
     )
     db.add(pipeline)
-    db.flush()
+    try:
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        # Race condition: another request created the pipeline first
+        pipeline = (
+            db.query(PipelineCRM)
+            .filter(
+                PipelineCRM.sede_id == sede_id,
+                PipelineCRM.tipo == TipoPipelineEnum.NUEVOS_VISITANTES,
+                PipelineCRM.activo,
+            )
+            .first()
+        )
+        if pipeline:
+            return pipeline
+        # If still missing, re-add
+        pipeline = PipelineCRM(
+            sede_id=sede_id,
+            nombre="Nuevos Visitantes",
+            tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+            activo=True,
+        )
+        db.add(pipeline)
+        db.flush()
 
     etapa = EtapaPipeline(
         pipeline_id=pipeline.id,
@@ -79,6 +107,10 @@ def crear_caso_desde_asistencia(
         .first()
     )
     if not etapa:
+        logger.warning(
+            "No etapas found for pipeline %s (sede=%s) — skipping caso creation",
+            pipeline.id, sede_id,
+        )
         return None
 
     sla = datetime.now(timezone.utc) + timedelta(hours=48)
@@ -115,6 +147,10 @@ def crear_caso_nuevo_visitante(
         .first()
     )
     if not etapa:
+        logger.warning(
+            "No etapas found for pipeline %s (sede=%s) — skipping caso creation",
+            pipeline.id, sede_id,
+        )
         return None
 
     caso = CasoCRM(

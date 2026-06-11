@@ -32,7 +32,6 @@ class ContentPublication(Base):
     expire_at = Column(DateTime(timezone=True), nullable=True)
     last_published_at = Column(DateTime(timezone=True), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -70,7 +69,6 @@ class CmsMediaItem(Base):
     tags = Column(JSON, default=[])
     status = Column(String(20), default="active", index=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -102,8 +100,6 @@ class CmsTheme(Base):
     version = Column(Integer, default=1)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -179,8 +175,6 @@ class CmsPage(Base):
     locale = Column(String(5), default="es", server_default="es", index=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -204,7 +198,6 @@ class CmsPageVersion(Base):
     snapshot_json = Column(JSON, default={})
     notes = Column(Text, nullable=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
@@ -234,8 +227,6 @@ class CmsSection(Base):
     locale = Column(String(5), default="es", server_default="es", index=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -261,7 +252,6 @@ class CmsPublishLog(Base):
     from_status = Column(String(30), nullable=True)
     to_status = Column(String(30), nullable=True)
     actor_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     metadata_json = Column(JSON, default={})
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
@@ -319,7 +309,6 @@ class Testimonial(Base):
     show_on_home = Column(Boolean, default=False)
     status = Column(String(20), default="pending", index=True)
     author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     author = relationship("Persona", foreign_keys=[author_persona_id], lazy="joined")

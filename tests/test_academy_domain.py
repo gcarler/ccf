@@ -61,14 +61,12 @@ def test_create_enrollment_dual_writes_persona_id(db_session):
 
     enrollment = crud.create_enrollment(db_session, payload)
 
-    assert enrollment.user_id is None
     assert enrollment.persona_id == persona.id
 
     log = db_session.query(models.AcademyActivityLog).filter_by(
         event_type="enrollment",
         course_id=course.id,
     ).one()
-    assert log.user_id is None
     assert log.persona_id == persona.id
 
 
@@ -86,7 +84,6 @@ def test_lesson_progress_dual_writes_and_updates_enrollment_by_persona(db_sessio
     db_session.commit()
     db_session.refresh(lesson)
     enrollment = models.Enrollment(
-        user_id=None,
         persona_id=persona.id,
         course_id=course.id,
     )
@@ -101,7 +98,6 @@ def test_lesson_progress_dual_writes_and_updates_enrollment_by_persona(db_sessio
         last_position=45,
     )
 
-    assert progress.user_id == str(user.id)
     assert progress.persona_id == persona.id
     db_session.refresh(enrollment)
     assert enrollment.progress_percent == 100
@@ -111,7 +107,6 @@ def test_issue_pending_certificates(db_session):
     user = seed_user(db_session)
     course = seed_course(db_session, code="COURSE-2")
     enrollment = models.Enrollment(
-        user_id=None,
         persona_id=seed_persona(db_session, user).id,
         course_id=course.id,
         status="completed",
@@ -130,7 +125,7 @@ def test_issue_pending_certificates(db_session):
 def test_pilot_readiness_returns_checklist(db_session):
     user = seed_user(db_session, email="other@example.com")
     course = seed_course(db_session, code="COURSE-3")
-    enrollment = models.Enrollment(user_id=None, persona_id=seed_persona(db_session, user).id, course_id=course.id)
+    enrollment = models.Enrollment(persona_id=seed_persona(db_session, user).id, course_id=course.id)
     db_session.add(enrollment)
     db_session.commit()
 
@@ -138,3 +133,4 @@ def test_pilot_readiness_returns_checklist(db_session):
     readiness = schemas.PilotReadiness(**readiness_dict)
     assert readiness.environment_ready is True
     assert len(readiness.checklist) > 0
+

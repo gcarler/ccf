@@ -61,6 +61,16 @@ class Settings(BaseSettings):
     smtp_from_name: str = Field(default="CCF Ministerio")
     smtp_use_tls: bool = Field(default=True)
     frontend_url: str = Field(default="http://localhost:3000")
+
+    # Stub / Mock mode — bloquea comunicaciones externas (email, SMS, WhatsApp)
+    # True = ningún mensaje sale al exterior (solo se registra en CommunicationLog)
+    # Excepción: email a TEST_EMAIL_OVERRIDE si está configurado
+    stub_comms: bool = Field(default=False, description="Block all external communications; log only")
+    test_email_override: str = Field(
+        default="",
+        description="Email exception for stub mode — only this address receives real email",
+    )
+
     run_startup_schema_fixes: bool = Field(
         default=False
     )  # DEPRECATED: use Alembic instead

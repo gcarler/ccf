@@ -24,7 +24,8 @@ from backend.crud.crm import (
     resolve_persona_id_for_user,
     resolve_persona_id_from_identity,
 )
-from backend.services.messaging import MessagingGateway
+from backend.services.messaging import MessagingGateway, get_messaging_gateway
+from backend.services.messaging import StubMessagingGateway  # noqa: F401 — disponible para override manual en tests
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
 router = APIRouter(tags=["CRM"])
@@ -417,6 +418,7 @@ async def send_crm_message(
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
+    gateway: MessagingGateway = Depends(get_messaging_gateway),
 ):
     channel = str(payload.get("channel") or "").strip().lower()
     content = str(payload.get("content") or "").strip()
@@ -471,7 +473,7 @@ async def send_crm_message(
         persona_id_value = persona["id"] if isinstance(persona, dict) else persona.id
         try:
             if channel == "whatsapp":
-                log = await MessagingGateway.send_whatsapp(
+                log = await gateway.send_whatsapp(
                     db,
                     persona_id_value,
                     content,
@@ -480,7 +482,7 @@ async def send_crm_message(
                     external_id=external_id,
                 )
             elif channel == "sms":
-                log = await MessagingGateway.send_sms(
+                log = await gateway.send_sms(
                     db,
                     persona_id_value,
                     content,
@@ -489,7 +491,7 @@ async def send_crm_message(
                     external_id=external_id,
                 )
             elif channel == "email":
-                log = await MessagingGateway.send_email(
+                log = await gateway.send_email(
                     db,
                     persona_id_value,
                     content,
@@ -569,14 +571,9 @@ def list_crm_tasks(
     if assignee_user_id:
         assignee_persona_id = resolve_persona_id_for_user(db, assignee_user_id)
         if assignee_persona_id:
-            q = q.filter(
-                or_(
-                    models.CrmTask.assignee_id == assignee_persona_id,
-                    models.CrmTask.assignee_user_id == assignee_user_id,
-                )
-            )
+            q = q.filter(models.CrmTask.assignee_id == assignee_persona_id)
         else:
-            q = q.filter(models.CrmTask.assignee_user_id == assignee_user_id)
+            return []
     tasks = q.order_by(models.CrmTask.created_at.desc()).all()
     return [_serialize_task(t) for t in tasks]
 
@@ -606,7 +603,6 @@ def create_crm_task(
         category=payload.get("category") or "Pastoral",
         persona_id=payload.get("persona_id"),
         assignee_id=resolve_persona_id_from_identity(db, assignee_identity),
-        assignee_user_id=legacy_user_id_from_identity(assignee_identity),
         due_date=due_date,
         status=payload.get("status") or "pending",
         priority=payload.get("priority") or "medium",
@@ -622,13 +618,12 @@ def list_my_crm_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    owner_conditions = [models.CrmTask.assignee_user_id == current_user.id]
     my_persona_id = resolve_persona_id_for_user(db, current_user.id)
-    if my_persona_id:
-        owner_conditions.append(models.CrmTask.assignee_id == my_persona_id)
+    if not my_persona_id:
+        return []
     tasks = (
         db.query(models.CrmTask)
-        .filter(or_(*owner_conditions))
+        .filter(models.CrmTask.assignee_id == my_persona_id)
         .order_by(models.CrmTask.created_at.desc())
         .all()
     )
@@ -647,9 +642,7 @@ def get_crm_task_detail(
     is_staff = _get_user_role(current_user) in {"admin", "administrador", "pastor", "coordinador"}
     my_persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
     is_persona_owner = task.assignee_id is not None and task.assignee_id == my_persona_id
-    my_user_id = getattr(current_user, "id", None)
-    is_legacy_owner = task.assignee_user_id is not None and task.assignee_user_id == my_user_id
-    if not is_staff and not (is_persona_owner or is_legacy_owner):
+    if not is_staff and not is_persona_owner:
         raise HTTPException(status_code=403, detail="No autorizado para ver esta tarea")
     return _serialize_task(task)
 
@@ -683,7 +676,6 @@ def update_crm_task(
                     raise HTTPException(status_code=400, detail="Formato de fecha inválido")
             if field == "assignee_id":
                 task.assignee_id = resolve_persona_id_from_identity(db, val)
-                task.assignee_user_id = legacy_user_id_from_identity(val)
             else:
                 setattr(task, field, val)
     db.commit()
@@ -1278,7 +1270,7 @@ def list_prayer_requests(
     """Lista pedidos de oracion. Opcionalmente filtra por source (web, crm)."""
     q = db.query(models.PrayerRequest).order_by(models.PrayerRequest.created_at.desc())
     if source:
-        q = q.filter(models.PrayerRequest.origen_canal == source)
+        q = q.filter(models.PrayerRequest.source == source)
     prayers = q.all()
     return [
         {
@@ -1713,3 +1705,95 @@ def export_newsletter_leads_csv(
         )
 
     return {"rows": rows, "count": len(rows)}
+
+
+# ──────────────────────────────────────────────
+# PASTORAL CALL LOGS (Registro de llamadas de consolidación)
+# ──────────────────────────────────────────────
+
+@router.get("/consolidation/cases/{case_id}/calls", response_model=List[dict])
+def list_consolidation_calls(
+    case_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
+):
+    """List all call logs for a consolidation case."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _get_case_or_404(db, case_id, user_sede)
+    case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+    logs = (
+        db.query(models.PastoralCallLog)
+        .filter(models.PastoralCallLog.case_id == case_uuid)
+        .order_by(models.PastoralCallLog.created_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": log.id,
+            "case_id": str(log.case_id) if log.case_id else None,
+            "persona_id": str(log.persona_id) if log.persona_id else None,
+            "pastor_id": str(log.pastor_id) if log.pastor_id else None,
+            "outcome": log.outcome,
+            "notes": log.notes,
+            "prayer_requests": log.prayer_requests,
+            "duration_seconds": log.duration_seconds,
+            "created_at": log.created_at.isoformat() if log.created_at else None,
+        }
+        for log in logs
+    ]
+
+
+@router.post("/consolidation/cases/{case_id}/calls", response_model=dict, status_code=201)
+def create_consolidation_call(
+    case_id: str,
+    payload: schemas.PastoralCallLogCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
+):
+    """Register a call log for a consolidation case."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _get_case_or_404(db, case_id, user_sede)
+    case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+
+    # Resolve pastor_id from current user if not provided
+    pastor_uuid = None
+    if payload.pastor_id:
+        pastor_uuid = uuid.UUID(str(payload.pastor_id))
+    else:
+        persona_id_str = resolve_persona_id_for_user(db, current_user.id)
+        if persona_id_str:
+            pastor_uuid = uuid.UUID(persona_id_str)
+
+    # Resolve persona_id if provided
+    persona_uuid = None
+    if payload.persona_id:
+        persona_uuid = uuid.UUID(str(payload.persona_id))
+
+    row = models.PastoralCallLog(
+        case_id=case_uuid,
+        persona_id=persona_uuid,
+        pastor_id=pastor_uuid or current_user.id,
+        outcome=payload.outcome,
+        notes=payload.notes,
+        prayer_requests=payload.prayer_requests,
+        duration_seconds=payload.duration_seconds,
+    )
+    db.add(row)
+
+    # Update case last_contact_at
+    case = _get_case_or_404(db, case_id, user_sede)
+    case.last_contact_at = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(row)
+    return {
+        "id": row.id,
+        "case_id": str(row.case_id) if row.case_id else None,
+        "persona_id": str(row.persona_id) if row.persona_id else None,
+        "pastor_id": str(row.pastor_id) if row.pastor_id else None,
+        "outcome": row.outcome,
+        "notes": row.notes,
+        "prayer_requests": row.prayer_requests,
+        "duration_seconds": row.duration_seconds,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+    }

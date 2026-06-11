@@ -1,15 +1,25 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
     LineChart, Line, AreaChart, Area, BarChart, Bar,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
 export const DSChart = ({ type = 'line', data = [], height = 300, color = "#3b82f6" }: any) => {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <div style={{ width: '100%', height, minWidth: 0, minHeight: 0 }} />;
+    }
+
     if (type === 'line') {
         return (
-            <div style={{ width: '100%', height }}>
+            <div style={{ width: '100%', height, minWidth: 0, minHeight: 0 }}>
                 <ResponsiveContainer>
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
@@ -33,7 +43,7 @@ export const DSChart = ({ type = 'line', data = [], height = 300, color = "#3b82
 
     if (type === 'area') {
         return (
-            <div style={{ width: '100%', height }}>
+            <div style={{ width: '100%', height, minWidth: 0, minHeight: 0 }}>
                 <ResponsiveContainer>
                     <AreaChart data={data}>
                         <defs>
@@ -58,7 +68,7 @@ export const DSChart = ({ type = 'line', data = [], height = 300, color = "#3b82
 
     if (type === 'bar') {
         return (
-            <div style={{ width: '100%', height }}>
+            <div style={{ width: '100%', height, minWidth: 0, minHeight: 0 }}>
                 <ResponsiveContainer>
                     <BarChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />

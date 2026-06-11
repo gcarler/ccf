@@ -6,7 +6,6 @@ class AdminAuditLog(Base):
     __tablename__ = "admin_audit_logs"
     id = Column(Integer, primary_key=True, index=True)
     actor_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     action = Column(String(120), nullable=False, index=True)
     resource_type = Column(String(120), nullable=True, index=True)
     resource_id = Column(String(120), nullable=True, index=True)

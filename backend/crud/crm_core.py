@@ -130,15 +130,29 @@ def list_plantillas(db: Session, canal: Optional[str] = None) -> List[PlantillaM
 
 
 def create_caso(db: Session, payload: CasoCRMCreate) -> CasoCRM:
-    obj = CasoCRM(**payload.model_dump())
+    data = payload.model_dump()
+    # Convert string UUIDs to uuid.UUID objects for the model
+    for key in ("persona_id", "sede_id", "asignado_a_id", "created_by_id"):
+        val = data.get(key)
+        if val and isinstance(val, str):
+            try:
+                data[key] = uuid.UUID(val)
+            except ValueError:
+                data[key] = None
+    obj = CasoCRM(**data)
     db.add(obj)
     db.commit()
     db.refresh(obj)
     return obj
 
 
-def get_caso(db: Session, caso_id: int) -> Optional[CasoCRM]:
-    return db.query(CasoCRM).filter(CasoCRM.id == caso_id, CasoCRM.deleted_at.is_(None)).first()
+def get_caso(db: Session, caso_id: str) -> Optional[CasoCRM]:
+    """Get caso by UUID string. Converts to uuid.UUID internally."""
+    try:
+        uid = uuid.UUID(caso_id) if isinstance(caso_id, str) else caso_id
+    except (ValueError, AttributeError):
+        return None
+    return db.query(CasoCRM).filter(CasoCRM.id == uid, CasoCRM.deleted_at.is_(None)).first()
 
 
 def list_casos(
@@ -157,40 +171,42 @@ def list_casos(
         q = q.filter(CasoCRM.estado == estado)
     if sede_id:
         q = q.filter(CasoCRM.sede_id == sede_id)
-    return q.order_by(CasoCRM.created_at.desc()).all()
+    return q.order_by(CasoCRM.fecha_creacion.desc()).all()
 
 
-def update_caso(db: Session, caso_id: int, payload: CasoCRMCreate) -> Optional[CasoCRM]:
+def update_caso(db: Session, caso_id: str, payload: CasoCRMCreate) -> Optional[CasoCRM]:
     obj = get_caso(db, caso_id)
     if not obj:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(obj, k, v)
-    obj.updated_at = datetime.now(timezone.utc)
+    if hasattr(obj, 'updated_at'):
+        obj.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(obj)
     return obj
 
 
-def mover_etapa(db: Session, caso_id: int, nueva_etapa_id: int) -> Optional[CasoCRM]:
+def mover_etapa(db: Session, caso_id: str, nueva_etapa_id: int) -> Optional[CasoCRM]:
     obj = get_caso(db, caso_id)
     if not obj:
         return None
     obj.etapa_actual_id = nueva_etapa_id
-    obj.updated_at = datetime.now(timezone.utc)
+    if hasattr(obj, 'updated_at'):
+        obj.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(obj)
     return obj
 
 
-def close_caso(db: Session, caso_id: int, motivo: Optional[str] = None) -> Optional[CasoCRM]:
+def close_caso(db: Session, caso_id: str, motivo: Optional[str] = None) -> Optional[CasoCRM]:
     obj = get_caso(db, caso_id)
     if not obj:
         return None
-    obj.estado = "CERRADO"
+    obj.estado = EstadoCasoEnum.CERRADO_PERDIDO
     obj.fecha_cierre = datetime.now(timezone.utc)
-    obj.motivo_cierre = motivo
-    obj.updated_at = datetime.now(timezone.utc)
+    if hasattr(obj, 'updated_at'):
+        obj.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(obj)
     return obj
@@ -200,17 +216,34 @@ def close_caso(db: Session, caso_id: int, motivo: Optional[str] = None) -> Optio
 
 
 def create_interaccion(db: Session, payload: InteraccionCRMCreate) -> InteraccionCRM:
-    obj = InteraccionCRM(**payload.model_dump())
+    data = payload.model_dump()
+    caso_id_val = data.get("caso_id")
+    if caso_id_val and isinstance(caso_id_val, str):
+        try:
+            data["caso_id"] = uuid.UUID(caso_id_val)
+        except ValueError:
+            data["caso_id"] = None
+    realizada_por = data.get("realizada_por_id")
+    if realizada_por and isinstance(realizada_por, str):
+        try:
+            data["realizada_por_id"] = uuid.UUID(realizada_por)
+        except ValueError:
+            data["realizada_por_id"] = None
+    obj = InteraccionCRM(**data)
     db.add(obj)
     db.commit()
     db.refresh(obj)
     return obj
 
 
-def list_interacciones(db: Session, caso_id: int) -> List[InteraccionCRM]:
+def list_interacciones(db: Session, caso_id: str) -> List[InteraccionCRM]:
+    try:
+        uid = uuid.UUID(caso_id) if isinstance(caso_id, str) else caso_id
+    except (ValueError, AttributeError):
+        return []
     return (
         db.query(InteraccionCRM)
-        .filter(InteraccionCRM.caso_id == caso_id)
+        .filter(InteraccionCRM.caso_id == uid)
         .order_by(InteraccionCRM.created_at.desc())
         .all()
     )
@@ -220,15 +253,32 @@ def list_interacciones(db: Session, caso_id: int) -> List[InteraccionCRM]:
 
 
 def create_tarea(db: Session, payload: TareaCRMCreate) -> TareaCRM:
-    obj = TareaCRM(**payload.model_dump())
+    data = payload.model_dump()
+    caso_id_val = data.get("caso_id")
+    if caso_id_val and isinstance(caso_id_val, str):
+        try:
+            data["caso_id"] = uuid.UUID(caso_id_val)
+        except ValueError:
+            data["caso_id"] = None
+    asignado_a = data.get("asignado_a_id")
+    if asignado_a and isinstance(asignado_a, str):
+        try:
+            data["asignado_a_id"] = uuid.UUID(asignado_a)
+        except ValueError:
+            data["asignado_a_id"] = None
+    obj = TareaCRM(**data)
     db.add(obj)
     db.commit()
     db.refresh(obj)
     return obj
 
 
-def list_tareas(db: Session, caso_id: int) -> List[TareaCRM]:
-    return db.query(TareaCRM).filter(TareaCRM.caso_id == caso_id).order_by(TareaCRM.created_at.desc()).all()
+def list_tareas(db: Session, caso_id: str) -> List[TareaCRM]:
+    try:
+        uid = uuid.UUID(caso_id) if isinstance(caso_id, str) else caso_id
+    except (ValueError, AttributeError):
+        return []
+    return db.query(TareaCRM).filter(TareaCRM.caso_id == uid).order_by(TareaCRM.created_at.desc()).all()
 
 
 def get_tarea(db: Session, tarea_id: int) -> Optional[TareaCRM]:
@@ -240,8 +290,7 @@ def complete_tarea(db: Session, tarea_id: int) -> Optional[TareaCRM]:
     if not obj:
         return None
     obj.completada = True
-    obj.completada_en = datetime.now(timezone.utc)
-    obj.updated_at = datetime.now(timezone.utc)
+    obj.fecha_completada = datetime.now(timezone.utc)
     db.commit()
     db.refresh(obj)
     return obj

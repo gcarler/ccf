@@ -93,7 +93,7 @@ export interface ProjectCommentItem {
   project_id: string;
   task_id?: string | null;
   content: string;
-  author_id: number;
+  author_id: string;
   author_name: string;
   author: string;       // author display name
   is_resolved: boolean;

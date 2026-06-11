@@ -766,7 +766,7 @@ def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: st
     return db_obj
 
 
-def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpdate):
+def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGroupUpdate):
     house = db.query(models.CellGroup).filter(models.CellGroup.id == house_id).first()
     if not house:
         return None
@@ -1309,11 +1309,11 @@ def delete_prayer_request(db: Session, request_id: int) -> bool:
 # ── Grupos ───────────────────────────────────────
 
 
-def get_cell_group(db: Session, house_id: int) -> Optional[models.CellGroup]:
+def get_cell_group(db: Session, house_id: uuid.UUID) -> Optional[models.CellGroup]:
     return db.query(models.CellGroup).filter(models.CellGroup.id == house_id).first()
 
 
-def delete_cell_group(db: Session, house_id: int) -> bool:
+def delete_cell_group(db: Session, house_id: uuid.UUID) -> bool:
     row = db.query(models.CellGroup).filter(models.CellGroup.id == house_id).first()
     if not row:
         return False

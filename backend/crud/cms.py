@@ -157,7 +157,6 @@ def update_content_publication(
     if notes is not None:
         row.notes = notes
     if updated_by is not None:
-        row.updated_by = updated_by
         row.updated_by_persona_id = resolve_persona_id_for_user(db, updated_by)
     if status == "published":
         row.last_published_at = _utcnow()
@@ -191,7 +190,6 @@ def create_cms_media_item(
         alt_text=alt_text,
         section=section,
         tags=tags or [],
-        created_by=created_by,
         created_by_persona_id=resolve_persona_id_for_user(db, created_by),
         filename=filename,
         mime_type=mime_type,
@@ -404,7 +402,6 @@ def create_cms_theme(
         is_active=bool(payload.is_active) and status != "archived",
         status=status,
         version=int(version) + 1,
-        created_by=created_by,
         created_by_persona_id=resolve_persona_id_for_user(db, created_by),
     )
     db.add(row)
@@ -646,8 +643,6 @@ def create_cms_page(
         title=payload.title.strip(),
         status=payload.status,
         seo_json=payload.seo_json or {},
-        created_by=user_id,
-        updated_by=user_id,
         created_by_persona_id=resolve_persona_id_for_user(db, user_id),
         updated_by_persona_id=resolve_persona_id_for_user(db, user_id),
     )
@@ -673,7 +668,6 @@ def update_cms_page(
     if "seo_json" in data and data["seo_json"] is not None:
         row.seo_json = data["seo_json"]
     if user_id is not None:
-        row.updated_by = user_id
         row.updated_by_persona_id = resolve_persona_id_for_user(db, user_id)
     db.commit()
     db.refresh(row)
@@ -810,7 +804,6 @@ def create_cms_page_version(
         version_number=int(max_version) + 1,
         snapshot_json=snapshot,
         notes=notes,
-        created_by=user_id,
         created_by_persona_id=resolve_persona_id_for_user(db, user_id),
     )
     db.add(row)
@@ -864,7 +857,6 @@ def restore_cms_page_version(
         page.title = str(page_data.get("title") or page.title)
         page.seo_json = page_data.get("seo_json") or {}
     page.status = "draft"
-    page.updated_by = user_id
     page.updated_by_persona_id = resolve_persona_id_for_user(db, user_id)
     db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(
         synchronize_session=False
@@ -911,7 +903,6 @@ def transition_cms_page_status(
         version = create_cms_page_version(db, page, user_id=user_id, notes=notes)
         page.published_version_id = version.id
     page.status = next_status
-    page.updated_by = user_id
     actor_persona_id = resolve_persona_id_for_user(db, user_id)
     page.updated_by_persona_id = actor_persona_id
     db.add(
@@ -924,7 +915,6 @@ def transition_cms_page_status(
             from_status=previous_status,
             to_status=next_status,
             actor_persona_id=actor_persona_id,
-            actor_user_id=user_id,
             metadata_json={"notes": notes} if notes else {},
         )
     )

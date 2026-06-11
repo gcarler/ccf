@@ -55,7 +55,7 @@ export default function GroupDetailPage() {
         <CrmShell
             breadcrumbs={[
                 { label: "CRM", icon: LayoutDashboard, href: "/plataforma/crm" },
-                { label: "Casas de Bendicion", icon: Home, href: "/crm/groups" },
+                { label: "Casas de Bendicion", icon: Home, href: "/plataforma/crm/groups" },
                 { label: group.name, icon: MapPin },
             ]}
         >
@@ -112,7 +112,7 @@ export default function GroupDetailPage() {
                     </div>
 
                     <aside className="space-y-3">
-                        <div className="p-4 bg-slate-900 rounded-md text-white space-y-4">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] rounded-md text-[hsl(var(--text-primary))] space-y-4">
                             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
                                 <History size={14} /> Linea de Tiempo
                             </div>

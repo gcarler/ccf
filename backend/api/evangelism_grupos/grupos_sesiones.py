@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime as _datetime, timezone as _timezone
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
@@ -32,7 +33,7 @@ router = APIRouter()
 @router.get("/faro/sessions")
 def list_faro_sessions(
     season_id: Optional[int] = None,
-    cell_group_id: Optional[int] = None,
+    cell_group_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):

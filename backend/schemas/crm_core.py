@@ -95,7 +95,7 @@ class CasoCRMCreate(BaseModel):
 
 class CasoCRMResponse(BaseModel):
     model_config = orm_config
-    id: int
+    id: str  # UUID as string
     persona_id: str
     sede_id: str
     pipeline_id: Optional[int] = None
@@ -122,7 +122,7 @@ class CasoCRMResponse(BaseModel):
 # ── Interacción CRM ─────────────────────────────────────
 
 class InteraccionCRMCreate(BaseModel):
-    caso_id: int
+    caso_id: str  # UUID as string
     tipo: str
     resumen: str
     detalle: Optional[str] = None
@@ -133,7 +133,7 @@ class InteraccionCRMCreate(BaseModel):
 class InteraccionCRMResponse(BaseModel):
     model_config = orm_config
     id: int
-    caso_id: int
+    caso_id: str  # UUID as string
     tipo: str
     resumen: str
     detalle: Optional[str] = None
@@ -145,7 +145,7 @@ class InteraccionCRMResponse(BaseModel):
 # ── Tarea CRM ───────────────────────────────────────────
 
 class TareaCRMCreate(BaseModel):
-    caso_id: int
+    caso_id: str  # UUID as string
     titulo: str
     descripcion: Optional[str] = None
     fecha_vencimiento: Optional[datetime] = None
@@ -154,8 +154,8 @@ class TareaCRMCreate(BaseModel):
 
 class TareaCRMResponse(BaseModel):
     model_config = orm_config
-    id: int
-    caso_id: int
+    id: str  # UUID as string
+    caso_id: str  # UUID as string
     titulo: str
     descripcion: Optional[str] = None
     fecha_vencimiento: Optional[datetime] = None

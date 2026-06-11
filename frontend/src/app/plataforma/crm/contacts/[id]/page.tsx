@@ -47,7 +47,7 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 export default function LeadDetail() {
-    const { isAuthenticated, token } = useAuth();
+    const { token } = useAuth();
     const { canEditCrm } = useCrmAccess();
     const { addToast } = useToast();
     const router = useRouter();
@@ -75,7 +75,7 @@ export default function LeadDetail() {
         try {
             const [leadData, logsData, counselingData] = await Promise.allSettled([
                 apiFetch(`/crm/consolidation/cases/${leadId}`, { token, cache: 'no-store' }),
-                apiFetch<CallLog[]>(`/crm/pipeline/leads/${leadId}/calls`, { token, cache: 'no-store' }),
+                apiFetch<CallLog[]>(`/crm/consolidation/cases/${leadId}/calls`, { token, cache: 'no-store' }),
                 apiFetch(`/crm/counseling/lead/${leadId}`, { token, cache: 'no-store' })
             ]);
             if (leadData.status === 'fulfilled') setLead(leadData.value);
@@ -109,7 +109,7 @@ export default function LeadDetail() {
         e.preventDefault();
         setIsSavingCall(true);
         try {
-            await apiFetch(`/crm/pipeline/leads/${leadId}/calls`, {
+            await apiFetch(`/crm/consolidation/cases/${leadId}/calls`, {
                 method: 'POST', token,
                 body: callForm
             });
@@ -159,9 +159,8 @@ export default function LeadDetail() {
         }
     ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
-    if (!isAuthenticated) return null;
     if (loading) return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-primary font-bold uppercase tracking-wide text-xs">
+        <div className="min-h-screen bg-[hsl(var(--bg-primary))] flex items-center justify-center text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-xs">
             Cargando...
         </div>
     );
@@ -265,7 +264,7 @@ export default function LeadDetail() {
                                 {item.type === 'spiritual' && <Sparkles size={16} />}
                                 {item.type === 'counseling' && <MessageSquare size={16} />}
                             </div>
-                            <div className={`flex flex-col gap-2 flex-1 ${item.isInsight ? 'bg-amber-500/5 border border-amber-500/10 p-3 rounded-md' : 'bg-white/2 p-3 rounded-md border border-white/5'}`}>
+                            <div className={`flex flex-col gap-2 flex-1 ${item.isInsight ? 'bg-amber-500/5 border border-amber-500/10 p-3 rounded-md' : 'bg-white/5 p-3 rounded-md border border-white/5'}`}>
                                 <div className="flex justify-between items-start">
                                     <h4 className={`text-sm font-bold tracking-tight ${item.isInsight ? 'text-amber-500' : 'text-white'}`}>{item.title}</h4>
                                     <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">{item.time}</span>

@@ -600,11 +600,11 @@ export default function ProjectDetailPage() {
                         )}
 
                         {viewType === 'wiki' && (
-                            <ProjectWikiEditor project_id={Number(project?.id || id)} />
+                            <ProjectWikiEditor project_id={project?.id || id} />
                         )}
 
                         {viewType === 'chat' && (
-                            <ProjectChatPanel projectId={Number(project?.id || id)} />
+                            <ProjectChatPanel projectId={project?.id || id} />
                         )}
                     </>
                 )}
@@ -631,13 +631,13 @@ export default function ProjectDetailPage() {
                 onSubmit={handleCreateTask}
             />
             <ProjectWhiteboard
-                project_id={Number(project?.id || id)}
+                project_id={project?.id || id}
                 isOpen={whiteboardOpen}
                 onClose={() => setWhiteboardOpen(false)}
             />
             {showPhaseManager && (
                 <PhaseManagerDrawer
-                    projectId={Number(project?.id || id)}
+                    projectId={project?.id || id}
                     phases={phases}
                     onClose={() => setShowPhaseManager(false)}
                     onSaved={(newPhases) => {

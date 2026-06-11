@@ -27,8 +27,6 @@ class Agent(Base):
     is_active = Column(Boolean, default=True, index=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     auth_credentials = relationship("AgentAuth", back_populates="agent", cascade="all, delete-orphan")
     contacts = relationship("AgentContact", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentContact.agent_id")
     roles = relationship("AgentRole", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentRole.agent_id")
@@ -82,7 +80,6 @@ class AgentRole(Base):
     ended_at = Column(DateTime(timezone=True), nullable=True)
     is_primary = Column(Boolean, default=False)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     agent = relationship("Agent", back_populates="roles", foreign_keys=[agent_id])
 
 

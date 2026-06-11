@@ -1,7 +1,7 @@
 """Admin audit log CRUD."""
 
 import datetime as dt
-import uuid
+import uuid as _uuid
 
 from sqlalchemy.orm import Session
 
@@ -17,24 +17,16 @@ def create_admin_audit_log(
     resource_id: str | None = None,
     metadata: dict | None = None,
     ip_address: str | None = None,
-    actor_user_id: int | None = None,
 ):
     resolved_persona_id = actor_persona_id
-    if not resolved_persona_id and actor_user_id is not None:
-        resolved_persona_id = (
-            str(resolve_persona_id_for_user(db, actor_user_id))
-            if resolve_persona_id_for_user(db, actor_user_id)
-            else None
-        )
     if actor_persona_id:
         try:
-            uuid.UUID(actor_persona_id)
+            _uuid.UUID(actor_persona_id)
         except ValueError:
             resolved_persona_id = None
     now = dt.datetime.now(dt.timezone.utc)
     row = models.AdminAuditLog(
         actor_persona_id=resolved_persona_id,
-        actor_user_id=actor_user_id,
         action=action,
         resource_type=resource_type,
         resource_id=resource_id,

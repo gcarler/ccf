@@ -56,7 +56,7 @@ export default function PrayerDetailPage() {
         <CrmShell
             breadcrumbs={[
                 { label: "CRM", icon: LayoutDashboard, href: "/plataforma/crm" },
-                { label: "Intercesion", icon: Heart, href: "/crm/prayers" },
+                { label: "Intercesion", icon: Heart, href: "/plataforma/crm/prayers" },
                 { label: prayer.requester_name, icon: User },
             ]}
         >
@@ -90,7 +90,7 @@ export default function PrayerDetailPage() {
                     </div>
 
                     <aside className="space-y-3">
-                        <div className="p-4 bg-slate-900 rounded-md text-white space-y-4">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] rounded-md text-[hsl(var(--text-primary))] space-y-4">
                             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
                                 <Sparkles size={14} /> AI Context
                             </div>

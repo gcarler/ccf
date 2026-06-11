@@ -15,7 +15,7 @@ import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 
 interface Props {
-    project_id: number;
+    project_id: string;
     isOpen: boolean;
     onClose: () => void;
 }

@@ -46,8 +46,8 @@ export default function MyCardPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
-                <Loader2 className="animate-spin text-primary" size={48} />
+            <div className="min-h-screen bg-[hsl(var(--bg-primary))] flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} />
                 <p className="text-slate-500 font-bold uppercase tracking-wide text-[10px]">Generando Credencial...</p>
             </div>
         );
@@ -55,7 +55,7 @@ export default function MyCardPage() {
 
     if (!member) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center space-y-3">
+            <div className="min-h-screen bg-[hsl(var(--bg-primary))] flex flex-col items-center justify-center p-4 text-center space-y-3">
                 <div className="p-4 bg-rose-500/10 rounded-full text-rose-500">
                     <ShieldCheck size={48} />
                 </div>
@@ -124,7 +124,7 @@ export default function MyCardPage() {
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'Consolidación', icon: Users }, { label: 'Mi carnet', icon: QrCode }]}
             rightActions={
-                <button className="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-lg text-[11px] font-bold text-white hover:bg-black transition-all">
+                <button className="flex items-center gap-2 bg-[hsl(var(--surface-1))] px-4 py-2 rounded-lg text-[11px] font-bold text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-primary))] transition-all">
                     <Share2 size={16} /> Compartir
                 </button>
             }

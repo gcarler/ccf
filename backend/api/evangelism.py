@@ -31,6 +31,7 @@ from backend.auth import (
 )
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
+from backend.services.messaging import get_messaging_gateway, MessagingGateway
 
 router = APIRouter()
 router.include_router(events_router)
@@ -454,9 +455,9 @@ async def send_crm_message(
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
+    gateway: MessagingGateway = Depends(get_messaging_gateway),
 ):
     _warn_deprecated_crm_alias("/api/evangelism/messaging/send", "/api/crm/messaging/send")
-    from backend.services.messaging import MessagingGateway
 
     persona_id = payload.get("persona_id")
     channel = _channel_label(payload.get("channel", "WhatsApp"))
@@ -485,7 +486,7 @@ async def send_crm_message(
             for persona in personas:
                 try:
                     if channel.lower() == "whatsapp":
-                        log = await MessagingGateway.send_whatsapp(
+                        log = await gateway.send_whatsapp(
                             db,
                             persona.id,
                             content,
@@ -494,7 +495,7 @@ async def send_crm_message(
                             external_id=campaign_id,
                         )
                     elif channel.lower() == "email":
-                        log = await MessagingGateway.send_email(
+                        log = await gateway.send_email(
                             db,
                             persona.id,
                             content,
@@ -503,7 +504,7 @@ async def send_crm_message(
                             external_id=campaign_id,
                         )
                     else:
-                        log = await MessagingGateway.send_sms(
+                        log = await gateway.send_sms(
                             db,
                             persona.id,
                             content,
@@ -544,21 +545,21 @@ async def send_crm_message(
             raise HTTPException(status_code=400, detail="persona_id and content required")
 
         if channel.lower() == "whatsapp":
-            log = await MessagingGateway.send_whatsapp(
+            log = await gateway.send_whatsapp(
                 db,
                 persona_id,
                 content,
                 current_user.id,
             )
         elif channel.lower() == "email":
-            log = await MessagingGateway.send_email(
+            log = await gateway.send_email(
                 db,
                 persona_id,
                 content,
                 current_user.id,
             )
         else:
-            log = await MessagingGateway.send_sms(
+            log = await gateway.send_sms(
                 db,
                 persona_id,
                 content,

@@ -17,12 +17,12 @@ import { useAuth } from '@/context/AuthContext';
 // TYPES
 // ─────────────────────────────────────────────────────────────────
 export interface TaskDetail {
-    id: number;
+    id: string;
     title: string;
     status: string;
     priority: string | null;
     due_date: string | null;
-    project_id: number;
+    project_id: string;
     project_title?: string;
     description?: string | null;
     done?: boolean;
@@ -32,7 +32,7 @@ interface TaskEditDrawerProps {
     task: TaskDetail | null;
     onClose: () => void;
     onTaskUpdated: (updatedTask: TaskDetail) => void;
-    onTaskDeleted: (taskId: number) => void;
+    onTaskDeleted: (taskId: string) => void;
     onTaskDuplicated?: (duplicatedTask: TaskDetail) => void;
 }
 
@@ -184,7 +184,7 @@ export default function TaskEditDrawer({
             setForm(duplicated);
             setDirty(false);
         } catch {
-            const duplicated = { ...form, id: Date.now(), title: `${form.title} (copia)` };
+            const duplicated = { ...form, id: `tmp_${Date.now()}`, title: `${form.title} (copia)` };
             onTaskDuplicated?.(duplicated);
             setForm(duplicated);
             setDirty(false);

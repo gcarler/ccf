@@ -453,7 +453,7 @@ export default function ConsolidationPipelinePage() {
 
                                         {/* SLA & Stats Sidebar */}
                                         <div className="space-y-3">
-                                            <div className="p-4 rounded-md bg-slate-900 text-white shadow-2xl relative overflow-hidden">
+                                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] shadow-2xl relative overflow-hidden">
                                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                                     <Clock size={80} />
                                                 </div>
