@@ -1,90 +1,64 @@
 # Plan de Acción para Producción — Proyecto CCF
 
-> Basado en la revisión de calidad del 2026-05-21.
-> Objetivo: Llevar la plataforma a un estado seguro y desplegable en producción.
+> Revisión original: 2026-05-21. Actualizado al estado real: 2026-06-10.
+> Stack: VPS directo (sin Docker/Kubernetes). FastAPI + PostgreSQL 15 + Next.js + nginx.
 
 ---
 
-## Fase 0: Correcciones de Seguridad Críticas (Día 1)
-*Debe hacerse antes de cualquier despliegue a producción.*
+## Fase 0: Correcciones de Seguridad Críticas ✅ COMPLETADA
 
-### 0.1 — Reducir expiración de tokens JWT
-**Archivos:** `backend/core/config.py:17-18`
+### 0.1 — Reducir expiración de tokens JWT ✅ HECHO
+**Archivos:** `backend/core/config.py:24-29`
 
-| Campo | Valor actual | Valor producción |
-|---|---|---|
-| `access_token_expire_minutes` | 5,256,000 (10 años) | **30** (30 minutos) |
-| `refresh_token_expire_days` | 3,650 (10 años) | **7** (7 días) |
+| Campo | Valor actual |
+|---|---|
+| `access_token_expire_minutes` | 15 min |
+| `refresh_token_expire_days` | 180 días (estilo Gmail) |
 
-El valor actual de 10 años para access token es una vulnerabilidad crítica: un token robado vale por una década. Implementar refresh token rotation (ya existe el endpoint `/auth/refresh`) mantiene sesiones largas de forma segura.
+Valores aplicados. Refresh token rotation disponible vía `/auth/refresh`.
 
-### 0.2 — Eliminar credenciales hardcodeadas
-**Archivo:** `backend/core/config.py:13`
+### 0.2 — Eliminar credenciales hardcodeadas ✅ HECHO
+**Archivo:** `backend/core/config.py:18-21`
 
-Reemplazar el default de `database_url`:
-- **Local:** usar variable de entorno obligatoria o default solo para SQLite en memoria
-- **Producción:** forzar lectura desde `.env` o secretos de Kubernetes
+Default actual es `sqlite:///./ccf_dev.db` (solo dev local). El validator bloquea SQLite en entornos `production`/`staging`. Producción lee `DATABASE_URL` desde `.env`.
 
-```python
-# Antes
-database_url: str = "postgresql+pg8000://postgres:admin123@localhost:5435/ccf_db"
+### 0.3 — Desactivar debug logging de autenticación ✅ HECHO
+**Archivo:** `backend/api/auth.py`
 
-# Después
-database_url: str = Field(default="sqlite:///./dev.db")  # Solo para dev local
-```
+No quedan logs `[AUTH DEBUG]` en auth.py. Logging de login usa nivel estándar sin exponer qué usuarios existen.
 
-### 0.3 — Desactivar debug logging de autenticación
-**Archivo:** `backend/api/auth.py:41-80`
+### 0.4 — Forzar `encryption_key` en producción ✅ HECHO
+**Archivo:** `backend/core/config.py:98-99`
 
-Los logs `[AUTH DEBUG]` revelan qué usuarios existen. Reemplazar con logging condicional:
+Validator activo: lanza `ValueError` si `ENCRYPTION_KEY` no está definida en entornos `production`/`prod`/`staging`.
 
-```python
-if settings.environment not in {"production", "prod", "staging"}:
-    log.info(f"Login attempt for: {form_data.username}")
-```
+### 0.5 — Email verification y password reset ✅ HECHO
+**Archivo:** `backend/api/auth.py`
 
-O mejor, migrar los logs sensibles a nivel `DEBUG` y configurar el handler de producción en WARNING+.
-
-### 0.4 — Forzar `encryption_key` en producción
-**Archivo:** `backend/core/config.py:16`
-
-Agregar validación en `validate_security_defaults`:
-```python
-if env in {"production", "prod", "staging"} and not self.encryption_key:
-    raise ValueError("ENCRYPTION_KEY must be set in production environments")
-```
-
-### 0.5 — Stub de email verification y password reset
-**Archivo:** `backend/api/auth.py:194-225`
-
-Opción A (rápida): Documentar que no están implementados y devolver error 501 Not Implemented.
-Opción B (completa): Implementar con un servicio de email (SendGrid, SES, o SMTP). Usar tablas de `verification_tokens` y `reset_tokens` con expiración.
+Endpoint `POST /verify-email` implementado. `backend/services/email` implementado con `render_verify_email`/`send_email`. Tablas `verification_tokens` y `reset_tokens` activas. Google OAuth retorna 501 si no está configurado (comportamiento documentado).
 
 ---
 
-## Fase 1: Endurecimiento de Configuración (Días 2-3)
+## Fase 1: Endurecimiento de Configuración
 
 ### 1.1 — Unificar driver de base de datos
-**Archivos:** `requirements.txt`, `deploy/helm/ccf/values.yaml`, `alembic.ini`
+**Archivos:** `requirements.txt`, `alembic.ini`
 
-Decidir entre `psycopg2` (maduro, recomendado para producción) o `pg8000` (pure-Python, más fácil en contenedores slim) y eliminar el otro. Consistencia en:
+La plataforma corre en VPS directo (sin Docker ni contenedores). El driver es `psycopg2` en producción.
 
-| Ubicación | Driver actual |
+| Ubicación | Driver |
 |---|---|
-| `requirements.txt` | Ambos |
-| `docker-compose.yml` | `pg8000` |
-| `backend.Dockerfile` | «libpq-dev» incluido (sugiere psycopg2) |
+| `requirements.txt` | `psycopg2-binary` (producción) |
 | `alembic.ini` | `psycopg2` |
-| `deploy/helm/*/values.yaml` | `psycopg2` |
+| Dev local | SQLite vía `ccf_dev.db` |
 
-**Recomendación:** Usar `psycopg2` en producción (soporte nativo de pool, madurez) y `pg8000` como alternativa ligera para CI.
+**Acción pendiente:** confirmar que `requirements.txt` no incluye `pg8000` innecesariamente y que `alembic.ini` apunta al `DATABASE_URL` correcto desde `.env`.
 
 ### 1.2 — Endurecer defaults de Settings
 **Archivo:** `backend/core/config.py`
 
-- `access_token_cookie_secure` debe ser `True` por defecto (solo False en local)
-- Verificar que `access_token_cookie_name` tenga un valor por entorno
-- Validar que `redis_url` no sea localhost en producción
+- `access_token_cookie_secure` es `False` por defecto — debe sobreescribirse a `True` en `.env` de producción
+- `redis_url` por defecto apunta a `localhost:6379` — validar que `.env` de producción lo sobreescriba si Redis corre en otra interfaz
 
 ### 1.3 — Verificar que .env esté en .gitignore y exista .env.example completo
 **Archivo:** `.gitignore`
@@ -121,11 +95,8 @@ scripts/
 legacy/          → scripts obsoletos o de una sola ejecución
 ```
 
-### 2.3 — Eliminar `ccf_v2.db.bak` del repositorio
-```bash
-git rm --cached ccf_v2.db.bak
-echo "*.db.bak" >> .gitignore
-```
+### 2.3 — Mantener archivos SQLite fuera del repositorio
+`ccf_dev.db` es la base de datos local de desarrollo (SQLite). Verificar que `.gitignore` incluya `*.db` y `*.db.bak` para que no se cometan al repositorio.
 
 ### 2.4 — Agregar archivos .log al .gitignore y limpiar existentes
 ```bash
@@ -142,23 +113,12 @@ Agregar reglas faltantes:
 
 ---
 
-## Fase 3: Infraestructura y Despliegue (Días 7-9)
+## Fase 3: Infraestructura y Despliegue
 
-### 3.1 — Hacer Kafka/Redpanda opcional
-**Impacto:** Simplifica drásticamente el despliegue.
+### 3.1 — EventBus Redis/Kafka opcional ✅ HECHO
+**Archivo:** `backend/core/events.py`
 
-Crear un `EventBus` abstracto con implementación Redis como default y Kafka como alternativa:
-
-```python
-class EventBus:
-    async def publish(self, channel: str, data: dict): ...
-    async def subscribe(self, channel: str): ...
-
-class RedisEventBus(EventBus): ...   # Usa Redis Streams
-class KafkaEventBus(EventBus): ...   # Usa Redpanda/Kafka
-```
-
-En `docker-compose.yml`, hacer que `redpanda` sea un servicio opcional (comentado por defecto).
+`EventBus` abstracto implementado con prioridad Redis > Kafka > no-op. Kafka es opcional: se activa solo si `KAFKA_BOOTSTRAP_SERVERS` está definido y `kafka-python` está instalado. Sin Redis ni Kafka, corre en modo no-op sin error.
 
 ### 3.2 — Migrar a driver async de SQLAlchemy
 **Archivo:** `backend/core/database.py`
@@ -186,24 +146,19 @@ def rate_limiter(limit: int = 5, window_seconds: int = 60):
         # ... lógica actual
 ```
 
-### 3.4 — Actualizar Helm charts con valores reales
-**Archivo:** `deploy/helm/ccf/values.yaml`
+### 3.4 — Migraciones antes del deploy (VPS)
+La plataforma NO usa Kubernetes ni Helm. El procedimiento de deploy es VPS directo.
 
-- Reemplazar `app.example.com` por el dominio real
-- Verificar que los secrets tengan una fuente real (Vault, External Secrets Operator, o values reales cifrados)
-- Agregar `PodDisruptionBudget` y `topologySpreadConstraints` para alta disponibilidad
-- Agregar probes de readiness/liveness explícitas (el backend ya tiene `/healthz`)
-
-### 3.5 — Agregar contenedor de migrations en Helm
-**Archivo:** `deploy/helm/ccf/templates/migration-job.yaml`
-
-Ya existe el template. Verificar que ejecute Alembic como init container antes del backend:
-```yaml
-initContainers:
-  - name: run-migrations
-    image: {{ .Values.backend.image }}
-    command: ["alembic", "upgrade", "head"]
+Antes de cada deploy que incluya migraciones:
+```bash
+# En el VPS, antes de reiniciar la plataforma:
+cd /root/ccf
+source venv/bin/activate
+alembic upgrade head
+./stopccf && ./startccf
 ```
+
+Ver procedimiento completo en `docs/RUNBOOK_PRODUCCION.md`.
 
 ---
 
@@ -256,29 +211,29 @@ Ya existe Storybook configurado y Playwright. Agregar pruebas visuales (`storybo
 
 ---
 
-## Resumen de Prioridades
+## Resumen de Prioridades (Estado 2026-06-10)
 
-| Fase | Tareas | Esfuerzo | Dependencia | ¿Bloqueante para producción? |
-|---|---|---|---|---|
-| **Fase 0** | 5 tareas de seguridad | 1 día | Ninguna | **SÍ** |
-| **Fase 1** | 3 tareas de configuración | 2 días | Fase 0 | SÍ |
-| **Fase 2** | 5 tareas de calidad | 3 días | Fase 0 | Parcial |
-| **Fase 3** | 5 tareas de infra | 3 días | Fase 1 | Parcial |
-| **Fase 4** | 3 tareas de tests | 2 días | Fase 0-2 | No, pero recomendado |
-| **Fase 5** | 3 tareas de deuda técnica | 3 días | Fase 2 | No |
-
-**Total estimado:** 14 días hábiles (~3 semanas)
+| Fase | Estado | Pendiente |
+|---|---|---|
+| **Fase 0** — Seguridad crítica | ✅ Completada | — |
+| **Fase 1** — Configuración | Parcial | 1.1 verificar `requirements.txt`; 1.2 `.env` prod con `cookie_secure=True` |
+| **Fase 2** — Calidad de código | Parcial | 2.1 TypeScript strict; 2.4-2.5 gitignore limpio |
+| **Fase 3** — Infraestructura | Parcial | 3.2 async SQLAlchemy; 3.3 rate limiter multi-worker |
+| **Fase 4** — Tests y QA gates | Pendiente | Tests de seguridad, refresh token rotation |
+| **Fase 5** — Deuda técnica | Pendiente | Ver `docs/PLAN_SANEAMIENTO_DEUDA_LEGACY_CCF.md` |
 
 ---
 
-## Pipeline de Release
+## Pipeline de Release (VPS)
 
 ```
-Fase 0 → Fase 1 → [TEST] → Fase 3 → [STAGING] → Fase 4 → PRODUCTION
-                     ↓
-                  Fase 2 (paralelo)
-                     ↓
-                  Fase 5 (post-producción)
+git pull origin main
+↓
+alembic upgrade head   (si hay migraciones)
+↓
+./stopccf && ./startccf
+↓
+curl -f http://127.0.0.1:8000/healthz
 ```
 
-**Recomendación:** Hacer Fase 0 + Fase 1 como hotfix branch, desplegar a staging, validar, y luego producción. El resto puede hacerse en paralelo o después del lanzamiento inicial.
+Ver procedimiento completo (incluyendo rollback) en `docs/RUNBOOK_PRODUCCION.md`.

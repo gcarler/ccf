@@ -20,353 +20,353 @@ import { useCallback,useEffect,useMemo,useState } from 'react';
 import { toast } from 'sonner';
 
 export interface EvangelismStrategy {
-    id: string;
-    name: string;
-    description: string;
-    codigo?: string;
-    clase_raiz?: string;
-    activa: boolean;
-    status: 'active' | 'pending' | 'done';
-    strategy_type: string;
-    start_date?: string | null;
-    end_date?: string | null;
-    created_at: string;
-    updated_at: string;
+ id: string;
+ name: string;
+ description: string;
+ codigo?: string;
+ clase_raiz?: string;
+ activa: boolean;
+ status: 'active' | 'pending' | 'done';
+ strategy_type: string;
+ start_date?: string | null;
+ end_date?: string | null;
+ created_at: string;
+ updated_at: string;
 }
 
 export default function EvangelismClient() {
-    const { token } = useAuth();
-    const router = useRouter();
-    const { viewType, setViewType } = useViewType('evangelism_dashboard', 'table');
-    const [data, setData] = useState<EvangelismStrategy[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState('');
-    const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+ const { token } = useAuth();
+ const router = useRouter();
+ const { viewType, setViewType } = useViewType('evangelism_dashboard', 'table');
+ const [data, setData] = useState<EvangelismStrategy[]>([]);
+ const [loading, setLoading] = useState(true);
+ const [search, setSearch] = useState('');
+ const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
-    const fetchStrategies = useCallback(async () => {
-        if (!token) return;
-        setLoading(true);
-        try {
-            const result = await apiFetch<EvangelismStrategy[]>('/evangelism/strategies/', { token });
-            setData(Array.isArray(result) ? result : []);
-        } catch {
-            toast.error('Error al cargar estrategias de evangelismo');
-            setData([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [token]);
+ const fetchStrategies = useCallback(async () => {
+ if (!token) return;
+ setLoading(true);
+ try {
+ const result = await apiFetch<EvangelismStrategy[]>('/evangelism/strategies/', { token });
+ setData(Array.isArray(result) ? result : []);
+ } catch {
+ toast.error('Error al cargar estrategias de evangelismo');
+ setData([]);
+ } finally {
+ setLoading(false);
+ }
+ }, [token]);
 
-    useEffect(() => {
-        fetchStrategies();
-    }, [fetchStrategies]);
+ useEffect(() => {
+ fetchStrategies();
+ }, [fetchStrategies]);
 
-    // Reactively refresh when a new strategy is created globally
-    useEffect(() => {
-        const handleCreated = () => {
-            fetchStrategies();
-        };
-        window.addEventListener('evangelism-strategy-created', handleCreated);
-        return () => {
-            window.removeEventListener('evangelism-strategy-created', handleCreated);
-        };
-    }, [fetchStrategies]);
+ // Reactively refresh when a new strategy is created globally
+ useEffect(() => {
+ const handleCreated = () => {
+ fetchStrategies();
+ };
+ window.addEventListener('evangelism-strategy-created', handleCreated);
+ return () => {
+ window.removeEventListener('evangelism-strategy-created', handleCreated);
+ };
+ }, [fetchStrategies]);
 
-    // Handle closing RightPanel (removed — now navigates to detail page)
+ // Handle closing RightPanel (removed — now navigates to detail page)
 
-    const filteredData = useMemo(() => {
-        if (!search) return data;
-        const term = search.toLowerCase();
-        return data.filter(item => 
-            item.name.toLowerCase().includes(term) ||
-            (item.description && item.description.toLowerCase().includes(term)) ||
-            (item.strategy_type && item.strategy_type.toLowerCase().includes(term))
-        );
-    }, [data, search]);
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const term = search.toLowerCase();
+ return data.filter(item => 
+ item.name.toLowerCase().includes(term) ||
+ (item.description && item.description.toLowerCase().includes(term)) ||
+ (item.strategy_type && item.strategy_type.toLowerCase().includes(term))
+ );
+ }, [data, search]);
 
-    const handleAddItem = () => {
-        setIsCreateDrawerOpen(true);
-    };
+ const handleAddItem = () => {
+ setIsCreateDrawerOpen(true);
+ };
 
-    const handleSelectStrategy = (strat: EvangelismStrategy) => {
-        router.push(`/plataforma/evangelism/strategies/${strat.id}`);
-    };
+ const handleSelectStrategy = (strat: EvangelismStrategy) => {
+ router.push(`/plataforma/evangelism/strategies/${strat.id}`);
+ };
 
-    const statusColors = {
-        pending: '#F59E0B', // amber-500
-        active: '#2563EB', // blue-600
-        done: '#10B981', // emerald-500
-    };
+ const statusColors = {
+ pending: '#F59E0B', // amber-500
+ active: '#2563EB', // blue-600
+ done: '#10B981', // emerald-500
+ };
 
-    const statusLabels = {
-        pending: 'No iniciada',
-        active: 'Iniciada',
-        done: 'Terminada',
-    };
+ const statusLabels = {
+ pending: 'No iniciada',
+ active: 'Iniciada',
+ done: 'Terminada',
+ };
 
-    const formatDate = (dateStr: string | null | undefined) => {
-        if (!dateStr) return 'Sin fecha';
-        try {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-        } catch {
-            return dateStr;
-        }
-    };
+ const formatDate = (dateStr: string | null | undefined) => {
+ if (!dateStr) return 'Sin fecha';
+ try {
+ const date = new Date(dateStr);
+ return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+ } catch {
+ return dateStr;
+ }
+ };
 
-    return (
-        <ModuleErrorBoundary moduleName="Evangelismo">
-            <EvangelismShell
-                breadcrumbs={[
-                    { label: 'Evangelismo', icon: Flame },
-                    { label: 'Estrategias' }
-                ]}
-                viewOptions={OPERATIONAL_VIEWS}
-                viewType={viewType}
-                onViewChange={setViewType}
-            onSearch={setSearch}
-            rightActions={
-                <button
-                    onClick={handleAddItem}
-                    className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-[7px] transition-all shadow-sm"
-                >
-                    <Plus size={12} />
-                    Crear Estrategia
-                </button>
-            }
-        >
-            <div className="h-full flex flex-col relative">
-                {loading ? (
-                    <div className="p-4 space-y-4">
-                        {[1, 2, 3].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
-                    </div>
-                ) : filteredData.length === 0 ? (
-                    <EmptyState
-                        title="No hay estrategias"
-                        description="Las estrategias te permiten planificar campañas de alcance, consolidación y discipulado en tu comunidad."
-                        icon={Flame}
-                        onAction={handleAddItem}
-                        actionLabel="Crear Estrategia"
-                    />
-                ) : (
-                    <div className="pb-16 flex-1">
-                        {/* ── TABLE VIEW ─────────────────────────────── */}
-                        {viewType === 'table' && (
-                            <div className="overflow-x-auto border border-slate-200 dark:border-white/[0.06] rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/10">
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 w-16">ID</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Estrategia</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 w-32">Estado</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 w-44">Tipo</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 w-40">Inicio</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 w-40">Fin</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 w-12"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04]">
-                                        {filteredData.map((strategy, idx) => (
-                                            <motion.tr 
-                                                key={strategy.id}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: idx * 0.03, duration: 0.2 }}
-                                                onClick={() => handleSelectStrategy(strategy)}
-                                                className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] cursor-pointer group transition-colors"
-                                            >
-                                                <td className="px-3 py-1.5 text-[12px] font-semibold text-slate-400 dark:text-slate-600">
-                                                    {strategy.codigo ? strategy.codigo : `#${strategy.id}`}
-                                                </td>
-                                                <td className="px-3 py-1.5">
-                                                    <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">
-                                                        {strategy.name}
-                                                    </div>
-                                                    {strategy.description && (
-                                                        <div className="text-[11px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[300px] mt-0.5">
-                                                            {strategy.description}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-1.5">
-                                                    <span 
-                                                        className="px-2.5 py-1 rounded-full text-[10px] font-bold"
-                                                        style={{ 
-                                                            backgroundColor: `${statusColors[strategy.status]}12`, 
-                                                            color: statusColors[strategy.status] 
-                                                        }}
-                                                    >
-                                                        {statusLabels[strategy.status]}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300">
-                                                    {strategy.strategy_type || 'General'}
-                                                </td>
-                                                <td className="px-3 py-1.5 text-[12px] text-slate-500 dark:text-slate-400 font-medium">
-                                                    {formatDate(strategy.start_date)}
-                                                </td>
-                                                <td className="px-3 py-1.5 text-[12px] text-slate-500 dark:text-slate-400 font-medium">
-                                                    {formatDate(strategy.end_date)}
-                                                </td>
-                                                <td className="px-3 py-1.5 text-right">
-                                                    <ChevronRight size={16} className="text-slate-300 group-hover:text-slate-600 dark:group-hover:text-white transition-all transform group-hover:translate-x-0.5" />
-                                                </td>
-                                            </motion.tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+ return (
+ <ModuleErrorBoundary moduleName="Evangelismo">
+ <EvangelismShell
+ breadcrumbs={[
+ { label: 'Evangelismo', icon: Flame },
+ { label: 'Estrategias' }
+ ]}
+ viewOptions={OPERATIONAL_VIEWS}
+ viewType={viewType}
+ onViewChange={setViewType}
+ onSearch={setSearch}
+ rightActions={
+ <button
+ onClick={handleAddItem}
+ className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-[7px] transition-all shadow-sm"
+ >
+ <Plus size={12} />
+ Crear Estrategia
+ </button>
+ }
+ >
+ <div className="h-full flex flex-col relative">
+ {loading ? (
+ <div className="p-4 space-y-4">
+ {[1, 2, 3].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
+ </div>
+ ) : filteredData.length === 0 ? (
+ <EmptyState
+ title="No hay estrategias"
+ description="Las estrategias te permiten planificar campañas de alcance, consolidación y discipulado en tu comunidad."
+ icon={Flame}
+ onAction={handleAddItem}
+ actionLabel="Crear Estrategia"
+ />
+ ) : (
+ <div className="pb-16 flex-1">
+ {/* ── TABLE VIEW ─────────────────────────────── */}
+ {viewType === 'table' && (
+ <div className="overflow-x-auto border border-[hsl(var(--border-primary))] dark:border-white/[0.06] rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
+ <table className="w-full text-left border-collapse">
+ <thead>
+ <tr className="border-b border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))]/50 dark:bg-black/10">
+ <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-16">ID</th>
+ <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Estrategia</th>
+ <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-32">Estado</th>
+ <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-44">Tipo</th>
+ <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-40">Inicio</th>
+ <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-40">Fin</th>
+ <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-12"></th>
+ </tr>
+ </thead>
+ <tbody className="divide-y divide-[hsl(var(--border-primary))]">
+ {filteredData.map((strategy, idx) => (
+ <motion.tr 
+ key={strategy.id}
+ initial={{ opacity: 0, y: 10 }}
+ animate={{ opacity: 1, y: 0 }}
+ transition={{ delay: idx * 0.03, duration: 0.2 }}
+ onClick={() => handleSelectStrategy(strategy)}
+ className="hover:bg-[hsl(var(--bg-muted))] cursor-pointer group transition-colors"
+ >
+ <td className="px-3 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+ {strategy.codigo ? strategy.codigo : `#${strategy.id}`}
+ </td>
+ <td className="px-3 py-1.5">
+ <div className="text-[12px] font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">
+ {strategy.name}
+ </div>
+ {strategy.description && (
+ <div className="text-[11px] text-[hsl(var(--text-secondary))] font-medium truncate max-w-[300px] mt-0.5">
+ {strategy.description}
+ </div>
+ )}
+ </td>
+ <td className="px-3 py-1.5">
+ <span 
+ className="px-2.5 py-1 rounded-full text-[10px] font-bold"
+ style={{ 
+ backgroundColor: `${statusColors[strategy.status]}12`, 
+ color: statusColors[strategy.status] 
+ }}
+ >
+ {statusLabels[strategy.status]}
+ </span>
+ </td>
+ <td className="px-3 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))]">
+ {strategy.strategy_type || 'General'}
+ </td>
+ <td className="px-3 py-1.5 text-[12px] text-[hsl(var(--text-secondary))] font-medium">
+ {formatDate(strategy.start_date)}
+ </td>
+ <td className="px-3 py-1.5 text-[12px] text-[hsl(var(--text-secondary))] font-medium">
+ {formatDate(strategy.end_date)}
+ </td>
+ <td className="px-3 py-1.5 text-right">
+ <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-white transition-all transform group-hover:translate-x-0.5" />
+ </td>
+ </motion.tr>
+ ))}
+ </tbody>
+ </table>
+ </div>
+ )}
 
-                        {/* ── BOARD VIEW ─────────────────────────────── */}
-                        {viewType === 'board' && (
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 h-full min-h-48 items-start">
-                                {/* Columns map */}
-                                {(['pending', 'active', 'done'] as const).map(colStatus => {
-                                    const colItems = filteredData.filter(item => item.status === colStatus);
-                                    return (
-                                        <div 
-                                            key={colStatus}
-                                            className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-lg p-4 flex flex-col max-h-[80vh] overflow-y-auto scrollbar-thin"
-                                        >
-                                            <header className="flex items-center justify-between mb-4 px-2 shrink-0">
-                                                <div className="flex items-center gap-2">
-                                                    <span 
-                                                        className="size-2.5 rounded-full" 
-                                                        style={{ backgroundColor: statusColors[colStatus] }}
-                                                    />
-                                                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                                                        {statusLabels[colStatus]}
-                                                    </h3>
-                                                </div>
-                                                <span className="font-semibold bg-slate-200/50 dark:bg-white/5 px-2 py-0.5 rounded-md text-slate-500">
-                                                    {colItems.length}
-                                                </span>
-                                            </header>
+ {/* ── BOARD VIEW ─────────────────────────────── */}
+ {viewType === 'board' && (
+ <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 h-full min-h-48 items-start">
+ {/* Columns map */}
+ {(['pending', 'active', 'done'] as const).map(colStatus => {
+ const colItems = filteredData.filter(item => item.status === colStatus);
+ return (
+ <div 
+ key={colStatus}
+ className="bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 flex flex-col max-h-[80vh] overflow-y-auto scrollbar-thin"
+ >
+ <header className="flex items-center justify-between mb-4 px-2 shrink-0">
+ <div className="flex items-center gap-2">
+ <span 
+ className="size-2.5 rounded-full" 
+ style={{ backgroundColor: statusColors[colStatus] }}
+ />
+ <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))]">
+ {statusLabels[colStatus]}
+ </h3>
+ </div>
+ <span className="font-semibold bg-[hsl(var(--bg-muted))] px-2 py-0.5 rounded-md text-[hsl(var(--text-secondary))]">
+ {colItems.length}
+ </span>
+ </header>
 
-                                            <div className="space-y-4">
-                                                {colItems.map((strategy) => (
-                                                    <motion.div
-                                                        key={strategy.id}
-                                                        initial={{ opacity: 0, scale: 0.96 }}
-                                                        animate={{ opacity: 1, scale: 1 }}
-                                                        transition={{ duration: 0.2 }}
-                                                        onClick={() => handleSelectStrategy(strategy)}
-                                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99] border-t-4"
-                                                        style={{ borderTopColor: statusColors[strategy.status] }}
-                                                    >
-                                                        <div className="flex items-start justify-between gap-4">
-                                                            <h4 className="text-[13px] font-bold text-slate-900 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">
-                                                                {strategy.name}
-                                                            </h4>
-                                                            <span className="font-semibold text-slate-400 shrink-0">
-                                                                {strategy.codigo ? strategy.codigo : `#${strategy.id}`}
-                                                            </span>
-                                                        </div>
+ <div className="space-y-4">
+ {colItems.map((strategy) => (
+ <motion.div
+ key={strategy.id}
+ initial={{ opacity: 0, scale: 0.96 }}
+ animate={{ opacity: 1, scale: 1 }}
+ transition={{ duration: 0.2 }}
+ onClick={() => handleSelectStrategy(strategy)}
+ className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99] border-t-4"
+ style={{ borderTopColor: statusColors[strategy.status] }}
+ >
+ <div className="flex items-start justify-between gap-4">
+ <h4 className="text-[13px] font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">
+ {strategy.name}
+ </h4>
+ <span className="font-semibold text-[hsl(var(--text-secondary))] shrink-0">
+ {strategy.codigo ? strategy.codigo : `#${strategy.id}`}
+ </span>
+ </div>
 
-                                                        {strategy.description && (
-                                                            <p className="text-[11px] text-slate-500 mt-2 font-medium line-clamp-2 leading-relaxed">
-                                                                {strategy.description}
-                                                            </p>
-                                                        )}
+ {strategy.description && (
+ <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-2 font-medium line-clamp-2 leading-relaxed">
+ {strategy.description}
+ </p>
+ )}
 
-                                                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex flex-wrap gap-2 items-center justify-between">
-                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-semibold uppercase tracking-wide bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400">
-                                                                {strategy.strategy_type || 'General'}
-                                                            </span>
-                                                            
-                                                            <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold">
-                                                                <Calendar size={11} />
-                                                                <span>{formatDate(strategy.start_date).split(' ')[0]}</span>
-                                                                <span>-</span>
-                                                                <span>{formatDate(strategy.end_date).split(' ')[0]}</span>
-                                                            </div>
-                                                        </div>
-                                                    </motion.div>
-                                                ))}
+ <div className="mt-4 pt-3 border-t border-[hsl(var(--border-primary))] flex flex-wrap gap-2 items-center justify-between">
+ <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-semibold uppercase tracking-wide bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
+ {strategy.strategy_type || 'General'}
+ </span>
+ 
+ <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))] font-bold">
+ <Calendar size={11} />
+ <span>{formatDate(strategy.start_date).split(' ')[0]}</span>
+ <span>-</span>
+ <span>{formatDate(strategy.end_date).split(' ')[0]}</span>
+ </div>
+ </div>
+ </motion.div>
+ ))}
 
-                                                {colItems.length === 0 && (
-                                                    <div className="py-8 text-center border border-dashed border-slate-200 dark:border-white/5 rounded-lg text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                                                        Vacío
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+ {colItems.length === 0 && (
+ <div className="py-8 text-center border border-dashed border-[hsl(var(--border-primary))] rounded-lg text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ Vacío
+ </div>
+ )}
+ </div>
+ </div>
+ );
+ })}
+ </div>
+ )}
 
-                        {/* ── LIST VIEW ─────────────────────────────── */}
-                        {viewType === 'list' && (
+ {/* ── LIST VIEW ─────────────────────────────── */}
+ {viewType === 'list' && (
  <div className="space-y-4 w-full">
-                                {filteredData.map((strategy, idx) => (
-                                    <motion.div
-                                        key={strategy.id}
-                                        initial={{ opacity: 0, y: 12 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.03 }}
-                                        onClick={() => handleSelectStrategy(strategy)}
-                                        className="group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer flex items-center justify-between gap-3"
-                                    >
-                                        <div className="flex items-start gap-4 flex-1 min-w-0">
-                                            <div 
-                                                className="size-10 rounded-md flex items-center justify-center shrink-0"
-                                                style={{ backgroundColor: `${statusColors[strategy.status]}12`, color: statusColors[strategy.status] }}
-                                            >
-                                                <Flame size={20} />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-3">
-                                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">
-                                                        {strategy.name}
-                                                    </h3>
-                                                    <span className="font-semibold bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded">
-                                                        #{strategy.id}
-                                                    </span>
-                                                </div>
-                                                {strategy.description && (
-                                                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-medium line-clamp-1">
-                                                        {strategy.description}
-                                                    </p>
-                                                )}
-                                                <div className="flex items-center gap-4 mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                                    <span>Tipo: {strategy.strategy_type || 'General'}</span>
-                                                    <span>•</span>
-                                                    <span>Inicio: {formatDate(strategy.start_date)}</span>
-                                                    <span>•</span>
-                                                    <span>Fin: {formatDate(strategy.end_date)}</span>
-                                                </div>
-                                            </div>
-                                        </div>
+ {filteredData.map((strategy, idx) => (
+ <motion.div
+ key={strategy.id}
+ initial={{ opacity: 0, y: 12 }}
+ animate={{ opacity: 1, y: 0 }}
+ transition={{ delay: idx * 0.03 }}
+ onClick={() => handleSelectStrategy(strategy)}
+ className="group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer flex items-center justify-between gap-3"
+ >
+ <div className="flex items-start gap-4 flex-1 min-w-0">
+ <div 
+ className="size-10 rounded-md flex items-center justify-center shrink-0"
+ style={{ backgroundColor: `${statusColors[strategy.status]}12`, color: statusColors[strategy.status] }}
+ >
+ <Flame size={20} />
+ </div>
+ <div className="min-w-0 flex-1">
+ <div className="flex items-center gap-3">
+ <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">
+ {strategy.name}
+ </h3>
+ <span className="font-semibold bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] px-2 py-0.5 rounded">
+ #{strategy.id}
+ </span>
+ </div>
+ {strategy.description && (
+ <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1 font-medium line-clamp-1">
+ {strategy.description}
+ </p>
+ )}
+ <div className="flex items-center gap-4 mt-2 text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wider">
+ <span>Tipo: {strategy.strategy_type || 'General'}</span>
+ <span>•</span>
+ <span>Inicio: {formatDate(strategy.start_date)}</span>
+ <span>•</span>
+ <span>Fin: {formatDate(strategy.end_date)}</span>
+ </div>
+ </div>
+ </div>
 
-                                        <div className="flex items-center gap-4">
-                                            <span 
-                                                className="px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0"
-                                                style={{ 
-                                                    backgroundColor: `${statusColors[strategy.status]}12`, 
-                                                    color: statusColors[strategy.status] 
-                                                }}
-                                            >
-                                                {statusLabels[strategy.status]}
-                                            </span>
-                                            <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-600 dark:group-hover:text-white transition-all transform group-hover:translate-x-0.5" />
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
+ <div className="flex items-center gap-4">
+ <span 
+ className="px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0"
+ style={{ 
+ backgroundColor: `${statusColors[strategy.status]}12`, 
+ color: statusColors[strategy.status] 
+ }}
+ >
+ {statusLabels[strategy.status]}
+ </span>
+ <ChevronRight size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-white transition-all transform group-hover:translate-x-0.5" />
+ </div>
+ </motion.div>
+ ))}
+ </div>
+ )}
+ </div>
+ )}
+ </div>
 
-            {/* ── Strategy Creation Drawer ── */}
-            <StrategyCreationDrawer
-                isOpen={isCreateDrawerOpen}
-                onClose={() => setIsCreateDrawerOpen(false)}
-                onCreated={fetchStrategies}
-            />
-        </EvangelismShell>
-        </ModuleErrorBoundary>
-    );
+ {/* ── Strategy Creation Drawer ── */}
+ <StrategyCreationDrawer
+ isOpen={isCreateDrawerOpen}
+ onClose={() => setIsCreateDrawerOpen(false)}
+ onCreated={fetchStrategies}
+ />
+ </EvangelismShell>
+ </ModuleErrorBoundary>
+ );
 }

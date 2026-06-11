@@ -359,6 +359,7 @@ class SesionGrupo(Base):
     tema_estudio = Column(String(200), nullable=True)
     notas_lider = Column(Text, nullable=True)
     offering_amount = Column(Numeric(12, 2), nullable=True)
+    season_id = Column(Integer, ForeignKey("campaign_seasons.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -372,14 +373,6 @@ class SesionGrupo(Base):
     topic = synonym("tema_estudio")
     cancellation_reason = synonym("motivo_cancelacion")
     report_notes = synonym("notas_lider")
-
-    @property
-    def season_id(self):
-        return getattr(self, "_season_id", None)
-
-    @season_id.setter
-    def season_id(self, value):
-        self._season_id = value
 
     @property
     def season(self):
@@ -426,7 +419,6 @@ class SesionGrupo(Base):
         self._report_deadline = value
 
     def __init__(self, **kwargs):
-        season_id = kwargs.pop("season_id", None)
         offering_amount = kwargs.pop("offering_amount", None)
         kwargs.pop("reported_by_persona_id", None)
         kwargs.pop("reported_at", None)
@@ -434,8 +426,6 @@ class SesionGrupo(Base):
         kwargs.pop("novelty_detail", None)
         report_deadline = kwargs.pop("report_deadline", None)
         super().__init__(**kwargs)
-        if season_id is not None:
-            self._season_id = season_id
         if offering_amount is not None:
             self._offering_amount = offering_amount
         if report_deadline is not None:
