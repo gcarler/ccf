@@ -251,13 +251,15 @@ export default function StrategyDetailPage() {
     const [memberSplitHeight, setMemberSplitHeight] = useState(200);
     const memberSplitRef = useRef<HTMLDivElement>(null);
 
-    const handleMemberSplitDrag = (e: React.MouseEvent) => {
+    const handleMemberSplitDrag = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         const startY = e.clientY;
-        const startHeight = memberSplitHeight;
+        const startHeight = memberSplitRef.current
+            ? memberSplitRef.current.querySelector<HTMLDivElement>(':first-child')?.offsetHeight ?? 200
+            : 200;
         const onMouseMove = (ev: MouseEvent) => {
             const containerH = memberSplitRef.current?.clientHeight ?? 600;
-            const next = Math.max(60, Math.min(startHeight + ev.clientY - startY, containerH - 140));
+            const next = Math.max(80, Math.min(startHeight + ev.clientY - startY, containerH - 140));
             setMemberSplitHeight(next);
         };
         const onMouseUp = () => {
@@ -266,7 +268,7 @@ export default function StrategyDetailPage() {
         };
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
-    };
+    }, []);
 
     // Sessions
     const [sessions, setSessions] = useState<SessionRow[]>([]);
@@ -541,6 +543,7 @@ export default function StrategyDetailPage() {
         setIsMemberDrawerOpen(true);
         setMemberSearch('');
         setAllMembers([]);
+        setMemberSplitHeight(200);
         try {
             const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${group.id}`, { token });
             setGroupMembers(house?.base_attendees?.map((a: any) => ({
