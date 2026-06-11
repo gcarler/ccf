@@ -44,12 +44,12 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
         tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
         activo=True,
     )
-    db.add(pipeline)
     try:
-        db.flush()
+        sp = db.begin_nested()  # SAVEPOINT — no afecta la transacción exterior
+        db.add(pipeline)
+        sp.commit()
     except IntegrityError:
-        db.rollback()
-        # Race condition: another request created the pipeline first
+        sp.rollback()  # ROLLBACK TO SAVEPOINT — persona/participante intactos
         pipeline = (
             db.query(PipelineCRM)
             .filter(
@@ -59,17 +59,9 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
             )
             .first()
         )
-        if pipeline:
-            return pipeline
-        # If still missing, re-add
-        pipeline = PipelineCRM(
-            sede_id=sede_id,
-            nombre="Nuevos Visitantes",
-            tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
-            activo=True,
-        )
-        db.add(pipeline)
-        db.flush()
+        if not pipeline:
+            logger.error("Pipeline race condition: still missing after rollback to savepoint (sede=%s)", sede_id)
+            return None
 
     etapa = EtapaPipeline(
         pipeline_id=pipeline.id,

@@ -31,6 +31,7 @@ Copy,
 Flame,
 FolderOpen,
 Home,
+Loader2,
 Plus,
 Save,
 Search,
@@ -762,7 +763,7 @@ export default function StrategyDetailPage() {
  if (!attendanceSession) return;
  setSavingNewVisitor(true);
  try {
- const res = await apiFetch<{ status: string; persona_id: string }>('/evangelism/faro/visitors', {
+ const res = await apiFetch<{ status: string; persona_id: string; first_name?: string | null; last_name?: string | null }>('/evangelism/faro/visitors', {
  method: 'POST', token,
  body: {
  first_name: newVisitorForm.first_name || null,
@@ -775,15 +776,15 @@ export default function StrategyDetailPage() {
  session_id: attendanceSession.id,
  },
  });
- const displayName = [newVisitorForm.first_name, newVisitorForm.last_name].filter(Boolean).join(' ') || 'Visitante';
+ const realName = [res.first_name, res.last_name].filter(Boolean).join(' ') || 'Visitante';
  if (res.status === 'duplicate') {
- toast.info(`Ya existe una persona con ese teléfono (${displayName})`);
+ toast.info(`Ya existe una persona con ese teléfono: ${realName}`);
  } else {
- toast.success(`Visitante "${displayName}" registrado`);
+ toast.success(`Visitante "${realName}" registrado`);
  }
  setAttendanceMembers(prev => [...prev, {
  persona_id: res.persona_id,
- name: displayName,
+ name: realName,
  role: 'visitante',
  role_label: 'Visitante',
  status: 'first_time',
@@ -1994,7 +1995,7 @@ export default function StrategyDetailPage() {
  className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
  <button onClick={handleCreateGroup} disabled={groupSaving || !groupForm.name.trim()}
  className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
- {groupSaving ? <><Sparkles size={14} className="animate-spin" />Creando...</> : <><Plus size={14} />Crear Grupo</>}
+ {groupSaving ? <><Loader2 size={14} className="animate-spin" />Creando...</> : <><Plus size={14} />Crear Grupo</>}
  </button>
  </>}>
  <div className="space-y-4">
@@ -2131,7 +2132,7 @@ export default function StrategyDetailPage() {
  className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
  <button onClick={handleSaveMembers} disabled={memberSaving}
  className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
- {memberSaving ? <><Sparkles size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar ({groupMembers.length})</>}
+ {memberSaving ? <><Loader2 size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar ({groupMembers.length})</>}
  </button>
  </>}>
  <div ref={memberSplitRef} className="flex flex-col" style={{ height: 'calc(100vh - 16rem)' }}>
@@ -2179,7 +2180,7 @@ export default function StrategyDetailPage() {
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block shrink-0">Agregar personas</label>
  <div className="relative mb-2 shrink-0">
  {memberSearchLoading
- ? <Sparkles size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 animate-spin" />
+ ? <Loader2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 animate-spin" />
  : <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />}
  <input value={memberSearch}
  onChange={e => setMemberSearch(e.target.value)}
@@ -2240,7 +2241,7 @@ export default function StrategyDetailPage() {
  className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
  <button onClick={handleCreateSession} disabled={sessionSaving}
  className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
- {sessionSaving ? <><Sparkles size={14} className="animate-spin" />Guardando...</> : <><Save size={14} />Guardar</>}
+ {sessionSaving ? <><Loader2 size={14} className="animate-spin" />Guardando...</> : <><Save size={14} />Guardar</>}
  </button>
  </>}>
  <div className="space-y-4">
@@ -2287,7 +2288,7 @@ export default function StrategyDetailPage() {
  className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
  <button onClick={handleSaveAttendance} disabled={attendanceSaving}
  className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
- {attendanceSaving ? <><Sparkles size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar asistencia</>}
+ {attendanceSaving ? <><Loader2 size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar asistencia</>}
  </button>
  </>}>
  <div className="space-y-3">
@@ -2464,7 +2465,7 @@ export default function StrategyDetailPage() {
  </div>
  <button onClick={handleCreateNewVisitor} disabled={savingNewVisitor}
  className="w-full py-2 rounded-lg text-[12px] font-semibold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
- {savingNewVisitor ? <><Sparkles size={13} className="animate-spin" />Guardando...</> : <><UserPlus size={13} />Registrar visitante</>}
+ {savingNewVisitor ? <><Loader2 size={13} className="animate-spin" />Guardando...</> : <><UserPlus size={13} />Registrar visitante</>}
  </button>
  </div>
  )}

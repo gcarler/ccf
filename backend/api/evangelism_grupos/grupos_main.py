@@ -824,8 +824,15 @@ class FaroVisitorCreate(BaseModel):
     session_id: Optional[int] = None
 
 
-@router.post("/grupos/visitors", response_model=dict)
-@router.post("/faro/visitors", response_model=dict)
+class FaroVisitorResponse(BaseModel):
+    status: str           # "created" | "duplicate"
+    persona_id: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+
+@router.post("/grupos/visitors", response_model=FaroVisitorResponse)
+@router.post("/faro/visitors", response_model=FaroVisitorResponse)
 def register_faro_visitor(
     visitor: FaroVisitorCreate,
     db: Session = Depends(get_db),
@@ -836,18 +843,41 @@ def register_faro_visitor(
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
 
+    # Fix #2: admins/pastores pueden registrar libremente; líderes solo en su propio grupo
     persona = _get_persona_for_user(db, current_user.id)
-    if persona is not None and persona.id not in {grupo.lider_persona_id, grupo.asistente_persona_id, grupo.anfitrion_persona_id}:
-        raise HTTPException(status_code=403, detail="Solo el líder o asistente puede registrar visitantes")
+    if not _is_crm_admin_or_pastor(current_user):
+        if persona is None or persona.id not in {
+            grupo.lider_persona_id,
+            grupo.asistente_persona_id,
+            grupo.anfitrion_persona_id,
+        }:
+            raise HTTPException(status_code=403, detail="Solo el líder o asistente puede registrar visitantes")
 
-    # Buscar persona existente por teléfono o whatsapp
+    # Fix #5: validar que session_id pertenece a este grupo
+    if visitor.session_id is not None:
+        sesion = db.query(models.SesionGrupo).filter(
+            models.SesionGrupo.id == visitor.session_id,
+            models.SesionGrupo.grupo_id == visitor.grupo_id,
+        ).first()
+        if not sesion:
+            raise HTTPException(status_code=400, detail="La sesión no pertenece a este grupo")
+
+    # Fix #4: buscar duplicado solo dentro de la misma sede
     existing = None
     lookup_phone = visitor.phone or visitor.whatsapp
     if lookup_phone:
-        existing = db.query(models.Persona).filter(models.Persona.telefono == lookup_phone).first()
+        existing = db.query(models.Persona).filter(
+            models.Persona.telefono == lookup_phone,
+            models.Persona.sede_id == grupo.sede_id,
+        ).first()
 
     if existing:
-        return {"status": "duplicate", "persona_id": existing.id}
+        return FaroVisitorResponse(
+            status="duplicate",
+            persona_id=str(existing.id),
+            first_name=existing.first_name,
+            last_name=existing.last_name,
+        )
 
     # Crear persona marcada con su origen evangelístico
     new_persona = models.Persona(
@@ -884,7 +914,12 @@ def register_faro_visitor(
         origen_sesion_id=visitor.session_id,
     )
 
-    return {"status": "created", "persona_id": new_persona.id}
+    return FaroVisitorResponse(
+        status="created",
+        persona_id=str(new_persona.id),
+        first_name=new_persona.first_name,
+        last_name=new_persona.last_name,
+    )
 
 
 # ── Dashboard Metrics ──

@@ -314,7 +314,7 @@ class Persona(Base):
     spiritual_gifts = Column(Text, nullable=True)
     pastoral_notes = Column(Text, nullable=True)
     tags = Column(JSON, nullable=True, default=list)
-    origen_estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    origen_estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     origen_grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     origen_sesion_id = Column(Integer, ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
     origen_fecha = Column(DateTime(timezone=True), nullable=True)
