@@ -43,7 +43,7 @@ X
 } from 'lucide-react';
 import { ChevronDown } from 'lucide-react';
 import { useParams,useRouter } from 'next/navigation';
-import { useCallback,useEffect,useRef,useState } from 'react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import { toast } from 'sonner';
 
 interface Strategy {
@@ -341,6 +341,9 @@ export default function StrategyDetailPage() {
  // Session menu
  const [sessionMenuId, setSessionMenuId] = useState<number | null>(null);
  const [sessionGroupFilter, setSessionGroupFilter] = useState<number | 'all'>('all');
+ const [sessionHabFilter, setSessionHabFilter] = useState<'all' | 'HABILITADO' | 'DESHABILITADO' | 'CERRADO'>('all');
+ const [sessionMonthFilter, setSessionMonthFilter] = useState<string>('all');
+ const [sessionSearch, setSessionSearch] = useState('');
  const [tableSubTab, setTableSubTab] = useState<'groups' | 'sessions'>('groups');
 
  // Visitor search (in attendance drawer)
@@ -851,6 +854,33 @@ export default function StrategyDetailPage() {
  };
 
  const groupName = (houseId: number) => groups.find(g => g.id === houseId)?.name || `Grupo #${houseId}`;
+
+ // Meses disponibles para el filtro de sesiones
+ const sessionMonths = useMemo(() => {
+ const seen = new Set<string>();
+ sessions.forEach(s => seen.add(s.session_date.substring(0, 7)));
+ return Array.from(seen).sort();
+ }, [sessions]);
+
+ // Sesiones filtradas para la vista de lista
+ const filteredSessions = useMemo(() => {
+ const q = sessionSearch.trim().toLowerCase();
+ return sessions.filter(s => {
+ if (sessionGroupFilter !== 'all' && s.grupo_id !== sessionGroupFilter) return false;
+ if (sessionHabFilter !== 'all' && s.estado_habilitacion !== sessionHabFilter) return false;
+ if (sessionMonthFilter !== 'all' && !s.session_date.startsWith(sessionMonthFilter)) return false;
+ if (q) {
+ const haystack = [
+ s.topic || '',
+ groupName(s.grupo_id),
+ s.session_date.substring(0, 7),
+ ].join(' ').toLowerCase();
+ if (!haystack.includes(q)) return false;
+ }
+ return true;
+ });
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [sessions, sessionGroupFilter, sessionHabFilter, sessionMonthFilter, sessionSearch]);
 
  if (loading) {
  return (
@@ -1515,31 +1545,82 @@ export default function StrategyDetailPage() {
  </div>
  </div>
 
+ {/* Buscador + filtros */}
+ <div className="flex flex-col gap-2">
+ {/* Buscador */}
+ <div className="relative">
+ <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+ <input
+ value={sessionSearch}
+ onChange={e => setSessionSearch(e.target.value)}
+ placeholder="Buscar por tema, grupo o mes (ej. 2025-03)…"
+ className="w-full pl-8 pr-8 h-8 text-xs rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+ />
+ {sessionSearch && (
+ <button onClick={() => setSessionSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+ <X size={12} />
+ </button>
+ )}
+ </div>
+ {/* Filtros en fila */}
+ <div className="flex items-center gap-2 flex-wrap">
  {groups.length > 1 && (
- <div className="flex items-center gap-2">
  <select
  value={sessionGroupFilter}
  onChange={e => setSessionGroupFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
- className="h-8 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-blue-500">
+ className="h-7 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-blue-400">
  <option value="all">Todos los grupos</option>
  {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
  </select>
- </div>
  )}
+ <select
+ value={sessionHabFilter}
+ onChange={e => setSessionHabFilter(e.target.value as typeof sessionHabFilter)}
+ className="h-7 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-blue-400">
+ <option value="all">Todas las habilitaciones</option>
+ <option value="HABILITADO">Abiertas</option>
+ <option value="DESHABILITADO">Bloqueadas</option>
+ <option value="CERRADO">Cerradas</option>
+ </select>
+ {sessionMonths.length > 1 && (
+ <select
+ value={sessionMonthFilter}
+ onChange={e => setSessionMonthFilter(e.target.value)}
+ className="h-7 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-blue-400">
+ <option value="all">Todos los meses</option>
+ {sessionMonths.map(m => {
+ const [y, mo] = m.split('-');
+ const label = new Date(Number(y), Number(mo) - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+ return <option key={m} value={m}>{label}</option>;
+ })}
+ </select>
+ )}
+ {/* Contador */}
+ <span className="ml-auto text-[11px] text-[hsl(var(--text-secondary))]">
+ {filteredSessions.length !== sessions.length
+ ? `${filteredSessions.length} de ${sessions.length} sesiones`
+ : `${sessions.length} sesion${sessions.length !== 1 ? 'es' : ''}`}
+ </span>
+ </div>
+ </div>
 
  {sessionsLoading ? (
  <div className="space-y-2">
  {[1, 2, 3].map(i => <div key={i} className="h-14 bg-[hsl(var(--bg-muted))] rounded-lg animate-pulse" />)}
  </div>
- ) : sessions.filter(s => sessionGroupFilter === 'all' || s.grupo_id === sessionGroupFilter).length === 0 ? (
+ ) : filteredSessions.length === 0 ? (
  <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg">
  <ClipboardList size={32} className="text-[hsl(var(--text-secondary))] mb-2" />
- <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">Sin sesiones registradas</p>
- <p className="text-xs text-[hsl(var(--text-secondary))]">Registra la primera sesión semanal</p>
+ <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">
+ {sessions.length === 0 ? 'Sin sesiones registradas' : 'Sin sesiones con esos filtros'}
+ </p>
+ <p className="text-xs text-[hsl(var(--text-secondary))]">
+ {sessions.length === 0 ? 'Registra la primera sesión semanal' : 'Prueba ajustando la búsqueda o los filtros'}
+ </p>
  </div>
  ) : (
  <div className="space-y-2">
- {sessions.filter(s => sessionGroupFilter === 'all' || s.grupo_id === sessionGroupFilter).map(s => (
+ {filteredSessions.map(s => (
  <div key={s.id} className={`flex items-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border rounded-lg px-4 py-3 transition-all ${
  s.estado_habilitacion === 'HABILITADO'
  ? 'border-emerald-300 dark:border-emerald-700'
