@@ -247,6 +247,7 @@ export default function StrategyDetailPage() {
  const [groupMembers, setGroupMembers] = useState<{ id: string; name: string; email: string; role: string; role_label?: string }[]>([]);
  const [allMembers, setAllMembers] = useState<any[]>([]);
  const [memberSearch, setMemberSearch] = useState('');
+ const [memberSearchLoading, setMemberSearchLoading] = useState(false);
  const [memberSaving, setMemberSaving] = useState(false);
  const [memberSplitHeight, setMemberSplitHeight] = useState(200);
  const memberSplitRef = useRef<HTMLDivElement>(null);
@@ -556,11 +557,8 @@ export default function StrategyDetailPage() {
  } catch { setGroupMembers([]); }
  };
 
- // Búsqueda en tiempo real de personas para agregar al grupo
- useEffect(() => {
- if (!isMemberDrawerOpen) return;
- const query = memberSearch.trim();
- const timer = setTimeout(async () => {
+ const fetchMemberSearchResults = useCallback(async (query: string) => {
+ setMemberSearchLoading(true);
  try {
  const params: Record<string, any> = query.length >= 1
  ? { limit: 500, search: query }
@@ -568,9 +566,16 @@ export default function StrategyDetailPage() {
  const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
  setAllMembers(res || []);
  } catch { /* silently keep previous results */ }
- }, query.length >= 1 ? 150 : 0);
+ finally { setMemberSearchLoading(false); }
+ }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+ // Búsqueda en tiempo real de personas para agregar al grupo
+ useEffect(() => {
+ if (!isMemberDrawerOpen) return;
+ const query = memberSearch.trim();
+ const timer = setTimeout(() => fetchMemberSearchResults(query), query.length >= 1 ? 150 : 0);
  return () => clearTimeout(timer);
- }, [memberSearch, isMemberDrawerOpen, token]); // eslint-disable-line react-hooks/exhaustive-deps
+ }, [memberSearch, isMemberDrawerOpen, fetchMemberSearchResults]);
 
  const handleSaveMembers = async () => {
  if (!selectedGroup) return;
@@ -1919,14 +1924,21 @@ export default function StrategyDetailPage() {
  <div className="flex-1 min-h-0 flex flex-col pt-3">
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block shrink-0">Agregar personas</label>
  <div className="relative mb-2 shrink-0">
- <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
- <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)}
+ {memberSearchLoading
+ ? <Sparkles size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 animate-spin" />
+ : <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />}
+ <input value={memberSearch}
+ onChange={e => setMemberSearch(e.target.value)}
+ onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); fetchMemberSearchResults(memberSearch.trim()); } }}
  placeholder="Buscar por nombre o email..."
  className="w-full pl-9 pr-3 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]" />
  </div>
  <div className="flex-1 min-h-0 overflow-y-auto space-y-1">
  {(() => {
  const available = allMembers.filter(m => !groupMembers.find(gm => String(gm.id) === String(m.id)));
+ if (memberSearchLoading) return (
+ <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Buscando...</p>
+ );
  if (allMembers.length === 0) return (
  <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">
  {memberSearch.trim() ? 'Sin resultados para esta búsqueda' : 'Cargando personas...'}
