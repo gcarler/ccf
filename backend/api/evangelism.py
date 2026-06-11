@@ -21,6 +21,7 @@ from backend.api.evangelism_multiplication import router as multiplication_route
 from backend.api.evangelism_notifications import router as notifications_router
 from backend.api.evangelism_rankings import router as rankings_router
 from backend.api.evangelism_reports import router as reports_router
+from backend.api.evangelism_analytics import router as analytics_router
 from backend.api.evangelism_shared import utc_now
 from backend.auth import (
     require_active_user,
@@ -40,6 +41,7 @@ router.include_router(multiplication_router)
 router.include_router(notifications_router)
 router.include_router(rankings_router)
 router.include_router(reports_router)
+router.include_router(analytics_router)
 logger = logging.getLogger(__name__)
 _DEPRECATED_ALIAS_HITS: set[str] = set()
 

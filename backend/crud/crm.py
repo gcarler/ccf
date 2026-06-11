@@ -189,13 +189,13 @@ def search_personas(
         query = query.filter(models.Persona.sede_id == sede_id)
     if search:
         like = f"%{search}%"
+        # NOTA: nombre_completo es @hybrid_property con expresión SQL, funciona en filter
         query = query.filter(
             or_(
                 models.Persona.first_name.ilike(like),
                 models.Persona.last_name.ilike(like),
                 models.Persona.nombre_completo.ilike(like),
                 models.Persona.email.ilike(like),
-                models.Persona.church_role.ilike(like),
                 models.Persona.id_number.ilike(like),
                 models.Persona.phone.ilike(like),
                 models.Persona.mobile_phone.ilike(like),
@@ -510,8 +510,11 @@ def get_personas(db: Session, search: str | None = None, role: str | None = None
 # ── CRM Events ─────────────────────────────────────────
 
 
-def get_crm_events(db: Session, skip: int = 0, limit: int = 100) -> List[models.CrmEvent]:
-    return db.query(models.CrmEvent).order_by(models.CrmEvent.event_date.desc()).offset(skip).limit(limit).all()
+def get_crm_events(db: Session, sede_id: str | None = None, skip: int = 0, limit: int = 100) -> List[models.CrmEvent]:
+    q = db.query(models.CrmEvent)
+    if sede_id:
+        q = q.filter(models.CrmEvent.sede_id == sede_id)
+    return q.order_by(models.CrmEvent.event_date.desc()).offset(skip).limit(limit).all()
 
 
 def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.CrmEvent:
@@ -775,7 +778,8 @@ def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpda
     members_updated = False
     if payload.base_attendees_with_roles is not None:
         db.query(models.CellGroupMember).filter(models.CellGroupMember.cell_group_id == house_id).update(
-            {models.CellGroupMember.deleted_at: _utcnow()}, synchronize_session=False
+            {models.CellGroupMember.deleted_at: _utcnow(), models.CellGroupMember.activo: False},
+            synchronize_session=False,
         )
         for item in payload.base_attendees_with_roles:
             role, custom_role_id = _group_member_role_values(item)
@@ -813,7 +817,8 @@ def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpda
                 break
     elif payload.base_attendee_ids is not None:
         db.query(models.CellGroupMember).filter(models.CellGroupMember.cell_group_id == house_id).update(
-            {models.CellGroupMember.deleted_at: _utcnow()}, synchronize_session=False
+            {models.CellGroupMember.deleted_at: _utcnow(), models.CellGroupMember.activo: False},
+            synchronize_session=False,
         )
         for persona_id in payload.base_attendee_ids:
             db.add(

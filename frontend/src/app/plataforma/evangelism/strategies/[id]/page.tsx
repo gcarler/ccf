@@ -1618,52 +1618,39 @@ export default function StrategyDetailPage() {
 
  {/* ── Métricas ── */}
  {activeTab === 'metrics' && (
- <div className="space-y-3">
- <h2 className="text-sm font-bold text-[hsl(var(--text-primary))]">Métricas de la estrategia</h2>
- {!metrics ? (
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg p-8 text-center">
- <BarChart3 size={32} className="text-[hsl(var(--text-secondary))] mx-auto mb-2" />
- <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">Cargando métricas...</p>
+ <div className="space-y-4">
+ <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-8 flex flex-col items-center text-center gap-4">
+ <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/40">
+ <BarChart3 size={36} className="text-[hsl(var(--primary))]" />
  </div>
- ) : (
- <>
+ <div>
+ <h3 className="text-base font-bold text-[hsl(var(--text-primary))] mb-1">Dashboard de métricas</h3>
+ <p className="text-sm text-[hsl(var(--text-secondary))] max-w-sm">
+ Tendencias de asistencia, embudo de roles, mapa de calor, alertas tempranas y velocidad ministerial en tiempo real.
+ </p>
+ </div>
+ <button
+ onClick={() => router.push(`/plataforma/evangelism/strategies/${id}/analytics`)}
+ className="flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm"
+ >
+ <BarChart3 size={15} />
+ Abrir dashboard analítico
+ </button>
+ </div>
+ {metrics && (
  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
  {[
  { label: 'Grupos', value: metrics.summary.total_groups },
  { label: 'Sesiones', value: metrics.summary.total_sessions },
- { label: 'Primeriza', value: metrics.summary.total_first_timers, cls: 'text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]' },
- { label: 'Inasistencias', value: metrics.summary.total_absences, cls: 'text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]' },
+ { label: 'Primera vez', value: metrics.summary.total_first_timers, cls: 'text-emerald-600' },
+ { label: 'Inasistencias', value: metrics.summary.total_absences, cls: 'text-red-500' },
  ].map(stat => (
- <div key={stat.label} className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg p-4">
+ <div key={stat.label} className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
  <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{stat.label}</p>
- <p className={`text-lg font-bold mt-1 ${stat.cls || 'text-[hsl(var(--text-primary))]'}`}>{stat.value}</p>
+ <p className={`text-2xl font-black mt-1 ${stat.cls || 'text-[hsl(var(--text-primary))]'}`}>{stat.value}</p>
  </div>
  ))}
  </div>
- {metrics.weekly && metrics.weekly.length > 0 && (
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg p-4">
- <h3 className="text-xs font-bold text-[hsl(var(--text-primary))] mb-4">Asistencia semanal</h3>
- <div className="flex items-end gap-2 h-32">
- {metrics.weekly.map((w: any) => {
- const max = Math.max(...metrics.weekly.map((x: any) => x.present + x.absent), 1);
- return (
- <div key={w.week} className="flex-1 flex flex-col items-center gap-1">
- <div className="w-full flex flex-col" style={{ height: '100px' }}>
- <div className="w-full rounded-t bg-[hsl(var(--primary))] dark:bg-[hsl(var(--primary))] transition-all"
- style={{ height: `${(w.present / max) * 100}%`, minHeight: w.present > 0 ? '4px' : '0' }} />
- {w.absent > 0 && (
- <div className="w-full rounded-t bg-red-300 dark:bg-red-800 transition-all"
- style={{ height: `${(w.absent / max) * 100}%`, minHeight: '4px' }} />
- )}
- </div>
- <span className="text-[9px] text-[hsl(var(--text-secondary))] truncate w-full text-center">{w.week.slice(5)}</span>
- </div>
- );
- })}
- </div>
- </div>
- )}
- </>
  )}
  </div>
  )}
