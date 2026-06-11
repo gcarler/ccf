@@ -789,15 +789,25 @@ def update_cell_group(db: Session, house_id: int, payload: schemas.CellGroupUpda
             )
         members_updated = True
         # Sincronizar lider_persona_id desde el miembro con rol primario de líder
-        _PRIMARY_LEADER_ROLES = {"lider", "líder", "leader"}
-        _SUBORDINATE_TOKENS = {"co", "colider", "colíder", "asistente"}
+        _SUBORDINATE_TOKENS = {"co", "colider", "colíder", "asistente", "del"}
+        db.flush()  # para que los nuevos CellGroupMember tengan IDs asignados
         for item in payload.base_attendees_with_roles:
             role_str = str(getattr(item, "role", "") or "").lower().strip()
+            custom_id = getattr(item, "rol_personalizado_id", None)
+            # Resolver nombre real: rol base o nombre del rol personalizado
+            if role_str.startswith("custom:") and not custom_id:
+                try:
+                    custom_id = int(role_str.split(":", 1)[1])
+                except (ValueError, TypeError):
+                    pass
+            if custom_id:
+                custom_rol = db.query(models.RolPersonalizadoEstrategia).filter(
+                    models.RolPersonalizadoEstrategia.id == custom_id
+                ).first()
+                role_str = (custom_rol.nombre_rol if custom_rol else role_str).lower().strip()
             tokens = set(role_str.replace("-", " ").replace("_", " ").split())
-            if role_str in _PRIMARY_LEADER_ROLES or (
-                ("lider" in tokens or "líder" in tokens)
-                and not (tokens & _SUBORDINATE_TOKENS)
-            ):
+            is_leader = ("lider" in tokens or "líder" in tokens or "leader" in tokens) and not (tokens & _SUBORDINATE_TOKENS)
+            if is_leader:
                 new_lid = item.persona_id
                 house.lider_persona_id = uuid.UUID(str(new_lid)) if isinstance(new_lid, str) else new_lid
                 break
