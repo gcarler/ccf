@@ -7,13 +7,14 @@ Endpoints:
   GET /analytics/strategy/{strategy_id}/funnel    — Embudo de conversión de roles
   GET /analytics/strategy/{strategy_id}/heatmap   — Asistencia por día de la semana
   GET /analytics/strategy/{strategy_id}/alerts    — Alertas tempranas (grupos y personas)
-  GET /analytics/strategy/{strategy_id}/velocity  — Velocidad de cambio de roles (embudo ministerial)
+  GET /analytics/strategy/{strategy_id}/velocity  — Velocidad de cambio de roles
   GET /analytics/strategy/{strategy_id}/groups    — Grupos con mini-métricas detalladas
 """
 from __future__ import annotations
 
 import datetime as _dt
 from collections import defaultdict
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func as _func
 from sqlalchemy.orm import Session
@@ -22,16 +23,39 @@ from backend import models
 from backend.api.evangelism_shared import ATTENDED_STATES
 from backend.auth import require_active_user
 from backend.core.database import get_db
-from backend.core.tenant import require_user_sede_id
+from backend.core.tenant import get_user_sede_id
 
 router = APIRouter()
 
 # ─────────────────────────────────────────────────────────
-# Helpers
+# Constants
 # ─────────────────────────────────────────────────────────
 
 _PERIOD_DAYS = {"7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365}
 
+# Role normalization: maps any known rol_base variant to a canonical funnel key
+_ROL_TO_FUNNEL: dict[str, str] = {
+    # Visitors / entry
+    "visitante": "visitante", "VISITANTE": "visitante",
+    "invitado": "visitante", "INVITADO": "visitante",
+    "persona": "visitante",
+    # Regular attendees
+    "asistente": "asistente", "ASISTENTE": "asistente",
+    "miembro": "asistente", "MIEMBRO": "asistente",
+    # Host
+    "anfitrion": "anfitrion", "ANFITRION": "anfitrion",
+    "anfitrión": "anfitrion",
+    # Co-leader
+    "colider": "colider", "COLIDER": "colider",
+    "colíder": "colider",
+    # Leader
+    "lider": "lider", "LIDER": "lider",
+    "líder": "lider",
+}
+
+# ─────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────
 
 def _parse_period(period: str) -> int:
     return _PERIOD_DAYS.get(period, 30)
@@ -39,18 +63,16 @@ def _parse_period(period: str) -> int:
 
 def _date_range(days: int):
     now = _dt.datetime.now(_dt.timezone.utc)
-    start = now - _dt.timedelta(days=days)
-    return start, now
+    return now - _dt.timedelta(days=days), now
 
 
 def _prev_range(days: int):
     now = _dt.datetime.now(_dt.timezone.utc)
     end = now - _dt.timedelta(days=days)
-    start = end - _dt.timedelta(days=days)
-    return start, end
+    return end - _dt.timedelta(days=days), end
 
 
-def _get_strategy_or_404(db: Session, strategy_id: str, sede_id):
+def _get_strategy_or_404(db: Session, strategy_id: str):
     s = db.query(models.EstrategiaEvangelismo).filter(
         models.EstrategiaEvangelismo.id == strategy_id,
         models.EstrategiaEvangelismo.deleted_at.is_(None),
@@ -65,7 +87,7 @@ def _group_ids_for_strategy(db: Session, strategy_id: str, sede_id) -> list[int]
         models.GrupoEvangelismo.estrategia_id == strategy_id,
         models.GrupoEvangelismo.deleted_at.is_(None),
     )
-    if sede_id is not None:
+    if sede_id:
         q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
     return [r[0] for r in q.all()]
 
@@ -77,7 +99,7 @@ def _delta(current: float, previous: float) -> float:
 
 
 def _attendance_stats(db: Session, group_ids: list[int], start, end) -> tuple[int, int]:
-    """Returns (present, total) attendance counts."""
+    """Returns (present, total) attendance counts in the date range."""
     if not group_ids:
         return 0, 0
     rows = (
@@ -96,6 +118,38 @@ def _attendance_stats(db: Session, group_ids: list[int], start, end) -> tuple[in
     return present, len(rows)
 
 
+def _sessions_done_count(db: Session, group_ids: list[int], start, end) -> int:
+    """Count sessions with estado that means 'completed', case-insensitive."""
+    if not group_ids:
+        return 0
+    return (
+        db.query(_func.count(models.SesionGrupo.id))
+        .filter(
+            models.SesionGrupo.grupo_id.in_(group_ids),
+            _func.lower(models.SesionGrupo.estado) == "realizada",
+            models.SesionGrupo.fecha_sesion >= start,
+            models.SesionGrupo.fecha_sesion < end,
+            models.SesionGrupo.deleted_at.is_(None),
+        )
+        .scalar() or 0
+    )
+
+
+def _sessions_total_count(db: Session, group_ids: list[int], start, end) -> int:
+    if not group_ids:
+        return 0
+    return (
+        db.query(_func.count(models.SesionGrupo.id))
+        .filter(
+            models.SesionGrupo.grupo_id.in_(group_ids),
+            models.SesionGrupo.fecha_sesion >= start,
+            models.SesionGrupo.fecha_sesion < end,
+            models.SesionGrupo.deleted_at.is_(None),
+        )
+        .scalar() or 0
+    )
+
+
 # ─────────────────────────────────────────────────────────
 # GET /analytics/strategy/{strategy_id}  — KPIs principales
 # ─────────────────────────────────────────────────────────
@@ -107,8 +161,9 @@ def strategy_kpis(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    sede_id = require_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id, sede_id)
+    # sede_id is optional — if user has no sede we show all groups (super-admin case)
+    sede_id = get_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
 
     days = _parse_period(period)
@@ -146,44 +201,14 @@ def strategy_kpis(
             .scalar() or 0
         )
 
-    # ── Sesiones ──
-    sessions_done = sessions_total = prev_sessions_done = 0
-    if group_ids:
-        sessions_done = (
-            db.query(_func.count(models.SesionGrupo.id))
-            .filter(
-                models.SesionGrupo.grupo_id.in_(group_ids),
-                models.SesionGrupo.estado == "REALIZADA",
-                models.SesionGrupo.fecha_sesion >= start,
-                models.SesionGrupo.fecha_sesion < end,
-                models.SesionGrupo.deleted_at.is_(None),
-            )
-            .scalar() or 0
-        )
-        sessions_total = (
-            db.query(_func.count(models.SesionGrupo.id))
-            .filter(
-                models.SesionGrupo.grupo_id.in_(group_ids),
-                models.SesionGrupo.fecha_sesion >= start,
-                models.SesionGrupo.fecha_sesion < end,
-                models.SesionGrupo.deleted_at.is_(None),
-            )
-            .scalar() or 0
-        )
-        prev_sessions_done = (
-            db.query(_func.count(models.SesionGrupo.id))
-            .filter(
-                models.SesionGrupo.grupo_id.in_(group_ids),
-                models.SesionGrupo.estado == "REALIZADA",
-                models.SesionGrupo.fecha_sesion >= prev_start,
-                models.SesionGrupo.fecha_sesion < prev_end,
-                models.SesionGrupo.deleted_at.is_(None),
-            )
-            .scalar() or 0
-        )
+    # ── Sesiones (case-insensitive para manejar "Realizada" vs "REALIZADA") ──
+    sessions_done = _sessions_done_count(db, group_ids, start, end)
+    sessions_total = _sessions_total_count(db, group_ids, start, end)
+    prev_sessions_done = _sessions_done_count(db, group_ids, prev_start, prev_end)
 
-    # ── Nuevos ingresos en el período ──
-    new_joiners = prev_new_joiners = 0
+    # ── Nuevos ingresos ──
+    new_joiners = 0
+    prev_new_joiners = 0
     if group_ids:
         new_joiners = (
             db.query(_func.count(models.ParticipanteGrupo.id))
@@ -221,15 +246,13 @@ def strategy_kpis(
             .scalar() or 0
         )
 
-    # ── Retención: personas que estaban en prev y siguen en current ──
+    # ── Retención ──
     retention_pct = 0.0
-    if group_ids and prev_active_members > 0:
-        still_active = active_members
-        retention_pct = round(min((still_active / prev_active_members) * 100, 100.0), 1)
+    if prev_active_members > 0:
+        retention_pct = round(min((active_members / prev_active_members) * 100, 100.0), 1)
 
     return {
         "period": period,
-        "group_ids": group_ids,
         "kpis": {
             "active_members": {
                 "value": active_members,
@@ -272,8 +295,8 @@ def strategy_trend(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    sede_id = require_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id, sede_id)
+    sede_id = get_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
     if not group_ids:
         return {"buckets": [], "groups": []}
@@ -288,7 +311,6 @@ def strategy_trend(
         .all()
     )
 
-    # Fetch all sessions + attendance in range
     rows = (
         db.query(
             models.SesionGrupo.grupo_id,
@@ -306,30 +328,25 @@ def strategy_trend(
         .all()
     )
 
-    def _bucket_key(dt: _dt.datetime) -> str:
+    def _bucket_key(dt) -> str:
+        # Normalize timezone-aware and naive datetimes
+        if hasattr(dt, "tzinfo") and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=_dt.timezone.utc)
         if use_weeks:
-            # ISO week: "2026-W23"
             return dt.strftime("%G-W%V")
         return dt.strftime("%Y-%m")
 
-    # Aggregate per bucket per group
-    # structure: {bucket_key: {group_id: {present, total}}}
     agg: dict[str, dict[int, dict]] = defaultdict(lambda: defaultdict(lambda: {"p": 0, "t": 0}))
+    global_agg: dict[str, dict] = defaultdict(lambda: {"p": 0, "t": 0})
+
     for grupo_id, fecha, estado in rows:
         key = _bucket_key(fecha)
         agg[key][grupo_id]["t"] += 1
-        if estado in ATTENDED_STATES:
-            agg[key][grupo_id]["p"] += 1
-
-    # Also global bucket
-    global_agg: dict[str, dict] = defaultdict(lambda: {"p": 0, "t": 0})
-    for grupo_id, fecha, estado in rows:
-        key = _bucket_key(fecha)
         global_agg[key]["t"] += 1
         if estado in ATTENDED_STATES:
+            agg[key][grupo_id]["p"] += 1
             global_agg[key]["p"] += 1
 
-    # Build sorted bucket list
     all_keys = sorted(set(agg.keys()))
 
     def _pct(p, t):
@@ -338,7 +355,7 @@ def strategy_trend(
     buckets = []
     for key in all_keys:
         g_data = global_agg[key]
-        entry = {
+        entry: dict = {
             "key": key,
             "label": _bucket_label(key, use_weeks),
             "avg_pct": _pct(g_data["p"], g_data["t"]),
@@ -358,10 +375,8 @@ def strategy_trend(
 
 def _bucket_label(key: str, use_weeks: bool) -> str:
     if use_weeks:
-        # "2026-W23" → "Sem 23"
         parts = key.split("-W")
         return f"Sem {parts[1]}" if len(parts) == 2 else key
-    # "2026-03" → "Mar 26"
     _months = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
     try:
         year, month = key.split("-")
@@ -380,12 +395,12 @@ def strategy_funnel(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    sede_id = require_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id, sede_id)
+    sede_id = get_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
 
-    # Count active participants by rol_base
-    role_counts: dict[str, int] = {}
+    # Count active participants by rol_base (exact values from DB)
+    raw_counts: dict[str, int] = {}
     if group_ids:
         rows = (
             db.query(models.ParticipanteGrupo.rol_base, _func.count(models.ParticipanteGrupo.id))
@@ -397,18 +412,32 @@ def strategy_funnel(
             .group_by(models.ParticipanteGrupo.rol_base)
             .all()
         )
-        role_counts = {r.lower(): c for r, c in rows}
+        raw_counts = {r: c for r, c in rows}
 
-    # Canonical funnel stages (order matters — top to bottom)
+    # Map raw rol_base values to canonical funnel stages
+    stage_counts: dict[str, int] = defaultdict(int)
+    unclassified = 0
+    for rol, count in raw_counts.items():
+        canonical = _ROL_TO_FUNNEL.get(rol) or _ROL_TO_FUNNEL.get(rol.lower() if rol else "")
+        if canonical:
+            stage_counts[canonical] += count
+        elif rol and rol.lower() != "personalizado":
+            # Unknown non-custom role → entry level
+            stage_counts["visitante"] += count
+        else:
+            unclassified += count
+
+    # Canonical funnel order (top → bottom = most common → leadership)
     STAGES = [
-        {"key": "visitante",  "label": "Visitante",    "roles": ["visitante", "invitado"]},
-        {"key": "asistente",  "label": "Asistente",    "roles": ["asistente"]},
-        {"key": "anfitrion",  "label": "Anfitrión",    "roles": ["anfitrion"]},
-        {"key": "colider",    "label": "Colíder",      "roles": ["colider"]},
-        {"key": "lider",      "label": "Líder",        "roles": ["lider"]},
+        {"key": "visitante",  "label": "Visitante / Invitado"},
+        {"key": "asistente",  "label": "Asistente / Miembro"},
+        {"key": "anfitrion",  "label": "Anfitrión"},
+        {"key": "colider",    "label": "Colíder"},
+        {"key": "lider",      "label": "Líder"},
     ]
 
-    total_top = sum(role_counts.get(r, 0) for r in STAGES[0]["roles"])
+    total_active = sum(stage_counts.values()) + unclassified
+    total_top = stage_counts.get("visitante", 0) + unclassified or total_active or 1
 
     # Average days per role transition from HistorialEmbudo
     velocity_rows = (
@@ -420,26 +449,40 @@ def strategy_funnel(
         .group_by(models.HistorialEmbudo.rol_nuevo)
         .all()
     )
-    velocity_map = {r.lower(): round(float(d), 0) for r, d in velocity_rows if d is not None}
+    velocity_map = {
+        (_ROL_TO_FUNNEL.get(r) or r.lower()): round(float(d), 0)
+        for r, d in velocity_rows
+        if d is not None
+    }
 
     stages = []
-    running_total = 0
     for stage in STAGES:
-        count = sum(role_counts.get(r, 0) for r in stage["roles"])
-        running_total += count
+        count = stage_counts.get(stage["key"], 0)
         pct_of_top = round((count / total_top) * 100, 1) if total_top else 0.0
-        avg_days = velocity_map.get(stage["key"])
         stages.append({
             "key": stage["key"],
             "label": stage["label"],
             "count": count,
             "pct_of_top": pct_of_top,
-            "avg_days_before": avg_days,
+            "avg_days_before": velocity_map.get(stage["key"]),
         })
 
+    # Include unclassified if any
+    unclassified_stage = None
+    if unclassified > 0:
+        unclassified_stage = {
+            "key": "personalizado",
+            "label": "Rol personalizado",
+            "count": unclassified,
+            "pct_of_top": round((unclassified / total_top) * 100, 1),
+            "avg_days_before": None,
+        }
+
     return {
-        "total_active": running_total,
+        "total_active": total_active,
         "stages": stages,
+        "unclassified": unclassified_stage,
+        "raw_role_counts": raw_counts,
     }
 
 
@@ -454,8 +497,8 @@ def strategy_heatmap(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    sede_id = require_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id, sede_id)
+    sede_id = get_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
     if not group_ids:
         return {"cells": []}
@@ -479,19 +522,20 @@ def strategy_heatmap(
         .all()
     )
 
-    # weekday (0=Mon...6=Sun) x week_number_within_period
-    # Build per-day aggregates (date → {p, t})
     day_agg: dict[_dt.date, dict] = defaultdict(lambda: {"p": 0, "t": 0})
     for fecha, estado in rows:
-        d = fecha.date() if hasattr(fecha, "date") else fecha
+        # Handle both timezone-aware and naive datetimes
+        if hasattr(fecha, "date"):
+            d = fecha.date()
+        else:
+            d = fecha
         day_agg[d]["t"] += 1
         if estado in ATTENDED_STATES:
             day_agg[d]["p"] += 1
 
-    # Now group by weekday
     weekday_agg: dict[int, dict] = defaultdict(lambda: {"p": 0, "t": 0, "sessions": 0})
     for date_key, counts in day_agg.items():
-        wd = date_key.weekday()  # 0=Mon
+        wd = date_key.weekday()
         weekday_agg[wd]["p"] += counts["p"]
         weekday_agg[wd]["t"] += counts["t"]
         weekday_agg[wd]["sessions"] += 1
@@ -520,16 +564,14 @@ def strategy_heatmap(
 @router.get("/analytics/strategy/{strategy_id}/alerts")
 def strategy_alerts(
     strategy_id: str,
-    threshold_pct: int = Query(60, description="% mínimo de asistencia aceptable"),
-    consecutive_sessions: int = Query(3, description="Sesiones consecutivas bajo umbral para alerta"),
+    threshold_pct: int = Query(60),
+    consecutive_sessions: int = Query(3),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    sede_id = require_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id, sede_id)
+    sede_id = get_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
-    alerts = []
-
     if not group_ids:
         return {"alerts": []}
 
@@ -539,14 +581,15 @@ def strategy_alerts(
         .all()
     )
     group_map = {g.id: g for g in groups}
+    alerts = []
 
-    # Alert type 1: Grupos con N sesiones consecutivas bajo umbral
+    # Alert type 1: Groups with N consecutive low-attendance sessions
     for gid in group_ids:
         recent_sessions = (
             db.query(models.SesionGrupo)
             .filter(
                 models.SesionGrupo.grupo_id == gid,
-                models.SesionGrupo.estado == "REALIZADA",
+                _func.lower(models.SesionGrupo.estado) == "realizada",
                 models.SesionGrupo.deleted_at.is_(None),
             )
             .order_by(models.SesionGrupo.fecha_sesion.desc())
@@ -566,9 +609,9 @@ def strategy_alerts(
                 )
                 .all()
             )
-            total = len(att)
-            present = sum(1 for (e,) in att if e in ATTENDED_STATES)
-            pct = (present / total * 100) if total else 0
+            t = len(att)
+            p = sum(1 for (e,) in att if e in ATTENDED_STATES)
+            pct = (p / t * 100) if t else 0
             if pct < threshold_pct:
                 low_count += 1
 
@@ -580,10 +623,9 @@ def strategy_alerts(
                 "group_id": gid,
                 "group_name": g.nombre if g else str(gid),
                 "message": f"{consecutive_sessions} sesiones consecutivas con asistencia bajo {threshold_pct}%",
-                "consecutive_sessions": consecutive_sessions,
             })
 
-    # Alert type 2: Grupos sin sesión en 30+ días
+    # Alert type 2: Groups without a session in 30+ days
     cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=30)
     for gid in group_ids:
         last = (
@@ -594,12 +636,12 @@ def strategy_alerts(
             )
             .scalar()
         )
+        # Normalize timezone for comparison
+        if last is not None and hasattr(last, "tzinfo") and last.tzinfo is None:
+            last = last.replace(tzinfo=_dt.timezone.utc)
         if last is None or last < cutoff:
             g = group_map.get(gid)
-            days_ago = (
-                (_dt.datetime.now(_dt.timezone.utc) - last).days
-                if last else None
-            )
+            days_ago = int((_dt.datetime.now(_dt.timezone.utc) - last).days) if last else None
             alerts.append({
                 "type": "no_recent_session",
                 "severity": "medium",
@@ -609,7 +651,7 @@ def strategy_alerts(
                 "days_since_last": days_ago,
             })
 
-    # Alert type 3: Grupos listos para multiplicación (>= capacidad * 0.85)
+    # Alert type 3: Groups near capacity (ready to multiply)
     for g in groups:
         member_count = (
             db.query(_func.count(models.ParticipanteGrupo.id))
@@ -621,85 +663,85 @@ def strategy_alerts(
             .scalar() or 0
         )
         capacity = g.capacidad or 15
-        if member_count >= capacity * 0.85:
+        if member_count >= int(capacity * 0.85):
             alerts.append({
                 "type": "ready_to_multiply",
                 "severity": "info",
                 "group_id": g.id,
                 "group_name": g.nombre,
-                "message": f"{member_count} personas — alcanzó el {round(member_count/capacity*100)}% de capacidad ({capacity})",
+                "message": f"{member_count} personas — {round(member_count / capacity * 100)}% de capacidad ({capacity})",
                 "members": member_count,
                 "capacity": capacity,
             })
 
-    # Alert type 4: Personas con 2+ ausencias consecutivas (top 10)
-    absent_alerts = []
+    # Alert type 4: People with 2+ consecutive absences (top 10)
     thirty_days_ago = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=30)
-    participant_ids = (
-        db.query(_func.distinct(models.ParticipanteGrupo.persona_id))
-        .filter(
-            models.ParticipanteGrupo.grupo_id.in_(group_ids),
-            models.ParticipanteGrupo.activo.is_(True),
-            models.ParticipanteGrupo.deleted_at.is_(None),
-        )
-        .limit(200)
-        .all()
-    )
-    persona_ids_list = [r[0] for r in participant_ids]
-
-    if persona_ids_list:
-        recent_att = (
-            db.query(
-                models.Asistencia.persona_id,
-                models.Asistencia.estado,
-                models.SesionGrupo.fecha_sesion,
-            )
-            .join(models.SesionGrupo, models.Asistencia.sesion_id == models.SesionGrupo.id)
+    if group_ids:
+        participant_ids = (
+            db.query(_func.distinct(models.ParticipanteGrupo.persona_id))
             .filter(
-                models.SesionGrupo.grupo_id.in_(group_ids),
-                models.Asistencia.persona_id.in_(persona_ids_list),
-                models.SesionGrupo.fecha_sesion >= thirty_days_ago,
-                models.Asistencia.deleted_at.is_(None),
-                models.SesionGrupo.deleted_at.is_(None),
+                models.ParticipanteGrupo.grupo_id.in_(group_ids),
+                models.ParticipanteGrupo.activo.is_(True),
+                models.ParticipanteGrupo.deleted_at.is_(None),
             )
-            .order_by(models.SesionGrupo.fecha_sesion.desc())
+            .limit(200)
             .all()
         )
+        persona_ids_list = [r[0] for r in participant_ids]
 
-        person_att: dict = defaultdict(list)
-        for pid, estado, _ in recent_att:
-            person_att[pid].append(estado)
-
-        persona_records = {}
-        if person_att:
-            persons = (
-                db.query(models.Persona)
-                .filter(models.Persona.id.in_(list(person_att.keys())))
+        if persona_ids_list:
+            recent_att = (
+                db.query(
+                    models.Asistencia.persona_id,
+                    models.Asistencia.estado,
+                )
+                .join(models.SesionGrupo, models.Asistencia.sesion_id == models.SesionGrupo.id)
+                .filter(
+                    models.SesionGrupo.grupo_id.in_(group_ids),
+                    models.Asistencia.persona_id.in_(persona_ids_list),
+                    models.SesionGrupo.fecha_sesion >= thirty_days_ago,
+                    models.Asistencia.deleted_at.is_(None),
+                    models.SesionGrupo.deleted_at.is_(None),
+                )
+                .order_by(models.SesionGrupo.fecha_sesion.desc())
                 .all()
             )
-            persona_records = {str(p.id): p for p in persons}
 
-        for pid, estados in person_att.items():
-            consecutive_absent = 0
-            for e in estados:
-                if e not in ATTENDED_STATES:
-                    consecutive_absent += 1
-                else:
-                    break
-            if consecutive_absent >= 2:
-                p = persona_records.get(str(pid))
-                name = f"{p.first_name} {p.last_name}" if p else str(pid)
-                absent_alerts.append({
-                    "type": "consecutive_absences",
-                    "severity": "medium",
-                    "persona_id": str(pid),
-                    "persona_name": name,
-                    "message": f"{consecutive_absent} ausencias consecutivas",
-                    "consecutive_absences": consecutive_absent,
-                })
+            person_att: dict = defaultdict(list)
+            for pid, estado in recent_att:
+                person_att[pid].append(estado)
 
-    absent_alerts.sort(key=lambda x: x["consecutive_absences"], reverse=True)
-    alerts.extend(absent_alerts[:10])
+            persona_records = {}
+            if person_att:
+                persons = (
+                    db.query(models.Persona)
+                    .filter(models.Persona.id.in_(list(person_att.keys())))
+                    .all()
+                )
+                persona_records = {str(p.id): p for p in persons}
+
+            absent_alerts = []
+            for pid, estados in person_att.items():
+                consecutive_absent = 0
+                for e in estados:
+                    if e not in ATTENDED_STATES:
+                        consecutive_absent += 1
+                    else:
+                        break
+                if consecutive_absent >= 2:
+                    p = persona_records.get(str(pid))
+                    name = f"{p.first_name} {p.last_name}" if p else str(pid)
+                    absent_alerts.append({
+                        "type": "consecutive_absences",
+                        "severity": "medium",
+                        "persona_id": str(pid),
+                        "persona_name": name,
+                        "message": f"{consecutive_absent} ausencias consecutivas",
+                        "consecutive_absences": consecutive_absent,
+                    })
+
+            absent_alerts.sort(key=lambda x: x["consecutive_absences"], reverse=True)
+            alerts.extend(absent_alerts[:10])
 
     return {"alerts": alerts}
 
@@ -714,10 +756,9 @@ def strategy_velocity(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    sede_id = require_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id, sede_id)
+    # Validate strategy exists
+    _get_strategy_or_404(db, strategy_id)
 
-    # Velocity from HistorialEmbudo (global, since it's not tied to strategy directly)
     rows = (
         db.query(
             models.HistorialEmbudo.rol_nuevo,
@@ -730,35 +771,32 @@ def strategy_velocity(
     )
 
     _ROLE_LABELS = {
-        "visitante": "Visitante",
-        "invitado": "Invitado",
-        "asistente": "Asistente",
-        "anfitrion": "Anfitrión",
-        "colider": "Colíder",
-        "lider": "Líder",
-        "VISITANTE": "Visitante",
-        "INVITADO": "Invitado",
-        "ASISTENTE": "Asistente",
-        "ANFITRION": "Anfitrión",
-        "COLIDER": "Colíder",
-        "LIDER": "Líder",
+        "visitante": "Visitante", "VISITANTE": "Visitante",
+        "persona": "Visitante",
+        "invitado": "Invitado", "INVITADO": "Invitado",
+        "asistente": "Asistente", "ASISTENTE": "Asistente",
+        "miembro": "Asistente / Miembro",
+        "anfitrion": "Anfitrión", "ANFITRION": "Anfitrión",
+        "colider": "Colíder", "COLIDER": "Colíder",
+        "lider": "Líder", "LIDER": "Líder",
     }
-
-    _ROLE_ORDER = ["visitante", "invitado", "asistente", "anfitrion", "colider", "lider"]
+    _ROLE_ORDER = ["visitante", "persona", "invitado", "asistente", "miembro", "anfitrion", "colider", "lider"]
 
     stages = []
     for rol, avg_days, count in rows:
+        if avg_days is None:
+            continue
+        order = _ROLE_ORDER.index(rol.lower()) if rol and rol.lower() in _ROLE_ORDER else 99
         stages.append({
             "role": rol,
             "label": _ROLE_LABELS.get(rol, rol),
-            "avg_days": round(float(avg_days), 1) if avg_days else 0.0,
+            "avg_days": round(float(avg_days), 1),
             "transitions": count,
-            "order": _ROLE_ORDER.index(rol.lower()) if rol.lower() in _ROLE_ORDER else 99,
+            "order": order,
         })
 
     stages.sort(key=lambda x: x["order"])
     max_days = max((s["avg_days"] for s in stages), default=1) or 1
-
     for s in stages:
         s["pct_of_max"] = round((s["avg_days"] / max_days) * 100, 1)
 
@@ -776,8 +814,8 @@ def strategy_groups_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    sede_id = require_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id, sede_id)
+    sede_id = get_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
     if not group_ids:
         return {"groups": []}
@@ -792,7 +830,6 @@ def strategy_groups_detail(
         .all()
     )
 
-    # Leader names
     leader_ids = [g.lider_persona_id for g in groups if g.lider_persona_id]
     leader_map = {}
     if leader_ids:
@@ -801,7 +838,6 @@ def strategy_groups_detail(
             for p in db.query(models.Persona).filter(models.Persona.id.in_(leader_ids)).all()
         }
 
-    # Member counts
     member_counts = dict(
         db.query(models.ParticipanteGrupo.grupo_id, _func.count(models.ParticipanteGrupo.id))
         .filter(
@@ -813,7 +849,6 @@ def strategy_groups_detail(
         .all()
     )
 
-    # Attendance per group, current and previous period
     def _group_att(gid, s, e):
         rows = (
             db.query(models.Asistencia.estado)
@@ -828,16 +863,15 @@ def strategy_groups_detail(
             .all()
         )
         present = sum(1 for (estado,) in rows if estado in ATTENDED_STATES)
-        total = len(rows)
-        return present, total
+        return present, len(rows)
 
-    # Sparkline: last 6 sessions attendance pct
-    def _sparkline(gid):
+    def _sparkline(gid) -> list[float]:
+        """Last 8 realized sessions attendance percentage."""
         sessions = (
             db.query(models.SesionGrupo)
             .filter(
                 models.SesionGrupo.grupo_id == gid,
-                models.SesionGrupo.estado == "REALIZADA",
+                _func.lower(models.SesionGrupo.estado) == "realizada",
                 models.SesionGrupo.deleted_at.is_(None),
             )
             .order_by(models.SesionGrupo.fecha_sesion.desc())
@@ -854,9 +888,9 @@ def strategy_groups_detail(
                 )
                 .all()
             )
-            total = len(att)
-            present = sum(1 for (e,) in att if e in ATTENDED_STATES)
-            result.append(round((present / total) * 100, 1) if total else 0.0)
+            t = len(att)
+            p = sum(1 for (e,) in att if e in ATTENDED_STATES)
+            result.append(round((p / t) * 100, 1) if t else 0.0)
         return result
 
     result = []

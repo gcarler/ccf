@@ -230,14 +230,6 @@ function Sparkline({ data }: { data: number[] }) {
   );
 }
 
-function LoadingSpinner() {
-  return (
-    <div className="flex items-center justify-center h-40">
-      <Loader2 size={20} className="animate-spin text-slate-400" />
-    </div>
-  );
-}
-
 // ─── Main Page ────────────────────────────────────────────────────────
 
 export default function StrategyAnalyticsPage() {
