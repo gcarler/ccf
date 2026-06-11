@@ -41,6 +41,7 @@ UserPlus,
 Users,
 X
 } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useParams,useRouter } from 'next/navigation';
 import { useCallback,useEffect,useRef,useState } from 'react';
 import { toast } from 'sonner';
@@ -191,6 +192,51 @@ const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
  { id: 'sessions', label: 'Sesiones', icon: Calendar },
  { id: 'metrics', label: 'Métricas', icon: BarChart3 },
 ];
+
+function RoleSelect({ value, options, colorClass, onChange }: {
+ value: string;
+ options: { value: string; label: string }[];
+ colorClass: string;
+ onChange: (v: string) => void;
+}) {
+ const [open, setOpen] = useState(false);
+ const ref = useRef<HTMLDivElement>(null);
+ const current = options.find(o => o.value === value);
+
+ useEffect(() => {
+ if (!open) return;
+ const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+ document.addEventListener('mousedown', handler);
+ return () => document.removeEventListener('mousedown', handler);
+ }, [open]);
+
+ return (
+ <div ref={ref} className="relative">
+ <button
+ type="button"
+ onClick={() => setOpen(o => !o)}
+ className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded cursor-pointer ${colorClass}`}
+ >
+ {current?.label ?? value}
+ <ChevronDown size={10} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+ </button>
+ {open && (
+ <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 overflow-hidden">
+ {options.map(opt => (
+ <button
+ key={opt.value}
+ type="button"
+ onClick={() => { onChange(opt.value); setOpen(false); }}
+ className={`w-full text-left px-3 py-1.5 text-[11px] font-semibold hover:bg-[hsl(var(--bg-muted))] transition-colors ${value === opt.value ? 'opacity-60' : ''}`}
+ >
+ {opt.label}
+ </button>
+ ))}
+ </div>
+ )}
+ </div>
+ );
+}
 
 export default function StrategyDetailPage() {
  const params = useParams();
@@ -1879,10 +1925,12 @@ export default function StrategyDetailPage() {
  <div className="flex-1 min-w-0">
  <span className="text-xs font-medium text-[hsl(var(--text-primary))] truncate block">{m.name}</span>
  </div>
- <select value={m.role} onChange={e => updateMemberRole(m.id, e.target.value)}
- className={`text-[11px] font-semibold px-2 py-1 rounded border-0 outline-none cursor-pointer ${getRoleColor(m.role)}`}>
- {memberRoleOptions.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
- </select>
+ <RoleSelect
+ value={m.role}
+ options={memberRoleOptions}
+ colorClass={getRoleColor(m.role)}
+ onChange={v => updateMemberRole(m.id, v)}
+ />
  <button onClick={() => removeMemberFromGroup(m.id)}
  className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
  <UserMinus size={13} />
