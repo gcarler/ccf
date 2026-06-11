@@ -289,7 +289,9 @@ class GrupoEvangelismo(Base):
 
     @hybrid_property
     def members_count(self):
-        return len(self.participantes) if self.participantes is not None else 0
+        if self.participantes is None:
+            return 0
+        return sum(1 for p in self.participantes if p.activo and p.deleted_at is None)
 
     @members_count.setter
     def members_count(self, val):
