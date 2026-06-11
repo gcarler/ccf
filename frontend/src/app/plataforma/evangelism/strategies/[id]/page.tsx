@@ -27,12 +27,14 @@ Calendar,
 CheckCircle2,
 ClipboardList,
 Clock,
+Copy,
 Flame,
 FolderOpen,
 Home,
 Plus,
 Save,
 Search,
+Share2,
 Sparkles,
 Trash2,
 UserCheck,
@@ -340,6 +342,7 @@ export default function StrategyDetailPage() {
 
  // Session menu
  const [sessionMenuId, setSessionMenuId] = useState<number | null>(null);
+ const [shareMenuId, setShareMenuId] = useState<number | null>(null);
  const [sessionGroupFilter, setSessionGroupFilter] = useState<number | 'all'>('all');
  const [sessionHabFilter, setSessionHabFilter] = useState<'all' | 'HABILITADO' | 'DESHABILITADO' | 'CERRADO'>('all');
  const [sessionMonthFilter, setSessionMonthFilter] = useState<string>('all');
@@ -355,6 +358,13 @@ export default function StrategyDetailPage() {
  document.addEventListener('click', close);
  return () => document.removeEventListener('click', close);
  }, [sessionMenuId]);
+
+ useEffect(() => {
+ if (shareMenuId === null) return;
+ const close = () => setShareMenuId(null);
+ document.addEventListener('click', close);
+ return () => document.removeEventListener('click', close);
+ }, [shareMenuId]);
 
  const memberRoleOptions = customRoles.length > 0
  ? [
@@ -855,6 +865,19 @@ export default function StrategyDetailPage() {
 
  const groupName = (houseId: number) => groups.find(g => g.id === houseId)?.name || `Grupo #${houseId}`;
 
+ const shareGroupLink = (groupId: number, gName: string, via: 'copy' | 'whatsapp' | 'telegram') => {
+ const url = `${window.location.origin}/plataforma/evangelism/faro/${groupId}`;
+ const msg = `Hola, este es el enlace directo a tu grupo "${gName}" en la plataforma CCF:`;
+ if (via === 'copy') {
+ navigator.clipboard.writeText(url).then(() => toast.success('Enlace copiado al portapapeles'));
+ } else if (via === 'whatsapp') {
+ window.open(`https://wa.me/?text=${encodeURIComponent(msg + '\n' + url)}`, '_blank');
+ } else {
+ window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(msg)}`, '_blank');
+ }
+ setShareMenuId(null);
+ };
+
  // Meses disponibles para el filtro de sesiones
  const sessionMonths = useMemo(() => {
  const seen = new Set<string>();
@@ -1160,6 +1183,13 @@ export default function StrategyDetailPage() {
  className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
  >
  <Calendar size={10} /> Detalle
+ </button>
+ <button
+ onClick={(e) => { e.stopPropagation(); shareGroupLink(item.id, item.name, 'whatsapp'); }}
+ title="Compartir por WhatsApp"
+ className="w-6 h-6 inline-flex items-center justify-center rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 transition-colors"
+ >
+ <Share2 size={10} />
  </button>
  </div>
  ),
@@ -1479,7 +1509,37 @@ export default function StrategyDetailPage() {
  className="absolute top-2 right-8 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
  <Calendar size={14} />
  </button>
- <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] pr-16">{g.name}</h3>
+ {/* Share button + dropdown */}
+ <div className="absolute top-2 right-[3.25rem] z-20">
+ <button
+ onClick={e => { e.stopPropagation(); setShareMenuId(shareMenuId === g.id ? null : g.id); }}
+ className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 opacity-0 group-hover:opacity-100 transition-all"
+ title="Compartir enlace del grupo"
+ >
+ <Share2 size={14} />
+ </button>
+ {shareMenuId === g.id && (
+ <div
+ onClick={e => e.stopPropagation()}
+ className="absolute top-7 right-0 w-52 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl py-1"
+ >
+ <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400 px-3 py-1.5">Compartir enlace del grupo</p>
+ <button onClick={() => shareGroupLink(g.id, g.name, 'copy')}
+ className="w-full text-left px-3 py-2 text-xs font-medium text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] flex items-center gap-2">
+ <Copy size={12} className="shrink-0" /> Copiar enlace
+ </button>
+ <button onClick={() => shareGroupLink(g.id, g.name, 'whatsapp')}
+ className="w-full text-left px-3 py-2 text-xs font-medium text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] flex items-center gap-2">
+ <span className="shrink-0 w-3 h-3 rounded-full bg-emerald-500 inline-block" />WhatsApp
+ </button>
+ <button onClick={() => shareGroupLink(g.id, g.name, 'telegram')}
+ className="w-full text-left px-3 py-2 text-xs font-medium text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] flex items-center gap-2">
+ <span className="shrink-0 w-3 h-3 rounded-full bg-sky-500 inline-block" />Telegram
+ </button>
+ </div>
+ )}
+ </div>
+ <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] pr-24">{g.name}</h3>
  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{g.zone || 'Sin zona'}</p>
  <div className="flex items-center gap-3 mt-3 text-xs text-[hsl(var(--text-secondary))]">
  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--bg-muted))]">
