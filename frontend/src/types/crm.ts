@@ -107,7 +107,7 @@ export interface CounselingSession {
 
 // ── Groups ────────────────────────────────────────────────────────────────
 export interface Grupo {
-  id: number;
+  id: string;
   name: string;
   zone?: string;
   address?: string;

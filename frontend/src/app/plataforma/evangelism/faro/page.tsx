@@ -17,14 +17,14 @@ import { useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
 
 interface FaroSeason { id: number; name: string; start_date: string; end_date: string; periodicity: string; status: string; }
-interface Grupo { id: number; name: string; leader_name?: string; zone?: string; day_of_week?: string; time?: string; status?: string; }
+interface Grupo { id: string; name: string; leader_name?: string; zone?: string; day_of_week?: string; time?: string; status?: string; }
 interface FaroAnalytics {
  active_faros: number;
  total_sessions: number;
  total_attendance: number;
  avg_per_session: number;
  per_faro: Array<{
- grupo_id: number;
+ grupo_id: string;
  total_sessions: number;
  total_attendance: number;
  avg: number;
@@ -108,7 +108,7 @@ export default function FaroPage() {
  try {
  const bodyPayload: any = { ...sessionForm, season_id: activeSeason.id };
  if (sessionForm.grupo_id !== 'all') {
- bodyPayload.cell_group_id = Number(sessionForm.grupo_id);
+ bodyPayload.cell_group_id = sessionForm.grupo_id;
  } else {
  bodyPayload.cell_group_id = 'all';
  }

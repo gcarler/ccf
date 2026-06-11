@@ -6,6 +6,8 @@ Este archivo contiene el CRUD refactorizado con los nuevos esquemas.
 
 from __future__ import annotations
 
+import uuid
+
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -237,7 +239,7 @@ def delete_rol_personalizado(db: Session, role_id: int) -> bool:
 
 def get_participantes(
     db: Session,
-    grupo_id: int,
+    grupo_id: uuid.UUID,
     solo_activos: bool = True,
 ) -> List[ParticipanteGrupo]:
     q = db.query(ParticipanteGrupo).filter(

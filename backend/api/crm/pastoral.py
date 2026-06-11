@@ -738,7 +738,7 @@ def get_counseling_detail(
 
 @router.get("/grupos/{grupo_id}", response_model=dict)
 def get_grupo_detail(
-    grupo_id: int,
+    grupo_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -798,7 +798,7 @@ def list_grupos(
 
 @router.put("/grupos/{grupo_id}", response_model=dict)
 def update_grupo(
-    grupo_id: int,
+    grupo_id: uuid.UUID,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),

@@ -90,7 +90,7 @@ interface FollowUpRecord {
 }
 
 interface StrategyGroup {
- id: number;
+ id: string;
  name: string;
  zone: string | null;
  leader_name: string | null;
@@ -101,7 +101,7 @@ type HabilitacionEstado = 'DESHABILITADO' | 'HABILITADO' | 'CERRADO' | 'CANCELAD
 
 interface SessionRow {
  id: number;
- grupo_id: number;
+ grupo_id: string;
  session_date: string;
  status: string;
  estado_habilitacion?: HabilitacionEstado;
@@ -342,8 +342,8 @@ export default function StrategyDetailPage() {
 
  // Session menu
  const [sessionMenuId, setSessionMenuId] = useState<number | null>(null);
- const [shareMenuId, setShareMenuId] = useState<number | null>(null);
- const [sessionGroupFilter, setSessionGroupFilter] = useState<number | 'all'>('all');
+ const [shareMenuId, setShareMenuId] = useState<string | null>(null);
+ const [sessionGroupFilter, setSessionGroupFilter] = useState<string | 'all'>('all');
  const [sessionHabFilter, setSessionHabFilter] = useState<'all' | 'HABILITADO' | 'DESHABILITADO' | 'CERRADO'>('all');
  const [sessionMonthFilter, setSessionMonthFilter] = useState<string>('all');
  const [sessionSearch, setSessionSearch] = useState('');
@@ -585,7 +585,7 @@ export default function StrategyDetailPage() {
  } finally { setGroupSaving(false); }
  };
 
- const handleDeleteGroup = async (groupId: number, groupName: string) => {
+ const handleDeleteGroup = async (groupId: string, groupName: string) => {
  try {
  await apiFetch(`/evangelism/grupos/${groupId}`, { method: 'DELETE', token });
  toast.success('Grupo eliminado');
@@ -593,7 +593,7 @@ export default function StrategyDetailPage() {
  } catch { toast.error('Error al eliminar'); }
  };
 
- const requestDeleteGroup = (groupId: number, groupName: string) => {
+ const requestDeleteGroup = (groupId: string, groupName: string) => {
  setConfirmAction({
  title: 'Eliminar grupo',
  description: `Se eliminara "${groupName}" y todo su historial de asistencia.`,
@@ -682,7 +682,7 @@ export default function StrategyDetailPage() {
  await apiFetch('/evangelism/sessions', {
  method: 'POST', token,
  body: {
- grupo_id: parseInt(String(sessionForm.grupo_id)),
+ grupo_id: sessionForm.grupo_id,
  session_date: sessionForm.session_date + 'T12:00:00',
  topic: sessionForm.topic || null,
  offering_amount: sessionForm.offering_amount ? parseFloat(sessionForm.offering_amount) : null,
@@ -863,9 +863,9 @@ export default function StrategyDetailPage() {
  catch { return dateStr; }
  };
 
- const groupName = (houseId: number) => groups.find(g => g.id === houseId)?.name || `Grupo #${houseId}`;
+ const groupName = (houseId: string) => groups.find(g => g.id === houseId)?.name || `Grupo #${houseId}`;
 
- const shareGroupLink = (groupId: number, gName: string, via: 'copy' | 'whatsapp' | 'telegram') => {
+ const shareGroupLink = (groupId: string, gName: string, via: 'copy' | 'whatsapp' | 'telegram') => {
  const url = `${window.location.origin}/plataforma/evangelism/faro/${groupId}`;
  const msg = `Hola, este es el enlace directo a tu grupo "${gName}" en la plataforma CCF:`;
  if (via === 'copy') {
@@ -1627,7 +1627,7 @@ export default function StrategyDetailPage() {
  {groups.length > 1 && (
  <select
  value={sessionGroupFilter}
- onChange={e => setSessionGroupFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+ onChange={e => setSessionGroupFilter(e.target.value)}
  className="h-7 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-blue-400">
  <option value="all">Todos los grupos</option>
  {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}

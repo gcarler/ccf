@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 # ── Pydantic schemas ─────────────────────────────────────────────────────────
 
 class SplitRequest(BaseModel):
-    grupo_id: int
+    grupo_id: UUID
     nuevo_nombre: str = Field(..., min_length=2, max_length=150)
     nuevo_lider_id: str  # UUID de la Persona que será líder del nuevo grupo
 
@@ -41,9 +42,9 @@ class SplitResponse(BaseModel):
 
 
 class MultiplicationHistoryItem(BaseModel):
-    grupo_id: int
+    grupo_id: UUID
     grupo_nombre: str
-    parent_group_id: Optional[int] = None
+    parent_group_id: Optional[UUID] = None
     parent_group_nombre: Optional[str] = None
     notes_historial: Optional[str] = None
     created_at: Optional[str] = None
@@ -54,7 +55,7 @@ class MultiplicationHistoryItem(BaseModel):
 
 
 class MultiplicationCheckItem(BaseModel):
-    grupo_id: int
+    grupo_id: UUID
     grupo_nombre: str
     lider_nombre: Optional[str] = None
     total_miembros: int
@@ -66,7 +67,7 @@ class MultiplicationCheckItem(BaseModel):
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _count_members(db: Session, grupo_id: int) -> int:
+def _count_members(db: Session, grupo_id: UUID) -> int:
     return (
         db.query(models.ParticipanteGrupo)
         .filter(

@@ -13,6 +13,7 @@ Endpoints:
 from __future__ import annotations
 
 import datetime as _dt
+import uuid as _uuid
 from collections import defaultdict
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -91,7 +92,7 @@ def _get_strategy_or_404(db: Session, strategy_id: str):
     return s
 
 
-def _group_ids_for_strategy(db: Session, strategy_id: str, sede_id) -> list[int]:
+def _group_ids_for_strategy(db: Session, strategy_id: str, sede_id) -> list[_uuid.UUID]:
     q = db.query(models.GrupoEvangelismo.id).filter(
         models.GrupoEvangelismo.estrategia_id == strategy_id,
         models.GrupoEvangelismo.deleted_at.is_(None),
@@ -107,7 +108,7 @@ def _delta(current: float, previous: float) -> float:
     return round(((current - previous) / previous) * 100, 1)
 
 
-def _attendance_stats(db: Session, group_ids: list[int], start, end) -> tuple[int, int]:
+def _attendance_stats(db: Session, group_ids: list[_uuid.UUID], start, end) -> tuple[int, int]:
     """Returns (present, total) attendance counts in the date range."""
     if not group_ids:
         return 0, 0
@@ -127,7 +128,7 @@ def _attendance_stats(db: Session, group_ids: list[int], start, end) -> tuple[in
     return present, len(rows)
 
 
-def _sessions_done_count(db: Session, group_ids: list[int], start, end) -> int:
+def _sessions_done_count(db: Session, group_ids: list[_uuid.UUID], start, end) -> int:
     """Count sessions with estado that means 'completed', case-insensitive."""
     if not group_ids:
         return 0
@@ -144,7 +145,7 @@ def _sessions_done_count(db: Session, group_ids: list[int], start, end) -> int:
     )
 
 
-def _sessions_total_count(db: Session, group_ids: list[int], start, end) -> int:
+def _sessions_total_count(db: Session, group_ids: list[_uuid.UUID], start, end) -> int:
     if not group_ids:
         return 0
     return (

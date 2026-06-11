@@ -856,7 +856,7 @@ class Family(BaseModel):
 
 class CellGroupMember(BaseModel):
     id: int
-    cell_group_id: int
+    cell_group_id: str
     persona_id: str
     role: str
     model_config = orm_config
@@ -958,7 +958,7 @@ class FaroSessionAttendanceItem(BaseModel):
 class FaroSessionAttendance(BaseModel):
     session_id: int
     session_date: date
-    cell_group_id: int
+    cell_group_id: str
     status: str
     topic: Optional[str] = None
     offering_amount: Optional[float] = None
@@ -997,7 +997,7 @@ class PastoralCallLog(BaseModel):
 # ── Faro Sessions & Attendance ──
 
 class CellGroupSessionBase(BaseModel):
-    cell_group_id: int
+    cell_group_id: str
     season_id: Optional[int] = None
     session_date: datetime
     topic: Optional[str] = None

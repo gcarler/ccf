@@ -817,7 +817,7 @@ class FaroVisitorCreate(BaseModel):
     first_name: str
     last_name: str
     phone: Optional[str] = None
-    cell_group_id: int
+    cell_group_id: UUID
     session_id: Optional[int] = None
 
 

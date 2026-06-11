@@ -28,8 +28,9 @@ import { Grupo } from '@/types/crm';
 
 const ZONE_COLORS = ['from-blue-500 to-sky-600', 'from-blue-500 to-sky-600', 'from-emerald-500 to-teal-600', 'from-orange-500 to-amber-600', 'from-rose-500 to-pink-600', 'from-sky-500 to-cyan-600'];
 
-function getZoneColor(id: number) {
-    return ZONE_COLORS[id % ZONE_COLORS.length];
+function getZoneColor(id: string) {
+    const n = parseInt(String(id).replace(/-/g, '').slice(-4), 16) || 0;
+    return ZONE_COLORS[n % ZONE_COLORS.length];
 }
 
 interface Member {

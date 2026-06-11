@@ -32,7 +32,7 @@ import type { ViewType } from '@/components/ViewSwitcher';
 
 
 interface Grupo {
- id: number;
+ id: string;
  code?: string;
  name: string;
  zone?: string;

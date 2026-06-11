@@ -14,6 +14,7 @@ import io
 import logging
 from collections import defaultdict
 from datetime import datetime, timezone
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -40,7 +41,7 @@ router = APIRouter()
 # Helpers
 # ──────────────────────────────────────────────────────────────────────
 
-def _get_group_or_404(db: Session, grupo_id: int) -> models.GrupoEvangelismo:
+def _get_group_or_404(db: Session, grupo_id: UUID) -> models.GrupoEvangelismo:
     grupo = db.query(models.GrupoEvangelismo).filter(
         models.GrupoEvangelismo.id == grupo_id
     ).first()
@@ -60,7 +61,7 @@ def _get_leader_name(db: Session, grupo: models.GrupoEvangelismo) -> str:
     return "Líder (no encontrado)"
 
 
-def _count_participants(db: Session, grupo_id: int) -> int:
+def _count_participants(db: Session, grupo_id: UUID) -> int:
     return db.query(func.count(models.ParticipanteGrupo.id)).filter(
         models.ParticipanteGrupo.grupo_id == grupo_id,
         models.ParticipanteGrupo.activo,
@@ -68,7 +69,7 @@ def _count_participants(db: Session, grupo_id: int) -> int:
 
 
 def _build_session_rows(
-    db: Session, grupo_id: int
+    db: Session, grupo_id: UUID
 ) -> list[dict]:
     """Return one dict per session with attendance stats."""
     sessions = (
@@ -206,7 +207,7 @@ def _generate_attendance_pdf(
 
 @router.get("/reports/group/{grupo_id}/attendance-pdf")
 def attendance_pdf(
-    grupo_id: int,
+    grupo_id: UUID,
     db: Session = Depends(get_db),
     current_user=Depends(require_active_user),
 ):
@@ -314,7 +315,7 @@ def _generate_attendance_excel(
 
 @router.get("/reports/group/{grupo_id}/attendance-excel")
 def attendance_excel(
-    grupo_id: int,
+    grupo_id: UUID,
     db: Session = Depends(get_db),
     current_user=Depends(require_active_user),
 ):

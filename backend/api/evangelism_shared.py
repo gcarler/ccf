@@ -327,7 +327,7 @@ def get_expected_members_for_event(
     return q.order_by(models.Persona.nombre_completo.asc()).all()
 
 
-def expected_group_rows(db: Session, grupo_id: int):
+def expected_group_rows(db: Session, grupo_id: UUID):
     rows = (
         db.query(models.ParticipanteGrupo, models.Persona)
         .join(models.Persona, models.Persona.id == models.ParticipanteGrupo.persona_id)

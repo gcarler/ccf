@@ -15,7 +15,7 @@ export interface BreadcrumbOption {
 }
 
 interface SidebarGroup {
-    id: number;
+    id: string;
     name: string;
     estrategiaId?: string;
 }

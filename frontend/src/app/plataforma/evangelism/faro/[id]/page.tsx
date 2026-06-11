@@ -15,7 +15,7 @@ import {
 import { toast } from 'sonner';
 
 interface HouseDetail {
- id: number; name: string; zone?: string; address?: string;
+ id: string; name: string; zone?: string; address?: string;
  code?: string; leader_name?: string; members_count?: number; capacity?: number;
  day_of_week?: string; time?: string; status?: string;
  sessions: SessionRow[]; total_sessions: number; total_attendance: number;
@@ -54,7 +54,7 @@ type AttendanceReason = 'weather' | 'work' | 'health' | 'family' | 'other';
 interface AttendanceData {
  session_id: number;
  session_date: string;
- grupo_id: number;
+ grupo_id: string;
  status: string;
  topic?: string | null;
  offering_amount?: number | null;

@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 
 interface Grupo {
- id: number;
+ id: string;
  name: string;
  zone: string | null;
  address: string | null;
@@ -141,7 +141,7 @@ export default function SessionReportPage() {
  const sessionData = await apiFetch<any>('/evangelism/sessions', {
  method: 'POST', token: token || '',
  body: {
- grupo_id: parseInt(houseId),
+ grupo_id: houseId,
  session_date: new Date(sessionDate).toISOString(),
  topic: topic || null,
  offering_amount: offering ? parseFloat(offering) : null,
@@ -173,7 +173,7 @@ export default function SessionReportPage() {
  first_name: guest.firstName.trim(),
  last_name: guest.lastName.trim(),
  phone: guest.phone.trim() || null,
- grupo_id: parseInt(houseId),
+ grupo_id: houseId,
  session_id: sessionId,
  },
  });
