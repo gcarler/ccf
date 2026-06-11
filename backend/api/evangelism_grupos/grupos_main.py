@@ -832,16 +832,15 @@ def register_faro_visitor(
     current_user: models.User = Depends(require_active_user),
 ):
     """Register a new guest from a Faro session report as a Persona + CRM lead."""
-    # Verificar que usuario es líder/asistente del grupo
-    house = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == visitor.cell_group_id).first()
-    if not house:
+    grupo = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == visitor.cell_group_id).first()
+    if not grupo:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
 
     persona = _get_persona_for_user(db, current_user.id)
-    if persona and persona.id not in {house.leader_persona_id, house.assistant_persona_id, house.host_persona_id}:
+    if persona and persona.id not in {grupo.lider_persona_id, grupo.asistente_persona_id, grupo.anfitrion_persona_id}:
         raise HTTPException(status_code=403, detail="Solo el líder o asistente puede registrar visitantes")
 
-    # Find existing persona by phone or whatsapp
+    # Buscar persona existente por teléfono o whatsapp
     existing = None
     lookup_phone = visitor.phone or visitor.whatsapp
     if lookup_phone:
@@ -850,7 +849,7 @@ def register_faro_visitor(
     if existing:
         return {"status": "duplicate", "persona_id": existing.id}
 
-    # Create new persona — marcada con su origen evangelístico
+    # Crear persona marcada con su origen evangelístico
     new_persona = models.Persona(
         first_name=visitor.first_name or "Visitante",
         last_name=visitor.last_name or "",
@@ -858,10 +857,10 @@ def register_faro_visitor(
         mobile_phone=visitor.whatsapp,
         email=visitor.email,
         address=visitor.address,
-        sede_id=house.sede_id,
+        sede_id=grupo.sede_id,
         church_role="Visitante",
-        origen_grupo_id=house.id,
-        origen_estrategia_id=house.estrategia_id,
+        origen_grupo_id=grupo.id,
+        origen_estrategia_id=grupo.estrategia_id,
         origen_sesion_id=visitor.session_id,
     )
     db.add(new_persona)
@@ -879,9 +878,9 @@ def register_faro_visitor(
 
     from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
     crear_caso_nuevo_visitante(
-        db, new_persona, house.sede_id,
-        origen_grupo_id=house.id,
-        origen_estrategia_id=house.estrategia_id,
+        db, new_persona, grupo.sede_id,
+        origen_grupo_id=grupo.id,
+        origen_estrategia_id=grupo.estrategia_id,
         origen_sesion_id=visitor.session_id,
     )
 
