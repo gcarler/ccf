@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Target, Sparkles, Quote } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
 import RichText from "@/components/public/RichText";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function NosotrosPage() {
     const { data: heroContent } = useContentBlock("faro_about_hero");
@@ -22,7 +23,8 @@ export default function NosotrosPage() {
     const heroDescription = heroContent?.description || "Somos una comunidad vibrante dedicada a guiar a las personas hacia una vida llena de propósito y luz a través del mensaje de esperanza.";
 
     return (
-        <main className="pt-[88px]">
+        <CmsPageOverride slug="nosotros">
+            <main className="pt-[88px]">
             {/* ── HERO EDITORIAL ────────────────────────────────── */}
             <section className="relative px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16 overflow-hidden">
                 <div className="absolute inset-0 bg-light-glow pointer-events-none opacity-50" />
@@ -205,6 +207,7 @@ export default function NosotrosPage() {
                 </div>
             </section>
         </main>
+        </CmsPageOverride>
     );
 }
 

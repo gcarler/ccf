@@ -318,7 +318,7 @@ export default function CursoDetailPage() {
                                     type="submit"
                                     disabled={enrollSubmitting}
                                     className="flex-1 py-2 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-60"
-                                    style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}
+                                    style={{ background: "var(--faro-cta-gradient)" }}
                                 >
                                     {enrollSubmitting ? "Inscribiendo..." : "Inscribirme"}
                                 </button>

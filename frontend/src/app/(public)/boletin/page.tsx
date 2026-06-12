@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
-import { FAROHeader, FAROFooter } from "@/components/public/FAROShared";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function BoletinPage() {
     const { data: cms } = useContentBlock("faro_boletin_hero");
@@ -36,9 +36,8 @@ export default function BoletinPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-faro-surface">
-            <FAROHeader />
-            <main className="flex-1 flex items-center justify-center px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16">
+        <CmsPageOverride slug="boletin">
+            <main className="pt-[100px] flex-1 flex items-center justify-center px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -84,7 +83,7 @@ export default function BoletinPage() {
                                     type="submit"
                                     disabled={status === "sending"}
                                     className="px-8 py-3.5 rounded-xl font-bold text-base text-white transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
-                                    style={{ background: "linear-gradient(135deg, var(--faro-primary) 0%, var(--faro-secondary) 100%)" }}
+                                    style={{ background: "var(--faro-cta-gradient)" }}
                                 >
                                     {status === "sending" ? "Enviando..." : ctaText}
                                 </button>
@@ -93,7 +92,6 @@ export default function BoletinPage() {
                     </div>
                 </motion.div>
             </main>
-            <FAROFooter />
-        </div>
+        </CmsPageOverride>
     );
 }

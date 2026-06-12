@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ChevronRight, Bookmark, Play } from "lucide-react";
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function PredicasPage() {
     const { data: heroContent } = useContentBlock("faro_sermons_hero");
@@ -75,7 +76,8 @@ export default function PredicasPage() {
     const displayFeatured = hasSermons ? featuredSermon : DEFAULT_SERMONS[0];
 
     return (
-        <main className="pt-[88px] bg-faro-surface">
+        <CmsPageOverride slug="predicas">
+            <main className="pt-[88px] bg-faro-surface">
             {/* ── HERO CINEMATOGRÁFICO ─────────────────────────── */}
             <section className="relative min-h-[80vh] flex items-end overflow-hidden">
                 <div className="absolute inset-0">
@@ -269,6 +271,7 @@ export default function PredicasPage() {
                 )}
             </section>
         </main>
+        </CmsPageOverride>
     );
 }
 

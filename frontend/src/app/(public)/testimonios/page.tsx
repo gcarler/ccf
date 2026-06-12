@@ -8,6 +8,7 @@ import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
 import { apiFetch } from "@/lib/http";
 import { Testimonial } from "@/lib/data/testimonios";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -197,7 +198,8 @@ export default function TestimoniosPage() {
     }
 
     return (
-        <main className="pt-[88px] pb-4 overflow-hidden">
+        <CmsPageOverride slug="testimonios">
+            <main className="pt-[88px] pb-4 overflow-hidden">
             {/* ── HERO ──────────────────────────────────────────── */}
             <header className="relative px-3 md:px-4 lg:px-8 xl:px-12 py-6 md:py-10 lg:py-14 flex flex-col items-center text-center">
                 <div className="absolute inset-0 bg-beam-gradient pointer-events-none opacity-60" />
@@ -322,5 +324,6 @@ export default function TestimoniosPage() {
                 </AnimatePresence>
             </section>
         </main>
+        </CmsPageOverride>
     );
 }

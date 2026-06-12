@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, HeartHandshake, Sparkles } from "lucide-react";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 const HIGHLIGHTS = [
     {
@@ -27,7 +28,8 @@ export default async function WelcomePage({
     const name = typeof params?.name === "string" && params.name.trim() ? params.name.trim() : "amigo";
 
     return (
-        <main className="min-h-screen pt-[96px] pb-8 px-3 md:px-6 lg:px-8 xl:px-12" style={{ background: "var(--faro-background)" }}>
+        <CmsPageOverride slug="bienvenida">
+            <main className="min-h-screen pt-[96px] pb-8 px-3 md:px-6 lg:px-8 xl:px-12" style={{ background: "var(--faro-background)" }}>
             <section className="mx-auto max-w-6xl rounded-[24px] border border-[color:var(--faro-outline-variant)] overflow-hidden">
                 <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
                     <div className="p-6 md:p-10 lg:p-12" style={{ background: "linear-gradient(135deg, var(--faro-surface-container-lowest), var(--faro-surface-container-low))" }}>
@@ -92,6 +94,7 @@ export default async function WelcomePage({
                     </div>
                 </div>
             </section>
-        </main>
+            </main>
+        </CmsPageOverride>
     );
 }

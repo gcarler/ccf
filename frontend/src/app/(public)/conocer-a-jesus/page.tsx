@@ -8,6 +8,7 @@ import RichText from "@/components/public/RichText";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/http";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 interface TestimonialItem {
     id: number;
@@ -99,7 +100,8 @@ export default function ConocerAJesusPage() {
     };
 
     return (
-        <main className="pt-[88px]">
+        <CmsPageOverride slug="conocer-a-jesus">
+            <main className="pt-[88px]">
             {/* ── HERO ──────────────────────────────────────── */}
             <header className="relative min-h-screen flex items-center overflow-hidden">
                 {/* Background: lighthouse in fog */}
@@ -467,6 +469,7 @@ export default function ConocerAJesusPage() {
                 </div>
             </section>
         </main>
+        </CmsPageOverride>
     );
 }
 

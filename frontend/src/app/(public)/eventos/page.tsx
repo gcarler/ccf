@@ -8,6 +8,7 @@ import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 import { Bell,ChevronLeft,ChevronRight,MapPin,Star } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 interface PublicEventItem {
     title?: string;
@@ -106,7 +107,8 @@ export default function EventosPage() {
     ];
 
     return (
-        <main className="pt-[88px] pb-4 px-3 md:px-4">
+        <CmsPageOverride slug="eventos">
+            <main className="pt-[88px] pb-4 px-3 md:px-4">
             <header className="mb-14 pt-12 md:grid md:grid-cols-12 gap-3 items-end">
                 <div className="md:col-span-8">
                     <span
@@ -195,8 +197,7 @@ export default function EventosPage() {
                                     }}
                                     className="px-4 py-1.5 rounded-md font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
                                     style={{
-                                        background:
-                                            "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                        background: "var(--faro-cta-gradient)",
                                     }}
                                 >
                                     Reservar lugar
@@ -679,5 +680,6 @@ export default function EventosPage() {
                 </div>
             </section>
         </main>
+        </CmsPageOverride>
     );
 }

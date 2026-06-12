@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PREMIUM_COURSES, PREMIUM_BOOKS, CourseItem, BookItem } from "@/lib/data/cursos";
 import { ShoppingBag, ArrowRight, Clock, User, CheckCircle2 } from "lucide-react";
 import { apiFetch } from "@/lib/http";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function CursosPage() {
     const { data: heroContent } = useContentBlock("faro_courses_hero");
@@ -94,7 +95,8 @@ export default function CursosPage() {
     const books = cmsBooks.length > 0 ? cmsBooks : PREMIUM_BOOKS;
 
     return (
-        <main className="pt-[88px] pb-4 overflow-hidden">
+        <CmsPageOverride slug="cursos">
+            <main className="pt-[88px] pb-4 overflow-hidden">
             {/* ── TOAST NOTIFICATION ────────────────────── */}
             <AnimatePresence>
                 {toastMessage && (
@@ -497,5 +499,6 @@ export default function CursosPage() {
                 </motion.div>
             </section>
         </main>
+        </CmsPageOverride>
     );
 }

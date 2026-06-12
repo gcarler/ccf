@@ -10,6 +10,7 @@ import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 import { useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function PublicHomePage() {
     const { data: heroContent } = useContentBlock("faro_home_hero");
@@ -60,7 +61,8 @@ export default function PublicHomePage() {
         : [];
 
     return (
-        <main>
+        <CmsPageOverride slug="home">
+            <main>
             {/* ─── HERO ─────────────────────────────────────────────── */}
             <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
                 {/* Background: imagen faro con overlay */}
@@ -463,8 +465,7 @@ export default function PublicHomePage() {
                                     disabled={nlStatus === "sending"}
                                 className="px-4 py-1.5 rounded-lg font-bold text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
                                 style={{
-                                    background:
-                                        "linear-gradient(135deg, var(--faro-primary) 0%, var(--faro-secondary) 100%)",
+                                    background: "var(--faro-cta-gradient)",
                                     boxShadow: "var(--faro-hero-cta-shadow)",
                                 }}
                             >
@@ -476,6 +477,7 @@ export default function PublicHomePage() {
                 </motion.div>
             </section>
         </main>
+        </CmsPageOverride>
     );
 }
 

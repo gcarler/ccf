@@ -52,14 +52,10 @@ export default async function FaroDynamicPage({ params }: { params: Promise<{ sl
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--faro-background)", color: "var(--faro-on-background)" }}>
-      <FAROHeader />
-      <main className="flex-1 px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16 space-y-8">
-        {page.sections.filter((section) => section.is_visible).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((section) => (
-          <PublicSectionRenderer key={section.id} section={section} />
-        ))}
-      </main>
-      <FAROFooter />
-    </div>
+    <main className="flex-1 px-3 md:px-6 lg:px-8 xl:px-12 pt-[100px] pb-16 space-y-8">
+      {page.sections.filter((section) => section.is_visible).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((section) => (
+        <PublicSectionRenderer key={section.id} section={section} />
+      ))}
+    </main>
   );
 }

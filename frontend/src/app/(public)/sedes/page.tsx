@@ -4,6 +4,7 @@ import { useContentBlock } from "@/hooks/useContent";
 import { AnimatePresence,motion } from "framer-motion";
 import { Calendar,Clock,Home,Navigation,Phone,Search } from "lucide-react";
 import { useEffect,useState } from "react";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 const MAP_EMBED_URL =
     "https://www.google.com/maps/d/embed?mid=1VDNpplw_9z1tcEhx25wEFRR5gQmnHgM&ehbc=2E312F";
@@ -76,7 +77,8 @@ export default function SedesPage() {
     );
 
     return (
-        <main className="pt-[88px] flex flex-col md:flex-row bg-faro-surface" style={{ minHeight: "100vh" }}>
+        <CmsPageOverride slug="sedes">
+            <main className="pt-[88px] flex flex-col md:flex-row bg-faro-surface" style={{ minHeight: "100vh" }}>
 
             {/* ── LISTADO DE SEDES ──────────────────────────── */}
             <aside className="w-full md:w-[450px] lg:w-[500px] flex flex-col md:h-[calc(100vh-88px)] md:sticky md:top-[88px] bg-faro-surface-container-lowest border-r border-faro-outline-variant/10">
@@ -131,7 +133,7 @@ export default function SedesPage() {
                                         <Home size={20} />
                                     </div>
                                     {loc.isMain && (
-                                        <span className="text-[9px] font-semibold uppercase tracking-wide bg-faro-secondary text-white px-2.5 py-1 rounded-full">
+                                        <span className="text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full" style={{ background: "var(--faro-cta-gradient)", color: "white" }}>
                                             Principal
                                         </span>
                                     )}
@@ -207,5 +209,6 @@ export default function SedesPage() {
                 />
             </section>
         </main>
+        </CmsPageOverride>
     );
 }

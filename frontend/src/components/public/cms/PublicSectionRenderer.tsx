@@ -63,7 +63,7 @@ function HeroSection({ section }: { section: CmsSection }) {
   return (
     <section
       className="rounded-2xl p-8 md:p-12 lg:p-16 min-h-[380px] flex items-center"
-      style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}
+      style={{ background: "var(--faro-cta-gradient)" }}
     >
       <div className="max-w-3xl">
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
@@ -508,7 +508,7 @@ function StatsSection({ section }: { section: CmsSection }) {
   return (
     <section
       className="rounded-2xl p-8 md:p-12"
-      style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary, var(--faro-primary)))" }}
+      style={{ background: "var(--faro-cta-gradient)" }}
     >
       {title && (
         <h2 className="text-xl md:text-2xl font-black tracking-tight text-center text-white mb-8">{title}</h2>
@@ -610,7 +610,7 @@ function CountdownSection({ section }: { section: CmsSection }) {
   return (
     <section
       className="rounded-2xl p-8 md:p-12 text-center"
-      style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary, var(--faro-primary)))" }}
+      style={{ background: "var(--faro-cta-gradient)" }}
     >
       <h2 className="text-2xl md:text-3xl font-black text-white">{title}</h2>
       {body && <p className="mt-3 text-white/80 text-base">{body}</p>}
@@ -956,7 +956,7 @@ function PopupBlock({ section }: { section: CmsSection }) {
                   href={ctaHref}
                   onClick={handleClose}
                   className="w-full py-3 rounded-full text-sm font-black uppercase tracking-widest text-white text-center transition-transform hover:scale-[1.02]"
-                  style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary, var(--faro-primary)))" }}
+                  style={{ background: "var(--faro-cta-gradient)" }}
                 >
                   {ctaLabel}
                 </Link>

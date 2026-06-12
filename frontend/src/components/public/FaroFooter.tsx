@@ -42,7 +42,7 @@ export default function FaroFooter() {
                                 <div
                                     className="w-10 h-10 rounded-full flex items-center justify-center"
                                     style={{
-                                        background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                        background: "var(--faro-cta-gradient)",
                                     }}
                                 >
                                     <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-5 h-5">

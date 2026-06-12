@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useContentBlock } from "@/hooks/useContent";
 import RichText from "@/components/public/RichText";
+import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 const DEFAULT_SECTIONS = [
   {
@@ -44,7 +45,8 @@ export default function PrivacidadPage() {
   })();
 
   return (
-    <main className="pt-[120px] pb-4 px-3 md:px-4 lg:px-8 xl:px-12 bg-faro-surface min-h-screen">
+    <CmsPageOverride slug="privacidad">
+      <main className="pt-[120px] pb-4 px-3 md:px-4 lg:px-8 xl:px-12 bg-faro-surface min-h-screen">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -66,5 +68,6 @@ export default function PrivacidadPage() {
         </div>
       </motion.div>
     </main>
+    </CmsPageOverride>
   );
 }
