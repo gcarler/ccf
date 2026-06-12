@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import collections
-import uuid as _uuid_mod
 from datetime import datetime as _datetime, timezone as _timezone
 from typing import List, Optional
 from uuid import UUID

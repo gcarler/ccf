@@ -13,6 +13,7 @@ Endpoints:
 from __future__ import annotations
 
 import datetime as _dt
+import math as _math
 import uuid as _uuid
 from collections import defaultdict
 
@@ -960,54 +961,66 @@ def strategy_groups_detail(
 # GET /analytics/strategy/{strategy_id}/full?weeks=12
 # ═══════════════════════════════════════════════════════════════
 
-import math as _math
-from datetime import timedelta as _td
-
 
 def _semaforo_tof(pct: float) -> str:
-    if pct >= 86: return "SATURADO"
-    if pct >= 60: return "SALUDABLE"
+    if pct >= 86:
+        return "SATURADO"
+    if pct >= 60:
+        return "SALUDABLE"
     return "BAJO"
 
 
 def _semaforo_ics(pct: float) -> str:
-    if pct >= 90: return "OPTIMO"
-    if pct >= 70: return "INCONSTANTE"
+    if pct >= 90:
+        return "OPTIMO"
+    if pct >= 70:
+        return "INCONSTANTE"
     return "ABANDONO"
 
 
 def _semaforo_icd(pct: float) -> str:
-    if pct >= 70: return "IMAN_FUERTE"
-    if pct >= 35: return "REGULAR"
+    if pct >= 70:
+        return "IMAN_FUERTE"
+    if pct >= 35:
+        return "REGULAR"
     return "COLADOR"
 
 
 def _classify_group(nuevos_vol: int, icn: float) -> str:
     alto_volumen = nuevos_vol >= 5
-    if alto_volumen and icn >= 70: return "IMAN_FUERTE"
-    if alto_volumen and icn < 35:  return "COLADOR"
-    if not alto_volumen and icn >= 85: return "INCUBADORA"
+    if alto_volumen and icn >= 70:
+        return "IMAN_FUERTE"
+    if alto_volumen and icn < 35:
+        return "COLADOR"
+    if not alto_volumen and icn >= 85:
+        return "INCUBADORA"
     return "ESTANDAR"
 
 
 def _shannon_entropy(counts: dict) -> float:
     total = sum(counts.values())
-    if total == 0: return 0.0
+    if total == 0:
+        return 0.0
     return round(-sum((v / total) * _math.log(v / total) for v in counts.values() if v > 0), 3)
 
 
 def _age_bucket(birthday) -> str:
-    if birthday is None: return "Desconocido"
+    if birthday is None:
+        return "Desconocido"
     today = _dt.date.today()
     try:
         bday = birthday.date() if hasattr(birthday, "date") else birthday
         age = today.year - bday.year - ((today.month, today.day) < (bday.month, bday.day))
     except Exception:
         return "Desconocido"
-    if age < 12:  return "Niños"
-    if age < 26:  return "Jóvenes"
-    if age < 36:  return "Jóvenes Adultos"
-    if age < 56:  return "Adultos"
+    if age < 12:
+        return "Niños"
+    if age < 26:
+        return "Jóvenes"
+    if age < 36:
+        return "Jóvenes Adultos"
+    if age < 56:
+        return "Adultos"
     return "Adultos Mayores"
 
 
@@ -1027,12 +1040,10 @@ def get_strategy_full_analytics(
     current_user: models.User = Depends(require_active_user),
 ):
     """10-dimension analytics engine for an evangelism strategy."""
-    from backend.core.tenant import get_user_sede_id
-    sede_id = get_user_sede_id(db, current_user)
 
     # ── 0. Base data load (bulk, no N+1) ──────────────────────
     fecha_hasta = _dt.date.today()
-    fecha_desde = fecha_hasta - _td(weeks=weeks)
+    fecha_desde = fecha_hasta - _dt.timedelta(weeks=weeks)
 
     grupos = (
         db.query(models.GrupoEvangelismo)
@@ -1248,7 +1259,6 @@ def get_strategy_full_analytics(
     }
 
     # ── DIM 5: Consistencia y Fidelidad ──────────────────────
-    sesiones_realizadas_global = [s for s in sesiones if (s.estado or "").lower() in {"realizada", "realizado"}]
     alertas_enfriamiento = []
     top_asistentes = []
     personas_ica = []
@@ -1432,7 +1442,7 @@ def get_strategy_full_analytics(
 
     total_px = max(len(persona_ids), 1)
     idg = _shannon_entropy(dict(rangos))
-    max_entropy = round(_math.log(5), 3)  # 5 rangos
+    max_entropy = round(_math.log(5), 3)  # ln(5) — 5 rangos etarios
     equilibrio = round(idg / max_entropy * 100, 1) if max_entropy > 0 else 0
 
     dim10 = {

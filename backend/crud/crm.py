@@ -216,7 +216,6 @@ def search_personas(
     if membership_type:
         query = query.filter(models.Persona.membership_type == membership_type)
     if min_age is not None:
-        from sqlalchemy import func as sa_func
         cutoff = dt.date.today() - dt.timedelta(days=min_age * 365)
         query = query.filter(models.Persona.birthday <= cutoff)
     if max_age is not None:
@@ -780,7 +779,6 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
     for key, value in update_data.items():
         setattr(house, key, value)
 
-    members_updated = False
     if payload.base_attendees_with_roles is not None:
         db.query(models.CellGroupMember).filter(models.CellGroupMember.cell_group_id == house_id).update(
             {models.CellGroupMember.deleted_at: _utcnow(), models.CellGroupMember.activo: False},
@@ -807,7 +805,6 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
                         rol_personalizado_id=custom_role_id,
                     )
                 )
-        members_updated = True
         # Sincronizar lider_persona_id, asistente_persona_id y anfitrion_persona_id desde los miembros
         _SUBORDINATE_TOKENS = {"co", "colider", "colíder", "asistente", "del"}
         db.flush()  # para que los nuevos CellGroupMember tengan IDs asignados
@@ -873,7 +870,6 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
                         role="miembro",
                     )
                 )
-        members_updated = True
 
     db.flush()
     house.members_count = (
