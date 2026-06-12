@@ -135,7 +135,7 @@ def list_cell_groups(
             "leader_id": str(g.lider_persona_id) if g.lider_persona_id else None,
             "assistant_id": str(g.asistente_persona_id) if g.asistente_persona_id else None,
             "host_id": str(g.anfitrion_persona_id) if g.anfitrion_persona_id else None,
-            "members_count": sum(1 for p in g.participantes if p.activo and p.deleted_at is None) if g.participantes else 0,
+            "members_count": len({p.persona_id for p in (g.participantes or []) if p.activo and p.deleted_at is None} | ({g.lider_persona_id} if g.lider_persona_id else set())),
             "capacity": g.capacidad,
             "day_of_week": g.dia_reunion,
             "start_time": g.hora_reunion,
@@ -530,7 +530,7 @@ async def create_cell_group(
         "assistant_id": str(obj.asistente_persona_id) if obj.asistente_persona_id else None,
         "host_id": str(obj.anfitrion_persona_id) if obj.anfitrion_persona_id else None,
         "status": "Activo" if obj.activo else "Inactivo",
-        "members_count": sum(1 for p in obj.participantes if p.activo and p.deleted_at is None) if obj.participantes else 0,
+        "members_count": len({p.persona_id for p in (obj.participantes or []) if p.activo and p.deleted_at is None} | ({obj.lider_persona_id} if obj.lider_persona_id else set())),
         "evangelism_strategy_id": str(obj.estrategia_id) if obj.estrategia_id else None,
     }
 

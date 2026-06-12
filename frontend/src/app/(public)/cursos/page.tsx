@@ -251,7 +251,7 @@ export default function CursosPage() {
                                         </span>
                                         <button
                                             className="ml-auto px-4 py-1.5 rounded-lg font-black text-sm text-white transition-all hover:scale-105 uppercase tracking-wide flex items-center gap-2"
-                                            style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}
+                                            style={{ background: "var(--faro-cta-gradient)" }}
                                         >
                                             {featuredCourse.cta || "Ver Curso"} <ArrowRight size={16} />
                                         </button>
@@ -458,7 +458,7 @@ export default function CursosPage() {
                                     type="submit"
                                     className="px-4 py-1.5 rounded-lg font-black text-sm text-white shadow-lg transition-all hover:scale-105 uppercase tracking-wide"
                                     style={{
-                                        background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                        background: "var(--faro-cta-gradient)",
                                     }}
                                 >
                                     Suscribirme
