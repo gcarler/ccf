@@ -19,9 +19,36 @@ export default function FaroFooter() {
     ];
 
     const socialLinks = [
-        { href: "https://facebook.com/comunidadfaro", label: "Facebook", icon: "public" },
-        { href: "https://instagram.com/comunidadfaro", label: "Instagram", icon: "photo_camera" },
-        { href: "https://youtube.com/comunidadfaro", label: "YouTube", icon: "smart_display" },
+        {
+            href: "https://facebook.com/comunidadfaro",
+            label: "Facebook",
+            svg: (
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                </svg>
+            ),
+        },
+        {
+            href: "https://instagram.com/comunidadfaro",
+            label: "Instagram",
+            svg: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+                </svg>
+            ),
+        },
+        {
+            href: "https://youtube.com/comunidadfaro",
+            label: "YouTube",
+            svg: (
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
+                    <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white" />
+                </svg>
+            ),
+        },
     ];
 
     return (
@@ -33,35 +60,35 @@ export default function FaroFooter() {
             }}
         >
             {/* Main footer */}
-            <div className="px-3 md:px-6 lg:px-8 xl:px-12 py-3">
+            <div className="px-4 md:px-6 lg:px-8 xl:px-12 py-12 md:py-16">
                 <div className="w-full">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-12 mb-0">
                         {/* Brand column */}
-                        <div className="md:col-span-4 space-y-3">
-                            <div className="flex items-center gap-3">
+                        <div className="md:col-span-4 space-y-5">
+                            <div className="flex items-center gap-4">
                                 <div
-                                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                                    className="w-14 h-14 rounded-full flex items-center justify-center"
                                     style={{
                                         background: "var(--faro-cta-gradient)",
                                     }}
                                 >
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-5 h-5">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-7 h-7">
                                         <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
                                         <circle cx="12" cy="4" r="1.5" fill="white" />
                                     </svg>
                                 </div>
                                 <div>
                                     <div
-                                        className="text-lg font-bold tracking-tight"
+                                        className="text-2xl font-bold tracking-tight"
                                         style={{ color: "var(--faro-on-surface)" }}
                                     >
                                         FARO
                                     </div>
                                     <div
-                                        className="text-[10px] uppercase tracking-wide"
+                                        className="text-xs uppercase tracking-widest"
                                         style={{ color: "var(--faro-on-surface-variant)" }}
                                     >
-                                        Comunidad de Fe
+                                        Comunidad Cristiana El Faro
                                     </div>
                                 </div>
                             </div>
@@ -71,22 +98,23 @@ export default function FaroFooter() {
                             >
                                 Iluminando el camino hacia una conexión profunda con lo divino
                                 a través de la comunidad y la guía espiritual.
+                                Una casa de fe abierta para toda la familia.
                             </p>
-                            <div className="flex gap-2">
-                                {socialLinks.map(({ href, label, icon }) => (
+                            <div className="flex gap-3 pt-1">
+                                {socialLinks.map(({ href, label, svg }) => (
                                     <a
                                         key={label}
                                         href={href}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                                        className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
                                         style={{
                                             background: "var(--faro-surface-container)",
                                             color: "var(--faro-on-surface-variant)",
                                         }}
                                         title={label}
                                     >
-                                        <span className="material-symbols-outlined text-lg">{icon}</span>
+                                        {svg}
                                     </a>
                                 ))}
                             </div>
@@ -95,12 +123,12 @@ export default function FaroFooter() {
                         {/* Navegación */}
                         <div className="md:col-span-3">
                             <h4
-                                className="text-[10px] font-bold uppercase tracking-widest mb-4"
+                                className="text-[10px] font-bold uppercase tracking-widest mb-6"
                                 style={{ color: "var(--faro-primary)" }}
                             >
                                 Navegación
                             </h4>
-                            <ul className="space-y-2">
+                            <ul className="space-y-3">
                                 {navLinks.map(({ href, label }) => (
                                     <li key={href}>
                                         <Link
@@ -120,12 +148,12 @@ export default function FaroFooter() {
                         {/* Recursos */}
                         <div className="md:col-span-3">
                             <h4
-                                className="text-[10px] font-bold uppercase tracking-widest mb-4"
+                                className="text-[10px] font-bold uppercase tracking-widest mb-6"
                                 style={{ color: "var(--faro-primary)" }}
                             >
                                 Recursos
                             </h4>
-                            <ul className="space-y-2">
+                            <ul className="space-y-3">
                                 {resourceLinks.map(({ href, label }) => (
                                     <li key={href}>
                                         <Link
@@ -145,20 +173,20 @@ export default function FaroFooter() {
                         {/* Newsletter mini */}
                         <div className="md:col-span-2">
                             <h4
-                                className="text-[10px] font-bold uppercase tracking-widest mb-4"
+                                className="text-[10px] font-bold uppercase tracking-widest mb-6"
                                 style={{ color: "var(--faro-primary)" }}
                             >
                                 Mantente conectado
                             </h4>
                             <p
-                                className="text-xs mb-3 leading-relaxed"
+                                className="text-sm mb-5 leading-relaxed"
                                 style={{ color: "var(--faro-on-surface-variant)" }}
                             >
-                                Recibe meditaciones y novedades semanales.
+                                Recibe meditaciones, devocionales y novedades cada semana.
                             </p>
                             <Link
                                 href="/boletin"
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all hover:scale-105"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all hover:scale-105"
                                 style={{
                                     background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
                                     color: "var(--faro-on-primary)",
@@ -174,7 +202,7 @@ export default function FaroFooter() {
 
             {/* Bottom bar */}
             <div
-                className="px-3 md:px-6 lg:px-8 xl:px-12 py-2 border-t"
+                className="px-4 md:px-6 lg:px-8 xl:px-12 py-5 border-t"
                 style={{ borderColor: "var(--faro-outline-variant)" }}
             >
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">

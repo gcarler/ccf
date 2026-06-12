@@ -315,6 +315,21 @@ def get_cell_group(
     ]
     base_attendee_ids = [item["persona_id"] for item in base_attendees]
 
+    # Include leader in base_attendees if not already a participant
+    if house.lider_persona_id and str(house.lider_persona_id) not in base_attendee_ids:
+        leader_persona = db.query(models.Persona).filter(models.Persona.id == house.lider_persona_id).first()
+        if leader_persona:
+            base_attendees.insert(0, {
+                "persona_id": str(leader_persona.id),
+                "name": leader_persona.nombre_completo,
+                "role": "lider",
+                "role_label": "Líder",
+                "rol_personalizado_id": None,
+                "church_role": leader_persona.church_role,
+                "phone": leader_persona.telefono,
+            })
+            base_attendee_ids.insert(0, str(leader_persona.id))
+
     sessions = (
         db.query(SesionGrupo)
         .filter(
