@@ -34,11 +34,10 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const root = document.documentElement;
 
-        // Remove all theme classes
         root.classList.remove("theme-institutional", "theme-light", "theme-dark", "dark");
-
-        // Add current theme class only — each theme is independent
         root.classList.add(`theme-${theme}`);
+        // Tailwind dark: prefix requires the "dark" class on <html>
+        if (theme === "dark") root.classList.add("dark");
 
         localStorage.setItem("faro-theme-v2", theme);
     }, [theme]);

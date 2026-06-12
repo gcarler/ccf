@@ -123,9 +123,10 @@ export default function SedesPage() {
                                     <div
                                         className={`p-3 rounded-lg ${
                                             selected?.id === loc.id
-                                                ? "bg-faro-primary text-white"
+                                                ? "bg-faro-primary"
                                                 : "bg-faro-primary-container text-faro-primary"
                                         }`}
+                                        style={selected?.id === loc.id ? { color: "var(--faro-on-primary)" } : undefined}
                                     >
                                         <Home size={20} />
                                     </div>

@@ -226,7 +226,7 @@ export default function PredicasPage() {
                                     </div>
                                 </div>
                                 {displayFeatured.series && (
-                                    <div className="absolute top-3 left-6 bg-faro-primary text-white font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">
+                                    <div className="absolute top-3 left-6 bg-faro-primary font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide" style={{ color: "var(--faro-on-primary)" }}>
                                         Serie: {displayFeatured.series}
                                     </div>
                                 )}
