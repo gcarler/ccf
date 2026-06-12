@@ -135,7 +135,7 @@ def list_cell_groups(
             "leader_id": str(g.lider_persona_id) if g.lider_persona_id else None,
             "assistant_id": str(g.asistente_persona_id) if g.asistente_persona_id else None,
             "host_id": str(g.anfitrion_persona_id) if g.anfitrion_persona_id else None,
-            "members_count": len({p.persona_id for p in (g.participantes or []) if p.activo and p.deleted_at is None} | ({g.lider_persona_id} if g.lider_persona_id else set())),
+            "members_count": sum(1 for p in (g.participantes or []) if p.activo and p.deleted_at is None),
             "capacity": g.capacidad,
             "day_of_week": g.dia_reunion,
             "start_time": g.hora_reunion,
@@ -314,21 +314,6 @@ def get_cell_group(
         for row, persona in base_rows
     ]
     base_attendee_ids = [item["persona_id"] for item in base_attendees]
-
-    # Include leader in base_attendees if not already a participant
-    if house.lider_persona_id and str(house.lider_persona_id) not in base_attendee_ids:
-        leader_persona = db.query(models.Persona).filter(models.Persona.id == house.lider_persona_id).first()
-        if leader_persona:
-            base_attendees.insert(0, {
-                "persona_id": str(leader_persona.id),
-                "name": leader_persona.nombre_completo,
-                "role": "lider",
-                "role_label": "Líder",
-                "rol_personalizado_id": None,
-                "church_role": leader_persona.church_role,
-                "phone": leader_persona.telefono,
-            })
-            base_attendee_ids.insert(0, str(leader_persona.id))
 
     sessions = (
         db.query(SesionGrupo)
@@ -545,7 +530,7 @@ async def create_cell_group(
         "assistant_id": str(obj.asistente_persona_id) if obj.asistente_persona_id else None,
         "host_id": str(obj.anfitrion_persona_id) if obj.anfitrion_persona_id else None,
         "status": "Activo" if obj.activo else "Inactivo",
-        "members_count": len({p.persona_id for p in (obj.participantes or []) if p.activo and p.deleted_at is None} | ({obj.lider_persona_id} if obj.lider_persona_id else set())),
+        "members_count": sum(1 for p in (obj.participantes or []) if p.activo and p.deleted_at is None),
         "evangelism_strategy_id": str(obj.estrategia_id) if obj.estrategia_id else None,
     }
 

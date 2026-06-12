@@ -723,6 +723,24 @@ def _group_member_role_values(item):
     return role or "participante", custom_role_id
 
 
+def _ensure_leader_in_participantes(db: Session, group_id, lider_persona_id) -> None:
+    """Ensure the leader has an active row in grupo_participantes (reactivates if soft-deleted)."""
+    if not lider_persona_id:
+        return
+    lid = uuid.UUID(str(lider_persona_id)) if isinstance(lider_persona_id, str) else lider_persona_id
+    existing = db.query(models.CellGroupMember).filter(
+        models.CellGroupMember.cell_group_id == group_id,
+        models.CellGroupMember.persona_id == lid,
+    ).first()
+    if existing:
+        if existing.deleted_at is not None or not existing.activo:
+            existing.deleted_at = None
+            existing.activo = True
+            existing.role = "lider"
+    else:
+        db.add(models.CellGroupMember(cell_group_id=group_id, persona_id=lid, role="lider"))
+
+
 def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: str | None = None):
     data = payload.model_dump(exclude={"base_attendee_ids", "base_attendees_with_roles"})
     # Map evangelism_strategy_id -> estrategia_id (CellGroup = GrupoEvangelismo uses estrategia_id)
@@ -760,7 +778,10 @@ def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: st
         for persona_id in payload.base_attendee_ids:
             attendee = models.CellGroupMember(cell_group_id=db_obj.id, persona_id=persona_id, role="asistente")
             db.add(attendee)
+    else:
+        db.flush()
 
+    _ensure_leader_in_participantes(db, db_obj.id, db_obj.lider_persona_id)
     db.commit()
     db.refresh(db_obj)
     return db_obj
@@ -857,15 +878,16 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
         members_updated = True
 
     db.flush()
-    if members_updated:
-        house.members_count = (
-            db.query(models.CellGroupMember)
-            .filter(
-                models.CellGroupMember.cell_group_id == house_id,
-                models.CellGroupMember.deleted_at.is_(None),
-            )
-            .count()
+    _ensure_leader_in_participantes(db, house_id, house.lider_persona_id)
+    db.flush()
+    house.members_count = (
+        db.query(models.CellGroupMember)
+        .filter(
+            models.CellGroupMember.cell_group_id == house_id,
+            models.CellGroupMember.deleted_at.is_(None),
         )
+        .count()
+    )
 
     db.commit()
     db.refresh(house)
