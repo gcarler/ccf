@@ -705,6 +705,22 @@ export default function StrategyDetailPage() {
  } finally { setSessionSaving(false); }
  };
 
+ const openGroupAttendance = async (g: StrategyGroup) => {
+  let sessionList = sessions;
+  if (sessionList.length === 0) {
+   try {
+    sessionList = (await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token })) || [];
+    setSessions(sessionList);
+   } catch { toast.error('Error al cargar sesiones'); return; }
+  }
+  const grpSessions = sessionList
+   .filter(s => s.grupo_id === g.id)
+   .sort((a, b) => b.session_date.localeCompare(a.session_date));
+  const target = grpSessions.find(s => s.estado_habilitacion === 'HABILITADO') ?? grpSessions[0];
+  if (!target) { toast.error('Este grupo no tiene sesiones registradas'); return; }
+  openAttendanceDrawer(target);
+ };
+
  const openAttendanceDrawer = async (session: SessionRow) => {
  setAttendanceSession(session);
  setIsAttendanceDrawerOpen(true);
@@ -1573,8 +1589,12 @@ export default function StrategyDetailPage() {
  className="absolute top-2 right-8 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
  <Calendar size={14} />
  </button>
+ <button onClick={e => { e.stopPropagation(); openGroupAttendance(g); }}
+ className="absolute top-2 right-[3.25rem] p-1 rounded text-[hsl(var(--text-secondary))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Registrar asistencia">
+ <ClipboardList size={14} />
+ </button>
  {/* Share button + dropdown */}
- <div className="absolute top-2 right-[3.25rem] z-20">
+ <div className="absolute top-2 right-[4.75rem] z-20">
  <button
  onClick={e => { e.stopPropagation(); setShareMenuId(shareMenuId === g.id ? null : g.id); }}
  className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 opacity-0 group-hover:opacity-100 transition-all"
@@ -1603,7 +1623,7 @@ export default function StrategyDetailPage() {
  </div>
  )}
  </div>
- <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] pr-24">{g.name}</h3>
+ <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] pr-28">{g.name}</h3>
  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{g.zone || 'Sin zona'}</p>
  <div className="flex items-center gap-3 mt-3 text-xs text-[hsl(var(--text-secondary))]">
  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--bg-muted))]">
