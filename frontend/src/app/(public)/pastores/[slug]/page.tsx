@@ -4,7 +4,7 @@ import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Quote, BookOpen, Cross, Sparkles, Linkedin, Instagram, Heart } from 'lucide-react';
+import { ArrowLeft, Quote, BookOpen, Cross, Sparkles, Instagram, Heart } from 'lucide-react';
 import { useContentBlock } from '@/hooks/useContent';
 import { PASTORS } from '@/data/pastors';
 
@@ -33,6 +33,9 @@ export default function PastorDetailPage() {
             verse: cmsPastor.verse || fallback?.verse || '',
             shortStory: cmsPastor.story || fallback?.shortStory || '',
             fullStory: cmsPastor.story || fallback?.fullStory || '',
+            instagram: cmsPastor.instagram || fallback?.instagram,
+            facebook: cmsPastor.facebook || fallback?.facebook,
+            twitter: cmsPastor.twitter || fallback?.twitter,
         }
         : fallback;
 
@@ -154,6 +157,52 @@ export default function PastorDetailPage() {
                                         </span>
                                     ))}
                                 </div>
+
+                                {/* ── Redes Sociales ── */}
+                                {(pastor.instagram || pastor.facebook || pastor.twitter) && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Síguelo en</span>
+                                        <div className="flex items-center gap-2">
+                                            {pastor.instagram && (
+                                                <a
+                                                    href={pastor.instagram}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-200/50 dark:border-pink-500/15 flex items-center justify-center text-pink-500 hover:scale-110 hover:from-pink-500/20 hover:to-purple-500/20 transition-all shadow-sm"
+                                                    aria-label="Instagram"
+                                                >
+                                                    <Instagram size={16} />
+                                                </a>
+                                            )}
+                                            {pastor.facebook && (
+                                                <a
+                                                    href={pastor.facebook}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/15 flex items-center justify-center text-blue-600 hover:scale-110 hover:bg-blue-500/20 transition-all shadow-sm"
+                                                    aria-label="Facebook"
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                                    </svg>
+                                                </a>
+                                            )}
+                                            {pastor.twitter && (
+                                                <a
+                                                    href={pastor.twitter}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-800 dark:text-white hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
+                                                    aria-label="X (Twitter)"
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                                    </svg>
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* ── Versículo ── */}
                                 <div className="flex items-start gap-4 p-5 rounded-[1rem] bg-[hsl(var(--primary))/0.03] dark:bg-white/[0.015] border border-slate-100 dark:border-white/[0.03]">

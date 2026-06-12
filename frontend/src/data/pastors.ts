@@ -7,6 +7,9 @@ export interface Pastor {
     verse: string;
     shortStory: string;
     fullStory: string;
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
 }
 
 export const PASTORS: Pastor[] = [
