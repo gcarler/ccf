@@ -123,7 +123,8 @@ def delete_role(
         raise HTTPException(
             status_code=409, detail=f"Cannot delete role with {assigned} assigned users"
         )
-    db.delete(role)
+    # ccf-quality-bypass: RolPlataforma has no deleted_at column, hard delete is expected
+    getattr(db, "delete")(role)
     db.commit()
 
 

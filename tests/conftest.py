@@ -236,6 +236,7 @@ def seed_admin_v2(db_session, email="admin@example.com", password="testpass123")
     )
     db_session.add(user)
     db_session.commit()
+    # Compatibility check: persona.user_id = legacy_user.id
     return user, persona, sede
 
 

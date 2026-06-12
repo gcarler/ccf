@@ -2,6 +2,7 @@
 Ejecuta: python3 _verify_quality.py
 """
 import sys
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -49,9 +50,8 @@ print("\n--- FASE 2: Hard delete erradicado ---")
 admin_py = ROOT / "backend/api/admin.py"
 adm = admin_py.read_text(encoding="utf-8")
 # Buscar db.delete( explícito (no en comentarios)
-import re
-hard_deletes = re.findall(r'(?<!#.*)\bdb\.delete\(', adm)
-check(len(hard_deletes) == 0, f"admin.py: 0 hard deletes (encontrados: {len(hard_deletes)})")
+lines_with_delete = [l for l in adm.split("\n") if "db.delete(" in l and not l.strip().startswith("#")]
+check(len(lines_with_delete) == 0, f"admin.py: 0 hard deletes (encontrados: {len(lines_with_delete)})")
 check("UsuarioRolModulo.deleted_at.is_(None)" in adm, "admin.py: filtro deleted_at en query UsuarioRolModulo")
 check("umr.deleted_at = datetime.now(timezone.utc)" in adm, "admin.py: soft delete con timezone-aware")
 

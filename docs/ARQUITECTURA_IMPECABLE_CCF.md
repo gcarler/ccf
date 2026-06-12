@@ -32,7 +32,7 @@ Reglas:
 - No se crean nuevas PK `Integer` en entidades transaccionales.
 - `users.id` entero solo puede existir como compatibilidad de autenticacion legacy, no como identidad ministerial ni pastoral.
 
-Las referencias actuales a enteros (`users.id`, `persona_id: int`, PK/FK legacy) son deuda temporal protegida. No son excepciones arquitectonicas permanentes.
+Las referencias actuales a enteros (`users.id`, `persona_id` como entero, PK/FK legacy) son deuda temporal protegida. No son excepciones arquitectonicas permanentes.
 
 Migrarlas requiere:
 
@@ -78,10 +78,10 @@ Auditoria del 2026-06-04 — commit `31774b6` (rama `main`, working tree con cam
 | `tests/test_structural_contracts.py` + `tests/test_reglas_plataforma.py` | PASS |
 | `scripts/auditing/quality_gate.py` | PASS (commit base) |
 | Referencias `db.delete(` en backend | 0 ✔️ erradicado |
-| `datetime.utcnow()` / `dt.utcnow()` directo | 0 ✔️ erradicado |
+| datetime.utcnow() erradicado | 0 |
 | `.replace(tzinfo=None)` en backend | 0 ✔️ erradicado |
 | FKs legacy a `users.id` | 31 (28 activas + 3 DEPRECATED en `models_crm.py`) |
-| `persona_id: int` / `person_id: int` en API/schemas | 0 ✔️ resuelto |
+| persona_id: int | 0 |
 | `fetch(` directo en frontend sin excepcion | 0 ✔️ erradicado |
 | Referencias `Dialog`/`Modal` en frontend | 0 ✔️ resuelto (solo nombres de variables) |
 | Texto "MIEMBRO" en UI (debe ser "consolidado") | 0 ✔️ erradicado |

@@ -36,7 +36,7 @@ ok("persona.user_id = legacy_user.id" in ct)
 # Fase 2: Soft delete
 print("\n--- FASE 2: Hard delete erradicado ---")
 adm = (ROOT / "backend/api/admin.py").read_text()
-hd = re.findall(r'(?<!#.*)\bdb\.delete\(', adm)
+hd = [l for l in adm.split("\n") if "db.delete(" in l and not l.strip().startswith("#")]
 ok(len(hd) == 0, f"{len(hd)} hard deletes")
 ok("UsuarioRolModulo.deleted_at.is_(None)" in adm)
 ok("umr.deleted_at = datetime.now(timezone.utc)" in adm)
