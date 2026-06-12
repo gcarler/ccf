@@ -399,81 +399,61 @@ export default function PublicHomePage() {
             </section>
 
             {/* ─── CTA NEWSLETTER ───────────────────────────────────── */}
-            <section
-                className="py-8 md:py-12 px-3 md:px-4 lg:px-8 xl:px-12"
-                style={{ background: "var(--faro-surface-container-low)" }}
-            >
+            <section className="py-16 md:py-24 px-3 md:px-4 lg:px-8 xl:px-12" style={{ background: "var(--faro-surface-container-low)" }}>
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="max-w-4xl mx-auto rounded-xl p-8 md:p-10 relative overflow-hidden text-center backdrop-blur-2xl"
-                    style={{
-                        background: "var(--faro-card-glass-gradient)",
-                        backgroundColor: "var(--faro-primary-container)",
-                        border: "1px solid var(--faro-glass-border)",
-                        boxShadow: "var(--faro-card-shadow)",
-                    }}
+                    className="max-w-3xl mx-auto text-center"
                 >
-                    <div
-                        className="absolute inset-0 opacity-40 pointer-events-none mix-blend-overlay"
-                        style={{
-                            background:
-                                "radial-gradient(circle at 30% 50%, var(--faro-card-glass-glow) 0%, transparent 60%)",
-                        }}
-                    />
-                    <div className="relative z-10">
-                        <h2
-                            className="font-bold text-lg md:text-xl tracking-tight mb-3"
-                            style={{ color: "var(--faro-on-background)" }}
-                        >
-                            ¿Quieres recibir nuestras novedades?
-                        </h2>
-                        <p
-                            className="text-lg mb-3"
-                            style={{ color: "var(--faro-on-surface-variant)" }}
-                        >
-                            Meditaciones semanales, eventos exclusivos y más. Directo a tu correo.
-                        </p>
-                        {nlStatus === "sent" ? (
-                            <div className="relative z-10">
-                                <h2 className="font-bold text-lg md:text-xl tracking-tight mb-3" style={{ color: "var(--faro-on-background)" }}>
-                                    ¡Gracias por suscribirte!
-                                </h2>
-                                <p className="text-lg" style={{ color: "var(--faro-on-surface-variant)" }}>
-                                    Recibirás meditaciones y novedades semanales.
-                                </p>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
-                                <input
-                                    type="email"
-                                    value={nlEmail}
-                                    onChange={(e) => setNlEmail(e.target.value)}
-                                    placeholder="Tu correo electrónico"
-                                    required
-                                    disabled={nlStatus === "sending"}
-                                    className="flex-grow rounded-lg px-3 py-1.5 text-sm focus:outline-none disabled:opacity-60"
-                                    style={{
-                                        background: "var(--faro-surface)",
-                                        border: "2px solid var(--faro-outline-variant)",
-                                        color: "var(--faro-on-surface)",
-                                    }}
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={nlStatus === "sending"}
-                                className="px-4 py-1.5 rounded-lg font-bold text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
+                    <span className="inline-block text-xs font-bold uppercase tracking-widest mb-5 px-4 py-1.5 rounded-full" style={{ background: "var(--faro-primary-container)", color: "var(--faro-primary)" }}>
+                        Boletín semanal
+                    </span>
+                    <h2
+                        className="font-black tracking-tight mb-5 leading-tight"
+                        style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--faro-on-background)" }}
+                    >
+                        ¿Quieres recibir nuestras novedades?
+                    </h2>
+                    <p className="text-lg md:text-xl mb-10 leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+                        Meditaciones semanales, eventos exclusivos y más.<br />
+                        <span style={{ color: "var(--faro-primary)" }}>Directo a tu correo.</span>
+                    </p>
+
+                    {nlStatus === "sent" ? (
+                        <div className="py-6">
+                            <p className="text-2xl font-black mb-2" style={{ color: "var(--faro-on-background)" }}>¡Gracias por suscribirte!</p>
+                            <p className="text-base" style={{ color: "var(--faro-on-surface-variant)" }}>Recibirás meditaciones y novedades semanales.</p>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+                            <input
+                                type="email"
+                                value={nlEmail}
+                                onChange={(e) => setNlEmail(e.target.value)}
+                                placeholder="Tu correo electrónico"
+                                required
+                                disabled={nlStatus === "sending"}
+                                className="flex-grow rounded-full px-6 py-4 text-base focus:outline-none disabled:opacity-60 focus:ring-2"
+                                style={{
+                                    background: "var(--faro-surface)",
+                                    border: "2px solid var(--faro-outline-variant)",
+                                    color: "var(--faro-on-surface)",
+                                }}
+                            />
+                            <button
+                                type="submit"
+                                disabled={nlStatus === "sending"}
+                                className="shrink-0 px-8 py-4 rounded-full font-black text-sm uppercase tracking-wider text-white transition-all hover:scale-105 disabled:opacity-60"
                                 style={{
                                     background: "var(--faro-cta-gradient)",
-                                    boxShadow: "var(--faro-hero-cta-shadow)",
+                                    boxShadow: "var(--faro-cta-shadow)",
                                 }}
                             >
-                                Suscribirme
+                                {nlStatus === "sending" ? "Enviando..." : "Suscribirme"}
                             </button>
                         </form>
-                        )}
-                    </div>
+                    )}
                 </motion.div>
             </section>
         </main>
