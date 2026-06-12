@@ -15,22 +15,6 @@ export interface Pastor {
 
 export const PASTORS: Pastor[] = [
     {
-        id: "histar-ariza",
-        name: "Histar Ariza Herrera",
-        title: "Pastor Principal",
-        image: "/pastores/histar_ariza_1777656780660.png",
-        isMain: true,
-        quote: "Nuestra mayor recompensa es ver corazones transformados por el amor del Padre.",
-        verse: "Jeremías 3:15 - 'Y os daré pastores según mi corazón, que os apacienten con ciencia y con inteligencia.'",
-        shortStory: "El llamado pastoral, la visión de expansión y el corazón de paternidad espiritual que guía a nuestra congregación.",
-        fullStory: `
-            <p>El Pastor Histar Ariza Herrera ha sido un pilar fundamental en la fundación y consolidación de la Comunidad Cristiana El Faro. Su ministerio nació de un profundo encuentro personal con la paternidad de Dios, lo que marcó para siempre su forma de liderar, amar y guiar a la iglesia.</p>
-            <blockquote>"El ministerio no se trata de construir edificios grandes, sino de edificar familias fuertes que reflejen el carácter de Cristo."</blockquote>
-            <p>Con más de dos décadas de servicio ininterrumpido, su enseñanza se caracteriza por la profundidad teológica combinada con una aplicación práctica y compasiva. Su visión principal es ver a cada persona de la comunidad no solo como un asistente, sino como un hijo espiritual llamado a cumplir un propósito eterno.</p>
-            <p>A lo largo de los años, el Pastor Histar ha liderado proyectos de expansión, siembra de nuevas misiones y ha formado a decenas de líderes que hoy sirven a lo largo de toda la Comunidad Cristiana El Faro. Su testimonio es un recordatorio vivo de que cuando Dios llama, también respalda, provee y sostiene.</p>
-        `
-    },
-    {
         id: "luis-ricardo-meza",
         name: "Luis Ricardo Meza Gutiérrez",
         title: "Pastor Principal",
@@ -44,6 +28,22 @@ export const PASTORS: Pastor[] = [
             <blockquote>"Cuando la mente es iluminada por la revelación de la Escritura, el corazón inevitablemente se enciende en adoración."</blockquote>
             <p>Dotado de una aguda capacidad para la exégesis bíblica y la enseñanza apologética, Luis Ricardo es un defensor apasionado de la sana doctrina. Ha liderado el Instituto Bíblico y la Academia de la Comunidad Cristiana El Faro, formando teológicamente a los nuevos obreros y asegurando que las raíces doctrinales de la congregación sean profundas y firmes.</p>
             <p>Su testimonio nos recuerda que Dios redime nuestro intelecto y lo usa como un instrumento poderoso para derribar argumentos y llevar todo pensamiento cautivo a la obediencia a Cristo.</p>
+        `
+    },
+    {
+        id: "histar-ariza",
+        name: "Histar Ariza Herrera",
+        title: "Pastor Principal",
+        image: "/pastores/histar_ariza_1777656780660.png",
+        isMain: true,
+        quote: "Nuestra mayor recompensa es ver corazones transformados por el amor del Padre.",
+        verse: "Jeremías 3:15 - 'Y os daré pastores según mi corazón, que os apacienten con ciencia y con inteligencia.'",
+        shortStory: "El llamado pastoral, la visión de expansión y el corazón de paternidad espiritual que guía a nuestra congregación.",
+        fullStory: `
+            <p>El Pastor Histar Ariza Herrera ha sido un pilar fundamental en la fundación y consolidación de la Comunidad Cristiana El Faro. Su ministerio nació de un profundo encuentro personal con la paternidad de Dios, lo que marcó para siempre su forma de liderar, amar y guiar a la iglesia.</p>
+            <blockquote>"El ministerio no se trata de construir edificios grandes, sino de edificar familias fuertes que reflejen el carácter de Cristo."</blockquote>
+            <p>Con más de dos décadas de servicio ininterrumpido, su enseñanza se caracteriza por la profundidad teológica combinada con una aplicación práctica y compasiva. Su visión principal es ver a cada persona de la comunidad no solo como un asistente, sino como un hijo espiritual llamado a cumplir un propósito eterno.</p>
+            <p>A lo largo de los años, el Pastor Histar ha liderado proyectos de expansión, siembra de nuevas misiones y ha formado a decenas de líderes que hoy sirven a lo largo de toda la Comunidad Cristiana El Faro. Su testimonio es un recordatorio vivo de que cuando Dios llama, también respalda, provee y sostiene.</p>
         `
     },
     {
