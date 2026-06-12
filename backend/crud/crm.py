@@ -808,13 +808,17 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
                     )
                 )
         members_updated = True
-        # Sincronizar lider_persona_id desde el miembro con rol primario de líder
+        # Sincronizar lider_persona_id, asistente_persona_id y anfitrion_persona_id desde los miembros
         _SUBORDINATE_TOKENS = {"co", "colider", "colíder", "asistente", "del"}
         db.flush()  # para que los nuevos CellGroupMember tengan IDs asignados
+        
+        new_leader_id = None
+        new_assistant_id = None
+        new_host_id = None
+
         for item in payload.base_attendees_with_roles:
             role_str = str(getattr(item, "role", "") or "").lower().strip()
             custom_id = getattr(item, "rol_personalizado_id", None)
-            # Resolver nombre real: rol base o nombre del rol personalizado
             if role_str.startswith("custom:") and not custom_id:
                 try:
                     custom_id = int(role_str.split(":", 1)[1])
@@ -825,15 +829,27 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
                     models.RolPersonalizadoEstrategia.id == custom_id
                 ).first()
                 role_str = (custom_rol.nombre_rol if custom_rol else role_str).lower().strip()
-            tokens = set(role_str.replace("-", " ").replace("_", " ").split())
-            is_leader = ("lider" in tokens or "líder" in tokens or "leader" in tokens) and not (tokens & _SUBORDINATE_TOKENS)
-            if is_leader:
-                new_lid = item.persona_id
-                house.lider_persona_id = uuid.UUID(str(new_lid)) if isinstance(new_lid, str) else new_lid
-                break
-        else:
-            # No member with leader role → clear the leader
-            house.lider_persona_id = None
+            
+            # Normalizar para comparación
+            role_norm = role_str.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+            tokens = set(role_norm.replace("-", " ").replace("_", " ").split())
+            
+            is_leader = ("lider" in tokens or "leader" in tokens) and not (tokens & _SUBORDINATE_TOKENS)
+            is_assistant = ("asistente" in tokens or "colider" in tokens or ("co" in tokens and ("lider" in tokens or "leader" in tokens)))
+            is_host = "anfitrion" in tokens or "host" in tokens
+
+            p_uuid = uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id
+
+            if is_leader and not new_leader_id:
+                new_leader_id = p_uuid
+            if is_assistant and not new_assistant_id:
+                new_assistant_id = p_uuid
+            if is_host and not new_host_id:
+                new_host_id = p_uuid
+
+        house.lider_persona_id = new_leader_id
+        house.asistente_persona_id = new_assistant_id
+        house.anfitrion_persona_id = new_host_id
     elif payload.base_attendee_ids is not None:
         db.query(models.CellGroupMember).filter(models.CellGroupMember.cell_group_id == house_id).update(
             {models.CellGroupMember.deleted_at: _utcnow(), models.CellGroupMember.activo: False},

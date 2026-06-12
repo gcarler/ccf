@@ -953,3 +953,557 @@ def strategy_groups_detail(
 
     result.sort(key=lambda x: x["attendance_pct"], reverse=True)
     return {"groups": result}
+
+
+# ═══════════════════════════════════════════════════════════════
+# ANALYTICS COMPLETO — 10 DIMENSIONES
+# GET /analytics/strategy/{strategy_id}/full?weeks=12
+# ═══════════════════════════════════════════════════════════════
+
+import math as _math
+from datetime import timedelta as _td
+
+
+def _semaforo_tof(pct: float) -> str:
+    if pct >= 86: return "SATURADO"
+    if pct >= 60: return "SALUDABLE"
+    return "BAJO"
+
+
+def _semaforo_ics(pct: float) -> str:
+    if pct >= 90: return "OPTIMO"
+    if pct >= 70: return "INCONSTANTE"
+    return "ABANDONO"
+
+
+def _semaforo_icd(pct: float) -> str:
+    if pct >= 70: return "IMAN_FUERTE"
+    if pct >= 35: return "REGULAR"
+    return "COLADOR"
+
+
+def _classify_group(nuevos_vol: int, icn: float) -> str:
+    alto_volumen = nuevos_vol >= 5
+    if alto_volumen and icn >= 70: return "IMAN_FUERTE"
+    if alto_volumen and icn < 35:  return "COLADOR"
+    if not alto_volumen and icn >= 85: return "INCUBADORA"
+    return "ESTANDAR"
+
+
+def _shannon_entropy(counts: dict) -> float:
+    total = sum(counts.values())
+    if total == 0: return 0.0
+    return round(-sum((v / total) * _math.log(v / total) for v in counts.values() if v > 0), 3)
+
+
+def _age_bucket(birthday) -> str:
+    if birthday is None: return "Desconocido"
+    today = _dt.date.today()
+    try:
+        bday = birthday.date() if hasattr(birthday, "date") else birthday
+        age = today.year - bday.year - ((today.month, today.day) < (bday.month, bday.day))
+    except Exception:
+        return "Desconocido"
+    if age < 12:  return "Niños"
+    if age < 26:  return "Jóvenes"
+    if age < 36:  return "Jóvenes Adultos"
+    if age < 56:  return "Adultos"
+    return "Adultos Mayores"
+
+
+def _attended(estado: str | None) -> bool:
+    return str(estado or "").lower().strip() in {"presente", "asistio", "primera_vez", "primera vez"}
+
+
+def _is_primera_vez(a) -> bool:
+    return bool(a.es_primera_vez) or str(a.estado or "").lower().strip() in {"primera_vez", "primera vez"}
+
+
+@router.get("/analytics/strategy/{strategy_id}/full", response_model=dict)
+def get_strategy_full_analytics(
+    strategy_id: str,
+    weeks: int = Query(default=12, ge=1, le=104),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """10-dimension analytics engine for an evangelism strategy."""
+    from backend.core.tenant import get_user_sede_id
+    sede_id = get_user_sede_id(db, current_user)
+
+    # ── 0. Base data load (bulk, no N+1) ──────────────────────
+    fecha_hasta = _dt.date.today()
+    fecha_desde = fecha_hasta - _td(weeks=weeks)
+
+    grupos = (
+        db.query(models.GrupoEvangelismo)
+        .filter(
+            models.GrupoEvangelismo.estrategia_id == strategy_id,
+            models.GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .all()
+    )
+    if not grupos:
+        return {"error": "Estrategia sin grupos", "strategy_id": strategy_id}
+
+    group_ids = [g.id for g in grupos]
+    group_map = {g.id: g for g in grupos}
+
+    # Sesiones en el período
+    sesiones = (
+        db.query(models.SesionGrupo)
+        .filter(
+            models.SesionGrupo.grupo_id.in_(group_ids),
+            models.SesionGrupo.fecha_sesion >= fecha_desde,
+            models.SesionGrupo.fecha_sesion <= fecha_hasta,
+            models.SesionGrupo.deleted_at.is_(None),
+        )
+        .all()
+    )
+    session_ids = [s.id for s in sesiones]
+    sessions_by_group: dict = defaultdict(list)
+    for s in sesiones:
+        sessions_by_group[s.grupo_id].append(s)
+
+    # Asistencias
+    asistencias = (
+        db.query(models.Asistencia)
+        .filter(models.Asistencia.sesion_id.in_(session_ids))
+        .all()
+    ) if session_ids else []
+    att_by_session: dict = defaultdict(list)
+    att_by_persona: dict = defaultdict(list)
+    for a in asistencias:
+        att_by_session[a.sesion_id].append(a)
+        att_by_persona[a.persona_id].append(a)
+
+    # Participantes activos
+    participantes = (
+        db.query(models.ParticipanteGrupo)
+        .filter(
+            models.ParticipanteGrupo.grupo_id.in_(group_ids),
+            models.ParticipanteGrupo.deleted_at.is_(None),
+            models.ParticipanteGrupo.activo == True,  # noqa: E712
+        )
+        .all()
+    )
+    parts_by_group: dict = defaultdict(list)
+    for p in participantes:
+        parts_by_group[p.grupo_id].append(p)
+
+    # Personas únicas (participantes + asistentes)
+    persona_ids = list({p.persona_id for p in participantes} | {a.persona_id for a in asistencias})
+    personas_map: dict = {}
+    if persona_ids:
+        for persona in db.query(models.Persona).filter(models.Persona.id.in_(persona_ids)).all():
+            personas_map[persona.id] = persona
+
+    # CRM casos vinculados a estos grupos
+    crm_casos = (
+        db.query(models.CrmCaso)
+        .filter(models.CrmCaso.origen_grupo_id.in_(group_ids))
+        .all()
+    ) if hasattr(models, "CrmCaso") else []
+    crm_by_group: dict = defaultdict(list)
+    for c in crm_casos:
+        crm_by_group[c.origen_grupo_id].append(c)
+
+    # Grupos hijos (multiplicación)
+    grupos_hijos = (
+        db.query(models.GrupoEvangelismo)
+        .filter(
+            models.GrupoEvangelismo.parent_group_id.in_(group_ids),
+            models.GrupoEvangelismo.deleted_at.is_(None),
+            models.GrupoEvangelismo.created_at >= _dt.datetime.combine(fecha_desde, _dt.time.min),
+        )
+        .all()
+    ) if any(True for g in grupos if hasattr(g, "parent_group_id")) else []
+
+    # ── DIM 1: Territorial ────────────────────────────────────
+    zonas: dict = defaultdict(int)
+    for g in grupos:
+        if g.activo:
+            zona = (g.ubicacion or "Sin zona definida").strip() or "Sin zona definida"
+            zonas[zona] += 1
+    total_zonas = max(len(zonas), 1)
+    activos_count = sum(1 for g in grupos if g.activo)
+    idc = round(activos_count / total_zonas, 2)
+    dim1 = {
+        "grupos_activos": activos_count,
+        "zonas_identificadas": total_zonas,
+        "idc": idc,
+        "semaforo": "ALTO" if idc > 3 else ("MEDIO" if idc >= 1 else "CRITICO"),
+        "por_zona": [{"zona": z, "grupos": c} for z, c in sorted(zonas.items(), key=lambda x: -x[1])],
+        "nota": "IDC basado en campo ubicacion. Para mapa GIS agrega latitud/longitud a los grupos.",
+    }
+
+    # ── DIM 2: Capacidad y Población ─────────────────────────
+    grupos_tof = []
+    for g in grupos:
+        activos = len(parts_by_group.get(g.id, []))
+        cap = g.capacidad or 15
+        tof = round(activos / cap * 100, 1)
+        grupos_tof.append({
+            "grupo_id": str(g.id),
+            "nombre": g.nombre,
+            "participantes_activos": activos,
+            "capacidad": cap,
+            "tof_porcentaje": tof,
+            "estado": _semaforo_tof(tof),
+        })
+    dim2 = {
+        "grupos": sorted(grupos_tof, key=lambda x: -x["tof_porcentaje"]),
+        "saturados": sum(1 for x in grupos_tof if x["estado"] == "SATURADO"),
+        "saludables": sum(1 for x in grupos_tof if x["estado"] == "SALUDABLE"),
+        "bajos": sum(1 for x in grupos_tof if x["estado"] == "BAJO"),
+    }
+
+    # ── DIM 3: Atracción y Recurrencia ────────────────────────
+    nuevos_por_grupo: dict = defaultdict(set)
+    total_presentes_por_grupo: dict = defaultdict(int)
+    for s in sesiones:
+        for a in att_by_session.get(s.id, []):
+            if _attended(a.estado):
+                total_presentes_por_grupo[s.grupo_id] += 1
+            if _is_primera_vez(a):
+                nuevos_por_grupo[s.grupo_id].add(a.persona_id)
+
+    # IRT: asistencias en primeras 4 sesiones para nuevos
+    grupos_tan = []
+    for g in grupos:
+        nuevos = nuevos_por_grupo.get(g.id, set())
+        total_presentes = total_presentes_por_grupo.get(g.id, 0)
+        tan = round(len(nuevos) / total_presentes * 100, 1) if total_presentes > 0 else 0
+
+        # IRT: por cada nuevo, contar cuántas asistencias en sus primeras 4 sesiones
+        gsessions_sorted = sorted(sessions_by_group.get(g.id, []), key=lambda s: s.fecha_sesion)
+        irt_vals = []
+        for pid in nuevos:
+            # Encontrar primera sesión donde asistió
+            first_sess_idx = None
+            for i, s in enumerate(gsessions_sorted):
+                for a in att_by_session.get(s.id, []):
+                    if a.persona_id == pid and _is_primera_vez(a):
+                        first_sess_idx = i
+                        break
+                if first_sess_idx is not None:
+                    break
+            if first_sess_idx is None:
+                continue
+            next4 = gsessions_sorted[first_sess_idx:first_sess_idx + 4]
+            count = sum(
+                1 for s in next4
+                for a in att_by_session.get(s.id, [])
+                if a.persona_id == pid and _attended(a.estado)
+            )
+            irt_vals.append(count)
+
+        irt_prom = round(sum(irt_vals) / len(irt_vals), 2) if irt_vals else 0
+        irt_sem = "EXCELENTE" if irt_prom >= 3 else ("REGULAR" if irt_prom >= 2 else "ALERTA_DESERCION")
+        grupos_tan.append({
+            "grupo_id": str(g.id),
+            "nombre": g.nombre,
+            "nuevos_visitantes": len(nuevos),
+            "tan_porcentaje": tan,
+            "irt_promedio": irt_prom,
+            "irt_semaforo": irt_sem,
+        })
+
+    dim3 = {
+        "total_nuevos_periodo": sum(len(v) for v in nuevos_por_grupo.values()),
+        "tan_global_porcentaje": round(
+            sum(len(v) for v in nuevos_por_grupo.values()) /
+            max(sum(total_presentes_por_grupo.values()), 1) * 100, 1
+        ),
+        "por_grupo": sorted(grupos_tan, key=lambda x: -x["nuevos_visitantes"]),
+    }
+
+    # ── DIM 4: Conversión CRM ────────────────────────────────
+    grupos_icn = []
+    for g in grupos:
+        casos = crm_by_group.get(g.id, [])
+        total_casos = len(casos)
+        resueltos = sum(1 for c in casos if (c.estado or "").upper() in {"RESUELTO_EXITO", "CERRADO_EXITO", "GANADO"})
+        perdidos = sum(1 for c in casos if (c.estado or "").upper() in {"RESUELTO_PERDIDO", "CERRADO_PERDIDO", "PERDIDO"})
+        icn = round(resueltos / total_casos * 100, 1) if total_casos > 0 else 0
+        nuevos = len(nuevos_por_grupo.get(g.id, set()))
+        grupos_icn.append({
+            "grupo_id": str(g.id),
+            "nombre": g.nombre,
+            "casos_crm_total": total_casos,
+            "casos_resueltos_exito": resueltos,
+            "casos_perdidos": perdidos,
+            "casos_abiertos": total_casos - resueltos - perdidos,
+            "icn_porcentaje": icn,
+            "clasificacion": _classify_group(nuevos, icn),
+        })
+
+    dim4 = {
+        "total_casos_crm": sum(x["casos_crm_total"] for x in grupos_icn),
+        "total_resueltos": sum(x["casos_resueltos_exito"] for x in grupos_icn),
+        "icn_global": round(
+            sum(x["casos_resueltos_exito"] for x in grupos_icn) /
+            max(sum(x["casos_crm_total"] for x in grupos_icn), 1) * 100, 1
+        ),
+        "por_grupo": grupos_icn,
+    }
+
+    # ── DIM 5: Consistencia y Fidelidad ──────────────────────
+    sesiones_realizadas_global = [s for s in sesiones if (s.estado or "").lower() in {"realizada", "realizado"}]
+    alertas_enfriamiento = []
+    top_asistentes = []
+    personas_ica = []
+
+    for pid, atts in att_by_persona.items():
+        atts_sorted = sorted(atts, key=lambda a: a.sesion_id)
+        total_atts = len(atts_sorted)
+        presentes = sum(1 for a in atts_sorted if _attended(a.estado))
+        ica = round(presentes / total_atts * 100, 1) if total_atts > 0 else 0
+
+        # Alerta enfriamiento: 3+ FALTO consecutivos al final
+        estados_recientes = [a.estado for a in atts_sorted[-5:]]
+        consecutivos = 0
+        for e in reversed(estados_recientes):
+            if str(e or "").upper() == "FALTO":
+                consecutivos += 1
+            else:
+                break
+
+        persona = personas_map.get(pid)
+        nombre = persona.nombre_completo if persona else str(pid)[:8]
+        grupo_nombre = ""
+        for g in grupos:
+            if any(p.persona_id == pid for p in parts_by_group.get(g.id, [])):
+                grupo_nombre = g.nombre
+                break
+
+        personas_ica.append({"nombre": nombre, "ica": ica, "grupo": grupo_nombre, "consecutivos_falta": consecutivos})
+
+        if consecutivos >= 3:
+            alertas_enfriamiento.append({
+                "persona_id": str(pid),
+                "nombre": nombre,
+                "grupo": grupo_nombre,
+                "ausencias_consecutivas": consecutivos,
+            })
+        if ica >= 80 and presentes >= 3:
+            top_asistentes.append({"nombre": nombre, "ica_porcentaje": ica, "sesiones_asistidas": presentes, "grupo": grupo_nombre})
+
+    dim5 = {
+        "ica_global_porcentaje": round(
+            sum(x["ica"] for x in personas_ica) / max(len(personas_ica), 1), 1
+        ),
+        "total_personas_analizadas": len(personas_ica),
+        "alertas_enfriamiento": sorted(alertas_enfriamiento, key=lambda x: -x["ausencias_consecutivas"])[:20],
+        "total_alertas_enfriamiento": len(alertas_enfriamiento),
+        "top_asistentes": sorted(top_asistentes, key=lambda x: -x["ica_porcentaje"])[:10],
+    }
+
+    # ── DIM 6: Eficiencia Operativa ───────────────────────────
+    grupos_ics = []
+    for g in grupos:
+        gsess = sessions_by_group.get(g.id, [])
+        proyectadas = len(gsess)
+        realizadas = sum(1 for s in gsess if (s.estado or "").lower() in {"realizada", "realizado"})
+        canceladas = sum(1 for s in gsess if (s.estado or "").lower() in {"cancelada", "cancelado"})
+        ics = round(realizadas / proyectadas * 100, 1) if proyectadas > 0 else 0
+        # Ofrendas
+        ofrenda_total = sum(float(s.offering_amount or 0) for s in gsess if s.offering_amount)
+        ofrenda_prom = round(ofrenda_total / max(realizadas, 1), 0)
+        grupos_ics.append({
+            "grupo_id": str(g.id),
+            "nombre": g.nombre,
+            "sesiones_proyectadas": proyectadas,
+            "sesiones_realizadas": realizadas,
+            "sesiones_canceladas": canceladas,
+            "sesiones_pendientes": proyectadas - realizadas - canceladas,
+            "ics_porcentaje": ics,
+            "estado_operativo": _semaforo_ics(ics),
+            "ofrenda_total": ofrenda_total,
+            "ofrenda_promedio_por_sesion": ofrenda_prom,
+        })
+
+    total_proy = sum(x["sesiones_proyectadas"] for x in grupos_ics)
+    total_real = sum(x["sesiones_realizadas"] for x in grupos_ics)
+    dim6 = {
+        "sesiones_proyectadas_total": total_proy,
+        "sesiones_realizadas_total": total_real,
+        "ics_global_porcentaje": round(total_real / max(total_proy, 1) * 100, 1),
+        "ofrenda_total_periodo": sum(x["ofrenda_total"] for x in grupos_ics),
+        "por_grupo": sorted(grupos_ics, key=lambda x: -x["ics_porcentaje"]),
+    }
+
+    # ── DIM 7: Multiplicación ─────────────────────────────────
+    tpm_vals = []
+    for hijo in grupos_hijos:
+        padre = group_map.get(hijo.parent_group_id)
+        if padre and padre.created_at and hijo.created_at:
+            dias = (hijo.created_at - padre.created_at).days
+            tpm_vals.append(dias / 30)
+
+    tmg = round(len(grupos_hijos) / max(len(grupos), 1) * 100, 1)
+    tpm = round(sum(tpm_vals) / len(tpm_vals), 1) if tpm_vals else None
+    dim7 = {
+        "grupos_iniciales": len(grupos),
+        "grupos_multiplicados_periodo": len(grupos_hijos),
+        "tmg_porcentaje": tmg,
+        "tpm_meses_promedio": tpm,
+        "estado_reproduccion": "EXPONENCIAL" if (tpm and tpm < 9) else ("SALUDABLE" if (tpm and tpm <= 18) else "ESTANCADO"),
+        "detalle_multiplicaciones": [
+            {
+                "grupo_hijo": h.nombre,
+                "grupo_padre": group_map.get(h.parent_group_id, type("", (), {"nombre": "?"})()).nombre,
+                "fecha_creacion": str(h.created_at.date()) if h.created_at else None,
+            }
+            for h in grupos_hijos
+        ],
+    }
+
+    # ── DIM 8: Liderazgo ─────────────────────────────────────
+    # Promociones: personas que cambiaron a rol lider/servidor en el período
+    desde_dt = _dt.datetime.combine(fecha_desde, _dt.time.min)
+    promovidos = (
+        db.query(models.PersonaChurchRole)
+        .filter(
+            models.PersonaChurchRole.persona_id.in_(persona_ids),
+            models.PersonaChurchRole.church_role.in_(["LIDER", "Líder", "SERVIDOR", "Servidor", "Lider"]),
+            models.PersonaChurchRole.assigned_at >= desde_dt,
+        )
+        .all()
+    ) if persona_ids and hasattr(models, "PersonaChurchRole") else []
+
+    # Deserción: líderes con estado_vital inactivo
+    lideres_ids = [g.lider_persona_id for g in grupos if g.lider_persona_id]
+    lideres_inactivos = sum(
+        1 for pid in lideres_ids
+        if pid in personas_map and str(personas_map[pid].estado_vital or "").upper() in {"INACTIVO", "FRIO", "DESERTOR"}
+    )
+
+    dim8 = {
+        "total_lideres_asignados": len([g for g in grupos if g.lider_persona_id]),
+        "lideres_inactivos": lideres_inactivos,
+        "tds_porcentaje": round(lideres_inactivos / max(len(lideres_ids), 1) * 100, 1),
+        "promovidos_periodo": len(promovidos),
+        "irl_porcentaje": round(len(promovidos) / max(len(persona_ids), 1) * 100, 1),
+        "alertas_burnout": [
+            {"nombre": personas_map[pid].nombre_completo, "grupo": group_map[gid].nombre if gid in group_map else "?", "estado_vital": personas_map[pid].estado_vital}
+            for gid, g in group_map.items()
+            for pid in ([g.lider_persona_id] if g.lider_persona_id and g.lider_persona_id in personas_map else [])
+            if str(personas_map[pid].estado_vital or "").upper() in {"INACTIVO", "FRIO", "DESERTOR"}
+        ],
+    }
+
+    # ── DIM 9: Retención de Campañas ─────────────────────────
+    # Personas cuyo origen_estrategia_id = strategy_id
+    personas_campana = (
+        db.query(models.Persona)
+        .filter(models.Persona.origen_estrategia_id == strategy_id)
+        .all()
+    )
+    retenidos = 0
+    for p in personas_campana:
+        atts_p = att_by_persona.get(p.id, [])
+        presentes_p = sum(1 for a in atts_p if _attended(a.estado))
+        if presentes_p >= 3:
+            retenidos += 1
+
+    total_campana = len(personas_campana)
+    irc = round(retenidos / total_campana * 100, 1) if total_campana > 0 else 0
+    dim9 = {
+        "total_captados_campana": total_campana,
+        "retenidos_3_sesiones": retenidos,
+        "irc_porcentaje": irc,
+        "semaforo": "EXCELENTE" if irc >= 70 else ("REGULAR" if irc >= 40 else "INEFICIENTE"),
+    }
+
+    # ── DIM 10: Diversidad Generacional ──────────────────────
+    rangos: dict = defaultdict(int)
+    spiritual_dist: dict = defaultdict(int)
+    church_role_dist: dict = defaultdict(int)
+    bautizados = 0
+    for pid in persona_ids:
+        p = personas_map.get(pid)
+        if not p:
+            continue
+        rangos[_age_bucket(p.birthday)] += 1
+        spiritual_dist[p.spiritual_status or "Sin dato"] += 1
+        church_role_dist[p.church_role or "Sin dato"] += 1
+        if p.is_baptized:
+            bautizados += 1
+
+    total_px = max(len(persona_ids), 1)
+    idg = _shannon_entropy(dict(rangos))
+    max_entropy = round(_math.log(5), 3)  # 5 rangos
+    equilibrio = round(idg / max_entropy * 100, 1) if max_entropy > 0 else 0
+
+    dim10 = {
+        "total_personas": total_px,
+        "bautizados": bautizados,
+        "pct_bautizados": round(bautizados / total_px * 100, 1),
+        "idg": idg,
+        "idg_max_posible": max_entropy,
+        "equilibrio_porcentaje": equilibrio,
+        "estado_equilibrio": "EQUILIBRADO" if equilibrio >= 70 else ("MODERADO" if equilibrio >= 40 else "HOMOGENEO"),
+        "distribucion_etaria": dict(rangos),
+        "distribucion_spiritual_status": dict(spiritual_dist),
+        "distribucion_church_role": dict(church_role_dist),
+    }
+
+    # ── WEEKLY TREND (para gráficas) ─────────────────────────
+    weekly: dict = defaultdict(lambda: {"presentes": 0, "ausentes": 0, "primera_vez": 0, "sesiones": 0, "ofrenda": 0.0})
+    for s in sesiones:
+        wk = s.fecha_sesion.strftime("%Y-%m-%d") if hasattr(s.fecha_sesion, "strftime") else str(s.fecha_sesion)[:10]
+        weekly[wk]["sesiones"] += 1
+        weekly[wk]["ofrenda"] += float(s.offering_amount or 0)
+        for a in att_by_session.get(s.id, []):
+            if _is_primera_vez(a):
+                weekly[wk]["primera_vez"] += 1
+            elif _attended(a.estado):
+                weekly[wk]["presentes"] += 1
+            else:
+                weekly[wk]["ausentes"] += 1
+
+    weekly_list = []
+    for wk in sorted(weekly.keys()):
+        d = weekly[wk]
+        total_w = d["presentes"] + d["ausentes"] + d["primera_vez"]
+        weekly_list.append({
+            "semana": wk,
+            **d,
+            "tasa_asistencia": round((d["presentes"] + d["primera_vez"]) / max(total_w, 1) * 100, 1),
+        })
+
+    # ── RESUMEN EJECUTIVO ─────────────────────────────────────
+    total_presentes_glob = sum(w["presentes"] + w["primera_vez"] for w in weekly_list)
+    total_ausentes_glob = sum(w["ausentes"] for w in weekly_list)
+    total_registros = total_presentes_glob + total_ausentes_glob
+    resumen = {
+        "estrategia_id": strategy_id,
+        "periodo_semanas": weeks,
+        "fecha_desde": str(fecha_desde),
+        "fecha_hasta": str(fecha_hasta),
+        "total_grupos": len(grupos),
+        "grupos_activos": activos_count,
+        "total_sesiones_periodo": len(sesiones),
+        "total_participantes": len(participantes),
+        "personas_unicas_analizadas": len(persona_ids),
+        "tasa_asistencia_global": round(total_presentes_glob / max(total_registros, 1) * 100, 1),
+        "total_primera_vez": dim3["total_nuevos_periodo"],
+        "total_alertas_enfriamiento": dim5["total_alertas_enfriamiento"],
+        "ofrenda_total": dim6["ofrenda_total_periodo"],
+        "ics_global": dim6["ics_global_porcentaje"],
+    }
+
+    return {
+        "resumen": resumen,
+        "tendencia_semanal": weekly_list,
+        "dim1_territorial": dim1,
+        "dim2_capacidad": dim2,
+        "dim3_atraccion": dim3,
+        "dim4_conversion_crm": dim4,
+        "dim5_fidelidad": dim5,
+        "dim6_eficiencia": dim6,
+        "dim7_multiplicacion": dim7,
+        "dim8_liderazgo": dim8,
+        "dim9_campanas": dim9,
+        "dim10_demografia": dim10,
+    }

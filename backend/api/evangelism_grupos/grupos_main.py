@@ -831,6 +831,31 @@ class FaroVisitorResponse(BaseModel):
     last_name: Optional[str] = None
 
 
+def _ensure_group_visitor_link(db: Session, grupo_id: UUID, persona_id: UUID) -> None:
+    participant = (
+        db.query(models.ParticipanteGrupo)
+        .filter(
+            models.ParticipanteGrupo.grupo_id == grupo_id,
+            models.ParticipanteGrupo.persona_id == persona_id,
+        )
+        .first()
+    )
+    if participant:
+        participant.activo = True
+        participant.deleted_at = None
+        if not participant.rol_base:
+            participant.rol_base = "visitante"
+        return
+
+    db.add(
+        models.ParticipanteGrupo(
+            grupo_id=grupo_id,
+            persona_id=persona_id,
+            rol_base="visitante",
+        )
+    )
+
+
 @router.post("/grupos/visitors", response_model=FaroVisitorResponse)
 @router.post("/faro/visitors", response_model=FaroVisitorResponse)
 def register_faro_visitor(
@@ -872,6 +897,8 @@ def register_faro_visitor(
         ).first()
 
     if existing:
+        _ensure_group_visitor_link(db, visitor.grupo_id, existing.id)
+        db.commit()
         return FaroVisitorResponse(
             status="duplicate",
             persona_id=str(existing.id),
@@ -897,14 +924,7 @@ def register_faro_visitor(
     db.flush()  # obtener ID sin commitear — todo en una sola transacción
     db.refresh(new_persona)
 
-    # Vincular al grupo
-    db.add(
-        models.ParticipanteGrupo(
-            grupo_id=visitor.grupo_id,
-            persona_id=new_persona.id,
-            rol_base="visitante",
-        )
-    )
+    _ensure_group_visitor_link(db, visitor.grupo_id, new_persona.id)
 
     from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
     crear_caso_nuevo_visitante(  # hace el db.commit() final

@@ -138,38 +138,28 @@ export default function FaroFooter() {
                             </ul>
                         </div>
 
-                        {/* Newsletter */}
+                        {/* Redes y contacto */}
                         <div className="md:col-span-4">
-                            <div
-                                className="rounded-2xl p-6 h-full flex flex-col justify-between gap-5"
-                                style={{
-                                    background: "var(--faro-surface-container)",
-                                    border: "1px solid var(--faro-outline-variant)",
-                                }}
-                            >
-                                <div>
-                                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--faro-primary)" }}>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest mb-6" style={{ color: "var(--faro-primary)" }}>
+                                Contáctanos
+                            </h4>
+                            <ul className="space-y-3">
+                                <li>
+                                    <a href="mailto:info@elfarocc.tech" className="text-sm transition-colors duration-200 hover:text-[var(--faro-primary)]" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                        info@elfarocc.tech
+                                    </a>
+                                </li>
+                                <li>
+                                    <Link href="/sedes" className="text-sm transition-colors duration-200 hover:text-[var(--faro-primary)]" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                        Cartagena, Colombia
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/boletin" className="text-sm transition-colors duration-200 hover:text-[var(--faro-primary)]" style={{ color: "var(--faro-on-surface-variant)" }}>
                                         Boletín semanal
-                                    </span>
-                                    <h3 className="text-lg font-black mt-2 mb-2 leading-snug" style={{ color: "var(--faro-on-surface)" }}>
-                                        ¿Quieres recibir nuestras novedades?
-                                    </h3>
-                                    <p className="text-sm leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
-                                        Meditaciones semanales, eventos exclusivos y más. Directo a tu correo.
-                                    </p>
-                                </div>
-                                <Link
-                                    href="/boletin"
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm font-black uppercase tracking-wide transition-all hover:scale-[1.02]"
-                                    style={{
-                                        background: "var(--faro-cta-gradient)",
-                                        color: "white",
-                                        boxShadow: "var(--faro-cta-shadow)",
-                                    }}
-                                >
-                                    Suscribirme
-                                </Link>
-                            </div>
+                                    </Link>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
