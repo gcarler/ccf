@@ -4,7 +4,7 @@ import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Quote, BookOpen } from 'lucide-react';
+import { ArrowLeft, Quote, BookOpen, Cross, Sparkles } from 'lucide-react';
 import { useContentBlock } from '@/hooks/useContent';
 import { PASTORS } from '@/data/pastors';
 
@@ -38,10 +38,13 @@ export default function PastorDetailPage() {
 
     if (!pastor) {
         return (
-            <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
-                <div className="text-center">
-                    <h1 className="text-lg font-bold text-slate-800 mb-4">Pastor no encontrado</h1>
-                    <button onClick={() => router.push('/pastores')} className="text-[hsl(var(--primary))] font-bold hover:underline">
+            <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] flex items-center justify-center">
+                <div className="text-center space-y-4">
+                    <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--primary))/0.1] flex items-center justify-center mx-auto">
+                        <Cross size={24} className="text-[hsl(var(--primary))]" />
+                    </div>
+                    <h1 className="text-xl font-bold text-slate-800 dark:text-white">Pastor no encontrado</h1>
+                    <button onClick={() => router.push('/pastores')} className="px-5 py-2.5 rounded-xl bg-[hsl(var(--primary))] text-white text-sm font-bold uppercase tracking-wider hover:scale-105 transition-all shadow-lg shadow-[hsl(var(--primary))/0.25]">
                         Volver a la galería
                     </button>
                 </div>
@@ -50,68 +53,110 @@ export default function PastorDetailPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] selection:bg-blue-500/30 selection:text-blue-900">
+        <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] selection:bg-[hsl(var(--primary))/0.2] selection:text-[hsl(var(--primary))]">
 
             <main>
-                <div className="relative pt-32 pb-4 lg:pt-48 lg:pb-4 overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-                        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-400/10 blur-[100px] rounded-full"></div>
-                        <div className="absolute top-40 -left-20 w-72 h-48 bg-[hsl(var(--primary)/0.1)] blur-[80px] rounded-full"></div>
+                {/* ── Hero / Profile Section ── */}
+                <section className="relative overflow-hidden pt-28 pb-8 md:pt-36 md:pb-12 lg:pt-44 lg:pb-16">
+                    {/* Background effects */}
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[hsl(var(--primary))/0.06] to-transparent blur-[120px]" />
+                        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-[hsl(var(--secondary))/0.04] to-transparent blur-[100px]" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[hsl(var(--primary))/0.02] blur-[150px]" />
                     </div>
 
-                    <div className="max-w-7xl mx-auto px-3 md:px-6 lg:px-8 xl:px-12">
-                        <Link href="/pastores" className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] font-bold text-sm mb-3 transition-colors">
-                            <ArrowLeft size={16} /> Volver al liderazgo
+                    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 relative z-10">
+                        <Link
+                            href="/pastores"
+                            className="inline-flex items-center gap-2 text-sm font-bold text-slate-400 dark:text-slate-500 hover:text-[hsl(var(--primary))] transition-colors mb-8 group"
+                        >
+                            <ArrowLeft size={15} className="group-hover:-translate-x-1 transition-transform" />
+                            Volver al liderazgo
                         </Link>
 
-                        <div className="flex flex-col lg:flex-row gap-3 lg:gap-24 items-center">
-                            <div className="w-full lg:w-5/12 relative">
-                                <div className="aspect-[4/5] relative rounded-lg overflow-hidden shadow-2xl shadow-blue-900/10 dark:shadow-none border border-slate-100 dark:border-white/5">
-                                    <Image src={pastor.image} alt={pastor.name} fill className="object-cover object-top" priority />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+                        <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 xl:gap-24 items-center lg:items-start">
+                            {/* Photo */}
+                            <div className="w-full max-w-[360px] lg:w-5/12 relative shrink-0">
+                                <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-[0_20px_80px_rgba(0,0,0,0.5)] border border-slate-200/50 dark:border-white/[0.06]">
+                                    <Image
+                                        src={pastor.image}
+                                        alt={pastor.name}
+                                        fill
+                                        className="object-cover object-top"
+                                        priority
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                                    {/* Decorative corner */}
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-white/10 to-transparent rounded-bl-[100%]" />
                                 </div>
+                                {/* Decorative ring behind photo */}
+                                <div className="absolute -top-3 -right-3 w-full h-full rounded-2xl border border-[hsl(var(--primary))/0.1] -z-10 hidden lg:block" />
                             </div>
 
-                            <div className="w-full lg:w-7/12">
-                                <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight mb-4">
-                                    {pastor.name}
-                                </h1>
-                                <p className="text-lg md:text-xl text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold tracking-wide mb-3">
-                                    {pastor.title}
-                                </p>
-
-                                <div className="relative p-4 bg-slate-50 dark:bg-[#13161c] rounded-lg border border-slate-100 dark:border-white/5 mb-3">
-                                    <Quote className="absolute top-3 left-6 text-blue-200 dark:text-blue-500/20" size={40} />
-                                    <p className="relative z-10 text-lg md:text-xl text-slate-700 dark:text-slate-300 font-medium italic leading-relaxed pt-6">
-                                        &ldquo;{pastor.quote}&rdquo;
+                            {/* Info */}
+                            <div className="w-full lg:w-7/12 space-y-6">
+                                <div>
+                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--primary))/0.08] border border-[hsl(var(--primary))/0.15] text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-widest mb-4">
+                                        <Sparkles size={10} /> Ministerio Pastoral
+                                    </div>
+                                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.05] mb-3">
+                                        {pastor.name}
+                                    </h1>
+                                    <p className="text-lg md:text-xl font-bold text-[hsl(var(--primary))] tracking-wide">
+                                        {pastor.title}
                                     </p>
                                 </div>
 
-                                <div className="flex items-start gap-4">
-                                    <div className="mt-1 w-10 h-10 rounded-md bg-blue-50 dark:bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
-                                        <BookOpen className="text-[hsl(var(--primary))] dark:text-blue-400" size={20} />
+                                {/* Quote */}
+                                <div className="relative p-5 md:p-6 bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-white/[0.03] dark:to-white/[0.01] rounded-xl border border-slate-200/50 dark:border-white/[0.05]">
+                                    <Quote className="absolute top-4 left-4 text-[hsl(var(--primary))/0.15]" size={36} />
+                                    <p className="relative z-10 text-base md:text-lg text-slate-600 dark:text-slate-300 font-medium italic leading-relaxed pt-6 pl-2">
+                                        &ldquo;{pastor.quote}&rdquo;
+                                    </p>
+                                    <div className="h-px w-12 bg-gradient-to-r from-[hsl(var(--primary))/0.3] to-transparent mt-4 ml-2" />
+                                </div>
+
+                                {/* Verse */}
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-[hsl(var(--primary))/0.03] dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.03]">
+                                    <div className="mt-0.5 w-10 h-10 rounded-lg bg-[hsl(var(--primary))/0.1] flex items-center justify-center shrink-0">
+                                        <BookOpen size={18} className="text-[hsl(var(--primary))]" />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2">Versículo Lema</h3>
-                                        <p className="text-lg text-slate-800 dark:text-slate-200 font-medium">{pastor.verse}</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">Versículo Lema</p>
+                                        <p className="text-base md:text-lg text-slate-700 dark:text-slate-200 font-medium leading-relaxed">{pastor.verse}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div className="bg-slate-50 dark:bg-[#0f1117] py-8 md:py-12 lg:py-16 border-t border-slate-200 dark:border-white/5">
-                    <div className="max-w-3xl mx-auto px-3 md:px-6 lg:px-8 xl:px-12">
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Su Historia</h2>
-                        <div
-                            className="prose prose-lg dark:prose-invert max-w-none
-                            prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-p:leading-relaxed
-                            prose-blockquote:border-l-blue-500 prose-blockquote:bg-[hsl(var(--bg-primary))] dark:prose-blockquote:bg-[#151821] prose-blockquote:py-2 prose-blockquote:px-3 prose-blockquote:rounded-r-2xl prose-blockquote:font-medium prose-blockquote:text-slate-800 dark:prose-blockquote:text-slate-200 prose-blockquote:shadow-sm"
-                            dangerouslySetInnerHTML={{ __html: pastor.fullStory }}
-                        />
+                {/* ── Full Story ── */}
+                <section className="bg-gradient-to-b from-transparent via-slate-50/50 to-slate-100/50 dark:via-white/[0.01] dark:to-white/[0.02] py-12 md:py-16 lg:py-20 border-t border-slate-200/50 dark:border-white/[0.04]">
+                    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
+                        <div className="max-w-3xl mx-auto">
+                            <div className="flex items-center gap-3 mb-8">
+                                <Cross size={16} className="text-[hsl(var(--primary))/0.5]" />
+                                <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Su Historia</h2>
+                                <div className="flex-1 h-px bg-gradient-to-r from-[hsl(var(--primary))/0.2] to-transparent" />
+                            </div>
+                            <div
+                                className="
+                                    faro-rich-text
+                                    prose prose-lg dark:prose-invert max-w-none
+                                    prose-headings:text-slate-900 dark:prose-headings:text-white
+                                    prose-p:text-slate-600 dark:prose-p:text-slate-300 prose-p:leading-relaxed
+                                    prose-blockquote:border-l-[hsl(var(--primary))]
+                                    prose-blockquote:bg-gradient-to-r prose-blockquote:from-[hsl(var(--primary))/0.05] prose-blockquote:to-transparent
+                                    prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-xl
+                                    prose-blockquote:font-medium prose-blockquote:text-slate-700 dark:prose-blockquote:text-slate-200
+                                    prose-blockquote:not-italic
+                                "
+                                dangerouslySetInnerHTML={{ __html: pastor.fullStory }}
+                            />
+                        </div>
                     </div>
-                </div>
+                </section>
             </main>
         </div>
     );
