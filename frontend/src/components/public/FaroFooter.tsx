@@ -59,12 +59,50 @@ export default function FaroFooter() {
                 borderTop: "1px solid var(--faro-outline-variant)",
             }}
         >
+            {/* Newsletter banner — full width */}
+            <div className="px-4 md:px-6 lg:px-8 xl:px-12 pt-12 md:pt-16 pb-10">
+                <div
+                    className="rounded-2xl px-8 py-10 md:px-14 md:py-12 flex flex-col md:flex-row items-center justify-between gap-8"
+                    style={{
+                        background: "var(--faro-surface-container)",
+                        border: "1px solid var(--faro-outline-variant)",
+                    }}
+                >
+                    <div className="flex-1 text-center md:text-left">
+                        <h3
+                            className="text-2xl md:text-3xl font-black tracking-tight mb-3"
+                            style={{ color: "var(--faro-on-surface)" }}
+                        >
+                            ¿Quieres recibir nuestras novedades?
+                        </h3>
+                        <p
+                            className="text-base leading-relaxed max-w-xl"
+                            style={{ color: "var(--faro-on-surface-variant)" }}
+                        >
+                            Meditaciones semanales, eventos exclusivos y más.{" "}
+                            <span style={{ color: "var(--faro-primary)" }}>Directo a tu correo.</span>
+                        </p>
+                    </div>
+                    <Link
+                        href="/boletin"
+                        className="shrink-0 inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-black uppercase tracking-wider transition-all hover:scale-105"
+                        style={{
+                            background: "var(--faro-cta-gradient)",
+                            color: "white",
+                            boxShadow: "var(--faro-cta-shadow)",
+                        }}
+                    >
+                        Suscribirme
+                    </Link>
+                </div>
+            </div>
+
             {/* Main footer */}
-            <div className="px-4 md:px-6 lg:px-8 xl:px-12 py-12 md:py-16">
+            <div className="px-4 md:px-6 lg:px-8 xl:px-12 pb-12 md:pb-16">
                 <div className="w-full">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-12 mb-0">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-12">
                         {/* Brand column */}
-                        <div className="md:col-span-4 space-y-5">
+                        <div className="md:col-span-5 space-y-5">
                             <div className="flex items-center gap-4">
                                 <div
                                     className="w-14 h-14 rounded-full flex items-center justify-center"
@@ -121,7 +159,7 @@ export default function FaroFooter() {
                         </div>
 
                         {/* Navegación */}
-                        <div className="md:col-span-3">
+                        <div className="md:col-span-3 md:col-start-7">
                             <h4
                                 className="text-[10px] font-bold uppercase tracking-widest mb-6"
                                 style={{ color: "var(--faro-primary)" }}
@@ -134,9 +172,7 @@ export default function FaroFooter() {
                                         <Link
                                             href={href}
                                             className="text-sm transition-colors duration-200 hover:text-[var(--faro-primary)]"
-                                            style={{
-                                                color: "var(--faro-on-surface-variant)",
-                                            }}
+                                            style={{ color: "var(--faro-on-surface-variant)" }}
                                         >
                                             {label}
                                         </Link>
@@ -146,7 +182,7 @@ export default function FaroFooter() {
                         </div>
 
                         {/* Recursos */}
-                        <div className="md:col-span-3">
+                        <div className="md:col-span-2">
                             <h4
                                 className="text-[10px] font-bold uppercase tracking-widest mb-6"
                                 style={{ color: "var(--faro-primary)" }}
@@ -159,42 +195,13 @@ export default function FaroFooter() {
                                         <Link
                                             href={href}
                                             className="text-sm transition-colors duration-200 hover:text-[var(--faro-primary)]"
-                                            style={{
-                                                color: "var(--faro-on-surface-variant)",
-                                            }}
+                                            style={{ color: "var(--faro-on-surface-variant)" }}
                                         >
                                             {label}
                                         </Link>
                                     </li>
                                 ))}
                             </ul>
-                        </div>
-
-                        {/* Newsletter mini */}
-                        <div className="md:col-span-2">
-                            <h4
-                                className="text-[10px] font-bold uppercase tracking-widest mb-6"
-                                style={{ color: "var(--faro-primary)" }}
-                            >
-                                Mantente conectado
-                            </h4>
-                            <p
-                                className="text-sm mb-5 leading-relaxed"
-                                style={{ color: "var(--faro-on-surface-variant)" }}
-                            >
-                                Recibe meditaciones, devocionales y novedades cada semana.
-                            </p>
-                            <Link
-                                href="/boletin"
-                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all hover:scale-105"
-                                style={{
-                                    background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
-                                    color: "var(--faro-on-primary)",
-                                    boxShadow: "var(--faro-cta-shadow)",
-                                }}
-                            >
-                                Suscríbete
-                            </Link>
                         </div>
                     </div>
                 </div>
@@ -210,7 +217,16 @@ export default function FaroFooter() {
                         className="text-xs"
                         style={{ color: "var(--faro-on-surface-variant)" }}
                     >
-                        © {new Date().getFullYear()} FARO — La Luz que Guía tu Vida. Todos los derechos reservados.
+                        © {new Date().getFullYear()}{" "}
+                        <a
+                            href="https://ples.com.co"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline hover:text-[var(--faro-primary)] transition-colors"
+                        >
+                            PLES SAS
+                        </a>
+                        {" "}— El uso inteligente de la experiencia. Todos los derechos reservados.
                     </p>
                     <div className="flex items-center gap-4">
                         <Link
