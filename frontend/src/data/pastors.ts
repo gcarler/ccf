@@ -7,6 +7,7 @@ export interface Pastor {
     verse: string;
     shortStory: string;
     fullStory: string;
+    isMain?: boolean;
     instagram?: string;
     facebook?: string;
     twitter?: string;
@@ -15,17 +16,34 @@ export interface Pastor {
 export const PASTORS: Pastor[] = [
     {
         id: "histar-ariza",
-        name: "Histar Ariza",
+        name: "Histar Ariza Herrera",
         title: "Pastor Principal",
         image: "/pastores/histar_ariza_1777656780660.png",
+        isMain: true,
         quote: "Nuestra mayor recompensa es ver corazones transformados por el amor del Padre.",
         verse: "Jeremías 3:15 - 'Y os daré pastores según mi corazón, que os apacienten con ciencia y con inteligencia.'",
         shortStory: "El llamado pastoral, la visión de expansión y el corazón de paternidad espiritual que guía a nuestra congregación.",
         fullStory: `
-            <p>El Pastor Histar Ariza ha sido un pilar fundamental en la fundación y consolidación de la Comunidad Cristiana Alfaro. Su ministerio nació de un profundo encuentro personal con la paternidad de Dios, lo que marcó para siempre su forma de liderar, amar y guiar a la iglesia.</p>
+            <p>El Pastor Histar Ariza Herrera ha sido un pilar fundamental en la fundación y consolidación de la Comunidad Cristiana El Faro. Su ministerio nació de un profundo encuentro personal con la paternidad de Dios, lo que marcó para siempre su forma de liderar, amar y guiar a la iglesia.</p>
             <blockquote>"El ministerio no se trata de construir edificios grandes, sino de edificar familias fuertes que reflejen el carácter de Cristo."</blockquote>
             <p>Con más de dos décadas de servicio ininterrumpido, su enseñanza se caracteriza por la profundidad teológica combinada con una aplicación práctica y compasiva. Su visión principal es ver a cada persona de la comunidad no solo como un asistente, sino como un hijo espiritual llamado a cumplir un propósito eterno.</p>
-            <p>A lo largo de los años, el Pastor Histar ha liderado proyectos de expansión, siembra de nuevas misiones y ha formado a decenas de líderes que hoy sirven a lo largo de toda la congregación. Su testimonio es un recordatorio vivo de que cuando Dios llama, también respalda, provee y sostiene.</p>
+            <p>A lo largo de los años, el Pastor Histar ha liderado proyectos de expansión, siembra de nuevas misiones y ha formado a decenas de líderes que hoy sirven a lo largo de toda la Comunidad Cristiana El Faro. Su testimonio es un recordatorio vivo de que cuando Dios llama, también respalda, provee y sostiene.</p>
+        `
+    },
+    {
+        id: "luis-ricardo-meza",
+        name: "Luis Ricardo Meza Gutiérrez",
+        title: "Pastor Principal",
+        image: "/pastores/luis_ricardo_meza_1777656765476.png",
+        isMain: true,
+        quote: "La Palabra de Dios, correctamente dividida, es el alimento que da vida a la Iglesia.",
+        verse: "Esdras 7:10 - 'Porque Esdras había preparado su corazón para inquirir la ley de Jehová y para cumplirla, y para enseñar en Israel sus estatutos y decretos.'",
+        shortStory: "Un testimonio de transformación profunda y pasión inagotable por la enseñanza de la Palabra.",
+        fullStory: `
+            <p>El Pastor Luis Ricardo Meza Gutiérrez llegó a los pies de Cristo buscando respuestas a las inquietudes más profundas de su intelecto y su alma. Lo que encontró fue una verdad tan innegable y un amor tan avasallador que cambió el rumbo de sus estudios y de su vida por completo.</p>
+            <blockquote>"Cuando la mente es iluminada por la revelación de la Escritura, el corazón inevitablemente se enciende en adoración."</blockquote>
+            <p>Dotado de una aguda capacidad para la exégesis bíblica y la enseñanza apologética, Luis Ricardo es un defensor apasionado de la sana doctrina. Ha liderado el Instituto Bíblico y la Academia de la Comunidad Cristiana El Faro, formando teológicamente a los nuevos obreros y asegurando que las raíces doctrinales de la congregación sean profundas y firmes.</p>
+            <p>Su testimonio nos recuerda que Dios redime nuestro intelecto y lo usa como un instrumento poderoso para derribar argumentos y llevar todo pensamiento cautivo a la obediencia a Cristo.</p>
         `
     },
     {
@@ -69,23 +87,8 @@ export const PASTORS: Pastor[] = [
         fullStory: `
             <p>Los pastores Fernando y Mónica representan la esencia del servicio incondicional y la fidelidad. Su caminar en la iglesia comenzó sirviendo en las áreas más silenciosas, donde nadie los veía, pero donde Dios formó el carácter de siervos que hoy los define.</p>
             <blockquote>"El discipulado no es un curso que se toma, es una vida que se comparte."</blockquote>
-            <p>Su ministerio está enfocado en el crecimiento integral del creyente. Son los encargados de asegurar que cada persona que cruza las puertas de CCF no solo se quede a escuchar un mensaje, sino que sea abrazada, integrada y formada a la imagen de Cristo a través del discipulado uno a uno y los grupos pequeños.</p>
+            <p>Su ministerio está enfocado en el crecimiento integral del creyente. Son los encargados de asegurar que cada persona que cruza las puertas de la Comunidad Cristiana El Faro no solo se quede a escuchar un mensaje, sino que sea abrazada, integrada y formada a la imagen de Cristo a través del discipulado uno a uno y los grupos pequeños.</p>
             <p>Su hogar siempre ha sido una casa de puertas abiertas. A través de su ejemplo, enseñan que el liderazgo más efectivo es aquel que se ejerce con una toalla en las manos y la disposición de lavar los pies de los demás.</p>
-        `
-    },
-    {
-        id: "luis-ricardo-meza",
-        name: "Luis Ricardo Meza Gutiérrez",
-        title: "Pastor de Enseñanza",
-        image: "/pastores/luis_ricardo_meza_1777656765476.png",
-        quote: "La Palabra de Dios, correctamente dividida, es el alimento que da vida a la Iglesia.",
-        verse: "Esdras 7:10 - 'Porque Esdras había preparado su corazón para inquirir la ley de Jehová y para cumplirla, y para enseñar en Israel sus estatutos y decretos.'",
-        shortStory: "Un testimonio de transformación profunda y pasión inagotable por la enseñanza de la Palabra.",
-        fullStory: `
-            <p>El Pastor Luis Ricardo Meza Gutiérrez llegó a los pies de Cristo buscando respuestas a las inquietudes más profundas de su intelecto y su alma. Lo que encontró fue una verdad tan innegable y un amor tan avasallador que cambió el rumbo de sus estudios y de su vida por completo.</p>
-            <blockquote>"Cuando la mente es iluminada por la revelación de la Escritura, el corazón inevitablemente se enciende en adoración."</blockquote>
-            <p>Dotado de una aguda capacidad para la exégesis bíblica y la enseñanza apologética, Luis Ricardo es un defensor apasionado de la sana doctrina. Ha liderado el Instituto Bíblico y la Academia de la iglesia, formando teológicamente a los nuevos obreros y asegurando que las raíces doctrinales de la congregación sean profundas y firmes.</p>
-            <p>Su testimonio nos recuerda que Dios redime nuestro intelecto y lo usa como un instrumento poderoso para derribar argumentos y llevar todo pensamiento cautivo a la obediencia a Cristo.</p>
         `
     },
     {
@@ -112,7 +115,7 @@ export const PASTORS: Pastor[] = [
         verse: "Marcos 16:15 - 'Y les dijo: Id por todo el mundo y predicad el evangelio a toda criatura.'",
         shortStory: "Un relato de gracia abrumadora, superación personal y un fuego evangelístico inextinguible.",
         fullStory: `
-            <p>El Pastor Yair Macea es el impulso misional de CCF. Su encuentro con Cristo lo sacó de un pasado de oscuridad profunda, y desde el momento en que sus ojos fueron abiertos a la gracia salvadora, no ha podido dejar de hablar de lo que Dios hizo por él.</p>
+            <p>El Pastor Yair Macea es el impulso misional de la Comunidad Cristiana El Faro. Su encuentro con Cristo lo sacó de un pasado de oscuridad profunda, y desde el momento en que sus ojos fueron abiertos a la gracia salvadora, no ha podido dejar de hablar de lo que Dios hizo por él.</p>
             <blockquote>"La iglesia no es un club de personas santas, es un hospital de rescate y la calle es nuestra principal sala de emergencias."</blockquote>
             <p>Con un estilo de predicación ferviente y directo, Yair lidera las jornadas de evangelismo, misiones urbanas y el alcance a sectores vulnerables de la ciudad. Su mayor pasión es ver a las personas reconciliadas con Dios y bautizadas.</p>
             <p>Él es la prueba de que Dios no desperdicia ninguna parte de nuestro pasado, sino que lo convierte en un testimonio poderoso para rescatar a quienes hoy se encuentran en los mismos lugares de donde fuimos sacados.</p>

@@ -25,6 +25,7 @@ export default function PastoresIndexPage() {
                 name: cp.name,
                 title: cp.role,
                 image: cp.image,
+                isMain: cp.isMain ?? fallback?.isMain ?? false,
                 quote: cp.quote || fallback?.quote || '',
                 verse: cp.verse || fallback?.verse || '',
                 shortStory: cp.story || fallback?.shortStory || '',
@@ -90,6 +91,14 @@ export default function PastoresIndexPage() {
                                 />
                                 {/* Gradient overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c12]/90 via-black/30 to-transparent" />
+                                {/* Badge pastor principal */}
+                                {pastor.isMain && (
+                                    <div className="absolute top-3 left-3 z-20">
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--primary))] text-white text-[9px] font-bold uppercase tracking-wider shadow-lg">
+                                            <Sparkles size={8} /> Pastor Principal
+                                        </span>
+                                    </div>
+                                )}
                                 {/* Name + role on image */}
                                 <div className="absolute bottom-4 left-5 right-5 z-20">
                                     <h3 className="text-lg font-bold text-white drop-shadow-sm">{pastor.name}</h3>
