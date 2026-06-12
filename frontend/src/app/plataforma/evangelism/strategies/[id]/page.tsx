@@ -1145,7 +1145,7 @@ export default function StrategyDetailPage() {
 
  {/* ── View: Table (ag-grid, editable como Airtable) ── */}
  {viewType === 'table' && (
- <div className="flex flex-col h-full gap-3">
+ <div className="flex flex-col gap-3">
  {/* Sub-tab switcher */}
  <div className="flex items-center gap-1 shrink-0">
  <button
@@ -1172,7 +1172,7 @@ export default function StrategyDetailPage() {
 
  {/* Groups table */}
  {tableSubTab === 'groups' && (
- <div className="flex-1 min-h-0">
+ <div className="h-[calc(100vh-280px)]">
  <UniversalTableView
  key="groups-table"
  viewName={`strategy_groups_${id}`}
@@ -1281,7 +1281,7 @@ export default function StrategyDetailPage() {
 
  {/* Sessions table */}
  {tableSubTab === 'sessions' && (
- <div className="flex-1 min-h-0">
+ <div className="h-[calc(100vh-280px)]">
  <UniversalTableView
  key="sessions-table"
  viewName={`strategy_sessions_${id}`}
@@ -1452,7 +1452,7 @@ export default function StrategyDetailPage() {
  )}
 
  {/* ── Overview ── */}
- {activeTab === 'overview' && (
+ {viewType === 'dashboard' && activeTab === 'overview' && (
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
  <div>
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Nombre</label>
@@ -1553,7 +1553,7 @@ export default function StrategyDetailPage() {
  )}
 
  {/* ── Grupos ── */}
- {activeTab === 'groups' && (
+ {viewType === 'dashboard' && activeTab === 'groups' && (
  <div className="space-y-3">
  <div className="flex items-center justify-between">
  <div>
@@ -1639,7 +1639,7 @@ export default function StrategyDetailPage() {
  )}
 
  {/* ── Sesiones ── */}
- {activeTab === 'sessions' && (
+ {viewType === 'dashboard' && activeTab === 'sessions' && (
  <div className="space-y-3">
  <div className="flex items-center justify-between flex-wrap gap-2">
  <h2 className="text-sm font-bold text-[hsl(var(--text-primary))]">Registro de sesiones</h2>
@@ -1847,7 +1847,7 @@ export default function StrategyDetailPage() {
  )}
 
  {/* ── Asistencia ── */}
- {activeTab === 'attendance' && (
+ {viewType === 'dashboard' && activeTab === 'attendance' && (
   <div className="space-y-4">
    <div className="flex items-center justify-between">
     <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
@@ -1944,7 +1944,7 @@ export default function StrategyDetailPage() {
  )}
 
  {/* ── Métricas ── */}
- {activeTab === 'metrics' && (
+ {viewType === 'dashboard' && activeTab === 'metrics' && (
  <div className="space-y-4">
  <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-8 flex flex-col items-center text-center gap-4">
  <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/40">
@@ -1983,7 +1983,7 @@ export default function StrategyDetailPage() {
  )}
 
  {/* Metadata */}
- {activeTab === 'overview' && (
+ {viewType === 'dashboard' && activeTab === 'overview' && (
  <>
  <div className="bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Información</h3>
