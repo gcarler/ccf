@@ -42,7 +42,7 @@ export default function ShareButtons({ title, className = '' }: ShareButtonsProp
             {/* Facebook */}
             <button
                 onClick={() => shareOn('facebook')}
-                className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/15 flex items-center justify-center text-blue-600 hover:scale-110 hover:bg-blue-500/20 transition-all shadow-sm"
+                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
                 aria-label="Compartir en Facebook"
             >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
@@ -53,7 +53,7 @@ export default function ShareButtons({ title, className = '' }: ShareButtonsProp
             {/* X */}
             <button
                 onClick={() => shareOn('twitter')}
-                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-800 dark:text-white hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
+                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
                 aria-label="Compartir en X"
             >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
@@ -64,7 +64,7 @@ export default function ShareButtons({ title, className = '' }: ShareButtonsProp
             {/* WhatsApp */}
             <button
                 onClick={() => shareOn('whatsapp')}
-                className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-200/50 dark:border-emerald-500/15 flex items-center justify-center text-emerald-600 hover:scale-110 hover:bg-emerald-500/20 transition-all shadow-sm"
+                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
                 aria-label="Compartir por WhatsApp"
             >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
@@ -75,11 +75,11 @@ export default function ShareButtons({ title, className = '' }: ShareButtonsProp
             {/* Copiar enlace */}
             <button
                 onClick={copyLink}
-                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
+                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
                 aria-label="Copiar enlace"
             >
                 {copied
-                    ? <Check size={13} className="text-emerald-500" />
+                    ? <Check size={13} className="text-slate-500 dark:text-slate-400" />
                     : <Link2 size={13} />
                 }
             </button>

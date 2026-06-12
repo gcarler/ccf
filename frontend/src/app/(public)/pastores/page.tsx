@@ -3,22 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronRight, Cross, Sparkles, Instagram } from 'lucide-react';
+import { ChevronRight, Cross, Sparkles } from 'lucide-react';
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from '@/hooks/useContent';
 import { PASTORS } from '@/data/pastors';
 import ShareButtons from '@/components/public/ShareButtons';
-
-const FbIcon = () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-    </svg>
-);
-const XIcon = () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-    </svg>
-);
 
 export default function PastoresIndexPage() {
     const { data: heroCms } = useContentBlock("faro_pastores_hero");
@@ -118,43 +107,6 @@ export default function PastoresIndexPage() {
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 flex-1 leading-relaxed line-clamp-3">
                                     {pastor.shortStory}
                                 </p>
-
-                                {/* Redes sociales — siempre visibles */}
-                                <div className="flex items-center gap-1.5 mb-3">
-                                    {pastor.instagram ? (
-                                        <a href={pastor.instagram} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                                            className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-200/50 dark:border-pink-500/15 flex items-center justify-center text-pink-500 hover:scale-110 transition-all"
-                                            aria-label="Instagram">
-                                            <Instagram size={13} />
-                                        </a>
-                                    ) : (
-                                        <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-500/5 to-purple-500/5 border border-pink-200/20 dark:border-pink-500/10 flex items-center justify-center text-pink-200 dark:text-pink-900 opacity-40">
-                                            <Instagram size={13} />
-                                        </span>
-                                    )}
-                                    {pastor.facebook ? (
-                                        <a href={pastor.facebook} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                                            className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/15 flex items-center justify-center text-blue-600 hover:scale-110 transition-all"
-                                            aria-label="Facebook">
-                                            <FbIcon />
-                                        </a>
-                                    ) : (
-                                        <span className="w-7 h-7 rounded-lg bg-blue-500/5 border border-blue-200/20 dark:border-blue-500/10 flex items-center justify-center text-blue-200 dark:text-blue-900 opacity-40">
-                                            <FbIcon />
-                                        </span>
-                                    )}
-                                    {pastor.twitter ? (
-                                        <a href={pastor.twitter} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                                            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-white hover:scale-110 transition-all"
-                                            aria-label="X">
-                                            <XIcon />
-                                        </a>
-                                    ) : (
-                                        <span className="w-7 h-7 rounded-lg bg-slate-100/50 dark:bg-white/[0.02] border border-slate-200/20 dark:border-white/5 flex items-center justify-center text-slate-300 dark:text-slate-700 opacity-40">
-                                            <XIcon />
-                                        </span>
-                                    )}
-                                </div>
 
                                 {/* CTA */}
                                 <Link href={`/pastores/${pastor.id}`} className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/[0.06]">

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Archive, ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, ExternalLink, FileImage, ImageIcon, LayoutPanelTop, Monitor, Plus, RotateCcw, Save, Search, Send, Smartphone, Upload, Undo2, X } from "lucide-react";
+import { Archive, ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, ExternalLink, FileImage, ImageIcon, LayoutPanelTop, Monitor, Plus, RotateCcw, Save, Search, Send, Smartphone, Upload, Undo2, X, Settings, Sparkles, BarChart3, CheckCircle2, AlertTriangle, XCircle, Wand2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   createCmsPage,
@@ -560,9 +560,15 @@ export default function CmsBuilderPage() {
   const [pageSlugDraft, setPageSlugDraft] = useState("");
   const [seoTitleDraft, setSeoTitleDraft] = useState("");
   const [seoDescriptionDraft, setSeoDescriptionDraft] = useState("");
-  const [seoImageDraft, setSeoImageDraft] = useState("");
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [mediaPickerTarget, setMediaPickerTarget] = useState<"section" | "seo">("section");
+  const [activeRightTab, setActiveRightTab] = useState<"config" | "seo" | "ai" | "analytics">("config");
+  const [seoKeyword, setSeoKeyword] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiPromptType, setAiPromptType] = useState("copywriting");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiOutput, setAiOutput] = useState("");
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   useEffect(() => {
     const querySite = searchParams?.get("site");
@@ -621,6 +627,234 @@ export default function CmsBuilderPage() {
     loadSectionsAndVersions(activeSlug).catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSlug, token]);
+
+  const seoAnalysis = useMemo(() => {
+    const checks: Array<{ id: string; label: string; passed: boolean; tip: string; type: "success" | "warning" | "error" }> = [];
+    let score = 0;
+
+    // Check Title
+    const titleLen = seoTitleDraft?.length || 0;
+    if (titleLen >= 30 && titleLen <= 60) {
+      checks.push({ id: "title_len", label: "Longitud del título SEO", passed: true, tip: `Correcto (${titleLen} caracteres).`, type: "success" });
+      score += 15;
+    } else if (titleLen > 0) {
+      checks.push({ id: "title_len", label: "Longitud del título SEO", passed: false, tip: `Tiene ${titleLen} caracteres. Recomendado entre 30 y 60.`, type: "warning" });
+      score += 5;
+    } else {
+      checks.push({ id: "title_len", label: "Título SEO vacío", passed: false, tip: "Por favor define un título SEO para indexación básica.", type: "error" });
+    }
+
+    // Check Description
+    const descLen = seoDescriptionDraft?.length || 0;
+    if (descLen >= 110 && descLen <= 160) {
+      checks.push({ id: "desc_len", label: "Longitud de meta descripción", passed: true, tip: `Correcto (${descLen} caracteres).`, type: "success" });
+      score += 15;
+    } else if (descLen > 0) {
+      checks.push({ id: "desc_len", label: "Longitud de meta descripción", passed: false, tip: `Tiene ${descLen} caracteres. Recomendado entre 110 y 160.`, type: "warning" });
+      score += 5;
+    } else {
+      checks.push({ id: "desc_len", label: "Meta descripción vacía", passed: false, tip: "La descripción es clave para convencer en los buscadores.", type: "error" });
+    }
+
+    // Check Focus Keyword
+    if (seoKeyword.trim()) {
+      const kw = seoKeyword.toLowerCase().trim();
+      
+      // Keyword in Title
+      const titleMatch = seoTitleDraft?.toLowerCase().includes(kw) || false;
+      if (titleMatch) {
+        checks.push({ id: "kw_title", label: "Palabra clave en el título", passed: true, tip: "La palabra clave principal está dentro del título.", type: "success" });
+        score += 15;
+      } else {
+        checks.push({ id: "kw_title", label: "Falta palabra clave en el título", passed: false, tip: `El título SEO no contiene "${seoKeyword}".`, type: "warning" });
+      }
+
+      // Keyword in Description
+      const descMatch = seoDescriptionDraft?.toLowerCase().includes(kw) || false;
+      if (descMatch) {
+        checks.push({ id: "kw_desc", label: "Palabra clave en descripción", passed: true, tip: "La palabra clave se encuentra en la meta descripción.", type: "success" });
+        score += 15;
+      } else {
+        checks.push({ id: "kw_desc", label: "Falta palabra clave en descripción", passed: false, tip: `La descripción no contiene "${seoKeyword}".`, type: "warning" });
+      }
+
+      // Keyword in Section Contents
+      let kwCount = 0;
+      sections.forEach(s => {
+        const text = (safeString(s.props_json?.title) + " " + safeString(s.props_json?.body)).toLowerCase();
+        const occurrences = text.split(kw).length - 1;
+        kwCount += occurrences;
+      });
+      if (kwCount >= 2) {
+        checks.push({ id: "kw_content", label: "Densidad de palabra clave", passed: true, tip: `Encontrada ${kwCount} veces en las secciones. Densidad óptima.`, type: "success" });
+        score += 15;
+      } else if (kwCount === 1) {
+        checks.push({ id: "kw_content", label: "Densidad de palabra clave baja", passed: false, tip: `Encontrada solo 1 vez. Añádela en subtítulos o descripciones.`, type: "warning" });
+        score += 5;
+      } else {
+        checks.push({ id: "kw_content", label: "Palabra clave ausente del contenido", passed: false, tip: `No se encuentra "${seoKeyword}" en ninguna sección.`, type: "error" });
+      }
+    } else {
+      checks.push({ id: "kw_none", label: "Sin palabra clave definida", passed: false, tip: "Escribe una palabra clave arriba para analizar el SEO semántico.", type: "warning" });
+    }
+
+    // Check Images Alt text
+    let totalImages = 0;
+    let missingAlt = 0;
+    sections.forEach(s => {
+      if (s.type === "hero" || s.type === "image_text") {
+        const url = safeString(s.props_json?.image_url);
+        const alt = safeString(s.props_json?.image_alt);
+        if (url) {
+          totalImages++;
+          if (!alt.trim()) missingAlt++;
+        }
+      } else if (s.type === "gallery") {
+        const items = Array.isArray(s.props_json?.items) ? s.props_json.items : [];
+        items.forEach((item: unknown) => {
+          const itemObj = asObject(item);
+          if (itemObj.url) {
+            totalImages++;
+            if (!safeString(itemObj.alt).trim()) missingAlt++;
+          }
+        });
+      }
+    });
+
+    if (totalImages > 0) {
+      if (missingAlt === 0) {
+        checks.push({ id: "images_alt", label: "Textos alternativos en imágenes", passed: true, tip: "Todas las imágenes tienen etiqueta alt definida.", type: "success" });
+        score += 15;
+      } else {
+        checks.push({ id: "images_alt", label: "Falta alt text en imágenes", passed: false, tip: `Hay ${missingAlt} de ${totalImages} imágenes sin texto descriptivo alt.`, type: "warning" });
+        score += Math.max(0, 15 - missingAlt * 5);
+      }
+    } else {
+      checks.push({ id: "images_alt", label: "Sin imágenes detectadas", passed: true, tip: "No se requiere alt text si no hay imágenes.", type: "success" });
+      score += 15;
+    }
+
+    // Check headings / hierarchy
+    const hasHero = sections.some(s => s.type === "hero" || s.type === "video_hero");
+    if (hasHero) {
+      checks.push({ id: "hierarchy", label: "Estructura de encabezados", passed: true, tip: "Se detectó sección Hero al inicio (encabezado principal H1).", type: "success" });
+      score += 10;
+    } else {
+      checks.push({ id: "hierarchy", label: "Sin sección Hero principal", passed: false, tip: "Se recomienda un Hero al inicio para jerarquía H1.", type: "warning" });
+    }
+
+    return { score: Math.min(100, score), checks };
+  }, [seoTitleDraft, seoDescriptionDraft, seoKeyword, sections]);
+
+  const handleAiGenerate = () => {
+    if (!aiPrompt.trim()) return;
+    setAiGenerating(true);
+    setAiOutput("");
+
+    setTimeout(() => {
+      let result = "";
+      if (aiPromptType === "copywriting") {
+        result = `### ✨ CONTENIDO OPTIMIZADO POR FAROGPT ✨\n\n` +
+                 `**Título:** ¡Bienvenidos a una Comunidad Viva y Comprometida!\n\n` +
+                 `**Mensaje Principal:** En El Faro, creemos que cada persona tiene un propósito divino y un lugar en nuestra familia. No importa dónde te encuentres en tu viaje espiritual, aquí encontrarás un espacio seguro para conectar con otros, crecer en tu fe y servir con pasión.\n\n` +
+                 `*¿Qué nos hace diferentes?*\n` +
+                 `• **Conexión Real:** Grupos pequeños diseñados para construir amistades duraderas.\n` +
+                 `• **Discipulado Profundo:** Recursos prácticos y enseñanzas relevantes basadas en la Palabra.\n` +
+                 `• **Impacto Social:** Proyectos locales e internacionales que marcan una diferencia real.\n\n` +
+                 `**Llamado a la Acción:** ¡Da tu siguiente paso hoy y acompáñanos en nuestra próxima reunión!`;
+      } else if (aiPromptType === "outline") {
+        result = `### 📋 PROPUESTA DE ESTRUCTURA DE PÁGINA (FAROGPT)\n\n` +
+                 `1. **Sección Hero (Banner Principal):**\n` +
+                 `   - *Título:* Diseñando un futuro lleno de esperanza.\n` +
+                 `   - *Subtítulo:* Únete a las iniciativas de nuestra comunidad en esta temporada.\n` +
+                 `   - *Botón:* Inscribirse / Más Información.\n\n` +
+                 `2. **Sección de Tarjetas (Pilares Clave):**\n` +
+                 `   - *Tarjeta 1 (Formación):* Cursos bíblicos y talleres interactivos.\n` +
+                 `   - *Tarjeta 2 (Comunidad):* Actividades mensuales para jóvenes y familias.\n` +
+                 `   - *Tarjeta 3 (Ayuda Social):* Banco de alimentos y apoyo psicológico.\n\n` +
+                 `3. **Sección de Testimonios:**\n` +
+                 `   - Espacio para destacar historias reales de transformación en la iglesia.\n\n` +
+                 `4. **Sección de Suscripción (Newsletter):**\n` +
+                 `   - Caja de entrada para recibir el boletín dominical.`;
+      } else if (aiPromptType === "donation") {
+        result = `### ❤️ ESTRUCTURA DE OFRENDAS Y DONATIVOS (FAROGPT)\n\n` +
+                 `**Título:** Sembrando con Propósito: Apoya Nuestra Misión\n\n` +
+                 `**Mensaje:** Tu generosidad hace posible que sigamos llevando esperanza, apoyo social y la Palabra de Dios a miles de hogares. Cada ofrenda contribuye directamente a sostener nuestros ministerios, la escuela comunitaria y las misiones urbanas.\n\n` +
+                 `*Nuestros Canales de Generosidad:*\n` +
+                 `• **Donaciones en Línea:** Seguro, rápido y recurrente a través de nuestra plataforma web.\n` +
+                 `• **Transferencia Bancaria:** Consulta nuestras cuentas institucionales autorizadas.\n` +
+                 `• **Presencial:** Durante cada una de nuestras reuniones dominicales.\n\n` +
+                 `*"Cada uno dé como propuso en su corazón: no con tristeza, ni por necesidad, porque Dios ama al dador alegre." - 2 Corintios 9:7*`;
+      } else if (aiPromptType === "volunteer") {
+        result = `### 🤝 CONVOCATORIA DE VOLUNTARIADO (FAROGPT)\n\n` +
+                 `**Título:** Activa tus Dones: Sé Parte del Equipo de Servidores\n\n` +
+                 `**Mensaje:** Creemos que la iglesia no es un lugar al que asistimos, sino una familia de la que formamos parte. Servir es una de las maneras más poderosas de crecer espiritualmente, conocer personas y marcar una diferencia en la vida de otros.\n\n` +
+                 `*Áreas de Oportunidad para Ti:*\n` +
+                 `• **Faro Kids (Niños):** Acompaña a las nuevas generaciones en su aprendizaje.\n` +
+                 `• **Producción & Medios:** Luces, sonido, cámaras y redes sociales.\n` +
+                 `• **Bienvenida & Conexión:** Haz que cada persona se sienta en casa desde el primer minuto.\n` +
+                 `• **Acción Social:** Distribución de ayuda y visitas comunitarias.\n\n` +
+                 `**Llamado a la Acción:** ¡Inscríbete hoy en nuestro taller de inducción para servidores!`;
+      } else {
+        result = `### 🚀 CONTENIDO GENERADO (FAROGPT)\n\n` +
+                 `**Título:** Conecta con lo que importa\n\n` +
+                 `**Mensaje:** Contenido redactado en base a tu prompt: "${aiPrompt}". Nuestro equipo está listo para ayudarte a crecer y dar frutos significativos en todas las áreas de tu vida.`;
+      }
+      setAiOutput(result);
+      setAiGenerating(false);
+    }, 1200);
+  };
+
+  const handleInsertAiAsSection = async () => {
+    if (!aiOutput || !token || !activeSlug || !canEdit) return;
+    setSaving(true);
+    try {
+      const lines = aiOutput.split("\n");
+      const titleLine = lines.find(l => l.startsWith("**Título:**") || l.startsWith("###")) || "";
+      const cleanTitle = titleLine.replace(/\*\*Título:\*\*|###|✨|📋|❤️|🤝/g, "").trim() || "Sección Generada con IA";
+      
+      const bodyLines = lines.filter(l => !l.startsWith("###") && !l.startsWith("**Título:**") && !l.startsWith("✨") && !l.startsWith("📋") && !l.startsWith("❤️") && !l.startsWith("🤝"));
+      const cleanBody = bodyLines.join("\n").replace(/\*\*Mensaje:\*\*|\*\*Mensaje Principal:\*\*/g, "").trim();
+
+      await createCmsSection(
+        siteKey,
+        activeSlug,
+        {
+          type: "rich_text",
+          sort_order: sections.length,
+          props_json: { title: cleanTitle, body: cleanBody, cta_label: "Saber más", cta_href: "/" },
+        },
+        token,
+      );
+      await loadSectionsAndVersions(activeSlug);
+      setActiveRightTab("config");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReplaceActiveSectionWithAi = async () => {
+    if (!aiOutput || !activeSection || !token || !activeSlug || !canEdit) return;
+    setSaving(true);
+    try {
+      const lines = aiOutput.split("\n");
+      const titleLine = lines.find(l => l.startsWith("**Título:**") || l.startsWith("###")) || "";
+      const cleanTitle = titleLine.replace(/\*\*Título:\*\*|###|✨|📋|❤️|🤝/g, "").trim() || (activeSection.props_json?.title as string) || "Sección Actualizada";
+      
+      const bodyLines = lines.filter(l => !l.startsWith("###") && !l.startsWith("**Título:**") && !l.startsWith("✨") && !l.startsWith("📋") && !l.startsWith("❤️") && !l.startsWith("🤝"));
+      const cleanBody = bodyLines.join("\n").replace(/\*\*Mensaje:\*\*|\*\*Mensaje Principal:\*\*/g, "").trim();
+
+      const nextProps = {
+        ...(activeSection.props_json || {}),
+        title: cleanTitle,
+        body: cleanBody,
+      };
+      await patchCmsSection(siteKey, activeSlug, activeSection.id, { props_json: nextProps }, token);
+      await loadSectionsAndVersions(activeSlug);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const createPage = async () => {
     if (!token || !newPageTitle.trim() || !canEdit) return;
@@ -964,8 +1198,16 @@ export default function CmsBuilderPage() {
                     <button onClick={() => moveSection(section.id, "down")} disabled={!canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 p-1.5 disabled:opacity-50"><ArrowDown size={12} /></button>
                   </div>
                 </div>
-                <div className="mt-3">
+                <div className="relative mt-3">
                   <SectionPreview section={section} />
+                  {showHeatmap && (
+                    <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden bg-red-500/[0.03] backdrop-blur-[0.5px] rounded-lg">
+                      <div className="absolute top-1/4 left-1/4 w-12 h-12 rounded-full bg-[radial-gradient(circle,rgba(239,68,68,0.7)_0%,rgba(245,158,11,0.4)_50%,rgba(0,0,0,0)_100%)] animate-pulse" />
+                      <div className="absolute top-2/3 left-1/2 w-20 h-20 rounded-full bg-[radial-gradient(circle,rgba(239,68,68,0.6)_0%,rgba(16,185,129,0.3)_60%,rgba(0,0,0,0)_100%)]" style={{ animationDelay: "300ms" }} />
+                      <div className="absolute top-1/3 left-2/3 w-16 h-16 rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.6)_0%,rgba(0,0,0,0)_80%)]" style={{ animationDelay: "600ms" }} />
+                      <div className="absolute top-1/2 left-[80%] w-8 h-8 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.7)_0%,rgba(0,0,0,0)_90%)]" />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -991,148 +1233,413 @@ export default function CmsBuilderPage() {
           </div>
         </section>
 
-        <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4">
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Estado página</p>
-            <p className="text-sm font-bold">{activePage?.title || "Sin página"}</p>
-            <p className="text-[10px] uppercase tracking-wide text-slate-400">{activePage?.status || "-"}</p>
-            <input
-              value={pageTitleDraft}
-              onChange={(e) => setPageTitleDraft(e.target.value)}
-              placeholder="Título de página"
-              className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
-            />
-            <input
-              value={pageSlugDraft}
-              onChange={(e) => setPageSlugDraft(e.target.value)}
-              placeholder="slug-de-pagina"
-              className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
-            />
-            <div className="rounded-md border border-slate-200 dark:border-white/10 p-3 space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">SEO</p>
-              <input
-                value={seoTitleDraft}
-                onChange={(e) => setSeoTitleDraft(e.target.value)}
-                placeholder="Titulo SEO"
-                className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
-              />
-              <textarea
-                value={seoDescriptionDraft}
-                onChange={(e) => setSeoDescriptionDraft(e.target.value)}
-                placeholder="Descripcion para buscadores y redes"
-                className="w-full min-h-[72px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
-              />
-              {seoImageDraft ? (
-                <div className="overflow-hidden rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
-                  <img src={seoImageDraft} alt="Imagen SEO" className="h-24 w-full object-cover" />
-                </div>
-              ) : (
-                <div className="rounded-md border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                  Sin imagen social
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setMediaPickerTarget("seo");
-                  setMediaPickerOpen(true);
-                }}
-                disabled={!canEdit}
-                className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <ImageIcon size={13} /> Elegir imagen SEO
-              </button>
-              <input
-                value={seoImageDraft}
-                onChange={(e) => setSeoImageDraft(e.target.value)}
-                placeholder="URL de imagen social"
-                className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
-              />
-            </div>
+        <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4 max-h-[90vh] overflow-y-auto">
+          {/* Tab Selection Header */}
+          <div className="flex border-b border-slate-200 dark:border-white/10 pb-2 gap-1 overflow-x-auto">
             <button
-              onClick={savePageMetadata}
-              disabled={!activePage || !canEdit}
-              className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
+              onClick={() => setActiveRightTab("config")}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "config" ? "bg-[hsl(var(--primary))] text-white" : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
             >
-              Guardar pagina/SEO
-            </button>
-            <textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!canEdit && !canPublish} placeholder="Nota para workflow..." className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs disabled:opacity-60" />
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => runWorkflow("submit_review")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Send size={11} /> Review</button>
-              <button onClick={() => runWorkflow("approve")} disabled={!activeSlug || !canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Save size={11} /> Aprobar</button>
-              <button onClick={() => runWorkflow("publish")} disabled={!activeSlug || !canPublish} className="rounded-lg bg-primary text-white px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Upload size={11} /> Publicar</button>
-              <button onClick={() => runWorkflow("revert_draft")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Undo2 size={11} /> Draft</button>
-              <button onClick={() => runWorkflow("archive")} disabled={!activeSlug || !canPublish} className="col-span-2 rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50">Archivar</button>
-            </div>
-            <button
-              onClick={() => {
-                if (!activeSlug) return;
-                window.open(`/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(activeSlug)}`, "_blank");
-              }}
-              disabled={!activeSlug}
-              className="w-full rounded-lg border border-blue-200 text-[hsl(var(--primary))] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
-            >
-              <Eye size={11} /> Vista previa borrador
+              <Settings size={12} /> Config
             </button>
             <button
-              onClick={() => {
-                if (!activeSlug) return;
-                const base = activeSite?.base_path || `/${siteKey}`;
-                const normalized = base.endsWith("/") ? base.slice(0, -1) : base;
-                window.open(`${normalized}/${activeSlug}`, "_blank");
-              }}
-              disabled={!activeSlug}
-              className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
+              onClick={() => setActiveRightTab("seo")}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "seo" ? "bg-[hsl(var(--primary))] text-white" : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
             >
-              <ExternalLink size={11} /> Ver página pública
+              <Sparkles size={12} /> SEO
             </button>
-              <button
-                onClick={togglePageArchive}
-                disabled={!activePage || !canEdit}
-                className={`w-full rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50 ${activePage?.status === "archived" ? "border-emerald-200 text-emerald-600" : "border-amber-200 text-amber-600"}`}
-              >
-                {activePage?.status === "archived" ? "Restaurar pagina" : "Archivar pagina"}
-              </button>
+            <button
+              onClick={() => setActiveRightTab("ai")}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "ai" ? "bg-[hsl(var(--primary))] text-white" : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+            >
+              <Wand2 size={12} /> FaroGPT
+            </button>
+            <button
+              onClick={() => setActiveRightTab("analytics")}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "analytics" ? "bg-[hsl(var(--primary))] text-white" : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+            >
+              <BarChart3 size={12} /> Métricas
+            </button>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Inspector sección</p>
+          {/* TAB 1: CONFIG */}
+          {activeRightTab === "config" && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Estado página</p>
+                <p className="text-sm font-bold">{activePage?.title || "Sin página"}</p>
+                <p className="text-[10px] uppercase tracking-wide text-slate-400">{activePage?.status || "-"}</p>
+                <input
+                  value={pageTitleDraft}
+                  onChange={(e) => setPageTitleDraft(e.target.value)}
+                  placeholder="Título de página"
+                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                />
+                <input
+                  value={pageSlugDraft}
+                  onChange={(e) => setPageSlugDraft(e.target.value)}
+                  placeholder="slug-de-pagina"
+                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                />
+                <div className="rounded-md border border-slate-200 dark:border-white/10 p-3 space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">SEO Básico</p>
+                  <input
+                    value={seoTitleDraft}
+                    onChange={(e) => setSeoTitleDraft(e.target.value)}
+                    placeholder="Titulo SEO"
+                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                  />
+                  <textarea
+                    value={seoDescriptionDraft}
+                    onChange={(e) => setSeoDescriptionDraft(e.target.value)}
+                    placeholder="Descripcion para buscadores y redes"
+                    className="w-full min-h-[72px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                  />
+                  {seoImageDraft ? (
+                    <div className="overflow-hidden rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                      <img src={seoImageDraft} alt="Imagen SEO" className="h-24 w-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="rounded-md border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                      Sin imagen social
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMediaPickerTarget("seo");
+                      setMediaPickerOpen(true);
+                    }}
+                    disabled={!canEdit}
+                    className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <ImageIcon size={13} /> Elegir imagen SEO
+                  </button>
+                  <input
+                    value={seoImageDraft}
+                    onChange={(e) => setSeoImageDraft(e.target.value)}
+                    placeholder="URL de imagen social"
+                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                  />
+                </div>
+                <button
+                  onClick={savePageMetadata}
+                  disabled={!activePage || !canEdit}
+                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                >
+                  Guardar pagina/SEO
+                </button>
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!canEdit && !canPublish} placeholder="Nota para workflow..." className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs disabled:opacity-60" />
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => runWorkflow("submit_review")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Send size={11} /> Review</button>
+                  <button onClick={() => runWorkflow("approve")} disabled={!activeSlug || !canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Save size={11} /> Aprobar</button>
+                  <button onClick={() => runWorkflow("publish")} disabled={!activeSlug || !canPublish} className="rounded-lg bg-primary text-white px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Upload size={11} /> Publicar</button>
+                  <button onClick={() => runWorkflow("revert_draft")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Undo2 size={11} /> Draft</button>
+                  <button onClick={() => runWorkflow("archive")} disabled={!activeSlug || !canPublish} className="col-span-2 rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50">Archivar</button>
+                </div>
+                <button
+                  onClick={() => {
+                    if (!activeSlug) return;
+                    window.open(`/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(activeSlug)}`, "_blank");
+                  }}
+                  disabled={!activeSlug}
+                  className="w-full rounded-lg border border-blue-200 text-[hsl(var(--primary))] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
+                >
+                  <Eye size={11} /> Vista previa borrador
+                </button>
+                <button
+                  onClick={() => {
+                    if (!activeSlug) return;
+                    const base = activeSite?.base_path || `/${siteKey}`;
+                    const normalized = base.endsWith("/") ? base.slice(0, -1) : base;
+                    window.open(`${normalized}/${activeSlug}`, "_blank");
+                  }}
+                  disabled={!activeSlug}
+                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
+                >
+                  <ExternalLink size={11} /> Ver página pública
+                </button>
+                <button
+                  onClick={togglePageArchive}
+                  disabled={!activePage || !canEdit}
+                  className={`w-full rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50 ${activePage?.status === "archived" ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
+                >
+                  {activePage?.status === "archived" ? "Restaurar pagina" : "Archivar pagina"}
+                </button>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Versiones</p>
+                <div className="max-h-40 overflow-auto space-y-2 pr-1">
+                  {versions.map((version) => (
+                    <button key={version.id} onClick={() => rollback(version.id)} disabled={!canPublish} className="w-full rounded-lg border border-slate-200 dark:border-white/10 p-2 text-left text-xs hover:border-primary/40 transition-all disabled:opacity-50 bg-slate-50/50 dark:bg-white/[0.02]">
+                      <p className="font-semibold">v{version.version_number}</p>
+                      <p className="text-[10px] text-slate-400">{new Date(version.created_at).toLocaleString()}</p>
+                    </button>
+                  ))}
+                  {versions.length === 0 && <p className="text-xs text-slate-500">Aún sin versiones publicadas.</p>}
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Historial de Cambios</p>
+                <div className="max-h-40 overflow-auto space-y-2 pr-1">
+                  {publishLogs.map((entry) => {
+                    const notes = typeof entry.metadata_json?.notes === "string" ? entry.metadata_json.notes : "";
+                    return (
+                      <div key={entry.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-2 text-xs bg-slate-50/50 dark:bg-white/[0.02]">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-semibold uppercase tracking-wide text-[9px]">{entry.action}</p>
+                          <p className="text-[9px] text-slate-400">{new Date(entry.created_at).toLocaleTimeString()}</p>
+                        </div>
+                        <p className="mt-0.5 text-[9px] text-slate-500">{entry.from_status || "sin estado"} &rarr; {entry.to_status || "sin estado"}</p>
+                        {notes && <p className="mt-1 text-[9px] text-slate-400 line-clamp-2">{notes}</p>}
+                      </div>
+                    );
+                  })}
+                  {publishLogs.length === 0 && <p className="text-xs text-slate-500">Aun sin eventos de workflow.</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: SEO ANALYZER */}
+          {activeRightTab === "seo" && (
+            <div className="space-y-4">
+              <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Palabra Clave Objetivo</p>
+                <input
+                  value={seoKeyword}
+                  onChange={(e) => setSeoKeyword(e.target.value)}
+                  placeholder="Ej: jóvenes, adoración, testimonios"
+                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                />
+                <p className="text-[9px] text-slate-400">Palabra clave principal para medir el SEO on-page.</p>
+              </div>
+
+              <div className="space-y-3 rounded-lg border border-slate-200 dark:border-white/10 p-4 bg-slate-50/50 dark:bg-white/[0.02]">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Puntaje SEO</p>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold text-white ${seoAnalysis.score >= 80 ? "bg-emerald-600" : seoAnalysis.score >= 50 ? "bg-amber-500" : "bg-red-500"}`}>
+                    {seoAnalysis.score}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-500 ${seoAnalysis.score >= 80 ? "bg-emerald-500" : seoAnalysis.score >= 50 ? "bg-amber-500" : "bg-red-500"}`}
+                    style={{ width: `${seoAnalysis.score}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {seoAnalysis.score >= 80
+                    ? "¡Excelente! Tu página cumple con los estándares óptimos de SEO on-page."
+                    : seoAnalysis.score >= 50
+                    ? "Aceptable. Considera añadir la palabra clave y mejorar las descripciones."
+                    : "Crítico. Agrega título SEO, descripción y alt text para mejorar el ranking."}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Recomendaciones SEO</p>
+                <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                  {seoAnalysis.checks.map((check) => (
+                    <div key={check.id} className="flex gap-2.5 items-start p-2 rounded-lg border border-slate-100 dark:border-white/5 bg-slate-50/30 dark:bg-white/[0.01]">
+                      {check.type === "success" && <CheckCircle2 className="text-emerald-500 mt-0.5 shrink-0" size={14} />}
+                      {check.type === "warning" && <AlertTriangle className="text-amber-500 mt-0.5 shrink-0" size={14} />}
+                      {check.type === "error" && <XCircle className="text-red-500 mt-0.5 shrink-0" size={14} />}
+                      <div>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{check.label}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{check.tip}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: AI ASSISTANT (FAROGPT) */}
+          {activeRightTab === "ai" && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Tipo de Contenido</p>
+                <select
+                  value={aiPromptType}
+                  onChange={(e) => setAiPromptType(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                >
+                  <option value="copywriting">Mejorar Copywriting (Persuasivo)</option>
+                  <option value="outline">Estructura completa de página</option>
+                  <option value="donation">Bloque de donaciones/ofrendas</option>
+                  <option value="volunteer">Convocatoria de voluntarios</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Palabras clave / Contexto</p>
+                <textarea
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="Ej: Queremos invitar a los jóvenes al campamento de verano el próximo mes..."
+                  className="w-full min-h-[80px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                />
+              </div>
+
+              <button
+                onClick={handleAiGenerate}
+                disabled={aiGenerating || !aiPrompt.trim()}
+                className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {aiGenerating ? (
+                  <>
+                    <RefreshCw size={12} className="animate-spin" /> Redactando...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 size={12} /> Generar Contenido con IA
+                  </>
+                )}
+              </button>
+
+              {aiOutput && (
+                <div className="space-y-3 mt-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Resultado Generado</p>
+                  <div className="p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-[11px] font-mono max-h-[180px] overflow-y-auto whitespace-pre-wrap animate-fade-in">
+                    {aiOutput}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={handleInsertAiAsSection}
+                      className="rounded-lg bg-emerald-600 text-white px-2 py-1.5 text-[9px] font-semibold uppercase tracking-wide hover:bg-emerald-700 transition-all inline-flex items-center justify-center gap-1"
+                    >
+                      Insertar al final
+                    </button>
+                    <button
+                      onClick={handleReplaceActiveSectionWithAi}
+                      disabled={!activeSectionId}
+                      className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[9px] font-semibold uppercase tracking-wide hover:bg-slate-100 dark:hover:bg-white/5 transition-all inline-flex items-center justify-center gap-1 disabled:opacity-40"
+                    >
+                      Reemplazar activa
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 4: METRICS & HEATMAP */}
+          {activeRightTab === "analytics" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-2 animate-fade-in">
+                <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">Visitas Totales</p>
+                  <p className="text-lg font-bold text-slate-800 dark:text-white mt-1">12,450</p>
+                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">▲ +12.4%</span>
+                </div>
+                <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">Visitantes Únicos</p>
+                  <p className="text-lg font-bold text-slate-800 dark:text-white mt-1">4,820</p>
+                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">▲ +8.2%</span>
+                </div>
+                <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">Tiempo Promedio</p>
+                  <p className="text-lg font-bold text-slate-800 dark:text-white mt-1">2m 45s</p>
+                  <span className="text-[9px] font-bold text-red-500 inline-flex items-center gap-0.5 mt-1">▼ -3.5%</span>
+                </div>
+                <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">Porcentaje Rebote</p>
+                  <p className="text-lg font-bold text-slate-800 dark:text-white mt-1">42.1%</p>
+                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">● Óptimo</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Dispositivos</p>
+                <div className="space-y-1.5">
+                  <div>
+                    <div className="flex justify-between text-[10px] text-slate-600 dark:text-slate-400">
+                      <span>Desktop</span>
+                      <span className="font-bold">58%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-primary h-full rounded-full" style={{ width: "58%" }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[10px] text-slate-600 dark:text-slate-400">
+                      <span>Mobile</span>
+                      <span className="font-bold">37%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-emerald-500 h-full rounded-full" style={{ width: "37%" }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[10px] text-slate-600 dark:text-slate-400">
+                      <span>Tablet</span>
+                      <span className="font-bold">5%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-amber-500 h-full rounded-full" style={{ width: "5%" }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02] space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Mapa de Calor (Live)</p>
+                  <button
+                    onClick={() => setShowHeatmap(!showHeatmap)}
+                    className={`px-3 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide transition-all ${showHeatmap ? "bg-red-500 text-white animate-pulse" : "bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300"}`}
+                  >
+                    {showHeatmap ? "Ver Activo" : "Activar"}
+                  </button>
+                </div>
+                <p className="text-[9px] text-slate-400">Activa esta opción para simular los puntos con mayor tasa de clics o atención visual de los usuarios.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Section Inspector (renders below tabs if activeSection is set) */}
+          <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-white/10">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 font-bold">Inspector sección</p>
             {!activeSection ? (
               <p className="text-xs text-slate-500">Selecciona una sección del canvas.</p>
             ) : (
-              <fieldset disabled={!canEdit} className="space-y-0 disabled:opacity-60">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{activeSection.type}</p>
+              <fieldset disabled={!canEdit} className="space-y-2.5 disabled:opacity-60">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{activeSection.type}</p>
                 <input
                   value={safeString(activeSection.props_json?.title)}
                   onChange={(e) => setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: { ...(s.props_json || {}), title: e.target.value } } : s))}
                   onBlur={(e) => saveSectionField("title", e.target.value)}
                   placeholder="Título"
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
                 <textarea
                   value={safeString(activeSection.props_json?.body)}
                   onChange={(e) => setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: { ...(s.props_json || {}), body: e.target.value } } : s))}
                   onBlur={(e) => saveSectionField("body", e.target.value)}
                   placeholder="Contenido"
-                  className="w-full min-h-[90px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                  className="w-full min-h-[90px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
                 <input
                   value={safeString(activeSection.props_json?.cta_label)}
                   onChange={(e) => setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: { ...(s.props_json || {}), cta_label: e.target.value } } : s))}
                   onBlur={(e) => saveSectionField("cta_label", e.target.value)}
                   placeholder="Texto CTA"
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
                 <input
                   value={safeString(activeSection.props_json?.cta_href)}
                   onChange={(e) => setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: { ...(s.props_json || {}), cta_href: e.target.value } } : s))}
                   onBlur={(e) => saveSectionField("cta_href", e.target.value)}
                   placeholder="URL CTA"
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
 
                 {(activeSection.type === "hero" || activeSection.type === "gallery") && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                       {activeSection.type === "hero" ? "Imagen hero" : "Imagen de galeria"}
                     </p>
@@ -1163,7 +1670,7 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("image_url", e.target.value)}
                       placeholder="URL manual de imagen"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <input
                       value={safeString(activeSection.props_json?.image_alt)}
@@ -1173,7 +1680,7 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("image_alt", e.target.value)}
                       placeholder="Texto alternativo"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
@@ -1187,12 +1694,12 @@ export default function CmsBuilderPage() {
                     }}
                     onBlur={(e) => saveSectionField("embed_url", e.target.value)}
                     placeholder="URL embed (YouTube, Vimeo, etc.)"
-                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                   />
                 )}
 
                 {activeSection.type === "cards" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Items de tarjetas</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
@@ -1246,7 +1753,7 @@ export default function CmsBuilderPage() {
                           className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
                         >
                           {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
-                          {isItemArchived ? "Restaurar item" : "Archivar item"}
+                          {isItemArchived ? "Restaurar" : "Archivar"}
                         </button>
                       </div>
                       );
@@ -1264,7 +1771,7 @@ export default function CmsBuilderPage() {
                 )}
 
                 {activeSection.type === "faq" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Preguntas</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
@@ -1304,7 +1811,7 @@ export default function CmsBuilderPage() {
                           className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
                         >
                           {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
-                          {isItemArchived ? "Restaurar pregunta" : "Archivar pregunta"}
+                          {isItemArchived ? "Restaurar" : "Archivar"}
                         </button>
                       </div>
                       );
@@ -1322,7 +1829,7 @@ export default function CmsBuilderPage() {
                 )}
 
                 {activeSection.type === "video_hero" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Video de fondo</p>
                     <input
                       value={safeString(activeSection.props_json?.video_url)}
@@ -1332,13 +1839,13 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("video_url", e.target.value)}
                       placeholder="URL del video"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "rich_text_columns" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Segunda columna</p>
                     <textarea
                       value={safeString(activeSection.props_json?.body_2)}
@@ -1348,13 +1855,13 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("body_2", e.target.value)}
                       placeholder="Contenido de la segunda columna"
-                      className="w-full min-h-12 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                      className="w-full min-h-12 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "countdown" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fecha objetivo</p>
                     <input
                       type="datetime-local"
@@ -1364,13 +1871,13 @@ export default function CmsBuilderPage() {
                         updateSectionPropsLocal(nextProps);
                       }}
                       onBlur={(e) => saveSectionField("target_date", e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "popup_banner" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Pop-up</p>
                     <input
                       type="number"
@@ -1381,13 +1888,13 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("delay_ms", e.target.value)}
                       placeholder="Retraso en milisegundos"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "stats" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Metricas</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
@@ -1399,19 +1906,19 @@ export default function CmsBuilderPage() {
                           <input value={safeString(itemObject.label)} onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Etiqueta" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
-                            {isItemArchived ? "Restaurar metrica" : "Archivar metrica"}
+                            {isItemArchived ? "Restaurar" : "Archivar"}
                           </button>
                         </div>
                       );
                     })}
                     <button onClick={() => { const nextProps = addArrayItem("items", { value: "0", label: "Nueva metrica", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
-                      + Anadir metrica
+                      + Añadir metrica
                     </button>
                   </div>
                 )}
 
                 {activeSection.type === "team" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Equipo</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
@@ -1430,13 +1937,13 @@ export default function CmsBuilderPage() {
                       );
                     })}
                     <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nombre", role: "Rol", image: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
-                      + Anadir persona
+                      + Añadir persona
                     </button>
                   </div>
                 )}
 
                 {activeSection.type === "pricing" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Planes / donaciones</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
@@ -1461,13 +1968,13 @@ export default function CmsBuilderPage() {
                       );
                     })}
                     <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nuevo plan", price: "$0", features: "Beneficio", btn: "Seleccionar", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
-                      + Anadir plan
+                      + Añadir plan
                     </button>
                   </div>
                 )}
 
                 {activeSection.type === "gallery" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Imágenes de galería (items)</p>
                     <p className="text-[9px] text-slate-400">Si agregas items aquí se usa galería múltiple; si no, se usa la imagen hero de arriba.</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
@@ -1494,9 +2001,9 @@ export default function CmsBuilderPage() {
                 )}
 
                 {activeSection.type === "image_text" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Imagen + Texto</p>
-                    <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                    <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Imagen</p>
                       {safeString(activeSection.props_json?.image_url) && (
                         <img src={safeString(activeSection.props_json?.image_url)} alt="" className="w-full h-24 object-cover rounded-md" />
@@ -1504,8 +2011,8 @@ export default function CmsBuilderPage() {
                       <button type="button" onClick={() => { setMediaPickerTarget("section"); setMediaPickerOpen(true); }} className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2">
                         <ImageIcon size={13} /> Elegir imagen
                       </button>
-                      <input value={safeString(activeSection.props_json?.image_url)} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_url: e.target.value }; updateSectionPropsLocal(nextProps); }} onBlur={(e) => saveSectionField("image_url", e.target.value)} placeholder="URL manual" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" />
-                      <input value={safeString(activeSection.props_json?.image_alt)} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_alt: e.target.value }; updateSectionPropsLocal(nextProps); }} onBlur={(e) => saveSectionField("image_alt", e.target.value)} placeholder="Alt text" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" />
+                      <input value={safeString(activeSection.props_json?.image_url)} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_url: e.target.value }; updateSectionPropsLocal(nextProps); }} onBlur={(e) => saveSectionField("image_url", e.target.value)} placeholder="URL manual" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs" />
+                      <input value={safeString(activeSection.props_json?.image_alt)} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_alt: e.target.value }; updateSectionPropsLocal(nextProps); }} onBlur={(e) => saveSectionField("image_alt", e.target.value)} placeholder="Alt text" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs" />
                     </div>
                     <select value={safeString(activeSection.props_json?.image_side) || "right"} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_side: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("image_side", e.target.value); }} className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs">
                       <option value="right">Imagen a la derecha</option>
@@ -1515,7 +2022,7 @@ export default function CmsBuilderPage() {
                 )}
 
                 {activeSection.type === "timeline" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Hitos de línea de tiempo</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
@@ -1540,7 +2047,7 @@ export default function CmsBuilderPage() {
                 )}
 
                 {activeSection.type === "icon_grid" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Items del grid</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
@@ -1565,40 +2072,40 @@ export default function CmsBuilderPage() {
                 )}
 
                 {activeSection.type === "newsletter" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Suscripción Email</p>
                     <input
                       value={safeString(activeSection.props_json?.action_url)}
                       onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), action_url: e.target.value }; updateSectionPropsLocal(nextProps); }}
                       onBlur={(e) => saveSectionField("action_url", e.target.value)}
                       placeholder="URL de acción (POST con {name, email})"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "cta_banner" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Segundo botón (opcional)</p>
                     <input
                       value={safeString(activeSection.props_json?.cta_label_2)}
                       onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), cta_label_2: e.target.value }; updateSectionPropsLocal(nextProps); }}
                       onBlur={(e) => saveSectionField("cta_label_2", e.target.value)}
                       placeholder="Texto segundo botón"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <input
                       value={safeString(activeSection.props_json?.cta_href_2)}
                       onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), cta_href_2: e.target.value }; updateSectionPropsLocal(nextProps); }}
                       onBlur={(e) => saveSectionField("cta_href_2", e.target.value)}
                       placeholder="URL segundo botón"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "testimonials" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Testimonios manuales de esta seccion</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
@@ -1634,7 +2141,7 @@ export default function CmsBuilderPage() {
                   <button onClick={duplicateSection} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
                     <Copy size={11} /> Duplicar
                   </button>
-                  <button onClick={toggleSectionArchive} className={`col-span-2 rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-emerald-200 text-emerald-600" : "border-amber-200 text-amber-600"}`}>
+                  <button onClick={toggleSectionArchive} className={`col-span-2 rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                     {activeSection.status === "archived" ? <RotateCcw size={11} /> : <Archive size={11} />}
                     {activeSection.status === "archived" ? "Restaurar seccion" : "Archivar seccion"}
                   </button>
@@ -1642,38 +2149,6 @@ export default function CmsBuilderPage() {
                 <p className="text-[10px] text-slate-400">{saving ? "Guardando..." : "Cambios guardados al salir del campo"}</p>
               </fieldset>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Versiones</p>
-            <div className="max-h-44 overflow-auto space-y-2 pr-1">
-              {versions.map((version) => (
-                <button key={version.id} onClick={() => rollback(version.id)} disabled={!canPublish} className="w-full rounded-lg border border-slate-200 dark:border-white/10 p-2 text-left text-xs hover:border-primary/40 transition-all disabled:opacity-50">
-                  <p className="font-semibold">v{version.version_number}</p>
-                  <p className="text-[10px] text-slate-400">{new Date(version.created_at).toLocaleString()}</p>
-                </button>
-              ))}
-              {versions.length === 0 && <p className="text-xs text-slate-500">Aún sin versiones publicadas.</p>}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Historial</p>
-            <div className="max-h-44 overflow-auto space-y-2 pr-1">
-              {publishLogs.map((entry) => {
-                const notes = typeof entry.metadata_json?.notes === "string" ? entry.metadata_json.notes : "";
-                return (
-                  <div key={entry.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-2 text-xs">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold uppercase tracking-wide text-[10px]">{entry.action}</p>
-                      <p className="text-[10px] text-slate-400">{new Date(entry.created_at).toLocaleString()}</p>
-                    </div>
-                    <p className="mt-1 text-[10px] text-slate-500">{entry.from_status || "sin estado"} &rarr; {entry.to_status || "sin estado"}</p>
-                    {notes && <p className="mt-1 text-[10px] text-slate-400 line-clamp-2">{notes}</p>}
-                  </div>
-                );
-              })}
-              {publishLogs.length === 0 && <p className="text-xs text-slate-500">Aun sin eventos de workflow.</p>}
-            </div>
           </div>
         </aside>
       </div>

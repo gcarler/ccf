@@ -50,7 +50,7 @@ function HeroSection({ section }: { section: CmsSection }) {
             <Link
               href={ctaHref}
               className="inline-flex mt-6 items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg transition-transform hover:scale-105"
-              style={{ background: "var(--faro-primary)" }}
+              style={{ background: "var(--faro-cta-gradient)" }}
             >
               {ctaLabel}
             </Link>
@@ -115,7 +115,7 @@ function VideoHeroSection({ section }: { section: CmsSection }) {
           <Link
             href={ctaHref}
             className="inline-flex mt-8 items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg transition-transform hover:scale-105"
-            style={{ background: "var(--faro-primary)" }}
+            style={{ background: "var(--faro-cta-gradient)" }}
           >
             {ctaLabel}
           </Link>
@@ -259,7 +259,7 @@ function CtaBannerSection({ section }: { section: CmsSection }) {
           <Link
             href={ctaHref}
             className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg transition-transform hover:scale-105"
-            style={{ background: "var(--faro-primary)" }}
+            style={{ background: "var(--faro-cta-gradient)" }}
           >
             {ctaLabel}
           </Link>
@@ -433,7 +433,7 @@ function TestimonialsSection({ section }: { section: CmsSection }) {
               <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: "var(--faro-outline-variant, rgba(0,0,0,0.1))" }}>
                 <div
                   className="size-10 rounded-full flex items-center justify-center font-black text-white text-sm flex-shrink-0"
-                  style={{ background: "var(--faro-primary)" }}
+                  style={{ background: "var(--faro-cta-gradient)" }}
                 >
                   {(item.author || "A")[0].toUpperCase()}
                 </div>
@@ -547,7 +547,7 @@ function TeamSection({ section }: { section: CmsSection }) {
             <div
               className="size-20 md:size-24 rounded-full overflow-hidden flex items-center justify-center font-black text-white text-2xl flex-shrink-0"
               style={{
-                background: item.image ? undefined : "var(--faro-primary)",
+                background: item.image ? undefined : "var(--faro-cta-gradient)",
                 backgroundImage: item.image ? `url('${item.image}')` : undefined,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
@@ -692,14 +692,14 @@ function PricingSection({ section }: { section: CmsSection }) {
                   <Link
                     href={item.btn_href}
                     className="w-full py-3 rounded-full text-sm font-black uppercase tracking-widest text-center block transition-opacity hover:opacity-90"
-                    style={{ background: featured ? "white" : "var(--faro-primary)", color: featured ? "var(--faro-primary)" : "white" }}
+                    style={{ background: featured ? "var(--faro-on-primary)" : "var(--faro-primary)", color: featured ? "var(--faro-primary)" : "var(--faro-on-primary)" }}
                   >
                     {item.btn}
                   </Link>
                 ) : (
                   <button
                     className="w-full py-3 rounded-full text-sm font-black uppercase tracking-widest transition-opacity hover:opacity-90"
-                    style={{ background: featured ? "white" : "var(--faro-primary)", color: featured ? "var(--faro-primary)" : "white" }}
+                    style={{ background: featured ? "var(--faro-on-primary)" : "var(--faro-primary)", color: featured ? "var(--faro-primary)" : "var(--faro-on-primary)" }}
                   >
                     {item.btn}
                   </button>
@@ -733,7 +733,7 @@ function ImageTextSection({ section }: { section: CmsSection }) {
         <Link
           href={ctaHref}
           className="inline-flex self-start items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold uppercase tracking-widest text-white transition-transform hover:scale-105"
-          style={{ background: "var(--faro-primary)" }}
+          style={{ background: "var(--faro-cta-gradient)" }}
         >
           {ctaLabel}
         </Link>
@@ -775,7 +775,7 @@ function TimelineSection({ section }: { section: CmsSection }) {
             <div key={i} className="relative pl-16">
               <div
                 className="absolute left-0 size-12 rounded-full flex items-center justify-center text-xs font-black text-white leading-tight text-center"
-                style={{ background: "var(--faro-primary)" }}
+                style={{ background: "var(--faro-cta-gradient)" }}
               >
                 {item.year || String(i + 1)}
               </div>
@@ -887,7 +887,7 @@ function NewsletterSection({ section }: { section: CmsSection }) {
             type="submit"
             disabled={loading}
             className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white whitespace-nowrap disabled:opacity-60 transition-opacity hover:opacity-90"
-            style={{ background: "var(--faro-primary)" }}
+            style={{ background: "var(--faro-cta-gradient)" }}
           >
             <Send size={14} /> {loading ? "Enviando..." : btnLabel}
           </button>
