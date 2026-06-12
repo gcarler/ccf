@@ -12,6 +12,7 @@ interface LocationItem {
     id: number;
     name: string;
     address: string;
+    mapsUrl?: string;
     phone?: string;
     schedule?: string;
     midweek?: string;
@@ -167,7 +168,7 @@ export default function SedesPage() {
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     window.open(
-                                                        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}`,
+                                                        loc.mapsUrl ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}`,
                                                         "_blank",
                                                         "noopener,noreferrer"
                                                     );
