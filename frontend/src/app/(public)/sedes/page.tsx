@@ -173,7 +173,8 @@ export default function SedesPage() {
                                                         "noopener,noreferrer"
                                                     );
                                                 }}
-                                                className="mt-1 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-faro-primary text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+                                                className="mt-1 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+                                                style={{ background: "var(--faro-cta-gradient)", color: "white" }}
                                             >
                                                 <Navigation size={13} />
                                                 Cómo llegar

@@ -211,7 +211,7 @@ export default function FaroNavbar() {
                                 style={{
                                     background: "var(--faro-cta-gradient)",
                                     backgroundSize: "200% auto",
-                                    color: "var(--faro-on-primary)",
+                                    color: "white",
                                     boxShadow: "var(--faro-cta-shadow)",
                                 }}
                             >
@@ -277,7 +277,7 @@ export default function FaroNavbar() {
                                 style={{
                                     background: "var(--faro-cta-gradient)",
                                     backgroundSize: "200% auto",
-                                    color: "var(--faro-on-primary)",
+                                    color: "white",
                                     boxShadow: "var(--faro-cta-shadow)",
                                 }}
                             >
