@@ -1,20 +1,54 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
-import { CalendarDays, Calendar, ListTodo, HelpCircle } from 'lucide-react';
+import {
+  CalendarDays, Calendar, ListTodo, HelpCircle,
+  Megaphone, Users, FolderKanban, User,
+} from 'lucide-react';
 
 const SIDEBAR_SECTIONS = [
   {
-    title: 'Planificación',
+    title: 'Vistas',
     items: [
       {
-        id: 'calendar',
-        label: 'Calendario',
+        id: 'todo',
+        label: 'Todo',
         icon: CalendarDays,
         href: '/plataforma/calendar',
       },
+      {
+        id: 'evangelismo',
+        label: 'Evangelismo',
+        icon: Megaphone,
+        href: '/plataforma/calendar?view=evangelismo',
+      },
+      {
+        id: 'crm',
+        label: 'Consolidación',
+        icon: Users,
+        href: '/plataforma/calendar?view=crm',
+      },
+      {
+        id: 'proyectos',
+        label: 'Proyectos',
+        icon: FolderKanban,
+        href: '/plataforma/calendar?view=proyectos',
+      },
+      {
+        id: 'personal',
+        label: 'Personal',
+        icon: User,
+        href: '/plataforma/calendar?view=personal',
+      },
+    ],
+  },
+  {
+    title: 'Módulos',
+    items: [
       {
         id: 'agenda',
         label: 'Agenda',
@@ -27,11 +61,6 @@ const SIDEBAR_SECTIONS = [
         icon: ListTodo,
         href: '/plataforma/tasks',
       },
-    ],
-  },
-  {
-    title: 'Soporte',
-    items: [
       {
         id: 'help',
         label: 'Ayuda',
@@ -49,7 +78,7 @@ export default function CalendarLayout({ children }: { children: React.ReactNode
         sidebarTitle="Calendario"
         sidebarSections={SIDEBAR_SECTIONS}
       >
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] h-full">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] h-full flex overflow-hidden">
           {children}
         </div>
       </WorkspaceLayout>

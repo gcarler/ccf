@@ -591,7 +591,7 @@ export default function StrategyDetailPage() {
  } finally { setGroupSaving(false); }
  };
 
- const handleDeleteGroup = async (groupId: string, groupName: string) => {
+ const handleDeleteGroup = async (groupId: string) => {
  try {
  await apiFetch(`/evangelism/grupos/${groupId}`, { method: 'DELETE', token });
  toast.success('Grupo eliminado');
@@ -605,7 +605,7 @@ export default function StrategyDetailPage() {
  description: `Se eliminara "${groupName}" y todo su historial de asistencia.`,
  confirmLabel: 'Eliminar',
  destructive: true,
- onConfirm: () => handleDeleteGroup(groupId, groupName),
+ onConfirm: () => handleDeleteGroup(groupId),
  });
  };
 
@@ -800,16 +800,37 @@ export default function StrategyDetailPage() {
  } else {
  toast.success(`Visitante "${realName}" registrado`);
  }
- setAttendanceMembers(prev => [...prev, {
+ setAttendanceMembers(prev => {
+ const nextMember = {
  persona_id: res.persona_id,
  name: realName,
  role: 'visitante',
  role_label: 'Visitante',
- status: 'first_time',
+ status: 'first_time' as const,
  notes: '',
- }]);
+ };
+ if (prev.some(member => member.persona_id === res.persona_id)) {
+ return prev.map(member => member.persona_id === res.persona_id ? { ...member, ...nextMember } : member);
+ }
+ return [...prev, nextMember];
+ });
+ setAllMembers(prev => {
+ if (prev.some(member => member.id === res.persona_id)) return prev;
+ return [
+ ...prev,
+ {
+ id: res.persona_id,
+ first_name: res.first_name || '',
+ last_name: res.last_name || '',
+ nombre_completo: realName,
+ church_role: 'Visitante',
+ },
+ ];
+ });
  setNewVisitorForm({ first_name: '', last_name: '', phone: '', whatsapp: '', email: '', address: '' });
  setShowNewVisitorForm(false);
+ fetchGroups();
+ fetchStrategy();
  } catch (e: any) {
  toast.error('Error al registrar visitante: ' + (e.message || 'Intente de nuevo'));
  } finally { setSavingNewVisitor(false); }
@@ -1064,7 +1085,8 @@ export default function StrategyDetailPage() {
  {/* Tabs */}
  <div className="flex items-center gap-1 border-b border-[hsl(var(--border-primary))]">
  {TABS.map(tab => (
- <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+ <button key={tab.id}
+ onClick={() => tab.id === 'metrics' ? router.push(`/plataforma/evangelism/strategies/${id}/analytics`) : setActiveTab(tab.id)}
  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${
  activeTab === tab.id
  ? 'border-blue-600 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] dark:border-blue-400'

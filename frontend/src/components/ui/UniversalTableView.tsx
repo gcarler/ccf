@@ -19,9 +19,9 @@ import {
   Flag,
   Hash,
   Layers,
-  Loader2,
   Plus,
   Search,
+  TableIcon,
   User,
   X,
 } from 'lucide-react';
@@ -56,8 +56,7 @@ export interface TableColumn<T> {
   hidden?: boolean;
   editable?: boolean;
   filterable?: boolean;
-  render?: (value: any, item: T) => React.ReactNode;
-  displayValue?: (item: T) => string;
+  render?: (value: unknown, item: T) => React.ReactNode;
 }
 
 interface UniversalTableViewProps<T> {
@@ -67,7 +66,7 @@ interface UniversalTableViewProps<T> {
   viewName?: string;
   onRowClick?: (item: T) => void;
   onAddItem?: (groupValue?: string) => void;
-  onUpdateItem?: (id: string | number, field: string, value: any) => Promise<boolean | void> | boolean | void;
+  onUpdateItem?: (id: string | number, field: string, value: unknown) => Promise<boolean | void> | boolean | void;
   isLoading?: boolean;
   emptyMessage?: string;
   renderDetailPanel?: (item: T, onClose: () => void) => React.ReactNode;
@@ -112,12 +111,16 @@ const OPERATORS_BY_TYPE: Record<ColumnType, FilterOperator[]> = {
   link:     ['contains', 'isEmpty', 'isNotEmpty'],
 };
 
+function isPrimitive(v: unknown): boolean {
+  return v === null || v === undefined || typeof v !== 'object';
+}
+
 function applyFilters<T>(data: T[], filters: ActiveFilter[]): T[] {
   if (!filters.length) return data;
   return data.filter(item =>
     filters.every(f => {
       if (!f.field) return true;
-      const raw = String((item as any)[f.field] ?? '').toLowerCase().trim();
+      const raw = String((item as Record<string, unknown>)[f.field] ?? '').toLowerCase().trim();
       const val = f.value.toLowerCase().trim();
       switch (f.operator) {
         case 'contains':    return raw.includes(val);
@@ -126,9 +129,15 @@ function applyFilters<T>(data: T[], filters: ActiveFilter[]): T[] {
         case 'notEquals':   return raw !== val;
         case 'isEmpty':     return !raw;
         case 'isNotEmpty':  return !!raw;
-        case 'gt':          return parseFloat(raw) > parseFloat(val);
-        case 'lt':          return parseFloat(raw) < parseFloat(val);
-        default:            return true;
+        case 'gt': {
+          const n = parseFloat(val);
+          return !isNaN(n) && parseFloat(raw) > n;
+        }
+        case 'lt': {
+          const n = parseFloat(val);
+          return !isNaN(n) && parseFloat(raw) < n;
+        }
+        default: return true;
       }
     })
   );
@@ -147,16 +156,16 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string; dot:
   realizada:     { label: 'Realizada',   bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
   blocked:       { label: 'Bloqueado',   bg: 'bg-rose-50 dark:bg-rose-900/20',       text: 'text-rose-700 dark:text-rose-400',       dot: 'bg-rose-500'     },
   activo:        { label: 'Activo',      bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
-  inactivo:      { label: 'Inactivo',    bg: 'bg-slate-50 dark:bg-white/5',          text: 'text-slate-500 dark:text-slate-400',     dot: 'bg-slate-400'    },
+  inactivo:      { label: 'Inactivo',    bg: 'bg-slate-100 dark:bg-white/5',         text: 'text-slate-500 dark:text-slate-400',     dot: 'bg-slate-400'    },
   habilitado:    { label: 'Abierta',     bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
   deshabilitado: { label: 'Bloqueada',   bg: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-400',     dot: 'bg-amber-400'    },
-  cerrado:       { label: 'Cerrada',     bg: 'bg-slate-50 dark:bg-white/5',          text: 'text-slate-500 dark:text-slate-400',     dot: 'bg-slate-400'    },
+  cerrado:       { label: 'Cerrada',     bg: 'bg-slate-100 dark:bg-white/5',         text: 'text-slate-500 dark:text-slate-400',     dot: 'bg-slate-400'    },
   cancelada:     { label: 'Cancelada',   bg: 'bg-rose-50 dark:bg-rose-900/20',       text: 'text-rose-700 dark:text-rose-400',       dot: 'bg-rose-500'     },
 };
 function getStatus(v: string) {
   return STATUS_MAP[String(v ?? '').toLowerCase()] ?? {
     label: String(v ?? '—'),
-    bg: 'bg-slate-50 dark:bg-white/5',
+    bg: 'bg-slate-100 dark:bg-white/5',
     text: 'text-slate-600 dark:text-slate-400',
     dot: 'bg-slate-400',
   };
@@ -172,67 +181,71 @@ const PRIORITY_MAP: Record<string, { label: string; color: string; bg: string }>
 
 // ─── Cell renderers ───────────────────────────────────────────────────────────
 
-function StatusCell({ value }: any) {
+function StatusCell({ value }: { value: unknown }) {
   const st = getStatus(String(value ?? ''));
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 px-2 py-[3px] rounded text-[11px] font-semibold leading-none', st.bg, st.text)}>
+    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11px] font-semibold leading-none', st.bg, st.text)}>
       <span className={clsx('size-1.5 rounded-full shrink-0', st.dot)} />
       {st.label}
     </span>
   );
 }
-function PriorityCell({ value }: any) {
+function PriorityCell({ value }: { value: unknown }) {
   const p = PRIORITY_MAP[String(value ?? '').toLowerCase()] ?? PRIORITY_MAP.normal;
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 px-2 py-[3px] rounded text-[11px] font-semibold', p.bg, p.color)}>
-      <Flag size={10} /> {p.label}
+    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11px] font-semibold', p.bg, p.color)}>
+      <Flag size={9} /> {p.label}
     </span>
   );
 }
-function DateCell({ value }: any) {
+function DateCell({ value }: { value: unknown }) {
   if (!value) return <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>;
+  const d = new Date(String(value));
+  if (isNaN(d.getTime())) return <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>;
   return (
-    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+    <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
       <Calendar size={11} className="shrink-0" />
-      <span className="text-[12px] font-medium whitespace-nowrap">
-        {new Date(String(value)).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+      <span className="text-[12px] font-medium tabular-nums whitespace-nowrap">
+        {d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })}
       </span>
     </div>
   );
 }
-function UserCell({ value }: any) {
+function UserCell({ value }: { value: unknown }) {
+  if (!value) return <span className="text-slate-300 dark:text-slate-600 text-[12px]">—</span>;
+  const words = String(value).split(/\s+/).filter(Boolean);
+  const initials = words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
   return (
     <div className="flex items-center gap-2 h-full">
-      <div className="size-6 rounded-full bg-blue-100 dark:bg-white/10 flex items-center justify-center font-semibold text-blue-600 text-[10px] shrink-0">
-        {value ? String(value).charAt(0).toUpperCase() : <User size={11} className="text-slate-400" />}
+      <div className="size-6 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 text-[9px] shrink-0 leading-none">
+        {initials || <User size={10} className="text-slate-400" />}
       </div>
-      <span className="text-[12px] text-slate-600 dark:text-slate-300 font-medium truncate">
-        {value ? String(value) : '—'}
-      </span>
+      <span className="text-[12px] text-[hsl(var(--text-primary))] font-medium truncate">{String(value)}</span>
     </div>
   );
 }
-function IdCell({ value }: any) {
+function IdCell({ value }: { value: unknown }) {
   return (
-    <div className="flex items-center gap-1 text-[11px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-wide">
-      <Hash size={10} />{String(value ?? '').substring(0, 8)}
+    <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-slate-300 dark:text-slate-600">
+      <Hash size={9} />{String(value ?? '').substring(0, 8)}
     </div>
   );
 }
-function ProgressCell({ value }: any) {
+function ProgressCell({ value }: { value: unknown }) {
   const raw = Number(value || 0);
-  const pct = Math.round(raw <= 1 ? raw * 100 : raw);
+  const pct = isNaN(raw) ? 0 : Math.round(raw <= 1 ? raw * 100 : raw);
+  const color = pct === 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-blue-500' : 'bg-amber-400';
   return (
-    <div className="flex items-center gap-2 w-full">
+    <div className="flex items-center gap-2.5 w-full pr-2">
       <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-        <div className={clsx('h-full rounded-full', pct === 100 ? 'bg-emerald-500' : 'bg-blue-500')} style={{ width: `${pct}%` }} />
+        <div className={clsx('h-full rounded-full transition-all', color)} style={{ width: `${pct}%` }} />
       </div>
-      <span className="font-semibold text-slate-400 tabular-nums text-[11px] w-8 text-right">{pct}%</span>
+      <span className="font-semibold text-[hsl(var(--text-secondary))] tabular-nums text-[11px] w-7 text-right shrink-0">{pct}%</span>
     </div>
   );
 }
 
-// ─── FilterRow component ──────────────────────────────────────────────────────
+// ─── FilterRow ────────────────────────────────────────────────────────────────
 
 function FilterRow({
   filter,
@@ -250,12 +263,12 @@ function FilterRow({
   const colType = filterableCols.find(c => c.key === filter.field)?.type ?? 'text';
   const ops = OPERATORS_BY_TYPE[colType] ?? OPERATORS_BY_TYPE.text;
   const needsValue = !['isEmpty', 'isNotEmpty'].includes(filter.operator);
-  const selectClass = 'h-7 px-2 text-[11px] font-medium rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer';
+  const selectCls = 'h-7 px-2 text-[11px] font-medium rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer';
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] w-10 text-right shrink-0">
-        {filterIdx === 0 ? 'DONDE' : 'Y'}
+      <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] w-10 text-right shrink-0 uppercase tracking-wide">
+        {filterIdx === 0 ? 'Donde' : 'Y'}
       </span>
       <select
         value={filter.field}
@@ -264,14 +277,14 @@ function FilterRow({
           const newOps = OPERATORS_BY_TYPE[col?.type ?? 'text'] ?? OPERATORS_BY_TYPE.text;
           onChange({ ...filter, field: e.target.value, label: col?.label ?? e.target.value, operator: newOps[0], value: '' });
         }}
-        className={selectClass}
+        className={selectCls}
       >
         {filterableCols.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
       </select>
       <select
         value={filter.operator}
         onChange={e => onChange({ ...filter, operator: e.target.value as FilterOperator, value: '' })}
-        className={selectClass}
+        className={selectCls}
       >
         {ops.map(op => <option key={op} value={op}>{OPERATOR_LABELS[op]}</option>)}
       </select>
@@ -281,12 +294,12 @@ function FilterRow({
           value={filter.value}
           onChange={e => onChange({ ...filter, value: e.target.value })}
           placeholder="Valor…"
-          className="h-7 px-2 text-[11px] rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-400 min-w-[100px] max-w-[160px]"
+          className="h-7 px-2.5 text-[11px] rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 min-w-[100px] max-w-[160px]"
         />
       )}
       <button
         onClick={onRemove}
-        className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+        className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
       >
         <X size={12} />
       </button>
@@ -294,25 +307,90 @@ function FilterRow({
   );
 }
 
-// ─── Themes ───────────────────────────────────────────────────────────────────
+// ─── Skeleton loader ──────────────────────────────────────────────────────────
+
+function SkeletonRow({ cols }: { cols: number }) {
+  return (
+    <div className="flex items-center gap-4 px-4 py-2.5 border-b border-[hsl(var(--border-primary))] last:border-0">
+      {Array.from({ length: cols }).map((_, i) => (
+        <div key={i} className="h-4 rounded-md bg-slate-100 dark:bg-white/5 animate-pulse flex-1"
+          style={{ maxWidth: i === 0 ? 200 : 100, opacity: Math.max(1 - i * 0.12, 0.2) }} />
+      ))}
+    </div>
+  );
+}
+
+// ─── AG Grid themes ───────────────────────────────────────────────────────────
 
 const lightTheme = themeQuartz.withParams({
-  fontFamily: 'inherit', fontSize: 12, rowHeight: 36, headerHeight: 36,
-  backgroundColor: '#ffffff', foregroundColor: '#1e293b', borderColor: '#e2e8f0',
-  oddRowBackgroundColor: '#f8fafc', headerBackgroundColor: '#f1f5f9',
-  headerTextColor: '#475569', selectedRowBackgroundColor: '#eef2ff',
-  accentColor: '#6366f1', cellHorizontalPaddingScale: 0.8,
-});
-const darkTheme = themeQuartz.withParams({
-  fontFamily: 'inherit', fontSize: 12, rowHeight: 36, headerHeight: 36,
-  backgroundColor: 'rgb(15 23 42)', foregroundColor: '#e2e8f0',
-  borderColor: 'rgba(255,255,255,0.08)', oddRowBackgroundColor: 'rgba(255,255,255,0.02)',
-  headerBackgroundColor: 'rgba(255,255,255,0.04)', headerTextColor: '#94a3b8',
-  selectedRowBackgroundColor: 'rgba(99,102,241,0.15)', accentColor: '#6366f1',
-  cellHorizontalPaddingScale: 0.8,
+  fontFamily: 'inherit',
+  fontSize: 12.5,
+  rowHeight: 42,
+  headerHeight: 40,
+  backgroundColor: '#ffffff',
+  foregroundColor: '#0f172a',
+  borderColor: '#e2e8f0',
+  oddRowBackgroundColor: '#ffffff',
+  rowHoverColor: '#f8fafc',
+  headerBackgroundColor: '#f8fafc',
+  headerTextColor: '#64748b',
+  headerFontSize: 11,
+  headerFontWeight: 700,
+  selectedRowBackgroundColor: '#eef2ff',
+  accentColor: '#6366f1',
+  cellHorizontalPaddingScale: 1,
+  rowBorder: { style: 'solid', width: 1, color: '#f1f5f9' },
+  columnBorder: false,
+  wrapperBorder: false,
 });
 
+const darkTheme = themeQuartz.withParams({
+  fontFamily: 'inherit',
+  fontSize: 12.5,
+  rowHeight: 42,
+  headerHeight: 40,
+  backgroundColor: 'hsl(222 47% 11%)',
+  foregroundColor: '#e2e8f0',
+  borderColor: 'rgba(255,255,255,0.06)',
+  oddRowBackgroundColor: 'hsl(222 47% 11%)',
+  rowHoverColor: 'rgba(255,255,255,0.03)',
+  headerBackgroundColor: 'rgba(255,255,255,0.03)',
+  headerTextColor: '#64748b',
+  headerFontSize: 11,
+  headerFontWeight: 700,
+  selectedRowBackgroundColor: 'rgba(99,102,241,0.12)',
+  accentColor: '#6366f1',
+  cellHorizontalPaddingScale: 1,
+  rowBorder: { style: 'solid', width: 1, color: 'rgba(255,255,255,0.04)' },
+  columnBorder: false,
+  wrapperBorder: false,
+});
+
+// ─── Module-level constants (no re-creation per render) ───────────────────────
+
 const GROUP_ROW_ID_PREFIX = '__group__';
+
+const BTN_BASE = 'flex items-center gap-1.5 h-8 text-[11px] font-semibold rounded-lg transition-all border';
+const BTN_IDLE = 'px-2.5 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border-primary))] hover:bg-[hsl(var(--bg-muted))] hover:text-[hsl(var(--text-primary))]';
+const BTN_ICON = 'px-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border-primary))] hover:bg-[hsl(var(--bg-muted))] hover:text-[hsl(var(--text-primary))]';
+const BTN_ACTIVE = 'px-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800';
+
+// ─── makeValueSetter ──────────────────────────────────────────────────────────
+
+function makeValueSetter(
+  field: string,
+  onUpdateItem: NonNullable<UniversalTableViewProps<{ id: string | number }>['onUpdateItem']>,
+) {
+  return (params: { oldValue: unknown; newValue: unknown; data: { id: string | number }; api: { applyTransaction: (t: object) => void } }) => {
+    if (params.oldValue === params.newValue) return false;
+    const result = onUpdateItem(params.data.id, field, params.newValue);
+    if (result instanceof Promise) {
+      result.then(ok => { if (ok === false) params.api.applyTransaction({ update: [params.data] }); });
+      return true;
+    }
+    return result !== false;
+  };
+}
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -328,23 +406,11 @@ export default function UniversalTableView<T extends { id: string | number }>({
   emptyMessage = 'No hay registros para mostrar',
   renderDetailPanel,
 }: UniversalTableViewProps<T>) {
-  const saved = useMemo(() => loadState(viewName), [viewName]);
-
   const [isDark, setIsDark] = useState(false);
   const [quickFilter, setQuickFilter] = useState('');
-
-  // Persistent state
-  const [hiddenCols, setHiddenCols] = useState<Set<string>>(
-    () => new Set(saved?.hiddenCols ?? [])
-  );
-  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>(
-    () => saved?.filters ?? []
-  );
-  const [activeGroupBy, setActiveGroupBy] = useState<string | null>(
-    () => saved?.groupBy ?? groupByProp ?? null
-  );
-
-  // UI state
+  const [hiddenCols, setHiddenCols] = useState<Set<string>>(() => new Set(loadState(viewName)?.hiddenCols ?? []));
+  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>(() => loadState(viewName)?.filters ?? []);
+  const [activeGroupBy, setActiveGroupBy] = useState<string | null>(() => loadState(viewName)?.groupBy ?? groupByProp ?? null);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [showColPanel, setShowColPanel] = useState(false);
   const [showGroupPanel, setShowGroupPanel] = useState(false);
@@ -355,7 +421,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
   const colPanelRef = useRef<HTMLDivElement>(null);
   const groupPanelRef = useRef<HTMLDivElement>(null);
 
-  // Dark mode detection
+  // Dark mode
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.classList.contains('dark'));
     check();
@@ -379,12 +445,11 @@ export default function UniversalTableView<T extends { id: string | number }>({
     return () => document.removeEventListener('mousedown', h);
   }, [showGroupPanel]);
 
-  // Persist state to localStorage
+  // Persist state
   useEffect(() => {
     saveState(viewName, { hiddenCols: [...hiddenCols], filters: activeFilters, groupBy: activeGroupBy });
   }, [viewName, hiddenCols, activeFilters, activeGroupBy]);
 
-  // Filterable columns (exclude synthetic __ keys and those with filterable:false)
   const filterableCols = useMemo(() =>
     columns.filter(c => {
       const k = String(c.key);
@@ -401,7 +466,6 @@ export default function UniversalTableView<T extends { id: string | number }>({
     [columns]
   );
 
-  // Add / remove filters
   const addFilter = useCallback(() => {
     filterIdRef.current += 1;
     const first = filterableCols[0];
@@ -415,28 +479,28 @@ export default function UniversalTableView<T extends { id: string | number }>({
     }]);
   }, [filterableCols]);
 
-  // Pre-filter data (includes search box text so grouping headers are rebuilt correctly)
   const filteredData = useMemo(() => {
     let result = applyFilters(data, activeFilters);
     const q = quickFilter.trim().toLowerCase();
     if (q) {
       result = result.filter(item =>
-        Object.values(item as any).some(v => String(v ?? '').toLowerCase().includes(q))
+        Object.values(item as Record<string, unknown>)
+          .filter(isPrimitive)
+          .some(v => String(v ?? '').toLowerCase().includes(q))
       );
     }
     return result;
   }, [data, activeFilters, quickFilter]);
 
-  // Group rows
   const rowData = useMemo(() => {
     if (!activeGroupBy) return filteredData;
     const groups: Record<string, T[]> = {};
     filteredData.forEach(item => {
-      const k = String((item as any)[activeGroupBy] || 'Sin categoría');
+      const k = String((item as Record<string, unknown>)[activeGroupBy] || 'Sin categoría');
       if (!groups[k]) groups[k] = [];
       groups[k].push(item);
     });
-    const flat: any[] = [];
+    const flat: unknown[] = [];
     Object.entries(groups).forEach(([key, rows]) => {
       flat.push({ __isGroup: true, __groupKey: key, __groupCount: rows.length, id: `${GROUP_ROW_ID_PREFIX}${key}` });
       flat.push(...rows);
@@ -444,15 +508,12 @@ export default function UniversalTableView<T extends { id: string | number }>({
     return flat;
   }, [filteredData, activeGroupBy]);
 
-  // Column definitions
   const colDefs = useMemo<ColDef[]>(() => {
     return columns
       .filter(c => !c.hidden && !hiddenCols.has(String(c.key)))
       .map((col): ColDef => {
         const field = String(col.key);
-        const isGroupRow = field === '__isGroup';
-        const isExplicitlyDisabled = col.editable === false;
-        const canEdit = !isExplicitlyDisabled && !isGroupRow && !!onUpdateItem;
+        const canEdit = col.editable !== false && !!onUpdateItem;
 
         const base: ColDef = {
           field,
@@ -462,47 +523,25 @@ export default function UniversalTableView<T extends { id: string | number }>({
           minWidth: 80,
           resizable: true,
           sortable: col.sortable !== false,
-          filter: false, // we use our own filter system
+          filter: false,
           floatingFilter: false,
         };
 
+        if (canEdit) {
+          base.editable = true;
+          base.singleClickEdit = true;
+          base.cellEditor = 'agTextCellEditor';
+          base.valueSetter = makeValueSetter(field, onUpdateItem!) as ColDef['valueSetter'];
+        }
+
         if (col.render) {
           const renderFn = col.render;
-          base.cellRenderer = ({ value, data: rowData }: any) => {
+          base.cellRenderer = ({ value, data: rowData }: { value: unknown; data: Record<string, unknown> }) => {
             if (rowData?.__isGroup) return null;
             return <>{renderFn(value, rowData as T)}</>;
           };
-          if (canEdit) {
-            base.editable = true;
-            base.singleClickEdit = true;
-            base.cellEditor = 'agTextCellEditor';
-            base.valueSetter = (params: any) => {
-              if (params.oldValue === params.newValue) return false;
-              const result = onUpdateItem!(params.data.id, field, params.newValue);
-              if (result instanceof Promise) {
-                result.then(ok => { if (ok === false) params.api.applyTransaction({ update: [params.data] }); });
-                return true;
-              }
-              return result !== false;
-            };
-          } else {
-            base.editable = false;
-          }
+          if (!canEdit) base.editable = false;
         } else {
-          if (canEdit) {
-            base.editable = true;
-            base.singleClickEdit = true;
-            base.cellEditor = 'agTextCellEditor';
-            base.valueSetter = (params: any) => {
-              if (params.oldValue === params.newValue) return false;
-              const result = onUpdateItem!(params.data.id, field, params.newValue);
-              if (result instanceof Promise) {
-                result.then(ok => { if (ok === false) params.api.applyTransaction({ update: [params.data] }); });
-                return true;
-              }
-              return result !== false;
-            };
-          }
           switch (col.type) {
             case 'status':   base.cellRenderer = StatusCell; break;
             case 'priority': base.cellRenderer = PriorityCell; break;
@@ -510,77 +549,91 @@ export default function UniversalTableView<T extends { id: string | number }>({
             case 'user':     base.cellRenderer = UserCell; break;
             case 'id':       base.cellRenderer = IdCell; break;
             case 'progress': base.cellRenderer = ProgressCell; break;
-            default:         base.cellStyle = { fontSize: '13px', fontWeight: '500' }; break;
+            default:
+              base.cellStyle = { fontSize: '12.5px', fontWeight: '500', color: 'inherit' };
+              break;
           }
         }
         return base;
       });
   }, [columns, hiddenCols, onUpdateItem]);
 
-  const isFullWidthRow = useCallback((params: any) => !!params.rowNode.data?.__isGroup, []);
+  const isFullWidthRow = useCallback((params: { rowNode: { data?: Record<string, unknown> } }) =>
+    !!params.rowNode.data?.__isGroup, []);
 
-  const fullWidthCellRenderer = useCallback(({ data: row }: any) => (
-    <div className="flex items-center gap-2 px-3 h-full bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
-      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{row.__groupKey}</span>
-      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-white/10 rounded-full px-2 py-0.5">{row.__groupCount}</span>
+  const fullWidthCellRenderer = useCallback(({ data: row }: { data: { __groupKey: string; __groupCount: number } }) => (
+    <div className="flex items-center gap-2.5 px-4 h-full border-b border-[hsl(var(--border-primary))] bg-slate-50/80 dark:bg-white/[0.02]">
+      <div className="w-1 h-4 rounded-full bg-indigo-400 dark:bg-indigo-500 shrink-0" />
+      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">{row.__groupKey}</span>
+      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-white/10 rounded-full px-2 py-0.5 ml-0.5">
+        {row.__groupCount}
+      </span>
       {onAddItem && (
         <button onClick={(e) => { e.stopPropagation(); onAddItem(row.__groupKey); }}
-          className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-blue-600 hover:opacity-80 transition-colors">
-          <Plus size={11} /> Agregar
+          className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:opacity-70 transition-opacity">
+          <Plus size={10} /> Agregar
         </button>
       )}
     </div>
   ), [onAddItem]);
 
-  const getRowId = useCallback((params: GetRowIdParams) => String((params.data as any).id), []);
-  const getRowHeight = useCallback((params: any) => params.data?.__isGroup ? 32 : 36, []);
-  const handleRowClick = useCallback((e: any) => {
+  const getRowId = useCallback((params: GetRowIdParams) => String((params.data as { id: unknown }).id), []);
+  const getRowHeight = useCallback((params: { data?: Record<string, unknown> }) =>
+    params.data?.__isGroup ? 34 : 42, []);
+  const handleRowClick = useCallback((e: { data?: Record<string, unknown> }) => {
     if (e.data?.__isGroup) return;
-    setSelectedItem(e.data);
-    onRowClick?.(e.data);
+    setSelectedItem(e.data as T);
+    onRowClick?.(e.data as T);
   }, [onRowClick]);
 
-  const visibleCols = columns.filter(c => !c.hidden);
-  const activeGroupByLabel = groupableCols.find(c => String(c.key) === activeGroupBy)?.label;
+  // Stable row style object (avoids AG Grid re-render on every parent render)
+  const rowStyle = useMemo(() => ({ cursor: onRowClick ? 'pointer' : 'default' as const }), [onRowClick]);
+
+  const visibleCols = useMemo(() => columns.filter(c => !c.hidden), [columns]);
+  const activeGroupByLabel = useMemo(() =>
+    groupableCols.find(c => String(c.key) === activeGroupBy)?.label,
+    [groupableCols, activeGroupBy]
+  );
+
+  const hasData = data.length > 0;
+  const hasResults = filteredData.length > 0;
+  const isFiltered = activeFilters.length > 0 || quickFilter.trim().length > 0;
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full gap-2">
 
       {/* ── Toolbar ── */}
-      <div className="flex items-center gap-2 flex-wrap shrink-0">
+      <div className="flex items-center gap-1.5 flex-wrap shrink-0">
 
         {/* Search */}
-        <div className="relative flex-1 min-w-[160px] max-w-xs">
+        <div className="relative flex-1 min-w-[180px] max-w-[280px]">
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             value={quickFilter}
             onChange={e => setQuickFilter(e.target.value)}
             placeholder="Buscar…"
-            className="w-full pl-7 pr-7 py-1.5 text-xs border border-[hsl(var(--border-primary))] rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder-slate-400 outline-none focus:ring-1 focus:ring-blue-400"
+            className="w-full h-8 pl-7 pr-7 text-[11px] border border-[hsl(var(--border-primary))] rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder-slate-400 outline-none focus:ring-1 focus:ring-indigo-400 transition-shadow"
           />
           {quickFilter && (
             <button onClick={() => setQuickFilter('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded">
               <X size={11} />
             </button>
           )}
         </div>
 
-        {/* Filter button */}
+        <div className="w-px h-5 bg-[hsl(var(--border-primary))] hidden sm:block" />
+
+        {/* Filters */}
         <button
           onClick={() => setShowFilterPanel(p => !p)}
-          className={clsx(
-            'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors border',
-            showFilterPanel || activeFilters.length > 0
-              ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700'
-              : 'bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border-primary))] hover:border-slate-300 dark:hover:border-white/20'
-          )}
+          className={clsx(BTN_BASE, showFilterPanel || activeFilters.length > 0 ? BTN_ACTIVE : BTN_IDLE)}
         >
-          <Filter size={13} />
+          <Filter size={12} />
           Filtros
           {activeFilters.length > 0 && (
-            <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold leading-none">
+            <span className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full bg-indigo-600 text-white text-[9px] font-bold leading-4 text-center">
               {activeFilters.length}
             </span>
           )}
@@ -591,46 +644,30 @@ export default function UniversalTableView<T extends { id: string | number }>({
           <div className="relative" ref={groupPanelRef}>
             <button
               onClick={() => setShowGroupPanel(p => !p)}
-              className={clsx(
-                'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors border',
-                activeGroupBy
-                  ? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] border-[hsl(var(--border-primary))] dark:border-white/20'
-                  : 'bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border-primary))] hover:border-slate-300 dark:hover:border-white/20'
-              )}
+              className={clsx(BTN_BASE, activeGroupBy ? BTN_ACTIVE : BTN_IDLE)}
             >
-              <Layers size={13} />
-              {activeGroupByLabel ? `Agrupado: ${activeGroupByLabel}` : 'Agrupar'}
-              <ChevronDown size={11} />
+              <Layers size={12} />
+              {activeGroupByLabel ?? 'Agrupar'}
+              <ChevronDown size={11} className="opacity-60" />
             </button>
             <AnimatePresence>
               {showGroupPanel && (
                 <motion.div
-                  initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.97 }}
-                  transition={{ duration: 0.1 }}
-                  className="absolute top-full left-0 mt-1 z-50 w-48 bg-[hsl(var(--bg-primary))] dark:bg-slate-900 border border-[hsl(var(--border-primary))] rounded-lg shadow-xl py-1"
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute top-full left-0 mt-1.5 z-50 w-48 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 py-1.5 overflow-hidden"
                 >
-                  <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400 px-3 py-1.5">Agrupar por</p>
-                  <button
-                    onClick={() => { setActiveGroupBy(null); setShowGroupPanel(false); }}
-                    className={clsx(
-                      'w-full text-left px-3 py-2 text-xs font-medium transition-colors hover:bg-[hsl(var(--bg-muted))]',
-                      !activeGroupBy ? 'text-blue-600 font-semibold' : 'text-[hsl(var(--text-primary))]'
-                    )}
-                  >
-                    Sin agrupar
-                  </button>
-                  {groupableCols.map(col => (
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 px-3 py-1.5">Agrupar por</p>
+                  {[{ key: null, label: 'Sin agrupar' }, ...groupableCols.map(c => ({ key: String(c.key), label: c.label }))].map(opt => (
                     <button
-                      key={String(col.key)}
-                      onClick={() => { setActiveGroupBy(String(col.key)); setShowGroupPanel(false); }}
-                      className={clsx(
-                        'w-full text-left px-3 py-2 text-xs font-medium transition-colors hover:bg-[hsl(var(--bg-muted))]',
-                        activeGroupBy === String(col.key) ? 'text-blue-600 font-semibold' : 'text-[hsl(var(--text-primary))]'
-                      )}
+                      key={opt.key ?? '__none'}
+                      onClick={() => { setActiveGroupBy(opt.key); setShowGroupPanel(false); }}
+                      className={clsx('w-full text-left px-3 py-2 text-[12px] transition-colors hover:bg-[hsl(var(--bg-muted))]',
+                        activeGroupBy === opt.key ? 'text-indigo-600 font-semibold' : 'text-[hsl(var(--text-primary))] font-medium')}
                     >
-                      {col.label}
+                      {opt.label}
                     </button>
                   ))}
                 </motion.div>
@@ -639,32 +676,46 @@ export default function UniversalTableView<T extends { id: string | number }>({
           </div>
         )}
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-1 ml-auto">
+        {/* Right actions */}
+        <div className="flex items-center gap-1.5 ml-auto">
+          {!isLoading && hasData && (
+            <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 tabular-nums hidden sm:block pr-1">
+              {isFiltered ? `${filteredData.length} / ${data.length}` : data.length}
+            </span>
+          )}
 
-          {/* Column visibility */}
+          {/* Columns */}
           <div className="relative" ref={colPanelRef}>
             <button
               onClick={() => setShowColPanel(p => !p)}
-              className={clsx(
-                'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors border',
-                showColPanel
-                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700'
-                  : 'bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border-primary))] hover:border-slate-300 dark:hover:border-white/20'
-              )}
+              title="Columnas visibles"
+              className={clsx(BTN_BASE, showColPanel ? BTN_ACTIVE.replace('px-2.5', 'px-2') : BTN_ICON)}
             >
-              <ColumnsIcon size={13} /> Columnas
+              <ColumnsIcon size={13} />
+              {hiddenCols.size > 0 && (
+                <span className="min-w-[14px] h-3.5 px-1 rounded-full bg-indigo-600 text-white text-[8px] font-bold leading-[14px] text-center">
+                  {hiddenCols.size}
+                </span>
+              )}
             </button>
             <AnimatePresence>
               {showColPanel && (
                 <motion.div
-                  initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.97 }}
-                  transition={{ duration: 0.1 }}
-                  className="absolute top-full right-0 mt-1 z-50 w-52 bg-[hsl(var(--bg-primary))] dark:bg-slate-900 border border-[hsl(var(--border-primary))] rounded-lg shadow-xl p-2"
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute top-full right-0 mt-1.5 z-50 w-52 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 p-2"
                 >
-                  <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400 px-1 pb-1.5">Columnas visibles</p>
+                  <div className="flex items-center justify-between px-1.5 pb-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Columnas visibles</p>
+                    {hiddenCols.size > 0 && (
+                      <button onClick={() => setHiddenCols(new Set())}
+                        className="text-[9px] font-semibold text-indigo-600 hover:opacity-75 transition-opacity">
+                        Mostrar todo
+                      </button>
+                    )}
+                  </div>
                   {visibleCols.map(col => {
                     const key = String(col.key);
                     const isHidden = hiddenCols.has(key);
@@ -675,8 +726,9 @@ export default function UniversalTableView<T extends { id: string | number }>({
                         className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-[hsl(var(--bg-muted))] transition-colors"
                       >
                         <span className="text-[12px] font-medium text-[hsl(var(--text-primary))]">{col.label || key}</span>
-                        <div className={clsx('size-4 rounded border-2 flex items-center justify-center', !isHidden ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-white/20')}>
-                          {!isHidden && <span className="text-white text-[8px] font-bold">✓</span>}
+                        <div className={clsx('size-4 rounded-md border-2 flex items-center justify-center transition-colors',
+                          !isHidden ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 dark:border-white/20')}>
+                          {!isHidden && <span className="text-white text-[8px] font-bold leading-none">✓</span>}
                         </div>
                       </button>
                     );
@@ -689,15 +741,15 @@ export default function UniversalTableView<T extends { id: string | number }>({
           <button
             onClick={() => gridRef.current?.api?.exportDataAsCsv()}
             title="Exportar CSV"
-            className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] rounded-lg hover:bg-[hsl(var(--bg-muted))] transition-colors border border-transparent hover:border-[hsl(var(--border-primary))]"
+            className={clsx(BTN_BASE, BTN_ICON)}
           >
-            <Download size={14} />
+            <Download size={13} />
           </button>
 
           {onAddItem && (
             <button
               onClick={() => onAddItem()}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors shadow-sm shadow-indigo-600/20"
             >
               <Plus size={13} /> Agregar
             </button>
@@ -715,11 +767,11 @@ export default function UniversalTableView<T extends { id: string | number }>({
             transition={{ duration: 0.15 }}
             className="overflow-hidden shrink-0"
           >
-            <div className="flex flex-col gap-2 p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
+            <div className="flex flex-col gap-2 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-950/20">
               {filterableCols.length === 0 ? (
-                <p className="text-xs text-[hsl(var(--text-secondary))] italic">No hay columnas filtrables.</p>
+                <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">No hay columnas filtrables.</p>
               ) : activeFilters.length === 0 ? (
-                <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin filtros activos. Agrega uno para filtrar los datos.</p>
+                <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Sin filtros activos. Agrega uno para filtrar los datos.</p>
               ) : (
                 activeFilters.map((f, idx) => (
                   <FilterRow
@@ -736,19 +788,17 @@ export default function UniversalTableView<T extends { id: string | number }>({
                 <button
                   onClick={addFilter}
                   disabled={filterableCols.length === 0}
-                  className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:opacity-80 disabled:opacity-40 transition-opacity"
+                  className="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:opacity-75 disabled:opacity-40 transition-opacity"
                 >
                   <Plus size={12} /> Agregar filtro
                 </button>
                 {activeFilters.length > 0 && (
-                  <button
-                    onClick={() => setActiveFilters([])}
-                    className="text-xs text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors"
-                  >
+                  <button onClick={() => setActiveFilters([])}
+                    className="text-[11px] text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors">
                     Limpiar todo
                   </button>
                 )}
-                <span className="ml-auto text-[10px] text-[hsl(var(--text-secondary))]">
+                <span className="ml-auto text-[10px] font-medium text-[hsl(var(--text-secondary))]">
                   {filteredData.length} de {data.length} registro{data.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -760,18 +810,51 @@ export default function UniversalTableView<T extends { id: string | number }>({
       {/* ── Grid ── */}
       <div className="flex-1 min-h-[200px] rounded-xl overflow-hidden border border-[hsl(var(--border-primary))] relative">
         {isLoading ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-[hsl(var(--bg-primary))] z-10">
-            <Loader2 size={20} className="animate-spin text-blue-600" />
+          <div className="bg-[hsl(var(--bg-primary))] h-full">
+            <div className="flex items-center px-4 border-b border-[hsl(var(--border-primary))] h-10 gap-4">
+              {[200, 120, 90, 110, 80].map((w, i) => (
+                <div key={i} className="h-3 rounded-md bg-slate-100 dark:bg-white/5 animate-pulse" style={{ width: w }} />
+              ))}
+            </div>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonRow key={i} cols={5} />
+            ))}
           </div>
-        ) : data.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-[hsl(var(--bg-primary))] text-sm text-[hsl(var(--text-secondary))]">
-            {emptyMessage}
+        ) : !hasData ? (
+          /* Genuinely empty — no data at all */
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[hsl(var(--bg-primary))]">
+            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+              <TableIcon size={22} className="text-slate-300 dark:text-slate-600" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{emptyMessage}</p>
+              {onAddItem && (
+                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-0.5">Agrega el primer registro para comenzar</p>
+              )}
+            </div>
+            {onAddItem && (
+              <button onClick={() => onAddItem()}
+                className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors mt-1">
+                <Plus size={13} /> Agregar
+              </button>
+            )}
+          </div>
+        ) : !hasResults ? (
+          /* Has data but filters eliminated everything */
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[hsl(var(--bg-primary))]">
+            <Search size={20} className="text-slate-300 dark:text-slate-600" />
+            <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">Sin resultados</p>
+            <p className="text-[11px] text-[hsl(var(--text-secondary))]">Prueba con otro término o limpia los filtros</p>
+            <button onClick={() => { setQuickFilter(''); setActiveFilters([]); }}
+              className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:opacity-75 mt-1 transition-opacity">
+              Limpiar filtros
+            </button>
           </div>
         ) : (
           <AgGridReact
             ref={gridRef}
             theme={isDark ? darkTheme : lightTheme}
-            rowData={rowData as any[]}
+            rowData={rowData as Record<string, unknown>[]}
             columnDefs={colDefs}
             defaultColDef={{ resizable: true, sortable: true, minWidth: 80 }}
             getRowId={getRowId}
@@ -779,8 +862,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
             isFullWidthRow={activeGroupBy ? isFullWidthRow : undefined}
             fullWidthCellRenderer={activeGroupBy ? fullWidthCellRenderer : undefined}
             onRowClicked={handleRowClick}
-            rowStyle={{ cursor: onRowClick ? 'pointer' : 'default' }}
-            animateRows
+            rowStyle={rowStyle}
             enableCellTextSelection
             singleClickEdit={!!onUpdateItem}
             stopEditingWhenCellsLoseFocus
