@@ -2,7 +2,7 @@
 
 import { CmsSection } from "@/types/cms-v2";
 import { AnimatePresence,motion } from "framer-motion";
-import { Calendar,CheckCircle2,ChevronDown,ChevronRight,ChevronUp,FileText,MapPin,Send,Star,Upload,X } from "lucide-react";
+import { Calendar,CheckCircle2,ChevronDown,ChevronRight,ChevronUp,Download,FileText,MapPin,Search,Send,Star,Upload,X } from "lucide-react";
 import Link from "next/link";
 import React,{ useCallback,useEffect,useRef,useState } from "react";
 
@@ -1350,6 +1350,406 @@ function AccordionSection({ section }: { section: CmsSection }) {
   );
 }
 
+// ─── Civic: File Downloads ────────────────────────────────────────────────────
+
+function CivicFileDownloadsSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Documentos para descarga");
+  const body = val(props, "body", "");
+  const items = asItems(props) as Array<{
+    name?: string; file_url?: string; format?: string;
+    size_label?: string; description?: string;
+  }>;
+
+  const fmtBadge: Record<string, React.ReactNode> = {
+    pdf:  <span className="text-[10px] font-black text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded select-none">PDF</span>,
+    xls:  <span className="text-[10px] font-black text-green-700 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded select-none">XLS</span>,
+    xlsx: <span className="text-[10px] font-black text-green-700 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded select-none">XLS</span>,
+    doc:  <span className="text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded select-none">DOC</span>,
+    docx: <span className="text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded select-none">DOC</span>,
+    csv:  <span className="text-[10px] font-black text-teal-700 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded select-none">CSV</span>,
+    ppt:  <span className="text-[10px] font-black text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded select-none">PPT</span>,
+    pptx: <span className="text-[10px] font-black text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded select-none">PPT</span>,
+    zip:  <span className="text-[10px] font-black text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded select-none">ZIP</span>,
+  };
+
+  return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-2" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
+      {body && <p className="mb-6 text-base" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+      <div className="divide-y rounded-xl overflow-hidden border" style={{ borderColor: "var(--faro-outline-variant)" }}>
+        {items.length === 0 && (
+          <div className="flex items-center justify-center py-12 text-sm" style={{ color: "var(--faro-on-surface-variant)", background: "var(--faro-surface-container)" }}>
+            Sin documentos configurados.
+          </div>
+        )}
+        {items.map((item, i) => {
+          const fmt = (item.format || "").toLowerCase();
+          const badge = fmtBadge[fmt] ?? <span className="text-[10px] font-black text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded select-none">FILE</span>;
+          return (
+            <div key={i} className="flex items-center gap-4 px-5 py-4" style={{ background: i % 2 === 0 ? "var(--faro-surface)" : "var(--faro-surface-container)" }}>
+              <div className="shrink-0">{badge}</div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate" style={{ color: "var(--faro-on-surface)" }}>{item.name || `Documento ${i + 1}`}</p>
+                {item.description && <p className="text-xs mt-0.5 truncate" style={{ color: "var(--faro-on-surface-variant)" }}>{item.description}</p>}
+              </div>
+              {item.size_label && (
+                <span className="text-xs shrink-0" style={{ color: "var(--faro-on-surface-variant)" }}>{item.size_label}</span>
+              )}
+              {item.file_url ? (
+                <a
+                  href={item.file_url}
+                  download
+                  className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-2"
+                  style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}
+                  aria-label={`Descargar ${item.name || `documento ${i + 1}`}`}
+                >
+                  <Download size={13} /> Descargar
+                </a>
+              ) : (
+                <span className="text-xs shrink-0 opacity-40" style={{ color: "var(--faro-on-surface-variant)" }}>Sin enlace</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─── Civic: Accessible Data Table ────────────────────────────────────────────
+
+function CivicDataTableSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "");
+  const caption = val(props, "caption", "");
+  const headers = Array.isArray(props.headers) ? (props.headers as string[]) : [];
+  const rows = Array.isArray(props.rows) ? (props.rows as string[][]) : [];
+  const highlightFirstCol = props.highlight_first_col !== false;
+  const striped = props.striped !== false;
+  const footerNote = val(props, "footer_note", "");
+
+  return (
+    <section
+      className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12"
+      aria-labelledby={title ? `tbl-title-${section.id}` : undefined}
+    >
+      {title && (
+        <h2 id={`tbl-title-${section.id}`} className="text-xl md:text-2xl font-black tracking-tight mb-4" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>
+      )}
+      <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--faro-outline-variant)" }}>
+        <table className="w-full text-sm border-collapse" role="table">
+          {caption && (
+            <caption className="text-xs text-left py-2 px-4 font-medium caption-top" style={{ color: "var(--faro-on-surface-variant)" }}>
+              {caption}
+            </caption>
+          )}
+          {headers.length > 0 && (
+            <thead>
+              <tr style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}>
+                {headers.map((h, i) => (
+                  <th key={i} scope="col" className="px-4 py-3 text-left font-bold text-xs uppercase tracking-wide whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={Math.max(headers.length, 1)} className="px-4 py-10 text-center text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+                  Sin datos configurados.
+                </td>
+              </tr>
+            ) : rows.map((row, ri) => (
+              <tr key={ri} style={{ background: striped && ri % 2 === 1 ? "var(--faro-surface-container)" : "var(--faro-surface)" }}>
+                {row.map((cell, ci) =>
+                  ci === 0 && highlightFirstCol ? (
+                    <th key={ci} scope="row" className="px-4 py-3 font-semibold text-left whitespace-nowrap" style={{ color: "var(--faro-on-surface)", borderTop: "1px solid var(--faro-outline-variant)" }}>{cell}</th>
+                  ) : (
+                    <td key={ci} className="px-4 py-3 tabular-nums" style={{ color: "var(--faro-on-surface)", borderTop: "1px solid var(--faro-outline-variant)" }}>{cell}</td>
+                  )
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {footerNote && (
+        <p className="mt-3 text-xs" style={{ color: "var(--faro-on-surface-variant)" }}>* {footerNote}</p>
+      )}
+    </section>
+  );
+}
+
+// ─── Civic: Alert / Emergency Banner ─────────────────────────────────────────
+
+function CivicAlertBannerSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const level = val(props, "level", "warning");
+  const title = val(props, "title", "");
+  const message = val(props, "message", "");
+  const ctaLabel = val(props, "cta_label", "");
+  const ctaHref = val(props, "cta_href", "");
+  const dismissible = props.dismissible !== false;
+  const [dismissed, setDismissed] = useState(false);
+
+  const levels: Record<string, { bg: string; border: string; accent: string; icon: string; text: string }> = {
+    info:    { bg: "#EFF6FF", border: "#BFDBFE", accent: "#1D4ED8", icon: "ℹ️", text: "#1e3a5f" },
+    warning: { bg: "#FFFBEB", border: "#FDE68A", accent: "#D97706", icon: "⚠️", text: "#78350F" },
+    danger:  { bg: "#FEF2F2", border: "#FECACA", accent: "#DC2626", icon: "🚨", text: "#7F1D1D" },
+  };
+  const s = levels[level] || levels.warning;
+
+  if (dismissed) return null;
+
+  return (
+    <div role="alert" aria-live="assertive" className="w-full border rounded-xl" style={{ background: s.bg, borderColor: s.border, borderLeftWidth: 4, borderLeftColor: s.accent }}>
+      <div className="flex items-start gap-3 px-5 py-4">
+        <span className="text-xl shrink-0 mt-0.5" aria-hidden="true">{s.icon}</span>
+        <div className="flex-1 min-w-0">
+          {title && <p className="font-black text-base mb-1" style={{ color: s.text }}>{title}</p>}
+          {message && <p className="text-sm leading-relaxed" style={{ color: s.text }}>{message}</p>}
+          {ctaHref && ctaLabel && (
+            <a href={ctaHref} className="inline-flex items-center gap-1 mt-3 text-xs font-bold underline underline-offset-2" style={{ color: s.accent }}>
+              {ctaLabel} <ChevronRight size={12} />
+            </a>
+          )}
+        </div>
+        {dismissible && (
+          <button
+            type="button"
+            onClick={() => setDismissed(true)}
+            className="shrink-0 p-1 rounded-full opacity-60 hover:opacity-100 transition-opacity"
+            aria-label="Cerrar alerta"
+          >
+            <X size={16} style={{ color: s.accent }} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Civic: Convocatoria Cards ────────────────────────────────────────────────
+
+function CivicConvocatoriaCardsSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Convocatorias");
+  const body = val(props, "body", "");
+  const items = asItems(props) as Array<{
+    title?: string; description?: string;
+    status?: string; deadline?: string; category?: string; href?: string;
+  }>;
+
+  const statusMap: Record<string, { label: string; bg: string; text: string; dot: string }> = {
+    abierta:  { label: "Abierta",      bg: "#ECFDF5", text: "#065F46", dot: "#10B981" },
+    cerrada:  { label: "Cerrada",      bg: "#FEF2F2", text: "#991B1B", dot: "#EF4444" },
+    proxima:  { label: "Próxima",      bg: "#EFF6FF", text: "#1E40AF", dot: "#3B82F6" },
+    revision: { label: "En revisión",  bg: "#FFFBEB", text: "#92400E", dot: "#F59E0B" },
+  };
+
+  return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      {(title || body) && (
+        <div className="mb-8">
+          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
+          {body && <p className="mt-2 text-base" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+        </div>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.length === 0 && (
+          <div className="col-span-full rounded-xl border-2 border-dashed p-12 text-center" style={{ borderColor: "var(--faro-outline-variant)" }}>
+            <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>Agrega convocatorias usando el campo <strong>items</strong>.</p>
+          </div>
+        )}
+        {items.map((item, i) => {
+          const key = (item.status || "proxima").toLowerCase();
+          const st = statusMap[key] || statusMap.proxima;
+          return (
+            <article
+              key={i}
+              className="rounded-xl border flex flex-col overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md"
+              style={{ background: "var(--faro-surface)", borderColor: "var(--faro-outline-variant)" }}
+            >
+              <div className="h-1.5" style={{ background: st.dot }} />
+              <div className="flex-1 p-5 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-black text-base leading-tight flex-1" style={{ color: "var(--faro-on-surface)" }}>
+                    {item.title || `Convocatoria ${i + 1}`}
+                  </h3>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: st.bg, color: st.text }}>
+                    <span className="size-1.5 rounded-full" style={{ background: st.dot }} />
+                    {st.label}
+                  </span>
+                </div>
+                {item.category && (
+                  <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--faro-primary)" }}>{item.category}</span>
+                )}
+                {item.description && (
+                  <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--faro-on-surface-variant)" }}>{item.description}</p>
+                )}
+                {item.deadline && (
+                  <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: key === "cerrada" ? "#EF4444" : "var(--faro-on-surface-variant)" }}>
+                    <Calendar size={12} /> Cierre: {item.deadline}
+                  </div>
+                )}
+              </div>
+              {item.href && (
+                <div className="px-5 pb-5">
+                  <a
+                    href={item.href}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all hover:opacity-90"
+                    style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}
+                  >
+                    Ver convocatoria <ChevronRight size={14} />
+                  </a>
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─── Civic: Hero Search ───────────────────────────────────────────────────────
+
+function CivicHeroSearchSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const eyebrow = val(props, "eyebrow", "");
+  const title = val(props, "title", "¿Qué trámite buscas?");
+  const subtitle = val(props, "subtitle", "Encuentra todo en un solo lugar.");
+  const placeholder = val(props, "placeholder", "Buscar trámites, convocatorias, noticias...");
+  const actionUrl = val(props, "action_url", "/buscar");
+  const backgroundImage = val(props, "background_image", "");
+  const suggestions = Array.isArray(props.suggestions) ? (props.suggestions as string[]) : [];
+  const [query, setQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    window.location.href = `${actionUrl}?q=${encodeURIComponent(query.trim())}`;
+  };
+
+  return (
+    <section
+      className="relative flex flex-col items-center justify-center text-center px-4 py-16 md:py-24 overflow-hidden rounded-2xl"
+      style={{
+        background: backgroundImage
+          ? `linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.6)),url('${backgroundImage}') center/cover no-repeat`
+          : "var(--faro-primary)",
+      }}
+    >
+      {eyebrow && (
+        <span className="text-[11px] font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}>
+          {eyebrow}
+        </span>
+      )}
+      <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white drop-shadow-md max-w-3xl">
+        {title}
+      </h1>
+      {subtitle && <p className="mt-4 text-base md:text-lg max-w-xl" style={{ color: "rgba(255,255,255,0.8)" }}>{subtitle}</p>}
+      <form onSubmit={handleSearch} className="mt-8 w-full max-w-xl flex shadow-2xl rounded-2xl overflow-hidden">
+        <input
+          type="search"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder={placeholder}
+          aria-label="Buscar trámites"
+          className="flex-1 px-5 py-4 text-base outline-none bg-white text-slate-900 placeholder-slate-400"
+        />
+        <button
+          type="submit"
+          className="px-6 py-4 font-black text-sm uppercase tracking-wide text-white bg-slate-900 hover:bg-slate-800 transition-colors flex items-center gap-2 whitespace-nowrap"
+        >
+          <Search size={16} /> Buscar
+        </button>
+      </form>
+      {suggestions.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2 justify-center">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => { window.location.href = `${actionUrl}?q=${encodeURIComponent(s)}`; }}
+              className="text-xs font-semibold px-3 py-1 rounded-full transition-colors"
+              style={{ background: "rgba(255,255,255,0.2)", color: "white" }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ─── Civic: Quick Links Grid ──────────────────────────────────────────────────
+
+function CivicQuickLinksSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Accesos Rápidos");
+  const body = val(props, "body", "");
+  const columns = Math.max(2, Math.min(6, parseInt(val(props, "columns", "4"), 10)));
+  const colClasses: Record<number, string> = {
+    2: "grid-cols-2",
+    3: "grid-cols-2 sm:grid-cols-3",
+    4: "grid-cols-2 sm:grid-cols-2 md:grid-cols-4",
+    5: "grid-cols-2 sm:grid-cols-3 md:grid-cols-5",
+    6: "grid-cols-2 sm:grid-cols-3 md:grid-cols-6",
+  };
+  const items = asItems(props).slice(0, 12) as Array<{
+    icon?: string; label?: string; href?: string; description?: string; color?: string;
+  }>;
+
+  return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      {(title || body) && (
+        <div className="mb-8 text-center">
+          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
+          {body && <p className="mt-2 text-base max-w-2xl mx-auto" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+        </div>
+      )}
+      <div className={`grid ${colClasses[columns] || colClasses[4]} gap-3`}>
+        {items.map((item, i) => {
+          const accent = item.color || "var(--faro-primary)";
+          return (
+            <a
+              key={i}
+              href={item.href || "#"}
+              className="group flex flex-col items-center text-center gap-3 p-5 rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-offset-2"
+              style={{ background: "var(--faro-surface)", borderColor: "var(--faro-outline-variant)" }}
+            >
+              <div
+                className="size-14 rounded-2xl flex items-center justify-center text-3xl transition-transform group-hover:scale-110"
+                style={{ background: `color-mix(in srgb, ${accent} 12%, transparent)`, color: accent }}
+              >
+                {item.icon || "🔗"}
+              </div>
+              <div>
+                <p className="font-black text-sm leading-tight" style={{ color: "var(--faro-on-surface)" }}>
+                  {item.label || `Enlace ${i + 1}`}
+                </p>
+                {item.description && (
+                  <p className="text-xs mt-1 leading-snug" style={{ color: "var(--faro-on-surface-variant)" }}>
+                    {item.description}
+                  </p>
+                )}
+              </div>
+            </a>
+          );
+        })}
+        {items.length === 0 && (
+          <div className="col-span-full rounded-xl border-2 border-dashed p-12 text-center" style={{ borderColor: "var(--faro-outline-variant)" }}>
+            <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>Agrega enlaces usando el campo <strong>items</strong>.</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // ─── Main Dispatcher ───────────────────────────────────────────────────────────
 
 export default function PublicSectionRenderer({ section }: { section: CmsSection }) {
@@ -1384,7 +1784,14 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
     case "map":              return <MapSection section={section} />;
     case "document_upload":  return <DocumentUploadSection section={section} />;
     case "content_blocks":   return <ContentBlocksSection section={section} />;
-    case "accordion":        return <AccordionSection section={section} />;
-    default:                 return <RichTextSection section={section} />;
+    case "accordion":              return <AccordionSection section={section} />;
+    // Civic blocks
+    case "civic_file_downloads":   return <CivicFileDownloadsSection section={section} />;
+    case "civic_data_table":       return <CivicDataTableSection section={section} />;
+    case "civic_alert_banner":     return <CivicAlertBannerSection section={section} />;
+    case "civic_convocatoria_cards": return <CivicConvocatoriaCardsSection section={section} />;
+    case "civic_hero_search":      return <CivicHeroSearchSection section={section} />;
+    case "civic_quick_links":      return <CivicQuickLinksSection section={section} />;
+    default:                       return <RichTextSection section={section} />;
   }
 }
