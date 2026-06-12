@@ -38,7 +38,7 @@ export default function PastorDetailPage() {
 
     if (!pastor) {
         return (
-            <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] flex items-center justify-center">
+            <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] flex items-center justify-center pt-[88px]">
                 <div className="text-center space-y-6">
                     <div className="w-20 h-20 rounded-[1.25rem] bg-[hsl(var(--primary))/0.1] flex items-center justify-center mx-auto ring-1 ring-[hsl(var(--primary))/0.15]">
                         <Heart size={28} className="text-[hsl(var(--primary))]" />
@@ -62,15 +62,16 @@ export default function PastorDetailPage() {
         <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#07080c] selection:bg-[hsl(var(--primary))/0.2] selection:text-[hsl(var(--primary))] overflow-hidden">
 
             {/* ── Fondo Ambiental ── */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden">
+            <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
                 <div className="absolute -top-60 -right-60 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-[hsl(var(--primary))/0.05] to-transparent blur-[150px]" />
                 <div className="absolute -bottom-60 -left-60 w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-[hsl(var(--secondary))/0.04] to-transparent blur-[120px]" />
                 <div className="absolute top-1/3 left-1/3 w-96 h-96 rounded-full bg-[hsl(var(--primary))/0.015] blur-[100px]" />
             </div>
 
-            {/* ── Navbar Back ── */}
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-[hsl(var(--bg-primary))/0.7] dark:bg-[#07080c]/70 backdrop-blur-2xl border-b border-slate-200/30 dark:border-white/[0.03]">
-                <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 h-16 flex items-center justify-between">
+            <main className="relative z-10 pt-[88px]">
+
+                {/* ── Breadcrumb / Back link ── */}
+                <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 pt-6 pb-2 flex items-center justify-between">
                     <Link
                         href="/pastores"
                         className="inline-flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-[hsl(var(--primary))] transition-colors group"
@@ -78,18 +79,15 @@ export default function PastorDetailPage() {
                         <ArrowLeft size={15} className="group-hover:-translate-x-1 transition-transform" />
                         Todos los pastores
                     </Link>
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-300 dark:text-slate-600">
+                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600">
                         {pastor.title}
                     </span>
                 </div>
-            </nav>
-
-            <main className="relative z-10">
 
                 {/* ════════════════════════════════════════
                    HERO — LAYOUT MODERNO
                    ════════════════════════════════════════ */}
-                <section className="relative pt-28 pb-8 md:pt-36 md:pb-12 lg:pt-44 lg:pb-16">
+                <section className="relative pt-6 pb-8 md:pt-8 md:pb-12 lg:pt-10 lg:pb-16">
                     <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
                         <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 xl:gap-20 items-center lg:items-start">
 
