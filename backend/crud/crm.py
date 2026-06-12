@@ -788,14 +788,25 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
         )
         for item in payload.base_attendees_with_roles:
             role, custom_role_id = _group_member_role_values(item)
-            db.add(
-                models.CellGroupMember(
-                    cell_group_id=house_id,
-                    persona_id=uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id,
-                    role=role,
-                    rol_personalizado_id=custom_role_id,
+            p_id = uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id
+            existing = db.query(models.CellGroupMember).filter(
+                models.CellGroupMember.cell_group_id == house_id,
+                models.CellGroupMember.persona_id == p_id
+            ).first()
+            if existing:
+                existing.deleted_at = None
+                existing.activo = True
+                existing.role = role
+                existing.rol_personalizado_id = custom_role_id
+            else:
+                db.add(
+                    models.CellGroupMember(
+                        cell_group_id=house_id,
+                        persona_id=p_id,
+                        role=role,
+                        rol_personalizado_id=custom_role_id,
+                    )
                 )
-            )
         members_updated = True
         # Sincronizar lider_persona_id desde el miembro con rol primario de líder
         _SUBORDINATE_TOKENS = {"co", "colider", "colíder", "asistente", "del"}
@@ -826,13 +837,23 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
             synchronize_session=False,
         )
         for persona_id in payload.base_attendee_ids:
-            db.add(
-                models.CellGroupMember(
-                    cell_group_id=house_id,
-                    persona_id=uuid.UUID(str(persona_id)) if isinstance(persona_id, str) else persona_id,
-                    role="miembro",
+            p_id = uuid.UUID(str(persona_id)) if isinstance(persona_id, str) else persona_id
+            existing = db.query(models.CellGroupMember).filter(
+                models.CellGroupMember.cell_group_id == house_id,
+                models.CellGroupMember.persona_id == p_id
+            ).first()
+            if existing:
+                existing.deleted_at = None
+                existing.activo = True
+                existing.role = "miembro"
+            else:
+                db.add(
+                    models.CellGroupMember(
+                        cell_group_id=house_id,
+                        persona_id=p_id,
+                        role="miembro",
+                    )
                 )
-            )
         members_updated = True
 
     db.flush()

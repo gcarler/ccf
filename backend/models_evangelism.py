@@ -455,6 +455,37 @@ class Asistencia(Base):
     member_id = synonym("persona_id")
     absence_reason = synonym("motivo_excusa_id")
     absence_reason_detail = synonym("detalle_excusa")
+    notes = synonym("detalle_excusa")
+
+    @property
+    def status(self):
+        # Determine the lowercase, normalized status string for frontend compatibility
+        est = str(self.estado).strip().lower()
+        if self.es_primera_vez or est in {"primera_vez", "first_time"}:
+            return "first_time"
+        if est in {"falto", "ausente", "absent"}:
+            return "absent"
+        if est in {"excusa", "excused"}:
+            return "excused"
+        if est in {"presente", "present", "asistio"}:
+            return "present"
+        return est
+
+    @status.setter
+    def status(self, value):
+        val = str(value).strip().lower()
+        if val == "absent":
+            self.estado = "FALTO"
+            self.es_primera_vez = False
+        elif val == "first_time":
+            self.estado = "primera_vez"
+            self.es_primera_vez = True
+        elif val == "excused":
+            self.estado = "EXCUSA"
+            self.es_primera_vez = False
+        else:
+            self.estado = "Presente"
+            self.es_primera_vez = False
 
     @property
     def attended(self):
