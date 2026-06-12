@@ -120,7 +120,7 @@ interface AttendanceMember {
  notes?: string;
 }
 
-type TabId = 'overview' | 'groups' | 'sessions' | 'metrics';
+type TabId = 'overview' | 'groups' | 'sessions' | 'attendance' | 'metrics';
 
 const STATUS_COLORS = {
  pending: '#F59E0B',
@@ -193,6 +193,7 @@ const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
  { id: 'overview', label: 'General', icon: Sparkles },
  { id: 'groups', label: 'Grupos', icon: FolderOpen },
  { id: 'sessions', label: 'Sesiones', icon: Calendar },
+ { id: 'attendance', label: 'Asistencia', icon: ClipboardList },
  { id: 'metrics', label: 'Métricas', icon: BarChart3 },
 ];
 
@@ -517,6 +518,7 @@ export default function StrategyDetailPage() {
  if (activeTab === 'groups') fetchGroups();
  if (activeTab === 'metrics') fetchMetrics();
  if (activeTab === 'sessions') { fetchGroups(); fetchSessions(); }
+ if (activeTab === 'attendance') { fetchGroups(); fetchSessions(); }
  }, [activeTab, fetchGroups, fetchMetrics, fetchSessions]);
 
  useEffect(() => {
@@ -928,6 +930,24 @@ export default function StrategyDetailPage() {
  sessions.forEach(s => seen.add(s.session_date.substring(0, 7)));
  return Array.from(seen).sort();
  }, [sessions]);
+
+ // Sesiones para tab Asistencia — centrado en grupos
+ const attendanceByGroup = useMemo(() => {
+  // Para cada grupo, tomar su sesión más reciente
+  const byGroup: Record<string, SessionRow[]> = {};
+  sessions.forEach(s => {
+   if (!byGroup[s.grupo_id]) byGroup[s.grupo_id] = [];
+   byGroup[s.grupo_id].push(s);
+  });
+  // Ordenar sesiones de cada grupo por fecha desc
+  Object.values(byGroup).forEach(arr => arr.sort((a, b) => b.session_date.localeCompare(a.session_date)));
+  // Construir lista de grupos con su sesión más reciente primero
+  return groups.map(g => ({
+   group: g,
+   sessions: (byGroup[g.id] || []).slice(0, 5), // hasta 5 sesiones recientes por grupo
+   latest: (byGroup[g.id] || [])[0] ?? null,
+  })).filter(entry => entry.sessions.length > 0);
+ }, [sessions, groups]);
 
  // Sesiones filtradas para la vista de lista
  const filteredSessions = useMemo(() => {
@@ -1804,6 +1824,103 @@ export default function StrategyDetailPage() {
  </div>
  )}
  </div>
+ )}
+
+ {/* ── Asistencia ── */}
+ {activeTab === 'attendance' && (
+  <div className="space-y-4">
+   <div className="flex items-center justify-between">
+    <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+     Grupos — sesiones recientes
+    </p>
+    {sessionsLoading && <Loader2 size={14} className="animate-spin text-[hsl(var(--text-secondary))]" />}
+   </div>
+
+   {sessionsLoading && attendanceByGroup.length === 0 ? (
+    <div className="space-y-3">
+     {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-xl bg-[hsl(var(--bg-muted))] animate-pulse" />)}
+    </div>
+   ) : attendanceByGroup.length === 0 ? (
+    <div className="flex flex-col items-center gap-2 py-10 border-2 border-dashed border-[hsl(var(--border-primary))] rounded-xl text-center">
+     <ClipboardList size={28} className="text-[hsl(var(--text-secondary))] opacity-40" />
+     <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">Sin sesiones registradas</p>
+     <p className="text-xs text-[hsl(var(--text-secondary))] opacity-70">Crea sesiones en el tab Sesiones para poder reportar asistencia</p>
+    </div>
+   ) : (
+    <div className="space-y-3">
+     {attendanceByGroup.map(({ group: grp, sessions: grpSessions, latest }) => {
+      const isHabilitado = latest?.estado_habilitacion === 'HABILITADO';
+      return (
+       <div key={grp.id} className={`bg-[hsl(var(--bg-primary))] rounded-xl border overflow-hidden ${isHabilitado ? 'border-emerald-200 dark:border-emerald-800/40' : 'border-[hsl(var(--border-primary))]'}`}>
+        {/* Cabecera del grupo */}
+        <div className={`flex items-center justify-between px-4 py-3 ${isHabilitado ? 'bg-emerald-50 dark:bg-emerald-900/10' : 'bg-[hsl(var(--bg-secondary))]'}`}>
+         <div className="min-w-0">
+          <div className="flex items-center gap-2">
+           {isHabilitado && <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />}
+           <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{grp.name}</p>
+          </div>
+          <div className="flex items-center gap-3 mt-0.5 text-[11px] text-[hsl(var(--text-secondary))]">
+           {grp.leader_name && <span>{grp.leader_name}</span>}
+           <span>{grp.members_count} personas</span>
+          </div>
+         </div>
+         {latest && (
+          <button
+           onClick={() => openAttendanceDrawer(latest)}
+           className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all active:scale-95 ${
+            isHabilitado
+             ? 'bg-[hsl(var(--primary))] text-white hover:opacity-90 shadow-sm'
+             : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20'
+           }`}
+          >
+           <ClipboardList size={12} />
+           {isHabilitado ? 'Registrar' : 'Ver sesión'}
+          </button>
+         )}
+        </div>
+
+        {/* Lista de sesiones recientes del grupo */}
+        <div className="divide-y divide-[hsl(var(--border-primary))]">
+         {grpSessions.map(s => {
+          const dateStr = new Date(s.session_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-CO', {
+           weekday: 'short', day: 'numeric', month: 'short',
+          });
+          const isClosed = s.estado_habilitacion === 'CERRADO' || s.estado_habilitacion === 'CANCELADA';
+          const habColor = s.estado_habilitacion === 'HABILITADO'
+           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+           : s.estado_habilitacion === 'CANCELADA'
+           ? 'bg-red-50 text-red-500 dark:bg-red-900/20'
+           : s.estado_habilitacion === 'CERRADO'
+           ? 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400'
+           : 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400';
+          return (
+           <div key={s.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[hsl(var(--bg-muted))] transition-colors">
+            <div className="flex-1 min-w-0 flex items-center gap-2">
+             <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${habColor}`}>
+              {s.estado_habilitacion ?? 'DESHABILITADO'}
+             </span>
+             <p className="text-[12px] text-[hsl(var(--text-secondary))] capitalize truncate">
+              {dateStr}{s.topic ? ` · ${s.topic}` : ''}
+             </p>
+            </div>
+            {!isClosed && (
+             <button
+              onClick={() => openAttendanceDrawer(s)}
+              className="shrink-0 text-[11px] font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
+             >
+              Reportar
+             </button>
+            )}
+           </div>
+          );
+         })}
+        </div>
+       </div>
+      );
+     })}
+    </div>
+   )}
+  </div>
  )}
 
  {/* ── Métricas ── */}
