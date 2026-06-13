@@ -178,122 +178,108 @@ export default function PublicHomePage() {
 
             {/* ─── BENTO: Bienvenidos a Casa ────────────────────────── */}
             <section
-                className="py-8 md:py-12 px-3 md:px-4 lg:px-8 xl:px-12 overflow-hidden"
+                className="py-16 md:py-24 px-3 md:px-4 lg:px-8 xl:px-12 overflow-hidden"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div className="w-full px-3 md:px-8 lg:px-12 xl:px-16">
+                <div className="w-full">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, margin: "-100px" }}
-                        className="mb-6"
+                        className="mb-10"
                     >
                         <span
-                            className="text-xs font-bold uppercase tracking-wide block mb-4"
+                            className="text-xs font-bold uppercase tracking-widest block mb-4"
                             style={{ color: "var(--faro-primary)" }}
                         >
                             Nuestra esencia
                         </span>
                         <h2
-                            className="font-bold text-2xl md:text-3xl tracking-tight"
-                            style={{ color: "var(--faro-on-background)" }}
+                            className="font-black tracking-tight leading-tight"
+                            style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", color: "var(--faro-on-background)" }}
                         >
                             Bienvenidos a Casa
                         </h2>
                     </motion.div>
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Feature grande */}
+                        {/* Card grande — Conocer a Jesús */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.1 }}
-                            className="md:col-span-2 rounded-xl p-6 md:p-8 flex flex-col justify-between group relative overflow-hidden min-h-[320px]"
-                            style={{ background: "var(--faro-surface-container)" }}
+                            className="md:col-span-2 rounded-2xl flex flex-col justify-end group relative overflow-hidden min-h-[420px]"
                         >
-                            <div
-                                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-                                style={{
-                                    background:
-                                        "radial-gradient(ellipse at 80% 20%, var(--faro-glow-subtle) 0%, transparent 70%)",
-                                }}
+                            <Image
+                                src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&q=80"
+                                alt="Comunidad El Faro"
+                                fill
+                                className="object-cover transition-transform duration-700 group-hover:scale-105"
                             />
-                            <div className="relative z-10">
-                                <div
-                                    className="w-12 h-8 rounded-lg flex items-center justify-center mb-3"
-                                    style={{ background: "var(--faro-primary-container)" }}
-                                >
-                                    <span style={{ color: "var(--faro-primary)", fontSize: "22px" }}>✦</span>
-                                </div>
-                                <h3
-                                    className="text-lg font-bold mb-3"
-                                    style={{ color: "var(--faro-on-surface)" }}
-                                >
+                            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 55%, transparent 100%)" }} />
+                            <div className="relative z-10 p-8">
+                                <h3 className="text-2xl md:text-3xl font-black text-white mb-3">
                                     Conocer a Jesús
                                 </h3>
-                                <p
-                                    className="leading-relaxed max-w-md"
-                                    style={{ color: "var(--faro-on-surface-variant)" }}
-                                >
+                                <p className="text-white/80 leading-relaxed max-w-md mb-5 text-base">
                                     Descubre la base de nuestra fe a través de un viaje personal y
                                     transformador. En FARO, te acompañamos en cada paso.
                                 </p>
-                            </div>
-                            <div className="relative z-10 mt-3">
                                 <Link
                                     href="/conocer-a-jesus"
-                                    className="inline-flex items-center gap-2 font-bold text-sm uppercase tracking-wide group-hover:gap-4 transition-all"
-                                    style={{ color: "var(--faro-primary)" }}
+                                    className="inline-flex items-center gap-2 font-black text-sm uppercase tracking-wide text-white group-hover:gap-4 transition-all"
                                 >
-                                    Empezar el camino
-                                    <ArrowRight size={16} />
+                                    Empezar el camino <ArrowRight size={16} />
                                 </Link>
                             </div>
                         </motion.div>
 
-                        {/* Mini cards */}
+                        {/* Mini cards con imagen */}
                         {[
-                            { icon: <BookOpen size={22} />, title: "Librería", desc: "Recursos para profundizar en tu estudio bíblico.", href: "/cursos" },
-                            { icon: <Calendar size={22} />, title: "Horarios", desc: "Reuniones presenciales y online cada semana.", href: "/eventos" },
-                            { icon: <MapPin size={22} />, title: "Sedes", desc: "Encuéntranos en tu ciudad.", href: "/sedes" },
-                        ].map(({ icon, title, desc, href }, idx) => (
-                            <Link
+                            {
+                                title: "Librería",
+                                desc: "Recursos para profundizar en tu estudio bíblico.",
+                                href: "/cursos",
+                                img: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80",
+                            },
+                            {
+                                title: "Horarios",
+                                desc: "Reuniones presenciales y online cada semana.",
+                                href: "/eventos",
+                                img: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80",
+                            },
+                            {
+                                title: "Sedes",
+                                desc: "Encuéntranos en tu ciudad.",
+                                href: "/sedes",
+                                img: "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80",
+                            },
+                        ].map(({ title, desc, href, img }, idx) => (
+                            <motion.div
                                 key={title}
-                                href={href}
-                                className="block rounded-xl p-5 flex items-center gap-4 transition-all hover:scale-[1.02]"
-                                style={{ background: "var(--faro-surface-container)" }}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 * (idx + 1) }}
                             >
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: 0.1 * (idx + 1) }}
+                                <Link
+                                    href={href}
+                                    className="block rounded-2xl overflow-hidden group relative min-h-[130px] flex flex-col justify-end transition-transform hover:scale-[1.02]"
                                 >
-                                    <div
-                                        className="w-12 h-8 rounded-lg flex items-center justify-center shrink-0"
-                                        style={{
-                                            background: "var(--faro-primary-container)",
-                                            color: "var(--faro-primary)",
-                                        }}
-                                    >
-                                        {icon}
+                                    <Image
+                                        src={img}
+                                        alt={title}
+                                        fill
+                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
+                                    <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)" }} />
+                                    <div className="relative z-10 p-5">
+                                        <h4 className="font-black text-white text-base mb-1">{title}</h4>
+                                        <p className="text-white/70 text-xs leading-relaxed">{desc}</p>
                                     </div>
-                                </motion.div>
-                                <div>
-                                    <h4
-                                        className="font-bold mb-1"
-                                        style={{ color: "var(--faro-on-surface)" }}
-                                    >
-                                        {title}
-                                    </h4>
-                                    <p
-                                        className="text-xs leading-relaxed"
-                                        style={{ color: "var(--faro-on-surface-variant)" }}
-                                    >
-                                        {desc}
-                                    </p>
-                                </div>
-                            </Link>
+                                </Link>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
