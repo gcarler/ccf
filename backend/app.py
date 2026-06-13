@@ -44,6 +44,7 @@ from backend.api import (
     system,
     tables,
     workspace,
+    youtube,
 )
 from backend.core.config import get_settings
 from backend.core.logging import request_id_middleware
@@ -90,6 +91,7 @@ ROUTER_REGISTRY = [
     (analytics.router, "/api", ["analytics"]),
     (dashboard.router, "/api", ["dashboard"]),
     (tables.router, "/api", ["tables"]),
+    (youtube.router, "/api", ["youtube"]),
 ]
 
 
