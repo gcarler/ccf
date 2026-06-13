@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
-import { Play, Calendar, Eye, Loader2, Youtube, RefreshCw, ExternalLink } from "lucide-react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import {
+    Play, Calendar, Youtube, RefreshCw, ExternalLink,
+    Search, X, Check, Link2, MessageCircle, BookOpen, Eye,
+} from "lucide-react";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 import { apiFetch } from "@/lib/http";
 
@@ -17,7 +20,6 @@ interface YTVideo {
     url: string;
     embed_url: string;
 }
-
 interface YTResponse {
     videos: YTVideo[];
     total: number;
@@ -26,23 +28,13 @@ interface YTResponse {
 }
 
 /* ── Helpers ── */
-function formatDate(iso: string): string {
+function formatDate(iso: string) {
     if (!iso) return "";
-    const d = new Date(iso);
-    return d.toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+    return new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
 }
-
-function formatViews(n: number): string {
-    if (!n) return "";
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M vistas`;
-    if (n >= 1_000)     return `${Math.round(n / 1_000)}K vistas`;
-    return `${n} vistas`;
-}
-
-function timeAgo(iso: string): string {
+function timeAgo(iso: string) {
     if (!iso) return "";
-    const diff = Date.now() - new Date(iso).getTime();
-    const days = Math.floor(diff / 86_400_000);
+    const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
     if (days === 0) return "hoy";
     if (days === 1) return "ayer";
     if (days < 7)  return `hace ${days} días`;
@@ -50,15 +42,39 @@ function timeAgo(iso: string): string {
     if (days < 365) return `hace ${Math.floor(days / 30)} meses`;
     return `hace ${Math.floor(days / 365)} año${Math.floor(days / 365) > 1 ? "s" : ""}`;
 }
+function formatViews(n: number) {
+    if (!n) return "";
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000)     return `${Math.round(n / 1_000)}K`;
+    return `${n}`;
+}
 
-/* ── Skeleton card ── */
-function SkeletonCard({ large = false }: { large?: boolean }) {
+/* Limpia la descripción: quita todo el bloque de redes sociales */
+function cleanDesc(raw: string) {
+    const cutMarkers = ["¡NO OLVIDES", "REDES SOCIALES", "Instagram:", "Facebook:", "Visita nuestra página"];
+    let s = raw ?? "";
+    for (const m of cutMarkers) {
+        const i = s.indexOf(m);
+        if (i > 0) s = s.substring(0, i);
+    }
+    return s.trim();
+}
+
+/* ── Historial en localStorage ── */
+const LS_KEY = "faro-predicas-watched";
+function loadWatched(): Record<string, string> {
+    if (typeof window === "undefined") return {};
+    try { return JSON.parse(localStorage.getItem(LS_KEY) ?? "{}"); } catch { return {}; }
+}
+function saveWatched(w: Record<string, string>) {
+    localStorage.setItem(LS_KEY, JSON.stringify(w));
+}
+
+/* ── Skeleton ── */
+function SkeletonCard() {
     return (
-        <div
-            className={`rounded-2xl overflow-hidden animate-pulse ${large ? "col-span-full md:col-span-2" : ""}`}
-            style={{ background: "var(--faro-surface-container)" }}
-        >
-            <div className={`bg-faro-outline-variant/20 ${large ? "aspect-video" : "aspect-video"}`} />
+        <div className="rounded-2xl overflow-hidden animate-pulse" style={{ background: "var(--faro-surface-container)" }}>
+            <div className="aspect-video bg-faro-outline-variant/20" />
             <div className="p-4 space-y-2">
                 <div className="h-4 bg-faro-outline-variant/20 rounded w-3/4" />
                 <div className="h-3 bg-faro-outline-variant/10 rounded w-1/2" />
@@ -68,118 +84,286 @@ function SkeletonCard({ large = false }: { large?: boolean }) {
 }
 
 /* ── Card de video ── */
-function VideoCard({ video, featured = false }: { video: YTVideo; featured?: boolean }) {
-    const [imgError, setImgError] = useState(false);
+function VideoCard({
+    video, featured = false, watched, onPlay, onShare, onCopy, copied,
+}: {
+    video: YTVideo;
+    featured?: boolean;
+    watched: boolean;
+    onPlay: () => void;
+    onShare: () => void;
+    onCopy: () => void;
+    copied: boolean;
+}) {
+    const [imgErr, setImgErr] = useState(false);
+    const desc = cleanDesc(video.description);
 
     return (
-        <a
-            href={video.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`group block rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 ${
-                featured
-                    ? "col-span-full md:col-span-2 ring-2 ring-faro-primary/30"
-                    : ""
+        <div
+            className={`group relative rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 cursor-pointer ${
+                featured ? "ring-2 ring-faro-primary/30" : ""
             }`}
             style={{
                 background: "var(--faro-surface-container)",
                 boxShadow: featured ? "0 8px 40px -8px var(--faro-glow-intense)" : undefined,
             }}
         >
-            {/* Thumbnail */}
-            <div className="relative overflow-hidden aspect-video bg-faro-surface-container-lowest">
+            {/* Thumbnail — clic abre reproductor */}
+            <div className="relative overflow-hidden aspect-video bg-faro-surface-container-lowest" onClick={onPlay}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                    src={imgError ? video.thumbnail_mq : video.thumbnail_hq}
+                    src={imgErr ? video.thumbnail_mq : video.thumbnail_hq}
                     alt={video.title}
-                    onError={() => setImgError(true)}
+                    onError={() => setImgErr(true)}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-
-                {/* Overlay gradiente */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                {/* Botón play */}
+                {/* Play button */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                    <div
-                        className="w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-2xl"
-                        style={{ background: "var(--faro-hero-bg-light)" }}
-                    >
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-2xl" style={{ background: "var(--faro-hero-bg-light)" }}>
                         <Play size={28} className="text-white ml-1" fill="white" />
                     </div>
                 </div>
 
-                {/* Badge YouTube */}
-                {featured && (
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FF0000] text-white text-[10px] font-bold uppercase tracking-wider">
-                        <Youtube size={10} /> Más reciente
-                    </div>
-                )}
-
-                {/* Fecha flotante */}
-                <div
-                    className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-semibold text-white backdrop-blur-md"
-                    style={{ background: "rgba(0,0,0,0.6)" }}
-                >
-                    {timeAgo(video.published_at)}
+                {/* Badges */}
+                <div className="absolute top-2.5 left-2.5 flex gap-1.5">
+                    {featured && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FF0000] text-white text-[9px] font-bold uppercase tracking-wider">
+                            <Youtube size={9} /> Más reciente
+                        </span>
+                    )}
+                    {watched && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm">
+                            <Eye size={9} /> Visto
+                        </span>
+                    )}
                 </div>
+
+                {/* Tiempo */}
+                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-semibold text-white backdrop-blur-md" style={{ background: "rgba(0,0,0,0.6)" }}>
+                    {timeAgo(video.published_at)}
+                </span>
             </div>
 
             {/* Info */}
             <div className={`p-4 ${featured ? "md:p-5" : ""}`}>
                 <h3
-                    className={`font-bold text-faro-on-surface group-hover:text-faro-primary transition-colors leading-snug line-clamp-2 ${
-                        featured ? "text-xl md:text-2xl mb-2" : "text-sm mb-1.5"
+                    onClick={onPlay}
+                    className={`font-bold text-faro-on-surface group-hover:text-faro-primary transition-colors leading-snug line-clamp-2 mb-1.5 ${
+                        featured ? "text-xl md:text-2xl" : "text-sm"
                     }`}
                 >
                     {video.title}
                 </h3>
 
-                {featured && video.description && (
-                    <p className="text-sm text-faro-on-surface-variant line-clamp-2 mb-3">
-                        {video.description}
-                    </p>
+                {featured && desc && (
+                    <p className="text-sm text-faro-on-surface-variant line-clamp-2 mb-3">{desc}</p>
                 )}
 
-                <div className="flex items-center gap-3 text-[11px] text-faro-outline font-medium">
-                    <span className="flex items-center gap-1">
-                        <Calendar size={11} /> {formatDate(video.published_at)}
-                    </span>
-                    {video.view_count > 0 && (
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 text-[11px] text-faro-outline font-medium">
                         <span className="flex items-center gap-1">
-                            <Eye size={11} /> {formatViews(video.view_count)}
+                            <Calendar size={10} /> {formatDate(video.published_at)}
                         </span>
-                    )}
+                        {video.view_count > 0 && (
+                            <span className="flex items-center gap-1">
+                                <Eye size={10} /> {formatViews(video.view_count)}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Acciones rápidas */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onShare(); }}
+                            title="Compartir en WhatsApp"
+                            className="p-1.5 rounded-lg hover:bg-faro-primary/10 text-faro-outline hover:text-[#25D366] transition-colors"
+                        >
+                            <MessageCircle size={14} />
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onCopy(); }}
+                            title="Copiar enlace"
+                            className="p-1.5 rounded-lg hover:bg-faro-primary/10 text-faro-outline hover:text-faro-primary transition-colors"
+                        >
+                            {copied ? <Check size={14} className="text-green-500" /> : <Link2 size={14} />}
+                        </button>
+                    </div>
                 </div>
             </div>
-        </a>
+        </div>
+    );
+}
+
+/* ── Modal reproductor ── */
+function PlayerModal({
+    video, onClose, onShare, onCopy, copied,
+}: {
+    video: YTVideo;
+    onClose: () => void;
+    onShare: () => void;
+    onCopy: () => void;
+    copied: boolean;
+}) {
+    const desc = cleanDesc(video.description);
+
+    /* Cerrar con Escape */
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+        document.addEventListener("keydown", onKey);
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.removeEventListener("keydown", onKey);
+            document.body.style.overflow = "";
+        };
+    }, [onClose]);
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
+            style={{ background: "rgba(0,0,0,0.93)", backdropFilter: "blur(8px)" }}
+            onClick={(e) => e.target === e.currentTarget && onClose()}
+        >
+            <div className="w-full max-w-4xl">
+                {/* Cabecera */}
+                <div className="flex items-start justify-between mb-3 gap-4">
+                    <div className="flex-1 min-w-0">
+                        <h2 className="font-bold text-white text-base md:text-xl leading-snug line-clamp-2">
+                            {video.title}
+                        </h2>
+                        <p className="text-white/40 text-xs mt-0.5">{formatDate(video.published_at)}</p>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                            onClick={onShare}
+                            title="Compartir en WhatsApp"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white/70 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                            <MessageCircle size={14} /> WhatsApp
+                        </button>
+                        <button
+                            onClick={onCopy}
+                            title="Copiar enlace"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                            style={{ color: copied ? "#22c55e" : "rgba(255,255,255,0.7)" }}
+                        >
+                            {copied
+                                ? <><Check size={14} /> ¡Copiado!</>
+                                : <><Link2 size={14} /> Copiar</>
+                            }
+                        </button>
+                        <a
+                            href={video.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Ver en YouTube"
+                            className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                            <ExternalLink size={16} />
+                        </a>
+                        <button
+                            onClick={onClose}
+                            className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Iframe */}
+                <div className="aspect-video rounded-xl overflow-hidden bg-black shadow-2xl">
+                    <iframe
+                        src={video.embed_url}
+                        title={video.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        className="w-full h-full"
+                    />
+                </div>
+
+                {/* Descripción limpia */}
+                {desc && (
+                    <p className="mt-3 text-white/40 text-xs leading-relaxed line-clamp-3 max-w-3xl">
+                        {desc}
+                    </p>
+                )}
+            </div>
+        </div>
     );
 }
 
 /* ── Página principal ── */
 export default function PredicasPage() {
-    const [data, setData]       = useState<YTResponse | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError]     = useState(false);
+    const [data, setData]     = useState<YTResponse | null>(null);
+    const [loading, setLoad]  = useState(true);
+    const [error, setError]   = useState(false);
+    const [search, setSearch] = useState("");
+    const [player, setPlayer] = useState<YTVideo | null>(null);
+    const [watched, setWatched] = useState<Record<string, string>>({});
+    const [copied, setCopied]   = useState<string | null>(null);
+    const searchRef = useRef<HTMLInputElement>(null);
 
+    /* Cargar historial */
+    useEffect(() => { setWatched(loadWatched()); }, []);
+
+    /* Fetch videos */
     const load = useCallback(async () => {
-        setLoading(true);
-        setError(false);
+        setLoad(true); setError(false);
         try {
             const res = await apiFetch<YTResponse>("/youtube/videos", { silent: true });
             setData(res);
-        } catch {
-            setError(true);
-        } finally {
-            setLoading(false);
-        }
+        } catch { setError(true); }
+        finally { setLoad(false); }
     }, []);
-
     useEffect(() => { load(); }, [load]);
 
-    const videos   = data?.videos ?? [];
-    const featured = videos[0] ?? null;
-    const rest     = videos.slice(1);
+    /* Marcar visto + abrir reproductor */
+    const openPlayer = useCallback((video: YTVideo) => {
+        setPlayer(video);
+        setWatched(prev => {
+            const next = { ...prev, [video.id]: new Date().toISOString() };
+            saveWatched(next);
+            return next;
+        });
+    }, []);
+
+    /* Compartir WhatsApp */
+    const shareWA = useCallback((video: YTVideo) => {
+        const text = encodeURIComponent(`🎙️ ${video.title}\n\n${video.url}`);
+        window.open(`https://wa.me/?text=${text}`, "_blank");
+    }, []);
+
+    /* Copiar link */
+    const copyLink = useCallback(async (video: YTVideo) => {
+        await navigator.clipboard.writeText(video.url);
+        setCopied(video.id);
+        setTimeout(() => setCopied(null), 2000);
+    }, []);
+
+    /* Videos filtrados por búsqueda */
+    const videos = data?.videos ?? [];
+    const filtered = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        if (!q) return videos;
+        return videos.filter(v =>
+            v.title.toLowerCase().includes(q) ||
+            v.description.toLowerCase().includes(q)
+        );
+    }, [videos, search]);
+
+    /* Conteo mensual de prédicas vistas */
+    const viewedThisMonth = useMemo(() => {
+        const now = new Date();
+        return Object.values(watched).filter(d => {
+            const dt = new Date(d);
+            return dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear();
+        }).length;
+    }, [watched]);
+
+    const featured = !search.trim() ? (filtered[0] ?? null) : null;
+    const rest     = !search.trim() ? filtered.slice(1) : filtered;
 
     return (
         <CmsPageOverride slug="predicas">
@@ -187,14 +371,11 @@ export default function PredicasPage() {
 
                 {/* ── HERO ── */}
                 <section className="relative px-4 sm:px-6 md:px-8 xl:px-12 pt-14 pb-10 overflow-hidden">
-                    {/* Glow de fondo */}
                     <div
                         className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full blur-3xl pointer-events-none"
                         style={{ background: "radial-gradient(ellipse, var(--faro-glow-subtle) 0%, transparent 70%)" }}
                     />
-
                     <div className="max-w-7xl mx-auto">
-                        {/* Eyebrow */}
                         <div className="flex items-center gap-3 mb-4">
                             <span className="w-8 h-0.5 bg-faro-primary" />
                             <span className="text-[11px] font-bold uppercase tracking-widest text-faro-primary flex items-center gap-2">
@@ -202,115 +383,132 @@ export default function PredicasPage() {
                             </span>
                         </div>
 
-                        {/* Título */}
                         <h1
-                            className="font-black tracking-tight text-faro-on-surface leading-[0.92] mb-4"
+                            className="font-black tracking-tight text-faro-on-surface leading-[0.92] mb-3"
                             style={{ fontSize: "clamp(2.8rem, 6vw, 5.5rem)" }}
                         >
                             Prédicas &amp; <br />
-                            <span
-                                className="italic"
-                                style={{
-                                    background: "var(--faro-hero-cta-gradient)",
-                                    WebkitBackgroundClip: "text",
-                                    WebkitTextFillColor: "transparent",
-                                }}
-                            >
+                            <span className="italic" style={{ background: "var(--faro-hero-cta-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                                 Mensajes
                             </span>
                         </h1>
-                        <p className="text-base md:text-lg text-faro-on-surface-variant max-w-xl leading-relaxed">
+
+                        <p className="text-base md:text-lg text-faro-on-surface-variant max-w-xl leading-relaxed mb-4">
                             Alimento para el alma — explora los mensajes más recientes de nuestro canal de YouTube.
                         </p>
+
+                        {/* Contador de vistas del mes */}
+                        {viewedThisMonth > 0 && (
+                            <div className="inline-flex items-center gap-2 text-xs font-semibold text-faro-primary mb-2">
+                                <BookOpen size={13} />
+                                {viewedThisMonth} mensaje{viewedThisMonth !== 1 ? "s" : ""} visto{viewedThisMonth !== 1 ? "s" : ""} este mes
+                            </div>
+                        )}
+
+                        {/* Buscador */}
+                        <div className="relative max-w-md mt-2">
+                            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-faro-outline pointer-events-none" />
+                            <input
+                                ref={searchRef}
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Buscar por título o predicador…"
+                                className="w-full rounded-xl pl-10 pr-9 py-2.5 text-sm text-faro-on-surface placeholder:text-faro-outline outline-none focus:ring-2 focus:ring-faro-primary/30 transition-all"
+                                style={{ background: "var(--faro-surface-container)", border: "1px solid var(--faro-outline-variant)" }}
+                            />
+                            {search && (
+                                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-faro-outline hover:text-faro-on-surface transition-colors">
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </section>
 
                 {/* ── CONTENIDO ── */}
-                <section className="px-4 sm:px-6 md:px-8 xl:px-12 pb-20">
+                <section className="px-4 sm:px-6 md:px-8 xl:px-12 pb-24">
                     <div className="max-w-7xl mx-auto">
 
-                        {/* Estado: cargando */}
+                        {/* Cargando */}
                         {loading && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                                <SkeletonCard large />
-                                {[...Array(5)].map((_, i) => <SkeletonCard key={i} />)}
+                                {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
                             </div>
                         )}
 
-                        {/* Estado: error */}
+                        {/* Error */}
                         {!loading && error && (
                             <div className="text-center py-20">
-                                <Youtube size={56} className="mx-auto mb-4 text-faro-primary/30" />
-                                <h2 className="text-lg font-bold text-faro-on-surface mb-2">
-                                    No se pudieron cargar los videos
-                                </h2>
-                                <p className="text-sm text-faro-on-surface-variant mb-6">
-                                    Verifica tu conexión o intenta nuevamente.
-                                </p>
-                                <button
-                                    onClick={load}
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-faro-on-primary text-sm font-bold"
-                                    style={{ background: "var(--faro-cta-gradient)" }}
-                                >
+                                <Youtube size={52} className="mx-auto mb-4 text-faro-primary/30" />
+                                <h2 className="text-lg font-bold text-faro-on-surface mb-2">No se pudieron cargar los videos</h2>
+                                <p className="text-sm text-faro-on-surface-variant mb-6">Verifica tu conexión o intenta nuevamente.</p>
+                                <button onClick={load} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold" style={{ background: "var(--faro-cta-gradient)" }}>
                                     <RefreshCw size={15} /> Reintentar
                                 </button>
                             </div>
                         )}
 
-                        {/* Estado: sin videos */}
-                        {!loading && !error && videos.length === 0 && (
-                            <div className="text-center py-20">
-                                <Youtube size={56} className="mx-auto mb-4 text-faro-primary/30" />
-                                <h2 className="text-lg font-bold text-faro-on-surface mb-2">Sin videos disponibles</h2>
-                                <p className="text-sm text-faro-on-surface-variant">
-                                    El canal aún no tiene videos públicos o el feed no está disponible.
-                                </p>
+                        {/* Sin resultados de búsqueda */}
+                        {!loading && !error && filtered.length === 0 && search && (
+                            <div className="text-center py-16">
+                                <Search size={40} className="mx-auto mb-4 text-faro-primary/30" />
+                                <h2 className="text-base font-bold text-faro-on-surface mb-1">Sin resultados para "{search}"</h2>
+                                <p className="text-sm text-faro-on-surface-variant">Intenta con otro término.</p>
                             </div>
                         )}
 
-                        {/* Estado: videos cargados */}
-                        {!loading && !error && videos.length > 0 && (
+                        {/* Videos */}
+                        {!loading && !error && filtered.length > 0 && (
                             <>
-                                {/* Video destacado */}
+                                {/* Video destacado (solo sin búsqueda activa) */}
                                 {featured && (
                                     <div className="mb-8">
                                         <div className="flex items-center justify-between mb-4">
-                                            <h2 className="text-sm font-bold uppercase tracking-widest text-faro-primary">
-                                                Último mensaje
-                                            </h2>
-                                            <a
-                                                href={`https://www.youtube.com/${data?.channel}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-faro-outline hover:text-faro-primary transition-colors"
-                                            >
+                                            <h2 className="text-sm font-bold uppercase tracking-widest text-faro-primary">Último mensaje</h2>
+                                            <a href="https://www.youtube.com/@Ministeriosfarooficial" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-faro-outline hover:text-faro-primary transition-colors">
                                                 Ver canal <ExternalLink size={11} />
                                             </a>
                                         </div>
-                                        <VideoCard video={featured} featured />
+                                        <VideoCard
+                                            video={featured}
+                                            featured
+                                            watched={!!watched[featured.id]}
+                                            onPlay={() => openPlayer(featured)}
+                                            onShare={() => shareWA(featured)}
+                                            onCopy={() => copyLink(featured)}
+                                            copied={copied === featured.id}
+                                        />
                                     </div>
                                 )}
 
-                                {/* Grid de videos */}
+                                {/* Grid */}
                                 {rest.length > 0 && (
                                     <>
                                         <div className="flex items-center justify-between mb-4">
                                             <h2 className="text-sm font-bold uppercase tracking-widest text-faro-primary">
-                                                Más mensajes
+                                                {search ? `Resultados (${filtered.length})` : "Más mensajes"}
                                             </h2>
-                                            <span className="text-[11px] text-faro-outline">
-                                                {rest.length} video{rest.length !== 1 ? "s" : ""}
-                                            </span>
+                                            {!search && (
+                                                <span className="text-[11px] text-faro-outline">{rest.length} video{rest.length !== 1 ? "s" : ""}</span>
+                                            )}
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                                            {rest.map((v) => (
-                                                <VideoCard key={v.id} video={v} />
+                                            {rest.map(v => (
+                                                <VideoCard
+                                                    key={v.id}
+                                                    video={v}
+                                                    watched={!!watched[v.id]}
+                                                    onPlay={() => openPlayer(v)}
+                                                    onShare={() => shareWA(v)}
+                                                    onCopy={() => copyLink(v)}
+                                                    copied={copied === v.id}
+                                                />
                                             ))}
                                         </div>
                                     </>
                                 )}
 
-                                {/* Footer CTA */}
+                                {/* CTA */}
                                 <div className="mt-14 text-center">
                                     <a
                                         href="https://www.youtube.com/@Ministeriosfarooficial"
@@ -327,6 +525,16 @@ export default function PredicasPage() {
                     </div>
                 </section>
 
+                {/* ── REPRODUCTOR MODAL ── */}
+                {player && (
+                    <PlayerModal
+                        video={player}
+                        onClose={() => setPlayer(null)}
+                        onShare={() => shareWA(player)}
+                        onCopy={() => copyLink(player)}
+                        copied={copied === player.id}
+                    />
+                )}
             </main>
         </CmsPageOverride>
     );
