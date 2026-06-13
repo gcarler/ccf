@@ -129,7 +129,7 @@ function VideoCard({
                 {/* Badges */}
                 <div className="absolute top-2.5 left-2.5 flex gap-1.5">
                     {featured && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FF0000] text-white text-[9px] font-bold uppercase tracking-wider">
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm">
                             <Youtube size={9} /> Más reciente
                         </span>
                     )}
@@ -178,7 +178,7 @@ function VideoCard({
                         <button
                             onClick={(e) => { e.stopPropagation(); onShare(); }}
                             title="Compartir en WhatsApp"
-                            className="p-1.5 rounded-lg hover:bg-faro-primary/10 text-faro-outline hover:text-[#25D366] transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-faro-primary/10 text-faro-outline hover:text-faro-on-surface transition-colors"
                         >
                             <MessageCircle size={14} />
                         </button>
@@ -187,7 +187,7 @@ function VideoCard({
                             title="Copiar enlace"
                             className="p-1.5 rounded-lg hover:bg-faro-primary/10 text-faro-outline hover:text-faro-primary transition-colors"
                         >
-                            {copied ? <Check size={14} className="text-green-500" /> : <Link2 size={14} />}
+                            {copied ? <Check size={14} /> : <Link2 size={14} />}
                         </button>
                     </div>
                 </div>
