@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import {
     MousePointer2, Pencil, Square, Circle, Type,
@@ -25,27 +25,26 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const fabricCanvas = useRef<fabric.Canvas | null>(null);
+    const onCloseRef = useRef(onClose);
     const [tool, setTool] = useState<'select' | 'pencil' | 'rect' | 'circle' | 'text'>('select');
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const [isAiDrawing, setIsAiDrawing] = useState(false);
     const [zoom, setZoom] = useState(100);
 
-    const resizeCanvas = useCallback(() => {
-        const fc = fabricCanvas.current;
-        const container = containerRef.current;
-        if (!fc || !container) return;
-        fc.setDimensions({ width: container.clientWidth, height: container.clientHeight });
-        fc.renderAll();
-    }, []);
+    // Keep onClose ref fresh without triggering canvas re-init
+    useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
     // Inicialización del Canvas
     useEffect(() => {
-        if (!isOpen || !canvasRef.current || !containerRef.current) return;
+        if (!isOpen || !canvasRef.current) return;
 
-        const container = containerRef.current;
+        // Use window dimensions as initial size; ResizeObserver will correct immediately
+        const w = window.innerWidth;
+        const h = window.innerHeight - 44; // minus header
+
         const canvas = new fabric.Canvas(canvasRef.current, {
-            width: container.clientWidth,
-            height: container.clientHeight,
+            width: w,
+            height: h,
             backgroundColor: '#ffffff',
             preserveObjectStacking: true,
         });
@@ -59,7 +58,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                     await canvas.loadFromJSON(JSON.parse(data.elements_json));
                     canvas.renderAll();
                 }
-            } catch { /* empty canvas if no data */ }
+            } catch { /* empty canvas is fine */ }
         };
         load();
 
@@ -80,14 +79,17 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         canvas.on('object:added', triggerSave);
         canvas.on('object:removed', triggerSave);
 
-        const ro = new ResizeObserver(() => {
+        // Resize canvas when container changes size
+        const container = containerRef.current;
+        const ro = container ? new ResizeObserver(() => {
+            if (!container) return;
             canvas.setDimensions({ width: container.clientWidth, height: container.clientHeight });
             canvas.renderAll();
-        });
-        ro.observe(container);
+        }) : null;
+        if (container && ro) ro.observe(container);
 
         const handleKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape') onCloseRef.current();
             if ((e.key === 'Delete' || e.key === 'Backspace') && document.activeElement?.tagName !== 'INPUT') {
                 canvas.remove(...canvas.getActiveObjects());
                 canvas.discardActiveObject();
@@ -97,12 +99,13 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         window.addEventListener('keydown', handleKey);
 
         return () => {
-            ro.disconnect();
+            ro?.disconnect();
             window.removeEventListener('keydown', handleKey);
             canvas.dispose();
             fabricCanvas.current = null;
         };
-    }, [isOpen, project_id, token, onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, project_id, token]);
 
     const setActiveTool = (t: typeof tool) => {
         const fc = fabricCanvas.current;
