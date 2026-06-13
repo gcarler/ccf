@@ -8,7 +8,7 @@ from backend.api import (academy, academy_core, admin, agenda, agenda_core, agen
                          evangelism_notifications, evangelism_rankings, evangelism_reports,
                          finance, governance,
                          graph, kernel, messaging, prayer, projects,
-                         public, spiritual_life, support, system, tables, workspace)
+                         public, spiritual_life, support, system, tables, workspace, youtube)
 
 __all__ = [
     "academy",
@@ -48,4 +48,5 @@ __all__ = [
     "system",
     "tables",
     "workspace",
+    "youtube",
 ]

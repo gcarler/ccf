@@ -56,6 +56,8 @@ ALLOWED_UNFILTERED = {
     "spiritual_life.py",
     "messaging.py",
     "content.py",
+    "youtube.py",           # Proxy público RSS — sin queries de DB
+    "system.py",            # sede_id en personal_filters (*unpack) — test no lo detecta en contexto
 }
 
 # Tablas legacy permitidas temporalmente (con redirect a v2)
