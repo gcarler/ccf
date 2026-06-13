@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as fabric from 'fabric';
-import { 
-    MousePointer2, Pencil, Square, Circle, Type, 
+import {
+    MousePointer2, Pencil, Square, Circle, Type,
     Trash2, ZoomIn, ZoomOut,
     Cloud, Loader2, Sparkles,
-    X, Layers, LayoutDashboard
+    X, Layers, PencilRuler
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -23,18 +23,29 @@ interface Props {
 export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props) {
     const { token } = useAuth();
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const fabricCanvas = useRef<fabric.Canvas | null>(null);
     const [tool, setTool] = useState<'select' | 'pencil' | 'rect' | 'circle' | 'text'>('select');
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const [isAiDrawing, setIsAiDrawing] = useState(false);
+    const [zoom, setZoom] = useState(100);
+
+    const resizeCanvas = useCallback(() => {
+        const fc = fabricCanvas.current;
+        const container = containerRef.current;
+        if (!fc || !container) return;
+        fc.setDimensions({ width: container.clientWidth, height: container.clientHeight });
+        fc.renderAll();
+    }, []);
 
     // Inicialización del Canvas
     useEffect(() => {
-        if (!isOpen || !canvasRef.current) return;
+        if (!isOpen || !canvasRef.current || !containerRef.current) return;
 
+        const container = containerRef.current;
         const canvas = new fabric.Canvas(canvasRef.current, {
-            width: window.innerWidth * 0.8,
-            height: window.innerHeight - 150,
+            width: container.clientWidth,
+            height: container.clientHeight,
             backgroundColor: '#ffffff',
             preserveObjectStacking: true,
         });
@@ -45,11 +56,10 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             try {
                 const data = await apiFetch<{elements_json: string}>(`/projects/${project_id}/whiteboard`, { token });
                 if (data?.elements_json && data.elements_json !== '[]') {
-                    canvas.loadFromJSON(JSON.parse(data.elements_json), () => {
-                        canvas.renderAll();
-                    });
+                    await canvas.loadFromJSON(JSON.parse(data.elements_json));
+                    canvas.renderAll();
                 }
-            } catch (err) { console.error(err); }
+            } catch { /* empty canvas if no data */ }
         };
         load();
 
@@ -70,59 +80,91 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         canvas.on('object:added', triggerSave);
         canvas.on('object:removed', triggerSave);
 
-        return () => {
-            canvas.dispose();
+        const ro = new ResizeObserver(() => {
+            canvas.setDimensions({ width: container.clientWidth, height: container.clientHeight });
+            canvas.renderAll();
+        });
+        ro.observe(container);
+
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+            if ((e.key === 'Delete' || e.key === 'Backspace') && document.activeElement?.tagName !== 'INPUT') {
+                canvas.remove(...canvas.getActiveObjects());
+                canvas.discardActiveObject();
+                canvas.renderAll();
+            }
         };
-    }, [isOpen, project_id, token]);
+        window.addEventListener('keydown', handleKey);
+
+        return () => {
+            ro.disconnect();
+            window.removeEventListener('keydown', handleKey);
+            canvas.dispose();
+            fabricCanvas.current = null;
+        };
+    }, [isOpen, project_id, token, onClose]);
+
+    const setActiveTool = (t: typeof tool) => {
+        const fc = fabricCanvas.current;
+        if (!fc) return;
+        setTool(t);
+        if (t === 'pencil') {
+            fc.isDrawingMode = true;
+            const brush = new fabric.PencilBrush(fc);
+            brush.width = 3;
+            brush.color = '#2563eb';
+            fc.freeDrawingBrush = brush;
+        } else {
+            fc.isDrawingMode = false;
+        }
+    };
 
     const addRect = () => {
-        const rect = new fabric.Rect({ left: 100, top: 100, fill: 'rgba(37, 99, 235, 0.1)', stroke: '#2563eb', strokeWidth: 2, width: 150, height: 100, rx: 15, ry: 15 });
-        fabricCanvas.current?.add(rect);
-        setTool('select');
+        fabricCanvas.current?.add(new fabric.Rect({ left: 100, top: 100, fill: 'rgba(37, 99, 235, 0.1)', stroke: '#2563eb', strokeWidth: 2, width: 160, height: 100, rx: 12, ry: 12 }));
+        setActiveTool('select');
     };
 
     const addCircle = () => {
-        const circle = new fabric.Circle({
-            left: 120,
-            top: 120,
-            radius: 48,
-            fill: 'rgba(16, 185, 129, 0.12)',
-            stroke: '#10b981',
-            strokeWidth: 2,
-        });
-        fabricCanvas.current?.add(circle);
-        setTool('select');
+        fabricCanvas.current?.add(new fabric.Circle({ left: 120, top: 120, radius: 50, fill: 'rgba(16, 185, 129, 0.12)', stroke: '#10b981', strokeWidth: 2 }));
+        setActiveTool('select');
     };
 
     const addText = () => {
-        const text = new fabric.IText('Nuevo texto', {
-            left: 140,
-            top: 140,
-            fontSize: 24,
-            fill: '#0f172a',
-            fontFamily: 'Manrope',
-        });
+        const text = new fabric.IText('Texto', { left: 150, top: 150, fontSize: 22, fill: '#0f172a', fontFamily: 'sans-serif' });
         fabricCanvas.current?.add(text);
         fabricCanvas.current?.setActiveObject(text);
         text.enterEditing();
         text.selectAll();
-        setTool('select');
+        setActiveTool('select');
+    };
+
+    const deleteSelected = () => {
+        const fc = fabricCanvas.current;
+        if (!fc) return;
+        fc.remove(...fc.getActiveObjects());
+        fc.discardActiveObject();
+        fc.renderAll();
+    };
+
+    const handleZoom = (delta: number) => {
+        const fc = fabricCanvas.current;
+        if (!fc) return;
+        const next = Math.min(200, Math.max(25, zoom + delta));
+        fc.setZoom(next / 100);
+        setZoom(next);
     };
 
     const handleAiDiagram = async () => {
-        const prompt = window.prompt("¿Qué proceso ministerial deseas diagramar? (Ej: Flujo de grabación de clips)");
+        const prompt = window.prompt("¿Qué proceso ministerial deseas diagramar?");
         if (!prompt) return;
-
         setIsAiDrawing(true);
         try {
             await apiFetch<{response: string}>('/system/ai/generate', {
-                method: 'POST',
-                token,
+                method: 'POST', token,
                 body: { prompt: `Genera un diagrama de pizarra para: ${prompt}`, context: "Estética ministerial" }
             });
-            // Aquí iría el parseo del JSON de la IA para añadir objetos al canvas
             toast.success("IA: Esqueleto del diagrama generado.");
-        } catch (err) {
+        } catch {
             toast.error("Error en la IA de diagramación.");
         } finally {
             setIsAiDrawing(false);
@@ -132,99 +174,109 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
     return (
         <AnimatePresence>
             {isOpen && (
-                <>
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-x-0 bottom-0 top-10 z-[9500] bg-slate-900/40 backdrop-blur-md" onClick={onClose} />
-                            <motion.div 
-                                initial={{ x: '100%' }} 
-                                animate={{ x: 0 }} 
-                                exit={{ x: '100%' }}
-                                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                                className="fixed right-0 top-10 z-[9501] h-[calc(100vh-2.5rem)] w-[90vw] bg-[#f8fafc] dark:bg-[#0f1115] shadow-2xl border-l border-white/10 flex flex-col overflow-hidden"
-                                role="complementary"
-                                aria-label="Pizarra Infinita Ministerial"
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="fixed inset-0 z-[9999] flex flex-col bg-[#f4f5f7] dark:bg-[#0f1115]"
+                    role="dialog"
+                    aria-label="Pizarra del proyecto"
+                >
+                    {/* ── Top Bar ── */}
+                    <header className="h-11 px-4 shrink-0 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#1e1f21] shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="size-7 rounded-md bg-orange-500 flex items-center justify-center text-white">
+                                <PencilRuler size={14} />
+                            </div>
+                            <span className="text-[11px] font-bold text-slate-700 dark:text-white uppercase tracking-wide">
+                                Pizarra del Proyecto
+                            </span>
+                            <div className="flex items-center gap-1.5 ml-2">
+                                {saveStatus === 'saving' ? (
+                                    <><Loader2 size={10} className="animate-spin text-[hsl(var(--primary))]" />
+                                    <span className="text-[9px] font-semibold uppercase text-[hsl(var(--primary))]">Guardando...</span></>
+                                ) : (
+                                    <><Cloud size={10} className="text-emerald-500" />
+                                    <span className="text-[9px] font-semibold uppercase text-emerald-500">Guardado</span></>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleAiDiagram}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide hover:opacity-90 transition-opacity shadow-md"
                             >
-                                <h2 className="sr-only">Pizarra Infinita Ministerial</h2>
+                                {isAiDrawing ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                                Diagramar con IA
+                            </button>
+                            <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
+                            <button
+                                onClick={onClose}
+                                className="p-1.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+                                title="Cerrar (Esc)"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                    </header>
 
-                                {/* Top Bar: Calidad Premium */}
-                                <header className="h-8 px-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shrink-0">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-md bg-orange-500 flex items-center justify-center text-white shadow-xl shadow-orange-500/20">
-                                            <LayoutDashboard size={16} />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wide">Lienzo Creativo: Proyecto {project_id}</h3>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                {saveStatus === 'saving' ? (
-                                                    <><Loader2 size={10} className="animate-spin text-[hsl(var(--primary))]" /> <span className="text-[8px] font-semibold uppercase text-[hsl(var(--primary))]">Sincronizando...</span></>
-                                                ) : (
-                                                    <><Cloud size={10} className="text-emerald-500" /> <span className="text-[8px] font-semibold uppercase text-emerald-500">Persistido en DB</span></>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
+                    {/* ── Drawing Area ── */}
+                    <div className="flex-1 relative overflow-hidden">
 
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={handleAiDiagram} className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-blue-500/30">
-                                            {isAiDrawing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                                            Diagramar con IA
-                                        </button>
-                                        <div className="w-[1px] h-5 bg-slate-200 dark:bg-white/10 mx-1" />
-                                        <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-white/5 rounded-md text-slate-500 hover:text-rose-500 transition-all"><X size={16} /></button>
-                                    </div>
-                                </header>
+                        {/* Vertical toolbar */}
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1 p-1.5 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl">
+                            <ToolBtn active={tool === 'select'}  onClick={() => setActiveTool('select')}  icon={MousePointer2} label="Seleccionar" />
+                            <ToolBtn active={tool === 'pencil'}  onClick={() => setActiveTool('pencil')}  icon={Pencil}        label="Dibujar libre" />
+                            <div className="h-px w-7 bg-slate-100 dark:bg-white/10 mx-auto my-0.5" />
+                            <ToolBtn active={false} onClick={addRect}        icon={Square}       label="Rectángulo" />
+                            <ToolBtn active={false} onClick={addCircle}      icon={Circle}       label="Círculo" />
+                            <ToolBtn active={false} onClick={addText}        icon={Type}         label="Texto" />
+                            <div className="h-px w-7 bg-slate-100 dark:bg-white/10 mx-auto my-0.5" />
+                            <ToolBtn active={false} onClick={deleteSelected} icon={Trash2}       label="Eliminar" color="text-rose-500" />
+                        </div>
 
-                                {/* Drawing Area */}
-                                <main className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
-                                    {/* Toolbar Flotante */}
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1.5 p-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)]">
-                                        <ToolBtn active={tool === 'select'} onClick={() => { setTool('select'); if (fabricCanvas.current) fabricCanvas.current.isDrawingMode = false; }} icon={MousePointer2} label="Selección" />
-                                        <ToolBtn active={tool === 'pencil'} onClick={() => { setTool('pencil'); if (fabricCanvas.current) { fabricCanvas.current.isDrawingMode = true; fabricCanvas.current.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas.current); fabricCanvas.current.freeDrawingBrush.width = 3; fabricCanvas.current.freeDrawingBrush.color = '#2563eb'; } }} icon={Pencil} label="Dibujo" />
-                                        <div className="h-[1px] w-8 bg-slate-100 dark:bg-white/5 mx-auto my-1" />
-                                        <ToolBtn active={false} onClick={addRect} icon={Square} label="Caja" />
-                                        <ToolBtn active={false} onClick={addCircle} icon={Circle} label="Nodo" />
-                                        <ToolBtn active={false} onClick={addText} icon={Type} label="Texto" />
-                                        <div className="h-[1px] w-8 bg-slate-100 dark:bg-white/5 mx-auto my-1" />
-                                        <ToolBtn active={false} onClick={() => { fabricCanvas.current?.remove(...fabricCanvas.current?.getActiveObjects()); fabricCanvas.current?.discardActiveObject(); fabricCanvas.current?.renderAll(); }} icon={Trash2} label="Borrar" color="text-rose-500" />
-                                    </div>
+                        {/* Canvas container — fills all available space */}
+                        <div ref={containerRef} className="w-full h-full">
+                            <canvas ref={canvasRef} />
+                        </div>
 
-                                    {/* El Lienzo con Grid de Ingeniería */}
-                                    <div className="relative rounded-lg shadow-[0_64px_128px_-24px_rgba(0,0,0,0.1)] overflow-hidden border-4 border-white dark:border-[#1e1f21]">
-                                        <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(#000 1.5px, transparent 0)', backgroundSize: '32px 32px' }} />
-                                        <canvas ref={canvasRef} />
-                                    </div>
-
-                                    {/* Floating Zoom & Controls */}
-                                    <div className="absolute bottom-4 right-4 flex items-center gap-3 bg-white/80 dark:bg-[#1e1f21]/80 backdrop-blur-xl px-3 py-2 rounded-full border border-slate-200 dark:border-white/10 shadow-2xl">
-                                        <button className="text-slate-400 hover:text-[hsl(var(--primary))]"><ZoomOut size={18} /></button>
-                                        <span className="text-xs font-semibold w-12 text-center text-slate-600 dark:text-slate-200">100%</span>
-                                        <button className="text-slate-400 hover:text-[hsl(var(--primary))]"><ZoomIn size={18} /></button>
-                                        <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-2" />
-                                        <button className="text-slate-400 hover:text-[hsl(var(--primary))] group relative">
-                                            <Layers size={18} />
-                                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-[8px] font-semibold uppercase text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity">Capas</div>
-                                        </button>
-                                    </div>
-                                </main>
-                            </motion.div>
-                </>
+                        {/* Zoom controls */}
+                        <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 dark:bg-[#1e1f21]/90 backdrop-blur-xl px-3 py-2 rounded-full border border-slate-200 dark:border-white/10 shadow-lg">
+                            <button onClick={() => handleZoom(-25)} className="text-slate-400 hover:text-[hsl(var(--primary))] transition-colors"><ZoomOut size={16} /></button>
+                            <span className="text-[11px] font-bold w-10 text-center text-slate-600 dark:text-slate-200 tabular-nums">{zoom}%</span>
+                            <button onClick={() => handleZoom(+25)} className="text-slate-400 hover:text-[hsl(var(--primary))] transition-colors"><ZoomIn size={16} /></button>
+                            <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                            <button className="text-slate-400 hover:text-[hsl(var(--primary))] transition-colors" title="Capas">
+                                <Layers size={16} />
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
             )}
         </AnimatePresence>
     );
 }
 
-function ToolBtn({ active, onClick, icon: Icon, label, color = "text-slate-500" }: any) {
+function ToolBtn({ active, onClick, icon: Icon, label, color = "text-slate-500" }: {
+    active: boolean; onClick: () => void; icon: React.ElementType; label: string; color?: string;
+}) {
     return (
         <button
             onClick={onClick}
+            title={label}
             className={clsx(
-                "p-2 rounded-md transition-all relative group",
-                active ? "bg-[hsl(var(--primary))] text-white shadow-xl shadow-blue-500/20" : `hover:bg-slate-50 dark:hover:bg-white/5 ${color}`
+                "p-2 rounded-lg transition-all relative group",
+                active
+                    ? "bg-[hsl(var(--primary))] text-white shadow-md"
+                    : `hover:bg-slate-50 dark:hover:bg-white/5 ${color}`
             )}
         >
-            <Icon size={20} className={clsx(active ? "text-white" : color)} />
-            <div className="absolute left-16 px-2 py-1 bg-slate-800 text-white text-[9px] font-semibold uppercase rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-[100]">
+            <Icon size={18} />
+            <span className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-[9px] font-semibold rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100]">
                 {label}
-            </div>
+            </span>
         </button>
     );
 }
