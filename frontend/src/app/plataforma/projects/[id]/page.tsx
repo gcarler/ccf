@@ -34,7 +34,7 @@ import { DSMetric } from '@/design/components/DSMetric';
 import TaskTableView from '@/components/projects/TaskTableView';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectActivityItem, ProjectMilestoneRecord, ProjectTaskRecord } from '@/types/projects';
-import type { PhaseDef } from '@/components/projects/ProjectKanbanBoard';
+import { ProjectKanbanBoard, type PhaseDef } from '@/components/projects/ProjectKanbanBoard';
 import { PhaseManagerDrawer } from '@/components/projects/PhaseManagerDrawer';
 import { toast } from 'sonner';
 import UserSelect from '@/components/ui/UserSelect';
@@ -333,7 +333,7 @@ export default function ProjectDetailPage() {
             />
 
             <div className="flex min-h-0 flex-1 overflow-hidden">
-            <main className="flex-1 overflow-y-auto p-4 space-y-3">
+            <main className={(viewType === 'board' || viewType === 'kanban') ? "flex-1 overflow-hidden" : "flex-1 overflow-y-auto p-4 space-y-3"}>
                 {editingProject ? (
                     <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10 space-y-3">
                         <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600">Editar Proyecto</h3>
@@ -544,36 +544,16 @@ export default function ProjectDetailPage() {
                             </div>
                         )}
 
-                        {(viewType === 'board' || viewType === 'kanban') && (
-                            <div className="flex gap-3 overflow-x-auto pb-4">
-                                {phases.map((phase) => {
-                                    const columnTasks = tasks.filter((task) => (task.status || 'todo') === phase.slug);
-                                    return (
-                                        <section key={phase.slug} className="w-80 shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-white/10 dark:bg-[#252528]">
-                                            <div className="mb-3 flex items-center justify-between px-1">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="size-2 rounded-full" style={{ backgroundColor: phase.color }} />
-                                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{phase.name}</p>
-                                                </div>
-                                                <span className="font-semibold text-slate-400">{columnTasks.length}</span>
-                                            </div>
-                                            <div className="space-y-2">
-                                                {columnTasks.map((task) => (
-                                                    <article key={task.id} onClick={() => handleOpenTask(task)} className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-2 shadow-sm dark:border-white/10 dark:bg-[#1E1F21] cursor-pointer transition-all duration-300 hover:border-blue-300 active:scale-[0.99]">
-                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{task.title}</p>
-                                                        <div className="mt-2 flex items-center justify-between gap-2">
-                                                            <span className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-100 text-slate-600 dark:border-white/10">
-                                                                {phase.name}
-                                                            </span>
-                                                            <button onClick={(event) => { event.stopPropagation(); handleMoveTask(task); }} className="rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-semibold uppercase text-slate-500 dark:border-white/10">Avanzar</button>
-                                                        </div>
-                                                    </article>
-                                                ))}
-                                                {columnTasks.length === 0 && <div className="rounded-md border border-dashed border-slate-200 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:border-white/10">Vacio</div>}
-                                            </div>
-                                        </section>
-                                    );
-                                })}
+                        {(viewType === 'board' || viewType === 'kanban') && project && (
+                            <div className="h-full">
+                                <ProjectKanbanBoard
+                                    project={project}
+                                    tasks={tasks}
+                                    phases={phases}
+                                    onTasksChange={setTasks}
+                                    onOpenTask={handleOpenTask}
+                                    onAddTask={() => setShowTaskModal(true)}
+                                />
                             </div>
                         )}
 

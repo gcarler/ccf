@@ -46,7 +46,7 @@ export function SortableTaskCard({ task, onOpen }: Props) {
 
     // Initials from assignee name
     const assigneeInitials = task.assignee_name
-        ? task.assignee_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+        ? task.assignee_name.split(/\s+/).filter(Boolean).map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
         : task.assignee?.substring(0, 2).toUpperCase() || '?';
 
     const commentCount = task.comments_count ?? task.comments?.length ?? 0;
