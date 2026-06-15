@@ -4,12 +4,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useParams } from "next/navigation";
 import * as fabric from "fabric";
 import {
+    Bold,
     Circle,
     Cloud,
     Download,
     Eraser,
     History,
+    Italic,
     LayoutDashboard,
+    Layers,
     Loader2,
     MousePointer2,
     Pencil,
@@ -19,6 +22,11 @@ import {
     Square,
     Trash2,
     Type,
+    Grid3x3,
+    BringToFront,
+    SendToBack,
+    Copy,
+    EyeOff,
 } from "lucide-react";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import clsx from "clsx";
@@ -27,6 +35,8 @@ import {
     upsertWhiteboard,
     whiteboardCanvasKey,
     WhiteboardRecord,
+    GridStyle,
+    GridSize,
 } from "@/lib/whiteboards";
 
 type WhiteboardTool = "select" | "draw";
@@ -35,6 +45,60 @@ interface LayerRow {
     index: number;
     type: string;
     label: string;
+}
+
+const COLOR_PRESETS = [
+    "#2563eb", // blue-600
+    "#10b981", // emerald-500
+    "#f59e0b", // amber-500
+    "#f43f5e", // rose-500
+    "#8b5cf6", // violet-500
+    "#f97316", // orange-500
+    "#64748b", // slate-500
+    "#ffffff", // white
+];
+
+const FONT_FAMILIES = [
+    { label: "Manrope", value: "Manrope" },
+    { label: "Inter", value: "Inter" },
+    { label: "Georgia", value: "Georgia" },
+    { label: "Courier New", value: "Courier New" },
+    { label: "Arial", value: "Arial" },
+];
+
+const FONT_SIZE_PRESETS = [12, 14, 16, 18, 24, 32, 48, 64];
+
+const GRID_OPTIONS: { label: string; value: GridStyle; icon: React.ElementType }[] = [
+    { label: "Puntos", value: "dots", icon: Grid3x3 },
+    { label: "Líneas", value: "lines", icon: Grid3x3 },
+    { label: "Renglones", value: "ruled", icon: Grid3x3 },
+    { label: "Sin grilla", value: "none", icon: EyeOff },
+];
+
+const GRID_SIZES: { label: string; value: GridSize }[] = [
+    { label: "16px", value: 16 },
+    { label: "24px", value: 24 },
+    { label: "32px", value: 32 },
+];
+
+function getGridBackground(style: GridStyle, size: GridSize, isDark: boolean): string {
+    const color = isDark ? "#1e293b" : "#e5e7eb";
+    const dotColor = isDark ? "#334155" : "#cbd5e1";
+    switch (style) {
+        case "dots":
+            return `radial-gradient(${dotColor} 1px, transparent 1px)`;
+        case "lines":
+            return `
+                linear-gradient(90deg, ${color} 1px, transparent 1px),
+                linear-gradient(0deg, ${color} 1px, transparent 1px)
+            `;
+        case "ruled":
+            return `
+                linear-gradient(0deg, ${color} 1px, transparent 1px)
+            `;
+        case "none":
+            return "none";
+    }
 }
 
 export default function WhiteboardSessionPage() {
@@ -50,8 +114,58 @@ export default function WhiteboardSessionPage() {
     const [tool, setTool] = useState<WhiteboardTool>("select");
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const [layers, setLayers] = useState<LayerRow[]>([]);
+    const [selectedObjectProps, setSelectedObjectProps] = useState<Record<string, unknown> | null>(null);
+
+    // Grid state
+    const [gridStyle, setGridStyle] = useState<GridStyle>("dots");
+    const [gridSize, setGridSize] = useState<GridSize>(24);
+    const [showGridMenu, setShowGridMenu] = useState(false);
+
+    // Fill/Stroke/Text color state
+    const [fillColor, setFillColor] = useState("#2563eb");
+    const [strokeColor, setStrokeColor] = useState("#2563eb");
+    const [textColor, setTextColor] = useState("#0f172a");
+
+    // Text properties
+    const [textFontFamily, setTextFontFamily] = useState("Manrope");
+    const [textFontSize, setTextFontSize] = useState(24);
+    const [textBold, setTextBold] = useState(false);
+    const [textItalic, setTextItalic] = useState(false);
+
+    // Stroke width & opacity
+    const [strokeWidth, setStrokeWidth] = useState(2);
+    const [opacity, setOpacity] = useState(100);
+
+    // Position & size
+    const [objLeft, setObjLeft] = useState(0);
+    const [objTop, setObjTop] = useState(0);
+    const [objWidth, setObjWidth] = useState(0);
+    const [objHeight, setObjHeight] = useState(0);
+
+    const [isDark, setIsDark] = useState(false);
 
     const storageKey = useMemo(() => whiteboardCanvasKey(id || "unknown"), [id]);
+
+    // Detect dark mode
+    useEffect(() => {
+        const check = () => {
+            setIsDark(document.documentElement.classList.contains("dark"));
+        };
+        check();
+        const observer = new MutationObserver(check);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+        return () => observer.disconnect();
+    }, []);
+
+    // Close grid menu on outside click
+    useEffect(() => {
+        if (!showGridMenu) return;
+        const raf = requestAnimationFrame(() => {
+            const handler = () => setShowGridMenu(false);
+            window.addEventListener("click", handler, { once: true });
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [showGridMenu]);
 
     const syncLayers = useCallback(() => {
         const canvas = fabricCanvas.current;
@@ -62,6 +176,43 @@ export default function WhiteboardSessionPage() {
             label: getObjectLabel(object, index),
         })).reverse();
         setLayers(next);
+    }, []);
+
+    const updateSelectedProps = useCallback(() => {
+        const canvas = fabricCanvas.current;
+        const active = canvas?.getActiveObject();
+        if (!active) {
+            setSelectedObjectProps(null);
+            return;
+        }
+        setSelectedObjectProps({ type: active.type });
+        setFillColor((active.fill as string) || "#2563eb");
+        setStrokeColor((active.stroke as string) || "#2563eb");
+        setStrokeWidth((active.strokeWidth as number) || 2);
+        setOpacity(Math.round(((active.opacity as number) ?? 1) * 100));
+        setObjLeft(Math.round((active.left as number) || 0));
+        setObjTop(Math.round((active.top as number) || 0));
+        setObjWidth(Math.round((active.width as number) || 0));
+        setObjHeight(Math.round((active.height as number) || 0));
+
+        if (active.type === "i-text" || active.type === "textbox") {
+            const textObj = active as fabric.IText;
+            setTextFontFamily(textObj.fontFamily || "Manrope");
+            setTextFontSize(textObj.fontSize || 24);
+            setTextBold(textObj.fontWeight === "bold");
+            setTextItalic(!!textObj.fontStyle);
+        }
+    }, []);
+
+    const applyProperty = useCallback((key: string, value: unknown) => {
+        const canvas = fabricCanvas.current;
+        const active = canvas?.getActiveObject();
+        if (!active) return;
+        active.set(key as keyof fabric.FabricObject, value as fabric.FabricObject[keyof fabric.FabricObject]);
+        canvas?.renderAll();
+        // trigger save
+        const saveEvent = { key, value };
+        canvas?.fire("object:modified", saveEvent as unknown as fabric.ModifiedEvent<fabric.TPointerEvent> | undefined);
     }, []);
 
     const persistCanvas = useCallback((status: "saving" | "saved" = "saving") => {
@@ -83,18 +234,23 @@ export default function WhiteboardSessionPage() {
                 description: existing?.description || description,
                 created_at: existing?.created_at || now,
                 updated_at: now,
+                gridStyle,
+                gridSize,
             });
             setSaveStatus("saved");
             window.setTimeout(() => setSaveStatus("idle"), 1600);
         }, 350);
-    }, [description, id, storageKey, title]);
+    }, [description, gridSize, gridStyle, id, storageKey, title]);
 
+    // ── Load board metadata ──
     useEffect(() => {
         if (typeof window === "undefined" || !id) return;
         const board = readWhiteboards(window.localStorage).find((item) => item.id === id);
         if (board) {
             setTitle(board.title);
             setDescription(board.description || "");
+            if (board.gridStyle) setGridStyle(board.gridStyle);
+            if (board.gridSize) setGridSize(board.gridSize);
         } else {
             const now = new Date().toISOString();
             const fallback: WhiteboardRecord = {
@@ -108,6 +264,7 @@ export default function WhiteboardSessionPage() {
         }
     }, [id]);
 
+    // ── Init Fabric canvas ──
     useEffect(() => {
         if (!canvasRef.current || typeof window === "undefined") return;
 
@@ -128,6 +285,7 @@ export default function WhiteboardSessionPage() {
         resizeCanvas();
         window.addEventListener("resize", resizeCanvas);
 
+        // Load saved data
         const saved = window.localStorage.getItem(storageKey);
         if (saved) {
             restoringRef.current = true;
@@ -154,6 +312,9 @@ export default function WhiteboardSessionPage() {
         canvas.on("object:added", handleChanged);
         canvas.on("object:modified", handleChanged);
         canvas.on("object:removed", handleChanged);
+        canvas.on("selection:created", updateSelectedProps);
+        canvas.on("selection:updated", updateSelectedProps);
+        canvas.on("selection:cleared", () => setSelectedObjectProps(null));
 
         return () => {
             if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
@@ -161,7 +322,33 @@ export default function WhiteboardSessionPage() {
             canvas.dispose();
             fabricCanvas.current = null;
         };
-    }, [persistCanvas, storageKey, syncLayers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // ── Keyboard shortcuts ──
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            // Ignore if focus is in an input/textarea
+            const tag = (e.target as HTMLElement)?.tagName;
+            if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+            const canvas = fabricCanvas.current;
+            if (!canvas) return;
+
+            if (e.key === "v" || e.key === "V") activateTool("select");
+            else if (e.key === "p" || e.key === "P") activateTool("draw");
+            else if (e.key === "r" || e.key === "R") addRect();
+            else if (e.key === "c" || e.key === "C") addCircle();
+            else if (e.key === "t" || e.key === "T") addText();
+            else if (e.key === "Delete" || e.key === "Backspace") {
+                removeSelection();
+                e.preventDefault();
+            }
+        };
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const activateTool = (next: WhiteboardTool) => {
         const canvas = fabricCanvas.current;
@@ -244,6 +431,35 @@ export default function WhiteboardSessionPage() {
         canvas.requestRenderAll();
     };
 
+    const duplicateSelection = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        const active = canvas.getActiveObject();
+        if (!active) return;
+        active.clone().then((cloned: fabric.FabricObject) => {
+            cloned.set({ left: (cloned.left ?? 0) + 40, top: (cloned.top ?? 0) + 40 });
+            canvas.add(cloned);
+            canvas.setActiveObject(cloned);
+            canvas.renderAll();
+        });
+    };
+
+    const bringForward = () => {
+        const canvas = fabricCanvas.current;
+        const active = canvas?.getActiveObject();
+        if (!active) return;
+        (active as unknown as { bringForward: () => void }).bringForward();
+        canvas?.renderAll();
+    };
+
+    const sendBackward = () => {
+        const canvas = fabricCanvas.current;
+        const active = canvas?.getActiveObject();
+        if (!active) return;
+        (active as unknown as { sendBackwards: () => void }).sendBackwards();
+        canvas?.renderAll();
+    };
+
     const focusLayer = (index: number) => {
         const canvas = fabricCanvas.current;
         const object = canvas?.getObjects()[index];
@@ -272,17 +488,24 @@ export default function WhiteboardSessionPage() {
 
     const saveNow = () => persistCanvas("saving");
 
+    const isTextSelected = selectedObjectProps?.type === "i-text" || selectedObjectProps?.type === "textbox";
+    const isObjectSelected = selectedObjectProps !== null;
+
     return (
         <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0b0d11]">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: "CCF Tools", icon: LayoutDashboard, href: "/whiteboard" },
+                    { label: "CCF Tools", icon: LayoutDashboard, href: "/plataforma/whiteboard" },
                     { label: title, icon: Sparkles },
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5">
-                            {saveStatus === "saving" ? <Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" /> : <Cloud size={12} className="text-emerald-500" />}
+                            {saveStatus === "saving" ? (
+                                <Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" />
+                            ) : (
+                                <Cloud size={12} className="text-emerald-500" />
+                            )}
                             {saveStatus === "saving" ? "Guardando" : saveStatus === "saved" ? "Guardado" : "Local"}
                         </div>
                         <button onClick={copyShareLink} className="p-2 text-slate-400 transition-all hover:text-[hsl(var(--primary))]" title="Copiar enlace">
@@ -299,52 +522,350 @@ export default function WhiteboardSessionPage() {
             />
 
             <div className="relative flex flex-1 overflow-hidden">
-                <div className="absolute left-6 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 rounded-lg border border-slate-200 bg-white/90 p-2 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/90">
-                    <ToolbarButton icon={MousePointer2} active={tool === "select"} onClick={() => activateTool("select")} label="Seleccionar" />
-                    <ToolbarButton icon={Pencil} active={tool === "draw"} onClick={() => activateTool("draw")} label="Dibujo libre" />
-                    <ToolbarButton icon={Square} active={false} onClick={addRect} label="Rectangulo" />
-                    <ToolbarButton icon={Circle} active={false} onClick={addCircle} label="Circulo" />
-                    <ToolbarButton icon={Type} active={false} onClick={addText} label="Texto" />
+                {/* ── Left toolbar ── */}
+                <div className="absolute left-6 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 rounded-xl border border-slate-200 bg-white/90 p-2 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/90">
+                    <ToolbarButton icon={MousePointer2} active={tool === "select"} onClick={() => activateTool("select")} label="Seleccionar (V)" />
+                    <ToolbarButton icon={Pencil} active={tool === "draw"} onClick={() => activateTool("draw")} label="Dibujo libre (P)" />
                     <div className="mx-2 my-1 h-px bg-slate-100 dark:bg-white/5" />
-                    <ToolbarButton icon={Eraser} active={false} onClick={removeSelection} label="Borrar seleccion" />
+                    <ToolbarButton icon={Square} active={false} onClick={addRect} label="Rectángulo (R)" />
+                    <ToolbarButton icon={Circle} active={false} onClick={addCircle} label="Círculo (C)" />
+                    <ToolbarButton icon={Type} active={false} onClick={addText} label="Texto (T)" />
+                    <div className="mx-2 my-1 h-px bg-slate-100 dark:bg-white/5" />
+                    <ToolbarButton icon={Eraser} active={false} onClick={removeSelection} label="Borrar selección" />
                     <ToolbarButton icon={Trash2} active={false} onClick={clearCanvas} label="Limpiar lienzo" tone="danger" />
+                    <div className="mx-2 my-1 h-px bg-slate-100 dark:bg-white/5" />
+                    {/* Grid style toggle */}
+                    <div className="relative">
+                        <ToolbarButton
+                            icon={gridStyle === "none" ? EyeOff : Grid3x3}
+                            active={showGridMenu}
+                            onClick={() => setShowGridMenu((prev) => !prev)}
+                            label={`Grilla: ${GRID_OPTIONS.find((g) => g.value === gridStyle)?.label}`}
+                        />
+                        {showGridMenu && (
+                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl dark:border-white/10 dark:bg-slate-900 min-w-[140px]">
+                                <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">Estilo</p>
+                                {GRID_OPTIONS.map((opt) => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => { setGridStyle(opt.value); setShowGridMenu(false); }}
+                                        className={clsx(
+                                            "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-all",
+                                            gridStyle === opt.value
+                                                ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10"
+                                                : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/5"
+                                        )}
+                                    >
+                                        <opt.icon size={14} />
+                                        {opt.label}
+                                    </button>
+                                ))}
+                                <div className="my-1 h-px bg-slate-100 dark:bg-white/5" />
+                                <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">Tamaño</p>
+                                {GRID_SIZES.map((opt) => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => { setGridSize(opt.value); setShowGridMenu(false); }}
+                                        className={clsx(
+                                            "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-all",
+                                            gridSize === opt.value
+                                                ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10"
+                                                : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/5"
+                                        )}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
+                {/* ── Canvas area ── */}
                 <main
-                    className={clsx(
-                        "flex-1 overflow-auto bg-[hsl(var(--bg-primary))] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:32px_32px] p-4 pl-24 dark:bg-[#0f1114] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]",
-                        tool === "select" ? "cursor-default" : "cursor-crosshair"
-                    )}
+                    className="flex-1 overflow-auto p-4 pl-24"
+                    style={{
+                        background: gridStyle === "none"
+                            ? "hsl(var(--bg-primary))"
+                            : `${getGridBackground(gridStyle, gridSize, isDark)}`,
+                        backgroundSize: gridStyle === "dots" ? `${gridSize}px ${gridSize}px` : `${gridSize}px ${gridSize}px`,
+                        backgroundColor: "hsl(var(--bg-primary))",
+                    }}
                 >
-                    <div className="inline-block overflow-hidden rounded-lg border-8 border-white bg-[hsl(var(--bg-primary))] shadow-[0_48px_96px_-32px_rgba(15,23,42,0.35)] dark:border-[#1e1f21]">
+                    <div className="inline-block overflow-hidden rounded-xl border-8 border-white bg-[hsl(var(--bg-primary))] shadow-[0_48px_96px_-32px_rgba(15,23,42,0.4)] dark:border-[#1e1f21]">
                         <canvas ref={canvasRef} />
                     </div>
                 </main>
 
-                <aside className="w-80 shrink-0 space-y-3 overflow-y-auto border-l border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[#111418]">
+                {/* ── Right property panel ── */}
+                <aside className="w-80 shrink-0 overflow-y-auto border-l border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[#111418]">
+                    {/* Info section */}
                     <section className="space-y-2">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Objetivo</p>
                         <h1 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h1>
                         <p className="text-xs font-medium leading-5 text-slate-500">{description || "Sin objetivo documentado."}</p>
                     </section>
 
-                    <section className="space-y-4">
-                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Capas reales</h3>
-                        <div className="space-y-2">
+                    {/* ── Object properties ── */}
+                    {isObjectSelected && (
+                        <section className="mt-5 space-y-4 rounded-lg border border-slate-100 bg-slate-50/50 p-3 dark:border-white/5 dark:bg-white/[0.03]">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                Propiedades — {String(selectedObjectProps?.type || "objeto")}
+                            </p>
+
+                            {/* Fill color */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Relleno</label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="color"
+                                        value={fillColor}
+                                        onChange={(e) => { setFillColor(e.target.value); applyProperty("fill", e.target.value); }}
+                                        className="size-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent p-0 dark:border-white/10"
+                                    />
+                                    <div className="flex gap-1">
+                                        {COLOR_PRESETS.map((c) => (
+                                            <button
+                                                key={c}
+                                                onClick={() => { setFillColor(c); applyProperty("fill", c); }}
+                                                className={clsx(
+                                                    "size-5 rounded-full border transition-all hover:scale-125",
+                                                    fillColor === c ? "scale-125 ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-900" : "border-slate-200 dark:border-white/10"
+                                                )}
+                                                style={{ backgroundColor: c }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stroke color */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Borde</label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="color"
+                                        value={strokeColor}
+                                        onChange={(e) => { setStrokeColor(e.target.value); applyProperty("stroke", e.target.value); }}
+                                        className="size-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent p-0 dark:border-white/10"
+                                    />
+                                    <div className="flex gap-1">
+                                        {COLOR_PRESETS.map((c) => (
+                                            <button
+                                                key={c}
+                                                onClick={() => { setStrokeColor(c); applyProperty("stroke", c); }}
+                                                className={clsx(
+                                                    "size-5 rounded-full border transition-all hover:scale-125",
+                                                    strokeColor === c ? "scale-125 ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-900" : "border-slate-200 dark:border-white/10"
+                                                )}
+                                                style={{ backgroundColor: c }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stroke width slider */}
+                            <div className="space-y-1.5">
+                                <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                                    <span>Grosor de borde</span>
+                                    <span className="font-mono text-[11px]">{strokeWidth}px</span>
+                                </label>
+                                <input
+                                    type="range"
+                                    min={0}
+                                    max={20}
+                                    value={strokeWidth}
+                                    onChange={(e) => { const v = Number(e.target.value); setStrokeWidth(v); applyProperty("strokeWidth", v); }}
+                                    className="w-full accent-[hsl(var(--primary))]"
+                                />
+                            </div>
+
+                            {/* Opacity slider */}
+                            <div className="space-y-1.5">
+                                <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                                    <span>Opacidad</span>
+                                    <span className="font-mono text-[11px]">{opacity}%</span>
+                                </label>
+                                <input
+                                    type="range"
+                                    min={5}
+                                    max={100}
+                                    value={opacity}
+                                    onChange={(e) => { const v = Number(e.target.value) / 100; setOpacity(Number(e.target.value)); applyProperty("opacity", v); }}
+                                    className="w-full accent-[hsl(var(--primary))]"
+                                />
+                            </div>
+
+                            {/* Text-specific properties */}
+                            {isTextSelected && (
+                                <>
+                                    {/* Font family dropdown */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Fuente</label>
+                                        <select
+                                            value={textFontFamily}
+                                            onChange={(e) => { setTextFontFamily(e.target.value); applyProperty("fontFamily", e.target.value); }}
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[12px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        >
+                                            {FONT_FAMILIES.map((f) => (
+                                                <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
+                                                    {f.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Font size */}
+                                    <div className="space-y-1.5">
+                                        <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                                            <span>Tamaño</span>
+                                            <span className="font-mono text-[11px]">{textFontSize}px</span>
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min={8}
+                                            max={120}
+                                            value={textFontSize}
+                                            onChange={(e) => { const v = Number(e.target.value); setTextFontSize(v); applyProperty("fontSize", v); }}
+                                            className="w-full accent-[hsl(var(--primary))]"
+                                        />
+                                        <div className="flex flex-wrap gap-1">
+                                            {FONT_SIZE_PRESETS.map((s) => (
+                                                <button
+                                                    key={s}
+                                                    onClick={() => { setTextFontSize(s); applyProperty("fontSize", s); }}
+                                                    className={clsx(
+                                                        "rounded-md px-2 py-0.5 text-[10px] font-bold transition-all",
+                                                        textFontSize === s
+                                                            ? "bg-blue-500 text-white"
+                                                            : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10"
+                                                    )}
+                                                >
+                                                    {s}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Text color */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Color texto</label>
+                                        <input
+                                            type="color"
+                                            value={textColor}
+                                            onChange={(e) => { setTextColor(e.target.value); applyProperty("fill", e.target.value); }}
+                                            className="size-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent p-0 dark:border-white/10"
+                                        />
+                                    </div>
+
+                                    {/* Bold / Italic */}
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => { const v = textBold ? "normal" : "bold"; setTextBold(!textBold); applyProperty("fontWeight", v); }}
+                                            className={clsx(
+                                                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all",
+                                                textBold ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-500 dark:bg-white/5"
+                                            )}
+                                        >
+                                            <Bold size={14} /> Negrita
+                                        </button>
+                                        <button
+                                            onClick={() => { const v = textItalic ? "" : "italic"; setTextItalic(!textItalic); applyProperty("fontStyle", v); }}
+                                            className={clsx(
+                                                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all",
+                                                textItalic ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-500 dark:bg-white/5"
+                                            )}
+                                        >
+                                            <Italic size={14} /> Cursiva
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Position & size */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500">X</label>
+                                    <input
+                                        type="number"
+                                        value={objLeft}
+                                        onChange={(e) => { const v = Number(e.target.value); setObjLeft(v); applyProperty("left", v); }}
+                                        className="w-full rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Y</label>
+                                    <input
+                                        type="number"
+                                        value={objTop}
+                                        onChange={(e) => { const v = Number(e.target.value); setObjTop(v); applyProperty("top", v); }}
+                                        className="w-full rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Ancho</label>
+                                    <input
+                                        type="number"
+                                        value={objWidth}
+                                        onChange={(e) => { const v = Number(e.target.value); setObjWidth(v); applyProperty("width", v); }}
+                                        className="w-full rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Alto</label>
+                                    <input
+                                        type="number"
+                                        value={objHeight}
+                                        onChange={(e) => { const v = Number(e.target.value); setObjHeight(v); applyProperty("height", v); }}
+                                        className="w-full rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Order actions */}
+                            <div className="flex gap-2">
+                                <button onClick={bringForward} className="flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1.5 text-[10px] font-bold text-slate-600 transition-all hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10">
+                                    <BringToFront size={12} /> Al frente
+                                </button>
+                                <button onClick={sendBackward} className="flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1.5 text-[10px] font-bold text-slate-600 transition-all hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10">
+                                    <SendToBack size={12} /> Atrás
+                                </button>
+                                <button onClick={duplicateSelection} className="flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1.5 text-[10px] font-bold text-slate-600 transition-all hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10">
+                                    <Copy size={12} /> Duplicar
+                                </button>
+                            </div>
+
+                            {/* Delete button */}
+                            <button
+                                onClick={removeSelection}
+                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 py-2 text-[10px] font-bold uppercase tracking-wide text-rose-600 transition-all hover:bg-rose-100 dark:bg-rose-500/10"
+                            >
+                                <Trash2 size={14} /> Eliminar objeto
+                            </button>
+                        </section>
+                    )}
+
+                    {/* ── Layers ── */}
+                    <section className={clsx("space-y-3", isObjectSelected ? "mt-5" : "mt-6")}>
+                        <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                            <Layers size={12} /> Capas reales
+                        </h3>
+                        <div className="space-y-1.5">
                             {layers.map((layer) => (
                                 <button
                                     key={`${layer.type}-${layer.index}`}
                                     onClick={() => focusLayer(layer.index)}
-                                    className="flex w-full items-center justify-between rounded-md border border-slate-100 p-3 text-left text-xs font-medium text-slate-500 transition-all hover:border-blue-200 hover:bg-blue-50/40 dark:border-white/5 dark:hover:bg-blue-500/10"
+                                    className="flex w-full items-center justify-between rounded-lg border border-slate-100 p-2.5 text-left text-[11px] font-medium text-slate-500 transition-all hover:border-blue-200 hover:bg-blue-50/40 dark:border-white/5 dark:hover:bg-blue-500/10"
                                 >
                                     <span className="flex items-center gap-2">
                                         <History size={12} /> {layer.label}
                                     </span>
-                                    <span className="text-[9px] opacity-50">#{layer.index + 1}</span>
+                                    <span className="text-[8px] font-bold opacity-40">#{layer.index + 1}</span>
                                 </button>
                             ))}
                             {layers.length === 0 && (
-                                <div className="rounded-md border border-dashed border-slate-200 p-4 text-center text-xs font-semibold text-slate-400 dark:border-white/10">
+                                <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-[11px] font-semibold text-slate-400 dark:border-white/10">
                                     No hay objetos en el lienzo.
                                 </div>
                             )}
@@ -392,8 +913,8 @@ function getObjectLabel(object: fabric.FabricObject, index: number) {
         const text = "text" in object ? String(object.text || "").trim() : "";
         return text || `Texto ${index + 1}`;
     }
-    if (object.type === "rect") return `Rectangulo ${index + 1}`;
-    if (object.type === "circle") return `Circulo ${index + 1}`;
+    if (object.type === "rect") return `Rectángulo ${index + 1}`;
+    if (object.type === "circle") return `Círculo ${index + 1}`;
     if (object.type === "path") return `Trazo ${index + 1}`;
     return `Objeto ${index + 1}`;
 }
@@ -416,7 +937,7 @@ function ToolbarButton({
             onClick={onClick}
             title={label}
             className={clsx(
-                "group relative flex size-10 items-center justify-center rounded-md transition-all",
+                "group relative flex size-10 items-center justify-center rounded-lg transition-all",
                 active
                     ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
                     : tone === "danger"

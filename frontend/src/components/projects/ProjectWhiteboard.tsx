@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import * as fabric from 'fabric';
 import {
     MousePointer2, Pencil, Square, Circle, Type,
@@ -21,32 +22,62 @@ interface Props {
 
 export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props) {
     const { token } = useAuth();
+    const drawingAreaRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const fabricRef = useRef<fabric.Canvas | null>(null);
     const loadedFor = useRef<string | null>(null);
+    const projectIdRef = useRef(project_id);
+    const tokenRef = useRef(token);
+    const restoringRef = useRef(false);
+    const [isMounted, setIsMounted] = useState(false);
     const [tool, setTool] = useState<'select' | 'pencil' | 'rect' | 'circle' | 'text'>('select');
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const [isAiDrawing, setIsAiDrawing] = useState(false);
     const [zoom, setZoom] = useState(100);
 
+    useEffect(() => {
+        projectIdRef.current = project_id;
+        tokenRef.current = token;
+    }, [project_id, token]);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     // ── Init canvas once (on mount) ─────────────────────────────────────────
     useEffect(() => {
+        if (!isMounted) return;
         const el = canvasRef.current;
         if (!el) return;
 
+        const getCanvasSize = () => {
+            const rect = drawingAreaRef.current?.getBoundingClientRect();
+            return {
+                width: Math.max(320, Math.floor(rect?.width || window.innerWidth)),
+                height: Math.max(320, Math.floor(rect?.height || window.innerHeight - 44)),
+            };
+        };
+        const initialSize = getCanvasSize();
         const canvas = new fabric.Canvas(el, {
-            width: window.innerWidth,
-            height: window.innerHeight - 44,
-            backgroundColor: '#ffffff',
+            width: initialSize.width,
+            height: initialSize.height,
+            backgroundColor: '#fafafa',
             preserveObjectStacking: true,
+            selection: true,
+            selectionColor: 'rgba(37, 99, 235, 0.1)',
+            selectionBorderColor: '#2563eb',
+            selectionLineWidth: 1,
         });
         fabricRef.current = canvas;
 
         const save = () => {
+            if (restoringRef.current) return;
+            const activeProjectId = projectIdRef.current;
+            if (!activeProjectId) return;
             setSaveStatus('saving');
-            apiFetch(`/projects/${project_id}/whiteboard`, {
+            apiFetch(`/projects/${activeProjectId}/whiteboard`, {
                 method: 'POST',
-                token,
+                token: tokenRef.current,
                 body: { title: 'Pizarra Estrategica', elements_json: JSON.stringify(canvas.toJSON()) },
             }).then(() => {
                 setSaveStatus('saved');
@@ -59,7 +90,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         canvas.on('object:removed', save);
 
         const onResize = () => {
-            canvas.setDimensions({ width: window.innerWidth, height: window.innerHeight - 44 });
+            canvas.setDimensions(getCanvasSize());
             canvas.renderAll();
         };
         window.addEventListener('resize', onResize);
@@ -70,7 +101,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             fabricRef.current = null;
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isMounted]);
 
     // ── Load whiteboard data when opening ──────────────────────────────────
     useEffect(() => {
@@ -81,13 +112,36 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         apiFetch<{ elements_json: string }>(`/projects/${project_id}/whiteboard`, { token })
             .then(async (data) => {
                 if (data?.elements_json && data.elements_json !== '[]') {
-                    await canvas.loadFromJSON(JSON.parse(data.elements_json));
-                    canvas.renderAll();
+                    try {
+                        restoringRef.current = true;
+                        await canvas.loadFromJSON(JSON.parse(data.elements_json));
+                        canvas.renderAll();
+                    } catch {
+                        toast.error('No se pudo cargar la pizarra guardada.');
+                    } finally {
+                        restoringRef.current = false;
+                    }
                 }
                 loadedFor.current = project_id;
             })
-            .catch(() => { loadedFor.current = project_id; });
+            .catch(() => {
+                loadedFor.current = project_id;
+            });
     }, [isOpen, project_id, token]);
+
+    useEffect(() => {
+        if (!isOpen || !fabricRef.current) return;
+        const canvas = fabricRef.current;
+        const frame = window.requestAnimationFrame(() => {
+            const rect = drawingAreaRef.current?.getBoundingClientRect();
+            canvas.setDimensions({
+                width: Math.max(320, Math.floor(rect?.width || window.innerWidth)),
+                height: Math.max(320, Math.floor(rect?.height || window.innerHeight - 44)),
+            });
+            canvas.renderAll();
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, [isOpen]);
 
     // ── Esc to close ───────────────────────────────────────────────────────
     useEffect(() => {
@@ -117,30 +171,46 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             brush.width = 3;
             brush.color = '#2563eb';
             fc.freeDrawingBrush = brush;
+        } else if (t === 'rect') {
+            addRect();
+        } else if (t === 'circle') {
+            addCircle();
+        } else if (t === 'text') {
+            addText();
         } else {
             fc.isDrawingMode = false;
         }
     };
 
     const addRect = () => {
-        fabricRef.current?.add(new fabric.Rect({
+        const fc = fabricRef.current;
+        if (!fc) return;
+        const rect = new fabric.Rect({
             left: 120, top: 120, width: 160, height: 100,
             fill: 'rgba(37,99,235,0.08)', stroke: '#2563eb', strokeWidth: 2, rx: 10, ry: 10,
-        }));
+        });
+        fc.add(rect);
+        fc.setActiveObject(rect);
+        setActiveTool('select');
     };
 
     const addCircle = () => {
-        fabricRef.current?.add(new fabric.Circle({
+        const fc = fabricRef.current;
+        if (!fc) return;
+        const circle = new fabric.Circle({
             left: 140, top: 140, radius: 50,
             fill: 'rgba(16,185,129,0.1)', stroke: '#10b981', strokeWidth: 2,
-        }));
+        });
+        fc.add(circle);
+        fc.setActiveObject(circle);
+        setActiveTool('select');
     };
 
     const addText = () => {
         const fc = fabricRef.current;
         if (!fc) return;
         const t = new fabric.IText('Escribe aquí', {
-            left: 160, top: 160, fontSize: 20, fill: '#0f172a', fontFamily: 'sans-serif',
+            left: 160, top: 160, fontSize: 20, fill: '#0f172a', fontFamily: 'Manrope',
         });
         fc.add(t);
         fc.setActiveObject(t);
@@ -184,7 +254,9 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
 
     // ── Render ─────────────────────────────────────────────────────────────
     // Always in DOM — use CSS to hide/show. Avoids all Fabric.js ref/dispose issues.
-    return (
+    if (!isMounted) return null;
+
+    const whiteboard = (
         <div
             className={clsx(
                 'fixed inset-0 z-[9999] flex flex-col bg-[#f4f5f7] dark:bg-[#0f1115] transition-opacity duration-200',
@@ -237,17 +309,17 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             </header>
 
             {/* Drawing Area */}
-            <div className="flex-1 relative overflow-hidden">
+            <div ref={drawingAreaRef} className="flex-1 relative overflow-hidden bg-[#f8fafc] dark:bg-[#0f1115]">
                 {/* Vertical toolbar */}
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1 p-1.5 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl">
-                    <ToolBtn active={tool === 'select'} onClick={() => setActiveTool('select')} icon={MousePointer2} label="Seleccionar" />
-                    <ToolBtn active={tool === 'pencil'} onClick={() => setActiveTool('pencil')} icon={Pencil} label="Dibujar libre" />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1 p-1.5 bg-white/95 dark:bg-[#1e1f21]/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl">
+                    <ToolBtn active={tool === 'select'} onClick={() => setActiveTool('select')} icon={MousePointer2} label="Seleccionar (V)" />
+                    <ToolBtn active={tool === 'pencil'} onClick={() => setActiveTool('pencil')} icon={Pencil} label="Dibujar libre (P)" />
                     <div className="h-px w-7 bg-slate-100 dark:bg-white/10 mx-auto my-0.5" />
-                    <ToolBtn active={false} onClick={addRect}        icon={Square} label="Rectángulo" />
-                    <ToolBtn active={false} onClick={addCircle}      icon={Circle} label="Círculo" />
-                    <ToolBtn active={false} onClick={addText}        icon={Type}   label="Texto" />
+                    <ToolBtn active={tool === 'rect'} onClick={() => setActiveTool('rect')}  icon={Square} label="Rectángulo (R)" />
+                    <ToolBtn active={tool === 'circle'} onClick={() => setActiveTool('circle')} icon={Circle} label="Círculo (C)" />
+                    <ToolBtn active={tool === 'text'} onClick={() => setActiveTool('text')}   icon={Type}   label="Texto (T)" />
                     <div className="h-px w-7 bg-slate-100 dark:bg-white/10 mx-auto my-0.5" />
-                    <ToolBtn active={false} onClick={deleteSelected} icon={Trash2} label="Eliminar" color="text-rose-500" />
+                    <ToolBtn active={false} onClick={deleteSelected} icon={Trash2} label="Eliminar (Del)" color="text-rose-500" />
                 </div>
 
                 {/* Canvas — fills the full drawing area */}
@@ -266,6 +338,8 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             </div>
         </div>
     );
+
+    return createPortal(whiteboard, document.body);
 }
 
 function ToolBtn({ active, onClick, icon: Icon, label, color = 'text-slate-500' }: {

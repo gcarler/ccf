@@ -1,9 +1,14 @@
+export type GridStyle = "dots" | "lines" | "ruled" | "none";
+export type GridSize = 16 | 24 | 32;
+
 export interface WhiteboardRecord {
   id: string;
   title: string;
   description?: string;
   created_at: string;
   updated_at?: string;
+  gridStyle?: GridStyle;
+  gridSize?: GridSize;
 }
 
 export const WHITEBOARDS_KEY = "ccf_whiteboards";
@@ -22,6 +27,10 @@ export function normalizeWhiteboardRecord(value: unknown): WhiteboardRecord | nu
     description: item.description ? String(item.description) : "",
     created_at: String(item.created_at),
     updated_at: item.updated_at ? String(item.updated_at) : undefined,
+    gridStyle: item.gridStyle && ["dots", "lines", "ruled", "none"].includes(item.gridStyle as string)
+      ? (item.gridStyle as GridStyle) : undefined,
+    gridSize: item.gridSize && [16, 24, 32].includes(Number(item.gridSize))
+      ? Number(item.gridSize) as GridSize : undefined,
   };
 }
 
