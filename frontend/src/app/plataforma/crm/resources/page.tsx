@@ -39,7 +39,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 const CATEGORY_COLORS: Record<string, string> = {
     bienvenida: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
     seguimiento: 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    invitacion: 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
+    invitacion: 'bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
     pastoral: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400',
     consolidacion: 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400',
     anuncio: 'bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-400',
