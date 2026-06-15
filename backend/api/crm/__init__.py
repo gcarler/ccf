@@ -18,7 +18,7 @@ from backend.api.crm._shared import (_persona_full_name, _serialize_case,
 router = APIRouter(tags=["CRM"])
 
 # ── include sub-routers ────────────────────────────────────────────────
-from backend.api.crm import members, pastoral, personas, resources
+from backend.api.crm import members, pastoral, personas, resources  # noqa: E402
 
 router.include_router(members.router)
 router.include_router(pastoral.router)
