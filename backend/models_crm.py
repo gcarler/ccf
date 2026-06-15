@@ -1,8 +1,11 @@
 # ruff: noqa: F405
 from __future__ import annotations
 
+import enum as _enum
 import uuid
 
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import func as _func
 
@@ -241,34 +244,95 @@ class Ministry(Base):
     )
 
 
-class CrmResource(Base):
-    """Biblioteca de recursos reutilizables del CRM: plantillas de mensajes, guiones pastorales y respuestas rápidas."""
-    __tablename__ = "crm_resources"
+# ==============================================================================
+# BIBLIOTECA DE RECURSOS CRM
+# ==============================================================================
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
-    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+class CanalEnvio(_enum.Enum):
+    WHATSAPP = "WHATSAPP"
+    EMAIL = "EMAIL"
+    SMS = "SMS"
 
-    # Clasificación
-    name = Column(String(200), nullable=False, index=True)
-    description = Column(Text, nullable=True)
-    type = Column(String(30), nullable=False, default="message", index=True)      # message | script | quick_reply
-    channel = Column(String(30), nullable=True, index=True)                        # whatsapp | email | sms | general
-    category = Column(String(50), nullable=False, default="general", index=True)  # bienvenida | seguimiento | invitacion | pastoral | consolidacion | anuncio | general
 
-    # Contenido
-    subject = Column(String(500), nullable=True)   # solo email
-    body = Column(Text, nullable=False, default="")
-    steps = Column(JSON, nullable=True)             # solo script: [{"order": 1, "text": "..."}]
-    variables = Column(JSON, nullable=True)         # ["{{nombre}}", "{{fecha}}"]
-    tags = Column(JSON, nullable=True)              # búsqueda libre
+class EstadoEnvioPlantilla(_enum.Enum):
+    PROCESANDO = "PROCESANDO"
+    ENVIADO = "ENVIADO"
+    ENTREGADO = "ENTREGADO"
+    LEIDO = "LEIDO"
+    FALLIDO = "FALLIDO"
 
-    # Métricas y estado
-    usage_count = Column(Integer, default=0, nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False, index=True)
 
-    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+class CategoriaRecurso(Base):
+    """Agrupa plantillas para facilitar búsqueda en la UI del CRM."""
+    __tablename__ = "crm_recurso_categorias"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nombre = Column(String(100), unique=True, nullable=False, index=True)
+    descripcion = Column(Text, nullable=True)
+    color_ui_hex = Column(String(10), default="#6B7280")
+    activo = Column(Boolean, default=True, nullable=False, index=True)
+
+
+class PlantillaMensaje(Base):
+    """Plantillas de mensajes con soporte para variables dinámicas {{var}}."""
+    __tablename__ = "crm_plantillas_mensaje"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
+    categoria_id = Column(UUID(as_uuid=True), ForeignKey("crm_recurso_categorias.id", ondelete="RESTRICT"), nullable=False, index=True)
+    titulo = Column(String(150), nullable=False, index=True)
+    canal = Column(SAEnum(CanalEnvio), nullable=False, index=True)
+    asunto = Column(String(200), nullable=True)
+    contenido_texto = Column(Text, nullable=False)
+    variables_requeridas = Column(ARRAY(String), default=list, nullable=False)
+    meta_template_id = Column(String(150), nullable=True)
+    creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
+    fecha_actualizacion = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    activo = Column(Boolean, default=True, nullable=False, index=True)
+
+    categoria = relationship("CategoriaRecurso")
+    adjuntos = relationship("RecursoAdjunto", back_populates="plantilla", cascade="all, delete-orphan")
+
+
+class RecursoAdjunto(Base):
+    """Archivos multimedia vinculados a plantillas (local storage; seaweed_fid para migración futura)."""
+    __tablename__ = "crm_recursos_adjuntos"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
+    plantilla_id = Column(UUID(as_uuid=True), ForeignKey("crm_plantillas_mensaje.id", ondelete="CASCADE"), nullable=True, index=True)
+    nombre_recurso = Column(String(150), nullable=False)
+    seaweed_fid = Column(String(100), nullable=True)
+    url_acceso = Column(String, nullable=False)
+    nombre_archivo = Column(String(255), nullable=False)
+    tipo_mime = Column(String(100), nullable=False)
+    peso_bytes = Column(Integer, nullable=False)
+    creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    activo = Column(Boolean, default=True, nullable=False, index=True)
+
+    plantilla = relationship("PlantillaMensaje", back_populates="adjuntos")
+
+
+class BitacoraEnvioPlantilla(Base):
+    """Registro analítico de cada envío de plantilla: quién, a quién, con qué variables, resultado."""
+    __tablename__ = "crm_envios_plantilla_log"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
+    plantilla_id = Column(UUID(as_uuid=True), ForeignKey("crm_plantillas_mensaje.id", ondelete="SET NULL"), nullable=True, index=True)
+    caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="CASCADE"), nullable=True, index=True)
+    enviado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    destinatario_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
+    fecha_envio = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
+    estado = Column(SAEnum(EstadoEnvioPlantilla), default=EstadoEnvioPlantilla.PROCESANDO, nullable=False, index=True)
+    payload_hidratado = Column(JSON, nullable=False)
+    log_error = Column(Text, nullable=True)
+
+    plantilla = relationship("PlantillaMensaje")
+    enviado_por = relationship("Persona", foreign_keys=[enviado_por_id])
+    destinatario = relationship("Persona", foreign_keys=[destinatario_id])
 
 
 class ColombianDepartment(Base):

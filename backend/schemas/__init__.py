@@ -208,6 +208,7 @@ from backend.schemas.chat import (ConversationCreate, ConversationRead,
 
 # ── CRM Resources (Biblioteca de Recursos) ───────────────────────────
 from backend.schemas.crm_resources import (  # noqa: F401
-    CrmResourceCreate, CrmResourceUpdate, CrmResourceOut,
-    RESOURCE_TYPES, RESOURCE_CHANNELS, RESOURCE_CATEGORIES,
+    CategoriaRecursoCreate, CategoriaRecursoUpdate, CategoriaRecursoOut,
+    PlantillaMensajeCreate, PlantillaMensajeUpdate, PlantillaMensajeOut,
+    RecursoAdjuntoOut, EnviarPlantillaPayload, BitacoraEnvioOut,
 )

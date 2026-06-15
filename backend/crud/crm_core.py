@@ -9,12 +9,12 @@ from sqlalchemy.orm import Session
 from backend.models_crm_core import (
     PipelineCRM,
     EtapaPipeline,
-    PlantillaMensaje,
     CasoCRM,
     InteraccionCRM,
     TareaCRM,
     TipoPipelineEnum,
 )
+from backend.models_crm import PlantillaMensaje  # versión normalizada con UUID
 from backend.crud._utils import _utcnow
 from backend.schemas.crm_core import (
     PipelineCRMCreate,

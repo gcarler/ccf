@@ -97,8 +97,13 @@ from backend.models_academy_core import (
 
 # CRM Core 2.0 — Pipeline, Casos, Interacciones
 from backend.models_crm_core import (
-    CasoCRM, EtapaPipeline, InteraccionCRM, PipelineCRM,
-    PlantillaMensaje, TareaCRM,
+    CasoCRM, EtapaPipeline, InteraccionCRM, PipelineCRM, TareaCRM,
+)
+
+# Biblioteca de Recursos CRM — PlantillaMensaje vive aquí (versión normalizada)
+from backend.models_crm import (  # noqa: F401
+    CanalEnvio, CategoriaRecurso, EstadoEnvioPlantilla,
+    BitacoraEnvioPlantilla, PlantillaMensaje, RecursoAdjunto,
 )
 
 # Conversation Memory

@@ -106,22 +106,7 @@ class EtapaPipeline(Base):
     casos = relationship("CasoCRM", back_populates="etapa_actual")
 
 
-# ──────────────────────────────────────────────
-# PLANTILLAS
-# ──────────────────────────────────────────────
-
-class PlantillaMensaje(Base):
-    __tablename__ = "crm_plantillas_mensaje"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    titulo = Column(String(150), nullable=False)
-    canal = Column(SAEnum(TipoInteraccionEnum), nullable=False, index=True)
-    contenido_texto = Column(Text, nullable=False)
-    creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-
-    creado_por = relationship("Persona", foreign_keys=[creado_por_id])
-
+# PlantillaMensaje vive en backend.models_crm (versión normalizada con UUID, categorías, adjuntos y bitácora).
 
 # ──────────────────────────────────────────────
 # CASOS (TICKETS)
@@ -184,7 +169,7 @@ class InteraccionCRM(Base):
     fecha_interaccion = Column(DateTime(timezone=True), default=_utcnow, index=True)
     resumen = Column(Text, nullable=False)
     duration_seconds = Column(Integer, default=0)
-    plantilla_usada_id = Column(Integer, ForeignKey("crm_plantillas_mensaje.id"), nullable=True)
+    plantilla_usada_id = Column(UUID(as_uuid=True), ForeignKey("crm_plantillas_mensaje.id", ondelete="SET NULL"), nullable=True)
 
     caso = relationship("CasoCRM", back_populates="interacciones")
     realizado_por = relationship("Persona", foreign_keys=[realizado_por_id])

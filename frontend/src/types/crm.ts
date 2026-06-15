@@ -200,31 +200,60 @@ export interface FunnelRow {
   percent: number;
 }
 
-// ── CRM Resources (Biblioteca) ────────────────────────────────────────────
-export type ResourceType = 'message' | 'script' | 'quick_reply';
-export type ResourceChannel = 'whatsapp' | 'email' | 'sms' | 'general';
-export type ResourceCategory =
-  | 'bienvenida' | 'seguimiento' | 'invitacion' | 'pastoral'
-  | 'consolidacion' | 'anuncio' | 'general';
+// ── CRM Recursos (Biblioteca de Recursos) ────────────────────────────────────
+export type CanalEnvio = 'WHATSAPP' | 'EMAIL' | 'SMS';
+export type EstadoEnvio = 'PROCESANDO' | 'ENVIADO' | 'ENTREGADO' | 'LEIDO' | 'FALLIDO';
 
-export interface CrmResource {
+export interface CategoriaRecurso {
   id: string;
-  sede_id?: string | null;
-  created_by?: string | null;
-  name: string;
-  description?: string | null;
-  type: ResourceType;
-  channel?: ResourceChannel | null;
-  category: ResourceCategory;
-  subject?: string | null;
-  body: string;
-  steps?: { order: number; text: string }[] | null;
-  variables?: string[] | null;
-  tags?: string[] | null;
-  usage_count: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  nombre: string;
+  descripcion?: string | null;
+  color_ui_hex: string;
+  activo: boolean;
+}
+
+export interface RecursoAdjunto {
+  id: string;
+  sede_id: string;
+  plantilla_id?: string | null;
+  nombre_recurso: string;
+  url_acceso: string;
+  nombre_archivo: string;
+  tipo_mime: string;
+  peso_bytes: number;
+  fecha_creacion: string;
+}
+
+export interface PlantillaMensaje {
+  id: string;
+  sede_id: string;
+  categoria_id: string;
+  titulo: string;
+  canal: CanalEnvio;
+  asunto?: string | null;
+  contenido_texto: string;
+  variables_requeridas: string[];
+  meta_template_id?: string | null;
+  creado_por_id?: string | null;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+  activo: boolean;
+  categoria?: CategoriaRecurso | null;
+  adjuntos: RecursoAdjunto[];
+  total_envios: number;
+}
+
+export interface BitacoraEnvio {
+  id: string;
+  sede_id: string;
+  plantilla_id?: string | null;
+  caso_id?: string | null;
+  enviado_por_id?: string | null;
+  destinatario_id: string;
+  fecha_envio: string;
+  estado: EstadoEnvio;
+  payload_hidratado: Record<string, unknown>;
+  log_error?: string | null;
 }
 
 // ── Messaging ─────────────────────────────────────────────────────────────
