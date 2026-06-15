@@ -234,7 +234,7 @@ export default function SessionReportPage() {
  </div>
 
  {/* Stats */}
- <div className="grid grid-cols-4 gap-2">
+ <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]">{stats.present}</p><p className="text-[10px] font-semibold text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]">Presentes</p></div>
  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">{stats.absent}</p><p className="text-[10px] font-semibold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">Ausentes</p></div>
  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{stats.firstTime}</p><p className="text-[10px] font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">Nuevos</p></div>

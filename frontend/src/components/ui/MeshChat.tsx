@@ -95,7 +95,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                         initial={{ opacity: 0, y: 100, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 100, scale: 0.95 }}
-                        className="fixed bottom-6 right-6 w-full max-w-[440px] h-[600px] bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg shadow-2xl border border-slate-100 dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
+                        className="fixed inset-x-0 bottom-[72px] top-10 sm:inset-x-auto sm:top-auto sm:bottom-6 sm:right-6 sm:w-full sm:max-w-[440px] sm:h-[600px] rounded-none sm:rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] shadow-2xl border-t sm:border border-slate-100 dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
                     >
                         {/* Header */}
                         <header className="p-3 border-b border-slate-50 dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-white/5 shrink-0">

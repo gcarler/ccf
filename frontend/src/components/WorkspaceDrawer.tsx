@@ -62,8 +62,8 @@ export default function WorkspaceDrawer({
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        style={{ width }}
-                        className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
+                        style={{ width: typeof window !== 'undefined' && window.innerWidth < 640 ? '100vw' : width }}
+                        className="fixed top-10 right-0 h-[calc(100dvh-2.5rem)] max-w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
                         role="complementary"
                         aria-label={title}
                     >

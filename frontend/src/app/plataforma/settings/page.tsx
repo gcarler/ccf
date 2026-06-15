@@ -119,7 +119,7 @@ export default function SettingsPage() {
                     className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm"
                 >
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Tema Visual</p>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {([
                             { id: 'light', icon: Sun, label: 'Claro' },
                             { id: 'dark', icon: Moon, label: 'Oscuro' },

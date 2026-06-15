@@ -388,7 +388,7 @@ export default function ContactsPage() {
                 }
             >
                 <form id="create-contact-form" onSubmit={handleCreate} className="space-y-2">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre *</label>
                             <input
@@ -418,7 +418,7 @@ export default function ContactsPage() {
                             className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Fuente</label>
                             <select

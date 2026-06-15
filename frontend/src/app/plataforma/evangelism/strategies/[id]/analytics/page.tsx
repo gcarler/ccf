@@ -559,7 +559,7 @@ export default function StrategyAnalyticsPage() {
             sub="Índice de Cumplimiento de Sesiones + ofrendas" />
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
                 {[
                   { label: "Proyectadas", value: dim6_eficiencia.sesiones_proyectadas_total, color: "text-[hsl(var(--text-primary))]" },
                   { label: "Realizadas", value: dim6_eficiencia.sesiones_realizadas_total, color: "text-emerald-600" },
@@ -622,7 +622,7 @@ export default function StrategyAnalyticsPage() {
                 {dim7_multiplicacion.estado_reproduccion}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
                 <p className="text-xl font-black text-[hsl(var(--text-primary))]">{dim7_multiplicacion.grupos_multiplicados_periodo}</p>
                 <p className="text-[10px] text-[hsl(var(--text-secondary))]">Multiplicaciones</p>
@@ -644,7 +644,7 @@ export default function StrategyAnalyticsPage() {
           <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-5">
             <SectionHeader icon={Shield} title="8. Liderazgo (IRL / TDS)"
               sub="Reclutamiento de líderes y deserción de servidores" />
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               {[
                 { label: "Líderes asignados", value: dim8_liderazgo.total_lideres_asignados, color: "text-[hsl(var(--primary))]" },
                 { label: "TDS (Deserción)", value: `${dim8_liderazgo.tds_porcentaje}%`, color: dim8_liderazgo.tds_porcentaje > 20 ? "text-red-500" : "text-emerald-600" },
