@@ -131,7 +131,7 @@ export default function ConocerAJesusPage() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative z-10 px-3 md:px-4 pb-4"
+                    className="relative z-10 px-4 sm:px-6 md:px-10 xl:px-16 pb-8 md:pb-16"
                 >
                     <span
                         className="inline-block px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wide mb-3"
@@ -182,7 +182,7 @@ export default function ConocerAJesusPage() {
 
             {/* ── INTRO EDITORIAL ─────────────────────────── */}
             <section
-                className="py-8 md:py-12 lg:py-16 px-3 md:px-6 lg:px-8 xl:px-12"
+                className="py-8 md:py-12 lg:py-16 px-4 sm:px-6 md:px-8 xl:px-12"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <div className="grid md:grid-cols-2 gap-3 items-center">
@@ -222,7 +222,7 @@ export default function ConocerAJesusPage() {
                             </p>
                         </div>
                     </motion.div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {benefitCards.map(({ icon, title, desc }, idx) => (
                             <motion.div
                                 key={title}
@@ -262,7 +262,7 @@ export default function ConocerAJesusPage() {
 
             {/* ── TESTIMONIOS RÁPIDOS ──────────────────────── */}
             <section
-                className="py-8 md:py-12 lg:py-16 px-3 md:px-6 lg:px-8 xl:px-12"
+                className="py-8 md:py-12 lg:py-16 px-4 sm:px-6 md:px-8 xl:px-12"
                 style={{ background: "var(--faro-surface)" }}
             >
                 <div>
@@ -278,7 +278,7 @@ export default function ConocerAJesusPage() {
                             Próximamente compartiremos historias de transformación.
                         </p>
                     ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         {testimonials.map((t, idx) => (
                             <motion.div
                                 key={t.id}
@@ -314,7 +314,7 @@ export default function ConocerAJesusPage() {
             {/* ── FORMULARIO DE CONTACTO ───────────────────── */}
             <section
                 id="contacto"
-                className="py-8 md:py-12 lg:py-16 px-3 md:px-6 lg:px-8 xl:px-12"
+                className="py-8 md:py-12 lg:py-16 px-4 sm:px-6 md:px-8 xl:px-12"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <div className="grid md:grid-cols-2 gap-3 items-start">

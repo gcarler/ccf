@@ -118,7 +118,7 @@ export default function CursosPage() {
             </AnimatePresence>
 
             {/* ── HERO ──────────────────────────────────── */}
-            <section className="relative h-[560px] flex items-center px-4 md:px-8 lg:px-12 overflow-hidden">
+            <section className="relative min-h-[380px] md:h-[560px] flex items-center px-4 sm:px-6 md:px-8 lg:px-12 overflow-hidden">
                 <div className="absolute inset-0 z-0">
                     <Image
                         src="https://picsum.photos/seed/1481627834876-b7833e8f5570/1920/1080"
@@ -171,7 +171,7 @@ export default function CursosPage() {
             </section>
 
             {/* ── CURSOS BENTO ──────────────────────────── */}
-            <section className="px-4 md:px-8 lg:px-12 mt-24">
+            <section className="px-4 sm:px-6 md:px-8 lg:px-12 mt-24">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -200,7 +200,7 @@ export default function CursosPage() {
                             whileInView={{ opacity: 1, scale: 1 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
-                            className="md:col-span-8 group relative rounded-lg overflow-hidden min-h-[450px] cursor-pointer"
+                            className="md:col-span-8 group relative rounded-lg overflow-hidden min-h-[280px] md:min-h-[450px] cursor-pointer"
                             style={{ background: "var(--faro-surface-container-low)" }}
                         >
                             <Link href={`/cursos/${featuredCourse.id || "1"}`} className="block absolute inset-0 z-20" />
@@ -318,7 +318,7 @@ export default function CursosPage() {
 
             {/* ── LIBRERÍA ──────────────────────────────── */}
             <section
-                className="px-4 md:px-8 lg:px-12 mt-32 py-8 md:py-12 lg:py-16"
+                className="px-4 sm:px-6 md:px-8 lg:px-12 mt-32 py-8 md:py-12 lg:py-16"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <motion.div 
@@ -408,7 +408,7 @@ export default function CursosPage() {
             </section>
 
             {/* ── CTA ACADEMIA ─────────────────────────── */}
-            <section className="px-4 md:px-8 lg:px-12 mt-32">
+            <section className="px-4 sm:px-6 md:px-8 lg:px-12 mt-32">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
