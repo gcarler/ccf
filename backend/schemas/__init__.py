@@ -205,3 +205,9 @@ from backend.schemas.projects import (  # noqa: F401
 from backend.schemas.chat import (ConversationCreate, ConversationRead,
                                   ConversationParticipantRead,
                                   DirectMessageCreate, DirectMessageItem)
+
+# ── CRM Resources (Biblioteca de Recursos) ───────────────────────────
+from backend.schemas.crm_resources import (  # noqa: F401
+    CrmResourceCreate, CrmResourceUpdate, CrmResourceOut,
+    RESOURCE_TYPES, RESOURCE_CHANNELS, RESOURCE_CATEGORIES,
+)

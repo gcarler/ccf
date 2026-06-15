@@ -18,11 +18,12 @@ from backend.api.crm._shared import (_persona_full_name, _serialize_case,
 router = APIRouter(tags=["CRM"])
 
 # ── include sub-routers ────────────────────────────────────────────────
-from backend.api.crm import members, pastoral, personas
+from backend.api.crm import members, pastoral, personas, resources
 
 router.include_router(members.router)
 router.include_router(pastoral.router)
 router.include_router(personas.router)
+router.include_router(resources.router)
 
 __all__ = [
     "router",

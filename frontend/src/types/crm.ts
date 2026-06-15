@@ -200,6 +200,33 @@ export interface FunnelRow {
   percent: number;
 }
 
+// ── CRM Resources (Biblioteca) ────────────────────────────────────────────
+export type ResourceType = 'message' | 'script' | 'quick_reply';
+export type ResourceChannel = 'whatsapp' | 'email' | 'sms' | 'general';
+export type ResourceCategory =
+  | 'bienvenida' | 'seguimiento' | 'invitacion' | 'pastoral'
+  | 'consolidacion' | 'anuncio' | 'general';
+
+export interface CrmResource {
+  id: string;
+  sede_id?: string | null;
+  created_by?: string | null;
+  name: string;
+  description?: string | null;
+  type: ResourceType;
+  channel?: ResourceChannel | null;
+  category: ResourceCategory;
+  subject?: string | null;
+  body: string;
+  steps?: { order: number; text: string }[] | null;
+  variables?: string[] | null;
+  tags?: string[] | null;
+  usage_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // ── Messaging ─────────────────────────────────────────────────────────────
 export type Channel = 'whatsapp' | 'email' | 'sms';
 

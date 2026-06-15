@@ -241,6 +241,36 @@ class Ministry(Base):
     )
 
 
+class CrmResource(Base):
+    """Biblioteca de recursos reutilizables del CRM: plantillas de mensajes, guiones pastorales y respuestas rápidas."""
+    __tablename__ = "crm_resources"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    # Clasificación
+    name = Column(String(200), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    type = Column(String(30), nullable=False, default="message", index=True)      # message | script | quick_reply
+    channel = Column(String(30), nullable=True, index=True)                        # whatsapp | email | sms | general
+    category = Column(String(50), nullable=False, default="general", index=True)  # bienvenida | seguimiento | invitacion | pastoral | consolidacion | anuncio | general
+
+    # Contenido
+    subject = Column(String(500), nullable=True)   # solo email
+    body = Column(Text, nullable=False, default="")
+    steps = Column(JSON, nullable=True)             # solo script: [{"order": 1, "text": "..."}]
+    variables = Column(JSON, nullable=True)         # ["{{nombre}}", "{{fecha}}"]
+    tags = Column(JSON, nullable=True)              # búsqueda libre
+
+    # Métricas y estado
+    usage_count = Column(Integer, default=0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+
+
 class ColombianDepartment(Base):
     __tablename__ = "colombian_departments"
     id = Column(Integer, primary_key=True, index=True)

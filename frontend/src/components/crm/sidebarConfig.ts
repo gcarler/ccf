@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   QrCode,
   Settings,
+  BookOpen,
 } from 'lucide-react';
 
 export const CRM_SIDEBAR_SECTIONS = [
@@ -22,6 +23,7 @@ export const CRM_SIDEBAR_SECTIONS = [
       { id: 'crm-dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/plataforma/crm' },
       { id: 'crm-analytics', label: 'Analítica', icon: PieChart, href: '/plataforma/crm/analytics' },
       { id: 'crm-messaging', label: 'Mensajería', icon: Inbox, href: '/plataforma/crm/messaging' },
+      { id: 'crm-resources', label: 'Recursos', icon: BookOpen, href: '/plataforma/crm/resources' },
       { id: 'crm-tasks', label: 'Tareas', icon: CheckCircle2, href: '/plataforma/crm/tasks' },
     ],
   },
