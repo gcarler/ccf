@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 import { Church, Heart, Mail, Globe } from 'lucide-react';
+import { SITE_NAME, SITE_URL, SITE_EMAIL } from '@/lib/site-config';
 
 type FooterLink = {
     label: string;
@@ -34,8 +35,8 @@ const footerLinks: FooterGroup[] = [
     {
         title: 'Conectar',
         links: [
-            { label: 'comunicacionesministeriosfaro@gmail.com', href: 'mailto:comunicacionesministeriosfaro@gmail.com', icon: Mail },
-            { label: 'elfarocc.tech', href: 'https://elfarocc.tech', icon: Globe },
+            { label: SITE_EMAIL, href: `mailto:${SITE_EMAIL}`, icon: Mail },
+            { label: SITE_URL, href: SITE_URL, icon: Globe },
         ],
     },
 ];
@@ -49,7 +50,7 @@ export default function Footer() {
                     <div className="md:col-span-1 space-y-2">
                         <div className="flex items-center gap-2 text-white">
                             <Church size={16} className="text-[hsl(var(--primary))]" />
-                            <span className="text-xs font-semibold uppercase tracking-wide">CCF Ministerio</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide">{SITE_NAME}</span>
                         </div>
                         <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
                             Plataforma de inteligencia ministerial para la formación teológica, gestión pastoral y colaboración de equipos.
@@ -87,7 +88,7 @@ export default function Footer() {
             {/* Bottom bar */}
             <div className="w-full border-t border-white/5 px-4 lg:px-4 py-3">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-500">
-                    <span>&copy; {new Date().getFullYear()} CCF Ministerio. Todos los derechos reservados.</span>
+                    <span>&copy; {new Date().getFullYear()} {SITE_NAME}. Todos los derechos reservados.</span>
                     <div className="flex items-center gap-3">
                         <Link href="/" className="hover:text-white transition-colors">Sitio público</Link>
                         <Link href="/login" className="hover:text-white transition-colors">Acceso interno</Link>

@@ -7,7 +7,6 @@ import { apiFetch } from '@/lib/http';
 import {
     LayoutDashboard,
     ChevronRight,
-    Sparkles,
     Calendar,
     Plus,
     Trash2,
@@ -317,11 +316,9 @@ export default function ProjectDetailPage() {
                         <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2 dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900">
                             <PencilRuler size={14} /> Pizarra
                         </button>
-                        {phases.length > 0 && (
-                            <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
-                                <Edit3 size={14} /> Fases
-                            </button>
-                        )}
+                        <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
+                            <Edit3 size={14} /> Fases
+                        </button>
                         <button onClick={startEditing} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
                             <Edit3 size={14} /> Editar
                         </button>

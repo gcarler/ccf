@@ -90,8 +90,8 @@ export default function ForumThreadDetail() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4">
                 {viewType === 'table' && (
- <div className="w-full overflow-hidden rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
-                        <table className="w-full text-left">
+ <div className="w-full overflow-x-auto rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+                        <table className="w-full min-w-[480px] text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr>
                                     <th className="px-4 py-2">Autor</th>

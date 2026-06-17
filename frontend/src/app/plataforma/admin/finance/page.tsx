@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { SITE_NAME } from '@/lib/site-config';
 import { 
     TrendingUp, TrendingDown, DollarSign, Calendar, Download,
     ArrowUpRight, ArrowDownLeft, Wallet, PieChart,
@@ -168,7 +169,7 @@ export default function FinanceAdminPage() {
             `}</style>
 
             <WorkspaceToolbar 
-                breadcrumbs={[{ label: 'CCF Platform', icon: Layout }, { label: 'Tesorería y Finanzas', icon: Wallet }]}
+                breadcrumbs={[{ label: SITE_NAME, icon: Layout }, { label: 'Tesorería y Finanzas', icon: Wallet }]}
                 viewType={viewType} setViewType={setViewType} availableViews={FINANCE_VIEWS} onSearch={setSearch}
                 rightActions={
                     <div className="flex items-center gap-2">

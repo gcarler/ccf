@@ -7,7 +7,7 @@ tengan acceso a información real de la plataforma.
 from datetime import datetime, timezone
 
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Index,
-                        Integer, String, Text, cast, func)
+                        Integer, String, Text, cast, func, inspect)
 from sqlalchemy.orm import Session
 
 from backend.core.database import Base
@@ -32,7 +32,7 @@ class AgentKnowledgeBase(Base):
     summary = Column(String(500), nullable=True)
     category = Column(String(50), nullable=False, index=True)
     source_module = Column(String(50), nullable=False, index=True)
-    source_id = Column(Integer, nullable=True)
+    source_id = Column(String(120), nullable=True)
     source_url = Column(String(500), nullable=True)
     relevance_score = Column(Float, default=0.5)
     is_active = Column(Boolean, default=True, index=True)
@@ -53,6 +53,13 @@ class KnowledgeIndexer:
 
     def __init__(self, db: Session):
         self.db = db
+
+    def _has_table(self, table_name: str) -> bool:
+        """Return True when the target table exists in the current database."""
+        try:
+            return inspect(self.db.bind).has_table(table_name)  # type: ignore[arg-type]
+        except Exception:
+            return False
 
     def rebuild_all(self, indexed_by_agent_id: int = None) -> dict:
         """Reconstruye toda la KB desde cero."""
@@ -75,6 +82,9 @@ class KnowledgeIndexer:
         """Indexa cursos activos."""
         from backend import models
 
+        if not self._has_table(models.Course.__tablename__):
+            return 0
+
         courses = self.db.query(models.Course).filter(
             models.Course.is_published,
         ).all()
@@ -90,7 +100,7 @@ class KnowledgeIndexer:
                 summary=(c.description or "")[:200] if c.description else None,
                 category="academy",
                 source_module="academy",
-                source_id=c.id,
+                source_id=str(c.id),
                 source_url=f"/plataforma/academy/courses/{c.id}",
                 indexed_by=agent_id,
             )
@@ -117,7 +127,7 @@ class KnowledgeIndexer:
                 summary=(s.description or "")[:200] if s.description else None,
                 category="evangelism",
                 source_module="evangelism",
-                source_id=s.id,
+                source_id=str(s.id),
                 source_url=f"/plataforma/evangelism/strategies/{s.id}",
                 indexed_by=agent_id,
             )
@@ -144,7 +154,7 @@ class KnowledgeIndexer:
                 summary=(p.description or "")[:200] if p.description else None,
                 category="projects",
                 source_module="projects",
-                source_id=p.id,
+                source_id=str(p.id),
                 source_url=f"/plataforma/projects/{p.id}",
                 indexed_by=agent_id,
             )
@@ -154,20 +164,20 @@ class KnowledgeIndexer:
 
     def _index_member_stats(self, agent_id: int) -> int:
         """Indexa estadísticas de miembros (no datos personales)."""
-        from backend import models, models_kernel
+        from backend import models
 
         total = self.db.query(models.Persona).count()
         by_role = {}
         # Usa el rol del Kernel cuando existe, fallback a columna legacy
         effective_role = func.coalesce(
-            cast(models_kernel.PersonaChurchRole.church_role, String),
+            cast(models.PersonaRoleAssignment.church_role, String),
             models.Persona.church_role,
         )
         for role, cnt in (
             self.db.query(effective_role, func.count(models.Persona.id))
             .outerjoin(
-                models_kernel.PersonaChurchRole,
-                models_kernel.PersonaChurchRole.persona_id == models.Persona.id,
+                models.PersonaRoleAssignment,
+                models.PersonaRoleAssignment.persona_id == models.Persona.id,
             )
             .filter(effective_role.isnot(None))
             .group_by(effective_role)
@@ -182,11 +192,11 @@ class KnowledgeIndexer:
                 f"Distribución por rol: {by_role}"
             ),
             summary=f"{total} miembros registrados",
-            category="crm_stats",
-            source_module="crm",
-            source_id=None,
-            indexed_by=agent_id,
-        )
+                category="crm_stats",
+                source_module="crm",
+                source_id=None,
+                indexed_by=agent_id,
+            )
         self.db.commit()
         return 1
 
@@ -194,9 +204,7 @@ class KnowledgeIndexer:
         """Indexa variables del sistema como conocimiento."""
         from backend import models
 
-        variables = self.db.query(models.SystemVariable).filter(
-            models.SystemVariable.is_active,
-        ).all()
+        variables = self.db.query(models.SystemVariable).all()
         count = 0
         for v in variables:
             self._upsert_kb(
@@ -205,7 +213,7 @@ class KnowledgeIndexer:
                 summary=f"Variable del sistema: {v.key}",
                 category="system",
                 source_module="system",
-                source_id=v.id,
+                source_id=str(v.id),
                 indexed_by=agent_id,
             )
             count += 1
@@ -214,6 +222,8 @@ class KnowledgeIndexer:
 
     def _upsert_kb(self, **kwargs):
         """Inserta o actualiza un documento en la KB."""
+        if kwargs.get("source_id") is not None:
+            kwargs["source_id"] = str(kwargs["source_id"])
         existing = self.db.query(AgentKnowledgeBase).filter(
             AgentKnowledgeBase.source_module == kwargs.get("source_module"),
             AgentKnowledgeBase.source_id == kwargs.get("source_id"),

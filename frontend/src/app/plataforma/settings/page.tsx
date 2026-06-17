@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { SITE_NAME } from '@/lib/site-config';
 import { motion } from 'framer-motion';
 import {
     Settings, User, Bell, Lock, Palette, Globe, Shield,
@@ -195,7 +196,7 @@ export default function SettingsPage() {
                 </motion.div>
 
                 <p className="text-center text-[10px] text-slate-300 dark:text-slate-700 font-bold uppercase tracking-wide pb-8">
-                    CCF Platform v2.1.0 · Powered by Antigravity
+                    {SITE_NAME} · Powered by Antigravity
                 </p>
             </div>
         </div>

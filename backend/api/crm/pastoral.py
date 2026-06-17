@@ -24,6 +24,8 @@ from backend.crud.crm import (
     resolve_persona_id_for_user,
     resolve_persona_id_from_identity,
 )
+from backend.models_crm_core import EstadoCasoEnum, TipoInteraccionEnum
+from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
 from backend.services.messaging import MessagingGateway, get_messaging_gateway
 from backend.services.messaging import StubMessagingGateway  # noqa: F401 — disponible para override manual en tests
 from backend.services.public_contact_tracking import ContactRecord, tracker
@@ -50,10 +52,55 @@ def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]):
         .first()
     )
     if not case:
+        case = (
+            db.query(models.CasoCRM)
+            .filter(
+                models.CasoCRM.id == case_uuid,
+                models.CasoCRM.deleted_at.is_(None),
+            )
+            .first()
+        )
+    if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    if user_sede and case.sede_id != user_sede:
+    if user_sede and str(case.sede_id) != str(user_sede):
         raise HTTPException(status_code=404, detail="Case not found")
     return case
+
+
+def _legacy_stage_to_estado(stage: str) -> EstadoCasoEnum:
+    normalized = str(stage or "").strip().lower()
+    if normalized in {"consolidated", "integrated", "converted"}:
+        return EstadoCasoEnum.RESUELTO_EXITO
+    if normalized in {"lost", "closed", "discarded"}:
+        return EstadoCasoEnum.CERRADO_PERDIDO
+    if normalized in {"call", "contacted"}:
+        return EstadoCasoEnum.ESPERANDO_RESPUESTA
+    if normalized in {"visit", "visited", "discipleship", "in_process"}:
+        return EstadoCasoEnum.EN_PROGRESO
+    return EstadoCasoEnum.ABIERTO
+
+
+def _update_case_compat_field(case, key: str, value) -> None:
+    if hasattr(case, key):
+        setattr(case, key, value)
+        return
+
+    if isinstance(case, models.CasoCRM):
+        payload = dict(case.payload_web or {})
+        if key == "stage":
+            payload["legacy_stage"] = value
+            case.estado = _legacy_stage_to_estado(value)
+        elif key == "source":
+            payload["legacy_source"] = value
+        elif key == "notes":
+            payload["legacy_notes"] = value
+        elif key == "status":
+            payload["legacy_status"] = value
+        elif key in {"last_contact_at", "next_contact_at"}:
+            payload[f"legacy_{key}"] = value.isoformat() if hasattr(value, "isoformat") else value
+        else:
+            payload[f"legacy_{key}"] = value
+        case.payload_web = payload
 
 
 def _get_persona_or_404(db: Session, persona_ref: str, user_sede: Optional[int] = None):
@@ -77,6 +124,36 @@ def _get_persona_or_404(db: Session, persona_ref: str, user_sede: Optional[int] 
     return persona
 
 
+def _resolve_actor_persona_uuid(db: Session, current_user: models.User, fallback_persona_id=None):
+    persona_id_str = resolve_persona_id_for_user(db, current_user.id)
+    if persona_id_str:
+        return uuid.UUID(str(persona_id_str))
+    if fallback_persona_id:
+        return uuid.UUID(str(fallback_persona_id))
+    raise HTTPException(status_code=400, detail="No se pudo resolver la persona responsable")
+
+
+def _serialize_core_interaction_as_call(row: models.InteraccionCRM) -> dict:
+    notes = row.resumen or ""
+    outcome = row.tipo.value if hasattr(row.tipo, "value") else str(row.tipo)
+    prefix = "Resultado: "
+    if notes.startswith(prefix):
+        first_line, _, rest = notes.partition("\n\n")
+        outcome = first_line.replace(prefix, "", 1).strip() or outcome
+        notes = rest or ""
+    return {
+        "id": row.id,
+        "case_id": str(row.caso_id) if row.caso_id else None,
+        "persona_id": None,
+        "pastor_id": str(row.realizado_por_id) if row.realizado_por_id else None,
+        "outcome": outcome,
+        "notes": notes,
+        "prayer_requests": None,
+        "duration_seconds": row.duration_seconds or 0,
+        "created_at": row.fecha_interaccion.isoformat() if row.fecha_interaccion else None,
+    }
+
+
 # ═══════════════════════════════════════════════════════════════════
 # REDIRECTS: Old consolidation endpoints → new CRM Core
 # ═══════════════════════════════════════════════════════════════════
@@ -95,15 +172,62 @@ def get_consolidation_case(
 
 @router.post("/consolidation/cases", response_model=dict)
 def create_consolidation_case(
-    payload: schemas.CasoCRMCreate,
+    payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    p_uuid = uuid.UUID(payload.persona_id) if isinstance(payload.persona_id, str) else payload.persona_id
+    if "persona_id" not in payload:
+        user_sede = get_user_sede_id(db, current_user.id)
+        if not user_sede:
+            raise HTTPException(status_code=400, detail="El usuario no tiene sede asignada")
+
+        phone = str(payload.get("phone") or "").strip() or None
+        email = str(payload.get("email") or "").strip() or None
+        conditions = []
+        if phone:
+            conditions.append(models.Persona.phone == phone)
+        if email:
+            conditions.append(models.Persona.email == email)
+        persona = (
+            db.query(models.Persona)
+            .filter(or_(*conditions), models.Persona.sede_id == uuid.UUID(str(user_sede)))
+            .first()
+            if conditions
+            else None
+        )
+        if not persona:
+            persona = models.Persona(
+                first_name=str(payload.get("first_name") or "Prospecto").strip() or "Prospecto",
+                last_name=str(payload.get("last_name") or "").strip(),
+                phone=phone,
+                email=email,
+                spiritual_status=str(payload.get("spiritual_status") or "Prospecto"),
+                church_role="Visitante",
+                sede_id=uuid.UUID(str(user_sede)),
+            )
+            db.add(persona)
+            db.flush()
+
+        case = crear_caso_nuevo_visitante(
+            db,
+            persona,
+            uuid.UUID(str(persona.sede_id or user_sede)),
+            titulo_prefix="Consolidacion",
+        )
+        if not case:
+            raise HTTPException(status_code=500, detail="No se pudo crear el caso de consolidacion")
+        _update_case_compat_field(case, "stage", payload.get("stage", "new"))
+        _update_case_compat_field(case, "source", payload.get("source", "Visitante"))
+        _update_case_compat_field(case, "notes", payload.get("notes"))
+        db.commit()
+        db.refresh(case)
+        return _serialize_case(case)
+
+    p_uuid = uuid.UUID(payload["persona_id"]) if isinstance(payload["persona_id"], str) else payload["persona_id"]
     persona = db.query(models.Persona).filter(models.Persona.id == p_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
-    data = payload.model_dump()
+    data = dict(payload)
     data["persona_id"] = p_uuid
     if data.get("assigned_pastor_id"):
         data["assigned_pastor_id"] = uuid.UUID(str(data["assigned_pastor_id"]))
@@ -129,7 +253,7 @@ def update_consolidation_case(
     for key, value in payload.model_dump(exclude_unset=True).items():
         if key in ("assigned_pastor_id", "assigned_leader_id") and value is not None:
             value = uuid.UUID(str(value))
-        setattr(case, key, value)
+        _update_case_compat_field(case, key, value)
     db.commit()
     db.refresh(case)
     return _serialize_case(case)
@@ -181,9 +305,36 @@ def create_consolidation_interaction(
     if interaction_data.get("performed_by_id"):
         interaction_data["performed_by_id"] = uuid.UUID(str(interaction_data["performed_by_id"]))
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+    if isinstance(case, models.CasoCRM):
+        actor_id = interaction_data.get("performed_by_id") or _resolve_actor_persona_uuid(
+            db,
+            current_user,
+            fallback_persona_id=getattr(case, "persona_id", None),
+        )
+        row = models.InteraccionCRM(
+            caso_id=case_uuid,
+            realizado_por_id=actor_id,
+            tipo=TipoInteraccionEnum.LLAMADA_OUTBOUND,
+            fecha_interaccion=interaction_data.get("interaction_date") or datetime.now(timezone.utc),
+            resumen=interaction_data.get("notes") or interaction_data.get("result") or "Interacción registrada",
+        )
+        db.add(row)
+        _update_case_compat_field(case, "last_contact_at", row.fecha_interaccion)
+        db.commit()
+        db.refresh(row)
+        return {
+            "id": row.id,
+            "case_id": str(row.caso_id),
+            "performed_by_id": str(row.realizado_por_id),
+            "interaction_type": row.tipo.value if hasattr(row.tipo, "value") else str(row.tipo),
+            "interaction_date": row.fecha_interaccion.isoformat() if row.fecha_interaccion else None,
+            "result": row.tipo.value if hasattr(row.tipo, "value") else str(row.tipo),
+            "created_at": row.fecha_interaccion.isoformat() if row.fecha_interaccion else None,
+        }
+
     row = models.ConsolidationInteraction(**interaction_data, case_id=case_uuid)
     db.add(row)
-    case.last_contact_at = row.interaction_date
+    _update_case_compat_field(case, "last_contact_at", row.interaction_date)
     db.commit()
     db.refresh(row)
     return {
@@ -357,11 +508,34 @@ def list_consolidation_interactions(
 ):
     """Lista las interacciones de un caso de consolidación."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _get_case_or_404(db, case_id, user_sede)
+    case = _get_case_or_404(db, case_id, user_sede)
+    case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+
+    if isinstance(case, models.CasoCRM):
+        interactions = (
+            db.query(models.InteraccionCRM)
+            .filter(models.InteraccionCRM.caso_id == case_uuid)
+            .order_by(models.InteraccionCRM.fecha_interaccion.desc())
+            .all()
+        )
+        return [
+            {
+                "id": i.id,
+                "case_id": str(i.caso_id),
+                "performed_by_id": str(i.realizado_por_id),
+                "interaction_type": i.tipo.value if hasattr(i.tipo, "value") else str(i.tipo),
+                "interaction_date": i.fecha_interaccion.isoformat() if i.fecha_interaccion else None,
+                "result": i.tipo.value if hasattr(i.tipo, "value") else str(i.tipo),
+                "notes": i.resumen,
+                "next_action_date": None,
+                "created_at": i.fecha_interaccion.isoformat() if i.fecha_interaccion else None,
+            }
+            for i in interactions
+        ]
 
     interactions = (
         db.query(models.ConsolidationInteraction)
-        .filter(models.ConsolidationInteraction.case_id == case_id)
+        .filter(models.ConsolidationInteraction.case_id == case_uuid)
         .order_by(models.ConsolidationInteraction.created_at.desc())
         .all()
     )
@@ -1719,8 +1893,17 @@ def list_consolidation_calls(
 ):
     """List all call logs for a consolidation case."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _get_case_or_404(db, case_id, user_sede)
+    case = _get_case_or_404(db, case_id, user_sede)
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+    if isinstance(case, models.CasoCRM):
+        logs = (
+            db.query(models.InteraccionCRM)
+            .filter(models.InteraccionCRM.caso_id == case_uuid)
+            .order_by(models.InteraccionCRM.fecha_interaccion.desc())
+            .all()
+        )
+        return [_serialize_core_interaction_as_call(log) for log in logs]
+
     logs = (
         db.query(models.PastoralCallLog)
         .filter(models.PastoralCallLog.case_id == case_uuid)
@@ -1752,7 +1935,7 @@ def create_consolidation_call(
 ):
     """Register a call log for a consolidation case."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _get_case_or_404(db, case_id, user_sede)
+    case = _get_case_or_404(db, case_id, user_sede)
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
 
     # Resolve pastor_id from current user if not provided
@@ -1760,19 +1943,40 @@ def create_consolidation_call(
     if payload.pastor_id:
         pastor_uuid = uuid.UUID(str(payload.pastor_id))
     else:
-        persona_id_str = resolve_persona_id_for_user(db, current_user.id)
-        if persona_id_str:
-            pastor_uuid = uuid.UUID(persona_id_str)
+        pastor_uuid = _resolve_actor_persona_uuid(
+            db,
+            current_user,
+            fallback_persona_id=getattr(case, "persona_id", None),
+        )
 
     # Resolve persona_id if provided
     persona_uuid = None
     if payload.persona_id:
         persona_uuid = uuid.UUID(str(payload.persona_id))
 
+    if isinstance(case, models.CasoCRM):
+        summary_parts = [f"Resultado: {payload.outcome}"]
+        if payload.notes:
+            summary_parts.append(payload.notes)
+        if payload.prayer_requests:
+            summary_parts.append(f"Motivo de oración: {payload.prayer_requests}")
+        row = models.InteraccionCRM(
+            caso_id=case_uuid,
+            realizado_por_id=pastor_uuid,
+            tipo=TipoInteraccionEnum.LLAMADA_OUTBOUND,
+            resumen="\n\n".join(summary_parts) or payload.outcome,
+            duration_seconds=payload.duration_seconds,
+        )
+        db.add(row)
+        _update_case_compat_field(case, "last_contact_at", datetime.now(timezone.utc))
+        db.commit()
+        db.refresh(row)
+        return _serialize_core_interaction_as_call(row)
+
     row = models.PastoralCallLog(
         case_id=case_uuid,
         persona_id=persona_uuid,
-        pastor_id=pastor_uuid or current_user.id,
+        pastor_id=pastor_uuid,
         outcome=payload.outcome,
         notes=payload.notes,
         prayer_requests=payload.prayer_requests,
@@ -1780,9 +1984,7 @@ def create_consolidation_call(
     )
     db.add(row)
 
-    # Update case last_contact_at
-    case = _get_case_or_404(db, case_id, user_sede)
-    case.last_contact_at = datetime.now(timezone.utc)
+    _update_case_compat_field(case, "last_contact_at", datetime.now(timezone.utc))
 
     db.commit()
     db.refresh(row)

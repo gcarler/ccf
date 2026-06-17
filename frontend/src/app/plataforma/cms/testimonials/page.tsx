@@ -328,8 +328,8 @@ export default function CmsTestimonialsPage() {
   );
 
   const renderTestimonialTable = () => (
-    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
-      <table className="w-full text-left">
+    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto">
+      <table className="w-full min-w-[480px] text-left">
         <thead className="bg-slate-50 dark:bg-white/5">
           <tr>
             <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Testimonio</th>

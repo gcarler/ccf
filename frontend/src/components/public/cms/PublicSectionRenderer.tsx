@@ -4,7 +4,8 @@ import { CmsSection } from "@/types/cms-v2";
 import { AnimatePresence,motion } from "framer-motion";
 import { Calendar,CheckCircle2,ChevronDown,ChevronRight,ChevronUp,Download,FileText,MapPin,Search,Send,Star,Upload,X } from "lucide-react";
 import Link from "next/link";
-import React,{ useCallback,useEffect,useRef,useState } from "react";
+import { usePathname } from "next/navigation";
+import React,{ useCallback,useEffect,useMemo,useRef,useState } from "react";
 
 function val(props: Record<string, unknown>, key: string, fallback = "") {
   const value = props?.[key];
@@ -21,6 +22,36 @@ function asItems(props: Record<string, unknown>): Array<Record<string, unknown>>
     : [];
 }
 
+function asStringList(props: Record<string, unknown>, key: string): string[] {
+  const value = props?.[key];
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(/[\n,]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function matchesPathRule(pathname: string, rule: string): boolean {
+  const normalizedRule = rule.trim();
+  if (!normalizedRule) return false;
+  if (normalizedRule === "/") return true;
+  if (normalizedRule.endsWith("*")) {
+    return pathname.startsWith(normalizedRule.slice(0, -1));
+  }
+  return pathname === normalizedRule || pathname.startsWith(`${normalizedRule}/`);
+}
+
+function parseDateOrNull(value: string): Date | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 // ─── Hero ──────────────────────────────────────────────────────────────────────
 
 function HeroSection({ section }: { section: CmsSection }) {
@@ -35,7 +66,7 @@ function HeroSection({ section }: { section: CmsSection }) {
   if (imageUrl) {
     return (
       <section className="relative overflow-hidden rounded-2xl min-h-[520px] flex items-end">
-        <img src={imageUrl} alt={imageAlt} className="absolute inset-0 h-full w-full object-cover" />
+        <img src={imageUrl} alt={imageAlt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.3) 55%, transparent 100%)" }} />
         <div className="relative z-10 w-full p-6 md:p-10 lg:p-14">
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-3xl">
@@ -50,7 +81,7 @@ function HeroSection({ section }: { section: CmsSection }) {
             <Link
               href={ctaHref}
               className="inline-flex mt-6 items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg transition-transform hover:scale-105"
-              style={{ background: "var(--faro-cta-gradient)" }}
+              style={{ background: "var(--site-cta-gradient)" }}
             >
               {ctaLabel}
             </Link>
@@ -63,7 +94,7 @@ function HeroSection({ section }: { section: CmsSection }) {
   return (
     <section
       className="rounded-2xl p-8 md:p-12 lg:p-16 min-h-[380px] flex items-center"
-      style={{ background: "var(--faro-cta-gradient)" }}
+      style={{ background: "var(--site-cta-gradient)" }}
     >
       <div className="max-w-3xl">
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
@@ -78,7 +109,7 @@ function HeroSection({ section }: { section: CmsSection }) {
           <Link
             href={ctaHref}
             className="inline-flex mt-8 items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest bg-[hsl(var(--bg-primary))] shadow-lg transition-transform hover:scale-105"
-            style={{ color: "var(--faro-primary)" }}
+            style={{ color: "var(--site-primary)" }}
           >
             {ctaLabel}
           </Link>
@@ -115,7 +146,7 @@ function VideoHeroSection({ section }: { section: CmsSection }) {
           <Link
             href={ctaHref}
             className="inline-flex mt-8 items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg transition-transform hover:scale-105"
-            style={{ background: "var(--faro-cta-gradient)" }}
+            style={{ background: "var(--site-cta-gradient)" }}
           >
             {ctaLabel}
           </Link>
@@ -135,14 +166,14 @@ function RichTextSection({ section }: { section: CmsSection }) {
   const ctaHref = val(props, "cta_href", "");
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-4" style={{ color: "var(--faro-on-surface)" }}>
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-4" style={{ color: "var(--site-on-surface)" }}>
           {title}
         </h2>
       )}
       {body && (
-        <div className="prose prose-base max-w-3xl leading-relaxed whitespace-pre-line" style={{ color: "var(--faro-on-surface-variant)" }}>
+        <div className="prose prose-base max-w-3xl leading-relaxed whitespace-pre-line" style={{ color: "var(--site-on-surface-variant)" }}>
           {body}
         </div>
       )}
@@ -150,7 +181,7 @@ function RichTextSection({ section }: { section: CmsSection }) {
         <Link
           href={ctaHref}
           className="inline-flex mt-6 items-center gap-2 text-sm font-bold uppercase tracking-widest transition-opacity hover:opacity-70"
-          style={{ color: "var(--faro-primary)" }}
+          style={{ color: "var(--site-primary)" }}
         >
           {ctaLabel} →
         </Link>
@@ -168,17 +199,17 @@ function RichTextColumnsSection({ section }: { section: CmsSection }) {
   const body2 = val(props, "body_2", body);
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-6" style={{ color: "var(--faro-on-surface)" }}>
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-6" style={{ color: "var(--site-on-surface)" }}>
           {title}
         </h2>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
-        <div className="leading-relaxed whitespace-pre-line text-base" style={{ color: "var(--faro-on-surface-variant)" }}>
+        <div className="leading-relaxed whitespace-pre-line text-base" style={{ color: "var(--site-on-surface-variant)" }}>
           {body}
         </div>
-        <div className="leading-relaxed whitespace-pre-line text-base" style={{ color: "var(--faro-on-surface-variant)" }}>
+        <div className="leading-relaxed whitespace-pre-line text-base" style={{ color: "var(--site-on-surface-variant)" }}>
           {body2}
         </div>
       </div>
@@ -195,11 +226,11 @@ function CardsSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 9) as Array<{ title?: string; body?: string; href?: string; icon?: string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
       {(title || body) && (
         <div className="mb-8">
-          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
-          {body && <p className="mt-3 text-base max-w-2xl" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+          {body && <p className="mt-3 text-base max-w-2xl" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -207,17 +238,17 @@ function CardsSection({ section }: { section: CmsSection }) {
           const inner = (
             <>
               {card.icon && <span className="text-3xl">{card.icon}</span>}
-              <h3 className="text-lg font-bold" style={{ color: "var(--faro-on-surface)" }}>{card.title || `Tarjeta ${i + 1}`}</h3>
-              {card.body && <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--faro-on-surface-variant)" }}>{card.body}</p>}
+              <h3 className="text-lg font-bold" style={{ color: "var(--site-on-surface)" }}>{card.title || `Tarjeta ${i + 1}`}</h3>
+              {card.body && <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--site-on-surface-variant)" }}>{card.body}</p>}
               {card.href && (
-                <span className="text-xs font-bold uppercase tracking-widest mt-1" style={{ color: "var(--faro-primary)" }}>
+                <span className="text-xs font-bold uppercase tracking-widest mt-1" style={{ color: "var(--site-primary)" }}>
                   Ver más →
                 </span>
               )}
             </>
           );
           const cls = `rounded-xl p-6 flex flex-col gap-3 ${card.href ? "transition-transform hover:-translate-y-1 hover:shadow-md" : ""}`;
-          const sty = { background: "var(--faro-surface-container)" };
+          const sty = { background: "var(--site-surface-container)" };
           if (card.href) {
             return <Link key={i} href={card.href} className={cls} style={sty}>{inner}</Link>;
           }
@@ -242,15 +273,15 @@ function CtaBannerSection({ section }: { section: CmsSection }) {
   return (
     <section
       className="rounded-2xl p-8 md:p-12 text-center"
-      style={{ background: "linear-gradient(135deg, var(--faro-primary-container), var(--faro-secondary-container, var(--faro-primary-container)))" }}
+      style={{ background: "linear-gradient(135deg, var(--site-primary-container), var(--site-secondary-container, var(--site-primary-container)))" }}
     >
       {title && (
-        <h2 className="text-2xl md:text-4xl font-black tracking-tight max-w-2xl mx-auto" style={{ color: "var(--faro-on-primary-container)" }}>
+        <h2 className="text-2xl md:text-4xl font-black tracking-tight max-w-2xl mx-auto" style={{ color: "var(--site-on-primary-container)" }}>
           {title}
         </h2>
       )}
       {body && (
-        <p className="mt-4 text-base md:text-lg max-w-xl mx-auto leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+        <p className="mt-4 text-base md:text-lg max-w-xl mx-auto leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
           {body}
         </p>
       )}
@@ -259,7 +290,7 @@ function CtaBannerSection({ section }: { section: CmsSection }) {
           <Link
             href={ctaHref}
             className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg transition-transform hover:scale-105"
-            style={{ background: "var(--faro-cta-gradient)" }}
+            style={{ background: "var(--site-cta-gradient)" }}
           >
             {ctaLabel}
           </Link>
@@ -268,7 +299,7 @@ function CtaBannerSection({ section }: { section: CmsSection }) {
           <Link
             href={ctaHref2}
             className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest transition-transform hover:scale-105"
-            style={{ border: "2px solid var(--faro-primary)", color: "var(--faro-primary)" }}
+            style={{ border: "2px solid var(--site-primary)", color: "var(--site-primary)" }}
           >
             {ctaLabel2}
           </Link>
@@ -299,12 +330,12 @@ function GallerySection({ section }: { section: CmsSection }) {
   const isGrid = images.length > 1;
 
   return (
-    <section className="rounded-2xl overflow-hidden" style={{ background: "var(--faro-surface-container-low)" }}>
+    <section className="rounded-2xl overflow-hidden" style={{ background: "var(--site-surface-container-low)" }}>
       {isGrid ? (
         <div className={`grid gap-1 ${images.length === 2 ? "grid-cols-2" : images.length === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4"}`}>
           {images.map((img, i) => (
             <div key={i} className="relative aspect-square group overflow-hidden">
-              <img src={img.url} alt={img.alt} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <img src={img.url} alt={img.alt} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               {img.caption && (
                 <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }}>
                   <p className="text-xs text-white font-medium">{img.caption}</p>
@@ -314,12 +345,12 @@ function GallerySection({ section }: { section: CmsSection }) {
           ))}
         </div>
       ) : (
-        <img src={images[0].url} alt={images[0].alt} className="w-full max-h-[480px] object-cover" />
+        <img src={images[0].url} alt={images[0].alt} loading="lazy" className="w-full max-h-[480px] object-cover" />
       )}
       {(title || body) && (
         <div className="p-6">
-          {title && <h3 className="text-xl font-bold" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>}
-          {body && <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+          {title && <h3 className="text-xl font-bold" style={{ color: "var(--site-on-surface)" }}>{title}</h3>}
+          {body && <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
         </div>
       )}
     </section>
@@ -335,24 +366,24 @@ function FaqSection({ section }: { section: CmsSection }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
-      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-6" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-6" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       <div className="space-y-2">
         {items.map((item, i) => {
           const isOpen = openIndex === i;
           return (
-            <div key={i} className="rounded-xl overflow-hidden" style={{ background: "var(--faro-surface-container)" }}>
+            <div key={i} className="rounded-xl overflow-hidden" style={{ background: "var(--site-surface-container)" }}>
               <button
                 onClick={() => setOpenIndex(isOpen ? null : i)}
                 className="w-full flex items-center justify-between gap-4 p-5 text-left"
               >
-                <span className="font-bold text-base" style={{ color: "var(--faro-on-surface)" }}>
+                <span className="font-bold text-base" style={{ color: "var(--site-on-surface)" }}>
                   {item.q || `Pregunta ${i + 1}`}
                 </span>
                 {isOpen ? (
-                  <ChevronUp size={18} style={{ color: "var(--faro-primary)", flexShrink: 0 }} />
+                  <ChevronUp size={18} style={{ color: "var(--site-primary)", flexShrink: 0 }} />
                 ) : (
-                  <ChevronDown size={18} style={{ color: "var(--faro-on-surface-variant)", flexShrink: 0 }} />
+                  <ChevronDown size={18} style={{ color: "var(--site-on-surface-variant)", flexShrink: 0 }} />
                 )}
               </button>
               <AnimatePresence initial={false}>
@@ -364,7 +395,7 @@ function FaqSection({ section }: { section: CmsSection }) {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <p className="px-5 pb-5 text-sm leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+                    <p className="px-5 pb-5 text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
                       {item.a || "Respuesta pendiente"}
                     </p>
                   </motion.div>
@@ -387,15 +418,15 @@ function EmbedSection({ section }: { section: CmsSection }) {
   const embedUrl = val(props, "embed_url", "");
 
   return (
-    <section className="rounded-2xl p-6" style={{ background: "var(--faro-surface-container-low)" }}>
-      {title && <h3 className="text-xl font-bold mb-3" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>}
-      {body && <p className="mb-4 text-sm leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+    <section className="rounded-2xl p-6" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h3 className="text-xl font-bold mb-3" style={{ color: "var(--site-on-surface)" }}>{title}</h3>}
+      {body && <p className="mb-4 text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
       {embedUrl ? (
-        <div className="aspect-video rounded-xl overflow-hidden" style={{ background: "var(--faro-surface-container)" }}>
+        <div className="aspect-video rounded-xl overflow-hidden" style={{ background: "var(--site-surface-container)" }}>
           <iframe title={title} src={embedUrl} className="w-full h-full border-0" allowFullScreen />
         </div>
       ) : (
-        <div className="aspect-video rounded-xl flex items-center justify-center text-sm" style={{ background: "var(--faro-surface-container)", color: "var(--faro-on-surface-variant)" }}>
+        <div className="aspect-video rounded-xl flex items-center justify-center text-sm" style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface-variant)" }}>
           Sin URL de embed configurada
         </div>
       )}
@@ -411,9 +442,9 @@ function TestimonialsSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 6) as Array<{ author?: string; role?: string; content?: string; stars?: number | string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-8" style={{ color: "var(--faro-on-surface)" }}>
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-8" style={{ color: "var(--site-on-surface)" }}>
           {title}
         </h2>
       )}
@@ -421,25 +452,25 @@ function TestimonialsSection({ section }: { section: CmsSection }) {
         {items.map((item, i) => {
           const stars = typeof item.stars === "number" ? item.stars : typeof item.stars === "string" ? parseInt(item.stars, 10) : 5;
           return (
-            <article key={i} className="rounded-xl p-6 flex flex-col gap-4" style={{ background: "var(--faro-surface-container)" }}>
+            <article key={i} className="rounded-xl p-6 flex flex-col gap-4" style={{ background: "var(--site-surface-container)" }}>
               <div className="flex gap-0.5">
                 {Array.from({ length: 5 }).map((_, si) => (
-                  <Star key={si} size={14} fill={si < stars ? "var(--faro-primary)" : "none"} stroke={si < stars ? "var(--faro-primary)" : "var(--faro-on-surface-variant)"} />
+                  <Star key={si} size={14} fill={si < stars ? "var(--site-primary)" : "none"} stroke={si < stars ? "var(--site-primary)" : "var(--site-on-surface-variant)"} />
                 ))}
               </div>
-              <p className="text-base leading-relaxed italic flex-1" style={{ color: "var(--faro-on-surface)" }}>
+              <p className="text-base leading-relaxed italic flex-1" style={{ color: "var(--site-on-surface)" }}>
                 &ldquo;{item.content || "Testimonio"}&rdquo;
               </p>
-              <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: "var(--faro-outline-variant, rgba(0,0,0,0.1))" }}>
+              <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: "var(--site-outline-variant, rgba(0,0,0,0.1))" }}>
                 <div
                   className="size-10 rounded-full flex items-center justify-center font-black text-white text-sm flex-shrink-0"
-                  style={{ background: "var(--faro-cta-gradient)" }}
+                  style={{ background: "var(--site-cta-gradient)" }}
                 >
                   {(item.author || "A")[0].toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-bold text-sm" style={{ color: "var(--faro-on-surface)" }}>{item.author || "Anónimo"}</p>
-                  {item.role && <p className="text-xs" style={{ color: "var(--faro-on-surface-variant)" }}>{item.role}</p>}
+                  <p className="font-bold text-sm" style={{ color: "var(--site-on-surface)" }}>{item.author || "Anónimo"}</p>
+                  {item.role && <p className="text-xs" style={{ color: "var(--site-on-surface-variant)" }}>{item.role}</p>}
                 </div>
               </div>
             </article>
@@ -508,7 +539,7 @@ function StatsSection({ section }: { section: CmsSection }) {
   return (
     <section
       className="rounded-2xl p-8 md:p-12"
-      style={{ background: "var(--faro-cta-gradient)" }}
+      style={{ background: "var(--site-cta-gradient)" }}
     >
       {title && (
         <h2 className="text-xl md:text-2xl font-black tracking-tight text-center text-white mb-8">{title}</h2>
@@ -535,9 +566,9 @@ function TeamSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 12) as Array<{ name?: string; role?: string; image?: string; bio?: string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-8" style={{ color: "var(--faro-on-surface)" }}>
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-8" style={{ color: "var(--site-on-surface)" }}>
           {title}
         </h2>
       )}
@@ -547,7 +578,7 @@ function TeamSection({ section }: { section: CmsSection }) {
             <div
               className="size-20 md:size-24 rounded-full overflow-hidden flex items-center justify-center font-black text-white text-2xl flex-shrink-0"
               style={{
-                background: item.image ? undefined : "var(--faro-cta-gradient)",
+                background: item.image ? undefined : "var(--site-cta-gradient)",
                 backgroundImage: item.image ? `url('${item.image}')` : undefined,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
@@ -556,9 +587,9 @@ function TeamSection({ section }: { section: CmsSection }) {
               {!item.image && (item.name || "?")[0].toUpperCase()}
             </div>
             <div>
-              <p className="font-bold text-base" style={{ color: "var(--faro-on-surface)" }}>{item.name || "Nombre"}</p>
-              {item.role && <p className="text-xs font-medium mt-0.5" style={{ color: "var(--faro-primary)" }}>{item.role}</p>}
-              {item.bio && <p className="text-xs mt-2 leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>{item.bio}</p>}
+              <p className="font-bold text-base" style={{ color: "var(--site-on-surface)" }}>{item.name || "Nombre"}</p>
+              {item.role && <p className="text-xs font-medium mt-0.5" style={{ color: "var(--site-primary)" }}>{item.role}</p>}
+              {item.bio && <p className="text-xs mt-2 leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{item.bio}</p>}
             </div>
           </div>
         ))}
@@ -610,7 +641,7 @@ function CountdownSection({ section }: { section: CmsSection }) {
   return (
     <section
       className="rounded-2xl p-8 md:p-12 text-center"
-      style={{ background: "var(--faro-cta-gradient)" }}
+      style={{ background: "var(--site-cta-gradient)" }}
     >
       <h2 className="text-2xl md:text-3xl font-black text-white">{title}</h2>
       {body && <p className="mt-3 text-white/80 text-base">{body}</p>}
@@ -648,9 +679,9 @@ function PricingSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 4) as Array<{ name?: string; price?: string; features?: string; btn?: string; btn_href?: string; featured?: boolean | string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-8" style={{ color: "var(--faro-on-surface)" }}>
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-8" style={{ color: "var(--site-on-surface)" }}>
           {title}
         </h2>
       )}
@@ -662,27 +693,27 @@ function PricingSection({ section }: { section: CmsSection }) {
               key={i}
               className={`rounded-xl p-6 flex flex-col gap-4 relative ${featured ? "shadow-xl scale-[1.02]" : ""}`}
               style={{
-                background: featured ? "var(--faro-primary)" : "var(--faro-surface-container)",
+                background: featured ? "var(--site-primary)" : "var(--site-surface-container)",
                 border: featured ? "none" : "1px solid transparent",
               }}
             >
               {featured && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest bg-[hsl(var(--bg-primary))]" style={{ color: "var(--faro-primary)" }}>
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest bg-[hsl(var(--bg-primary))]" style={{ color: "var(--site-primary)" }}>
                   Recomendado
                 </span>
               )}
               <div>
-                <h3 className="text-lg font-black" style={{ color: featured ? "white" : "var(--faro-on-surface)" }}>
+                <h3 className="text-lg font-black" style={{ color: featured ? "white" : "var(--site-on-surface)" }}>
                   {item.name || `Plan ${i + 1}`}
                 </h3>
-                <p className="text-3xl font-black mt-1" style={{ color: featured ? "white" : "var(--faro-primary)" }}>
+                <p className="text-3xl font-black mt-1" style={{ color: featured ? "white" : "var(--site-primary)" }}>
                   {item.price || "—"}
                 </p>
               </div>
               <ul className="space-y-2 flex-1">
                 {(item.features || "").split("\n").filter(Boolean).map((feat, fi) => (
-                  <li key={fi} className="flex items-start gap-2 text-sm" style={{ color: featured ? "rgba(255,255,255,0.85)" : "var(--faro-on-surface-variant)" }}>
-                    <span className="mt-0.5 flex-shrink-0 font-black" style={{ color: featured ? "white" : "var(--faro-primary)" }}>✓</span>
+                  <li key={fi} className="flex items-start gap-2 text-sm" style={{ color: featured ? "rgba(255,255,255,0.85)" : "var(--site-on-surface-variant)" }}>
+                    <span className="mt-0.5 flex-shrink-0 font-black" style={{ color: featured ? "white" : "var(--site-primary)" }}>✓</span>
                     {feat}
                   </li>
                 ))}
@@ -692,14 +723,14 @@ function PricingSection({ section }: { section: CmsSection }) {
                   <Link
                     href={item.btn_href}
                     className="w-full py-3 rounded-full text-sm font-black uppercase tracking-widest text-center block transition-opacity hover:opacity-90"
-                    style={{ background: featured ? "var(--faro-on-primary)" : "var(--faro-primary)", color: featured ? "var(--faro-primary)" : "var(--faro-on-primary)" }}
+                    style={{ background: featured ? "var(--site-on-primary)" : "var(--site-primary)", color: featured ? "var(--site-primary)" : "var(--site-on-primary)" }}
                   >
                     {item.btn}
                   </Link>
                 ) : (
                   <button
                     className="w-full py-3 rounded-full text-sm font-black uppercase tracking-widest transition-opacity hover:opacity-90"
-                    style={{ background: featured ? "var(--faro-on-primary)" : "var(--faro-primary)", color: featured ? "var(--faro-primary)" : "var(--faro-on-primary)" }}
+                    style={{ background: featured ? "var(--site-on-primary)" : "var(--site-primary)", color: featured ? "var(--site-primary)" : "var(--site-on-primary)" }}
                   >
                     {item.btn}
                   </button>
@@ -727,13 +758,13 @@ function ImageTextSection({ section }: { section: CmsSection }) {
 
   const textCol = (
     <div className="flex flex-col justify-center gap-5 py-4 md:py-0">
-      {title && <h2 className="text-2xl md:text-4xl font-black tracking-tight leading-tight" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
-      {body && <p className="text-base leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+      {title && <h2 className="text-2xl md:text-4xl font-black tracking-tight leading-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {body && <p className="text-base leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
       {ctaLabel && (
         <Link
           href={ctaHref}
           className="inline-flex self-start items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold uppercase tracking-widest text-white transition-transform hover:scale-105"
-          style={{ background: "var(--faro-cta-gradient)" }}
+          style={{ background: "var(--site-cta-gradient)" }}
         >
           {ctaLabel}
         </Link>
@@ -743,12 +774,12 @@ function ImageTextSection({ section }: { section: CmsSection }) {
 
   const imgCol = imageUrl ? (
     <div className="relative rounded-xl overflow-hidden aspect-[4/3]">
-      <img src={imageUrl} alt={imageAlt} className="w-full h-full object-cover" />
+      <img src={imageUrl} alt={imageAlt} loading="lazy" className="w-full h-full object-cover" />
     </div>
   ) : null;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
         {side === "left" && imgCol}
         {textCol}
@@ -766,22 +797,22 @@ function TimelineSection({ section }: { section: CmsSection }) {
   const items = asItems(props) as Array<{ year?: string; title?: string; body?: string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
-      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-8" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-8" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       <div className="relative">
-        <div className="absolute left-6 top-0 bottom-0 w-0.5" style={{ background: "var(--faro-primary)", opacity: 0.3 }} />
+        <div className="absolute left-6 top-0 bottom-0 w-0.5" style={{ background: "var(--site-primary)", opacity: 0.3 }} />
         <div className="space-y-6">
           {items.map((item, i) => (
             <div key={i} className="relative pl-16">
               <div
                 className="absolute left-0 size-12 rounded-full flex items-center justify-center text-xs font-black text-white leading-tight text-center"
-                style={{ background: "var(--faro-cta-gradient)" }}
+                style={{ background: "var(--site-cta-gradient)" }}
               >
                 {item.year || String(i + 1)}
               </div>
-              <div className="rounded-xl p-5" style={{ background: "var(--faro-surface-container)" }}>
-                {item.title && <h3 className="font-black text-base" style={{ color: "var(--faro-on-surface)" }}>{item.title}</h3>}
-                {item.body && <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>{item.body}</p>}
+              <div className="rounded-xl p-5" style={{ background: "var(--site-surface-container)" }}>
+                {item.title && <h3 className="font-black text-base" style={{ color: "var(--site-on-surface)" }}>{item.title}</h3>}
+                {item.body && <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{item.body}</p>}
               </div>
             </div>
           ))}
@@ -800,19 +831,19 @@ function IconGridSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 12) as Array<{ icon?: string; title?: string; body?: string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
       {(title || body) && (
         <div className="mb-8 text-center">
-          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
-          {body && <p className="mt-3 text-base max-w-2xl mx-auto" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+          {body && <p className="mt-3 text-base max-w-2xl mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
         </div>
       )}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {items.map((item, i) => (
-          <div key={i} className="rounded-xl p-5 flex flex-col items-center text-center gap-3" style={{ background: "var(--faro-surface-container)" }}>
+          <div key={i} className="rounded-xl p-5 flex flex-col items-center text-center gap-3" style={{ background: "var(--site-surface-container)" }}>
             {item.icon && <span className="text-4xl">{item.icon}</span>}
-            <h3 className="font-black text-sm" style={{ color: "var(--faro-on-surface)" }}>{item.title || `Item ${i + 1}`}</h3>
-            {item.body && <p className="text-xs leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>{item.body}</p>}
+            <h3 className="font-black text-sm" style={{ color: "var(--site-on-surface)" }}>{item.title || `Item ${i + 1}`}</h3>
+            {item.body && <p className="text-xs leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{item.body}</p>}
           </div>
         ))}
       </div>
@@ -833,20 +864,25 @@ function NewsletterSection({ section }: { section: CmsSection }) {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.includes("@")) return;
     setLoading(true);
+    setSubmitError(null);
     try {
-      if (actionUrl) {
-        await fetch(actionUrl, {
+      if (actionUrl.trim()) {
+        const res = await fetch(actionUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email }),
         });
+        if (!res.ok) throw new Error("Error al enviar");
       }
       setSent(true);
+    } catch {
+      setSubmitError("No se pudo enviar. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -855,14 +891,14 @@ function NewsletterSection({ section }: { section: CmsSection }) {
   return (
     <section
       className="rounded-2xl p-8 md:p-12 text-center"
-      style={{ background: "linear-gradient(135deg, var(--faro-primary-container), var(--faro-surface-container))" }}
+      style={{ background: "linear-gradient(135deg, var(--site-primary-container), var(--site-surface-container))" }}
     >
-      <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>
-      {body && <p className="mt-3 text-base max-w-xl mx-auto" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+      <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>
+      {body && <p className="mt-3 text-base max-w-xl mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
       {sent ? (
-        <div className="mt-8 inline-flex items-center gap-3 rounded-xl px-6 py-4" style={{ background: "var(--faro-surface-container)" }}>
+        <div className="mt-8 inline-flex items-center gap-3 rounded-xl px-6 py-4" style={{ background: "var(--site-surface-container)" }}>
           <span className="text-2xl">🎉</span>
-          <p className="font-bold" style={{ color: "var(--faro-on-surface)" }}>¡Gracias! Te mantendremos al tanto.</p>
+          <p className="font-bold" style={{ color: "var(--site-on-surface)" }}>¡Gracias! Te mantendremos al tanto.</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
@@ -872,7 +908,7 @@ function NewsletterSection({ section }: { section: CmsSection }) {
             onChange={(e) => setName(e.target.value)}
             placeholder="Tu nombre"
             className="flex-1 rounded-xl px-4 py-3 text-sm border outline-none"
-            style={{ background: "var(--faro-surface-container)", borderColor: "var(--faro-outline-variant, rgba(0,0,0,0.15))", color: "var(--faro-on-surface)" }}
+            style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant, rgba(0,0,0,0.15))", color: "var(--site-on-surface)" }}
           />
           <input
             type="email"
@@ -881,17 +917,20 @@ function NewsletterSection({ section }: { section: CmsSection }) {
             placeholder="tu@email.com"
             required
             className="flex-1 rounded-xl px-4 py-3 text-sm border outline-none"
-            style={{ background: "var(--faro-surface-container)", borderColor: "var(--faro-outline-variant, rgba(0,0,0,0.15))", color: "var(--faro-on-surface)" }}
+            style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant, rgba(0,0,0,0.15))", color: "var(--site-on-surface)" }}
           />
           <button
             type="submit"
             disabled={loading}
             className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white whitespace-nowrap disabled:opacity-60 transition-opacity hover:opacity-90"
-            style={{ background: "var(--faro-cta-gradient)" }}
+            style={{ background: "var(--site-cta-gradient)" }}
           >
             <Send size={14} /> {loading ? "Enviando..." : btnLabel}
           </button>
         </form>
+      )}
+      {submitError && (
+        <p className="mt-3 text-sm font-semibold text-red-600">{submitError}</p>
       )}
     </section>
   );
@@ -905,22 +944,83 @@ function PopupBlock({ section }: { section: CmsSection }) {
   const body = val(props, "body", "");
   const ctaLabel = val(props, "cta_label", "Ver Más");
   const ctaHref = val(props, "cta_href", "/");
-  const delayMs = parseInt(val(props, "delay_ms", "2000"), 10) || 2000;
-
+  const delayMs = Math.max(0, parseInt(val(props, "delay_ms", "2000"), 10) || 2000);
+  const pathname = usePathname() || "/";
+  const startAt = val(props, "start_at", "");
+  const endAt = val(props, "end_at", "");
+  const showOnPaths = asStringList(props, "show_on_paths");
+  const hideOnPaths = asStringList(props, "hide_on_paths");
+  const dismissMode = val(props, "dismiss_mode", "local").toLowerCase();
+  const dismissDays = Math.max(1, parseInt(val(props, "dismiss_days", "30"), 10) || 30);
+  const dismissKey = val(props, "dismiss_key", "") || `faro_popup_${section.id}`;
   const [isVisible, setIsVisible] = useState(false);
+  const shouldRenderForRoute = useMemo(() => {
+    const current = pathname || "/";
+    if (showOnPaths.length > 0 && !showOnPaths.some((rule) => matchesPathRule(current, rule))) {
+      return false;
+    }
+    if (hideOnPaths.some((rule) => matchesPathRule(current, rule))) {
+      return false;
+    }
+    const now = new Date();
+    const startDate = parseDateOrNull(startAt);
+    const endDate = parseDateOrNull(endAt);
+    if (startDate && now < startDate) return false;
+    if (endDate && now > endDate) return false;
+    return true;
+  }, [endAt, hideOnPaths, pathname, showOnPaths, startAt]);
+
+  const isDismissed = useCallback(() => {
+    if (dismissMode === "none") return false;
+    if (typeof window === "undefined") return false;
+    try {
+      const storage = dismissMode === "session" ? window.sessionStorage : window.localStorage;
+      const raw = storage.getItem(dismissKey);
+      if (!raw) return false;
+      if (dismissMode === "session") return raw === "closed";
+      const parsed = JSON.parse(raw) as { expiresAt?: number } | string;
+      if (typeof parsed === "string") return parsed === "closed";
+      if (parsed?.expiresAt && Date.now() > parsed.expiresAt) {
+        storage.removeItem(dismissKey);
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }, [dismissKey, dismissMode]);
 
   useEffect(() => {
-    const popupId = `faro_popup_${section.id}`;
-    if (!sessionStorage.getItem(popupId)) {
-      const timer = setTimeout(() => setIsVisible(true), delayMs);
-      return () => clearTimeout(timer);
+    if (!shouldRenderForRoute || isDismissed()) {
+      setIsVisible(false);
+      return;
     }
-  }, [section.id, delayMs]);
+    const timer = setTimeout(() => setIsVisible(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [delayMs, isDismissed, shouldRenderForRoute]);
 
   const handleClose = () => {
     setIsVisible(false);
-    sessionStorage.setItem(`faro_popup_${section.id}`, "closed");
+    if (dismissMode === "none") return;
+    if (typeof window === "undefined") return;
+    try {
+      const storage = dismissMode === "session" ? window.sessionStorage : window.localStorage;
+      if (dismissMode === "session") {
+        storage.setItem(dismissKey, "closed");
+      } else {
+        storage.setItem(dismissKey, JSON.stringify({
+          closedAt: Date.now(),
+          expiresAt: Date.now() + dismissDays * 24 * 60 * 60 * 1000,
+        }));
+      }
+    } catch {
+      // ignore storage failures
+    }
   };
+
+  if (!shouldRenderForRoute) {
+    return null;
+  }
 
   return (
     <AnimatePresence>
@@ -939,31 +1039,31 @@ function PopupBlock({ section }: { section: CmsSection }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 24 }}
             className="relative w-full max-w-md rounded-2xl p-8 shadow-2xl"
-            style={{ background: "var(--faro-surface-container)" }}
+            style={{ background: "var(--site-surface-container)" }}
           >
             <button
               onClick={handleClose}
               className="absolute top-4 right-4 p-2 rounded-full transition-colors"
-              style={{ background: "var(--faro-surface-container-high, rgba(0,0,0,0.05))" }}
+              style={{ background: "var(--site-surface-container-high, rgba(0,0,0,0.05))" }}
             >
-              <X size={18} style={{ color: "var(--faro-on-surface-variant)" }} />
+              <X size={18} style={{ color: "var(--site-on-surface-variant)" }} />
             </button>
             <div className="text-center mt-2">
-              <h2 className="text-xl font-black mb-3" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>
+              <h2 className="text-xl font-black mb-3" style={{ color: "var(--site-on-surface)" }}>{title}</h2>
+              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>
               <div className="flex flex-col gap-3">
                 <Link
                   href={ctaHref}
                   onClick={handleClose}
                   className="w-full py-3 rounded-full text-sm font-black uppercase tracking-widest text-white text-center transition-transform hover:scale-[1.02]"
-                  style={{ background: "var(--faro-cta-gradient)" }}
+                  style={{ background: "var(--site-cta-gradient)" }}
                 >
                   {ctaLabel}
                 </Link>
                 <button
                   onClick={handleClose}
                   className="w-full py-3 rounded-full text-sm font-bold transition-opacity hover:opacity-70"
-                  style={{ color: "var(--faro-on-surface-variant)" }}
+                  style={{ color: "var(--site-on-surface-variant)" }}
                 >
                   No, gracias
                 </button>
@@ -982,16 +1082,18 @@ function ButtonSection({ section }: { section: CmsSection }) {
   const props = section.props_json || {};
   const buttons = (Array.isArray(props.buttons) ? props.buttons : [{ label: "Click", href: "/" }]) as Array<{ label: string; href: string; variant?: string; size?: string; icon?: string }>;
   const align = val(props, "align", "center");
-  const gap = val(props, "gap", "4");
+  const gapRaw = val(props, "gap", "4");
+  const gapClass: Record<string, string> = { "2": "gap-2", "3": "gap-3", "4": "gap-4", "6": "gap-6", "8": "gap-8" };
+  const gap = gapClass[gapRaw] ?? "gap-4";
 
   const sizeClasses: Record<string, string> = { sm: "text-xs px-3 py-1.5", md: "text-sm px-4 py-2", lg: "text-base px-6 py-3" };
-  const variantBg: Record<string, string> = { primary: "var(--faro-primary)", outline: "transparent", ghost: "transparent" };
-  const variantBorder: Record<string, string> = { primary: "var(--faro-primary)", outline: "var(--faro-outline-variant)", ghost: "transparent" };
-  const variantColor: Record<string, string> = { primary: "var(--faro-on-primary)", outline: "var(--faro-on-surface)", ghost: "var(--faro-primary)" };
+  const variantBg: Record<string, string> = { primary: "var(--site-primary)", outline: "transparent", ghost: "transparent" };
+  const variantBorder: Record<string, string> = { primary: "var(--site-primary)", outline: "var(--site-outline-variant)", ghost: "transparent" };
+  const variantColor: Record<string, string> = { primary: "var(--site-on-primary)", outline: "var(--site-on-surface)", ghost: "var(--site-primary)" };
 
   return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
-      <div className={`flex flex-wrap gap-${gap} ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"}`}>
+      <div className={`flex flex-wrap ${gap} ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"}`}>
         {buttons.map((btn, i) => (
           <Link
             key={i}
@@ -1020,14 +1122,14 @@ function TocSection({ section }: { section: CmsSection }) {
   const items = asItems(props).filter(Boolean);
   return (
     <section className="py-6 md:py-8 px-3 md:px-6 lg:px-8 xl:px-12">
-      <div className="max-w-2xl rounded-lg p-4 border" style={{ background: "var(--faro-surface-container)", borderColor: "var(--faro-outline-variant)" }}>
-        <h3 className="text-sm font-bold uppercase tracking-wide mb-3" style={{ color: "var(--faro-primary)" }}>{title}</h3>
+      <div className="max-w-2xl rounded-lg p-4 border" style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant)" }}>
+        <h3 className="text-sm font-bold uppercase tracking-wide mb-3" style={{ color: "var(--site-primary)" }}>{title}</h3>
         <nav>
           <ol className="space-y-2">
             {items.map((item, i) => (
               <li key={i}>
-                <a href={val(item, "href", "#")} className="flex items-center gap-2 text-sm font-medium hover:underline" style={{ color: "var(--faro-on-surface)" }}>
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: "var(--faro-primary-container)", color: "var(--faro-primary)" }}>{i + 1}</span>
+                <a href={val(item, "href", "#")} className="flex items-center gap-2 text-sm font-medium hover:underline" style={{ color: "var(--site-on-surface)" }}>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>{i + 1}</span>
                   {val(item, "label", `Sección ${i + 1}`)}
                 </a>
               </li>
@@ -1044,39 +1146,45 @@ function TocSection({ section }: { section: CmsSection }) {
 function DividerSection({ section }: { section: CmsSection }) {
   const props = section.props_json || {};
   const style = val(props, "style", "solid");
-  const marginY = val(props, "margin_top", "8");
+  const marginYRaw = val(props, "margin_top", "8");
   const width = val(props, "width", "full");
 
   const styleClass = style === "dashed" ? "border-dashed" : style === "dotted" ? "border-dotted" : "border-solid";
   const widthClass = width === "full" ? "w-full" : width === "narrow" ? "w-1/3" : "w-2/3";
+  const pyClass: Record<string, string> = { "4": "py-4", "6": "py-6", "8": "py-8", "12": "py-12", "16": "py-16" };
+  const marginY = pyClass[marginYRaw] ?? "py-8";
 
   return (
-    <section className={`py-${marginY} px-3 md:px-6 lg:px-8 xl:px-12`}>
-      <hr className={`${styleClass} border-t-2 mx-auto ${widthClass}`} style={{ borderColor: "var(--faro-outline-variant)" }} />
+    <section className={`${marginY} px-3 md:px-6 lg:px-8 xl:px-12`}>
+      <hr className={`${styleClass} border-t-2 mx-auto ${widthClass}`} style={{ borderColor: "var(--site-outline-variant)" }} />
     </section>
   );
 }
 
 // ─── Collapsible ───────────────────────────────────────────────────────────────
 
+function sanitizeHtml(html: string): string {
+  return html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/\bon\w+\s*=/gi, "data-removed=");
+}
+
 function CollapsibleSection({ section }: { section: CmsSection }) {
   const props = section.props_json || {};
   const title = val(props, "title", "Información");
   const defaultOpen = props.default_open === true;
-  const contentHtml = val(props, "content_html", "");
+  const contentHtml = sanitizeHtml(val(props, "content_html", ""));
   const [open, setOpen] = useState(defaultOpen);
 
   return (
     <section className="py-4 md:py-6 px-3 md:px-6 lg:px-8 xl:px-12">
-      <div className="rounded-lg border" style={{ background: "var(--faro-surface-container)", borderColor: "var(--faro-outline-variant)" }}>
-        <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-4 text-left" style={{ color: "var(--faro-on-surface)" }}>
+      <div className="rounded-lg border" style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant)" }}>
+        <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-4 text-left" style={{ color: "var(--site-on-surface)" }}>
           <span className="font-bold text-lg">{title}</span>
           <ChevronDown size={20} className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
         </button>
         <AnimatePresence>
           {open && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-              <div className="px-4 pb-4" style={{ color: "var(--faro-on-surface-variant)" }} dangerouslySetInnerHTML={{ __html: contentHtml }} />
+              <div className="px-4 pb-4" style={{ color: "var(--site-on-surface-variant)" }} dangerouslySetInnerHTML={{ __html: contentHtml }} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -1108,15 +1216,15 @@ function SocialLinksSection({ section }: { section: CmsSection }) {
 
   return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
-      <h3 className="text-lg font-bold mb-4" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
+      <h3 className="text-lg font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>{title}</h3>
       <div className={containerClass}>
         {links.map((link, i) => {
           const platform = val(link, "platform", "").toLowerCase();
           const url = val(link, "url", "#");
           const label = val(link, "label", platform);
           return (
-            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 rounded-lg border transition-all hover:scale-105" style={{ background: "var(--faro-surface)", borderColor: "var(--faro-outline-variant)", color: "var(--faro-on-surface)" }}>
-              <span style={{ color: "var(--faro-primary)" }}>{platformIcons[platform] || <Star size={iconSize} />}</span>
+            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 rounded-lg border transition-all hover:scale-105" style={{ background: "var(--site-surface)", borderColor: "var(--site-outline-variant)", color: "var(--site-on-surface)" }}>
+              <span style={{ color: "var(--site-primary)" }}>{platformIcons[platform] || <Star size={iconSize} />}</span>
               {showLabels && <span className="text-sm font-medium">{label}</span>}
             </a>
           );
@@ -1145,17 +1253,17 @@ function CalendarSection({ section }: { section: CmsSection }) {
 
   return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
-      <h3 className="text-lg font-bold mb-6" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
+      <h3 className="text-lg font-bold mb-6" style={{ color: "var(--site-on-surface)" }}>{title}</h3>
       <div className="space-y-3">
-        {items.length === 0 && <p className="text-sm opacity-60" style={{ color: "var(--faro-on-surface-variant)" }}>No hay eventos configurados.</p>}
+        {items.length === 0 && <p className="text-sm opacity-60" style={{ color: "var(--site-on-surface-variant)" }}>No hay eventos configurados.</p>}
         {items.map((item, i) => (
-          <div key={i} className="flex items-start gap-4 p-4 rounded-lg border" style={{ background: "var(--faro-surface)", borderColor: "var(--faro-outline-variant)" }}>
-            <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center shrink-0" style={{ background: "var(--faro-primary-container)", color: "var(--faro-primary)" }}>
+          <div key={i} className="flex items-start gap-4 p-4 rounded-lg border" style={{ background: "var(--site-surface)", borderColor: "var(--site-outline-variant)" }}>
+            <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center shrink-0" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
               <Calendar size={18} />
             </div>
             <div className="flex-1">
-              <p className="font-bold" style={{ color: "var(--faro-on-surface)" }}>{val(item, "title", "Evento")}</p>
-              <div className="flex flex-wrap gap-3 text-xs mt-1" style={{ color: "var(--faro-on-surface-variant)" }}>
+              <p className="font-bold" style={{ color: "var(--site-on-surface)" }}>{val(item, "title", "Evento")}</p>
+              <div className="flex flex-wrap gap-3 text-xs mt-1" style={{ color: "var(--site-on-surface-variant)" }}>
                 {showTime && val(item, "date") && <span>{val(item, "date")}{showTime && val(item, "time") ? ` · ${val(item, "time")}` : ""}</span>}
                 {showLocation && val(item, "location") && <span>{val(item, "location")}</span>}
               </div>
@@ -1179,17 +1287,17 @@ function MapSection({ section }: { section: CmsSection }) {
 
   return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
-      <h3 className="text-lg font-bold mb-4" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
+      <h3 className="text-lg font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>{title}</h3>
       {embedUrl ? (
-        <div className="rounded-lg overflow-hidden border" style={{ borderColor: "var(--faro-outline-variant)" }}>
+        <div className="rounded-lg overflow-hidden border" style={{ borderColor: "var(--site-outline-variant)" }}>
           <iframe src={embedUrl} width="100%" height={height} style={{ border: 0 }} allowFullScreen loading="lazy" />
         </div>
       ) : (
-        <div className="rounded-lg border p-8 text-center" style={{ background: "var(--faro-surface-container)", borderColor: "var(--faro-outline-variant)", height: `${height}px` }}>
-          <MapPin size={48} className="mx-auto mb-3 opacity-30" style={{ color: "var(--faro-primary)" }} />
-          <p className="text-lg font-medium mb-2" style={{ color: "var(--faro-on-surface)" }}>{address || "Sin dirección configurada"}</p>
+        <div className="rounded-lg border p-8 text-center" style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant)", height: `${height}px` }}>
+          <MapPin size={48} className="mx-auto mb-3 opacity-30" style={{ color: "var(--site-primary)" }} />
+          <p className="text-lg font-medium mb-2" style={{ color: "var(--site-on-surface)" }}>{address || "Sin dirección configurada"}</p>
           {showDirections && address && (
-            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold" style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}>
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold" style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}>
               <MapPin size={16} /> Ver en Google Maps
             </a>
           )}
@@ -1246,26 +1354,26 @@ function DocumentUploadSection({ section }: { section: CmsSection }) {
 
   if (uploaded) return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
-      <div className="rounded-lg p-6 text-center" style={{ background: "var(--faro-primary-container)" }}>
-        <CheckCircle2 size={48} className="mx-auto mb-3" style={{ color: "var(--faro-primary)" }} />
-        <p className="text-lg font-bold" style={{ color: "var(--faro-on-primary)" }}>{val(props, "success_message", "Documento enviado correctamente")}</p>
+      <div className="rounded-lg p-6 text-center" style={{ background: "var(--site-primary-container)" }}>
+        <CheckCircle2 size={48} className="mx-auto mb-3" style={{ color: "var(--site-primary)" }} />
+        <p className="text-lg font-bold" style={{ color: "var(--site-on-primary)" }}>{val(props, "success_message", "Documento enviado correctamente")}</p>
       </div>
     </section>
   );
 
   return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
-      <div className="max-w-xl mx-auto rounded-lg border-2 border-dashed p-8 text-center transition-all hover:border-faro-primary/50" style={{ borderColor: "var(--faro-outline-variant)", background: "var(--faro-surface-container)" }}>
-        <FileText size={48} className="mx-auto mb-3 opacity-30" style={{ color: "var(--faro-primary)" }} />
-        <h3 className="text-lg font-bold mb-2" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
-        {description && <p className="text-sm mb-4" style={{ color: "var(--faro-on-surface-variant)" }}>{description}</p>}
+      <div className="max-w-xl mx-auto rounded-lg border-2 border-dashed p-8 text-center transition-all hover:border-site-primary/50" style={{ borderColor: "var(--site-outline-variant)", background: "var(--site-surface-container)" }}>
+        <FileText size={48} className="mx-auto mb-3 opacity-30" style={{ color: "var(--site-primary)" }} />
+        <h3 className="text-lg font-bold mb-2" style={{ color: "var(--site-on-surface)" }}>{title}</h3>
+        {description && <p className="text-sm mb-4" style={{ color: "var(--site-on-surface-variant)" }}>{description}</p>}
         {error && <p className="text-sm mb-3 text-[hsl(var(--destructive))] font-semibold">{error}</p>}
-        <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer hover:scale-105 transition-all" style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}>
+        <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer hover:scale-105 transition-all" style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}>
           <Upload size={16} /> Seleccionar archivo
           <input type="file" accept={acceptedTypes} onChange={handleFile} className="hidden" />
         </label>
         {selectedFile && (
-          <div className="mt-3 text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+          <div className="mt-3 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
             <span className="font-medium">{selectedFile.name}</span>
             <span className="mx-2 opacity-50">({(selectedFile.size / 1024).toFixed(0)}KB)</span>
             <button onClick={handleUpload} disabled={uploading} className="ml-3 px-3 py-1 rounded bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 disabled:opacity-50">
@@ -1273,7 +1381,7 @@ function DocumentUploadSection({ section }: { section: CmsSection }) {
             </button>
           </div>
         )}
-        <p className="text-xs mt-3 opacity-50" style={{ color: "var(--faro-on-surface-variant)" }}>Máx: {maxSize}MB · Tipos: {acceptedTypes}</p>
+        <p className="text-xs mt-3 opacity-50" style={{ color: "var(--site-on-surface-variant)" }}>Máx: {maxSize}MB · Tipos: {acceptedTypes}</p>
       </div>
     </section>
   );
@@ -1292,7 +1400,7 @@ function ContentBlocksSection({ section }: { section: CmsSection }) {
       <div className={`grid grid-cols-1 ${colClass} gap-6`}>
         {blocks.map((block, i) => {
           const type = val(block, "type", "text");
-          if (type === "text") return <div key={i} dangerouslySetInnerHTML={{ __html: val(block, "content", "") }} />;
+          if (type === "text") return <div key={i} dangerouslySetInnerHTML={{ __html: sanitizeHtml(val(block, "content", "")) }} />;
           if (type === "image") return (
             <div key={i} className="rounded-lg overflow-hidden">
               <img src={val(block, "image_url", "")} alt={val(block, "alt", "")} className="w-full h-auto" />
@@ -1300,12 +1408,12 @@ function ContentBlocksSection({ section }: { section: CmsSection }) {
             </div>
           );
           if (type === "quote") return (
-            <blockquote key={i} className="p-4 rounded-lg border-l-4 italic" style={{ borderColor: "var(--faro-primary)", background: "var(--faro-surface-container)" }}>
-              <p className="text-lg" style={{ color: "var(--faro-on-surface)" }}>{val(block, "text", "")}</p>
-              {val(block, "author") && <p className="text-sm mt-2 font-semibold" style={{ color: "var(--faro-primary)" }}>— {val(block, "author")}</p>}
+            <blockquote key={i} className="p-4 rounded-lg border-l-4 italic" style={{ borderColor: "var(--site-primary)", background: "var(--site-surface-container)" }}>
+              <p className="text-lg" style={{ color: "var(--site-on-surface)" }}>{val(block, "text", "")}</p>
+              {val(block, "author") && <p className="text-sm mt-2 font-semibold" style={{ color: "var(--site-primary)" }}>— {val(block, "author")}</p>}
             </blockquote>
           );
-          if (type === "divider") return <hr key={i} className="col-span-full" style={{ borderColor: "var(--faro-outline-variant)" }} />;
+          if (type === "divider") return <hr key={i} className="col-span-full" style={{ borderColor: "var(--site-outline-variant)" }} />;
           if (type === "spacer") return <div key={i} style={{ height: `${parseInt(val(block, "height", "32"))}px` }} />;
           return null;
         })}
@@ -1325,19 +1433,19 @@ function AccordionSection({ section }: { section: CmsSection }) {
 
   return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
-      {title && <h3 className="text-lg font-bold mb-2" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>}
-      {subtitle && <p className="text-sm mb-6" style={{ color: "var(--faro-on-surface-variant)" }}>{subtitle}</p>}
+      {title && <h3 className="text-lg font-bold mb-2" style={{ color: "var(--site-on-surface)" }}>{title}</h3>}
+      {subtitle && <p className="text-sm mb-6" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       <div className="space-y-2">
         {items.map((item, i) => (
-          <div key={i} className="rounded-lg border overflow-hidden" style={{ background: "var(--faro-surface)", borderColor: "var(--faro-outline-variant)" }}>
-            <button onClick={() => setOpenIdx(openIdx === i ? null : i)} className="w-full flex items-center justify-between p-4 text-left" style={{ color: "var(--faro-on-surface)" }}>
+          <div key={i} className="rounded-lg border overflow-hidden" style={{ background: "var(--site-surface)", borderColor: "var(--site-outline-variant)" }}>
+            <button onClick={() => setOpenIdx(openIdx === i ? null : i)} className="w-full flex items-center justify-between p-4 text-left" style={{ color: "var(--site-on-surface)" }}>
               <span className="font-semibold">{val(item, "question", `Pregunta ${i + 1}`)}</span>
               <ChevronDown size={18} className={`transition-transform duration-300 ${openIdx === i ? "rotate-180" : ""}`} />
             </button>
             <AnimatePresence>
               {openIdx === i && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                  <div className="px-4 pb-4 text-sm leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+                  <div className="px-4 pb-4 text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
                     {val(item, "answer", "")}
                   </div>
                 </motion.div>
@@ -1375,11 +1483,11 @@ function CivicFileDownloadsSection({ section }: { section: CmsSection }) {
 
   return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
-      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-2" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
-      {body && <p className="mb-6 text-base" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
-      <div className="divide-y rounded-xl overflow-hidden border" style={{ borderColor: "var(--faro-outline-variant)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-2" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {body && <p className="mb-6 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
+      <div className="divide-y rounded-xl overflow-hidden border" style={{ borderColor: "var(--site-outline-variant)" }}>
         {items.length === 0 && (
-          <div className="flex items-center justify-center py-12 text-sm" style={{ color: "var(--faro-on-surface-variant)", background: "var(--faro-surface-container)" }}>
+          <div className="flex items-center justify-center py-12 text-sm" style={{ color: "var(--site-on-surface-variant)", background: "var(--site-surface-container)" }}>
             Sin documentos configurados.
           </div>
         )}
@@ -1387,27 +1495,27 @@ function CivicFileDownloadsSection({ section }: { section: CmsSection }) {
           const fmt = (item.format || "").toLowerCase();
           const badge = fmtBadge[fmt] ?? <span className="text-[10px] font-black text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded select-none">FILE</span>;
           return (
-            <div key={i} className="flex items-center gap-4 px-5 py-4" style={{ background: i % 2 === 0 ? "var(--faro-surface)" : "var(--faro-surface-container)" }}>
+            <div key={i} className="flex items-center gap-4 px-5 py-4" style={{ background: i % 2 === 0 ? "var(--site-surface)" : "var(--site-surface-container)" }}>
               <div className="shrink-0">{badge}</div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate" style={{ color: "var(--faro-on-surface)" }}>{item.name || `Documento ${i + 1}`}</p>
-                {item.description && <p className="text-xs mt-0.5 truncate" style={{ color: "var(--faro-on-surface-variant)" }}>{item.description}</p>}
+                <p className="font-semibold text-sm truncate" style={{ color: "var(--site-on-surface)" }}>{item.name || `Documento ${i + 1}`}</p>
+                {item.description && <p className="text-xs mt-0.5 truncate" style={{ color: "var(--site-on-surface-variant)" }}>{item.description}</p>}
               </div>
               {item.size_label && (
-                <span className="text-xs shrink-0" style={{ color: "var(--faro-on-surface-variant)" }}>{item.size_label}</span>
+                <span className="text-xs shrink-0" style={{ color: "var(--site-on-surface-variant)" }}>{item.size_label}</span>
               )}
               {item.file_url ? (
                 <a
                   href={item.file_url}
                   download
                   className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-2"
-                  style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}
+                  style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
                   aria-label={`Descargar ${item.name || `documento ${i + 1}`}`}
                 >
                   <Download size={13} /> Descargar
                 </a>
               ) : (
-                <span className="text-xs shrink-0 opacity-40" style={{ color: "var(--faro-on-surface-variant)" }}>Sin enlace</span>
+                <span className="text-xs shrink-0 opacity-40" style={{ color: "var(--site-on-surface-variant)" }}>Sin enlace</span>
               )}
             </div>
           );
@@ -1435,18 +1543,18 @@ function CivicDataTableSection({ section }: { section: CmsSection }) {
       aria-labelledby={title ? `tbl-title-${section.id}` : undefined}
     >
       {title && (
-        <h2 id={`tbl-title-${section.id}`} className="text-xl md:text-2xl font-black tracking-tight mb-4" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>
+        <h2 id={`tbl-title-${section.id}`} className="text-xl md:text-2xl font-black tracking-tight mb-4" style={{ color: "var(--site-on-surface)" }}>{title}</h2>
       )}
-      <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--faro-outline-variant)" }}>
+      <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--site-outline-variant)" }}>
         <table className="w-full text-sm border-collapse" role="table">
           {caption && (
-            <caption className="text-xs text-left py-2 px-4 font-medium caption-top" style={{ color: "var(--faro-on-surface-variant)" }}>
+            <caption className="text-xs text-left py-2 px-4 font-medium caption-top" style={{ color: "var(--site-on-surface-variant)" }}>
               {caption}
             </caption>
           )}
           {headers.length > 0 && (
             <thead>
-              <tr style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}>
+              <tr style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}>
                 {headers.map((h, i) => (
                   <th key={i} scope="col" className="px-4 py-3 text-left font-bold text-xs uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
@@ -1456,17 +1564,17 @@ function CivicDataTableSection({ section }: { section: CmsSection }) {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={Math.max(headers.length, 1)} className="px-4 py-10 text-center text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+                <td colSpan={Math.max(headers.length, 1)} className="px-4 py-10 text-center text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
                   Sin datos configurados.
                 </td>
               </tr>
             ) : rows.map((row, ri) => (
-              <tr key={ri} style={{ background: striped && ri % 2 === 1 ? "var(--faro-surface-container)" : "var(--faro-surface)" }}>
+              <tr key={ri} style={{ background: striped && ri % 2 === 1 ? "var(--site-surface-container)" : "var(--site-surface)" }}>
                 {row.map((cell, ci) =>
                   ci === 0 && highlightFirstCol ? (
-                    <th key={ci} scope="row" className="px-4 py-3 font-semibold text-left whitespace-nowrap" style={{ color: "var(--faro-on-surface)", borderTop: "1px solid var(--faro-outline-variant)" }}>{cell}</th>
+                    <th key={ci} scope="row" className="px-4 py-3 font-semibold text-left whitespace-nowrap" style={{ color: "var(--site-on-surface)", borderTop: "1px solid var(--site-outline-variant)" }}>{cell}</th>
                   ) : (
-                    <td key={ci} className="px-4 py-3 tabular-nums" style={{ color: "var(--faro-on-surface)", borderTop: "1px solid var(--faro-outline-variant)" }}>{cell}</td>
+                    <td key={ci} className="px-4 py-3 tabular-nums" style={{ color: "var(--site-on-surface)", borderTop: "1px solid var(--site-outline-variant)" }}>{cell}</td>
                   )
                 )}
               </tr>
@@ -1475,7 +1583,7 @@ function CivicDataTableSection({ section }: { section: CmsSection }) {
         </table>
       </div>
       {footerNote && (
-        <p className="mt-3 text-xs" style={{ color: "var(--faro-on-surface-variant)" }}>* {footerNote}</p>
+        <p className="mt-3 text-xs" style={{ color: "var(--site-on-surface-variant)" }}>* {footerNote}</p>
       )}
     </section>
   );
@@ -1552,14 +1660,14 @@ function CivicConvocatoriaCardsSection({ section }: { section: CmsSection }) {
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
       {(title || body) && (
         <div className="mb-8">
-          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
-          {body && <p className="mt-2 text-base" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+          {body && <p className="mt-2 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {items.length === 0 && (
-          <div className="col-span-full rounded-xl border-2 border-dashed p-12 text-center" style={{ borderColor: "var(--faro-outline-variant)" }}>
-            <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>Agrega convocatorias usando el campo <strong>items</strong>.</p>
+          <div className="col-span-full rounded-xl border-2 border-dashed p-12 text-center" style={{ borderColor: "var(--site-outline-variant)" }}>
+            <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>Agrega convocatorias usando el campo <strong>items</strong>.</p>
           </div>
         )}
         {items.map((item, i) => {
@@ -1569,12 +1677,12 @@ function CivicConvocatoriaCardsSection({ section }: { section: CmsSection }) {
             <article
               key={i}
               className="rounded-xl border flex flex-col overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md"
-              style={{ background: "var(--faro-surface)", borderColor: "var(--faro-outline-variant)" }}
+              style={{ background: "var(--site-surface)", borderColor: "var(--site-outline-variant)" }}
             >
               <div className="h-1.5" style={{ background: st.dot }} />
               <div className="flex-1 p-5 flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-black text-base leading-tight flex-1" style={{ color: "var(--faro-on-surface)" }}>
+                  <h3 className="font-black text-base leading-tight flex-1" style={{ color: "var(--site-on-surface)" }}>
                     {item.title || `Convocatoria ${i + 1}`}
                   </h3>
                   <span className="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: st.bg, color: st.text }}>
@@ -1583,13 +1691,13 @@ function CivicConvocatoriaCardsSection({ section }: { section: CmsSection }) {
                   </span>
                 </div>
                 {item.category && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--faro-primary)" }}>{item.category}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--site-primary)" }}>{item.category}</span>
                 )}
                 {item.description && (
-                  <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--faro-on-surface-variant)" }}>{item.description}</p>
+                  <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--site-on-surface-variant)" }}>{item.description}</p>
                 )}
                 {item.deadline && (
-                  <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: key === "cerrada" ? "#EF4444" : "var(--faro-on-surface-variant)" }}>
+                  <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: key === "cerrada" ? "#EF4444" : "var(--site-on-surface-variant)" }}>
                     <Calendar size={12} /> Cierre: {item.deadline}
                   </div>
                 )}
@@ -1599,7 +1707,7 @@ function CivicConvocatoriaCardsSection({ section }: { section: CmsSection }) {
                   <a
                     href={item.href}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all hover:opacity-90"
-                    style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}
+                    style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
                   >
                     Ver convocatoria <ChevronRight size={14} />
                   </a>
@@ -1638,7 +1746,7 @@ function CivicHeroSearchSection({ section }: { section: CmsSection }) {
       style={{
         background: backgroundImage
           ? `linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.6)),url('${backgroundImage}') center/cover no-repeat`
-          : "var(--faro-primary)",
+          : "var(--site-primary)",
       }}
     >
       {eyebrow && (
@@ -1707,19 +1815,19 @@ function CivicQuickLinksSection({ section }: { section: CmsSection }) {
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
       {(title || body) && (
         <div className="mb-8 text-center">
-          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--faro-on-surface)" }}>{title}</h2>}
-          {body && <p className="mt-2 text-base max-w-2xl mx-auto" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
+          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+          {body && <p className="mt-2 text-base max-w-2xl mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
         </div>
       )}
       <div className={`grid ${colClasses[columns] || colClasses[4]} gap-3`}>
         {items.map((item, i) => {
-          const accent = item.color || "var(--faro-primary)";
+          const accent = item.color || "var(--site-primary)";
           return (
             <a
               key={i}
               href={item.href || "#"}
               className="group flex flex-col items-center text-center gap-3 p-5 rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-offset-2"
-              style={{ background: "var(--faro-surface)", borderColor: "var(--faro-outline-variant)" }}
+              style={{ background: "var(--site-surface)", borderColor: "var(--site-outline-variant)" }}
             >
               <div
                 className="size-14 rounded-2xl flex items-center justify-center text-3xl transition-transform group-hover:scale-110"
@@ -1728,11 +1836,11 @@ function CivicQuickLinksSection({ section }: { section: CmsSection }) {
                 {item.icon || "🔗"}
               </div>
               <div>
-                <p className="font-black text-sm leading-tight" style={{ color: "var(--faro-on-surface)" }}>
+                <p className="font-black text-sm leading-tight" style={{ color: "var(--site-on-surface)" }}>
                   {item.label || `Enlace ${i + 1}`}
                 </p>
                 {item.description && (
-                  <p className="text-xs mt-1 leading-snug" style={{ color: "var(--faro-on-surface-variant)" }}>
+                  <p className="text-xs mt-1 leading-snug" style={{ color: "var(--site-on-surface-variant)" }}>
                     {item.description}
                   </p>
                 )}
@@ -1741,8 +1849,8 @@ function CivicQuickLinksSection({ section }: { section: CmsSection }) {
           );
         })}
         {items.length === 0 && (
-          <div className="col-span-full rounded-xl border-2 border-dashed p-12 text-center" style={{ borderColor: "var(--faro-outline-variant)" }}>
-            <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>Agrega enlaces usando el campo <strong>items</strong>.</p>
+          <div className="col-span-full rounded-xl border-2 border-dashed p-12 text-center" style={{ borderColor: "var(--site-outline-variant)" }}>
+            <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>Agrega enlaces usando el campo <strong>items</strong>.</p>
           </div>
         )}
       </div>

@@ -380,11 +380,11 @@ export default function TableView<T extends Record<string, any>>({
   const theme = isDark ? darkTheme : lightTheme;
 
   return (
-    <div className="flex flex-col h-full gap-2">
+    <div className="flex min-w-0 flex-col h-full gap-2">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex min-w-0 items-center gap-2 flex-wrap">
         {enableFilters && (
-          <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <div className="relative flex-1 min-w-[min(100%,180px)] max-w-xs">
             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={quickFilter}
@@ -416,7 +416,7 @@ export default function TableView<T extends Record<string, any>>({
           </div>
         )}
 
-        <div className="flex items-center gap-1 ml-auto">
+        <div className="flex min-w-0 items-center gap-1 ml-0 sm:ml-auto overflow-x-auto">
           {selectedIds.length > 0 && (
             <>
               <span className="text-xs text-slate-500 dark:text-slate-400 mr-1">{selectedIds.length} seleccionados</span>
@@ -444,7 +444,7 @@ export default function TableView<T extends Record<string, any>>({
       </div>
 
       {/* Grid */}
-      <div className="flex-1 min-h-[300px] rounded-xl overflow-hidden border border-slate-200 dark:border-white/10">
+      <div className="flex-1 min-w-0 min-h-[300px] rounded-xl overflow-hidden border border-slate-200 dark:border-white/10">
         {!serverSide && data.length === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-slate-400 dark:text-slate-500 bg-[hsl(var(--bg-primary))] dark:bg-slate-900">
             {emptyMessage}

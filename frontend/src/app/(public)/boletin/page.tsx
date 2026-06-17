@@ -5,11 +5,12 @@ import { motion } from "framer-motion";
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
 import { apiFetch } from "@/lib/http";
+import { SITE_KEY } from "@/lib/site-config";
 import { toast } from "sonner";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function BoletinPage() {
-    const { data: cms } = useContentBlock("faro_boletin_hero");
+    const { data: cms } = useContentBlock(`${SITE_KEY}_boletin_hero`);
     const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
     const [email, setEmail] = useState("");
 
@@ -43,15 +44,15 @@ export default function BoletinPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full max-w-3xl rounded-2xl p-8 md:p-12 relative overflow-hidden text-center shadow-2xl border"
                     style={{
-                        backgroundColor: "var(--faro-primary-container)",
-                        borderColor: "var(--faro-outline-variant)"
+                        backgroundColor: "var(--site-primary-container)",
+                        borderColor: "var(--site-outline-variant)"
                     }}
                 >
                     <div className="relative z-10">
-                        <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--faro-primary)" }}>
+                        <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--site-primary)" }}>
                             {subtitle}
                         </p>
-                        <h1 className="font-black text-3xl md:text-4xl lg:text-5xl tracking-tight mb-4" style={{ color: "var(--faro-on-background)" }}>
+                        <h1 className="font-black text-3xl md:text-4xl lg:text-5xl tracking-tight mb-4" style={{ color: "var(--site-on-background)" }}>
                             {title}
                         </h1>
                         <RichText html={description} className="text-lg md:text-xl mb-8 max-w-xl mx-auto leading-relaxed" />
@@ -60,7 +61,7 @@ export default function BoletinPage() {
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 className="text-xl font-bold"
-                                style={{ color: "var(--faro-primary)" }}
+                                style={{ color: "var(--site-primary)" }}
                             >
                                 ¡Gracias por suscribirte!
                             </motion.div>
@@ -74,16 +75,16 @@ export default function BoletinPage() {
                                     required
                                     className="flex-grow rounded-xl px-5 py-3.5 text-base focus:outline-none focus:ring-2"
                                     style={{
-                                        background: "var(--faro-surface)",
-                                        border: "2px solid var(--faro-outline-variant)",
-                                        color: "var(--faro-on-surface)",
+                                        background: "var(--site-surface)",
+                                        border: "2px solid var(--site-outline-variant)",
+                                        color: "var(--site-on-surface)",
                                     }}
                                 />
                                 <button
                                     type="submit"
                                     disabled={status === "sending"}
                                     className="px-8 py-3.5 rounded-xl font-bold text-base text-white transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
-                                    style={{ background: "var(--faro-cta-gradient)" }}
+                                    style={{ background: "var(--site-cta-gradient)" }}
                                 >
                                     {status === "sending" ? "Enviando..." : ctaText}
                                 </button>

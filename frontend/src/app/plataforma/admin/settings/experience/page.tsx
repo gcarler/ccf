@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { SITE_NAME } from '@/lib/site-config';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -137,8 +138,8 @@ export default function WorkspaceExperienceManager() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/5">
-            <table className="w-full text-left">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+            <table className="w-full min-w-[480px] text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
                         <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Feature</th>
@@ -291,7 +292,7 @@ export default function WorkspaceExperienceManager() {
                                 <div className="space-y-3 bg-white/5 p-4 rounded-lg border border-white/10 backdrop-blur-md">
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-semibold uppercase text-slate-500 tracking-wide ml-2">Nombre del Workspace</label>
-                                        <input type="text" defaultValue="Comunidad Cristiana El Faro" className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all" />
+                                        <input type="text" defaultValue={SITE_NAME} className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all" />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-semibold uppercase text-slate-500 tracking-wide ml-2">URL del Logotipo (SVG/PNG)</label>

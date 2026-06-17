@@ -460,10 +460,10 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] font-sans overflow-hidden">
+        <div className="flex min-w-0 flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] font-sans overflow-hidden">
 
             {/* ── TOOLBAR ── */}
-            <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/60 dark:bg-black/10 flex-wrap">
+            <div className="shrink-0 flex min-w-0 items-center gap-1.5 px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/60 dark:bg-black/10 flex-wrap">
 
                 {/* Column visibility */}
                 <Popover.Root open={cfgOpen} onOpenChange={setCfgOpen}>
@@ -544,13 +544,13 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     </Popover.Portal>
                 </Popover.Root>
 
-                <div className="ml-auto flex items-center gap-1.5">
+                <div className="ml-0 sm:ml-auto flex min-w-0 items-center gap-1.5 overflow-x-auto">
                     {activeFilters.length > 0 && (
-                        <div className="flex gap-1">
-                            {activeFilters.map((f, i) => <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] text-[10px] font-semibold">{f.label}<button onClick={() => setActiveFilters(p => p.filter((_,j) => j !== i))}><X size={9} /></button></span>)}
+                        <div className="flex min-w-0 gap-1">
+                            {activeFilters.map((f, i) => <span key={i} className="flex shrink-0 items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] text-[10px] font-semibold">{f.label}<button onClick={() => setActiveFilters(p => p.filter((_,j) => j !== i))}><X size={9} /></button></span>)}
                         </div>
                     )}
-                    <button onClick={() => onAddTask('todo')} className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors">
+                    <button onClick={() => onAddTask('todo')} className="flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors">
                         <Plus size={13} /> Nueva tarea
                     </button>
                 </div>
@@ -560,7 +560,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
             <AnimatePresence>
                 {quickAddGroup && (
                     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                        className="shrink-0 flex items-center gap-3 px-4 py-2.5 bg-blue-50/50 dark:bg-blue-500/5 border-b border-slate-100 dark:border-white/5">
+                        className="shrink-0 flex min-w-0 items-center gap-3 px-4 py-2.5 bg-blue-50/50 dark:bg-blue-500/5 border-b border-slate-100 dark:border-white/5">
                         <Circle size={15} className="text-slate-300 shrink-0" />
                         <input
                             autoFocus
@@ -580,7 +580,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
             </AnimatePresence>
 
             {/* Grid */}
-            <div className="flex-1 min-h-0">
+            <div className="flex-1 min-w-0 min-h-0">
                 {tasks.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
                         <Circle size={28} className="text-slate-200 dark:text-white/10" />
@@ -595,7 +595,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         theme={isDark ? darkTheme : lightTheme}
                         rowData={rowData as any[]}
                         columnDefs={colDefs}
-                        defaultColDef={{ resizable: true, sortable: false, filter: false, editable: false, suppressMovable: false }}
+                        defaultColDef={{ resizable: true, sortable: false, filter: false, editable: false, suppressMovable: false, minWidth: 96 }}
                         context={gridContext}
                         getRowId={getRowId}
                         getRowHeight={getRowHeight}

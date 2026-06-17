@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Church } from 'lucide-react';
+import { SITE_NAME } from "@/lib/site-config";
 
 export function FAROHeader() {
     return (
@@ -13,7 +14,7 @@ export function FAROHeader() {
                         <Church size={16} className="text-white" />
                     </div>
                     <span className="font-bold text-sm text-slate-900 dark:text-white">
-                        CCF <span className="text-[hsl(var(--primary))]">Platform</span>
+                        {SITE_NAME}
                     </span>
                 </Link>
             </div>
@@ -25,7 +26,7 @@ export function FAROFooter() {
     return (
         <footer className="bg-slate-900 dark:bg-[#0f1117] text-white py-8 mt-auto">
             <div className="container mx-auto px-4 text-center text-sm text-slate-400">
-                <p>Comunidad Cristiana El Faro &copy; {new Date().getFullYear()}</p>
+                <p>{SITE_NAME} &copy; {new Date().getFullYear()}</p>
             </div>
         </footer>
     );

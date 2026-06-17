@@ -233,8 +233,8 @@ export default function CourseViewPage() {
 
                 {viewType === 'table' && (
  <section className="w-full p-4 lg:p-4">
-                        <div className="overflow-hidden rounded-md border border-slate-200 dark:border-white/10">
-                            <table className="w-full text-left">
+                        <div className="overflow-x-auto rounded-md border border-slate-200 dark:border-white/10">
+                            <table className="w-full text-left min-w-[480px]">
                                 <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                     <tr>
                                         <th className="px-4 py-2">Orden</th>

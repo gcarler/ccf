@@ -75,13 +75,13 @@ export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[]
     ], []);
 
     return (
-        <div className="rounded-lg overflow-hidden border border-slate-100 dark:border-white/10 shadow-sm" style={{ height: Math.min(Math.max(tasks.length * 36 + 40, 200), 600) }}>
+        <div className="min-w-0 rounded-lg overflow-hidden border border-slate-100 dark:border-white/10 shadow-sm" style={{ height: Math.min(Math.max(tasks.length * 36 + 40, 200), 600) }}>
             <AgGridReact
                 ref={gridRef}
                 theme={isDark ? darkTheme : lightTheme}
                 rowData={tasks}
                 columnDefs={colDefs}
-                defaultColDef={{ resizable: true, sortable: true, suppressMovable: false }}
+                defaultColDef={{ resizable: true, sortable: true, suppressMovable: false, minWidth: 96 }}
                 getRowId={(p) => String(p.data.id)}
                 suppressCellFocus
             />

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import uuid
 from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -231,7 +232,7 @@ def get_content_versions(
 )
 def rollback_content_version(
     page_key: str,
-    version_id: int,
+    version_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):

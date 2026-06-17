@@ -326,8 +326,8 @@ export default function ContactsPage() {
                             {filtered.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">Sin datos</div>}
                         </div>
                     ) : viewType === 'table' ? (
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
-                            <table className="w-full text-left">
+                        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto">
+                            <table className="w-full text-left min-w-[520px]">
                                 <thead className="bg-slate-50 dark:bg-white/5">
                                     <tr>
                                         <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Nombre</th>

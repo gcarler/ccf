@@ -142,7 +142,7 @@ export default function MemberDetailPage() {
                             </div>
 
                             {/* Stats rápidos */}
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
                                 {[
                                     { label: 'Salud Esp.', value: member.spiritual_health ? `${Math.round(member.spiritual_health * 100)}%` : '—', icon: Heart, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
                                     { label: 'Progreso', value: member.academy_progress ? `${Math.round(member.academy_progress)}%` : '—', icon: GraduationCap, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-[hsl(var(--primary))]/10' },

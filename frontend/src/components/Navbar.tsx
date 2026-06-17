@@ -13,6 +13,7 @@ import {
     ChevronDown
 } from 'lucide-react';
 import { useContentBlock } from '@/hooks/useContent';
+import { SITE_NAME } from '@/lib/site-config';
 
 export default function Navbar() {
     const { isAuthenticated, logout } = useAuth();
@@ -30,6 +31,9 @@ export default function Navbar() {
     ]);
     const pathname = usePathname() ?? '/';
     const { data: navContent } = useContentBlock('navbar_items');
+    const { data: logoBranding } = useContentBlock('logo_branding');
+    const logoUrl: string | undefined = logoBranding?.logo_url;
+    const siteName: string = (logoBranding?.site_name as string | undefined) || SITE_NAME;
 
     useEffect(() => {
         if (navContent?.items && Array.isArray(navContent.items)) {
@@ -54,11 +58,15 @@ export default function Navbar() {
                     }`}>
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="bg-[hsl(var(--primary))] p-1.5 rounded-md group-hover:scale-105 transition-transform shadow-md shadow-blue-500/20">
-                            <Church size={16} className="text-white" />
+                        <div className="bg-[hsl(var(--primary))] p-1.5 rounded-md group-hover:scale-105 transition-transform shadow-md shadow-blue-500/20 overflow-hidden">
+                            {logoUrl ? (
+                                <img src={logoUrl} alt={siteName} className="w-4 h-4 object-contain" />
+                            ) : (
+                                <Church size={16} className="text-white" />
+                            )}
                         </div>
                         <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white transition-colors">
-                            CCF <span className="text-[hsl(var(--primary))]">Platform</span>
+                            {siteName}
                         </span>
                     </Link>
 

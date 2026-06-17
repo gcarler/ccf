@@ -12,7 +12,7 @@ function sanitizeSiteKey(value: string) {
 
 export default function CmsSitesPage() {
   const { token, user } = useAuth();
-  const [sites, setSites] = useState<Array<{ id: number; site_key: string; name: string; base_path: string; is_active: boolean }>>([]);
+  const [sites, setSites] = useState<Array<{ id: string; site_key: string; name: string; base_path: string; is_active: boolean }>>([]);
   const [name, setName] = useState("");
   const [siteKey, setSiteKey] = useState("");
   const [basePath, setBasePath] = useState("");

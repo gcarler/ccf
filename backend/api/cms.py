@@ -65,7 +65,7 @@ def list_admin_testimonials(
     "/cms/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead
 )
 def get_cms_testimonial(
-    testimonial_id: int,
+    testimonial_id: uuid.UUID,
     db: Session = Depends(get_db),
 ):
     row = crud.get_testimonial(db, testimonial_id)
@@ -78,7 +78,7 @@ def get_cms_testimonial(
     "/admin/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead
 )
 def get_admin_testimonial(
-    testimonial_id: int,
+    testimonial_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -92,7 +92,7 @@ def get_admin_testimonial(
     "/admin/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead
 )
 def patch_admin_testimonial(
-    testimonial_id: int,
+    testimonial_id: uuid.UUID,
     payload: schemas.TestimonialUpdate,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
@@ -105,7 +105,7 @@ def patch_admin_testimonial(
 
 @router.delete("/admin/testimonials/{testimonial_id}", status_code=204)
 def delete_admin_testimonial(
-    testimonial_id: int,
+    testimonial_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -146,7 +146,7 @@ def list_admin_announcements(
     "/cms/announcements/{announcement_id}", response_model=schemas.AnnouncementRead
 )
 def get_cms_announcement(
-    announcement_id: int,
+    announcement_id: uuid.UUID,
     db: Session = Depends(get_db),
 ):
     row = crud.get_announcement(db, announcement_id)
@@ -164,7 +164,7 @@ def get_cms_announcement(
     "/admin/announcements/{announcement_id}", response_model=schemas.AnnouncementRead
 )
 def get_admin_announcement(
-    announcement_id: int,
+    announcement_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -178,7 +178,7 @@ def get_admin_announcement(
     "/admin/announcements/{announcement_id}", response_model=schemas.AnnouncementRead
 )
 def patch_admin_announcement(
-    announcement_id: int,
+    announcement_id: uuid.UUID,
     payload: schemas.AnnouncementUpdate,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
@@ -191,7 +191,7 @@ def patch_admin_announcement(
 
 @router.delete("/admin/announcements/{announcement_id}", status_code=204)
 def delete_admin_announcement(
-    announcement_id: int,
+    announcement_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -240,7 +240,7 @@ def create_cms_media(
 
 @router.get("/cms/media/{item_id}", response_model=schemas.CmsMediaRead)
 def get_cms_media(
-    item_id: int,
+    item_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -254,7 +254,7 @@ def get_cms_media(
 
 @router.patch("/cms/media/{item_id}", response_model=schemas.CmsMediaRead)
 def patch_cms_media(
-    item_id: int,
+    item_id: uuid.UUID,
     payload: schemas.CmsMediaUpdate,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
@@ -278,7 +278,7 @@ def patch_cms_media(
 
 @router.delete("/cms/media/{item_id}", status_code=204)
 def delete_cms_media(
-    item_id: int,
+    item_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):

@@ -1,50 +1,68 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import {
+    Calendar,
+    Check,
+    ChevronDown,
+    Clock,
+    Heart,
+    History,
+    Link2,
+    Loader2,
+    MessageSquare,
+    Phone,
+    Plus,
+    Send,
+    User,
+    Users,
+} from 'lucide-react';
+import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import {
-    Phone,
-    MessageSquare,
-    Heart,
-    Clock,
-    History,
-    Calendar,
-    Plus,
-    Sparkles,
-    Check,
-    MoreVertical,
-    Link2,
-    Users,
-    ChevronDown,
-    Loader2,
-    Send
-} from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
-import AdminHero from '@/components/admin/AdminHero';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import clsx from 'clsx';
 
 interface CallLog {
     id: number;
     outcome: string;
-    notes: string;
-    prayer_requests: string;
+    notes: string | null;
+    prayer_requests?: string | null;
     created_at: string;
+    duration_seconds?: number;
 }
 
 const STAGES = ['new', 'call', 'visit', 'discipleship', 'consolidated', 'lost'];
 const STAGE_LABELS: Record<string, string> = {
     new: 'Nuevo',
-    call: 'Por Llamar',
+    call: 'Por llamar',
     visit: 'Visita',
     discipleship: 'Discipulado',
     consolidated: 'Consolidado',
     lost: 'Perdido',
 };
+
+const STAGE_BADGES: Record<string, string> = {
+    new: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-white/5 dark:text-slate-300 dark:border-white/10',
+    call: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20',
+    visit: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/20',
+    discipleship: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/20',
+    consolidated: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20',
+    lost: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-500/20',
+};
+
+function formatDate(value?: string | null) {
+    if (!value) return 'Sin fecha';
+    return new Date(value).toLocaleString('es-CO', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
 
 export default function LeadDetail() {
     const { token } = useAuth();
@@ -54,18 +72,18 @@ export default function LeadDetail() {
     const params = useParams<{ id: string }>();
     const leadId = params?.id ?? '';
 
-    const [activeTab, setActiveTab] = useState('history');
+    const [activeTab, setActiveTab] = useState<'history' | 'notes'>('history');
     const [lead, setLead] = useState<any>(null);
     const [callLogs, setCallLogs] = useState<CallLog[]>([]);
     const [counselingSessions, setCounselingSessions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Call drawer
     const [isCallDrawerOpen, setIsCallDrawerOpen] = useState(false);
     const [isSavingCall, setIsSavingCall] = useState(false);
     const [callForm, setCallForm] = useState({ outcome: 'Exitoso', notes: '', prayer_requests: '' });
 
-    // Stage change
+    const [noteText, setNoteText] = useState('');
+    const [isSavingNote, setIsSavingNote] = useState(false);
     const [isStageOpen, setIsStageOpen] = useState(false);
     const [isSavingStage, setIsSavingStage] = useState(false);
 
@@ -76,25 +94,29 @@ export default function LeadDetail() {
             const [leadData, logsData, counselingData] = await Promise.allSettled([
                 apiFetch(`/crm/consolidation/cases/${leadId}`, { token, cache: 'no-store' }),
                 apiFetch<CallLog[]>(`/crm/consolidation/cases/${leadId}/calls`, { token, cache: 'no-store' }),
-                apiFetch(`/crm/counseling/lead/${leadId}`, { token, cache: 'no-store' })
+                apiFetch(`/crm/counseling/lead/${leadId}`, { token, cache: 'no-store' }),
             ]);
             if (leadData.status === 'fulfilled') setLead(leadData.value);
-            setCallLogs(logsData.status === 'fulfilled' && Array.isArray((logsData as any).value) ? (logsData as any).value : []);
-            setCounselingSessions(counselingData.status === 'fulfilled' && Array.isArray((counselingData as any).value) ? (counselingData as any).value : []);
+            setCallLogs(logsData.status === 'fulfilled' && Array.isArray(logsData.value) ? logsData.value : []);
+            setCounselingSessions(counselingData.status === 'fulfilled' && Array.isArray(counselingData.value) ? counselingData.value : []);
         } catch (err) {
             console.error(err);
+            addToast('No se pudo cargar el contacto', 'error');
         } finally {
             setLoading(false);
         }
-    }, [token, leadId]);
+    }, [addToast, leadId, token]);
+
+    useEffect(() => { fetchLeadData(); }, [fetchLeadData]);
 
     const handleStageChange = async (newStage: string) => {
         setIsStageOpen(false);
         setIsSavingStage(true);
         try {
             await apiFetch(`/crm/consolidation/cases/${leadId}`, {
-                method: 'PATCH', token,
-                body: { stage: newStage }
+                method: 'PATCH',
+                token,
+                body: { stage: newStage },
             });
             setLead((prev: any) => ({ ...prev, stage: newStage }));
             addToast(`Etapa actualizada a ${STAGE_LABELS[newStage]}`, 'success');
@@ -110,254 +132,288 @@ export default function LeadDetail() {
         setIsSavingCall(true);
         try {
             await apiFetch(`/crm/consolidation/cases/${leadId}/calls`, {
-                method: 'POST', token,
-                body: callForm
+                method: 'POST',
+                token,
+                body: callForm,
             });
-            addToast('Llamada registrada', 'success');
+            addToast('Interacción registrada', 'success');
             setIsCallDrawerOpen(false);
             setCallForm({ outcome: 'Exitoso', notes: '', prayer_requests: '' });
             fetchLeadData();
         } catch {
-            addToast('Error al registrar llamada', 'error');
+            addToast('Error al registrar la interacción', 'error');
         } finally {
             setIsSavingCall(false);
         }
     };
 
-    useEffect(() => { fetchLeadData(); }, [fetchLeadData]);
-
-    const combinedTimeline = [
-        ...callLogs.map(log => ({
-            id: `log-${log.id}`,
-            title: `Llamada: ${log.outcome}`,
-            message: log.notes,
-            prayer: log.prayer_requests,
-            time: new Date(log.created_at).toLocaleString(),
-            type: 'call',
-            color: log.outcome === 'Exitoso' ? 'bg-primary' : 'bg-slate-500',
-            isInsight: false
-        })),
-        ...counselingSessions.map(session => ({
-            id: `counseling-${session.id}`,
-            title: `Consejería: ${session.subject || session.topic}`,
-            message: session.notes || 'Sesión de acompañamiento espiritual.',
-            prayer: '',
-            time: new Date(session.created_at).toLocaleString(),
-            type: 'counseling',
-            color: 'bg-sky-600',
-            isInsight: false
-        })),
-        {
-            id: 'init',
-            title: 'Contacto Registrado',
-            message: 'El contacto ingresó al sistema de consolidación.',
-            prayer: '',
-            time: lead ? new Date(lead.created_at).toLocaleString() : 'Recientemente',
-            type: 'spiritual',
-            color: 'bg-amber-500',
-            isInsight: true
+    const handleSaveNote = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!noteText.trim()) return;
+        setIsSavingNote(true);
+        try {
+            await apiFetch(`/crm/consolidation/cases/${leadId}/calls`, {
+                method: 'POST',
+                token,
+                body: { outcome: 'Nota', notes: noteText.trim(), prayer_requests: '' },
+            });
+            setNoteText('');
+            addToast('Nota guardada', 'success');
+            fetchLeadData();
+        } catch {
+            addToast('Error al guardar la nota', 'error');
+        } finally {
+            setIsSavingNote(false);
         }
-    ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    };
 
-    if (loading) return (
-        <div className="min-h-screen bg-[hsl(var(--bg-primary))] flex items-center justify-center text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-xs">
-            Cargando...
-        </div>
-    );
+    const timeline = useMemo(() => {
+        const rows = [
+            ...callLogs.map(log => ({
+                id: `log-${log.id}`,
+                title: log.outcome === 'Nota' ? 'Nota registrada' : `Contacto: ${log.outcome}`,
+                message: log.notes || 'Sin observaciones.',
+                prayer: log.prayer_requests || '',
+                time: log.created_at,
+                type: log.outcome === 'Nota' ? 'note' : 'call',
+            })),
+            ...counselingSessions.map(session => ({
+                id: `counseling-${session.id}`,
+                title: `Consejería: ${session.subject || session.topic || 'Sesión'}`,
+                message: session.notes || 'Sesión de acompañamiento espiritual.',
+                prayer: '',
+                time: session.created_at,
+                type: 'counseling',
+            })),
+        ];
+        if (lead?.created_at) {
+            rows.push({
+                id: 'init',
+                title: 'Contacto registrado',
+                message: 'El contacto ingresó al sistema de consolidación.',
+                prayer: '',
+                time: lead.created_at,
+                type: 'system',
+            });
+        }
+        return rows.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    }, [callLogs, counselingSessions, lead?.created_at]);
 
-    const heroWatchers = ['Coordinación de Consolidación', 'Optimus Brain'];
+    const noteRows = timeline.filter(item => item.type === 'note' || item.message);
+    const stage = lead?.stage || 'new';
+    const initials = (lead?.nombre_completo || 'Contacto')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part: string) => part[0])
+        .join('')
+        .toUpperCase();
+
+    if (loading) {
+        return (
+            <div className="flex h-full items-center justify-center text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
+                Cargando contacto...
+            </div>
+        );
+    }
 
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CCF', icon: Users },
                 { label: 'Consolidación', icon: Users },
-                { label: lead ? (lead.nombre_completo || '') : 'Contacto', icon: Users }
+                { label: 'Leads / Contactos', href: '/plataforma/crm/contacts', icon: User },
+                { label: lead?.nombre_completo || 'Contacto', icon: User },
             ]}
             rightActions={canEditCrm ? (
-                <button className="flex size-8 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white transition-all">
-                    <MoreVertical size={20} />
+                <button
+                    onClick={() => setIsCallDrawerOpen(true)}
+                    className="inline-flex h-8 items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm transition-all active:scale-95"
+                >
+                    <Plus size={14} />
+                    Interacción
                 </button>
             ) : undefined}
         >
-            <AdminHero
-                eyebrow="Contacto"
-                title={lead ? (lead.nombre_completo || '') : 'Detalle de seguimiento'}
-                description="Historia, notas y próximos pasos para este contacto."
-                tags={[`Etapa: ${STAGE_LABELS[lead?.stage] ?? '...'}`, `Origen: ${lead?.source ?? '...'}`]}
-                watchers={heroWatchers}
-                primaryAction={{ label: 'Ver pipeline', icon: Link2, onClick: () => router.push('/plataforma/crm/pipeline') }}
-                secondaryAction={canEditCrm ? { label: 'Registrar llamada', icon: Plus, onClick: () => setIsCallDrawerOpen(true) } : undefined}
-            />
-
-            <div className="space-y-4">
-                <section className="px-4 pt-2 pb-6 flex flex-col items-center text-center space-y-4">
-                    <div className="relative group">
-                        <div className="size-10 rounded-md overflow-hidden border-4 border-white/10 group-hover:border-primary/50 transition-all shadow-2xl relative">
-                            <div className="size-full rounded-lg bg-slate-800 flex items-center justify-center text-white text-xl font-bold">
-                                {lead?.nombre_completo?.charAt(0)?.toUpperCase() || '?'}
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+                <section className="rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="flex min-w-0 items-start gap-4">
+                            <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--primary))] text-sm font-bold text-white">
+                                {initials || '?'}
+                            </div>
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h1 className="truncate text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                        {lead?.nombre_completo || 'Contacto sin nombre'}
+                                    </h1>
+                                    <span className={clsx('rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide', STAGE_BADGES[stage])}>
+                                        {STAGE_LABELS[stage] ?? stage}
+                                    </span>
+                                </div>
+                                <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                    <span className="inline-flex items-center gap-1.5"><Phone size={13} />{lead?.telefono || lead?.phone || 'Sin teléfono'}</span>
+                                    <span className="inline-flex items-center gap-1.5"><Clock size={13} />Registrado {lead?.created_at ? new Date(lead.created_at).toLocaleDateString('es-CO') : 'sin fecha'}</span>
+                                    <span className="inline-flex items-center gap-1.5"><Link2 size={13} />{lead?.source || 'Origen general'}</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="absolute -bottom-2 -right-2 size-8 rounded-full bg-emerald-500 border-4 border-slate-950 flex items-center justify-center">
-                            <Check size={14} className="text-white" />
+
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => router.push('/plataforma/crm/pipeline')}
+                                className="inline-flex h-8 items-center gap-2 rounded-md border border-slate-200 px-3 text-[11px] font-bold uppercase tracking-wide text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+                            >
+                                <Link2 size={14} />
+                                Pipeline
+                            </button>
+                            {canEditCrm && (
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsStageOpen(value => !value)}
+                                        disabled={isSavingStage}
+                                        className="inline-flex h-8 items-center gap-2 rounded-md border border-slate-200 px-3 text-[11px] font-bold uppercase tracking-wide text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+                                    >
+                                        {isSavingStage ? <Loader2 size={14} className="animate-spin" /> : <ChevronDown size={14} />}
+                                        Cambiar etapa
+                                    </button>
+                                    {isStageOpen && (
+                                        <div className="absolute right-0 top-9 z-50 w-48 overflow-hidden rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] shadow-xl dark:border-white/10 dark:bg-[#1e1f21]">
+                                            {STAGES.map(item => (
+                                                <button
+                                                    key={item}
+                                                    onClick={() => handleStageChange(item)}
+                                                    className={clsx(
+                                                        'flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-slate-50 dark:hover:bg-white/5',
+                                                        stage === item ? 'text-[hsl(var(--primary))]' : 'text-slate-500 dark:text-slate-300'
+                                                    )}
+                                                >
+                                                    {STAGE_LABELS[item]}
+                                                    {stage === item && <Check size={13} />}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                    </div>
-                    <div className="space-y-1">
-                        <h1 className="text-xl font-bold tracking-tight text-white">{lead?.nombre_completo || ''}</h1>
-                        <p className="text-primary font-bold uppercase tracking-wide text-[10px]">
-                            Etapa: {STAGE_LABELS[lead?.stage] ?? lead?.stage} • Origen: {lead?.source ?? '...'}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/5">
-                        <Clock size={12} className="text-primary" />
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-none">
-                            Registrado: {lead ? new Date(lead.created_at).toLocaleDateString() : '...'}
-                        </span>
                     </div>
                 </section>
 
-                <section className="px-4 py-2 flex gap-4 overflow-x-auto hide-scrollbar">
+                <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
                     {[
-                        { label: 'Llamadas', val: callLogs.length.toString(), icon: Phone },
-                        { label: 'Prayer Requests', val: callLogs.filter(l => l.prayer_requests).length.toString(), icon: Heart },
-                    ].map((stat, i) => (
-                        <div key={i} className="flex-1 min-w-[120px] bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-md p-3 flex flex-col gap-2 group hover:border-primary/30 transition-all">
-                            <div className="size-8 rounded-md bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all text-xs">
-                                <stat.icon size={16} />
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wide leading-none mb-1">{stat.label}</p>
-                                <p className="text-lg font-bold text-white">{stat.val}</p>
+                        { label: 'Interacciones', value: callLogs.length, icon: MessageSquare },
+                        { label: 'Llamadas', value: callLogs.filter(log => log.outcome !== 'Nota').length, icon: Phone },
+                        { label: 'Motivos de oración', value: callLogs.filter(log => log.prayer_requests).length, icon: Heart },
+                    ].map(stat => (
+                        <div key={stat.label} className="rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{stat.label}</p>
+                                    <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                                </div>
+                                <div className="flex size-9 items-center justify-center rounded-md bg-slate-100 text-[hsl(var(--primary))] dark:bg-white/5">
+                                    <stat.icon size={17} />
+                                </div>
                             </div>
                         </div>
                     ))}
                 </section>
 
-                <section className="sticky top-0 z-40 bg-slate-950/70 backdrop-blur-xl px-4 pt-6 border-b border-white/5">
-                    <div className="flex gap-3 justify-center">
+                <section className="rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/[0.03]">
+                    <div className="flex border-b border-slate-200 px-3 dark:border-white/10">
                         {[
-                            { id: 'history', label: 'Historial de Contacto' },
-                            { id: 'notes', label: 'Notas e Interacción' },
-                        ].map((tab) => (
+                            { id: 'history', label: 'Historial de contacto' },
+                            { id: 'notes', label: 'Notas e interacción' },
+                        ].map(tab => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`pb-4 text-xs font-bold uppercase tracking-wide transition-all relative ${activeTab === tab.id ? 'text-primary' : 'text-slate-500 hover:text-slate-300'}`}
+                                onClick={() => setActiveTab(tab.id as 'history' | 'notes')}
+                                className={clsx(
+                                    'relative px-3 py-3 text-[11px] font-bold uppercase tracking-wide transition-colors',
+                                    activeTab === tab.id
+                                        ? 'text-[hsl(var(--primary))]'
+                                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                )}
                             >
                                 {tab.label}
-                                {activeTab === tab.id && (
-                                    <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-full shadow-[0_0_8px_#4242f0]"></div>
-                                )}
+                                {activeTab === tab.id && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[hsl(var(--primary))]" />}
                             </button>
                         ))}
                     </div>
-                </section>
 
-                <section className="px-3 py-2 space-y-4">
-                    {combinedTimeline.map((item, idx) => (
-                        <div key={item.id} className="relative flex gap-4">
-                            {idx !== combinedTimeline.length - 1 && (
-                                <div className="absolute left-[1.125rem] top-5 bottom-[-40px] w-px bg-white/5"></div>
-                            )}
-                            <div className={`z-10 size-9 shrink-0 items-center justify-center rounded-lg ${item.color} text-white shadow-xl flex border-4 border-slate-950`}>
-                                {item.type === 'call' && <Phone size={16} />}
-                                {item.type === 'spiritual' && <Sparkles size={16} />}
-                                {item.type === 'counseling' && <MessageSquare size={16} />}
-                            </div>
-                            <div className={`flex flex-col gap-2 flex-1 ${item.isInsight ? 'bg-amber-500/5 border border-amber-500/10 p-3 rounded-md' : 'bg-white/5 p-3 rounded-md border border-white/5'}`}>
-                                <div className="flex justify-between items-start">
-                                    <h4 className={`text-sm font-bold tracking-tight ${item.isInsight ? 'text-amber-500' : 'text-white'}`}>{item.title}</h4>
-                                    <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">{item.time}</span>
+                    {activeTab === 'notes' && (
+                        <div className="border-b border-slate-200 p-4 dark:border-white/10">
+                            <form onSubmit={handleSaveNote} className="space-y-3">
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Nueva nota</label>
+                                <textarea
+                                    value={noteText}
+                                    onChange={event => setNoteText(event.target.value)}
+                                    rows={3}
+                                    placeholder="Registra observaciones, acuerdos o próximos pasos..."
+                                    className="w-full resize-none rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-slate-100"
+                                />
+                                <div className="flex justify-end">
+                                    <button
+                                        type="submit"
+                                        disabled={isSavingNote || !noteText.trim()}
+                                        className="inline-flex h-8 items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm transition-all disabled:opacity-50 active:scale-95"
+                                    >
+                                        {isSavingNote ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                        Guardar nota
+                                    </button>
                                 </div>
-                                <p className={`text-xs leading-relaxed font-medium ${item.isInsight ? 'text-amber-200/60 italic' : 'text-slate-400'}`}>
-                                    {item.message || 'Sin observaciones.'}
-                                </p>
-                                {item.prayer && (
-                                    <div className="mt-2 p-3 bg-emerald-500/10 rounded-md border border-emerald-500/20">
-                                        <p className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 uppercase tracking-wide mb-1">
-                                            <Heart size={10} /> Motivo de Oración
-                                        </p>
-                                        <p className="text-xs text-emerald-200/80">{item.prayer}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-
-                    {combinedTimeline.length === 0 && (
-                        <div className="py-1.5 text-center space-y-4">
-                            <History size={48} className="mx-auto text-slate-800" />
-                            <p className="text-slate-500 font-bold uppercase tracking-wide text-[10px]">Sin historial registrado</p>
+                            </form>
                         </div>
                     )}
-                </section>
 
-                {/* Actions */}
-                <section className="px-4 py-2 border-t border-white/5 mt-3 space-y-3">
-                    <div className="bg-primary/5 rounded-md border border-primary/20 p-4 flex flex-col gap-4 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
-                        <div className="flex items-center gap-4 relative z-10">
-                            <div className="bg-primary size-9 rounded-lg flex items-center justify-center text-white shadow-xl shadow-primary/20">
-                                <Calendar size={24} />
-                            </div>
-                            <div>
-                                <h4 className="text-white font-bold tracking-tight">Acciones de Consolidación</h4>
-                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wide">Gestión del Seguimiento</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-4 relative z-10">
-                            {canEditCrm && (
-                                <button
-                                    onClick={() => setIsCallDrawerOpen(true)}
-                                    className="flex-1 bg-primary hover:bg-primary-600 text-white py-2 rounded-lg font-bold uppercase tracking-wide text-[10px] shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-2 border border-primary-400/20"
-                                >
-                                    <Phone size={16} />
-                                    Registrar Llamada
-                                </button>
-                            )}
-                            {/* Stage change dropdown */}
-                            <div className="relative">
-                                {canEditCrm && (
-                                    <button
-                                        onClick={() => setIsStageOpen(s => !s)}
-                                        disabled={isSavingStage}
-                                        className="size-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-                                        title="Cambiar etapa"
-                                    >
-                                        {isSavingStage
-                                            ? <Loader2 size={20} className="animate-spin" />
-                                            : <ChevronDown size={20} />
-                                        }
-                                    </button>
-                                )}
-                                {isStageOpen && (
-                                    <div className="absolute bottom-16 right-0 w-48 bg-slate-900 border border-white/10 rounded-lg overflow-hidden shadow-2xl z-50">
-                                        {STAGES.map(s => (
-                                            <button
-                                                key={s}
-                                                onClick={() => handleStageChange(s)}
-                                                className={clsx(
-                                                    "w-full px-4 py-1.5 text-left text-[11px] font-bold uppercase tracking-wide transition-all hover:bg-white/10",
-                                                    lead?.stage === s ? 'text-primary bg-white/5' : 'text-slate-400'
-                                                )}
-                                            >
-                                                {STAGE_LABELS[s]}
-                                            </button>
-                                        ))}
+                    <div className="p-4">
+                        {(activeTab === 'history' ? timeline : noteRows).length > 0 ? (
+                            <div className="space-y-3">
+                                {(activeTab === 'history' ? timeline : noteRows).map(item => (
+                                    <div key={item.id} className="flex gap-3 rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-black/10">
+                                        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-300">
+                                            {item.type === 'call' && <Phone size={15} />}
+                                            {item.type === 'note' && <MessageSquare size={15} />}
+                                            {item.type === 'counseling' && <Heart size={15} />}
+                                            {item.type === 'system' && <History size={15} />}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-start justify-between gap-2">
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{item.title}</h3>
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                                    <Calendar size={11} />
+                                                    {formatDate(item.time)}
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-slate-500 dark:text-slate-400">{item.message}</p>
+                                            {item.prayer && (
+                                                <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
+                                                    <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide">
+                                                        <Heart size={11} />
+                                                        Motivo de oración
+                                                    </p>
+                                                    {item.prayer}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                )}
+                                ))}
                             </div>
-                        </div>
+                        ) : (
+                            <div className="py-10 text-center">
+                                <History size={34} className="mx-auto text-slate-300 dark:text-slate-600" />
+                                <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Sin registros todavía</p>
+                            </div>
+                        )}
                     </div>
                 </section>
             </div>
 
-            {/* ─── Drawer: Registrar Llamada ─── */}
             <WorkspaceDrawer
                 isOpen={isCallDrawerOpen}
                 onClose={() => setIsCallDrawerOpen(false)}
-                title="Registrar Llamada de Consolidación"
-                subtitle="Historial de contacto con el prospecto"
+                title="Registrar interacción"
+                subtitle="Llamadas, seguimientos y motivos de oración"
                 actions={
                     <>
                         <button type="button" onClick={() => setIsCallDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500">
@@ -367,7 +423,7 @@ export default function LeadDetail() {
                             form="call-form"
                             type="submit"
                             disabled={isSavingCall}
-                            className="px-3 py-2 bg-primary text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg active:scale-95 transition-all flex items-center gap-2"
+                            className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm transition-all disabled:opacity-60 active:scale-95"
                         >
                             {isSavingCall ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
@@ -375,37 +431,37 @@ export default function LeadDetail() {
                     </>
                 }
             >
-                <form id="call-form" onSubmit={handleRegisterCall} className="space-y-2">
+                <form id="call-form" onSubmit={handleRegisterCall} className="space-y-3">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Resultado de la llamada</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Tipo / resultado</label>
                         <select
                             value={callForm.outcome}
-                            onChange={e => setCallForm({ ...callForm, outcome: e.target.value })}
-                            className="w-full px-4 py-1.5 rounded-lg border border-white/10 bg-black/20 outline-none focus:ring-2 focus:ring-primary/20 font-bold text-sm text-white appearance-none"
+                            onChange={event => setCallForm({ ...callForm, outcome: event.target.value })}
+                            className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
                         >
-                            {['Exitoso', 'Sin respuesta', 'Buzón de voz', 'Número equivocado', 'Reagendar'].map(o =>
-                                <option key={o} value={o}>{o}</option>
-                            )}
+                            {['Exitoso', 'Sin respuesta', 'Buzón de voz', 'Número equivocado', 'Reagendar', 'Nota'].map(option => (
+                                <option key={option} value={option}>{option}</option>
+                            ))}
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Notas de la llamada</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Notas</label>
                         <textarea
                             value={callForm.notes}
-                            onChange={e => setCallForm({ ...callForm, notes: e.target.value })}
-                            placeholder="Observaciones, próximos pasos..."
-                            rows={3}
-                            className="w-full px-4 py-1.5 rounded-lg border border-white/10 bg-black/20 outline-none focus:ring-2 focus:ring-primary/20 font-bold text-sm text-white resize-none"
+                            onChange={event => setCallForm({ ...callForm, notes: event.target.value })}
+                            placeholder="Observaciones, acuerdos, próximos pasos..."
+                            rows={4}
+                            className="w-full resize-none rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Motivo de Oración (opcional)</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Motivo de oración</label>
                         <textarea
                             value={callForm.prayer_requests}
-                            onChange={e => setCallForm({ ...callForm, prayer_requests: e.target.value })}
-                            placeholder="Petición de oración mencionada..."
+                            onChange={event => setCallForm({ ...callForm, prayer_requests: event.target.value })}
+                            placeholder="Opcional"
                             rows={2}
-                            className="w-full px-4 py-1.5 rounded-lg border border-white/10 bg-black/20 outline-none focus:ring-2 focus:ring-primary/20 font-bold text-sm text-white resize-none"
+                            className="w-full resize-none rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
                         />
                     </div>
                 </form>

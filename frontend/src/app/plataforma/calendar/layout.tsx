@@ -1,13 +1,11 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
 import React from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import {
   CalendarDays, Calendar, ListTodo, HelpCircle,
-  Megaphone, Users, FolderKanban, User,
+  Megaphone, Users, FolderKanban, User, Cake,
 } from 'lucide-react';
 
 const SIDEBAR_SECTIONS = [
@@ -43,6 +41,12 @@ const SIDEBAR_SECTIONS = [
         label: 'Personal',
         icon: User,
         href: '/plataforma/calendar?view=personal',
+      },
+      {
+        id: 'cumpleanos',
+        label: 'Cumpleaños',
+        icon: Cake,
+        href: '/plataforma/calendar?view=cumpleanos',
       },
     ],
   },

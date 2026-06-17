@@ -14,14 +14,25 @@ import { useAuth } from '@/context/AuthContext';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { useCreation } from '@/context/CreationContext';
 import clsx from 'clsx';
+import { SITE_NAME } from '@/lib/site-config';
 import { AnimatePresence,motion } from 'framer-motion';
-import { Bell,Bot,ChevronLeft,ChevronRight,LogOut,Maximize2,Minimize2,Settings,User } from 'lucide-react';
+import { Bell,Bot,ChevronLeft,ChevronRight,LayoutPanelLeft,LogOut,Maximize2,Menu,Minimize2,Settings,User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import React,{ useCallback,useEffect,useMemo,useRef,useState } from 'react';
 
 // â”€â”€ Layer Context (importamos el provider aquÃ­) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 import { MODULE_CONFIGS } from '@/components/workspace/moduleConfigs';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
+
+const MODULE_PATH_PERM_MAP: Record<string, string> = {
+    '/plataforma/evangelism': 'evangelism',
+    '/plataforma/crm': 'crm',
+    '/plataforma/finances': 'finance',
+    '/plataforma/cms': 'cms',
+    '/plataforma/community': 'community',
+    '/plataforma/spiritual-life': 'spiritual_life',
+    '/plataforma/wiki': 'cms',
+};
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PUBLIC API: WorkspaceLayout wraps children with the layer provider
@@ -68,8 +79,9 @@ function WorkspaceLayoutInner({
     const moduleKey = pathname?.split('/')[2] || 'default';
     const [showInbox, setShowInbox] = useState(false);
     const [showChat, setShowChat] = useState(false);
-    const [isMounted, setIsReady] = useState(true);
+    const [isMounted, setIsReady] = useState(false);
     const [isFocusMode, setIsFocusMode] = useState(false);
+    const [viewportMode, setViewportMode] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
     const { isModalOpen, closeModal, defaultType } = useCreation();
     const previousLayerStateRef = useRef<{ s1: boolean; s2: boolean } | null>(null);
 
@@ -78,6 +90,22 @@ function WorkspaceLayoutInner({
 
     // S1 visibility is controlled by layers.S1 (always true, but kept in sync)
     const s1Visible = layers.S1;
+    const isMobileViewport = viewportMode === 'mobile';
+    const isTabletViewport = viewportMode === 'tablet';
+    const isCompactViewport = viewportMode !== 'desktop';
+
+    useEffect(() => {
+        const syncViewportMode = () => {
+            const width = window.innerWidth;
+            if (width < 768) setViewportMode('mobile');
+            else if (width < 1180) setViewportMode('tablet');
+            else setViewportMode('desktop');
+        };
+
+        syncViewportMode();
+        window.addEventListener('resize', syncViewportMode);
+        return () => window.removeEventListener('resize', syncViewportMode);
+    }, []);
 
     useEffect(() => {
         const savedS1 = localStorage.getItem('workspace:s1') !== 'hidden';
@@ -102,23 +130,45 @@ function WorkspaceLayoutInner({
         setIsReady(true);
     }, [closeLayer, moduleKey, openLayer]);
 
+    useEffect(() => {
+        if (!isMounted || isFocusMode) return;
+
+        if (isMobileViewport) {
+            closeLayer('S1');
+            closeLayer('S2');
+            return;
+        }
+
+        if (isTabletViewport) {
+            closeLayer('S1');
+            openLayer('S2');
+        }
+    }, [closeLayer, isFocusMode, isMobileViewport, isMounted, isTabletViewport, openLayer]);
+
+    useEffect(() => {
+        if (!isCompactViewport) return;
+        closeLayer('S1');
+        if (isMobileViewport) closeLayer('S2');
+    }, [closeLayer, isCompactViewport, isMobileViewport, pathname]);
+
+    useEffect(() => {
+        if (!isCompactViewport) return;
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+            closeLayer('S1');
+            closeLayer('S2');
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [closeLayer, isCompactViewport]);
+
     const moduleContext = useMemo(() => {
         const root = pathname?.split('/')[2] || '';
-        return MODULE_CONFIGS[root] || { title: "CCF Platform", sections: [] };
+        return MODULE_CONFIGS[root] || { title: SITE_NAME, sections: [] };
     }, [pathname]);
 
     const displayTitle = manualTitle || moduleContext.title;
     const displaySections = manualSections || moduleContext.sections;
-    // Module prefix → permission mapping for sidebar section filtering
-    const MODULE_PATH_PERM_MAP: Record<string, string> = {
-        '/plataforma/evangelism': 'evangelism',
-        '/plataforma/crm': 'crm',
-        '/plataforma/finances': 'finance',
-        '/plataforma/cms': 'cms',
-        '/plataforma/community': 'community',
-        '/plataforma/spiritual-life': 'spiritual_life',
-        '/plataforma/wiki': 'cms',
-    };
     const filteredDisplaySections = useMemo(() => {
         if (!Array.isArray(displaySections)) return displaySections;
         return displaySections
@@ -215,6 +265,12 @@ function WorkspaceLayoutInner({
     }, [s2WidthNum]);
 
     useEffect(() => {
+        if (isTabletViewport && s2WidthNum > 340) {
+            setS2WidthNum(320);
+        }
+    }, [isTabletViewport, s2WidthNum]);
+
+    useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!isDraggingS2) return;
             const delta = e.clientX - startPosRef.current;
@@ -253,8 +309,28 @@ function WorkspaceLayoutInner({
         e.preventDefault();
     };
 
-    const isMiniSidebar = layers.S2 && s2WidthNum <= snapThreshold;
-    const currentS2Width = layers.S2 ? `${s2WidthNum}px` : '0px';
+    const inlineS1Visible = s1Visible && !isCompactViewport;
+    const inlineS2Visible = layers.S2 && !isMobileViewport;
+    const tabletS2Width = Math.min(Math.max(s2WidthNum, 240), 340);
+    const resolvedS2Width = isTabletViewport ? tabletS2Width : s2WidthNum;
+    const isMiniSidebar = inlineS2Visible && resolvedS2Width <= snapThreshold;
+    const currentS2Width = inlineS2Visible ? `${resolvedS2Width}px` : '0px';
+
+    const openPrimaryNavigation = useCallback(() => {
+        if (isMobileViewport) closeLayer('S2');
+        openLayer('S1');
+    }, [closeLayer, isMobileViewport, openLayer]);
+
+    const openModuleNavigation = useCallback(() => {
+        if (isMobileViewport) closeLayer('S1');
+        openLayer('S2');
+    }, [closeLayer, isMobileViewport, openLayer]);
+
+    const closeCompactNavigation = useCallback(() => {
+        if (!isCompactViewport) return;
+        closeLayer('S1');
+        closeLayer('S2');
+    }, [closeLayer, isCompactViewport]);
 
     if (!isMounted) return (
         <div className="h-screen w-full bg-[hsl(var(--bg-primary))] dark:bg-[#111213] flex items-center justify-center">
@@ -270,6 +346,27 @@ function WorkspaceLayoutInner({
     const displayName = user?.username?.includes('@')
         ? user.username.split('@')[0]
         : user?.username;
+
+    const responsiveNavigationActions = (
+        <div className="hidden items-center gap-1 md:flex xl:hidden">
+            <button
+                onClick={openPrimaryNavigation}
+                className="flex size-8 items-center justify-center rounded-md text-slate-500 transition-all hover:bg-slate-100 hover:text-[hsl(var(--primary))] dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+                aria-label="Abrir navegación principal"
+                title="Navegación principal"
+            >
+                <Menu size={16} />
+            </button>
+            <button
+                onClick={openModuleNavigation}
+                className="flex size-8 items-center justify-center rounded-md text-slate-500 transition-all hover:bg-slate-100 hover:text-[hsl(var(--primary))] dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+                aria-label="Abrir navegación del módulo"
+                title="Navegación del módulo"
+            >
+                <LayoutPanelLeft size={16} />
+            </button>
+        </div>
+    );
 
     // Combined Right Actions for WorkspaceToolbar
     const defaultRightActions = (
@@ -307,7 +404,7 @@ function WorkspaceLayoutInner({
 
     return (
         <ProtectedRoute allowedRoles={allowedRoles} allowedPermissions={allowedPermissions}>
-            <div className="workspace-platform flex flex-col h-screen w-full bg-slate-50 dark:bg-[#111213] overflow-hidden font-display relative transition-colors duration-500">
+            <div className="workspace-platform flex h-[100dvh] w-full flex-col overflow-hidden bg-slate-50 font-display transition-colors duration-500 dark:bg-[#111213]">
 
                 <motion.div
                     className="absolute top-0 left-0 right-0 h-[2px] bg-[hsl(var(--primary))] z-[10000]"
@@ -328,6 +425,7 @@ function WorkspaceLayoutInner({
                             availableViews={availableViews}
                             leftActions={
                                 <>
+                                    {responsiveNavigationActions}
                                     {depth > 1 && (
                                         <button
                                             onClick={onBack}
@@ -355,6 +453,7 @@ function WorkspaceLayoutInner({
                         />
                     ) : (
                         <header className="h-10 border-b border-slate-100/80 dark:border-white/[0.05] flex items-center px-3 gap-2 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#141517] relative">
+                            {responsiveNavigationActions}
                             {depth > 1 && (
                                 <button
                                     onClick={onBack}
@@ -379,7 +478,7 @@ function WorkspaceLayoutInner({
 
                 <div className="flex flex-1 min-h-0 w-full overflow-hidden">
                     <AnimatePresence mode="popLayout">
-                        {s1Visible && (
+                        {inlineS1Visible && (
                             <motion.div
                                 key="sidebar1"
                                 initial={{ x: -80, opacity: 0 }}
@@ -398,7 +497,8 @@ function WorkspaceLayoutInner({
                         <div
                             className={clsx(
                                 "h-full shrink-0 relative flex",
-                                !isDraggingS2 && "transition-[width] duration-300 ease-in-out"
+                                !isDraggingS2 && "transition-[width] duration-300 ease-in-out",
+                                !inlineS2Visible && "pointer-events-none"
                             )}
                             style={{
                                 zIndex: 40,
@@ -421,7 +521,7 @@ function WorkspaceLayoutInner({
                                 )}
                             </div>
 
-                            {layers.S2 && (
+                            {inlineS2Visible && !isTabletViewport && (
                                 <div
                                     className="absolute top-0 right-[-3px] w-1.5 h-full cursor-col-resize z-50 group flex items-center justify-center"
                                     onMouseDown={handleMouseDownS2}
@@ -435,7 +535,7 @@ function WorkspaceLayoutInner({
                         </div>
 
                         <div className="flex-1 flex flex-col min-w-0 bg-[hsl(var(--bg-primary))] dark:bg-[#141517] shadow-[inset_1px_0_0_rgba(0,0,0,0.03)] dark:shadow-none relative z-10 border-l border-slate-100 dark:border-white/5 overflow-hidden">
-                            <div className="flex-1 overflow-y-auto scrollbar-thin relative">
+                            <div className="workspace-content flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative">
                                 <ErrorBoundary moduleName={displayTitle}>
                                     {children}
                                 </ErrorBoundary>
@@ -451,15 +551,32 @@ function WorkspaceLayoutInner({
                             whileHover={{ scale: 1.1, rotate: 5 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setShowChat(true)}
-                            className="fixed bottom-8 right-8 z-[500] size-7 rounded-lg bg-gradient-to-tr from-sky-600 to-sky-600 text-white shadow-2xl shadow-sky-500/40 flex items-center justify-center border border-white/20 group"
+                            className="fixed bottom-20 right-4 z-[500] flex size-10 items-center justify-center rounded-lg border border-white/20 bg-gradient-to-tr from-sky-600 to-sky-600 text-white shadow-2xl shadow-sky-500/40 group sm:bottom-8 sm:right-8 sm:size-9"
                             aria-label="Abrir MESH AI"
                         >
-                            <Bot size={28} className="group-hover:animate-pulse" />
+                            <Bot size={20} className="group-hover:animate-pulse" />
                             <div className="absolute -top-1 -right-1 size-4 bg-emerald-500 rounded-full border-2 border-white dark:border-[#111213]" />
                         </motion.button>
+
+                        <div className="fixed bottom-4 left-1/2 z-[520] flex -translate-x-1/2 items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[#141517]/95 md:hidden">
+                            <button
+                                onClick={openPrimaryNavigation}
+                                className="flex h-10 min-w-12 items-center justify-center rounded-lg text-slate-600 transition-all hover:bg-slate-100 hover:text-[hsl(var(--primary))] dark:text-slate-300 dark:hover:bg-white/5"
+                                aria-label="Abrir navegación principal"
+                            >
+                                <Menu size={18} />
+                            </button>
+                            <button
+                                onClick={openModuleNavigation}
+                                className="flex h-10 min-w-12 items-center justify-center rounded-lg text-slate-600 transition-all hover:bg-slate-100 hover:text-[hsl(var(--primary))] dark:text-slate-300 dark:hover:bg-white/5"
+                                aria-label="Abrir navegación del módulo"
+                            >
+                                <LayoutPanelLeft size={18} />
+                            </button>
+                        </div>
                     </main>
 
-                    {!s1Visible && (
+                    {!s1Visible && !isCompactViewport && (
                         <motion.button
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -471,7 +588,7 @@ function WorkspaceLayoutInner({
                         </motion.button>
                     )}
 
-                    {!layers.S2 && (
+                    {!layers.S2 && !isCompactViewport && (
                         <Tooltip content="Mostrar panel de módulo" side="right">
                             <motion.button
                                 initial={{ opacity: 0, y: 20 }}
@@ -485,6 +602,68 @@ function WorkspaceLayoutInner({
                         </Tooltip>
                     )}
                 </div>
+
+                <AnimatePresence>
+                    {isCompactViewport && s1Visible && (
+                        <motion.div
+                            key="mobile-primary-nav"
+                            className="fixed inset-0 z-[900] bg-slate-950/40 backdrop-blur-sm"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => closeLayer('S1')}
+                        >
+                            <motion.div
+                                className="absolute bottom-0 left-0 top-0 w-[88px] p-3"
+                                initial={{ x: -96 }}
+                                animate={{ x: 0 }}
+                                exit={{ x: -96 }}
+                                transition={{ type: 'tween', duration: 0.2 }}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    if ((event.target as HTMLElement).closest('a')) closeCompactNavigation();
+                                }}
+                            >
+                                <WorkspaceMiniSidebar onHide={() => closeLayer('S1')} />
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {isMobileViewport && layers.S2 && (
+                        <motion.div
+                            key="mobile-module-nav"
+                            className="fixed inset-0 z-[890] bg-slate-950/40 backdrop-blur-sm"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => closeLayer('S2')}
+                        >
+                            <motion.div
+                                className="absolute bottom-0 left-0 top-0 w-[min(88vw,360px)] bg-[hsl(var(--bg-primary))] shadow-2xl dark:bg-[#0f1113]"
+                                initial={{ x: '-100%' }}
+                                animate={{ x: 0 }}
+                                exit={{ x: '-100%' }}
+                                transition={{ type: 'tween', duration: 0.22 }}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    if ((event.target as HTMLElement).closest('a')) closeCompactNavigation();
+                                }}
+                            >
+                                {customSidebar || (
+                                    <WorkspaceMainSidebar
+                                        title={displayTitle}
+                                        sections={filteredDisplaySections}
+                                        isMini={false}
+                                        onToggle={() => closeLayer('S2')}
+                                        isCollapsed={false}
+                                    />
+                                )}
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </ProtectedRoute>
     );

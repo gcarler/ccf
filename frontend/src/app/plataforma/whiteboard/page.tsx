@@ -53,7 +53,7 @@ export default function WhiteboardPage() {
                     description="Espacios de trabajo visuales con canvas real, capas y guardado local persistente."
                     tags={["Canvas", "Local-first"]}
                     watchers={["Equipo Estrategico", "Diseno"]}
-                    primaryAction={{ label: "Nueva Pizarra", icon: Plus, onClick: () => router.push("/whiteboard/new") }}
+                    primaryAction={{ label: "Nueva Pizarra", icon: Plus, onClick: () => router.push("/plataforma/whiteboard/new") }}
                 />
 
  <div className="w-full space-y-3">
@@ -75,7 +75,7 @@ export default function WhiteboardPage() {
                                     className="group rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm transition-all hover:border-blue-300 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
                                 >
                                     <button
-                                        onClick={() => router.push(`/whiteboard/${board.id}`)}
+                                        onClick={() => router.push(`/plataforma/whiteboard/${board.id}`)}
                                         className="block w-full text-left"
                                     >
                                         <div className="mb-5 flex h-36 items-center justify-center rounded-lg border border-slate-100 bg-slate-50 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:border-white/10 dark:bg-black/20 dark:bg-[radial-gradient(#334155_1px,transparent_1px)]">
@@ -92,7 +92,7 @@ export default function WhiteboardPage() {
                                     </button>
                                     <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-white/10">
                                         <button
-                                            onClick={() => router.push(`/whiteboard/${board.id}`)}
+                                            onClick={() => router.push(`/plataforma/whiteboard/${board.id}`)}
                                             className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20"
                                         >
                                             Abrir

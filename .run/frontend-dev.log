@@ -2,3 +2,212 @@
 > ccf-frontend@0.1.0 dev
 > next dev -H 0.0.0.0 --hostname 0.0.0.0 --port 3000
 
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3000
+   - Network:      http://0.0.0.0:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1764ms
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 850ms (158 modules)
+ ○ Compiling /plataforma/calendar ...
+ ✓ Compiled /plataforma/calendar in 13.5s (3014 modules)
+ GET /plataforma/calendar 200 in 14471ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app-paths-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/server/app-paths-manifest.json',
+  page: '/plataforma/calendar'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 3.4s (3337 modules)
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app-paths-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/server/app-paths-manifest.json',
+  page: '/plataforma/calendar'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+ GET /plataforma/calendar?view=evangelismo 500 in 6369ms
+ GET /plataforma/calendar?view=evangelismo 500 in 278ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
+  page: '/plataforma/calendar'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
+  page: '/plataforma/calendar'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+ GET /plataforma/calendar?view=crm 500 in 643ms
+ GET /plataforma/calendar?view=crm 500 in 285ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
+  page: '/plataforma/calendar'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
+  page: '/plataforma/calendar'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+ GET /plataforma/calendar?view=proyectos 500 in 879ms
+ GET /plataforma/calendar?view=proyectos 500 in 283ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
+  page: '/plataforma/calendar'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
+  page: '/plataforma/calendar'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+ GET /plataforma/calendar?view=personal 500 in 648ms
+ GET /plataforma/calendar?view=personal 500 in 270ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
+  page: '/plataforma/calendar'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
+  page: '/plataforma/calendar'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/root/ccf/frontend/.next/routes-manifest.json'
+}
+ GET /plataforma/calendar?view=evangelismo 500 in 829ms
+ GET /plataforma/calendar?view=evangelismo 500 in 298ms
+ ⨯ Error: Cannot find module './1331.js'
+Require stack:
+- /root/ccf/frontend/.next/server/webpack-runtime.js
+- /root/ccf/frontend/.next/server/pages/_document.js
+- /root/ccf/frontend/node_modules/next/dist/server/require.js
+- /root/ccf/frontend/node_modules/next/dist/server/load-components.js
+- /root/ccf/frontend/node_modules/next/dist/build/utils.js
+- /root/ccf/frontend/node_modules/next/dist/build/swc/options.js
+- /root/ccf/frontend/node_modules/next/dist/build/swc/index.js
+- /root/ccf/frontend/node_modules/next/dist/build/analysis/parse-module.js
+- /root/ccf/frontend/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /root/ccf/frontend/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /root/ccf/frontend/node_modules/next/dist/server/lib/router-server.js
+- /root/ccf/frontend/node_modules/next/dist/server/lib/start-server.js
+    at <unknown> (.next/server/app/plataforma/calendar/page.js:2:9774)
+    at Object.<anonymous> (.next/server/app/plataforma/calendar/page.js:2:9854) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/plataforma/calendar'
+}
+ GET /plataforma/calendar?view=evangelismo 500 in 385ms
+ ✓ Compiled in 1456ms (3337 modules)
+ ✓ Compiled in 1725ms (1670 modules)
+ ✓ Compiled in 831ms (1557 modules)
+[?25h

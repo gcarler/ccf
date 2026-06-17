@@ -233,7 +233,7 @@ export const MODULE_CONFIGS: Record<string, any> = {
             icon: Activity,
           },
           {
-            id: 'ev-faro-groups',
+            id: 'ev-site-groups',
             label: 'Grupos',
             href: '/plataforma/evangelism/faro/groups',
             icon: Home,

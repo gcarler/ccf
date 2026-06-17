@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -14,7 +15,7 @@ class PageContentUpdate(BaseModel):
 
 
 class PageContentRead(BaseModel):
-    id: int
+    id: UUID
     page_key: str
     title: str
     content: str
@@ -24,7 +25,7 @@ class PageContentRead(BaseModel):
 
 
 class PageContentVersionRead(BaseModel):
-    id: int
+    id: UUID
     page_key: str
     title: str
     content: str
@@ -89,7 +90,7 @@ class CmsMediaUpdate(BaseModel):
 
 
 class CmsMediaRead(BaseModel):
-    id: int
+    id: UUID
     url: str
     alt_text: Optional[str] = None
     dimensions: Optional[str] = None
@@ -99,7 +100,7 @@ class CmsMediaRead(BaseModel):
     section: str
     tags: List[str] = Field(default_factory=list)
     status: str = "active"
-    created_by: Optional[int] = None
+    created_by_persona_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
     model_config = orm_config
@@ -119,7 +120,7 @@ class CmsSiteUpdate(BaseModel):
 
 
 class CmsSiteRead(BaseModel):
-    id: int
+    id: UUID
     site_key: str
     name: str
     base_path: str
@@ -147,14 +148,14 @@ class CmsThemeUpdate(BaseModel):
 
 
 class CmsThemeRead(BaseModel):
-    id: int
-    site_id: int
+    id: UUID
+    site_id: UUID
     name: str
     tokens_json: Dict[str, Any] = Field(default_factory=dict)
     is_active: bool
     status: CmsThemeStatus = "active"
     version: int
-    created_by: Optional[int] = None
+    created_by_persona_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
     model_config = orm_config
@@ -172,8 +173,8 @@ class CmsMenuUpdate(BaseModel):
 
 
 class CmsMenuRead(BaseModel):
-    id: int
-    site_id: int
+    id: UUID
+    site_id: UUID
     menu_key: str
     name: str
     is_active: bool
@@ -185,7 +186,7 @@ class CmsMenuRead(BaseModel):
 class CmsMenuItemCreate(BaseModel):
     label: str
     href: str
-    parent_id: Optional[int] = None
+    parent_id: Optional[UUID] = None
     target: str = "_self"
     is_external: bool = False
     visibility: str = "public"
@@ -196,7 +197,7 @@ class CmsMenuItemCreate(BaseModel):
 class CmsMenuItemUpdate(BaseModel):
     label: Optional[str] = None
     href: Optional[str] = None
-    parent_id: Optional[int] = None
+    parent_id: Optional[UUID] = None
     target: Optional[str] = None
     is_external: Optional[bool] = None
     visibility: Optional[str] = None
@@ -205,8 +206,8 @@ class CmsMenuItemUpdate(BaseModel):
 
 
 class CmsMenuItemReorderItem(BaseModel):
-    id: int
-    parent_id: Optional[int] = None
+    id: UUID
+    parent_id: Optional[UUID] = None
     sort_order: int
 
 
@@ -215,9 +216,9 @@ class CmsMenuItemReorderPayload(BaseModel):
 
 
 class CmsMenuItemRead(BaseModel):
-    id: int
-    menu_id: int
-    parent_id: Optional[int] = None
+    id: UUID
+    menu_id: UUID
+    parent_id: Optional[UUID] = None
     label: str
     href: str
     target: str
@@ -245,15 +246,15 @@ class CmsPageUpdate(BaseModel):
 
 
 class CmsPageRead(BaseModel):
-    id: int
-    site_id: int
+    id: UUID
+    site_id: UUID
     slug: str
     title: str
     status: str
     seo_json: Dict[str, Any] = Field(default_factory=dict)
-    published_version_id: Optional[int] = None
-    created_by: Optional[int] = None
-    updated_by: Optional[int] = None
+    published_version_id: Optional[UUID] = None
+    created_by_persona_id: Optional[UUID] = None
+    updated_by_persona_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
     model_config = orm_config
@@ -281,7 +282,7 @@ class CmsSectionUpdate(BaseModel):
 
 
 class CmsSectionReorderItem(BaseModel):
-    id: int
+    id: UUID
     sort_order: int
 
 
@@ -290,8 +291,8 @@ class CmsSectionReorderPayload(BaseModel):
 
 
 class CmsSectionRead(BaseModel):
-    id: int
-    page_id: int
+    id: UUID
+    page_id: UUID
     section_key: str
     type: str
     props_json: Dict[str, Any] = Field(default_factory=dict)
@@ -306,26 +307,26 @@ class CmsSectionRead(BaseModel):
 
 
 class CmsPageVersionRead(BaseModel):
-    id: int
-    page_id: int
+    id: UUID
+    page_id: UUID
     version_number: int
     snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     notes: Optional[str] = None
-    created_by: Optional[int] = None
+    created_by_persona_id: Optional[UUID] = None
     created_at: datetime
     model_config = orm_config
 
 
 class CmsPublishLogRead(BaseModel):
-    id: int
-    site_id: int
-    page_id: Optional[int] = None
+    id: UUID
+    site_id: UUID
+    page_id: Optional[UUID] = None
     entity_type: str
-    entity_id: Optional[int] = None
+    entity_id: Optional[str] = None
     action: str
     from_status: Optional[str] = None
     to_status: Optional[str] = None
-    actor_persona_id: Optional[str] = None
+    actor_persona_id: Optional[UUID] = None
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     model_config = orm_config
@@ -369,7 +370,7 @@ class AnnouncementUpdate(BaseModel):
 
 
 class AnnouncementRead(BaseModel):
-    id: int
+    id: UUID
     title: str
     content: str
     category: str
@@ -395,13 +396,16 @@ class TestimonialCreate(BaseModel):
     is_approved: bool = False
     show_on_home: bool = False
     status: Optional[TestimonialStatus] = None
-    author_persona_id: Optional[str] = None
-    author_id: Optional[int] = None
+    author_persona_id: Optional[UUID] = None
 
     @field_validator("author_persona_id", mode="before")
     @classmethod
-    def _author_persona_id_to_str(cls, value):
-        return str(value) if value is not None else None
+    def _coerce_author_persona_id(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, UUID):
+            return value
+        return UUID(str(value))
 
 
 class TestimonialUpdate(BaseModel):
@@ -418,13 +422,13 @@ class TestimonialUpdate(BaseModel):
 
 
 class TestimonialAuthorRead(BaseModel):
-    id: int
+    id: UUID
     username: str
     model_config = orm_config
 
 
 class TestimonialRead(BaseModel):
-    id: int
+    id: UUID
     content: str
     emotion: str
     media_type: str = "text"
@@ -435,16 +439,19 @@ class TestimonialRead(BaseModel):
     is_approved: bool
     show_on_home: bool
     status: TestimonialStatus = "pending"
-    author_persona_id: Optional[str] = None
-    author_id: Optional[int] = None
+    author_persona_id: Optional[UUID] = None
     author: Optional[TestimonialAuthorRead] = None
     created_at: datetime
     model_config = orm_config
 
     @field_validator("author_persona_id", mode="before")
     @classmethod
-    def _author_persona_id_to_str(cls, value):
-        return str(value) if value is not None else None
+    def _coerce_author_persona_id(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, UUID):
+            return value
+        return UUID(str(value))
 
 
 class NewsletterSubscriptionCreate(BaseModel):
@@ -458,7 +465,7 @@ class NewsletterSubscriptionCreate(BaseModel):
 
 
 class NewsletterSubscriptionRead(BaseModel):
-    id: int
+    id: UUID
     email: str
     status: str
     created_at: datetime

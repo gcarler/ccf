@@ -23,13 +23,13 @@ export default function NewWhiteboardPage() {
                 updated_at: new Date().toISOString(),
             });
         }
-        router.push(`/whiteboard/${id}`);
+        router.push(`/plataforma/whiteboard/${id}`);
     };
 
     return (
         <CrmShell
             breadcrumbs={[
-                { label: "CCF Tools", icon: LayoutDashboard, href: "/whiteboard" },
+                { label: "CCF Tools", icon: LayoutDashboard, href: "/plataforma/whiteboard" },
                 { label: "Nueva Pizarra", icon: PenTool },
             ]}
         >
@@ -72,7 +72,7 @@ export default function NewWhiteboardPage() {
                                 Crear pizarra
                             </button>
                             <button
-                                onClick={() => router.push("/whiteboard")}
+                                onClick={() => router.push("/plataforma/whiteboard")}
                                 className="rounded-lg border border-slate-200 px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10"
                             >
                                 Cancelar

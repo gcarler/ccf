@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { getCmsPublicPage } from "@/lib/cms/v2";
+import { SITE_KEY } from "@/lib/site-config";
 import { CmsPublicPage } from "@/types/cms-v2";
 import PublicSectionRenderer from "./PublicSectionRenderer";
 
@@ -16,7 +17,7 @@ export default function CmsPageOverride({ slug, children }: CmsPageOverrideProps
 
   useEffect(() => {
     let active = true;
-    getCmsPublicPage("faro", slug)
+    getCmsPublicPage(SITE_KEY, slug, { silent: true })
       .then((data) => {
         if (active) {
           setPage(data);
@@ -36,8 +37,8 @@ export default function CmsPageOverride({ slug, children }: CmsPageOverrideProps
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--faro-background)" }}>
-        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--faro-primary) transparent var(--faro-primary) transparent" }}></div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--site-background)" }}>
+        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--site-primary) transparent var(--site-primary) transparent" }}></div>
       </div>
     );
   }

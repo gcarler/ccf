@@ -134,8 +134,8 @@ export default function StudentProfilePage() {
                 )}
 
                 {viewType === 'table' && (
-                    <div className="relative z-10 mx-auto max-w-6xl overflow-hidden rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
-                        <table className="w-full text-left">
+                    <div className="relative z-10 mx-auto max-w-6xl overflow-x-auto rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+                        <table className="w-full min-w-[480px] text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Nombre</th><th className="px-4 py-2">Progreso</th><th className="px-4 py-2">Detalle</th></tr>
                             </thead>
@@ -212,7 +212,7 @@ export default function StudentProfilePage() {
                             <div className="absolute -right-10 -bottom-10 opacity-5"><Sparkles size={160} /></div>
                             <div className="relative z-10">
                                 <h3 className="font-semibold text-slate-400 uppercase tracking-wide mb-3">Vitrina de Logros MESH</h3>
-                                <div className="grid grid-cols-3 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {[
                                         { icon: Star, color: 'from-amber-400 to-orange-500', locked: false, title: 'Excelencia' },
                                         { icon: BookOpen, color: 'from-blue-400 to-sky-600', locked: false, title: 'Sabiduría' },

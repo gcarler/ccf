@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { SITE_NAME, SITE_EMAIL } from '@/lib/site-config';
 import { 
     Settings as SettingsIcon, Save, Globe, Shield,
     Smartphone, Users, Database, Bell,
@@ -35,13 +36,13 @@ export default function CrmSettingsPage() {
     });
 
     const [config, setConfig] = useState<any>({
-        churchName: 'Comunidad Cristiana El Faro',
-        contactEmail: 'sistemas@ministeriofaro.org',
+        churchName: SITE_NAME,
+        contactEmail: SITE_EMAIL || '',
         timezone: 'America/Bogota',
-        enableWhatsApp: true,
+        enableWhatsApp: false,
         enableSMS: false,
-        twilioApiKey: '••••••••••••••••',
-        smtpServer: 'smtp.ministeriofaro.org'
+        twilioApiKey: '',
+        smtpServer: ''
     });
 
     const fetchSettings = useCallback(async () => {

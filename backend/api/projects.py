@@ -19,6 +19,7 @@ from backend.crud.projects import get_user_persona_id
 from backend.mesh_websockets import manager
 from backend.core.database import get_db
 from backend.core.uploads import sanitize_filename, save_upload
+from backend.services.task_notifications import notify_task_assigned
 
 settings = get_settings()
 
@@ -38,6 +39,12 @@ def _author_name(persona) -> str:
     if not persona:
         return "Usuario"
     return getattr(persona, "nombre_completo", None) or getattr(persona, "full_name", None) or "Usuario"
+
+
+def _assignment_changed(previous_assignee_id, current_assignee_id) -> bool:
+    if previous_assignee_id is None and current_assignee_id is None:
+        return False
+    return str(previous_assignee_id) != str(current_assignee_id)
 
 
 @router.get("/tasks", response_model=List[schemas.ProjectTask])
@@ -301,22 +308,13 @@ def set_project_phases(
     project_id: str,
     phases: List[schemas.ProjectPhaseInput],
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Reemplaza todas las fases del proyecto (reordenar / renombrar / agregar / eliminar).
     El orden en el array define el order_index de cada fase.
     Solo administradores y gestores pueden modificar fases.
     """
     _project = _ensure_project(db, project_id)
-    # Only admins/staff can modify phases
-    user_role = normalize_role(getattr(current_user, "role", ""))
-    if not user_role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
-        user_role = normalize_role(current_user.rol_plataforma.nombre)
-    if user_role not in ("admin", "gestor", "coordinador", "docente", "pastor"):
-        raise HTTPException(
-            status_code=403,
-            detail="Solo administradores y gestores pueden modificar las fases",
-        )
 
     # Check no phase with tasks is being deleted
     existing = {p.slug for p in crud.get_project_phases(db, project_id)}
@@ -399,6 +397,7 @@ def create_project_task(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     _ensure_project(db, project_id)
+    project = db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).first()
     max_order = (
         db.query(func.max(models.ProjectTask.order_index))
         .filter(models.ProjectTask.project_id == _to_uuid(project_id))
@@ -421,6 +420,13 @@ def create_project_task(
     )
     db.commit()
     db.refresh(db_task)
+    if getattr(db_task, "assignee_id", None):
+        notify_task_assigned(
+            db,
+            task=db_task,
+            project=project,
+            assigned_by_user_id=current_user.id,
+        )
     return db_task
 
 
@@ -557,12 +563,20 @@ def update_task(
 ):
     """Actualiza una tarea usando ruta plana (sin project_id)."""
     task = _ensure_task(db, task_id)
+    previous_assignee_id = getattr(task, "assignee_id", None)
     update_data = payload.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(task, key, value)
     task.updated_at = _utcnow()
     db.commit()
     db.refresh(task)
+    if "assignee_id" in update_data and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None)) and task.assignee_id:
+        notify_task_assigned(
+            db,
+            task=task,
+            assigned_by_user_id=current_user.id,
+            previous_assignee_id=previous_assignee_id,
+        )
     _normalize_dates(task)
     return task
 
@@ -821,6 +835,7 @@ def update_project_task(
 ):
     """Actualiza una tarea con auditoría ministerial automática."""
     task = _ensure_task_in_project(db, project_id, task_id)
+    previous_assignee_id = getattr(task, "assignee_id", None)
     update_data = payload.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
@@ -828,6 +843,13 @@ def update_project_task(
 
     db.commit()
     db.refresh(task)
+    if "assignee_id" in update_data and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None)) and task.assignee_id:
+        notify_task_assigned(
+            db,
+            task=task,
+            assigned_by_user_id=current_user.id,
+            previous_assignee_id=previous_assignee_id,
+        )
     return task
 
 
@@ -965,6 +987,13 @@ def create_subtask(
     )
     db.commit()
     db.refresh(db_subtask)
+    if getattr(db_subtask, "assignee_id", None):
+        notify_task_assigned(
+            db,
+            task=db_subtask,
+            assigned_by_user_id=current_user.id,
+            previous_assignee_id=None,
+        )
     return db_subtask
 
 
@@ -986,11 +1015,19 @@ def update_subtask(
     subtask = _ensure_task_in_project(db, project_id, subtask_id)
     if str(subtask.parent_id) != str(task_id):
         raise HTTPException(status_code=404, detail="Subtask not found under task")
+    previous_assignee_id = getattr(subtask, "assignee_id", None)
     update_data = payload.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(subtask, key, value)
     db.commit()
     db.refresh(subtask)
+    if "assignee_id" in update_data and _assignment_changed(previous_assignee_id, getattr(subtask, "assignee_id", None)) and subtask.assignee_id:
+        notify_task_assigned(
+            db,
+            task=subtask,
+            assigned_by_user_id=current_user.id,
+            previous_assignee_id=previous_assignee_id,
+        )
     return subtask
 
 

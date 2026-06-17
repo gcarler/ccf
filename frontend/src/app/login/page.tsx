@@ -78,13 +78,13 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex w-screen min-h-screen font-sans">
+        <div className="flex flex-col md:flex-row w-screen min-h-screen font-sans">
             {/* ── LEFT PANEL: BRANDING ── */}
             <motion.section
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="flex-[1.2] bg-ccf-blue-dark relative flex flex-col justify-between px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen overflow-hidden"
+                className="hidden md:flex md:flex-[1.2] bg-ccf-blue-dark relative flex-col justify-between px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen overflow-hidden"
             >
                 {/* Radial glow */}
                 <div className="absolute top-[-20%] right-[-20%] w-[140%] h-[140%] pointer-events-none z-0"
@@ -154,7 +154,7 @@ export default function LoginPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 data-theme="day"
-                className="flex-1 bg-white flex flex-col justify-center px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen"
+                className="flex-1 bg-white flex flex-col justify-center px-5 sm:px-[clamp(40px,8%,90px)] py-12 sm:py-[clamp(40px,8%,90px)] min-h-screen"
             >
                 <div className="w-full max-w-[420px] mx-auto">
 
@@ -234,7 +234,7 @@ export default function LoginPage() {
                                 required
                                 value={email}
                                 onChange={e => { setEmail(e.target.value); if (step === 'password') { setStep('email'); setPassword(''); } }}
-                                placeholder="usuario@ministeriofaro.org"
+                                placeholder="tu@correo.com"
                                 className="login-input"
                                 autoFocus={step === 'email'}
                             />

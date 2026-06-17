@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import uuid
@@ -7,6 +8,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 
 from backend.models_shared import _utcnow
@@ -215,7 +218,7 @@ def create_theme(
 )
 def patch_theme(
     site_key: str,
-    theme_id: int,
+    theme_id: uuid.UUID,
     payload: schemas.CmsThemeUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
@@ -239,7 +242,7 @@ def patch_theme(
 )
 def activate_theme(
     site_key: str,
-    theme_id: int,
+    theme_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -254,7 +257,7 @@ def activate_theme(
 @router.delete("/sites/{site_key}/themes/{theme_id}", status_code=204)
 def delete_theme(
     site_key: str,
-    theme_id: int,
+    theme_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -373,7 +376,7 @@ def create_menu_item(
 def patch_menu_item(
     site_key: str,
     menu_key: str,
-    item_id: int,
+    item_id: uuid.UUID,
     payload: schemas.CmsMenuItemUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
@@ -391,7 +394,7 @@ def patch_menu_item(
 def delete_menu_item(
     site_key: str,
     menu_key: str,
-    item_id: int,
+    item_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -429,7 +432,39 @@ def list_pages(
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
-    return crud.list_cms_pages(db, site.id)
+    pages = crud.list_cms_pages(db, site.id)
+    if pages:
+        return pages
+
+    legacy_contents = [
+        row
+        for row in crud.list_page_contents(db, limit=500)
+        if not str(getattr(row, "page_key", "")).endswith("_wiki_notes")
+    ]
+    if not legacy_contents:
+        return []
+
+    publications = {
+        row.page_key: row
+        for row in crud.list_content_publications(db)
+        if getattr(row, "page_key", None)
+    }
+    return [
+        schemas.CmsPageRead(
+            id=row.id,
+            site_id=site.id,
+            slug=row.page_key,
+            title=row.title,
+            status=(publications.get(row.page_key).status if publications.get(row.page_key) else "draft"),
+            seo_json={},
+            published_version_id=None,
+            created_by=None,
+            updated_by=None,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+        )
+        for row in legacy_contents
+    ]
 
 
 @router.post(
@@ -548,7 +583,7 @@ def create_section(
 def patch_section(
     site_key: str,
     slug: str,
-    section_id: int,
+    section_id: uuid.UUID,
     payload: schemas.CmsSectionUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
@@ -572,7 +607,7 @@ def patch_section(
 def delete_section(
     site_key: str,
     slug: str,
-    section_id: int,
+    section_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -668,7 +703,7 @@ def preview_page(
 def rollback_page(
     site_key: str,
     slug: str,
-    version_id: int,
+    version_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -721,11 +756,9 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
     menu = _get_menu_or_404(db, site.id, menu_key)
     if not menu.is_active:
         raise HTTPException(status_code=404, detail="menu not found")
-    items = [
-        item
-        for item in crud.list_cms_menu_items(db, menu.id)
-        if item.visibility == "public"
-    ]
+    all_items = crud.list_cms_menu_items(db, menu.id)
+    public_ids = {item.id for item in all_items if item.visibility == "public"}
+    items = [item for item in all_items if item.visibility == "public" and (item.parent_id is None or item.parent_id in public_ids)]
     visible_ids = {item.id for item in items}
     serialized = [
         {
@@ -842,6 +875,7 @@ def list_global_blocks(
             models.CmsPage.site_id == site.id,
             models.CmsSection.is_global,
             models.CmsSection.is_visible,
+            models.CmsSection.deleted_at.is_(None),
         )
         .order_by(models.CmsSection.global_key)
         .all()
@@ -886,7 +920,7 @@ def create_global_block(
 
 @router.patch("/global-blocks/{section_id}", response_model=schemas.CmsSectionRead)
 def patch_global_block(
-    site_key: str, section_id: int, payload: schemas.CmsSectionUpdate,
+    site_key: str, section_id: uuid.UUID, payload: schemas.CmsSectionUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -906,7 +940,7 @@ def patch_global_block(
 
 @router.delete("/global-blocks/{section_id}", response_model=dict)
 def delete_global_block(
-    site_key: str, section_id: int,
+    site_key: str, section_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -939,7 +973,7 @@ def track_page_view(page_key: str, request: Request, db: Session = Depends(get_d
             ))
             db.commit()
     except Exception:
-        pass
+        logger.warning("Analytics tracking failed for page_key=%s", page_key, exc_info=True)
     return {"ok": True}
 
 
@@ -981,7 +1015,7 @@ def get_page_analytics(
 
 @router.post("/pages/{page_id}/schedule", response_model=dict)
 def schedule_page_publish(
-    site_key: str, page_id: int, payload: Dict[str, Any],
+    site_key: str, page_id: uuid.UUID, payload: Dict[str, Any],
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -1009,7 +1043,7 @@ def schedule_page_publish(
 
 @router.get("/images/{media_id}/resize", response_model=dict)
 def get_resized_image(
-    media_id: int,
+    media_id: uuid.UUID,
     width: int = Query(800, le=2400),
     height: Optional[int] = None,
     quality: int = Query(80, le=100),
@@ -1027,7 +1061,7 @@ def get_resized_image(
 
 @router.post("/images/optimize", response_model=dict)
 async def optimize_uploaded_image(
-    media_id: int,
+    media_id: uuid.UUID,
     max_width: int = Query(1920),
     quality: int = Query(80),
     db: Session = Depends(get_db),

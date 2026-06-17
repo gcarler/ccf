@@ -170,6 +170,35 @@ class AccordionProps(BaseModel):
     open_multiple: bool = False
 
 
+class PopupProps(BaseModel):
+    title: str = "Aviso Importante"
+    body: str = ""
+    cta_label: str = "Ver Más"
+    cta_href: str = "/"
+    delay_ms: int = 2000
+    start_at: Optional[str] = None
+    end_at: Optional[str] = None
+    show_on_paths: List[str] = []
+    hide_on_paths: List[str] = []
+    dismiss_mode: str = "local"
+    dismiss_days: int = 30
+    dismiss_key: str = ""
+
+    @field_validator("dismiss_mode")
+    @classmethod
+    def validate_dismiss_mode(cls, v: str) -> str:
+        allowed = {"local", "session", "none"}
+        value = (v or "").strip().lower()
+        if value not in allowed:
+            raise ValueError(f"dismiss_mode must be one of {allowed}")
+        return value
+
+    @field_validator("dismiss_days")
+    @classmethod
+    def validate_dismiss_days(cls, v: int) -> int:
+        return max(1, min(int(v), 3650))
+
+
 # Union schema for validation dispatch
 SECTION_PROPS_SCHEMAS: Dict[str, type[BaseModel]] = {
     "button": ButtonProps,
@@ -183,6 +212,7 @@ SECTION_PROPS_SCHEMAS: Dict[str, type[BaseModel]] = {
     "document_upload": DocumentUploadProps,
     "content_blocks": ContentBlocksProps,
     "accordion": AccordionProps,
+    "popup_banner": PopupProps,
 }
 
 

@@ -152,7 +152,7 @@ export default function GivingAndConnection() {
                         </h4>
 
                         <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md p-3 shadow-sm space-y-3">
-                            <div className="grid grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 {quickAmounts.map((amt) => (
                                     <button
                                         key={amt}

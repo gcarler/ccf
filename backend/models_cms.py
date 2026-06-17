@@ -4,7 +4,7 @@ from backend.models_shared import _utcnow
 
 class PageContent(Base):
     __tablename__ = "page_contents"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     page_key = Column(String(120), unique=True, nullable=False, index=True)
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
@@ -14,7 +14,7 @@ class PageContent(Base):
 
 class PageContentVersion(Base):
     __tablename__ = "page_content_versions"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     page_key = Column(String(120), nullable=False, index=True)
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
@@ -23,7 +23,7 @@ class PageContentVersion(Base):
 
 class ContentPublication(Base):
     __tablename__ = "content_publications"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     page_key = Column(String(120), unique=True, nullable=False, index=True)
     status = Column(
         String(30), default="draft", index=True
@@ -39,16 +39,16 @@ class ContentPublication(Base):
 
 class ContentMetric(Base):
     __tablename__ = "content_metrics"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     metric_key = Column(String(120), nullable=False, index=True)
-    ref_id = Column(Integer, nullable=False, index=True)
+    ref_id = Column(String(120), nullable=True, index=True)
     value = Column(Integer, default=0)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class MediaAsset(Base):
     __tablename__ = "media_assets"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     filename = Column(String(255), nullable=False)
     url = Column(String(500), nullable=False)
     mime_type = Column(String(120), nullable=True)
@@ -58,7 +58,7 @@ class MediaAsset(Base):
 
 class CmsMediaItem(Base):
     __tablename__ = "cms_media_items"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     url = Column(String(500), nullable=False)
     alt_text = Column(String(255), nullable=True)
     dimensions = Column(String(50), nullable=True)
@@ -75,7 +75,7 @@ class CmsMediaItem(Base):
 
 class CmsSite(Base):
     __tablename__ = "cms_sites"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), unique=True, nullable=False, index=True)
     name = Column(String(120), nullable=False)
     base_path = Column(String(120), unique=True, nullable=False, index=True)
@@ -86,9 +86,9 @@ class CmsSite(Base):
 
 class CmsTheme(Base):
     __tablename__ = "cms_themes"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("cms_sites.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -106,9 +106,9 @@ class CmsTheme(Base):
 
 class CmsMenu(Base):
     __tablename__ = "cms_menus"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("cms_sites.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -126,15 +126,15 @@ class CmsMenu(Base):
 
 class CmsMenuItem(Base):
     __tablename__ = "cms_menu_items"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     menu_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("cms_menus.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
     parent_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("cms_menu_items.id", ondelete="CASCADE"),
         nullable=True,
         index=True,
@@ -152,9 +152,9 @@ class CmsMenuItem(Base):
 
 class CmsPage(Base):
     __tablename__ = "cms_pages"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("cms_sites.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -164,7 +164,7 @@ class CmsPage(Base):
     status = Column(String(30), default="draft", index=True)
     seo_json = Column(JSON, default={})
     published_version_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey(
             "cms_page_versions.id",
             name="fk_cms_pages_published_version",
@@ -185,9 +185,9 @@ class CmsPage(Base):
 
 class CmsPageVersion(Base):
     __tablename__ = "cms_page_versions"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     page_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey(
             "cms_pages.id", ondelete="CASCADE", name="fk_cms_page_versions_page_id"
         ),
@@ -209,9 +209,9 @@ class CmsPageVersion(Base):
 
 class CmsSection(Base):
     __tablename__ = "cms_sections"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     page_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("cms_pages.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -233,21 +233,21 @@ class CmsSection(Base):
 
 class CmsPublishLog(Base):
     __tablename__ = "cms_publish_logs"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("cms_sites.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
     page_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("cms_pages.id", ondelete="CASCADE"),
         nullable=True,
         index=True,
     )
     entity_type = Column(String(50), nullable=False, index=True)
-    entity_id = Column(Integer, nullable=True)
+    entity_id = Column(String(120), nullable=True)
     action = Column(String(50), nullable=False, index=True)
     from_status = Column(String(30), nullable=True)
     to_status = Column(String(30), nullable=True)
@@ -258,8 +258,8 @@ class CmsPublishLog(Base):
 
 class CmsPageView(Base):
     __tablename__ = "cms_page_views"
-    id = Column(Integer, primary_key=True, index=True)
-    page_id = Column(Integer, ForeignKey("cms_pages.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    page_id = Column(UUID(as_uuid=True), ForeignKey("cms_pages.id", ondelete="CASCADE"), nullable=False, index=True)
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
     referrer = Column(String(500), nullable=True)
@@ -269,7 +269,7 @@ class CmsPageView(Base):
 class SavedView(Base):
     """Saved table views with schema, filters, grouping, and conditional format."""
     __tablename__ = "saved_views"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(200), nullable=False)
     schema_json = Column(JSON, default={})
@@ -282,7 +282,7 @@ class SavedView(Base):
 
 class Announcement(Base):
     __tablename__ = "announcements"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
     category = Column(String(100), default="General")
@@ -297,7 +297,7 @@ class Announcement(Base):
 
 class Testimonial(Base):
     __tablename__ = "testimonials"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     content = Column(Text, nullable=False)
     emotion = Column(String(50), default="Gratitud")
     media_type = Column(String(30), default="text")

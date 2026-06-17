@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend.core.config import get_settings
 from backend.core.database import get_db
+from backend.models_academy_core import Curso, Leccion
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
 logger = logging.getLogger(__name__)
@@ -96,33 +97,71 @@ def public_register_event(
     return persona
 
 
-@router.get("/courses", response_model=list[schemas.Course])
+class PublicCursoResponse(BaseModel):
+    """Respuesta pública de curso — campos alineados con el frontend CourseItem."""
+    id: str          # slug, usado como URL key
+    title: str
+    desc: Optional[str] = None
+    excerpt: Optional[str] = None
+    tag: Optional[str] = None
+    modality: Optional[str] = None
+    cta: Optional[str] = "Inscribirme"
+    lessons: Optional[int] = None   # duration_hours interpretado como semanas
+    imageUrl: Optional[str] = None
+    syllabus: Optional[list] = None
+    instructor: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+def _curso_to_public(curso: Curso, lesson_count: int = 0) -> PublicCursoResponse:
+    return PublicCursoResponse(
+        id=curso.slug or str(curso.id),
+        title=curso.title,
+        desc=curso.description,
+        excerpt=curso.excerpt,
+        tag=curso.tag,
+        modality=curso.modality,
+        cta=curso.cta_text or "Inscribirme",
+        lessons=curso.duration_hours or lesson_count,
+        imageUrl=curso.image_url,
+        syllabus=curso.syllabus or [],
+        instructor=curso.instructor_name,
+    )
+
+
+@router.get("/courses", response_model=list[PublicCursoResponse])
 def public_list_courses(db: Session = Depends(get_db)):
-    """Retorna la lista de cursos publicos disponibles."""
-    courses = db.query(models.Course).filter(models.Course.is_published).all()  # Cursos públicos globales (landing page) — OK sin sede_id
-    for c in courses:
-        c.lesson_count = (
-            db.query(models.Lesson).filter(models.Lesson.course_id == c.id).count()
-        )
-    return courses
+    """Lista de cursos publicados para la landing page /cursos."""
+    cursos = (
+        db.query(Curso)
+        .filter(Curso.is_published == True, Curso.deleted_at == None)  # noqa: E712
+        .order_by(Curso.id)
+        .all()
+    )
+    result = []
+    for c in cursos:
+        lecciones = db.query(Leccion).filter(
+            Leccion.course_id == c.id, Leccion.deleted_at == None  # noqa: E712
+        ).count()
+        result.append(_curso_to_public(c, lecciones))
+    return result
 
 
-@router.get("/courses/{course_id}", response_model=schemas.Course)
-def public_get_course(course_id: int, db: Session = Depends(get_db)):
-    """Retorna los detalles de un curso especifico."""
-    course = (
-        db.query(models.Course)
-        .filter(models.Course.id == course_id, models.Course.is_published)
+@router.get("/courses/{course_slug}", response_model=PublicCursoResponse)
+def public_get_course(course_slug: str, db: Session = Depends(get_db)):
+    """Detalle de un curso por slug."""
+    curso = (
+        db.query(Curso)
+        .filter(Curso.slug == course_slug, Curso.is_published == True, Curso.deleted_at == None)  # noqa: E712
         .first()
     )
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
-
-    course.lesson_count = (
-        db.query(models.Lesson).filter(models.Lesson.course_id == course.id).count()
-    )
-    return course
-
+    if not curso:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+    lecciones = db.query(Leccion).filter(
+        Leccion.course_id == curso.id, Leccion.deleted_at == None  # noqa: E712
+    ).count()
+    return _curso_to_public(curso, lecciones)
 
 
 class PublicEnrollCreate(BaseModel):
@@ -134,115 +173,57 @@ class PublicEnrollCreate(BaseModel):
     campaign: Optional[str] = None
 
 
-@router.post("/courses/{course_id}/enroll", response_model=dict)
+@router.post("/courses/{course_slug}/enroll", response_model=dict)
 def public_course_enroll(
-    course_id: int,
+    course_slug: str,
     payload: PublicEnrollCreate,
     db: Session = Depends(get_db),
 ):
-    """Inscripcion publica a un curso."""
-    course = (
-        db.query(models.Course)
-        .filter(models.Course.id == course_id, models.Course.is_published)
+    """Inscripcion publica a un curso por slug. Crea Persona en el kernel."""
+    curso = (
+        db.query(Curso)
+        .filter(Curso.slug == course_slug, Curso.is_published == True, Curso.deleted_at == None)  # noqa: E712
         .first()
     )
-    if not course:
+    if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
     email = (payload.email or "").strip().lower()
     phone = (payload.phone or "").strip()
 
-    user = None
-    if email:
-        user = db.query(models.User).filter(models.User.email == email).first()
-
-    if not user:
-        username = email.split("@")[0] if email else f"web_{secrets.token_hex(6)}"
-        existing = db.query(models.User).filter(models.User.username == username).first()
-        if existing:
-            username = f"{username}_{secrets.token_hex(4)}"
-
-        user = models.User(
-            username=username,
-            email=email or f"{secrets.token_hex(8)}@temp.faro",
-            password_hash=secrets.token_hex(32),
-            role="estudiante",
-            is_active=True,
-            is_email_verified=False,
-        )
-        db.add(user)
-        db.flush()
-
-    existing_enroll = (
-        db.query(models.Enrollment)
-        .filter(
-            models.Enrollment.user_id == user.id,
-            models.Enrollment.course_id == course_id,
-        )
-        .first()
-    )
-    if existing_enroll:
-        return {
-            "status": "already_enrolled",
-            "user_id": user.id,
-            "course_id": course_id,
-            "enrollment_id": existing_enroll.id,
-        }
-
-    notes_parts = [f"Curso: {course.title}"]
-
     result = tracker.record_contact(db, ContactRecord(
         email=email or None,
         phone=phone or None,
         first_name=(payload.full_name or "").strip().split(" ", 1)[0] or "Visitante",
-        last_name=(payload.full_name or "").strip().split(" ", 1)[1] if payload.full_name and " " in payload.full_name.strip() else "",
+        last_name=(payload.full_name or "").strip().split(" ", 1)[1] if payload.full_name and " " in (payload.full_name or "").strip() else "",
         source="academy-enrollment",
         landing_page=payload.landing_page,
         campaign=payload.campaign,
         spiritual_status="Nuevo",
         church_role="Visitante",
-        extra_notes=notes_parts,
+        extra_notes=[f"Interesado en curso: {curso.title}"],
     ))
     persona = result.persona
     case = result.case
 
-    enrollment = models.Enrollment(
-        user_id=user.id,
-        course_id=course_id,
-        status="active",
-    )
-    db.add(enrollment)
-    db.flush()
-
-    if persona:
+    if persona and case:
         followup_task = models.ConsolidationTask(
             case_id=case.id,
-            title=f"Seguimiento: nuevo estudiante en {course.title}",
-            description=f"Contactar a {persona.first_name} {persona.last_name} para dar la bienvenida al curso '{course.title}' y ofrecer apoyo pastoral.",
-            due_date=datetime.now(timezone.utc) + timedelta(days=3),
+            title=f"Seguimiento: interés en curso '{curso.title}'",
+            description=f"Contactar a {persona.first_name} {persona.last_name} para darle la bienvenida y proveer acceso al curso '{curso.title}'.",
+            due_date=datetime.now(timezone.utc) + timedelta(days=2),
             status="pending",
         )
         db.add(followup_task)
-
-        comm_log = models.CommunicationLog(
-            persona_id=persona.id,
-            channel="system",
-            content=f"Auto follow-up task created: student enrolled in '{course.title}'",
-            outcome="task_created",
-            campaign_name="academy-auto-followup",
-        )
-        db.add(comm_log)
+        db.flush()
 
     db.commit()
-    db.refresh(enrollment)
 
     return {
         "status": "enrolled",
-        "user_id": user.id,
-        "course_id": course_id,
-        "enrollment_id": enrollment.id,
-        "persona_id": persona.id if persona else None,
-        "course_title": course.title,
+        "persona_id": str(persona.id) if persona else None,
+        "course_slug": course_slug,
+        "course_title": curso.title,
     }
 
 

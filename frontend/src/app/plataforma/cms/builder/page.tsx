@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { SITE_KEY, SITE_URL } from "@/lib/site-config";
 import { Archive, ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, ExternalLink, FileImage, ImageIcon, LayoutPanelTop, Monitor, Plus, RotateCcw, Save, Search, Send, Smartphone, Upload, Undo2, X, Settings, Sparkles, BarChart3, CheckCircle2, AlertTriangle, XCircle, Wand2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -21,6 +22,7 @@ import { CmsPage, CmsPageVersion, CmsPublishLog, CmsSection } from "@/types/cms-
 import { useSearchParams } from "next/navigation";
 import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
 import { apiFetch } from "@/lib/http";
+import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer";
 
 const SECTION_TYPES = [
   "hero", "video_hero", "rich_text", "rich_text_columns",
@@ -238,6 +240,59 @@ function safeString(value: unknown) {
 function asObject(value: unknown): Record<string, unknown> {
   if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
   return {};
+}
+
+const CANVAS_PREVIEW_TOKENS: React.CSSProperties = {
+  "--site-background": "#f8f9ff",
+  "--site-on-background": "#101828",
+  "--site-surface": "#ffffff",
+  "--site-surface-container": "#ffffff",
+  "--site-surface-container-low": "#f0f4ff",
+  "--site-surface-container-high": "#e6ecff",
+  "--site-surface-container-highest": "#d9e2ff",
+  "--site-on-surface": "#101828",
+  "--site-on-surface-variant": "#475467",
+  "--site-primary": "#3155d4",
+  "--site-on-primary": "#ffffff",
+  "--site-primary-container": "#e1e8ff",
+  "--site-on-primary-container": "#001a66",
+  "--site-secondary": "#e0a931",
+  "--site-cta-gradient": "linear-gradient(135deg,#3155d4,#1a3ab8)",
+  "--site-outline-variant": "rgba(0,0,0,0.1)",
+} as React.CSSProperties;
+
+class SectionRenderErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { error: false };
+  }
+  static getDerivedStateFromError() { return { error: true }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="rounded-lg border border-dashed border-red-300 bg-red-50/40 p-4 text-center text-xs font-semibold text-red-500">
+          No se pudo renderizar esta sección.
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function SectionRenderPreview({ section, mobile }: { section: CmsSection; mobile: boolean }) {
+  return (
+    <div
+      style={CANVAS_PREVIEW_TOKENS}
+      className={`rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 bg-white${mobile ? " max-w-[420px] mx-auto" : ""}`}
+    >
+      <SectionRenderErrorBoundary>
+        <PublicSectionRenderer section={section} />
+      </SectionRenderErrorBoundary>
+    </div>
+  );
 }
 
 function SectionPreview({ section }: { section: CmsSection }) {
@@ -556,7 +611,7 @@ function MediaPicker({
 export default function CmsBuilderPage() {
   const { token, user } = useAuth();
   const searchParams = useSearchParams();
-  const [siteKey, setSiteKey] = useState("faro");
+  const [siteKey, setSiteKey] = useState(SITE_KEY);
   const [sites, setSites] = useState<Array<{ site_key: string; name: string; base_path: string }>>([]);
   const [pages, setPages] = useState<CmsPage[]>([]);
   const [activeSlug, setActiveSlug] = useState("");
@@ -566,11 +621,12 @@ export default function CmsBuilderPage() {
   const [newPageTitle, setNewPageTitle] = useState("");
   const [newSectionType, setNewSectionType] = useState("rich_text");
   const [pageTemplateKey, setPageTemplateKey] = useState("simple");
-  const [activeSectionId, setActiveSectionId] = useState<number | null>(null);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
-  const [draggedSectionId, setDraggedSectionId] = useState<number | null>(null);
+  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  const [canvasMode, setCanvasMode] = useState<"esquema" | "render">("esquema");
   const [pageTitleDraft, setPageTitleDraft] = useState("");
   const [pageSlugDraft, setPageSlugDraft] = useState("");
   const [seoTitleDraft, setSeoTitleDraft] = useState("");
@@ -581,7 +637,6 @@ export default function CmsBuilderPage() {
   const [activeRightTab, setActiveRightTab] = useState<"config" | "seo" | "ai" | "analytics">("config");
   const [seoKeyword, setSeoKeyword] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
-  const [aiPromptType, setAiPromptType] = useState("copywriting");
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiOutput, setAiOutput] = useState("");
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -790,16 +845,12 @@ export default function CmsBuilderPage() {
     return { score, label };
   }, [sections]);
 
-  const handleAiGenerate = () => {
+  const handleAiGenerate = async () => {
     if (!aiPrompt.trim()) return;
     setAiGenerating(true);
     setAiOutput("");
 
-    setTimeout(() => {
-      const pageTitle = pageTitleDraft || activePage?.title || "Nuestra Iglesia";
-      const kw = aiPrompt.trim();
-      let result = "";
-
+    try {
       const toneLabels: Record<string, string> = {
         inspiration: "Inspiracional & Espiritual",
         formal: "Institucional & Respetuoso",
@@ -808,9 +859,47 @@ export default function CmsBuilderPage() {
       };
 
       const toneText = toneLabels[aiTone] || "Cercano & Familiar";
+      const pageTitle = pageTitleDraft || activePage?.title || "Nuestra Iglesia";
+      const kw = aiPrompt.trim();
+
+      let fullPrompt = "";
+      if (aiTemplate === "aida") {
+        fullPrompt = `Genera contenido editorial usando el modelo AIDA (Atención-Interés-Deseo-Acción) con tono ${toneText} para la página "${pageTitle}" sobre: ${kw}. Incluye un título sugerido y un texto para botón CTA al final.`;
+      } else if (aiTemplate === "pas") {
+        fullPrompt = `Genera contenido editorial usando el modelo PAS (Problema-Agitación-Solución) con tono ${toneText} para la página "${pageTitle}" sobre: ${kw}. Incluye un título sugerido y un texto para botón CTA al final.`;
+      } else if (aiTemplate === "headlines") {
+        fullPrompt = `Genera 5 titulares impactantes en tono ${toneText} para una sección Hero de la página "${pageTitle}" relacionada con: ${kw}. Numera cada propuesta.`;
+      } else if (aiTemplate === "improve") {
+        fullPrompt = `Mejora el siguiente texto con un tono más profesional, persuasivo y en tono ${toneText}: "${kw}". Devuelve el texto mejorado directamente.`;
+      }
+
+      const result = await apiFetch<{ response: string }>("/system/ai/generate", {
+        method: "POST",
+        token,
+        body: { prompt: fullPrompt, context: `Página: ${pageTitle}, Plantilla: ${aiTemplate}, Tono: ${toneText}` },
+      });
+
+      if (result?.response) {
+        setAiOutput(result.response);
+      } else {
+        throw new Error("Respuesta vacía de la IA");
+      }
+    } catch (err) {
+      // Fallback: usar contenido mock si el endpoint no está disponible
+      console.warn("FaroGPT endpoint failed, using fallback:", err);
+      const toneLabels: Record<string, string> = {
+        inspiration: "Inspiracional & Espiritual",
+        formal: "Institucional & Respetuoso",
+        warm: "Cercano & Familiar",
+        dynamic: "Joven & Moderno"
+      };
+      const toneText = toneLabels[aiTone] || "Cercano & Familiar";
+      const pageTitle = pageTitleDraft || activePage?.title || "Nuestra Iglesia";
+      const kw = aiPrompt.trim();
+      let fallbackText = "";
 
       if (aiTemplate === "aida") {
-        result = `### 🌟 MODELO AIDA (Tono: ${toneText}) 🌟\n\n` +
+        fallbackText = `### 🌟 MODELO AIDA (Tono: ${toneText}) 🌟\n\n` +
                  `**[ATENCIÓN]**\n` +
                  `¿Buscas un lugar donde pertenecer y crecer de verdad? Descubre una comunidad apasionada en ${pageTitle} que te recibe con los brazos abiertos.\n\n` +
                  `**[INTERÉS]**\n` +
@@ -822,7 +911,7 @@ export default function CmsBuilderPage() {
                  `**Título:** ¡Te damos la Bienvenida a Casa!\n` +
                  `**Botón:** Planificar Visita`;
       } else if (aiTemplate === "pas") {
-        result = `### 🎯 MODELO PAS: Problema-Agitación-Solución (Tono: ${toneText}) 🎯\n\n` +
+        fallbackText = `### 🎯 MODELO PAS: Problema-Agitación-Solución (Tono: ${toneText}) 🎯\n\n` +
                  `**[PROBLEMA]**\n` +
                  `En un mundo hiperconectado pero cada vez más aislado, es fácil sentirse solo, abrumado o sin un rumbo espiritual claro.\n\n` +
                  `**[AGITACIÓN]**\n` +
@@ -833,7 +922,7 @@ export default function CmsBuilderPage() {
                  `**Mensaje Principal:** Una comunidad viva y comprometida para apoyarte en cada paso de tu vida espiritual.\n` +
                  `**Botón:** Conectar Ahora`;
       } else if (aiTemplate === "headlines") {
-        result = `### ✍️ TITULARES OPTIMIZADOS PARA HERO (Tono: ${toneText}) ✍️\n\n` +
+        fallbackText = `### ✍️ TITULARES OPTIMIZADOS PARA HERO (Tono: ${toneText}) ✍️\n\n` +
                  `Propuestas premium basadas en tu búsqueda "${kw}":\n\n` +
                  `1. **Propuesta de Impacto:** "Una casa de esperanza, una familia para crecer."\n` +
                  `2. **Propuesta Espiritual:** "Conectando corazones con el propósito eterno de Dios."\n` +
@@ -842,16 +931,17 @@ export default function CmsBuilderPage() {
                  `5. **Propuesta Corta & Fuerte:** "Crecer en fe, servir con amor."\n\n` +
                  `*Selecciona cualquiera de estos titulares para copiarlo directamente en tu sección Hero.*`;
       } else if (aiTemplate === "improve") {
-        result = `### ✨ TEXTO MEJORADO POR FAROGPT (Tono: ${toneText}) ✨\n\n` +
+        fallbackText = `### ✨ TEXTO MEJORADO POR FAROGPT (Tono: ${toneText}) ✨\n\n` +
                  `**Texto Original Analizado:**\n` +
                  `"${kw}"\n\n` +
                  `**Versión Optimizada y Pulida:**\n` +
                  `Queremos invitarte a ser parte activa de lo que Dios está haciendo en nuestra casa. A través de esta iniciativa en ${pageTitle}, no solo encontrarás un canal para canalizar tu vocación de servicio, sino también una comunidad dispuesta a caminar contigo. Creemos firmemente que cada pequeño esfuerzo sumado produce una gran transformación.\n\n` +
                  `*Este texto ha sido enriquecido para mejorar la retención de usuarios y el impacto emocional.*`;
       }
-      setAiOutput(result);
+      setAiOutput(fallbackText);
+    } finally {
       setAiGenerating(false);
-    }, 1000);
+    }
   };
 
   const handleAiImageGenerate = () => {
@@ -859,25 +949,88 @@ export default function CmsBuilderPage() {
     setAiImageGenerating(true);
     setAiImageResult("");
 
-    setTimeout(() => {
-      const term = aiImagePrompt.toLowerCase().trim();
-      let url = "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1200&q=80"; // cross sunset default
-      
-      if (term.includes("niño") || term.includes("kids") || term.includes("children")) {
-        url = "https://images.unsplash.com/photo-1472241139007-df4e38e764f2?auto=format&fit=crop&w=1200&q=80";
-      } else if (term.includes("musica") || term.includes("worship") || term.includes("adoracion") || term.includes("cantar")) {
-        url = "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=1200&q=80";
-      } else if (term.includes("comunidad") || term.includes("community") || term.includes("grupo") || term.includes("reunion")) {
-        url = "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80";
-      } else if (term.includes("biblia") || term.includes("bible") || term.includes("estudio")) {
-        url = "https://images.unsplash.com/photo-1504052434569-70ad58c63172?auto=format&fit=crop&w=1200&q=80";
-      } else if (term.includes("jovenes") || term.includes("youth") || term.includes("chicos")) {
-        url = "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80";
-      }
+    const term = aiImagePrompt.toLowerCase().trim();
 
-      setAiImageResult(url);
-      setAiImageGenerating(false);
-    }, 1500);
+    // Unsplash image categories for church/CMS content
+    const imageMap: Record<string, string[]> = {
+      default: ["https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1200&q=80"],
+      children: [
+        "https://images.unsplash.com/photo-1472241139007-df4e38e764f2?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80",
+      ],
+      music: [
+        "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80",
+      ],
+      community: [
+        "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80",
+      ],
+      bible: [
+        "https://images.unsplash.com/photo-1504052434569-70ad58c63172?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1532619675605-1ede6c2ed2b0?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1469583985357-2db70eafa4b0?auto=format&fit=crop&w=1200&q=80",
+      ],
+      youth: [
+        "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1560523159-4a9692d222f9?auto=format&fit=crop&w=1200&q=80",
+      ],
+      nature: [
+        "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
+      ],
+      prayer: [
+        "https://images.unsplash.com/photo-1478040049072-2c2cf0a143db?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1499728603263-13726abce5fd?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1504052434569-70ad58c63172?auto=format&fit=crop&w=1200&q=80",
+      ],
+      church: [
+        "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1507537362848-9c7e70b7b5c1?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1548624313-edb1d0e9e3b9?auto=format&fit=crop&w=1200&q=80",
+      ],
+      hands: [
+        "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1200&q=80",
+      ],
+      family: [
+        "https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1476703993599-0035a21b17a9?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1529636798458-92182e662485?auto=format&fit=crop&w=1200&q=80",
+      ],
+      hero: [
+        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80",
+      ],
+    };
+
+    const categories: Array<{ keys: string[]; name: string }> = [
+      { keys: ["niño", "kids", "children", "infant", "niños", "infantes"], name: "children" },
+      { keys: ["musica", "worship", "adoracion", "cantar", "music", "alabanza"], name: "music" },
+      { keys: ["comunidad", "community", "grupo", "reunion", "people", "personas"], name: "community" },
+      { keys: ["biblia", "bible", "estudio", "study", "lectura", "reading"], name: "bible" },
+      { keys: ["jovenes", "youth", "jóvenes", "chicos", "adolescent"], name: "youth" },
+      { keys: ["naturaleza", "nature", "creacion", "creation", "paisaje", "landscape"], name: "nature" },
+      { keys: ["oracion", "prayer", "oración", "rezar", "pray"], name: "prayer" },
+      { keys: ["iglesia", "church", "templo", "temple"], name: "church" },
+      { keys: ["manos", "hands", "ayuda", "help", "voluntario", "volunteer", "servicio"], name: "hands" },
+      { keys: ["familia", "family", "hogar", "home"], name: "family" },
+      { keys: ["hero", "heroe", "héroe", "banner", "portada", "cover"], name: "hero" },
+    ];
+
+    const matched = categories.find(c => c.keys.some(k => term.includes(k)));
+    const pool = matched ? imageMap[matched.name] : imageMap.default;
+    const url = pool[Math.floor(Math.random() * pool.length)];
+
+    setAiImageResult(url);
+    setAiImageGenerating(false);
   };
 
   const handleInsertAiAsSection = async () => {
@@ -1079,7 +1232,7 @@ export default function CmsBuilderPage() {
     await loadSectionsAndVersions(activeSlug);
   };
 
-  const moveSection = async (sectionId: number, direction: "up" | "down") => {
+  const moveSection = async (sectionId: string, direction: "up" | "down") => {
     if (!canEdit) return;
     const idx = sections.findIndex((s) => s.id === sectionId);
     if (idx < 0) return;
@@ -1096,7 +1249,7 @@ export default function CmsBuilderPage() {
     await loadSectionsAndVersions(activeSlug);
   };
 
-  const moveSectionToIndex = async (sourceId: number, targetId: number) => {
+  const moveSectionToIndex = async (sourceId: string, targetId: string) => {
     if (!canEdit) return;
     const sourceIndex = sections.findIndex((s) => s.id === sourceId);
     const targetIndex = sections.findIndex((s) => s.id === targetId);
@@ -1121,7 +1274,7 @@ export default function CmsBuilderPage() {
     setNote("");
   };
 
-  const rollback = async (versionId: number) => {
+  const rollback = async (versionId: string) => {
     if (!token || !activeSlug || !canPublish) return;
     await rollbackCmsPageVersion(siteKey, activeSlug, versionId, token);
     await loadPages(siteKey);
@@ -1173,7 +1326,7 @@ export default function CmsBuilderPage() {
         <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
           <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sitio</label>
           <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
-            {sites.length === 0 && <option value="faro">faro</option>}
+            {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
             {sites.map((site) => (
               <option key={site.site_key} value={site.site_key}>{site.name} ({site.site_key})</option>
             ))}
@@ -1222,6 +1375,24 @@ export default function CmsBuilderPage() {
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Canvas · {activeSlug ? `/${activeSlug}` : "Selecciona página"}</h2>
             <div className="flex items-center gap-2">
+              {/* Canvas mode toggle */}
+              <div className="inline-flex rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+                <button
+                  onClick={() => setCanvasMode("esquema")}
+                  className={`px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${canvasMode === "esquema" ? "bg-primary text-white" : "bg-transparent"}`}
+                  title="Vista esquemática"
+                >
+                  <LayoutPanelTop size={11} /> Esquema
+                </button>
+                <button
+                  onClick={() => setCanvasMode("render")}
+                  className={`px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${canvasMode === "render" ? "bg-primary text-white" : "bg-transparent"}`}
+                  title="Vista render real"
+                >
+                  <Eye size={11} /> Render
+                </button>
+              </div>
+              {/* Device toggle */}
               <div className="inline-flex rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
                 <button
                   onClick={() => setPreviewDevice("desktop")}
@@ -1274,7 +1445,11 @@ export default function CmsBuilderPage() {
                   </div>
                 </div>
                 <div className="relative mt-3">
-                  <SectionPreview section={section} />
+                  {canvasMode === "render" ? (
+                    <SectionRenderPreview section={section} mobile={previewDevice === "mobile"} />
+                  ) : (
+                    <SectionPreview section={section} />
+                  )}
                   {showHeatmap && (
                     <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden rounded-lg">
                       {heatmapType === "clicks" && (
@@ -1433,7 +1608,7 @@ export default function CmsBuilderPage() {
                 <button
                   onClick={() => {
                     if (!activeSlug) return;
-                    window.open(`/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(activeSlug)}`, "_blank");
+                    window.open(`/plataforma/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(activeSlug)}`, "_blank");
                   }}
                   disabled={!activeSlug}
                   className="w-full rounded-lg border border-blue-200 text-[hsl(var(--primary))] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
@@ -1567,7 +1742,7 @@ export default function CmsBuilderPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-xs text-[#202124]">
                         <span className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[8px] font-bold">⛪</span>
-                        <div className="truncate text-left">elfarocc.tech &rsaquo; {activeSlug || "slug"}</div>
+                        <div className="truncate text-left">{SITE_URL || siteKey} &rsaquo; {activeSlug || "slug"}</div>
                       </div>
                       <div className="text-base text-[#15c] hover:underline cursor-pointer font-medium leading-tight line-clamp-2 text-left">
                         {seoTitleDraft || activePage?.title || "Sin título SEO"}
@@ -1579,7 +1754,7 @@ export default function CmsBuilderPage() {
                   ) : (
                     <div className="space-y-1 text-left">
                       <div className="text-[12px] text-[#202124] leading-none">
-                        https://elfarocc.tech &rsaquo; {activeSlug || "slug"}
+                        https://{SITE_URL || siteKey} &rsaquo; {activeSlug || "slug"}
                       </div>
                       <div className="text-lg text-[#1a0dab] hover:underline cursor-pointer font-normal leading-normal line-clamp-1">
                         {seoTitleDraft || activePage?.title || "Sin título SEO"}
@@ -2200,6 +2375,80 @@ export default function CmsBuilderPage() {
                       placeholder="Retraso en milisegundos"
                       className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
+                    <input
+                      type="datetime-local"
+                      value={safeString(activeSection.props_json?.start_at).slice(0, 16)}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), start_at: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionField("start_at", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    />
+                    <input
+                      type="datetime-local"
+                      value={safeString(activeSection.props_json?.end_at).slice(0, 16)}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), end_at: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionField("end_at", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    />
+                    <textarea
+                      value={Array.isArray(activeSection.props_json?.show_on_paths) ? activeSection.props_json.show_on_paths.join("\n") : safeString(activeSection.props_json?.show_on_paths)}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), show_on_paths: e.target.value.split(/\n|,/).map((item) => item.trim()).filter(Boolean) };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionProps({ ...asObject(activeSection.props_json), show_on_paths: e.target.value.split(/\n|,/).map((item) => item.trim()).filter(Boolean) })}
+                      placeholder="/\n/nosotros\n/cursos"
+                      className="w-full min-h-16 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    />
+                    <textarea
+                      value={Array.isArray(activeSection.props_json?.hide_on_paths) ? activeSection.props_json.hide_on_paths.join("\n") : safeString(activeSection.props_json?.hide_on_paths)}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), hide_on_paths: e.target.value.split(/\n|,/).map((item) => item.trim()).filter(Boolean) };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionProps({ ...asObject(activeSection.props_json), hide_on_paths: e.target.value.split(/\n|,/).map((item) => item.trim()).filter(Boolean) })}
+                      placeholder="/login\n/checkout"
+                      className="w-full min-h-16 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    />
+                    <select
+                      value={safeString(activeSection.props_json?.dismiss_mode) || "local"}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), dismiss_mode: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                        saveSectionField("dismiss_mode", e.target.value);
+                      }}
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    >
+                      <option value="local">Persistente (localStorage)</option>
+                      <option value="session">Solo sesión</option>
+                      <option value="none">Sin persistencia</option>
+                    </select>
+                    <input
+                      type="number"
+                      value={safeString(activeSection.props_json?.dismiss_days) || "30"}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), dismiss_days: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionField("dismiss_days", e.target.value)}
+                      placeholder="Duración del cierre en días"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    />
+                    <input
+                      value={safeString(activeSection.props_json?.dismiss_key)}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), dismiss_key: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionField("dismiss_key", e.target.value)}
+                      placeholder="Clave de cierre personalizada (opcional)"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    />
                   </div>
                 )}
 
@@ -2488,4 +2737,3 @@ export default function CmsBuilderPage() {
     </div>
   );
 }
-

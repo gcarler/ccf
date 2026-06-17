@@ -1,4 +1,4 @@
-import "./faro.css";
+import "./public.css";
 import { Inter } from "next/font/google";
 import { FaroThemeProvider } from "../../components/public/FaroThemeProvider";
 import FaroNavbar from "../../components/public/FaroNavbar";
@@ -17,17 +17,16 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             {/* Apply theme class to <html> before React hydration so CSS vars resolve immediately */}
             <script
                 dangerouslySetInnerHTML={{
-                    __html: `(function(){var t=localStorage.getItem("faro-theme-v2")||"institutional";document.documentElement.classList.add("theme-"+t);if(t==="dark")document.documentElement.classList.add("dark")})()`,
+                    __html: `(function(){var t=localStorage.getItem("site-theme-v2")||localStorage.getItem("faro-theme-v2")||"institutional";document.documentElement.classList.add("theme-"+t);if(t==="dark")document.documentElement.classList.add("dark")})()`,
                 }}
             />
-            <div className={`min-h-screen bg-faro-background text-faro-on-background font-body antialiased selection:bg-faro-primary/30 ${inter.variable}`}>
+            <div className={`min-h-screen overflow-x-clip bg-site-background text-site-on-background font-body antialiased selection:bg-site-primary/30 ${inter.variable}`}>
                 <FaroNavbar />
                 {children}
+                <FaroFooter />
                 <div className="h-32 md:h-0" />
                 <FaroMobileNav />
-                <FaroFooter />
             </div>
         </FaroThemeProvider>
     );
 }
-

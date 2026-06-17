@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { SITE_NAME } from '@/lib/site-config';
 import { 
     Shield, 
     Users, 
@@ -452,7 +453,7 @@ export default function AccessManagementPage() {
             `}</style>
 
             <WorkspaceToolbar 
-                breadcrumbs={[{ label: 'CCF Platform', icon: Settings }, { label: 'Seguridad y Accesos', icon: Lock }]}
+                breadcrumbs={[{ label: SITE_NAME, icon: Settings }, { label: 'Seguridad y Accesos', icon: Lock }]}
                 viewType={viewType}
                 setViewType={setViewType}
                 availableViews={ACCESS_VIEWS}

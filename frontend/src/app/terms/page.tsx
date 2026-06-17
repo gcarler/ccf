@@ -4,11 +4,13 @@ import React from 'react';
 import Navbar from '@/components/Navbar';
 import { FileText } from 'lucide-react';
 import { useContentBlock } from '@/hooks/useContent';
+import CmsPageOverride from '@/components/public/cms/CmsPageOverride';
 
 export default function TermsPage() {
     const { data: content } = useContentBlock('terms_of_service');
 
     return (
+        <CmsPageOverride slug="terms">
         <div className="min-h-screen bg-slate-50 dark:bg-background-dark bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
             <Navbar />
             <div className="pt-32 pb-4 container mx-auto px-3 max-w-4xl relative z-10">
@@ -29,6 +31,7 @@ export default function TermsPage() {
                 </div>
             </div>
         </div>
+        </CmsPageOverride>
     );
 }
 

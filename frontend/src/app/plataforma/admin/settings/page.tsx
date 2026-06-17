@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { SITE_NAME } from '@/lib/site-config';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -78,7 +79,7 @@ export default function MinistrySettings() {
                         </button>
                     </div>
                     <div className="mt-3 text-center space-y-2">
-                        <h2 className="text-xl font-bold text-white tracking-tight uppercase">Comunidad Cristiana el Faro</h2>
+                        <h2 className="text-xl font-bold text-white tracking-tight uppercase">{SITE_NAME}</h2>
                         <div className="flex items-center justify-center gap-2 text-slate-500 font-bold text-[10px] uppercase tracking-wide">
                             <MapPin size={12} className="text-primary" />
                             Sede Central • Mocoa, Putumayo

@@ -1,6 +1,7 @@
 ﻿"use client";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
+import { SITE_KEY } from "@/lib/site-config";
 
 export type FaroTheme = "institutional" | "light" | "dark";
 
@@ -27,7 +28,7 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
     const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        const saved = (localStorage.getItem("faro-theme-v2") as FaroTheme) || "institutional";
+        const saved = (localStorage.getItem("site-theme-v2") || localStorage.getItem("faro-theme-v2") || "institutional") as FaroTheme;
         setTheme(saved);
     }, []);
 
@@ -39,14 +40,14 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
         // Tailwind dark: prefix requires the "dark" class on <html>
         if (theme === "dark") root.classList.add("dark");
 
-        localStorage.setItem("faro-theme-v2", theme);
+        localStorage.setItem("site-theme-v2", theme);
     }, [theme]);
 
     useEffect(() => {
         let mounted = true;
         const loadRemoteTheme = async () => {
             try {
-                const row = await apiFetch<{ tokens_json?: Record<string, string> }>("/cms/v2/public/sites/faro/theme", { silent: true });
+                const row = await apiFetch<{ tokens_json?: Record<string, string> }>(`/cms/v2/public/sites/${SITE_KEY}/theme`, { silent: true });
                 if (mounted && row?.tokens_json && typeof row.tokens_json === "object") {
                     setRemoteTokens(row.tokens_json);
                 }

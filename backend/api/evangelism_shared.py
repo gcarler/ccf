@@ -53,7 +53,7 @@ def _is_crm_admin_or_pastor(user) -> bool:
     role = normalize_role(str(getattr(user, "role", "")))
     if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
         role = normalize_role(user.rol_plataforma.nombre)
-    return role in {"admin", "administrador", "pastor"}
+    return role in {"admin", "administrador", "pastor", "coordinador"}
 
 
 def _get_persona_for_user(db: Session, user_id) -> Optional[models.Persona]:

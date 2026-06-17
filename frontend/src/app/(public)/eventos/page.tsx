@@ -4,6 +4,7 @@ import { useMemo,useState } from "react";
 
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
+import { SITE_KEY } from "@/lib/site-config";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 import { Bell,ChevronLeft,ChevronRight,MapPin,Star } from "lucide-react";
 import Image from "next/image";
@@ -45,7 +46,7 @@ function formatMonthDay(date?: string) {
 }
 
 export default function EventosPage() {
-    const { data: heroContent } = useContentBlock("faro_events_hero");
+    const { data: heroContent } = useContentBlock(`${SITE_KEY}_events_hero`);
     const { data: eventsContent } = useContentBlock(FARO_EVENTS_BLOCK_KEY);
     const [activeFilter, setActiveFilter] = useState("Todos");
     const [calendarView, setCalendarView] = useState<"Semanal" | "Mensual" | "Anual">("Mensual");
@@ -108,21 +109,18 @@ export default function EventosPage() {
 
     return (
         <CmsPageOverride slug="eventos">
-            <main className="pt-[88px] pb-4 px-3 md:px-4">
+            <main className="pt-[88px] pb-4 px-4 sm:px-6 md:px-8 xl:px-12">
             <header className="mb-14 pt-12 md:grid md:grid-cols-12 gap-3 items-end">
                 <div className="md:col-span-8">
                     <span
                         className="text-xs font-semibold uppercase tracking-wide mb-4 block"
-                        style={{ color: "var(--faro-secondary)" }}
+                        style={{ color: "var(--site-secondary)" }}
                     >
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="font-bold tracking-tighter leading-tight"
-                        style={{
-                            fontSize: "clamp(2.5rem, 6vw, 5rem)",
-                            color: "var(--faro-on-surface)",
-                        }}
+                        className="max-w-3xl font-bold tracking-tighter leading-tight text-4xl sm:text-5xl lg:text-6xl"
+                        style={{ color: "var(--site-on-surface)" }}
                     >
                         {heroTitle}
                     </h1>
@@ -132,10 +130,10 @@ export default function EventosPage() {
                 </div>
             </header>
 
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-16">
+            <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-16">
                 <div
-                    className="md:col-span-2 relative h-[440px] rounded-lg overflow-hidden group"
-                    style={{ background: "var(--faro-surface-container)" }}
+                    className="sm:col-span-2 md:col-span-2 relative min-h-[300px] md:h-[440px] rounded-lg overflow-hidden group"
+                    style={{ background: "var(--site-surface-container)" }}
                 >
                     {featuredEvent?.img ? (
                         <Image
@@ -150,7 +148,7 @@ export default function EventosPage() {
                             className="absolute inset-0"
                             style={{
                                 background:
-                                    "linear-gradient(135deg, var(--faro-primary-container), var(--faro-surface-container-high))",
+                                    "linear-gradient(135deg, var(--site-primary-container), var(--site-surface-container-high))",
                             }}
                         />
                     )}
@@ -158,7 +156,7 @@ export default function EventosPage() {
                         className="absolute inset-0"
                         style={{
                             background:
-                                "linear-gradient(to top, var(--faro-surface-container-lowest) 0%, transparent 60%)",
+                                "linear-gradient(to top, var(--site-surface-container-lowest) 0%, transparent 60%)",
                         }}
                     />
                     {featuredEvent ? (
@@ -167,8 +165,8 @@ export default function EventosPage() {
                                 <span
                                     className="px-3 py-1 rounded-full font-semibold tracking-wide uppercase"
                                     style={{
-                                        background: "var(--faro-primary-container)",
-                                        color: "var(--faro-primary)",
+                                        background: "var(--site-primary-container)",
+                                        color: "var(--site-primary)",
                                     }}
                                 >
                                     Destacado
@@ -176,7 +174,7 @@ export default function EventosPage() {
                                 {featuredEvent.date ? (
                                     <span
                                         className="text-xs font-bold"
-                                        style={{ color: "var(--faro-on-surface-variant)" }}
+                                        style={{ color: "var(--site-on-surface-variant)" }}
                                     >
                                         {featuredEvent.date}
                                     </span>
@@ -184,7 +182,7 @@ export default function EventosPage() {
                             </div>
                             <h2
                                 className="text-xl font-bold mb-4"
-                                style={{ color: "var(--faro-on-surface)" }}
+                                style={{ color: "var(--site-on-surface)" }}
                             >
                                 {featuredEvent.title || "Evento destacado"}
                             </h2>
@@ -197,7 +195,7 @@ export default function EventosPage() {
                                     }}
                                     className="px-4 py-1.5 rounded-md font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
                                     style={{
-                                        background: "var(--faro-cta-gradient)",
+                                        background: "var(--site-cta-gradient)",
                                     }}
                                 >
                                     Reservar lugar
@@ -205,7 +203,7 @@ export default function EventosPage() {
                                 {featuredEvent.location ? (
                                     <span
                                         className="flex items-center gap-2 text-sm font-bold"
-                                        style={{ color: "var(--faro-primary)" }}
+                                        style={{ color: "var(--site-primary)" }}
                                     >
                                         <MapPin size={16} /> {featuredEvent.location}
                                     </span>
@@ -216,23 +214,23 @@ export default function EventosPage() {
                         <div className="absolute inset-0 flex items-center justify-center p-4">
                             <div
                                 className="max-w-md rounded-lg p-4 text-center"
-                                style={{ background: "var(--faro-overlay-bg)", backdropFilter: "blur(12px)" }}
+                                style={{ background: "var(--site-overlay-bg)", backdropFilter: "blur(12px)" }}
                             >
                                 <p
                                     className="text-[10px] font-semibold uppercase tracking-wide mb-3"
-                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                    style={{ color: "var(--site-on-surface-variant)" }}
                                 >
                                     Sin eventos publicados
                                 </p>
                                 <h2
                                     className="text-xl font-bold mb-3"
-                                    style={{ color: "var(--faro-on-surface)" }}
+                                    style={{ color: "var(--site-on-surface)" }}
                                 >
                                     Esperando agenda desde el CMS
                                 </h2>
                                 <p
                                     className="text-sm"
-                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                    style={{ color: "var(--site-on-surface-variant)" }}
                                 >
                                     Cuando haya eventos reales publicados, apareceran aqui sin contenido simulado.
                                 </p>
@@ -243,12 +241,12 @@ export default function EventosPage() {
 
                 <div
                     className="rounded-lg p-4 flex flex-col justify-between"
-                    style={{ background: "var(--faro-surface-container-low)" }}
+                    style={{ background: "var(--site-surface-container-low)" }}
                 >
                     <div>
                         <h3
                             className="text-xl font-bold mb-3"
-                            style={{ color: "var(--faro-on-surface)" }}
+                            style={{ color: "var(--site-on-surface)" }}
                         >
                             Filtrar por tipo
                         </h3>
@@ -261,17 +259,17 @@ export default function EventosPage() {
                                     style={{
                                         background:
                                             activeFilter === cat
-                                                ? "var(--faro-primary-container)"
-                                                : "var(--faro-surface-container)",
+                                                ? "var(--site-primary-container)"
+                                                : "var(--site-surface-container)",
                                         color:
                                             activeFilter === cat
-                                                ? "var(--faro-primary)"
-                                                : "var(--faro-on-surface-variant)",
+                                                ? "var(--site-primary)"
+                                                : "var(--site-on-surface-variant)",
                                     }}
                                 >
                                     {cat}
                                     {activeFilter === cat ? (
-                                        <Star size={14} style={{ color: "var(--faro-primary)" }} />
+                                        <Star size={14} style={{ color: "var(--site-primary)" }} />
                                     ) : null}
                                 </button>
                             ))}
@@ -279,11 +277,11 @@ export default function EventosPage() {
                     </div>
                     <div
                         className="mt-3 pt-6"
-                        style={{ borderTop: "1px solid var(--faro-outline-variant)" }}
+                        style={{ borderTop: "1px solid var(--site-outline-variant)" }}
                     >
                         <p
                             className="text-[10px] font-semibold uppercase tracking-wide mb-3"
-                            style={{ color: "var(--faro-on-surface-variant)" }}
+                            style={{ color: "var(--site-on-surface-variant)" }}
                         >
                             Proximo en 48 horas
                         </p>
@@ -292,8 +290,8 @@ export default function EventosPage() {
                                 <div
                                     className="w-12 h-8 rounded-lg flex items-center justify-center font-black text-lg shrink-0"
                                     style={{
-                                        background: "var(--faro-primary-container)",
-                                        color: "var(--faro-primary)",
+                                        background: "var(--site-primary-container)",
+                                        color: "var(--site-primary)",
                                     }}
                                 >
                                     {upcomingEvent.date || "!"}
@@ -301,20 +299,20 @@ export default function EventosPage() {
                                 <div>
                                     <p
                                         className="text-sm font-semibold"
-                                        style={{ color: "var(--faro-on-surface)" }}
+                                        style={{ color: "var(--site-on-surface)" }}
                                     >
                                         {upcomingEvent.title || "Proximo evento"}
                                     </p>
                                     <p
                                         className="text-xs italic"
-                                        style={{ color: "var(--faro-on-surface-variant)" }}
+                                        style={{ color: "var(--site-on-surface-variant)" }}
                                     >
                                         {upcomingEvent.location || "Sin ubicacion publicada"}
                                     </p>
                                 </div>
                             </div>
                         ) : (
-                            <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+                            <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
                                 Sin eventos proximos publicados.
                             </p>
                         )}
@@ -322,7 +320,7 @@ export default function EventosPage() {
                 </div>
             </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-20">
                 {hasEvents ? (
                     upcomingCards.map((event) => {
                         const { month, day } = formatMonthDay(event.date);
@@ -330,7 +328,7 @@ export default function EventosPage() {
                             <article
                                 key={`${event.title || "event"}-${event.date || "date"}`}
                                 className="rounded-lg overflow-hidden group transition-transform hover:-translate-y-1"
-                                style={{ background: "var(--faro-surface-container-low)" }}
+                                style={{ background: "var(--site-surface-container-low)" }}
                             >
                                 <div className="h-52 relative overflow-hidden">
                                     {event.img ? (
@@ -345,7 +343,7 @@ export default function EventosPage() {
                                             className="absolute inset-0"
                                             style={{
                                                 background:
-                                                    "linear-gradient(135deg, var(--faro-primary-container), var(--faro-surface-container-high))",
+                                                    "linear-gradient(135deg, var(--site-primary-container), var(--site-surface-container-high))",
                                             }}
                                         />
                                     )}
@@ -353,14 +351,14 @@ export default function EventosPage() {
                                         <div
                                             className="absolute top-4 right-4 p-3 rounded-lg text-center min-w-[64px]"
                                             style={{
-                                                background: "var(--faro-date-badge-bg)",
+                                                background: "var(--site-date-badge-bg)",
                                                 backdropFilter: "blur(12px)",
                                             }}
                                         >
                                             {month ? (
                                                 <p
                                                     className="text-[9px] font-semibold uppercase tracking-wider"
-                                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                                    style={{ color: "var(--site-on-surface-variant)" }}
                                                 >
                                                     {month}
                                                 </p>
@@ -368,7 +366,7 @@ export default function EventosPage() {
                                             {day ? (
                                                 <p
                                                     className="text-xl font-bold"
-                                                    style={{ color: "var(--faro-primary)" }}
+                                                    style={{ color: "var(--site-primary)" }}
                                                 >
                                                     {day}
                                                 </p>
@@ -379,19 +377,19 @@ export default function EventosPage() {
                                 <div className="p-7">
                                     <span
                                         className="text-[10px] font-semibold uppercase tracking-wide mb-2 block"
-                                        style={{ color: "var(--faro-secondary)" }}
+                                        style={{ color: "var(--site-secondary)" }}
                                     >
                                         {event.category || "Evento"}
                                     </span>
                                     <h4
                                         className="font-black text-lg mb-3 group-hover:opacity-80 transition-opacity"
-                                        style={{ color: "var(--faro-on-surface)" }}
+                                        style={{ color: "var(--site-on-surface)" }}
                                     >
                                         {event.title || "Evento publicado"}
                                     </h4>
                                     <p
                                         className="text-sm leading-relaxed line-clamp-2"
-                                        style={{ color: "var(--faro-on-surface-variant)" }}
+                                        style={{ color: "var(--site-on-surface-variant)" }}
                                     >
                                         {event.excerpt || event.location || "Contenido real desde el CMS"}
                                     </p>
@@ -402,21 +400,21 @@ export default function EventosPage() {
                 ) : (
                     <div
                         className="md:col-span-3 rounded-lg p-4 text-center"
-                        style={{ background: "var(--faro-surface-container-low)" }}
+                        style={{ background: "var(--site-surface-container-low)" }}
                     >
                         <p
                             className="text-[10px] font-semibold uppercase tracking-wide mb-3"
-                            style={{ color: "var(--faro-on-surface-variant)" }}
+                            style={{ color: "var(--site-on-surface-variant)" }}
                         >
                             Sin eventos publicados
                         </p>
                         <h3
                             className="text-lg font-bold mb-2"
-                            style={{ color: "var(--faro-on-surface)" }}
+                            style={{ color: "var(--site-on-surface)" }}
                         >
                             El calendario aun no tiene contenido real
                         </h3>
-                        <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+                        <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
                             Cuando el CMS publique eventos, apareceran aqui sin tarjetas inventadas.
                         </p>
                     </div>
@@ -428,20 +426,20 @@ export default function EventosPage() {
                     <div>
                         <h2
                             className="text-xl font-bold tracking-tight"
-                            style={{ color: "var(--faro-on-surface)" }}
+                            style={{ color: "var(--site-on-surface)" }}
                         >
                             Explora nuestro Calendario
                         </h2>
                         <p
                             className="text-sm mt-1"
-                            style={{ color: "var(--faro-on-surface-variant)" }}
+                            style={{ color: "var(--site-on-surface-variant)" }}
                         >
                             Organiza tu tiempo con nuestras actividades comunitarias.
                         </p>
                     </div>
                     <div
                         className="inline-flex p-1 rounded-lg"
-                        style={{ background: "var(--faro-surface-container-high)" }}
+                        style={{ background: "var(--site-surface-container-high)" }}
                     >
                         {(["Semanal", "Mensual", "Anual"] as const).map((value) => (
                             <button
@@ -451,10 +449,10 @@ export default function EventosPage() {
                                 style={
                                     calendarView === value
                                         ? {
-                                              background: "var(--faro-primary)",
-                                              color: "var(--faro-on-primary)",
+                                              background: "var(--site-primary)",
+                                              color: "var(--site-on-primary)",
                                           }
-                                        : { color: "var(--faro-on-surface-variant)" }
+                                        : { color: "var(--site-on-surface-variant)" }
                                 }
                             >
                                 {value}
@@ -467,15 +465,15 @@ export default function EventosPage() {
                     <div
                         className="lg:col-span-8 rounded-lg p-3 md:p-4"
                         style={{
-                            background: "var(--faro-surface-container-low)",
-                            border: "1px solid var(--faro-outline-variant)",
+                            background: "var(--site-surface-container-low)",
+                            border: "1px solid var(--site-outline-variant)",
                         }}
                     >
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-4">
                                 <h3
                                     className="text-lg font-bold"
-                                    style={{ color: "var(--faro-on-surface)" }}
+                                    style={{ color: "var(--site-on-surface)" }}
                                 >
                                     {monthNames[currentMonth]} {currentYear}
                                 </h3>
@@ -487,8 +485,8 @@ export default function EventosPage() {
                                         }}
                                         className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
                                         style={{
-                                            background: "var(--faro-surface-container)",
-                                            color: "var(--faro-on-surface)",
+                                            background: "var(--site-surface-container)",
+                                            color: "var(--site-on-surface)",
                                         }}
                                     >
                                         <ChevronLeft size={16} />
@@ -500,8 +498,8 @@ export default function EventosPage() {
                                         }}
                                         className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
                                         style={{
-                                            background: "var(--faro-surface-container)",
-                                            color: "var(--faro-on-surface)",
+                                            background: "var(--site-surface-container)",
+                                            color: "var(--site-on-surface)",
                                         }}
                                     >
                                         <ChevronRight size={16} />
@@ -511,20 +509,21 @@ export default function EventosPage() {
                             <button
                                 onClick={() => { setCurrentMonth(new Date().getMonth()); setCurrentYear(new Date().getFullYear()); }}
                                 className="text-xs font-semibold uppercase tracking-wide"
-                                style={{ color: "var(--faro-primary)" }}
+                                style={{ color: "var(--site-primary)" }}
                             >
                                 HOY
                             </button>
                         </div>
 
                         <div className="grid grid-cols-7 gap-1 mb-2">
-                            {["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"].map((day) => (
+                            {[["D","Dom"], ["L","Lun"], ["M","Mar"], ["X","Mie"], ["J","Jue"], ["V","Vie"], ["S","Sab"]].map(([short, full]) => (
                                 <div
-                                    key={day}
-                                    className="text-center py-2 text-[10px] font-semibold uppercase tracking-wide"
-                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                    key={full}
+                                    className="text-center py-2 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide"
+                                    style={{ color: "var(--site-on-surface-variant)" }}
                                 >
-                                    {day}
+                                    <span className="sm:hidden">{short}</span>
+                                    <span className="hidden sm:inline">{full}</span>
                                 </div>
                             ))}
                         </div>
@@ -537,8 +536,8 @@ export default function EventosPage() {
                                     style={
                                         day.n === 24 && !day.prev
                                             ? {
-                                                  background: "var(--faro-card-highlight)",
-                                                  border: "2px solid var(--faro-primary)",
+                                                  background: "var(--site-card-highlight)",
+                                                  border: "2px solid var(--site-primary)",
                                               }
                                             : day.prev
                                             ? { opacity: 0.2 }
@@ -550,8 +549,8 @@ export default function EventosPage() {
                                         style={{
                                             color:
                                                 day.n === 24 && !day.prev
-                                                    ? "var(--faro-primary)"
-                                                    : "var(--faro-on-surface)",
+                                                    ? "var(--site-primary)"
+                                                    : "var(--site-on-surface)",
                                         }}
                                     >
                                         {day.n}
@@ -559,7 +558,7 @@ export default function EventosPage() {
                                     {day.event ? (
                                         <div
                                             className="w-1.5 h-1.5 rounded-full"
-                                            style={{ background: "var(--faro-primary)" }}
+                                            style={{ background: "var(--site-primary)" }}
                                         />
                                     ) : null}
                                 </div>
@@ -571,15 +570,15 @@ export default function EventosPage() {
                         <div
                             className="rounded-lg p-4"
                             style={{
-                                background: "var(--faro-surface-container-low)",
-                                border: "1px solid var(--faro-outline-variant)",
+                                background: "var(--site-surface-container-low)",
+                                border: "1px solid var(--site-outline-variant)",
                             }}
                         >
                             <h3
                                 className="text-xl font-bold mb-3 flex items-center gap-2"
-                                style={{ color: "var(--faro-on-surface)" }}
+                                style={{ color: "var(--site-on-surface)" }}
                             >
-                                <Star size={18} style={{ color: "var(--faro-primary)" }} />
+                                <Star size={18} style={{ color: "var(--site-primary)" }} />
                                 Destacados
                             </h3>
                             <div className="space-y-5">
@@ -591,25 +590,25 @@ export default function EventosPage() {
                                         >
                                             <div
                                                 className="w-2 shrink-0 rounded-full mt-1"
-                                                style={{ background: "var(--faro-primary)", minHeight: "12px" }}
+                                                style={{ background: "var(--site-primary)", minHeight: "12px" }}
                                             />
                                             <div>
                                                 <p
                                                     className="text-[10px] font-semibold uppercase tracking-wide mb-0.5"
-                                                    style={{ color: "var(--faro-primary)" }}
+                                                    style={{ color: "var(--site-primary)" }}
                                                 >
                                                     {event.category || "Evento"}
                                                     {event.date ? ` • ${event.date}` : ""}
                                                 </p>
                                                 <h4
                                                     className="text-sm font-semibold group-hover:opacity-70 transition-opacity"
-                                                    style={{ color: "var(--faro-on-surface)" }}
+                                                    style={{ color: "var(--site-on-surface)" }}
                                                 >
                                                     {event.title || "Evento publicado"}
                                                 </h4>
                                                 <p
                                                     className="text-xs line-clamp-1"
-                                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                                    style={{ color: "var(--site-on-surface-variant)" }}
                                                 >
                                                     {event.excerpt || event.location || "Contenido real desde el CMS"}
                                                 </p>
@@ -617,7 +616,7 @@ export default function EventosPage() {
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                    <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
                                         Sin destacados publicados todavia.
                                     </p>
                                 )}
@@ -630,14 +629,14 @@ export default function EventosPage() {
                                     const blob = new Blob([ics], { type: "text/calendar" });
                                     const url = URL.createObjectURL(blob);
                                     const a = document.createElement("a");
-                                    a.href = url; a.download = "faro-eventos.ics"; a.click();
+                                    a.href = url; a.download = `${SITE_KEY}-eventos.ics`; a.click();
                                     URL.revokeObjectURL(url);
                                     toast.success("Calendario descargado — impórtalo en Google Calendar o Outlook");
                                 }}
                                 className="w-full mt-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-all hover:scale-105"
                                 style={{
-                                    borderColor: "var(--faro-primary)",
-                                    color: "var(--faro-primary)",
+                                    borderColor: "var(--site-primary)",
+                                    color: "var(--site-primary)",
                                 }}
                             >
                                 Sincronizar Calendario
@@ -648,15 +647,15 @@ export default function EventosPage() {
                             onClick={() => toast.info("Notificaciones de eventos próximamente — te avisaremos")}
                             className="rounded-lg p-3 flex items-center gap-4 cursor-pointer transition-all hover:scale-[1.02]"
                             style={{
-                                background: "var(--faro-primary-container)",
-                                border: "1px solid var(--faro-outline-variant)",
+                                background: "var(--site-primary-container)",
+                                border: "1px solid var(--site-outline-variant)",
                             }}
                         >
                             <div
                                 className="w-12 h-8 rounded-lg flex items-center justify-center shrink-0"
                                 style={{
-                                    background: "var(--faro-primary)",
-                                    color: "var(--faro-on-primary)",
+                                    background: "var(--site-primary)",
+                                    color: "var(--site-on-primary)",
                                 }}
                             >
                                 <Bell size={20} />
@@ -664,13 +663,13 @@ export default function EventosPage() {
                             <div>
                                 <h4
                                     className="font-black text-sm"
-                                    style={{ color: "var(--faro-on-surface)" }}
+                                    style={{ color: "var(--site-on-surface)" }}
                                 >
                                     Quieres recordatorios?
                                 </h4>
                                 <p
                                     className="text-xs"
-                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                    style={{ color: "var(--site-on-surface-variant)" }}
                                 >
                                     Recibe avisos de tus eventos favoritos.
                                 </p>

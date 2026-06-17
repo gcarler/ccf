@@ -10,16 +10,21 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { useContentBlock } from '@/hooks/useContent';
+import { SITE_NAME } from '@/lib/site-config';
 
-export default function UnifiedSidebar({ 
-    title = "CCF Platform", 
-    sections = [] 
-}: { 
-    title?: string, 
-    sections?: any[] 
+export default function UnifiedSidebar({
+    title,
+    sections = []
+}: {
+    title?: string,
+    sections?: any[]
 }) {
     const pathname = usePathname();
     const [isMini, setIsMini] = useState(false);
+    const { data: logoBranding } = useContentBlock('logo_branding');
+    const logoUrl: string | undefined = logoBranding?.logo_url;
+    const logoDisplayName: string = logoBranding?.site_name || title || SITE_NAME;
     const [expandedFolders, setExpandedFolders] = useState<string[]>(['contextual-root', 'Income']);
 
     // Persist sidebar state
@@ -152,15 +157,18 @@ export default function UnifiedSidebar({
             {/* Sidebar Header (Logo) */}
             <div className="h-12 flex items-center px-3 shrink-0">
                 <div className="flex items-center gap-3 w-full">
-                    <div className="w-8 h-8 rounded-md bg-slate-900 dark:bg-[hsl(var(--bg-primary))] flex items-center justify-center shrink-0">
-                        {/* Abstract circle logo matching the mock */}
-                        <div className="w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 relative">
-                            <div className="absolute top-[-2px] right-[-2px] w-1.5 h-1.5 bg-[hsl(var(--bg-primary))] dark:bg-slate-900" />
-                        </div>
+                    <div className="w-8 h-8 rounded-md bg-slate-900 dark:bg-[hsl(var(--bg-primary))] flex items-center justify-center shrink-0 overflow-hidden">
+                        {logoUrl ? (
+                            <img src={logoUrl} alt={logoDisplayName} className="w-full h-full object-contain p-1" />
+                        ) : (
+                            <div className="w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 relative">
+                                <div className="absolute top-[-2px] right-[-2px] w-1.5 h-1.5 bg-[hsl(var(--bg-primary))] dark:bg-slate-900" />
+                            </div>
+                        )}
                     </div>
                     {!isMini && (
                         <div className="flex-1 overflow-hidden">
-                            <span className="font-semibold text-slate-900 dark:text-white tracking-tight">{title}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white tracking-tight">{logoDisplayName}</span>
                         </div>
                     )}
                 </div>

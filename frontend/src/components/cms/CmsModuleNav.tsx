@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Palette,
   PanelsTopLeft,
+  PackageOpen,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
@@ -28,6 +29,7 @@ const CMS_TABS = [
   { id: "menus", label: "Menus", href: "/cms/menus", icon: Link2 },
   { id: "media", label: "Media", href: "/cms/media", icon: ImageIcon },
   { id: "builder", label: "Builder", href: "/cms/builder", icon: PanelsTopLeft },
+  { id: "resources", label: "Recursos", href: "/cms/resources", icon: PackageOpen },
   { id: "themes", label: "Temas", href: "/cms/themes", icon: Palette },
   { id: "sites", label: "Sitios", href: "/cms/sites", icon: Globe },
 ] as const;
@@ -88,4 +90,3 @@ export function CmsModuleNav() {
     </nav>
   );
 }
-

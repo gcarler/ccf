@@ -192,7 +192,7 @@ export default function NewsletterLeadsPage() {
             <div className="flex flex-col h-full overflow-hidden">
                 {/* Summary cards */}
                 {summary && (
-                    <div className="grid grid-cols-4 gap-3 px-4 pt-4 pb-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 pt-4 pb-2">
                         {[
                             { label: 'Total leads', value: summary.total, icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                             { label: 'Con email', value: summary.withEmail, icon: Mail, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },

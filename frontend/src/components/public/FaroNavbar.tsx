@@ -2,6 +2,7 @@
 
 import { useContentBlock } from "@/hooks/useContent";
 import { getCmsPublicMenu } from "@/lib/cms/v2";
+import { SITE_KEY, SITE_NAME } from "@/lib/site-config";
 import { MapPin,Menu,Sun,X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,26 +25,26 @@ export default function FaroNavbar() {
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [menuItemsV2, setMenuItemsV2] = useState<Array<{ id?: number; href: string; label: string; children?: Array<{ id?: number; href: string; label: string }> }>>([]);
+    const [menuItemsV2, setMenuItemsV2] = useState<Array<{ id?: string; href: string; label: string; children?: Array<{ id?: string; href: string; label: string }> }>>([]);
 
-    const logoUrl = themeTokens["--faro-logo-url"] || "";
-    const logoName = themeTokens["--faro-logo-name"] || "FARO";
-    const ctaLabel = themeTokens["--faro-header-cta-label"] || "Quiero conocer a Jesús";
-    const ctaHref = themeTokens["--faro-header-cta-href"] || "/conocer-a-jesus";
+    const logoUrl = themeTokens["--site-logo-url"] || "";
+    const logoName = themeTokens["--site-logo-name"] || SITE_NAME;
+    const ctaLabel = themeTokens["--site-header-cta-label"] || "Quiero conocer a Jesús";
+    const ctaHref = themeTokens["--site-header-cta-href"] || "/conocer-a-jesus";
 
     // Dinamización vía CMS
-    const { data: navContent } = useContentBlock("faro_nav_items");
+    const { data: navContent } = useContentBlock(`${SITE_KEY}_nav_items`);
     const fallbackLinks = (Array.isArray(navContent?.items) ? navContent.items : DEFAULT_NAV_LINKS).map((item: any, index: number) => ({
-        id: index,
+        id: `fallback_${index}`,
         href: item.href,
         label: item.label,
         children: [],
     }));
     // Ensure /pastores is always in the nav, deduped by href
-    const _ensurePastores = (links: Array<{ href: string; label: string; children?: any[] }>) => {
+    const _ensurePastores = (links: Array<{ id?: string; href: string; label: string; children?: any[] }>) => {
         const hasPastores = links.some(l => l.href === '/pastores');
         if (!hasPastores) {
-            return [...links, { href: '/pastores', label: 'Pastores', children: [] }];
+            return [...links, { id: 'pastores', href: '/pastores', label: 'Pastores', children: [] }];
         }
         return links;
     };
@@ -53,12 +54,12 @@ export default function FaroNavbar() {
         let mounted = true;
         const loadMenu = async () => {
             try {
-                const data = await getCmsPublicMenu("faro", "main");
+                const data = await getCmsPublicMenu(SITE_KEY, "main");
                 const all = (data?.items || [])
                     .filter((item) => item.visibility !== "hidden")
                     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
-                const mapByParent = new Map<number | null, typeof all>();
+                const mapByParent = new Map<string | null, typeof all>();
                 all.forEach((item) => {
                     const key = item.parent_id ?? null;
                     const current = mapByParent.get(key) || [];
@@ -68,7 +69,7 @@ export default function FaroNavbar() {
 
                 const roots = mapByParent.get(null) || [];
                 const next = roots.map((item) => {
-                    const children = (mapByParent.get(item.id) || []).map((child) => ({
+                    const children = (mapByParent.get(item.id.toString()) || []).map((child) => ({
                         id: child.id,
                         href: child.href,
                         label: child.label,
@@ -97,21 +98,21 @@ export default function FaroNavbar() {
     return (
         <>
             <header
-                className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+                className="fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300"
                 style={{
-                    background: scrolled ? "var(--faro-navbar-bg-scrolled)" : "var(--faro-navbar-bg)",
+                    background: scrolled ? "var(--site-navbar-bg-scrolled)" : "var(--site-navbar-bg)",
                     backdropFilter: "blur(20px)",
-                    borderBottom: scrolled ? "1px solid var(--faro-navbar-border)" : "none",
+                    borderBottom: scrolled ? "1px solid var(--site-navbar-border)" : "none",
                 }}
             >
-                <nav className="max-w-[1400px] mx-auto px-3 md:px-4 h-[72px] flex items-center justify-between gap-3">
+                <nav className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 h-[72px] flex items-center justify-between gap-3">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-3 shrink-0">
                         {logoUrl ? (
                             <img src={logoUrl} alt={logoName} className="h-8 object-contain" />
                         ) : (
                             <div className="w-8 h-8 relative">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full text-faro-primary">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full text-site-primary">
                                     <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
                                     <circle cx="12" cy="4" r="1.5" fill="currentColor" />
                                 </svg>
@@ -120,7 +121,7 @@ export default function FaroNavbar() {
                         {logoName && (
                             <span
                                 className="font-black text-xl tracking-tight"
-                                style={{ color: "var(--faro-on-background)" }}
+                                style={{ color: "var(--site-on-background)" }}
                             >
                                 {logoName}
                             </span>
@@ -139,33 +140,33 @@ export default function FaroNavbar() {
                                     className="relative px-4 py-2 text-[13px] font-semibold uppercase tracking-wide transition-colors duration-200 rounded-lg"
                                     style={{
                                         color: active
-                                            ? "var(--faro-primary)"
-                                            : "var(--faro-on-surface-variant)",
+                                            ? "var(--site-primary)"
+                                            : "var(--site-on-surface-variant)",
                                     }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.color = "var(--faro-on-background)")}
-                                    onMouseLeave={(e) => (e.currentTarget.style.color = active ? "var(--faro-primary)" : "var(--faro-on-surface-variant)")}
+                                    onMouseEnter={(e) => (e.currentTarget.style.color = "var(--site-on-background)")}
+                                    onMouseLeave={(e) => (e.currentTarget.style.color = active ? "var(--site-primary)" : "var(--site-on-surface-variant)")}
                                 >
                                     {label}
                                     {(children || []).length > 0 && <span className="ml-1 text-[10px]">▾</span>}
                                     {active && (
                                         <span
                                             className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full"
-                                            style={{ background: "var(--faro-primary)" }}
+                                            style={{ background: "var(--site-primary)" }}
                                         />
                                     )}
                                 </Link>
                                 {(children || []).length > 0 && (
                                     <div className="absolute left-0 top-full mt-2 hidden group-hover:block min-w-[220px] rounded-lg backdrop-blur-xl shadow-2xl p-2"
                                         style={{
-                                            background: "var(--faro-dropdown-bg)",
-                                            border: "1px solid var(--faro-dropdown-border)",
+                                            background: "var(--site-dropdown-bg)",
+                                            border: "1px solid var(--site-dropdown-border)",
                                         }}>
                                         {(children || []).map((child: any) => (
                                             <Link
                                                 key={`${href}-${child.href}`}
                                                 href={child.href}
                                                 className="block rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-white/10"
-                                                style={{ color: "var(--faro-on-background)" }}
+                                                style={{ color: "var(--site-on-background)" }}
                                             >
                                                 {child.label}
                                             </Link>
@@ -183,7 +184,7 @@ export default function FaroNavbar() {
                         <Link
                             href="/sedes"
                             className="hidden md:flex items-center justify-center w-9 h-9 rounded-full transition-colors"
-                            style={{ color: "var(--faro-on-surface-variant)" }}
+                            style={{ color: "var(--site-on-surface-variant)" }}
                             title="Nuestras Sedes"
                         >
                             <MapPin size={18} />
@@ -194,8 +195,8 @@ export default function FaroNavbar() {
                             onClick={toggle}
                             className="flex items-center justify-center w-9 h-9 rounded-full transition-all"
                             style={{
-                                color: "var(--faro-on-surface-variant)",
-                                background: "var(--faro-surface-container)",
+                                color: "var(--site-on-surface-variant)",
+                                background: "var(--site-surface-container)",
                             }}
                             title="Cambiar tema"
                         >
@@ -209,10 +210,10 @@ export default function FaroNavbar() {
                                 onClick={() => setMobileOpen && setMobileOpen(false)}
                                 className="hidden lg:flex items-center gap-2 px-3 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-105"
                                 style={{
-                                    background: "var(--faro-cta-gradient)",
+                                    background: "var(--site-cta-gradient)",
                                     backgroundSize: "200% auto",
                                     color: "white",
-                                    boxShadow: "var(--faro-cta-shadow)",
+                                    boxShadow: "var(--site-cta-shadow)",
                                 }}
                             >
                                 {ctaLabel}
@@ -223,7 +224,7 @@ export default function FaroNavbar() {
                         <button
                             onClick={() => setMobileOpen(!mobileOpen)}
                             className="lg:hidden flex items-center justify-center w-9 h-9"
-                            style={{ color: "var(--faro-on-background)" }}
+                            style={{ color: "var(--site-on-background)" }}
                         >
                             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
                         </button>
@@ -236,7 +237,7 @@ export default function FaroNavbar() {
                 <div
                     className="fixed inset-0 z-40 lg:hidden flex flex-col pt-[72px]"
                     style={{
-                        background: "var(--faro-background)",
+                        background: "var(--site-background)",
                         opacity: 0.98,
                         backdropFilter: "blur(20px)",
                     }}
@@ -248,7 +249,7 @@ export default function FaroNavbar() {
                                     href={href}
                                     onClick={() => setMobileOpen(false)}
                                     className="text-xl font-bold uppercase tracking-wide transition-colors"
-                                    style={{ color: pathname === href ? "var(--faro-primary)" : "var(--faro-on-background)" }}
+                                    style={{ color: pathname === href ? "var(--site-primary)" : "var(--site-on-background)" }}
                                 >
                                     {label}
                                 </Link>
@@ -260,7 +261,7 @@ export default function FaroNavbar() {
                                                 href={child.href}
                                                 onClick={() => setMobileOpen(false)}
                                                 className="block text-sm font-bold uppercase tracking-wider"
-                                                style={{ color: "var(--faro-on-surface-variant)" }}
+                                                style={{ color: "var(--site-on-surface-variant)" }}
                                             >
                                                 {child.label}
                                             </Link>
@@ -275,10 +276,10 @@ export default function FaroNavbar() {
                                 onClick={() => setMobileOpen && setMobileOpen(false)}
                                 className="flex items-center justify-center gap-2 px-3 py-3 mt-4 w-full rounded-full text-[12px] font-bold uppercase tracking-wider transition-all hover:scale-105"
                                 style={{
-                                    background: "var(--faro-cta-gradient)",
+                                    background: "var(--site-cta-gradient)",
                                     backgroundSize: "200% auto",
                                     color: "white",
-                                    boxShadow: "var(--faro-cta-shadow)",
+                                    boxShadow: "var(--site-cta-shadow)",
                                 }}
                             >
                                 {ctaLabel}
@@ -290,4 +291,3 @@ export default function FaroNavbar() {
         </>
     );
 }
-

@@ -271,7 +271,6 @@ export default function ConsolidationPipelinePage() {
 
     // Reset when unmounting pipeline
     useEffect(() => {
-        setTimeout(() => resetSidebarStack(), 500); // Small delay allows smooth transitions when navigating away
         return () => resetSidebarStack();
     }, [resetSidebarStack]);
 

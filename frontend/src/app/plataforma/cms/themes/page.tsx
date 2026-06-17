@@ -1,26 +1,27 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { SITE_KEY } from "@/lib/site-config";
 import { Archive, Palette, RotateCcw, Save } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { activateCmsTheme, createCmsTheme, deleteCmsTheme as archiveCmsTheme, listCmsSites, listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
 import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
 
 const DEFAULT_TOKENS = {
-  "--faro-primary": "#a5c8ff",
-  "--faro-secondary": "#80d0ff",
-  "--faro-background": "#001134",
-  "--faro-on-background": "#d9e2ff",
+  "--site-primary": "#a5c8ff",
+  "--site-secondary": "#80d0ff",
+  "--site-background": "#001134",
+  "--site-on-background": "#d9e2ff",
 };
 
 export default function CmsThemesPage() {
   const { token, user } = useAuth();
-  const [siteKey, setSiteKey] = useState("faro");
+  const [siteKey, setSiteKey] = useState(SITE_KEY);
   const [sites, setSites] = useState<Array<{ site_key: string; name: string }>>([]);
-  const [themes, setThemes] = useState<Array<{ id: number; name: string; is_active: boolean; status?: string; tokens_json?: Record<string, string> }>>([]);
+  const [themes, setThemes] = useState<Array<{ id: string; name: string; is_active: boolean; status?: string; tokens_json?: Record<string, string> }>>([]);
   const [name, setName] = useState("Tema personalizado");
   const [tokens, setTokens] = useState(DEFAULT_TOKENS);
-  const [editingThemeId, setEditingThemeId] = useState<number | null>(null);
+  const [editingThemeId, setEditingThemeId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const canEdit = canEditCms(user?.role);
@@ -76,13 +77,13 @@ export default function CmsThemesPage() {
     }
   };
 
-  const activate = async (themeId: number) => {
+  const activate = async (themeId: string) => {
     if (!token || !canPublish) return;
     await activateCmsTheme(siteKey, themeId, token);
     await load(siteKey);
   };
 
-  const archive = async (themeId: number) => {
+  const archive = async (themeId: string) => {
     if (!token || !canPublish) return;
     await archiveCmsTheme(siteKey, themeId, token);
     if (editingThemeId === themeId) {
@@ -94,7 +95,7 @@ export default function CmsThemesPage() {
     await load(siteKey);
   };
 
-  const restore = async (themeId: number) => {
+  const restore = async (themeId: string) => {
     if (!token || !canEdit) return;
     await patchCmsTheme(siteKey, themeId, { status: "active", is_active: false }, token);
     setMessage("Tema restaurado como disponible.");
@@ -117,7 +118,7 @@ export default function CmsThemesPage() {
         <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
           <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Sitio</label>
           <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
-            {sites.length === 0 && <option value="faro">faro</option>}
+            {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
             {sites.map((site) => (
               <option key={site.site_key} value={site.site_key}>{site.name} ({site.site_key})</option>
             ))}
@@ -169,16 +170,16 @@ export default function CmsThemesPage() {
           <div
             className="rounded-lg border border-slate-200 dark:border-white/10 p-3"
             style={{
-              background: tokens["--faro-background"],
-              color: tokens["--faro-on-background"],
+              background: tokens["--site-background"],
+              color: tokens["--site-on-background"],
             }}
           >
-            <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: tokens["--faro-secondary"] }}>Preview</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: tokens["--site-secondary"] }}>Preview</p>
             <h3 className="mt-2 text-lg font-semibold">Tema en vivo</h3>
             <p className="mt-2 text-sm opacity-80">Así se verían tus variables principales en una sección pública.</p>
             <button
               className="mt-5 rounded-full px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide"
-              style={{ background: tokens["--faro-primary"], color: tokens["--faro-background"] }}
+              style={{ background: tokens["--site-primary"], color: tokens["--site-background"] }}
             >
               Acción principal
             </button>

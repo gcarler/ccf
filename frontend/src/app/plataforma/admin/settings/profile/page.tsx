@@ -1,20 +1,21 @@
 "use client";
 
 import React, { useState } from 'react';
+import { SITE_NAME } from '@/lib/site-config';
 import { motion } from 'framer-motion';
 import { Church, Camera, Save, Edit2, AlertCircle } from 'lucide-react';
 
 export default function AdminSettingsProfilePage() {
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState({
-        name: 'Comunidad Cristiana El Faro',
-        slogan: 'Transformando vidas, edificando el Reino',
-        mission: 'Ser un faro de esperanza que transforma vidas mediante el evangelio de Jesucristo.',
-        vision: 'Una iglesia que discipula naciones y forma líderes integrales para el Reino de Dios.',
-        city: 'Mocoa',
-        department: 'Putumayo',
-        country: 'Colombia',
-        founded: '1998',
+        name: SITE_NAME,
+        slogan: '',
+        mission: '',
+        vision: '',
+        city: '',
+        department: '',
+        country: '',
+        founded: '',
     });
     const [saved, setSaved] = useState(false);
 

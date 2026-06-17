@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useContentBlock } from "@/hooks/useContent";
+import { SITE_KEY } from "@/lib/site-config";
 import RichText from "@/components/public/RichText";
 import { motion, AnimatePresence } from "framer-motion";
 import { PREMIUM_COURSES, PREMIUM_BOOKS, CourseItem, BookItem } from "@/lib/data/cursos";
@@ -12,8 +13,8 @@ import { apiFetch } from "@/lib/http";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function CursosPage() {
-    const { data: heroContent } = useContentBlock("faro_courses_hero");
-    const { data: coursesContent } = useContentBlock("faro_courses_feed");
+    const { data: heroContent } = useContentBlock(`${SITE_KEY}_courses_hero`);
+    const { data: coursesContent } = useContentBlock(`${SITE_KEY}_courses_feed`);
     
     // State
     const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -72,7 +73,7 @@ export default function CursosPage() {
 
     const heroEyebrow = heroContent?.eyebrow || "Formación & Sabiduría";
     const heroTitleLead = heroContent?.title_lead || "El Camino";
-    const heroAccent = heroContent?.title_accent || "del Faro";
+    const heroAccent = heroContent?.title_accent || "del Aprendizaje";
     const heroDescription = heroContent?.description || "Explora nuestra academia de cursos especializados y sumérgete en una selección literaria para iluminar tu entendimiento.";
 
     const cmsCourses: CourseItem[] = Array.isArray(coursesContent?.parsed) && coursesContent.parsed.length > 0 
@@ -106,12 +107,12 @@ export default function CursosPage() {
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
                         className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-3 py-1.5 rounded-full shadow-2xl border"
                         style={{
-                            background: "var(--faro-surface)",
-                            borderColor: "var(--faro-outline-variant)",
-                            color: "var(--faro-on-surface)"
+                            background: "var(--site-surface)",
+                            borderColor: "var(--site-outline-variant)",
+                            color: "var(--site-on-surface)"
                         }}
                     >
-                        <CheckCircle2 size={20} style={{ color: "var(--faro-primary)" }} />
+                        <CheckCircle2 size={20} style={{ color: "var(--site-primary)" }} />
                         <span className="font-bold text-sm tracking-wide">{toastMessage}</span>
                     </motion.div>
                 )}
@@ -131,7 +132,7 @@ export default function CursosPage() {
                     <div
                         className="absolute inset-0"
                         style={{
-                            background: "linear-gradient(to right, var(--faro-background) 30%, transparent 70%)",
+                            background: "linear-gradient(to right, var(--site-background) 30%, transparent 70%)",
                         }}
                     />
                 </div>
@@ -143,22 +144,19 @@ export default function CursosPage() {
                 >
                     <span
                         className="text-xs font-semibold uppercase tracking-wide mb-4 block"
-                        style={{ color: "var(--faro-primary)" }}
+                        style={{ color: "var(--site-primary)" }}
                     >
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="font-bold tracking-tighter leading-none mb-3"
-                        style={{
-                            fontSize: "clamp(3rem, 8vw, 7rem)",
-                            color: "var(--faro-on-background)",
-                        }}
+                        className="max-w-4xl font-bold tracking-tighter leading-none mb-3 text-5xl sm:text-6xl lg:text-8xl"
+                        style={{ color: "var(--site-on-background)" }}
                     >
                         {heroTitleLead}
                         <br />
                         <span
                             style={{
-                                background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                background: "linear-gradient(135deg, var(--site-primary), var(--site-secondary))",
                                 WebkitBackgroundClip: "text",
                                 WebkitTextFillColor: "transparent",
                             }}
@@ -166,12 +164,12 @@ export default function CursosPage() {
                             {heroAccent}.
                         </span>
                     </h1>
-                    <RichText html={heroDescription} className="text-xl max-w-xl leading-relaxed" />
+                    <RichText html={heroDescription} className="text-base sm:text-lg max-w-xl leading-relaxed" />
                 </motion.div>
             </section>
 
             {/* ── CURSOS BENTO ──────────────────────────── */}
-            <section className="px-4 sm:px-6 md:px-8 lg:px-12 mt-24">
+            <section className="px-4 sm:px-6 md:px-8 lg:px-12 mt-10 md:mt-24">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -181,11 +179,11 @@ export default function CursosPage() {
                     <div className="max-w-2xl">
                         <h2
                             className="text-lg md:text-xl font-bold mb-4 tracking-tight"
-                            style={{ color: "var(--faro-on-surface)" }}
+                            style={{ color: "var(--site-on-surface)" }}
                         >
                             Cursos & Academia
                         </h2>
-                        <p className="text-lg leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+                        <p className="text-lg leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
                             Programas estructurados para líderes, estudiantes y buscadores de
                             la verdad. Formación teológica y práctica con estándares de excelencia.
                         </p>
@@ -201,7 +199,7 @@ export default function CursosPage() {
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
                             className="md:col-span-8 group relative rounded-lg overflow-hidden min-h-[280px] md:min-h-[450px] cursor-pointer"
-                            style={{ background: "var(--faro-surface-container-low)" }}
+                            style={{ background: "var(--site-surface-container-low)" }}
                         >
                             <Link href={`/cursos/${featuredCourse.id || "1"}`} className="block absolute inset-0 z-20" />
                             <Image
@@ -214,7 +212,7 @@ export default function CursosPage() {
                             <div
                                 className="absolute inset-0"
                                 style={{
-                                    background: "linear-gradient(to top, var(--faro-surface-container-lowest) 0%, transparent 60%)",
+                                    background: "linear-gradient(to top, var(--site-surface-container-lowest) 0%, transparent 60%)",
                                 }}
                             />
                             <div className="absolute bottom-0 p-4 md:p-4 w-full relative z-10 flex flex-col justify-end h-full">
@@ -222,8 +220,8 @@ export default function CursosPage() {
                                     <span
                                         className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide mb-3"
                                         style={{
-                                            background: "var(--faro-card-highlight)",
-                                            color: "var(--faro-primary)",
+                                            background: "var(--site-card-highlight)",
+                                            color: "var(--site-primary)",
                                             backdropFilter: "blur(8px)"
                                         }}
                                     >
@@ -231,27 +229,27 @@ export default function CursosPage() {
                                     </span>
                                     <h3
                                         className="text-lg md:text-xl font-bold mb-4 tracking-tight"
-                                        style={{ color: "var(--faro-on-surface)" }}
+                                        style={{ color: "var(--site-on-surface)" }}
                                     >
                                         {featuredCourse.title}
                                     </h3>
-                                    <p className="max-w-2xl mb-3 text-lg line-clamp-2 leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                    <p className="max-w-2xl mb-3 text-lg line-clamp-2 leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
                                         {featuredCourse.excerpt || featuredCourse.desc}
                                     </p>
                                     <div className="flex flex-wrap items-center gap-3">
                                         {featuredCourse.lessons && (
-                                            <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide" style={{ color: "var(--faro-on-surface)" }}>
-                                                <Clock size={16} style={{ color: "var(--faro-primary)" }} />
+                                            <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide" style={{ color: "var(--site-on-surface)" }}>
+                                                <Clock size={16} style={{ color: "var(--site-primary)" }} />
                                                 {featuredCourse.lessons} Semanas
                                             </span>
                                         )}
-                                        <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide" style={{ color: "var(--faro-on-surface)" }}>
-                                            <User size={16} style={{ color: "var(--faro-primary)" }} />
+                                        <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide" style={{ color: "var(--site-on-surface)" }}>
+                                            <User size={16} style={{ color: "var(--site-primary)" }} />
                                             {featuredCourse.modality || "Online"}
                                         </span>
                                         <button
                                             className="ml-auto px-4 py-1.5 rounded-lg font-black text-sm text-white transition-all hover:scale-105 uppercase tracking-wide flex items-center gap-2"
-                                            style={{ background: "var(--faro-cta-gradient)" }}
+                                            style={{ background: "var(--site-cta-gradient)" }}
                                         >
                                             {featuredCourse.cta || "Ver Curso"} <ArrowRight size={16} />
                                         </button>
@@ -272,41 +270,41 @@ export default function CursosPage() {
                                     transition={{ delay: i * 0.1 }}
                                     className="h-full rounded-lg p-4 group transition-all hover:-translate-y-2 hover:shadow-2xl flex flex-col justify-between"
                                     style={{
-                                        background: "var(--faro-surface-container-high)",
-                                        border: "1px solid var(--faro-outline-variant)",
+                                        background: "var(--site-surface-container-high)",
+                                        border: "1px solid var(--site-outline-variant)",
                                     }}
                                 >
                                     <div>
                                         <span
                                             className="text-[10px] font-semibold uppercase tracking-wide mb-4 block"
-                                            style={{ color: "var(--faro-secondary)" }}
+                                            style={{ color: "var(--site-secondary)" }}
                                         >
                                             {c.modality || c.tag}
                                         </span>
                                         <h4
                                             className="text-lg font-bold mb-4 group-hover:opacity-80 transition-opacity leading-tight"
-                                            style={{ color: "var(--faro-on-surface)" }}
+                                            style={{ color: "var(--site-on-surface)" }}
                                         >
                                             {c.title}
                                         </h4>
                                         <p
                                             className="text-sm leading-relaxed line-clamp-3 mb-3"
-                                            style={{ color: "var(--faro-on-surface-variant)" }}
+                                            style={{ color: "var(--site-on-surface-variant)" }}
                                         >
                                             {c.excerpt || c.desc}
                                         </p>
                                     </div>
-                                    <div className="flex justify-between items-center mt-auto border-t pt-6" style={{ borderColor: "var(--faro-outline-variant)" }}>
+                                    <div className="flex justify-between items-center mt-auto border-t pt-6" style={{ borderColor: "var(--site-outline-variant)" }}>
                                         <span
                                             className="font-black text-xs uppercase tracking-wide"
-                                            style={{ color: "var(--faro-primary)" }}
+                                            style={{ color: "var(--site-primary)" }}
                                         >
                                             {c.cta || "Ver Curso"}
                                         </span>
                                         <ArrowRight 
                                             size={20}
                                             className="group-hover:translate-x-2 transition-transform"
-                                            style={{ color: "var(--faro-primary)" }}
+                                            style={{ color: "var(--site-primary)" }}
                                         />
                                     </div>
                                 </motion.div>
@@ -319,7 +317,7 @@ export default function CursosPage() {
             {/* ── LIBRERÍA ──────────────────────────────── */}
             <section
                 className="px-4 sm:px-6 md:px-8 lg:px-12 mt-32 py-8 md:py-12 lg:py-16"
-                style={{ background: "var(--faro-surface-container-low)" }}
+                style={{ background: "var(--site-surface-container-low)" }}
             >
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
@@ -329,18 +327,18 @@ export default function CursosPage() {
                 >
                     <h2
                         className="text-lg md:text-xl font-bold mb-3 tracking-tight"
-                        style={{ color: "var(--faro-on-surface)" }}
+                        style={{ color: "var(--site-on-surface)" }}
                     >
                         Nuestra Librería
                     </h2>
-                    <p className="text-lg leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+                    <p className="text-lg leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
                         Una curaduría de obras que han transformado generaciones. Desde
                         clásicos de la patrística hasta literatura contemporánea.
                     </p>
                 </motion.div>
                 
                 {books.length === 0 ? (
-                    <p className="text-center py-8 text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+                    <p className="text-center py-8 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
                         Próximamente tendremos libros disponibles.
                     </p>
                 ) : (
@@ -366,26 +364,26 @@ export default function CursosPage() {
                                 </div>
                                 <h5
                                     className="font-black text-xl mb-2 leading-tight"
-                                    style={{ color: "var(--faro-on-surface)" }}
+                                    style={{ color: "var(--site-on-surface)" }}
                                 >
                                     {book.title}
                                 </h5>
                                 <p
                                     className="text-xs font-semibold mb-3 uppercase tracking-wide"
-                                    style={{ color: "var(--faro-primary)" }}
+                                    style={{ color: "var(--site-primary)" }}
                                 >
                                     {book.author}
                                 </p>
                                 <p
                                     className="text-sm leading-relaxed mb-3 flex-grow"
-                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                    style={{ color: "var(--site-on-surface-variant)" }}
                                 >
                                     {book.desc}
                                 </p>
-                                <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: "var(--faro-outline-variant)" }}>
+                                <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: "var(--site-outline-variant)" }}>
                                     <span
                                         className="text-lg font-bold"
-                                        style={{ color: "var(--faro-on-surface)" }}
+                                        style={{ color: "var(--site-on-surface)" }}
                                     >
                                         {book.price}
                                     </span>
@@ -394,8 +392,8 @@ export default function CursosPage() {
                                         disabled={wishlist.includes(book.title)}
                                         className="w-12 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 hover:-rotate-6 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:rotate-0"
                                         style={{
-                                            background: wishlist.includes(book.title) ? "var(--faro-surface-container-highest)" : "var(--faro-primary-container)",
-                                            color: "var(--faro-primary)",
+                                            background: wishlist.includes(book.title) ? "var(--site-surface-container-highest)" : "var(--site-primary-container)",
+                                            color: "var(--site-primary)",
                                         }}
                                     >
                                         <ShoppingBag size={20} />
@@ -408,32 +406,32 @@ export default function CursosPage() {
             </section>
 
             {/* ── CTA ACADEMIA ─────────────────────────── */}
-            <section className="px-4 sm:px-6 md:px-8 lg:px-12 mt-32">
+            <section className="px-4 sm:px-6 md:px-8 lg:px-12 mt-16 md:mt-32">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="rounded-lg p-4 md:p-24 relative overflow-hidden shadow-2xl"
+                    className="rounded-lg p-6 md:p-14 lg:p-20 relative overflow-hidden shadow-2xl"
                     style={{
-                        background: "linear-gradient(135deg, var(--faro-surface-container-high) 0%, var(--faro-surface-container-low) 100%)",
-                        border: "1px solid var(--faro-outline-variant)",
+                        background: "linear-gradient(135deg, var(--site-surface-container-high) 0%, var(--site-surface-container-low) 100%)",
+                        border: "1px solid var(--site-outline-variant)",
                     }}
                 >
                     <div
                         className="absolute top-0 right-0 w-96 h-96 blur-[120px] rounded-full -mr-32 -mt-32 pointer-events-none"
-                        style={{ background: "var(--faro-card-highlight)" }}
+                        style={{ background: "var(--site-card-highlight)" }}
                     />
                     <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                         <div>
                             <h2
                                 className="text-lg md:text-xl font-bold mb-3 tracking-tight leading-[1.1]"
-                                style={{ color: "var(--faro-on-surface)" }}
+                                style={{ color: "var(--site-on-surface)" }}
                             >
                                 Únete a la <br/>Academia FARO
                             </h2>
                             <p
                                 className="text-xl leading-relaxed mb-3"
-                                style={{ color: "var(--faro-on-surface-variant)" }}
+                                style={{ color: "var(--site-on-surface-variant)" }}
                             >
                                 Recibe actualizaciones sobre nuevos cursos, lanzamientos de
                                 libros y eventos exclusivos de formación directamente en tu
@@ -449,16 +447,16 @@ export default function CursosPage() {
                                     disabled={isSubmitting}
                                     className="flex-1 rounded-lg px-3 py-1.5 text-lg focus:outline-none transition-shadow focus:shadow-xl"
                                     style={{
-                                        background: "var(--faro-surface-container-highest)",
-                                        color: "var(--faro-on-surface)",
-                                        border: "2px solid var(--faro-outline-variant)",
+                                        background: "var(--site-surface-container-highest)",
+                                        color: "var(--site-on-surface)",
+                                        border: "2px solid var(--site-outline-variant)",
                                     }}
                                 />
                                 <button
                                     type="submit"
                                     className="px-4 py-1.5 rounded-lg font-black text-sm text-white shadow-lg transition-all hover:scale-105 uppercase tracking-wide"
                                     style={{
-                                        background: "var(--faro-cta-gradient)",
+                                        background: "var(--site-cta-gradient)",
                                     }}
                                 >
                                     Suscribirme
@@ -470,7 +468,7 @@ export default function CursosPage() {
                                 initial={{ y: 20 }}
                                 whileInView={{ y: 0 }}
                                 className="relative aspect-square rounded-lg overflow-hidden shadow-2xl"
-                                style={{ background: "var(--faro-surface)" }}
+                                style={{ background: "var(--site-surface)" }}
                             >
                                 <Image
                                     src="https://picsum.photos/seed/academia1/800/800"
@@ -484,7 +482,7 @@ export default function CursosPage() {
                                 initial={{ y: 40 }}
                                 whileInView={{ y: 20 }}
                                 className="relative aspect-square rounded-lg overflow-hidden shadow-2xl"
-                                style={{ background: "var(--faro-surface)" }}
+                                style={{ background: "var(--site-surface)" }}
                             >
                                 <Image
                                     src="https://picsum.photos/seed/academia2/800/800"

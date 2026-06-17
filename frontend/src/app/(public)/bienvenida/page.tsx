@@ -29,18 +29,18 @@ export default async function WelcomePage({
 
     return (
         <CmsPageOverride slug="bienvenida">
-            <main className="min-h-screen pt-[96px] pb-8 px-3 md:px-6 lg:px-8 xl:px-12" style={{ background: "var(--faro-background)" }}>
-            <section className="mx-auto max-w-6xl rounded-[24px] border border-[color:var(--faro-outline-variant)] overflow-hidden">
+            <main className="min-h-screen pt-[96px] pb-8 px-3 md:px-6 lg:px-8 xl:px-12" style={{ background: "var(--site-background)" }}>
+            <section className="mx-auto max-w-6xl rounded-[24px] border border-[color:var(--site-outline-variant)] overflow-hidden">
                 <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
-                    <div className="p-6 md:p-10 lg:p-12" style={{ background: "linear-gradient(135deg, var(--faro-surface-container-lowest), var(--faro-surface-container-low))" }}>
-                        <div className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide mb-4" style={{ background: "var(--faro-primary-container)", color: "var(--faro-primary)" }}>
+                    <div className="p-6 md:p-10 lg:p-12" style={{ background: "linear-gradient(135deg, var(--site-surface-container-lowest), var(--site-surface-container-low))" }}>
+                        <div className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide mb-4" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
                             <Sparkles size={14} />
                             Bienvenida
                         </div>
-                        <h1 className="text-2xl md:text-4xl font-black tracking-tight mb-4" style={{ color: "var(--faro-on-background)" }}>
+                        <h1 className="text-2xl md:text-4xl font-black tracking-tight mb-4" style={{ color: "var(--site-on-background)" }}>
                             Hola, {name}.
                         </h1>
-                        <p className="text-lg md:text-xl leading-relaxed max-w-2xl mb-6" style={{ color: "var(--faro-on-surface-variant)" }}>
+                        <p className="text-lg md:text-xl leading-relaxed max-w-2xl mb-6" style={{ color: "var(--site-on-surface-variant)" }}>
                             No encontramos una cuenta registrada todavía, pero no te dejamos en una pantalla vacía.
                             Puedes empezar por la ruta pública de fe y crecimiento que preparamos para ti.
                         </p>
@@ -48,7 +48,7 @@ export default async function WelcomePage({
                             <Link
                                 href="/cursos"
                                 className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold uppercase tracking-wide"
-                                style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}
+                                style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
                             >
                                 Discipulado Básico
                                 <ArrowRight size={16} />
@@ -56,7 +56,7 @@ export default async function WelcomePage({
                             <Link
                                 href="/conocer-a-jesus"
                                 className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold uppercase tracking-wide border"
-                                style={{ borderColor: "var(--faro-outline-variant)", color: "var(--faro-on-surface)" }}
+                                style={{ borderColor: "var(--site-outline-variant)", color: "var(--site-on-surface)" }}
                             >
                                 Una nueva vida con Cristo
                                 <ArrowRight size={16} />
@@ -64,25 +64,25 @@ export default async function WelcomePage({
                         </div>
                     </div>
 
-                    <div className="p-6 md:p-10 lg:p-12 border-t lg:border-t-0 lg:border-l" style={{ background: "var(--faro-surface-container)" , borderColor: "var(--faro-outline-variant)" }}>
+                    <div className="p-6 md:p-10 lg:p-12 border-t lg:border-t-0 lg:border-l" style={{ background: "var(--site-surface-container)" , borderColor: "var(--site-outline-variant)" }}>
                         <div className="space-y-4">
                             {HIGHLIGHTS.map(({ title, description, href, cta, icon: Icon }) => (
                                 <Link
                                     key={title}
                                     href={href}
                                     className="block rounded-[18px] border p-4 transition-transform hover:-translate-y-0.5"
-                                    style={{ borderColor: "var(--faro-outline-variant)", background: "var(--faro-surface)" }}
+                                    style={{ borderColor: "var(--site-outline-variant)", background: "var(--site-surface)" }}
                                 >
                                     <div className="flex items-start gap-3">
-                                        <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "var(--faro-primary-container)", color: "var(--faro-primary)" }}>
+                                        <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
                                             <Icon size={18} />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-black" style={{ color: "var(--faro-on-surface)" }}>{title}</p>
-                                            <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                            <p className="text-sm font-black" style={{ color: "var(--site-on-surface)" }}>{title}</p>
+                                            <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
                                                 {description}
                                             </p>
-                                            <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--faro-primary)" }}>
+                                            <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--site-primary)" }}>
                                                 {cta}
                                                 <ArrowRight size={14} />
                                             </span>

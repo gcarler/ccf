@@ -73,13 +73,13 @@ export default function CrmTableView({ members, search, onRowClick, isList = fal
     }, [isList]);
 
     return (
-        <div className="h-full rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
+        <div className="h-full min-w-0 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
             <AgGridReact
                 ref={gridRef}
                 theme={isDark ? darkTheme : lightTheme}
                 rowData={filtered}
                 columnDefs={colDefs}
-                defaultColDef={{ resizable: true, sortable: true, filter: true }}
+                defaultColDef={{ resizable: true, sortable: true, filter: true, minWidth: 96 }}
                 getRowId={(p) => String(p.data.id)}
                 onRowClicked={(e) => onRowClick(e.data)}
                 rowStyle={{ cursor: 'pointer' }}

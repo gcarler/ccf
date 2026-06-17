@@ -72,7 +72,7 @@ export default function AcademyAccountPage() {
 
  <div className="w-full px-3 py-1.5 space-y-3">
                 {/* Stats */}
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {stats.map((s, i) => (
                         <motion.div
                             key={s.label}
@@ -90,7 +90,7 @@ export default function AcademyAccountPage() {
                     ))}
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     {/* Personal Info */}
                     <motion.div
                         initial={{ opacity: 0, y: 12 }}

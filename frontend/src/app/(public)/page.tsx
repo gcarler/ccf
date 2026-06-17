@@ -7,19 +7,20 @@ import { ArrowRight, Play, Calendar, MapPin, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { useContentBlock } from "@/hooks/useContent";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
+import { SITE_KEY, SITE_NAME } from "@/lib/site-config";
 import { useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function PublicHomePage() {
-    const { data: heroContent } = useContentBlock("faro_home_hero");
+    const { data: heroContent } = useContentBlock(`${SITE_KEY}_home_hero`);
     const { data: eventsContent } = useContentBlock(FARO_EVENTS_BLOCK_KEY);
 
-    const heroEyebrow = heroContent?.eyebrow || "UNA COMUNIDAD QUE ILUMINA";
-    const heroTitleLead = heroContent?.title_lead || "FARO: ";
-    const heroTitleAccent = heroContent?.title_accent || "Tu Guía,";
-    const heroTitleTail = heroContent?.title_tail || "Su Luz";
+    const heroEyebrow = heroContent?.eyebrow || "BIENVENIDOS";
+    const heroTitleLead = heroContent?.title_lead || SITE_NAME;
+    const heroTitleAccent = heroContent?.title_accent || "";
+    const heroTitleTail = heroContent?.title_tail || "";
     const heroDescription = heroContent?.description || "Navegando juntos hacia la verdad. Un espacio de encuentro, fe y transformación en el corazón de nuestra comunidad.";
     const heroPrimaryCta = heroContent?.primary_cta || "Empezar mi viaje";
     const heroSecondaryCta = heroContent?.secondary_cta || "Ver Prédicas";
@@ -64,28 +65,29 @@ export default function PublicHomePage() {
         <CmsPageOverride slug="home">
             <main>
             {/* ─── HERO ─────────────────────────────────────────────── */}
-            <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+            <section className="relative min-h-[92svh] md:min-h-screen flex items-center justify-center overflow-hidden">
                 {/* Background: imagen faro con overlay */}
                 <div
                     className="absolute inset-0 bg-cover bg-center"
                     style={{
-                        backgroundImage:
-                            "url('https://picsum.photos/seed/1506905925346-21bda4d32df4/800/600')",
-                        filter: "brightness(0.35) saturate(0.6)",
+                        backgroundImage: heroContent?.bg_image
+                            ? `url('${heroContent.bg_image}')`
+                            : "linear-gradient(135deg, #0a1628 0%, #0d2244 50%, #0a1628 100%)",
+                        filter: heroContent?.bg_image ? "brightness(0.35) saturate(0.6)" : undefined,
                     }}
                 />
                 {/* Overlay gradiente azul marino */}
                 <div
                     className="absolute inset-0"
                     style={{
-                        background: "var(--faro-hero-overlay)",
+                        background: "var(--site-hero-overlay)",
                     }}
                 />
                 {/* Beam glow */}
                 <div
                     className="absolute inset-0 pointer-events-none"
                     style={{
-                        background: "radial-gradient(ellipse at 60% 20%, var(--faro-glow-subtle) 0%, transparent 60%)",
+                        background: "radial-gradient(ellipse at 60% 20%, var(--site-glow-subtle) 0%, transparent 60%)",
                     }}
                 />
 
@@ -93,21 +95,18 @@ export default function PublicHomePage() {
                 <div className="relative z-10 text-center w-full px-3 md:px-4 lg:px-8 xl:px-12 pt-24">
                     <span
                         className="inline-block text-xs font-bold uppercase tracking-wide mb-3"
-                        style={{ color: "var(--faro-hero-badge-color)" }}
+                        style={{ color: "var(--site-hero-badge-color)" }}
                     >
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="font-bold tracking-tight leading-[0.9] mb-3"
-                        style={{
-                            fontSize: "clamp(3.5rem, 9vw, 8rem)",
-                            color: "var(--faro-on-hero)",
-                        }}
+                        className="mx-auto max-w-5xl font-bold tracking-tight leading-[0.9] mb-3 text-5xl sm:text-6xl lg:text-8xl"
+                        style={{ color: "var(--site-on-hero)" }}
                     >
                         {heroTitleLead}{" "}
                         <span
                             style={{
-                                background: "var(--faro-hero-accent-1)",
+                                background: "var(--site-hero-accent-1)",
                                 WebkitBackgroundClip: "text",
                                 WebkitTextFillColor: "transparent",
                             }}
@@ -117,7 +116,7 @@ export default function PublicHomePage() {
                         <br />
                         <span
                             style={{
-                                background: "var(--faro-hero-accent-2)",
+                                background: "var(--site-hero-accent-2)",
                                 WebkitBackgroundClip: "text",
                                 WebkitTextFillColor: "transparent",
                             }}
@@ -126,8 +125,8 @@ export default function PublicHomePage() {
                         </span>
                     </h1>
                     <p
-                        className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-3"
-                        style={{ color: "var(--faro-on-hero)", opacity: 0.75 }}
+                        className="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-3"
+                        style={{ color: "var(--site-on-hero)", opacity: 0.75 }}
                     >
                         {heroDescription}
                     </p>
@@ -136,8 +135,8 @@ export default function PublicHomePage() {
                             href="/conocer-a-jesus"
                             className="group flex items-center gap-3 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide text-white transition-all hover:scale-105"
                             style={{
-                                background: "var(--faro-hero-cta-gradient)",
-                                boxShadow: "var(--faro-hero-cta-shadow)",
+                                background: "var(--site-hero-cta-gradient)",
+                                boxShadow: "var(--site-hero-cta-shadow)",
                             }}
                         >
                             {heroPrimaryCta}
@@ -150,9 +149,9 @@ export default function PublicHomePage() {
                             href="/predicas"
                             className="flex items-center gap-3 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide transition-all hover:scale-105"
                             style={{
-                                background: "var(--faro-hero-bg-light)",
-                                border: "2px solid var(--faro-hero-border-light)",
-                                color: "var(--faro-on-hero)",
+                                background: "var(--site-hero-bg-light)",
+                                border: "2px solid var(--site-hero-border-light)",
+                                color: "var(--site-on-hero)",
                                 backdropFilter: "blur(10px)",
                             }}
                         >
@@ -178,8 +177,8 @@ export default function PublicHomePage() {
 
             {/* ─── BENTO: Bienvenidos a Casa ────────────────────────── */}
             <section
-                className="py-16 md:py-24 px-3 md:px-4 lg:px-8 xl:px-12 overflow-hidden"
-                style={{ background: "var(--faro-surface-container-low)" }}
+                className="py-16 md:py-24 px-4 sm:px-6 md:px-8 xl:px-12 overflow-hidden"
+                style={{ background: "var(--site-surface-container-low)" }}
             >
                 <div className="w-full">
                     <motion.div
@@ -190,31 +189,32 @@ export default function PublicHomePage() {
                     >
                         <span
                             className="text-xs font-bold uppercase tracking-widest block mb-4"
-                            style={{ color: "var(--faro-primary)" }}
+                            style={{ color: "var(--site-primary)" }}
                         >
                             Nuestra esencia
                         </span>
                         <h2
-                            className="font-black tracking-tight leading-tight"
-                            style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", color: "var(--faro-on-background)" }}
+                            className="font-black tracking-tight leading-tight text-4xl sm:text-5xl lg:text-6xl"
+                            style={{ color: "var(--site-on-background)" }}
                         >
                             Bienvenidos a Casa
                         </h2>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {/* Card grande — Conocer a Jesús */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.1 }}
-                            className="md:col-span-2 rounded-2xl flex flex-col justify-end group relative overflow-hidden min-h-[420px]"
+                            className="sm:col-span-2 md:col-span-2 rounded-2xl flex flex-col justify-end group relative overflow-hidden min-h-[420px]"
                         >
                             <Image
                                 src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&q=80"
-                                alt="Comunidad El Faro"
+                                alt={SITE_NAME}
                                 fill
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 66vw"
                                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                             />
                             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 55%, transparent 100%)" }} />
@@ -271,6 +271,7 @@ export default function PublicHomePage() {
                                         src={img}
                                         alt={title}
                                         fill
+                                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
                                     <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)" }} />
@@ -287,10 +288,10 @@ export default function PublicHomePage() {
 
             {/* ─── ACTIVIDADES RECIENTES ────────────────────────────── */}
             <section
-                className="py-8 md:py-12 px-3 md:px-4 lg:px-8 xl:px-12 overflow-hidden"
-                style={{ background: "var(--faro-surface)" }}
+                className="py-8 md:py-12 px-4 sm:px-6 md:px-8 xl:px-12 overflow-hidden"
+                style={{ background: "var(--site-surface)" }}
             >
-                <div className="w-full px-3 md:px-8 lg:px-12 xl:px-16">
+                <div className="w-full">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -300,13 +301,13 @@ export default function PublicHomePage() {
                         <div>
                             <span
                                 className="text-xs font-bold uppercase tracking-wide block mb-3"
-                                style={{ color: "var(--faro-primary)" }}
+                                style={{ color: "var(--site-primary)" }}
                             >
                                 Actualidad
                             </span>
                             <h2
                                 className="font-bold text-2xl md:text-3xl tracking-tight"
-                                style={{ color: "var(--faro-on-background)" }}
+                                style={{ color: "var(--site-on-background)" }}
                             >
                                 Actividades Recientes
                             </h2>
@@ -315,19 +316,19 @@ export default function PublicHomePage() {
                             href="/eventos"
                             className="hidden md:block text-sm font-bold uppercase tracking-wide border-b-2 pb-1 transition-all hover:-translate-y-1"
                             style={{
-                                color: "var(--faro-primary)",
-                                borderColor: "var(--faro-primary)",
+                                color: "var(--site-primary)",
+                                borderColor: "var(--site-primary)",
                             }}
                         >
                             Ver calendario →
                         </Link>
                     </motion.div>
                     {publicEvents.length === 0 ? (
-                        <p className="text-center py-1.5" style={{ color: "var(--faro-on-surface-variant)" }}>
+                        <p className="text-center py-1.5" style={{ color: "var(--site-on-surface-variant)" }}>
                             Próximamente encontrarás aquí nuestras actividades. Mientras tanto, síguenos en redes sociales.
                         </p>
                     ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {publicEvents.slice(0, 3).map(({ img, tag, date, title, desc }, idx: number) => (
                             <motion.div
                                 key={title}
@@ -339,12 +340,13 @@ export default function PublicHomePage() {
                             >
                                 <div
                                     className="relative aspect-video rounded-lg overflow-hidden mb-4 shadow-md"
-                                    style={{ background: "var(--faro-surface-container-high)" }}
+                                    style={{ background: "var(--site-surface-container-high)" }}
                                 >
                                     <Image
                                         src={img || "https://picsum.photos/seed/1506905925346-21bda4d32df4/800/600"}
                                         alt={title || "Image"}
                                         fill
+                                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                         className="object-cover group-hover:scale-105 transition-transform duration-700"
                                     />
                                 </div>
@@ -352,28 +354,28 @@ export default function PublicHomePage() {
                                     <span
                                         className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
                                         style={{
-                                            background: "var(--faro-secondary-container)",
-                                            color: "var(--faro-on-secondary-container)",
+                                            background: "var(--site-secondary-container)",
+                                            color: "var(--site-on-secondary-container)",
                                         }}
                                     >
                                         {tag}
                                     </span>
                                     <span
                                         className="text-[10px] font-bold uppercase tracking-wider"
-                                        style={{ color: "var(--faro-on-surface-variant)" }}
+                                        style={{ color: "var(--site-on-surface-variant)" }}
                                     >
                                         {date}
                                     </span>
                                 </div>
                                 <h3
                                     className="font-bold text-lg mb-3 group-hover:opacity-80 transition-opacity"
-                                    style={{ color: "var(--faro-on-surface)" }}
+                                    style={{ color: "var(--site-on-surface)" }}
                                 >
                                     {title}
                                 </h3>
                                 <p
                                     className="text-sm leading-relaxed line-clamp-2"
-                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                    style={{ color: "var(--site-on-surface-variant)" }}
                                 >
                                     {desc}
                                 </p>
@@ -385,31 +387,31 @@ export default function PublicHomePage() {
             </section>
 
             {/* ─── CTA NEWSLETTER ───────────────────────────────────── */}
-            <section className="py-16 md:py-24 px-3 md:px-4 lg:px-8 xl:px-12" style={{ background: "var(--faro-surface-container-low)" }}>
+            <section className="py-16 md:py-24 px-4 sm:px-6 md:px-8 xl:px-12" style={{ background: "var(--site-surface-container-low)" }}>
                 <motion.div
                     initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     className="max-w-3xl mx-auto text-center"
                 >
-                    <span className="inline-block text-xs font-bold uppercase tracking-widest mb-5 px-4 py-1.5 rounded-full" style={{ background: "var(--faro-primary-container)", color: "var(--faro-primary)" }}>
+                    <span className="inline-block text-xs font-bold uppercase tracking-widest mb-5 px-4 py-1.5 rounded-full" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
                         Boletín semanal
                     </span>
                     <h2
-                        className="font-black tracking-tight mb-5 leading-tight"
-                        style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--faro-on-background)" }}
+                        className="font-black tracking-tight mb-5 leading-tight text-3xl sm:text-4xl lg:text-5xl"
+                        style={{ color: "var(--site-on-background)" }}
                     >
                         ¿Quieres recibir nuestras novedades?
                     </h2>
-                    <p className="text-lg md:text-xl mb-10 leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+                    <p className="text-base sm:text-lg mb-10 leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
                         Meditaciones semanales, eventos exclusivos y más.<br />
-                        <span style={{ color: "var(--faro-primary)" }}>Directo a tu correo.</span>
+                        <span style={{ color: "var(--site-primary)" }}>Directo a tu correo.</span>
                     </p>
 
                     {nlStatus === "sent" ? (
                         <div className="py-6">
-                            <p className="text-2xl font-black mb-2" style={{ color: "var(--faro-on-background)" }}>¡Gracias por suscribirte!</p>
-                            <p className="text-base" style={{ color: "var(--faro-on-surface-variant)" }}>Recibirás meditaciones y novedades semanales.</p>
+                            <p className="text-2xl font-black mb-2" style={{ color: "var(--site-on-background)" }}>¡Gracias por suscribirte!</p>
+                            <p className="text-base" style={{ color: "var(--site-on-surface-variant)" }}>Recibirás meditaciones y novedades semanales.</p>
                         </div>
                     ) : (
                         <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
@@ -422,9 +424,9 @@ export default function PublicHomePage() {
                                 disabled={nlStatus === "sending"}
                                 className="flex-grow rounded-full px-6 py-4 text-base focus:outline-none disabled:opacity-60 focus:ring-2"
                                 style={{
-                                    background: "var(--faro-surface)",
-                                    border: "2px solid var(--faro-outline-variant)",
-                                    color: "var(--faro-on-surface)",
+                                    background: "var(--site-surface)",
+                                    border: "2px solid var(--site-outline-variant)",
+                                    color: "var(--site-on-surface)",
                                 }}
                             />
                             <button
@@ -432,8 +434,8 @@ export default function PublicHomePage() {
                                 disabled={nlStatus === "sending"}
                                 className="shrink-0 px-8 py-4 rounded-full font-black text-sm uppercase tracking-wider text-white transition-all hover:scale-105 disabled:opacity-60"
                                 style={{
-                                    background: "var(--faro-cta-gradient)",
-                                    boxShadow: "var(--faro-cta-shadow)",
+                                    background: "var(--site-cta-gradient)",
+                                    boxShadow: "var(--site-cta-shadow)",
                                 }}
                             >
                                 {nlStatus === "sending" ? "Enviando..." : "Suscribirme"}
@@ -446,4 +448,3 @@ export default function PublicHomePage() {
         </CmsPageOverride>
     );
 }
-

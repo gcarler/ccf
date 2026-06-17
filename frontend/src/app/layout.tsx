@@ -16,14 +16,16 @@ import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
+const _siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "Mi Comunidad";
+
 export const metadata: Metadata = {
-    title: "CCF Platform | Formación y CRM",
-    description: "Plataforma académica y de gestión moderna",
+    title: `${_siteName} | Plataforma`,
+    description: "Plataforma académica y de gestión para comunidades de fe",
     manifest: "/manifest.json",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
-        title: "CCF Platform",
+        title: _siteName,
     },
     formatDetection: {
         telephone: false,

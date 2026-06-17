@@ -52,7 +52,7 @@ export default function SupportKBPage() {
                     {/* Categories */}
                     <section>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-5">Explorar por Categoría</p>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             {CATEGORIES.map((cat, i) => (
                                 <motion.button
                                     key={cat.id}

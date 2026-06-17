@@ -905,8 +905,8 @@ export default function EventsPage() {
  )}
 
  {viewType === 'table' && (
- <div className="overflow-hidden rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-sm">
- <table className="w-full text-left">
+ <div className="overflow-x-auto rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-sm">
+ <table className="w-full min-w-[480px] text-left">
  <thead className="bg-[hsl(var(--bg-muted))]">
  <tr>
  {['Evento', 'Tipo', 'Audiencia', 'Universo', 'Asistencia', 'Fecha visual'].map((label) => (

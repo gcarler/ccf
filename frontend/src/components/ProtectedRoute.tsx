@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { SITE_NAME } from '@/lib/site-config';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -204,7 +205,7 @@ function GateScreen({
                     className="mt-6 text-[10px] font-medium tracking-[0.18em] uppercase"
                     style={{ color: 'rgba(255,255,255,0.18)' }}
                 >
-                    El Faro · Acceso Protegido
+                    {SITE_NAME} · Acceso Protegido
                 </p>
             </div>
 
@@ -241,7 +242,7 @@ function LoadingScreen() {
                 {/* Badge */}
                 <div className="inline-flex items-center gap-2.5 border border-white/15 rounded-full px-3 py-2 bg-white/5 backdrop-blur-md mb-2">
                     <FaroFlame size={14} />
-                    <span className="text-white/60 font-bold uppercase tracking-wide text-[9px]">El Faro</span>
+                    <span className="text-white/60 font-bold uppercase tracking-wide text-[9px]">{SITE_NAME}</span>
                 </div>
 
                 {/* Spinner */}

@@ -21,8 +21,8 @@ export default function FaroMobileNav() {
             <div
                 className="backdrop-blur-2xl w-[90%] max-w-md rounded-[0.75rem] px-3 py-3 flex justify-between items-center"
                 style={{
-                    background: "var(--faro-mobile-nav-bg)",
-                    boxShadow: "var(--faro-mobile-nav-shadow)",
+                    background: "var(--site-mobile-nav-bg)",
+                    boxShadow: "var(--site-mobile-nav-shadow)",
                 }}
             >
                 {navItems.map(({ href, label, icon: Icon }) => {
@@ -34,12 +34,12 @@ export default function FaroMobileNav() {
                             className="flex flex-col items-center justify-center rounded-[0.75rem] p-2 transition-all"
                             style={isActive
                                 ? {
-                                      color: "var(--faro-primary)",
-                                      background: "var(--faro-primary-container)",
-                                      boxShadow: "var(--faro-mobile-nav-glow)",
+                                      color: "var(--site-primary)",
+                                      background: "var(--site-primary-container)",
+                                      boxShadow: "var(--site-mobile-nav-glow)",
                                   }
                                 : {
-                                      color: "var(--faro-mobile-nav-inactive)",
+                                      color: "var(--site-mobile-nav-inactive)",
                                   }
                             }
                         >

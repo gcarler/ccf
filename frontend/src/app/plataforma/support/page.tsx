@@ -187,7 +187,7 @@ export default function SupportPage() {
                                 label: 'Categoría', 
                                 type: 'text', 
                                 width: '150px',
-                                render: (val) => (
+                                render: (val: any) => (
                                     <span className="text-[11px] font-bold text-slate-500 flex items-center gap-2">
                                         <Book size={12} className="text-slate-300" />
                                         {val}

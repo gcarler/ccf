@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import { getCmsPublicPage } from "@/lib/cms/v2";
 import { CmsPublicPage } from "@/types/cms-v2";
 import { FAROHeader, FAROFooter } from "@/components/public/FAROShared";
+import { SITE_KEY } from "@/lib/site-config";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string[] }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!slugValue) return {};
 
   try {
-    const page = await getCmsPublicPage("faro", slugValue);
+    const page = await getCmsPublicPage(SITE_KEY, slugValue);
     if (!page) return {};
     const seo = page.seo_json || {};
     const metaTitle = typeof seo.meta_title === "string" && seo.meta_title.trim() ? seo.meta_title : page.title;
@@ -42,7 +43,7 @@ export default async function FaroDynamicPage({ params }: { params: Promise<{ sl
 
   let page: CmsPublicPage | null = null;
   try {
-    page = await getCmsPublicPage("faro", slugValue);
+    page = await getCmsPublicPage(SITE_KEY, slugValue);
   } catch {
     notFound();
   }

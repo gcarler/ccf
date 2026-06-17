@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { SITE_NAME } from "@/lib/site-config";
 import Link from "next/link";
 import { Activity, Sparkles, ShieldCheck, Users, PlayCircle, GraduationCap, MapPinned } from "lucide-react";
 
@@ -160,7 +161,7 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
                         <PlayCircle className="w-4 h-4" /> Demo guiada
                     </div>
                     <p className="text-sm text-slate-200 leading-relaxed">
-                        Mira cómo luce una semana típica dentro de CCF Platform con recursos interactivos, recordatorios inteligentes y tableros compartidos.
+                        Mira cómo luce una semana típica dentro de {SITE_NAME} con recursos interactivos, recordatorios inteligentes y tableros compartidos.
                     </p>
                     <Link
                         href={copy.cta.href}

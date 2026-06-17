@@ -33,6 +33,14 @@ const nextConfig = {
     async headers() {
         return [
             {
+                source: '/((?!_next/static|_next/image|api|icons|pastores|manifest.json|favicon.ico|noise.svg).*)',
+                headers: [
+                    { key: 'Cache-Control', value: 'no-store, no-cache, max-age=0, must-revalidate' },
+                    { key: 'Pragma', value: 'no-cache' },
+                    { key: 'Expires', value: '0' },
+                ],
+            },
+            {
                 source: '/auth/callback',
                 headers: [
                     { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },

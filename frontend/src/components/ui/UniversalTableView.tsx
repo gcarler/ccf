@@ -601,13 +601,13 @@ export default function UniversalTableView<T extends { id: string | number }>({
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full gap-2">
+    <div className="flex min-w-0 flex-col h-full gap-2">
 
       {/* ── Toolbar ── */}
-      <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+      <div className="flex min-w-0 items-center gap-1.5 flex-wrap shrink-0">
 
         {/* Search */}
-        <div className="relative flex-1 min-w-[180px] max-w-[280px]">
+        <div className="relative flex-1 min-w-[min(100%,180px)] max-w-[280px]">
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             value={quickFilter}
@@ -677,7 +677,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
         )}
 
         {/* Right actions */}
-        <div className="flex items-center gap-1.5 ml-auto">
+        <div className="flex min-w-0 items-center gap-1.5 ml-0 sm:ml-auto overflow-x-auto">
           {!isLoading && hasData && (
             <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 tabular-nums hidden sm:block pr-1">
               {isFiltered ? `${filteredData.length} / ${data.length}` : data.length}
@@ -808,7 +808,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
       </AnimatePresence>
 
       {/* ── Grid ── */}
-      <div className="flex-1 min-h-[200px] rounded-xl overflow-hidden border border-[hsl(var(--border-primary))] relative">
+      <div className="flex-1 min-w-0 min-h-[200px] rounded-xl overflow-hidden border border-[hsl(var(--border-primary))] relative">
         {isLoading ? (
           <div className="bg-[hsl(var(--bg-primary))] h-full">
             <div className="flex items-center px-4 border-b border-[hsl(var(--border-primary))] h-10 gap-4">
@@ -880,7 +880,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 24 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-y-0 right-0 w-[480px] z-50 shadow-2xl"
+            className="fixed inset-y-0 right-0 w-full sm:w-[480px] z-50 shadow-2xl"
           >
             {renderDetailPanel(selectedItem, () => setSelectedItem(null))}
           </motion.div>

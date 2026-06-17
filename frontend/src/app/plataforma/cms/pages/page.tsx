@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { SITE_KEY } from "@/lib/site-config";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -32,7 +33,7 @@ function slugify(value: string) {
 export default function CmsPagesManagement() {
   const router = useRouter();
   const { token, user } = useAuth();
-  const [siteKey, setSiteKey] = useState("faro");
+  const [siteKey, setSiteKey] = useState(SITE_KEY);
   const [sites, setSites] = useState<Array<{ site_key: string; name: string }>>([]);
   const [pages, setPages] = useState<CmsPage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +42,7 @@ export default function CmsPagesManagement() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [selectedPage, setSelectedPage] = useState<CmsPage | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const canEdit = canEditCms(user?.role);
 
   const fetchPages = async (targetSite: string) => {
@@ -110,22 +111,28 @@ export default function CmsPagesManagement() {
 
   const handleCreatePage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!newTitle.trim() || !token || !canEdit) return;
+    const trimmedTitle = newTitle.trim();
+    if (!trimmedTitle || !token || !canEdit) return;
+    const slug = slugify(trimmedTitle);
+    if (!slug) {
+      toast.error("El título no produce un slug válido");
+      return;
+    }
     try {
-      const slug = slugify(newTitle);
-      if (!slug) return;
-      await createCmsPage(siteKey, { title: newTitle, slug }, token);
+      await createCmsPage(siteKey, { title: trimmedTitle, slug }, token);
+      toast.success(`Página "${trimmedTitle}" creada`);
       setNewTitle("");
       setIsQuickAddOpen(false);
       await fetchPages(siteKey);
     } catch (error) {
       console.error("Error creating page:", error);
-      toast.error("Error al crear página");
+      toast.error("Error al crear página. El slug puede estar en uso.");
     }
   };
 
   const handleArchivePage = async (page: CmsPage) => {
     if (!token || !canEdit) return;
+    if (!window.confirm(`¿Archivar "${page.title}"? Puedes restaurarla después.`)) return;
     try {
       await workflowCmsPage(siteKey, page.slug, "archive", "Archivada desde gestion de paginas", token);
       if (selectedPage?.id === page.id) {
@@ -191,7 +198,7 @@ export default function CmsPagesManagement() {
     }
   };
 
-  const toggleSelect = (id: number) => {
+  const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -277,7 +284,7 @@ export default function CmsPagesManagement() {
         </div>
 
         <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-1.5 text-[12px] shrink-0">
-          {sites.length === 0 && <option value="faro">faro</option>}
+          {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
           {sites.map((site) => (
             <option key={site.site_key} value={site.site_key}>{site.name} ({site.site_key})</option>
           ))}
@@ -445,8 +452,8 @@ export default function CmsPagesManagement() {
           <UniversalWikiView moduleName="CMS Pages" storageKey={`cms-pages-wiki-${siteKey}`} />
         ) : (
           /* TABLE VIEW */
-          <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
-            <table className="w-full text-left">
+          <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto">
+            <table className="w-full min-w-[480px] text-left">
               <thead className="bg-slate-50 dark:bg-white/5">
                 <tr>
                   <th className="w-10 px-4 py-3">

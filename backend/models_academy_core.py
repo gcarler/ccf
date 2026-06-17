@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import uuid as _uuid
 
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey,
-                        Integer, Numeric, String, Text,
+                        Integer, JSON, Numeric, String, Text,
                         UniqueConstraint)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -30,8 +30,14 @@ class Curso(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True)
     code = Column(String(50), nullable=False, unique=True)
+    slug = Column(String(200), nullable=True, unique=True, index=True)
     title = Column(String(200), nullable=False)
     description = Column(Text)
+    excerpt = Column(Text, nullable=True)
+    tag = Column(String(100), nullable=True)
+    cta_text = Column(String(100), nullable=True)
+    syllabus = Column(JSON, nullable=True)
+    instructor_name = Column(String(200), nullable=True)
     modality = Column(String(50), nullable=False)
     otorga_rol_iglesia = Column(String(50), nullable=True)
     is_published = Column(Boolean, default=False)
@@ -43,6 +49,7 @@ class Curso(Base):
     access_level = Column(String(20), nullable=False, default="member", server_default="member")
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     lecciones = relationship("Leccion", back_populates="curso",
                              cascade="all, delete-orphan")
@@ -76,6 +83,7 @@ class Leccion(Base):
     order_index = Column(Integer, nullable=False)
     duration_minutes = Column(Integer, nullable=False)
     is_published = Column(Boolean, default=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     curso = relationship("Curso", back_populates="lecciones")
 

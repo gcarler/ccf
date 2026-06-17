@@ -98,6 +98,40 @@
   .workspace-platform h6 {
     font-size: clamp(0.6875rem, 0.8125rem, 0.8125rem) !important;
   }
+
+  .workspace-platform :where(div, main, section, article, aside, header, footer, nav, form, ul, ol, li, p, h1, h2, h3, h4, h5, h6, span, a) {
+    min-width: 0;
+  }
+
+  .workspace-platform table {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .workspace-platform :where(.ag-root-wrapper, .ag-root, .ag-body-viewport, .ag-center-cols-viewport, .ag-center-cols-container) {
+    max-width: 100%;
+  }
+
+  .workspace-platform :where(.ag-root-wrapper, .ag-root) {
+    min-width: 0;
+  }
+
+  @media (max-width: 767px) {
+    .workspace-platform :where(.ag-header-cell-text, .ag-cell-value, .ag-cell) {
+      overflow-wrap: anywhere;
+    }
+
+    .workspace-platform :where(.ag-center-cols-viewport, .ag-body-horizontal-scroll-viewport) {
+      overflow-x: auto;
+    }
+  }
+
+  .workspace-platform img,
+  .workspace-platform video,
+  .workspace-platform canvas,
+  .workspace-platform svg {
+    max-width: 100%;
+  }
 }
 
 @layer utilities {
@@ -195,6 +229,46 @@
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  .workspace-content {
+    overscroll-behavior: contain;
+  }
+
+  .workspace-content :where(table) {
+    border-collapse: collapse;
+  }
+
+  .workspace-content :where([role="table"], table, .min-w-max, [class*="min-w-["]) {
+    max-width: none;
+  }
+
+  .workspace-content :where(.overflow-x-auto, [role="tablist"]) {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (max-width: 767px) {
+    .workspace-platform {
+      --max-font-size: 1rem;
+    }
+
+    .workspace-content {
+      padding-bottom: 4.75rem;
+    }
+
+    .workspace-content :where(main, section, article) {
+      max-width: 100%;
+    }
+
+    .workspace-content :where(.grid) {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1179px) {
+    .workspace-content {
+      padding-bottom: 1rem;
+    }
   }
 
   @keyframes shimmer {

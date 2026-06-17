@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { SITE_NAME } from '@/lib/site-config';
 import { 
     X, 
     Download, 
@@ -69,7 +70,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                         </div>
                         <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter leading-tight">Certificado Oficial</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 font-medium leading-relaxed">
-                            Este documento avala tu formación teológica y ministerial en la Comunidad Cristiana El Faro.
+                            Este documento avala tu formación teológica y ministerial en {SITE_NAME}.
                         </p>
                     </div>
 
@@ -143,7 +144,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                             <div className="size-8 bg-slate-900 text-white rounded-full flex items-center justify-center mb-3 shadow-2xl">
                                 <Award size={44} />
                             </div>
-                            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Comunidad Cristiana El Faro</h3>
+                            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">{SITE_NAME}</h3>
                             <div className="h-0.5 w-12 bg-amber-400 rounded-full"></div>
                         </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { SITE_KEY } from "@/lib/site-config";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
@@ -9,7 +10,7 @@ import { motion } from "framer-motion";
 import clsx from "clsx";
 
 interface PageData {
-  id: number;
+  id: string;
   slug: string;
   title: string;
   status: string;
@@ -42,11 +43,11 @@ export default function CmsPageDetailPage() {
         setLoading(true);
         const data = await apiFetch<PageData>(`/cms/pages/${id}`, { token }).catch(() => null);
         setPage(data ?? {
-          id: Number(id),
+          id: id,
           slug: id,
           title: "Página",
           status: "draft",
-          site_key: "faro",
+          site_key: SITE_KEY,
         });
       } finally {
         setLoading(false);
@@ -58,7 +59,7 @@ export default function CmsPageDetailPage() {
   // Auto-redirect countdown
   useEffect(() => {
     if (!page || loading) return;
-    const siteKey = page.site_key || "faro";
+    const siteKey = page.site_key || SITE_KEY;
     const slug = page.slug || id;
 
     if (countdown <= 0) {
@@ -72,7 +73,7 @@ export default function CmsPageDetailPage() {
 
   const handleGoNow = () => {
     if (!page) return;
-    const siteKey = page.site_key || "faro";
+    const siteKey = page.site_key || SITE_KEY;
     router.replace(`/cms/builder?site=${siteKey}&page=${page.slug}`);
   };
 
@@ -118,7 +119,7 @@ export default function CmsPageDetailPage() {
           </h1>
           <div className="flex items-center justify-center gap-4 text-[11px] font-bold text-slate-400">
             <span className="flex items-center gap-1.5">
-              <Globe size={11} /> {page?.site_key || "faro"}
+              <Globe size={11} /> {page?.site_key || SITE_KEY}
             </span>
             <span className="flex items-center gap-1.5">
               <FileText size={11} /> /{page?.slug}

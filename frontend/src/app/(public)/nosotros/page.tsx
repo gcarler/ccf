@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Target, Sparkles, Quote, Heart, Users, BookOpen, Cross, ChevronRight, ArrowRight } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
+import { SITE_KEY } from "@/lib/site-config";
 import RichText from "@/components/public/RichText";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
@@ -35,8 +36,8 @@ const VALOR_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function NosotrosPage() {
-    const { data: heroCms }   = useContentBlock("faro_about_hero");
-    const { data: aboutCms }  = useContentBlock("faro_about_feed");
+    const { data: heroCms }   = useContentBlock(`${SITE_KEY}_about_hero`);
+    const { data: aboutCms }  = useContentBlock(`${SITE_KEY}_about_feed`);
 
     /* ── Hero ── */
     const hero = (heroCms?.parsed && typeof heroCms.parsed === "object" && !Array.isArray(heroCms.parsed))
@@ -46,7 +47,7 @@ export default function NosotrosPage() {
     const heroEyebrow    = (hero?.eyebrow    as string) || "Nuestra Identidad";
     const heroTitleLead  = (hero?.title_lead as string) || "Iluminando el";
     const heroTitleAccent = (hero?.title_accent as string) || "camino juntos.";
-    const heroDescription = (hero?.description as string) || "Somos la <strong>Comunidad Cristiana El Faro</strong>, una iglesia viva y en crecimiento que existe para conectar corazones con Dios y entre sí, fundamentada en la Palabra y movida por el amor.";
+    const heroDescription = (hero?.description as string) || "Una iglesia viva y en crecimiento que existe para conectar corazones con Dios y entre sí, fundamentada en la Palabra y movida por el amor.";
 
     /* ── Feed / About ── */
     const about = (aboutCms?.parsed && typeof aboutCms.parsed === "object" && !Array.isArray(aboutCms.parsed))
@@ -59,48 +60,47 @@ export default function NosotrosPage() {
     const visionText  = (about?.vision_text  as string) || "Ser una comunidad de fe que <strong>transforma vidas, familias y ciudades</strong> a través del poder del Evangelio, levantando discípulos que reflejen el carácter de Cristo en cada esfera de la sociedad.";
     const misionText  = (about?.mision_text  as string) || "Guiar, equipar y movilizar a cada persona de nuestra comunidad mediante la <strong>enseñanza bíblica profunda</strong>, el compañerismo genuino y el servicio desinteresado — llevando la luz de Cristo a donde haya oscuridad.";
 
-    const founderBio  = (about?.founder_bio  as string) || "La Comunidad Cristiana El Faro nació de un profundo encuentro con la paternidad de Dios. Nuestros pastores principales, <strong>Luis Ricardo Meza Gutiérrez</strong> e <strong>Histar Ariza Herrera</strong>, han dedicado más de dos décadas a construir una iglesia que sea verdaderamente una casa — un lugar donde cada persona sea vista, amada y formada.";
-    const founderBio2 = (about?.founder_bio2 as string) || "Desde sus inicios, el ADN de El Faro ha sido claro: <em>sana doctrina, corazón pastoral y vida en comunidad</em>. Una iglesia que no teme enseñar la Palabra en su profundidad y que, al mismo tiempo, envuelve a cada persona con la calidez del amor de Cristo.";
+    const founderBio  = (about?.founder_bio  as string) || "";
+    const founderBio2 = (about?.founder_bio2 as string) || "";
 
-    const quoteText   = (about?.quote_text   as string) || "La luz que encontramos en El Faro no es para guardarla — es para guiar a otros que aún caminan en la oscuridad.";
-    const quoteAuthor = (about?.quote_author as string) || "Pastor Histar Ariza Herrera";
+    const quoteText   = (about?.quote_text   as string) || "";
+    const quoteAuthor = (about?.quote_author as string) || "";
 
     return (
         <CmsPageOverride slug="nosotros">
-            <main className="min-h-screen bg-faro-background pt-[88px] overflow-hidden">
+            <main className="min-h-screen bg-site-background pt-[88px] overflow-hidden">
 
                 {/* ── HERO ── */}
                 <section className="relative px-4 md:px-6 lg:px-8 xl:px-12 py-16 md:py-24 lg:py-28 overflow-hidden">
                     <div className="absolute inset-0 pointer-events-none">
                         <div
                             className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full blur-3xl"
-                            style={{ background: "radial-gradient(ellipse, var(--faro-glow-subtle) 0%, transparent 70%)" }}
+                            style={{ background: "radial-gradient(ellipse, var(--site-glow-subtle) 0%, transparent 70%)" }}
                         />
                         <div
                             className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full blur-3xl"
-                            style={{ background: "radial-gradient(ellipse, var(--faro-glow-subtle) 0%, transparent 70%)" }}
+                            style={{ background: "radial-gradient(ellipse, var(--site-glow-subtle) 0%, transparent 70%)" }}
                         />
                     </div>
                     <div className="relative z-10 max-w-7xl mx-auto">
-                        <div className="flex items-center gap-2 text-xs text-faro-outline mb-8">
-                            <Link href="/" className="hover:text-faro-primary transition-colors">Inicio</Link>
+                        <div className="flex items-center gap-2 text-xs text-site-outline mb-8">
+                            <Link href="/" className="hover:text-site-primary transition-colors">Inicio</Link>
                             <ChevronRight size={12} />
-                            <span className="text-faro-on-surface-variant">Quiénes Somos</span>
+                            <span className="text-site-on-surface-variant">Quiénes Somos</span>
                         </div>
 
-                        <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-faro-primary mb-5">
+                        <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-site-primary mb-5">
                             <Sparkles size={12} className="animate-pulse" /> {heroEyebrow}
                         </span>
                         <h1
-                            className="font-black tracking-tight leading-[0.95] mb-6"
-                            style={{ fontSize: "clamp(2.8rem, 7vw, 6.5rem)" }}
+                            className="max-w-4xl font-black tracking-tight leading-[0.95] mb-6 text-5xl sm:text-6xl lg:text-7xl"
                         >
-                            <span className="text-faro-on-surface">{heroTitleLead}</span>
+                            <span className="text-site-on-surface">{heroTitleLead}</span>
                             <br />
                             <span
                                 className="italic"
                                 style={{
-                                    background: "var(--faro-hero-cta-gradient)",
+                                    background: "var(--site-hero-cta-gradient)",
                                     WebkitBackgroundClip: "text",
                                     WebkitTextFillColor: "transparent",
                                 }}
@@ -110,15 +110,15 @@ export default function NosotrosPage() {
                         </h1>
                         <RichText
                             html={heroDescription}
-                            className="text-lg md:text-xl text-faro-on-surface-variant leading-relaxed max-w-2xl mb-10 [&_strong]:text-faro-on-surface"
+                            className="text-lg md:text-xl text-site-on-surface-variant leading-relaxed max-w-2xl mb-10 [&_strong]:text-site-on-surface"
                         />
 
                         {/* Stats */}
                         <div className="flex flex-wrap gap-8 md:gap-12">
                             {stats.map((s, i) => (
                                 <div key={i}>
-                                    <p className="text-3xl md:text-4xl font-black text-faro-primary">{s.value}</p>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-faro-outline mt-0.5">{s.label}</p>
+                                    <p className="text-3xl md:text-4xl font-black text-site-primary">{s.value}</p>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-site-outline mt-0.5">{s.label}</p>
                                 </div>
                             ))}
                         </div>
@@ -126,22 +126,22 @@ export default function NosotrosPage() {
                 </section>
 
                 {/* ── VISIÓN Y MISIÓN ── */}
-                <section className="px-4 md:px-6 lg:px-8 xl:px-12 py-16 md:py-20 bg-faro-surface-container-low">
+                <section className="px-4 md:px-6 lg:px-8 xl:px-12 py-16 md:py-20 bg-site-surface-container-low">
                     <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Visión */}
-                        <div className="relative rounded-2xl p-8 md:p-10 overflow-hidden bg-faro-surface border border-faro-outline-variant/20 shadow-sm">
-                            <div className="absolute top-6 right-6 opacity-[0.06] text-faro-primary">
+                        <div className="relative rounded-2xl p-8 md:p-10 overflow-hidden bg-site-surface border border-site-outline-variant/20 shadow-sm">
+                            <div className="absolute top-6 right-6 opacity-[0.06] text-site-primary">
                                 <Target size={100} />
                             </div>
-                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-faro-primary/10 border border-faro-primary/20 text-faro-primary text-[10px] font-bold uppercase tracking-widest mb-5">
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-[10px] font-bold uppercase tracking-widest mb-5">
                                 <Target size={11} /> Visión
                             </div>
-                            <h2 className="text-2xl md:text-3xl font-black text-faro-on-surface tracking-tight leading-tight mb-4">
+                            <h2 className="text-2xl md:text-3xl font-black text-site-on-surface tracking-tight leading-tight mb-4">
                                 {(about?.vision_title as string) || "¿A dónde vamos?"}
                             </h2>
                             <RichText
                                 html={visionText}
-                                className="text-base md:text-lg text-faro-on-surface-variant leading-relaxed [&_strong]:text-faro-on-surface"
+                                className="text-base md:text-lg text-site-on-surface-variant leading-relaxed [&_strong]:text-site-on-surface"
                             />
                         </div>
 
@@ -149,8 +149,8 @@ export default function NosotrosPage() {
                         <div
                             className="relative rounded-2xl p-8 md:p-10 overflow-hidden shadow-2xl"
                             style={{
-                                background: "var(--faro-hero-cta-gradient)",
-                                boxShadow: "0 20px 60px -10px var(--faro-glow-intense)",
+                                background: "var(--site-hero-cta-gradient)",
+                                boxShadow: "0 20px 60px -10px var(--site-glow-intense)",
                             }}
                         >
                             <div className="absolute top-6 right-6 opacity-10">
@@ -175,8 +175,8 @@ export default function NosotrosPage() {
                     <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
                         {/* Fotos */}
                         <div className="w-full lg:w-5/12 relative shrink-0">
-                            <div className="relative h-[480px] md:h-[560px]">
-                                <div className="absolute left-0 top-0 w-[58%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-faro-outline-variant/20 z-10">
+                            <div className="relative h-[340px] sm:h-[420px] md:h-[520px] overflow-hidden">
+                                <div className="absolute left-0 top-0 w-[58%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-site-outline-variant/20 z-10">
                                     <Image
                                         src={(about?.founder1_image as string) || "/pastores/luis_ricardo_meza_1777656765476.png"}
                                         alt={(about?.founder1_name as string) || "Pastor Luis Ricardo Meza Gutiérrez"}
@@ -193,7 +193,7 @@ export default function NosotrosPage() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="absolute right-0 bottom-0 w-[55%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-faro-outline-variant/20 z-20">
+                                <div className="absolute right-0 bottom-0 w-[55%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-site-outline-variant/20 z-20">
                                     <Image
                                         src={(about?.founder2_image as string) || "/pastores/histar_ariza_1777656780660.png"}
                                         alt={(about?.founder2_name as string) || "Pastor Histar Ariza Herrera"}
@@ -212,41 +212,41 @@ export default function NosotrosPage() {
                                 </div>
                                 <div
                                     className="absolute top-1/3 right-1/4 w-32 h-32 rounded-full blur-2xl -z-10"
-                                    style={{ background: "var(--faro-glow-subtle)" }}
+                                    style={{ background: "var(--site-glow-subtle)" }}
                                 />
                             </div>
                         </div>
 
                         {/* Texto */}
                         <div className="w-full lg:w-7/12">
-                            <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-faro-primary mb-4">
+                            <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-site-primary mb-4">
                                 <Heart size={12} /> {(about?.founder_label as string) || "Nuestros Pastores Principales"}
                             </span>
-                            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-faro-on-surface tracking-tight leading-tight mb-5">
+                            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface tracking-tight leading-tight mb-5">
                                 {(about?.founder_title as string) || "Un llamado a construir"}
                                 <br />
-                                <span className="text-faro-primary">
+                                <span className="text-site-primary">
                                     {(about?.founder_title_accent as string) || "una familia de fe"}
                                 </span>
                             </h2>
-                            <div className="space-y-4 text-base md:text-lg text-faro-on-surface-variant leading-relaxed [&_strong]:text-faro-on-surface [&_em]:text-faro-outline">
+                            <div className="space-y-4 text-base md:text-lg text-site-on-surface-variant leading-relaxed [&_strong]:text-site-on-surface [&_em]:text-site-outline">
                                 <RichText html={founderBio} />
                                 <RichText html={founderBio2} />
                             </div>
                             <div className="mt-8 flex flex-wrap gap-3">
                                 <Link
                                     href="/pastores"
-                                    className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl text-faro-on-primary text-xs font-bold uppercase tracking-wider hover:scale-105 transition-all"
+                                    className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl text-site-on-primary text-xs font-bold uppercase tracking-wider hover:scale-105 transition-all"
                                     style={{
-                                        background: "var(--faro-cta-gradient)",
-                                        boxShadow: "var(--faro-cta-shadow)",
+                                        background: "var(--site-cta-gradient)",
+                                        boxShadow: "var(--site-cta-shadow)",
                                     }}
                                 >
                                     Conoce al equipo <ArrowRight size={14} />
                                 </Link>
                                 <Link
                                     href="/sedes"
-                                    className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-faro-surface-container text-faro-on-surface-variant text-xs font-bold uppercase tracking-wider hover:scale-105 transition-all border border-faro-outline-variant/30"
+                                    className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-site-surface-container text-site-on-surface-variant text-xs font-bold uppercase tracking-wider hover:scale-105 transition-all border border-site-outline-variant/30"
                                 >
                                     Visítanos
                                 </Link>
@@ -256,35 +256,35 @@ export default function NosotrosPage() {
                 </section>
 
                 {/* ── VALORES ── */}
-                <section className="px-4 md:px-6 lg:px-8 xl:px-12 py-20 md:py-24 bg-faro-surface-container-low">
+                <section className="px-4 md:px-6 lg:px-8 xl:px-12 py-20 md:py-24 bg-site-surface-container-low">
                     <div className="max-w-7xl mx-auto">
                         <div className="text-center mb-14">
-                            <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-faro-primary mb-3">
+                            <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-site-primary mb-3">
                                 <Sparkles size={12} /> Lo que nos define
                             </span>
-                            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-faro-on-surface tracking-tight mb-4">
+                            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface tracking-tight mb-4">
                                 {(about?.valores_title as string) || "Valores que nos Guían"}
                             </h2>
-                            <div className="h-1 w-16 rounded-full bg-faro-primary mx-auto" />
+                            <div className="h-1 w-16 rounded-full bg-site-primary mx-auto" />
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                             {valores.map((v: any, idx: number) => (
                                 <div
                                     key={v.key || v.num || idx}
-                                    className="group p-6 md:p-7 rounded-2xl bg-faro-surface border border-faro-outline-variant/20 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400"
-                                    style={{ "--tw-shadow-color": "var(--faro-glow-intense)" } as React.CSSProperties}
+                                    className="group p-6 md:p-7 rounded-2xl bg-site-surface border border-site-outline-variant/20 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-400"
+                                    style={{ "--tw-shadow-color": "var(--site-glow-intense)" } as React.CSSProperties}
                                 >
                                     <div className="flex items-start justify-between mb-5">
-                                        <div className="w-10 h-10 rounded-xl bg-faro-primary/10 flex items-center justify-center text-faro-primary border border-faro-primary/15">
+                                        <div className="w-10 h-10 rounded-xl bg-site-primary/10 flex items-center justify-center text-site-primary border border-site-primary/15">
                                             {VALOR_ICONS[v.key] || <Sparkles size={20} />}
                                         </div>
-                                        <span className="text-4xl font-black text-faro-outline-variant/40 select-none">
+                                        <span className="text-4xl font-black text-site-outline-variant/40 select-none">
                                             {v.num || String(idx + 1).padStart(2, "0")}
                                         </span>
                                     </div>
-                                    <h3 className="text-lg font-black text-faro-on-surface mb-2 tracking-tight">{v.title}</h3>
-                                    <p className="text-sm text-faro-on-surface-variant leading-relaxed">{v.desc}</p>
+                                    <h3 className="text-lg font-black text-site-on-surface mb-2 tracking-tight">{v.title}</h3>
+                                    <p className="text-sm text-site-on-surface-variant leading-relaxed">{v.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -294,19 +294,19 @@ export default function NosotrosPage() {
                 {/* ── CITA ── */}
                 <section className="px-4 md:px-6 lg:px-8 xl:px-12 py-20 md:py-28">
                     <div className="max-w-4xl mx-auto text-center">
-                        <Quote size={48} className="mx-auto mb-6 text-faro-primary/20" />
-                        <blockquote className="text-2xl md:text-3xl lg:text-4xl font-black text-faro-on-surface leading-tight italic tracking-tight mb-6">
+                        <Quote size={48} className="mx-auto mb-6 text-site-primary/20" />
+                        <blockquote className="text-2xl md:text-3xl lg:text-4xl font-black text-site-on-surface leading-tight italic tracking-tight mb-6">
                             &ldquo;{quoteText}&rdquo;
                         </blockquote>
                         <div className="flex items-center justify-center gap-3">
-                            <div className="h-px w-12 bg-gradient-to-r from-transparent to-faro-primary/30" />
+                            <div className="h-px w-12 bg-gradient-to-r from-transparent to-site-primary/30" />
                             <div>
-                                <p className="font-bold text-faro-on-surface">{quoteAuthor}</p>
-                                <p className="text-xs font-bold uppercase tracking-widest text-faro-primary mt-0.5">
-                                    {(about?.quote_subtitle as string) || "Comunidad Cristiana El Faro"}
+                                <p className="font-bold text-site-on-surface">{quoteAuthor}</p>
+                                <p className="text-xs font-bold uppercase tracking-widest text-site-primary mt-0.5">
+                                    {(about?.quote_subtitle as string) || ""}
                                 </p>
                             </div>
-                            <div className="h-px w-12 bg-gradient-to-l from-transparent to-faro-primary/30" />
+                            <div className="h-px w-12 bg-gradient-to-l from-transparent to-site-primary/30" />
                         </div>
                     </div>
                 </section>
@@ -315,10 +315,10 @@ export default function NosotrosPage() {
                 <section className="px-4 md:px-6 lg:px-8 xl:px-12 pb-20 md:pb-28">
                     <div className="max-w-7xl mx-auto">
                         <div
-                            className="relative rounded-3xl overflow-hidden p-10 md:p-14 text-center"
+                            className="relative rounded-3xl overflow-hidden p-6 md:p-10 lg:p-14 text-center"
                             style={{
-                                background: "var(--faro-cta-gradient)",
-                                boxShadow: "var(--faro-cta-shadow)",
+                                background: "var(--site-cta-gradient)",
+                                boxShadow: "var(--site-cta-shadow)",
                             }}
                         >
                             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.12),transparent_60%)] pointer-events-none" />
@@ -333,7 +333,7 @@ export default function NosotrosPage() {
                                 <div className="flex flex-wrap items-center justify-center gap-3">
                                     <Link
                                         href="/sedes"
-                                        className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-white text-faro-primary text-xs font-black uppercase tracking-wider hover:scale-105 transition-all shadow-xl"
+                                        className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-white text-site-primary text-xs font-black uppercase tracking-wider hover:scale-105 transition-all shadow-xl"
                                     >
                                         Ver sedes <ArrowRight size={14} />
                                     </Link>

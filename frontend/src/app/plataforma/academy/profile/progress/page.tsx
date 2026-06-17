@@ -136,8 +136,8 @@ export default function StudentProgressPage() {
                     />
                 )}
                 {viewType === 'table' && (
-                    <div className="overflow-hidden rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
-                        <table className="w-full text-left">
+                    <div className="overflow-x-auto rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+                        <table className="w-full min-w-[480px] text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr><th className="px-4 py-2">Curso</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2">Progreso</th><th className="px-4 py-2">Nota</th></tr>
                             </thead>
@@ -194,7 +194,7 @@ export default function StudentProgressPage() {
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 lg:w-[400px]">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:w-[400px]">
                                 <HeaderStat label="Promedio" value={stats.average_grade.toFixed(1)} icon={Star} color="text-amber-400" bg="bg-amber-400/20" />
                                 <HeaderStat label="Certificados" value={stats.certificates} icon={Award} color="text-emerald-400" bg="bg-emerald-400/20" />
                                 <HeaderStat label="Pendientes" value={stats.total_courses - stats.completed_courses} icon={BookOpen} color="text-[hsl(var(--primary))]" bg="bg-blue-400/20" />

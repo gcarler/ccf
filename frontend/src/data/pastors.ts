@@ -26,7 +26,7 @@ export const PASTORS: Pastor[] = [
         fullStory: `
             <p>El Pastor Luis Ricardo Meza Gutiérrez llegó a los pies de Cristo buscando respuestas a las inquietudes más profundas de su intelecto y su alma. Lo que encontró fue una verdad tan innegable y un amor tan avasallador que cambió el rumbo de sus estudios y de su vida por completo.</p>
             <blockquote>"Cuando la mente es iluminada por la revelación de la Escritura, el corazón inevitablemente se enciende en adoración."</blockquote>
-            <p>Dotado de una aguda capacidad para la exégesis bíblica y la enseñanza apologética, Luis Ricardo es un defensor apasionado de la sana doctrina. Ha liderado el Instituto Bíblico y la Academia de la Comunidad Cristiana El Faro, formando teológicamente a los nuevos obreros y asegurando que las raíces doctrinales de la congregación sean profundas y firmes.</p>
+            <p>Dotado de una aguda capacidad para la exégesis bíblica y la enseñanza apologética, Luis Ricardo es un defensor apasionado de la sana doctrina. Ha liderado el Instituto Bíblico y la Academia de la congregación, formando teológicamente a los nuevos obreros y asegurando que las raíces doctrinales de la congregación sean profundas y firmes.</p>
             <p>Su testimonio nos recuerda que Dios redime nuestro intelecto y lo usa como un instrumento poderoso para derribar argumentos y llevar todo pensamiento cautivo a la obediencia a Cristo.</p>
         `
     },
@@ -40,10 +40,10 @@ export const PASTORS: Pastor[] = [
         verse: "Jeremías 3:15 - 'Y os daré pastores según mi corazón, que os apacienten con ciencia y con inteligencia.'",
         shortStory: "El llamado pastoral, la visión de expansión y el corazón de paternidad espiritual que guía a nuestra congregación.",
         fullStory: `
-            <p>El Pastor Histar Ariza Herrera ha sido un pilar fundamental en la fundación y consolidación de la Comunidad Cristiana El Faro. Su ministerio nació de un profundo encuentro personal con la paternidad de Dios, lo que marcó para siempre su forma de liderar, amar y guiar a la iglesia.</p>
+            <p>El Pastor Histar Ariza Herrera ha sido un pilar fundamental en la fundación y consolidación de la congregación. Su ministerio nació de un profundo encuentro personal con la paternidad de Dios, lo que marcó para siempre su forma de liderar, amar y guiar a la iglesia.</p>
             <blockquote>"El ministerio no se trata de construir edificios grandes, sino de edificar familias fuertes que reflejen el carácter de Cristo."</blockquote>
             <p>Con más de dos décadas de servicio ininterrumpido, su enseñanza se caracteriza por la profundidad teológica combinada con una aplicación práctica y compasiva. Su visión principal es ver a cada persona de la comunidad no solo como un asistente, sino como un hijo espiritual llamado a cumplir un propósito eterno.</p>
-            <p>A lo largo de los años, el Pastor Histar ha liderado proyectos de expansión, siembra de nuevas misiones y ha formado a decenas de líderes que hoy sirven a lo largo de toda la Comunidad Cristiana El Faro. Su testimonio es un recordatorio vivo de que cuando Dios llama, también respalda, provee y sostiene.</p>
+            <p>A lo largo de los años, el Pastor Histar ha liderado proyectos de expansión, siembra de nuevas misiones y ha formado a decenas de líderes que hoy sirven a lo largo de toda la congregación. Su testimonio es un recordatorio vivo de que cuando Dios llama, también respalda, provee y sostiene.</p>
         `
     },
     {
@@ -62,18 +62,35 @@ export const PASTORS: Pastor[] = [
         `
     },
     {
-        id: "camilo-alba",
-        name: "Camilo Alba",
-        title: "Pastor de Jóvenes",
+        id: "alba-arias",
+        name: "Alba Arias",
+        title: "Pastora",
         image: "/pastores/camilo_alba_1777656794964.png",
-        quote: "Un joven rendido a Cristo es una flecha encendida en las manos de Dios.",
-        verse: "1 Timoteo 4:12 - 'Ninguno tenga en poco tu juventud, sino sé ejemplo de los creyentes en palabra, conducta, amor, espíritu, fe y pureza.'",
-        shortStory: "Un relato vibrante sobre el liderazgo juvenil, la pasión por la adoración y el avivamiento.",
+        quote: "Mi mayor gozo no está en una posición o en un título, sino en pertenecer a la obra de Dios y ser útil en sus manos.",
+        verse: "Juan 3:16 - 'Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna.'",
+        shortStory: "Le apasiona enseñar, convencida de que la educación transforma vidas y le da el privilegio de sembrar conocimiento y valores.",
         fullStory: `
-            <p>Con un corazón que late por la próxima generación, el Pastor Camilo Alba lidera con energía, creatividad y una pasión desbordante por ver a los jóvenes experimentar un avivamiento genuino. Su historia está marcada por una transformación radical durante sus años de adolescencia, cuando Dios lo rescató y le dio un propósito claro: levantar una generación que no se avergüenza del Evangelio.</p>
-            <blockquote>"No queremos una fe heredada por costumbre, sino una fe encendida por convicción."</blockquote>
-            <p>Camilo es conocido por su enfoque dinámico en la enseñanza y su talento para la adoración profética. Ha sido fundamental en la creación de los grandes congresos juveniles y los campamentos que han marcado un antes y un después en cientos de vidas.</p>
-            <p>Su mayor anhelo es ver a jóvenes profesionales, estudiantes y artistas usando sus talentos para la expansión del Reino, demostrando que seguir a Jesús es la aventura más grande que existe.</p>
+            <p>Antes de llegar a la congregación, la Pastora Alba Arias no había tenido acercamientos a ninguna iglesia ni una relación personal con Dios. Fue en este lugar donde experimentó la presencia del Espíritu Santo por primera vez, un encuentro que transformó su carácter, sanó su corazón y le dio una profunda identidad como hija amada. Esta revelación de la bondad del Padre la impulsó a compartir su amor con otros.</p>
+            <blockquote>"Elijo Juan 3:16 porque nos muestra la esencia misma de lo que Él es y lo que quiere con cada uno de nosotros."</blockquote>
+            <p>Lo que más le apasiona es enseñar, una vocación que también constituye su profesión. Alba cree firmemente que la educación transforma vidas y que, a través de ella, Dios le concede el privilegio de sembrar conocimiento y valores eternos en el corazón de cada estudiante.</p>
+            <p><strong>Perfil Ministerial:</strong> A lo largo de su servicio en la casa de Dios, Alba ha apoyado en múltiples áreas. Comenzó colaborando en la limpieza del templo y en diversas tareas logísticas; posteriormente se integró al equipo de bienvenida para recibir con amor a todos los que llegaban. Más adelante sirvió en el ministerio infantil (sala cuna y escuela dominical), sembrando principios bíblicos en la niñez. Actualmente se desempeña en el ministerio pastoral, apoyando a los pastores principales en las áreas administrativa y financiera.</p>
+            <p><strong>Perfil Familiar:</strong> Está casada con el Pastor Camilo Pájaro, a quien conoció en su etapa escolar. Juntos comenzaron asistiendo a los servicios de madrugón. Aunque en los inicios de su relación vivieron altibajos que los llevaron a separarse durante un año —período en el que Alba se alejó temporalmente de la iglesia—, el Señor restauró su lazo amoroso y ella regresó a la congregación. En 2014 se bautizaron y se casaron. En doce años de matrimonio, el Padre los ha sustentado y hecho crecer ministerialmente. Hoy en día, tienen dos hermosas hijas, Sara Valentina y Shaddai Antonella, y su historia es un testimonio de la fidelidad y provisión divina.</p>
+        `
+    },
+    {
+        id: "camilo-pajaro",
+        name: "Camilo Pájaro",
+        title: "Pastor",
+        image: "/pastores/camilo_alba_1777656794964.png",
+        quote: "He entendido que si es Él quien me guía y me dirige, en mi vida todo terminará ayudando para bien.",
+        verse: "Salmo 23:1 - 'Jehová es mi pastor; nada me faltará.'",
+        shortStory: "Le apasiona habitar en la presencia del Padre y siente un profundo celo por apoyar y guiar a las almas perdidas.",
+        fullStory: `
+            <p>Antes de conocer al Señor, Camilo Pájaro vivía una vida volcada al baile, la música secular y su mayor prioridad: el béisbol, deporte en el cual se formaba activamente. Sin embargo, Dios intervino de forma providencial, llamándolo a abandonar lo que creía que era su propósito terrenal para alinear su vida con su propósito eterno. Llegó a los pies del Señor con inseguridades y maldiciones generacionales, de las cuales fue totalmente libertado por el amor y la misericordia divina.</p>
+            <blockquote>"He entendido que si es Él quien me guía y me dirige, en mi vida todo terminará ayudando para bien."</blockquote>
+            <p>A Camilo le apasiona habitar en la presencia de Dios, cultivar una relación cercana con el Padre y agradarle en todo. Asimismo, tiene un profundo celo por las almas perdidas, sintiendo el llamado de apoyar a quienes andan sin rumbo y guiarlos de vuelta a la senda de Cristo.</p>
+            <p><strong>Perfil Ministerial:</strong> Su caminar en el servicio comenzó desde las tareas más sencillas, limpiando y colaborando con el aseo del templo. A medida que crecía espiritualmente, Dios abrió puertas en su liderazgo: se desempeñó como maestro de la Academia de Formación Ministerial, ministro de alabanza y miembro destacado de la agrupación musical Sonido de Gloria, y hoy en día sirve en el ministerio pastoral.</p>
+            <p><strong>Perfil Familiar:</strong> Está casado con la Pastora Alba Arias, con quien comparte su vida y ministerio. Se conocieron en el colegio y dieron sus primeros pasos espirituales asistiendo a los madrugones de la iglesia. Tras superar una separación de un año, se bautizaron y casaron en el 2014. Hoy, junto a sus hijas Sara Valentina y Shaddai Antonella, testifican que el Señor ha sido su sustento inquebrantable durante doce años de matrimonio.</p>
         `
     },
     {
@@ -87,7 +104,7 @@ export const PASTORS: Pastor[] = [
         fullStory: `
             <p>Los pastores Fernando y Mónica representan la esencia del servicio incondicional y la fidelidad. Su caminar en la iglesia comenzó sirviendo en las áreas más silenciosas, donde nadie los veía, pero donde Dios formó el carácter de siervos que hoy los define.</p>
             <blockquote>"El discipulado no es un curso que se toma, es una vida que se comparte."</blockquote>
-            <p>Su ministerio está enfocado en el crecimiento integral del creyente. Son los encargados de asegurar que cada persona que cruza las puertas de la Comunidad Cristiana El Faro no solo se quede a escuchar un mensaje, sino que sea abrazada, integrada y formada a la imagen de Cristo a través del discipulado uno a uno y los grupos pequeños.</p>
+            <p>Su ministerio está enfocado en el crecimiento integral del creyente. Son los encargados de asegurar que cada persona que cruza las puertas de la congregación no solo se quede a escuchar un mensaje, sino que sea abrazada, integrada y formada a la imagen de Cristo a través del discipulado uno a uno y los grupos pequeños.</p>
             <p>Su hogar siempre ha sido una casa de puertas abiertas. A través de su ejemplo, enseñan que el liderazgo más efectivo es aquel que se ejerce con una toalla en las manos y la disposición de lavar los pies de los demás.</p>
         `
     },
@@ -115,7 +132,7 @@ export const PASTORS: Pastor[] = [
         verse: "Marcos 16:15 - 'Y les dijo: Id por todo el mundo y predicad el evangelio a toda criatura.'",
         shortStory: "Un relato de gracia abrumadora, superación personal y un fuego evangelístico inextinguible.",
         fullStory: `
-            <p>El Pastor Yair Macea es el impulso misional de la Comunidad Cristiana El Faro. Su encuentro con Cristo lo sacó de un pasado de oscuridad profunda, y desde el momento en que sus ojos fueron abiertos a la gracia salvadora, no ha podido dejar de hablar de lo que Dios hizo por él.</p>
+            <p>El Pastor Yair Macea es el impulso misional de la congregación. Su encuentro con Cristo lo sacó de un pasado de oscuridad profunda, y desde el momento en que sus ojos fueron abiertos a la gracia salvadora, no ha podido dejar de hablar de lo que Dios hizo por él.</p>
             <blockquote>"La iglesia no es un club de personas santas, es un hospital de rescate y la calle es nuestra principal sala de emergencias."</blockquote>
             <p>Con un estilo de predicación ferviente y directo, Yair lidera las jornadas de evangelismo, misiones urbanas y el alcance a sectores vulnerables de la ciudad. Su mayor pasión es ver a las personas reconciliadas con Dios y bautizadas.</p>
             <p>Él es la prueba de que Dios no desperdicia ninguna parte de nuestro pasado, sino que lo convierte en un testimonio poderoso para rescatar a quienes hoy se encuentran en los mismos lugares de donde fuimos sacados.</p>

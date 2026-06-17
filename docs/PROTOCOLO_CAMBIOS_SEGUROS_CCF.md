@@ -3,6 +3,7 @@
 **Fecha:** 2026-06-04  
 **Estado:** Documento operativo vigente  
 **Objetivo:** Permitir corregir la plataforma a la luz de `REGLAS.md`, `docs/ESTANDARES_DESARROLLO.md` y `AGENTS_FRONTEND.md` sin tumbar funcionalidad existente.
+**Capa operativa de agentes:** `docs/AGENTES_OPERATIVOS_CCF.md`
 
 ---
 

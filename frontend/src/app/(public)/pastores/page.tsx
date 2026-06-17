@@ -6,12 +6,13 @@ import Image from 'next/image';
 import { ChevronRight, Cross, Sparkles } from 'lucide-react';
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from '@/hooks/useContent';
+import { SITE_KEY, SITE_NAME } from '@/lib/site-config';
 import { PASTORS } from '@/data/pastors';
 import ShareButtons from '@/components/public/ShareButtons';
 
 export default function PastoresIndexPage() {
-    const { data: heroCms } = useContentBlock("faro_pastores_hero");
-    const { data: feedCms } = useContentBlock("faro_pastores_feed");
+    const { data: heroCms } = useContentBlock(`${SITE_KEY}_pastores_hero`);
+    const { data: feedCms } = useContentBlock(`${SITE_KEY}_pastores_feed`);
 
     let cmsPastors: any[] = [];
     if (feedCms?.content) {
@@ -38,40 +39,53 @@ export default function PastoresIndexPage() {
     const heroContent = heroCms?.content ? JSON.parse(heroCms.content) : null;
     const heroTitle = heroContent?.title || "Liderazgo Pastoral";
     const heroDescription = heroContent?.description || "Hombres y mujeres llamados por Dios para servir, guiar y amar a esta casa.";
+    const heroBgImage = heroContent?.bg_image || null;
 
     return (
         <main className="pt-24 pb-4">
             {/* ── Hero Section ── */}
-            <section className="relative overflow-hidden">
-                <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[hsl(var(--primary))/0.08] to-transparent blur-3xl" />
-                    <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-[hsl(var(--secondary))/0.06] to-transparent blur-3xl" />
-                </div>
+            <section className="relative overflow-hidden min-h-[70vh] md:min-h-[85vh] flex flex-col">
+                {heroBgImage ? (
+                    <>
+                        <div
+                            className="absolute inset-0 bg-cover"
+                            style={{ backgroundImage: `url('${heroBgImage}')`, backgroundPosition: "center 20%", backgroundAttachment: "fixed", filter: "brightness(0.28) saturate(0.5)" }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[hsl(var(--bg-primary))]" />
+                    </>
+                ) : (
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[hsl(var(--primary))/0.08] to-transparent blur-3xl" />
+                        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-[hsl(var(--secondary))/0.06] to-transparent blur-3xl" />
+                    </div>
+                )}
 
-                <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 mb-16 md:mb-24 text-center relative z-10 pt-12 md:pt-20 pb-8">
-                    <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.1] backdrop-blur-sm text-[hsl(var(--primary))] text-xs font-bold uppercase tracking-widest mb-5 border border-[hsl(var(--primary))/0.2] shadow-lg shadow-[hsl(var(--primary))/0.05]">
+                <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 mt-auto text-center relative z-10 pb-12 md:pb-16">
+                    <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white/70 text-xs font-bold uppercase tracking-widest mb-5 border border-white/20 shadow-lg">
                         <Sparkles size={12} className="animate-pulse" /> Conoce a nuestro equipo pastoral
                     </div>
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white mb-5 leading-[1.05]">
+                    <h1 className={`text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-5 leading-[1.05] ${heroBgImage ? "text-white" : "text-slate-900 dark:text-white"}`}>
                         {heroTitle}
                     </h1>
-                    <RichText
-                        html={heroDescription}
-                        className="text-base md:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed"
-                    />
+                    {heroBgImage ? (
+                        <p className="text-base md:text-lg max-w-2xl mx-auto font-medium leading-relaxed" style={{ color: 'white' }}
+                            dangerouslySetInnerHTML={{ __html: heroDescription }} />
+                    ) : (
+                        <RichText
+                            html={heroDescription}
+                            className="text-base md:text-lg max-w-2xl mx-auto font-medium leading-relaxed text-slate-500 dark:text-slate-400"
+                        />
+                    )}
                     <div className="flex items-center justify-center gap-3 mt-8">
-                        <div className="h-px w-12 bg-gradient-to-r from-transparent to-[hsl(var(--primary))/0.3]" />
-                        <Cross size={14} className="text-[hsl(var(--primary))/0.4]" />
-                        <div className="h-px w-12 bg-gradient-to-l from-transparent to-[hsl(var(--primary))/0.3]" />
-                    </div>
-                    <div className="mt-6 flex justify-center">
-                        <ShareButtons title="Liderazgo Pastoral | Comunidad Cristiana El Faro" />
+                        <div className="h-px w-12 bg-gradient-to-r from-transparent to-white/20" />
+                        <Cross size={14} className="text-white/30" />
+                        <div className="h-px w-12 bg-gradient-to-l from-transparent to-white/20" />
                     </div>
                 </div>
             </section>
 
             {/* ── Pastors Grid ── */}
-            <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 pb-20 md:pb-28">
+            <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 pt-[3cm] pb-20 md:pb-28">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
                     {pastors.map((pastor, idx) => (
                         <div key={pastor.id} className="group relative bg-white dark:bg-[#0f1117] rounded-2xl overflow-hidden border border-slate-200/70 dark:border-white/[0.06] shadow-lg shadow-slate-200/40 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-2xl hover:shadow-[hsl(var(--primary))/0.15] dark:hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col"

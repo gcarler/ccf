@@ -77,8 +77,8 @@ export default function WorkspaceDrawer({
                         </div>
 
                         {/* Drawer Header */}
-                        <header className="h-14 flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-white/10 shrink-0 bg-slate-50/50 dark:bg-white/5">
-                            <div className="flex items-center gap-4 overflow-hidden">
+                        <header className="min-h-14 flex items-center justify-between gap-2 px-3 sm:px-5 py-3 border-b border-slate-200 dark:border-white/10 shrink-0 bg-slate-50/50 dark:bg-white/5">
+                            <div className="flex min-w-0 items-center gap-3 sm:gap-4 overflow-hidden">
                                 <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-md transition-colors text-slate-500">
                                     <X size={20} />
                                 </button>
@@ -95,11 +95,11 @@ export default function WorkspaceDrawer({
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-1">
-                                <button className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:opacity-80 transition-all border border-sky-100 dark:border-sky-900/50">
+                            <div className="flex shrink-0 items-center gap-1">
+                                <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:opacity-80 transition-all border border-sky-100 dark:border-sky-900/50">
                                     <Sparkles size={14} /> Resumir
                                 </button>
-                                <div className="h-5 w-[1px] bg-slate-200 dark:bg-white/10 mx-2" />
+                                <div className="hidden sm:block h-5 w-[1px] bg-slate-200 dark:bg-white/10 mx-2" />
                                 <HeaderButton icon={MessageSquare} tooltip="Comentarios" />
                                 <HeaderButton icon={Clock} tooltip="Historial" />
                                 <HeaderButton icon={MoreHorizontal} tooltip="Más" />
@@ -107,13 +107,13 @@ export default function WorkspaceDrawer({
                         </header>
 
                         {/* Drawer Body */}
-                        <main className="flex-1 overflow-y-auto scrollbar-thin px-8 py-5">
+                        <main className="flex-1 min-w-0 overflow-y-auto scrollbar-thin px-4 sm:px-8 py-5">
                             {children}
                         </main>
 
                         {/* Drawer Footer */}
                         {actions && (
-                            <footer className="px-8 py-5 border-t border-slate-200 dark:border-white/10 flex items-center justify-end gap-4 bg-slate-50/50 dark:bg-white/5">
+                            <footer className="px-4 sm:px-8 py-5 border-t border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-end gap-3 sm:gap-4 bg-slate-50/50 dark:bg-white/5">
                                 {actions}
                             </footer>
                         )}

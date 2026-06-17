@@ -73,11 +73,11 @@ function saveWatched(w: Record<string, string>) {
 /* ── Skeleton ── */
 function SkeletonCard() {
     return (
-        <div className="rounded-2xl overflow-hidden animate-pulse" style={{ background: "var(--faro-surface-container)" }}>
-            <div className="aspect-video bg-faro-outline-variant/20" />
+        <div className="rounded-2xl overflow-hidden animate-pulse" style={{ background: "var(--site-surface-container)" }}>
+            <div className="aspect-video bg-site-outline-variant/20" />
             <div className="p-4 space-y-2">
-                <div className="h-4 bg-faro-outline-variant/20 rounded w-3/4" />
-                <div className="h-3 bg-faro-outline-variant/10 rounded w-1/2" />
+                <div className="h-4 bg-site-outline-variant/20 rounded w-3/4" />
+                <div className="h-3 bg-site-outline-variant/10 rounded w-1/2" />
             </div>
         </div>
     );
@@ -101,15 +101,15 @@ function VideoCard({
     return (
         <div
             className={`group relative rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 cursor-pointer ${
-                featured ? "ring-2 ring-faro-primary/30" : ""
+                featured ? "ring-2 ring-site-primary/30" : ""
             }`}
             style={{
-                background: "var(--faro-surface-container)",
-                boxShadow: featured ? "0 8px 40px -8px var(--faro-glow-intense)" : undefined,
+                background: "var(--site-surface-container)",
+                boxShadow: featured ? "0 8px 40px -8px var(--site-glow-intense)" : undefined,
             }}
         >
             {/* Thumbnail — clic abre reproductor */}
-            <div className="relative overflow-hidden aspect-video bg-faro-surface-container-lowest" onClick={onPlay}>
+            <div className="relative overflow-hidden aspect-video bg-site-surface-container-lowest" onClick={onPlay}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                     src={imgErr ? video.thumbnail_mq : video.thumbnail_hq}
@@ -121,7 +121,7 @@ function VideoCard({
 
                 {/* Play button */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                    <div className="w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-2xl" style={{ background: "var(--faro-hero-bg-light)" }}>
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-2xl" style={{ background: "var(--site-hero-bg-light)" }}>
                         <Play size={28} className="text-white ml-1" fill="white" />
                     </div>
                 </div>
@@ -150,7 +150,7 @@ function VideoCard({
             <div className={`p-4 ${featured ? "md:p-5" : ""}`}>
                 <h3
                     onClick={onPlay}
-                    className={`font-bold text-faro-on-surface group-hover:text-faro-primary transition-colors leading-snug line-clamp-2 mb-1.5 ${
+                    className={`font-bold text-site-on-surface group-hover:text-site-primary transition-colors leading-snug line-clamp-2 mb-1.5 ${
                         featured ? "text-xl md:text-2xl" : "text-sm"
                     }`}
                 >
@@ -158,11 +158,11 @@ function VideoCard({
                 </h3>
 
                 {featured && desc && (
-                    <p className="text-sm text-faro-on-surface-variant line-clamp-2 mb-3">{desc}</p>
+                    <p className="text-sm text-site-on-surface-variant line-clamp-2 mb-3">{desc}</p>
                 )}
 
                 <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 text-[11px] text-faro-outline font-medium">
+                    <div className="flex items-center gap-2.5 text-[11px] text-site-outline font-medium">
                         <span className="flex items-center gap-1">
                             <Calendar size={10} /> {formatDate(video.published_at)}
                         </span>
@@ -174,18 +174,18 @@ function VideoCard({
                     </div>
 
                     {/* Acciones rápidas */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button
                             onClick={(e) => { e.stopPropagation(); onShare(); }}
                             title="Compartir en WhatsApp"
-                            className="p-1.5 rounded-lg hover:bg-faro-primary/10 text-faro-outline hover:text-faro-on-surface transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-site-primary/10 text-site-outline hover:text-site-on-surface transition-colors"
                         >
                             <MessageCircle size={14} />
                         </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); onCopy(); }}
                             title="Copiar enlace"
-                            className="p-1.5 rounded-lg hover:bg-faro-primary/10 text-faro-outline hover:text-faro-primary transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-site-primary/10 text-site-outline hover:text-site-primary transition-colors"
                         >
                             {copied ? <Check size={14} /> : <Link2 size={14} />}
                         </button>
@@ -235,23 +235,23 @@ function PlayerModal({
                         <p className="text-white/40 text-xs mt-0.5">{formatDate(video.published_at)}</p>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
                         <button
                             onClick={onShare}
                             title="Compartir en WhatsApp"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white/70 hover:text-white hover:bg-white/10 transition-all"
+                            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold text-white/70 hover:text-white hover:bg-white/10 transition-all"
                         >
-                            <MessageCircle size={14} /> WhatsApp
+                            <MessageCircle size={14} /> <span className="hidden sm:inline">WhatsApp</span>
                         </button>
                         <button
                             onClick={onCopy}
                             title="Copiar enlace"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold transition-all"
                             style={{ color: copied ? "#22c55e" : "rgba(255,255,255,0.7)" }}
                         >
                             {copied
-                                ? <><Check size={14} /> ¡Copiado!</>
-                                : <><Link2 size={14} /> Copiar</>
+                                ? <><Check size={14} /> <span className="hidden sm:inline">¡Copiado!</span></>
+                                : <><Link2 size={14} /> <span className="hidden sm:inline">Copiar</span></>
                             }
                         </button>
                         <a
@@ -367,39 +367,38 @@ export default function PredicasPage() {
 
     return (
         <CmsPageOverride slug="predicas">
-            <main className="min-h-screen bg-faro-background pt-[88px]">
+            <main className="min-h-screen bg-site-background pt-[88px]">
 
                 {/* ── HERO ── */}
                 <section className="relative px-4 sm:px-6 md:px-8 xl:px-12 pt-14 pb-10 overflow-hidden">
                     <div
                         className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full blur-3xl pointer-events-none"
-                        style={{ background: "radial-gradient(ellipse, var(--faro-glow-subtle) 0%, transparent 70%)" }}
+                        style={{ background: "radial-gradient(ellipse, var(--site-glow-subtle) 0%, transparent 70%)" }}
                     />
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center gap-3 mb-4">
-                            <span className="w-8 h-0.5 bg-faro-primary" />
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-faro-primary flex items-center gap-2">
+                            <span className="w-8 h-0.5 bg-site-primary" />
+                            <span className="text-[11px] font-bold uppercase tracking-widest text-site-primary flex items-center gap-2">
                                 <Youtube size={13} /> Ministerios Faro Oficial
                             </span>
                         </div>
 
                         <h1
-                            className="font-black tracking-tight text-faro-on-surface leading-[0.92] mb-3"
-                            style={{ fontSize: "clamp(2.8rem, 6vw, 5.5rem)" }}
+                            className="max-w-4xl font-black tracking-tight text-site-on-surface leading-[0.92] mb-3 text-4xl sm:text-5xl lg:text-6xl"
                         >
                             Prédicas &amp; <br />
-                            <span className="italic" style={{ background: "var(--faro-hero-cta-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                            <span className="italic" style={{ background: "var(--site-hero-cta-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                                 Mensajes
                             </span>
                         </h1>
 
-                        <p className="text-base md:text-lg text-faro-on-surface-variant max-w-xl leading-relaxed mb-4">
+                        <p className="text-base sm:text-lg text-site-on-surface-variant max-w-xl leading-relaxed mb-4">
                             Alimento para el alma — explora los mensajes más recientes de nuestro canal de YouTube.
                         </p>
 
                         {/* Contador de vistas del mes */}
                         {viewedThisMonth > 0 && (
-                            <div className="inline-flex items-center gap-2 text-xs font-semibold text-faro-primary mb-2">
+                            <div className="inline-flex items-center gap-2 text-xs font-semibold text-site-primary mb-2">
                                 <BookOpen size={13} />
                                 {viewedThisMonth} mensaje{viewedThisMonth !== 1 ? "s" : ""} visto{viewedThisMonth !== 1 ? "s" : ""} este mes
                             </div>
@@ -407,17 +406,17 @@ export default function PredicasPage() {
 
                         {/* Buscador */}
                         <div className="relative max-w-md mt-2">
-                            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-faro-outline pointer-events-none" />
+                            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-site-outline pointer-events-none" />
                             <input
                                 ref={searchRef}
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 placeholder="Buscar por título o predicador…"
-                                className="w-full rounded-xl pl-10 pr-9 py-2.5 text-sm text-faro-on-surface placeholder:text-faro-outline outline-none focus:ring-2 focus:ring-faro-primary/30 transition-all"
-                                style={{ background: "var(--faro-surface-container)", border: "1px solid var(--faro-outline-variant)" }}
+                                className="w-full rounded-xl pl-10 pr-9 py-2.5 text-sm text-site-on-surface placeholder:text-site-outline outline-none focus:ring-2 focus:ring-site-primary/30 transition-all"
+                                style={{ background: "var(--site-surface-container)", border: "1px solid var(--site-outline-variant)" }}
                             />
                             {search && (
-                                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-faro-outline hover:text-faro-on-surface transition-colors">
+                                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-site-outline hover:text-site-on-surface transition-colors">
                                     <X size={14} />
                                 </button>
                             )}
@@ -439,10 +438,10 @@ export default function PredicasPage() {
                         {/* Error */}
                         {!loading && error && (
                             <div className="text-center py-20">
-                                <Youtube size={52} className="mx-auto mb-4 text-faro-primary/30" />
-                                <h2 className="text-lg font-bold text-faro-on-surface mb-2">No se pudieron cargar los videos</h2>
-                                <p className="text-sm text-faro-on-surface-variant mb-6">Verifica tu conexión o intenta nuevamente.</p>
-                                <button onClick={load} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold" style={{ background: "var(--faro-cta-gradient)" }}>
+                                <Youtube size={52} className="mx-auto mb-4 text-site-primary/30" />
+                                <h2 className="text-lg font-bold text-site-on-surface mb-2">No se pudieron cargar los videos</h2>
+                                <p className="text-sm text-site-on-surface-variant mb-6">Verifica tu conexión o intenta nuevamente.</p>
+                                <button onClick={load} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold" style={{ background: "var(--site-cta-gradient)" }}>
                                     <RefreshCw size={15} /> Reintentar
                                 </button>
                             </div>
@@ -451,9 +450,9 @@ export default function PredicasPage() {
                         {/* Sin resultados de búsqueda */}
                         {!loading && !error && filtered.length === 0 && search && (
                             <div className="text-center py-16">
-                                <Search size={40} className="mx-auto mb-4 text-faro-primary/30" />
-                                <h2 className="text-base font-bold text-faro-on-surface mb-1">Sin resultados para "{search}"</h2>
-                                <p className="text-sm text-faro-on-surface-variant">Intenta con otro término.</p>
+                                <Search size={40} className="mx-auto mb-4 text-site-primary/30" />
+                                <h2 className="text-base font-bold text-site-on-surface mb-1">Sin resultados para "{search}"</h2>
+                                <p className="text-sm text-site-on-surface-variant">Intenta con otro término.</p>
                             </div>
                         )}
 
@@ -464,8 +463,8 @@ export default function PredicasPage() {
                                 {featured && (
                                     <div className="mb-8">
                                         <div className="flex items-center justify-between mb-4">
-                                            <h2 className="text-sm font-bold uppercase tracking-widest text-faro-primary">Último mensaje</h2>
-                                            <a href="https://www.youtube.com/@Ministeriosfarooficial" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-faro-outline hover:text-faro-primary transition-colors">
+                                            <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">Último mensaje</h2>
+                                            <a href="https://www.youtube.com/@Ministeriosfarooficial" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-site-outline hover:text-site-primary transition-colors">
                                                 Ver canal <ExternalLink size={11} />
                                             </a>
                                         </div>
@@ -485,11 +484,11 @@ export default function PredicasPage() {
                                 {rest.length > 0 && (
                                     <>
                                         <div className="flex items-center justify-between mb-4">
-                                            <h2 className="text-sm font-bold uppercase tracking-widest text-faro-primary">
+                                            <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">
                                                 {search ? `Resultados (${filtered.length})` : "Más mensajes"}
                                             </h2>
                                             {!search && (
-                                                <span className="text-[11px] text-faro-outline">{rest.length} video{rest.length !== 1 ? "s" : ""}</span>
+                                                <span className="text-[11px] text-site-outline">{rest.length} video{rest.length !== 1 ? "s" : ""}</span>
                                             )}
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -515,7 +514,7 @@ export default function PredicasPage() {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-white font-bold text-sm uppercase tracking-wider hover:scale-105 transition-all"
-                                        style={{ background: "var(--faro-cta-gradient)", boxShadow: "var(--faro-cta-shadow)" }}
+                                        style={{ background: "var(--site-cta-gradient)", boxShadow: "var(--site-cta-shadow)" }}
                                     >
                                         <Youtube size={18} /> Ver todos en YouTube
                                     </a>

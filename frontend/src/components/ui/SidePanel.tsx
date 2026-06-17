@@ -37,13 +37,13 @@ export default function SidePanel({
                     exit={{ x: "100%", opacity: 0 }}
                     transition={{ type: "spring", damping: 25, stiffness: 200 }}
                     className={clsx(
-                        "fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col",
+                        "fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] max-w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col",
                         width
                     )}
                 >
                     {/* Header */}
                     <div className="h-8 px-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5 shrink-0">
-                        <div className="flex items-center gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
                             <button
                                 onClick={onClose}
                                 className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"
@@ -79,7 +79,7 @@ export default function SidePanel({
                     </div>
 
                     {/* Content Area */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-3">
+                    <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar p-3">
                         <header className="mb-3">
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-1">
                                 DETALLES DEL ÍTEM

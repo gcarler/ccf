@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { SITE_KEY } from '@/lib/site-config';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -17,8 +18,8 @@ import { ApiError } from '@/lib/http';
 import { canEditCms } from '@/lib/cms/permissions';
 
 interface MenuItem {
-    id: number;
-    parent_id?: number | null;
+    id: string;
+    parent_id?: string | null;
     label: string;
     href: string;
     is_external?: boolean;
@@ -38,7 +39,7 @@ function sanitizeKey(value: string) {
 export default function CmsMenusManagement() {
     const { token, user } = useAuth();
     const [sites, setSites] = useState<CmsSite[]>([]);
-    const [siteKey, setSiteKey] = useState("faro");
+    const [siteKey, setSiteKey] = useState(SITE_KEY);
     const [menus, setMenus] = useState<CmsMenu[]>([]);
     const [menuKey, setMenuKey] = useState("main");
     const [navConfig, setNavConfig] = useState<NavConfig>({ items: [] });
@@ -51,16 +52,16 @@ export default function CmsMenusManagement() {
     const [newMenuKey, setNewMenuKey] = useState("");
     const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-    const [draggedId, setDraggedId] = useState<number | null>(null);
+    const [draggedId, setDraggedId] = useState<string | null>(null);
     const canEdit = canEditCms(user?.role);
     const selectedMenu = useMemo(() => menus.find((menu) => menu.menu_key === menuKey) || null, [menus, menuKey]);
 
-    const wouldCreateCycle = (itemId: number, parentId: number | null) => {
+    const wouldCreateCycle = (itemId: string, parentId: string | null) => {
         if (parentId == null) return false;
         if (itemId === parentId) return true;
         const byId = new Map(navConfig.items.map((item) => [item.id, item]));
         let cursor = byId.get(parentId);
-        const visited = new Set<number>();
+        const visited = new Set<string>();
         while (cursor) {
             if (visited.has(cursor.id)) return true;
             visited.add(cursor.id);
@@ -71,7 +72,7 @@ export default function CmsMenusManagement() {
     };
 
     const displayedItems = useMemo(() => {
-        const byParent = new Map<number | null, MenuItem[]>();
+        const byParent = new Map<string | null, MenuItem[]>();
         navConfig.items.forEach((item) => {
             const key = item.parent_id ?? null;
             const arr = byParent.get(key) || [];
@@ -81,7 +82,7 @@ export default function CmsMenusManagement() {
         byParent.forEach((items) => items.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
 
         const result: Array<{ item: MenuItem; depth: number }> = [];
-        const walk = (parentId: number | null, depth: number) => {
+        const walk = (parentId: string | null, depth: number) => {
             const children = byParent.get(parentId) || [];
             children.forEach((child) => {
                 result.push({ item: child, depth });
@@ -331,13 +332,13 @@ export default function CmsMenusManagement() {
         }
     };
 
-    const moveToRoot = async (itemId: number) => {
+    const moveToRoot = async (itemId: string) => {
         if (!canEdit) return;
         const next = navConfig.items.map((item) => item.id === itemId ? { ...item, parent_id: null } : item);
         await applyMenuReorder(next);
     };
 
-    const makeChildOf = async (itemId: number, parentId: number) => {
+    const makeChildOf = async (itemId: string, parentId: string) => {
         if (!canEdit) return;
         if (itemId === parentId) return;
         if (wouldCreateCycle(itemId, parentId)) return;
@@ -345,7 +346,7 @@ export default function CmsMenusManagement() {
         await applyMenuReorder(next);
     };
 
-    const moveRelativeTo = async (itemId: number, targetId: number, position: 'before' | 'after') => {
+    const moveRelativeTo = async (itemId: string, targetId: string, position: 'before' | 'after') => {
         if (!canEdit) return;
         if (itemId === targetId) return;
         const current = navConfig.items.find((item) => item.id === itemId);
@@ -716,9 +717,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.parent_id ?? ''}
                                     onChange={(e) => handleUpdateItem(selectedIndex, {
                                         ...selectedItem,
-                                        parent_id: e.target.value && !wouldCreateCycle(selectedItem.id, Number(e.target.value))
-                                            ? Number(e.target.value)
-                                            : null,
+                                        parent_id: e.target.value || null,
                                     })}
                                     disabled={!canEdit}
                                     className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"

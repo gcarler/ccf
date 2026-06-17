@@ -1,6 +1,7 @@
 "use client";
 
 import { useContentBlock } from "@/hooks/useContent";
+import { SITE_KEY } from "@/lib/site-config";
 import { AnimatePresence,motion } from "framer-motion";
 import { Calendar,Clock,Home,Navigation,Phone,Search } from "lucide-react";
 import { useEffect,useState } from "react";
@@ -42,8 +43,8 @@ const fallbackLocations: LocationItem[] = [
 ];
 
 export default function SedesPage() {
-    const { data: heroContent } = useContentBlock("faro_locations_hero");
-    const { data: locationsContent } = useContentBlock("faro_locations_feed");
+    const { data: heroContent } = useContentBlock(`${SITE_KEY}_locations_hero`);
+    const { data: locationsContent } = useContentBlock(`${SITE_KEY}_locations_feed`);
 
     const parsedLocations: LocationItem[] = Array.isArray(locationsContent?.parsed)
         ? (locationsContent.parsed as LocationItem[])
@@ -78,23 +79,23 @@ export default function SedesPage() {
 
     return (
         <CmsPageOverride slug="sedes">
-            <main className="pt-[88px] flex flex-col md:flex-row bg-faro-surface" style={{ minHeight: "100vh" }}>
+            <main className="pt-[88px] flex flex-col md:flex-row bg-site-surface" style={{ minHeight: "100vh" }}>
 
             {/* ── LISTADO DE SEDES ──────────────────────────── */}
-            <aside className="w-full md:w-[450px] lg:w-[500px] flex flex-col md:h-[calc(100vh-88px)] md:sticky md:top-[88px] bg-faro-surface-container-lowest border-r border-faro-outline-variant/10">
-                <div className="p-4 border-b border-faro-outline-variant/10">
+            <aside className="w-full md:w-[340px] lg:w-[420px] xl:w-[480px] flex flex-col max-h-[60vh] md:max-h-none md:h-[calc(100vh-88px)] md:sticky md:top-[88px] bg-site-surface-container-lowest border-r border-site-outline-variant/10 overflow-hidden">
+                <div className="p-4 border-b border-site-outline-variant/10">
                     <span className="font-semibold text-[10px] tracking-wide uppercase block mb-4">
                         {heroContent?.eyebrow || "Nuestra Presencia"}
                     </span>
-                    <h1 className="text-lg font-bold tracking-tight text-faro-on-surface mb-3">
+                    <h1 className="text-lg font-bold tracking-tight text-site-on-surface mb-3">
                         {heroContent?.title || "Nuestras Sedes"}
                     </h1>
                     <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-faro-outline w-4 h-4" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-site-outline w-4 h-4" />
                         <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full bg-faro-surface-container-highest rounded-lg py-1.5 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-faro-primary/30 transition-all"
+                            className="w-full bg-site-surface-container-highest rounded-lg py-1.5 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-site-primary/30 transition-all"
                             placeholder={heroContent?.search_placeholder || "Buscar ciudad o dirección..."}
                         />
                     </div>
@@ -103,8 +104,8 @@ export default function SedesPage() {
                 {locations.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center p-4 text-center">
                         <div>
-                            <Home size={40} className="mx-auto mb-4 opacity-20" style={{ color: "var(--faro-primary)" }} />
-                            <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+                            <Home size={40} className="mx-auto mb-4 opacity-20" style={{ color: "var(--site-primary)" }} />
+                            <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
                                 No hay sedes configuradas para mostrar.
                             </p>
                         </div>
@@ -117,29 +118,29 @@ export default function SedesPage() {
                                 onClick={() => setSelected(loc)}
                                 className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
                                     selected?.id === loc.id
-                                        ? "border-faro-primary bg-faro-primary-container/20"
-                                        : "border-transparent bg-faro-surface-container hover:bg-faro-surface-container-high"
+                                        ? "border-site-primary bg-site-primary-container/20"
+                                        : "border-transparent bg-site-surface-container hover:bg-site-surface-container-high"
                                 }`}
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <div
                                         className={`p-3 rounded-lg ${
                                             selected?.id === loc.id
-                                                ? "bg-faro-primary"
-                                                : "bg-faro-primary-container text-faro-primary"
+                                                ? "bg-site-primary"
+                                                : "bg-site-primary-container text-site-primary"
                                         }`}
-                                        style={selected?.id === loc.id ? { color: "var(--faro-on-primary)" } : undefined}
+                                        style={selected?.id === loc.id ? { color: "var(--site-on-primary)" } : undefined}
                                     >
                                         <Home size={20} />
                                     </div>
                                     {loc.isMain && (
-                                        <span className="text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full" style={{ background: "var(--faro-cta-gradient)", color: "white" }}>
+                                        <span className="text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full" style={{ background: "var(--site-cta-gradient)", color: "white" }}>
                                             Principal
                                         </span>
                                     )}
                                 </div>
-                                <h3 className="text-xl font-bold text-faro-on-surface mb-2">{loc.name}</h3>
-                                <p className="text-faro-on-surface-variant text-sm mb-3 leading-relaxed opacity-80">
+                                <h3 className="text-xl font-bold text-site-on-surface mb-2">{loc.name}</h3>
+                                <p className="text-site-on-surface-variant text-sm mb-3 leading-relaxed opacity-80">
                                     {loc.address}
                                 </p>
 
@@ -149,21 +150,21 @@ export default function SedesPage() {
                                             initial={{ height: 0, opacity: 0 }}
                                             animate={{ height: "auto", opacity: 1 }}
                                             exit={{ height: 0, opacity: 0 }}
-                                            className="space-y-3 pt-4 border-t border-faro-outline-variant/10 overflow-hidden"
+                                            className="space-y-3 pt-4 border-t border-site-outline-variant/10 overflow-hidden"
                                         >
-                                            <div className="flex items-center gap-3 text-faro-on-surface-variant text-xs">
-                                                <Clock size={14} className="text-faro-primary" />
+                                            <div className="flex items-center gap-3 text-site-on-surface-variant text-xs">
+                                                <Clock size={14} className="text-site-primary" />
                                                 <span>{loc.schedule}</span>
                                             </div>
                                             {loc.midweek && (
-                                                <div className="flex items-center gap-3 text-faro-on-surface-variant text-xs">
-                                                    <Calendar size={14} className="text-faro-primary" />
+                                                <div className="flex items-center gap-3 text-site-on-surface-variant text-xs">
+                                                    <Calendar size={14} className="text-site-primary" />
                                                     <span>{loc.midweek}</span>
                                                 </div>
                                             )}
                                             {loc.phone && (
-                                                <div className="flex items-center gap-3 text-faro-on-surface-variant text-xs">
-                                                    <Phone size={14} className="text-faro-primary" />
+                                                <div className="flex items-center gap-3 text-site-on-surface-variant text-xs">
+                                                    <Phone size={14} className="text-site-primary" />
                                                     <span>{loc.phone}</span>
                                                 </div>
                                             )}
@@ -177,7 +178,7 @@ export default function SedesPage() {
                                                     );
                                                 }}
                                                 className="mt-1 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
-                                                style={{ background: "var(--faro-cta-gradient)", color: "white" }}
+                                                style={{ background: "var(--site-cta-gradient)", color: "white" }}
                                             >
                                                 <Navigation size={13} />
                                                 Cómo llegar
@@ -188,7 +189,7 @@ export default function SedesPage() {
                             </motion.div>
                         ))}
                         {filtered.length === 0 && (
-                            <div className="rounded-lg border border-dashed border-faro-outline-variant/20 p-3 text-center text-sm text-faro-on-surface-variant">
+                            <div className="rounded-lg border border-dashed border-site-outline-variant/20 p-3 text-center text-sm text-site-on-surface-variant">
                                 No se encontraron sedes con ese criterio.
                             </div>
                         )}
@@ -204,7 +205,7 @@ export default function SedesPage() {
                     allowFullScreen
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
-                    title="Mapa de sedes El Faro"
+                    title="Mapa de sedes"
                     style={{ minHeight: "50vh" }}
                 />
             </section>

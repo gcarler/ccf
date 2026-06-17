@@ -200,8 +200,8 @@ export default function AssessmentPage() {
                 )}
 
                 {viewType === 'table' && (
- <div className="w-full overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
-                        <table className="w-full text-left">
+ <div className="w-full overflow-x-auto rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+                        <table className="w-full min-w-[480px] text-left">
                             <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:bg-white/5">
                                 <tr>
                                     <th className="px-4 py-1.5">#</th>

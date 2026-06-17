@@ -52,7 +52,7 @@ const COLOR_PRESETS = [
     "#10b981", // emerald-500
     "#f59e0b", // amber-500
     "#f43f5e", // rose-500
-    "#8b5cf6", // violet-500
+    "#8b5cf6", // #8b5cf6
     "#f97316", // orange-500
     "#64748b", // slate-500
     "#ffffff", // white

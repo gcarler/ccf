@@ -64,14 +64,14 @@ export async function createCmsTheme(
   });
 }
 
-export async function deleteCmsTheme(siteKey: string, themeId: number, token?: string | null) {
+export async function deleteCmsTheme(siteKey: string, themeId: string, token?: string | null) {
   await apiFetch<void>(`/cms/v2/sites/${siteKey}/themes/${themeId}`, {
     method: "DELETE",
     token,
   });
 }
 
-export async function activateCmsTheme(siteKey: string, themeId: number, token?: string | null) {
+export async function activateCmsTheme(siteKey: string, themeId: string, token?: string | null) {
   return apiFetch<CmsTheme>(`/cms/v2/sites/${siteKey}/themes/${themeId}/activate`, {
     method: "POST",
     token,
@@ -80,7 +80,7 @@ export async function activateCmsTheme(siteKey: string, themeId: number, token?:
 
 export async function patchCmsTheme(
   siteKey: string,
-  themeId: number,
+  themeId: string,
   payload: { name?: string; tokens_json?: Record<string, string>; is_active?: boolean; status?: string },
   token?: string | null,
 ) {
@@ -113,7 +113,7 @@ export async function createCmsMenuItem(
   payload: {
     label: string;
     href: string;
-    parent_id?: number | null;
+    parent_id?: string | null;
     target?: string;
     is_external?: boolean;
     visibility?: string;
@@ -132,7 +132,7 @@ export async function createCmsMenuItem(
 export async function patchCmsMenuItem(
   siteKey: string,
   menuKey: string,
-  itemId: number,
+  itemId: string,
   payload: Partial<Pick<CmsMenuItem, "label" | "href" | "target" | "is_external" | "visibility" | "sort_order" | "parent_id">>,
   token?: string | null,
 ) {
@@ -143,7 +143,7 @@ export async function patchCmsMenuItem(
   });
 }
 
-export async function deleteCmsMenuItem(siteKey: string, menuKey: string, itemId: number, token?: string | null) {
+export async function deleteCmsMenuItem(siteKey: string, menuKey: string, itemId: string, token?: string | null) {
   await apiFetch<void>(`/cms/v2/sites/${siteKey}/menus/${menuKey}/items/${itemId}`, {
     method: "DELETE",
     token,
@@ -153,7 +153,7 @@ export async function deleteCmsMenuItem(siteKey: string, menuKey: string, itemId
 export async function reorderCmsMenuItems(
   siteKey: string,
   menuKey: string,
-  items: Array<{ id: number; parent_id: number | null; sort_order: number }>,
+  items: Array<{ id: string; parent_id: string | null; sort_order: number }>,
   token?: string | null,
 ) {
   return apiFetch<CmsMenuItem[]>(`/cms/v2/sites/${siteKey}/menus/${menuKey}/reorder`, {
@@ -223,7 +223,7 @@ export async function createCmsSection(
 export async function patchCmsSection(
   siteKey: string,
   slug: string,
-  sectionId: number,
+  sectionId: string,
   payload: { type?: string; props_json?: Record<string, unknown>; sort_order?: number; is_visible?: boolean; status?: string },
   token?: string | null,
 ) {
@@ -234,7 +234,7 @@ export async function patchCmsSection(
   });
 }
 
-export async function deleteCmsSection(siteKey: string, slug: string, sectionId: number, token?: string | null) {
+export async function deleteCmsSection(siteKey: string, slug: string, sectionId: string, token?: string | null) {
   await apiFetch<void>(`/cms/v2/sites/${siteKey}/pages/${slug}/sections/${sectionId}`, {
     method: "DELETE",
     token,
@@ -244,7 +244,7 @@ export async function deleteCmsSection(siteKey: string, slug: string, sectionId:
 export async function reorderCmsSections(
   siteKey: string,
   slug: string,
-  items: Array<{ id: number; sort_order: number }>,
+  items: Array<{ id: string; sort_order: number }>,
   token?: string | null,
 ) {
   return apiFetch<CmsSection[]>(`/cms/v2/sites/${siteKey}/pages/${slug}/sections/reorder`, {
@@ -276,15 +276,17 @@ export async function listCmsPagePublishLog(siteKey: string, slug: string, token
   return apiFetch<CmsPublishLog[]>(`/cms/v2/sites/${siteKey}/pages/${slug}/publish-log`, { token });
 }
 
-export async function rollbackCmsPageVersion(siteKey: string, slug: string, versionId: number, token?: string | null) {
+export async function rollbackCmsPageVersion(siteKey: string, slug: string, versionId: string, token?: string | null) {
   return apiFetch<CmsPage>(`/cms/v2/sites/${siteKey}/pages/${slug}/rollback/${versionId}`, {
     method: "POST",
     token,
   });
 }
 
-export async function getCmsPublicPage(siteKey: string, slug: string) {
-  return apiFetch<CmsPublicPage>(`/cms/v2/public/sites/${siteKey}/pages/${slug}`);
+export async function getCmsPublicPage(siteKey: string, slug: string, options?: { silent?: boolean }) {
+  return apiFetch<CmsPublicPage>(`/cms/v2/public/sites/${siteKey}/pages/${slug}`, {
+    silent: options?.silent,
+  });
 }
 
 export async function getCmsPagePreview(siteKey: string, slug: string, token?: string | null) {

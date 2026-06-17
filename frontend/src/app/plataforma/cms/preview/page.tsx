@@ -1,41 +1,54 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ExternalLink, Loader2, Monitor, RefreshCw } from "lucide-react";
 import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer";
 import { useAuth } from "@/context/AuthContext";
 import { getCmsPagePreview } from "@/lib/cms/v2";
+import { SITE_KEY } from "@/lib/site-config";
 import { CmsPublicPage } from "@/types/cms-v2";
 
 const PREVIEW_TOKENS = {
-  "--faro-background": "#f8f9ff",
-  "--faro-on-background": "#101828",
-  "--faro-surface-container": "#ffffff",
-  "--faro-surface-container-low": "#f0f4ff",
-  "--faro-surface-container-high": "#e6ecff",
-  "--faro-surface-container-highest": "#d9e2ff",
-  "--faro-on-surface": "#101828",
-  "--faro-on-surface-variant": "#475467",
-  "--faro-primary": "#3155d4",
-  "--faro-on-primary": "#ffffff",
-  "--faro-primary-container": "#e1e8ff",
-  "--faro-on-primary-container": "#001a66",
-  "--faro-secondary": "#e0a931",
+  "--site-background": "#f8f9ff",
+  "--site-on-background": "#101828",
+  "--site-surface-container": "#ffffff",
+  "--site-surface-container-low": "#f0f4ff",
+  "--site-surface-container-high": "#e6ecff",
+  "--site-surface-container-highest": "#d9e2ff",
+  "--site-on-surface": "#101828",
+  "--site-on-surface-variant": "#475467",
+  "--site-primary": "#3155d4",
+  "--site-on-primary": "#ffffff",
+  "--site-primary-container": "#e1e8ff",
+  "--site-on-primary-container": "#001a66",
+  "--site-secondary": "#e0a931",
 } as React.CSSProperties;
 
 export default function CmsPreviewPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-full items-center justify-center gap-3 text-sm font-bold text-slate-400">
+        <Loader2 className="animate-spin" size={18} /> Cargando preview...
+      </div>
+    }>
+      <CmsPreviewInner />
+    </Suspense>
+  );
+}
+
+function CmsPreviewInner() {
   const params = useSearchParams();
   const { token } = useAuth();
-  const siteKey = params?.get("site") || "faro";
+  const siteKey = params?.get("site") || SITE_KEY;
   const slug = params?.get("page") || "";
   const [page, setPage] = useState<CmsPublicPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const publicHref = useMemo(() => {
-    const base = siteKey === "faro" ? "/" : `/${siteKey}`;
+    const base = siteKey === SITE_KEY ? "/" : `/${siteKey}`;
     return slug ? `${base}/${slug}` : base;
   }, [siteKey, slug]);
 

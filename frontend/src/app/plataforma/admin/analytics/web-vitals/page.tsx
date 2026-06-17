@@ -80,8 +80,8 @@ export default function WebVitalsAnalyticsPage() {
           ) : recent.length === 0 ? (
             <p className="py-8 text-sm text-slate-500">Aun no hay muestras registradas.</p>
           ) : (
-            <div className="max-h-[520px] overflow-y-auto">
-              <table className="w-full text-left text-sm">
+            <div className="max-h-[520px] overflow-y-auto overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[520px]">
                 <thead className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[#17181a]">
                   <tr className="text-[10px] uppercase tracking-wide text-slate-400">
                     <th className="py-2">Metrica</th>

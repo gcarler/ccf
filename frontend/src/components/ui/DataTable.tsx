@@ -30,8 +30,8 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
     });
 
     return (
-        <div className="flex-1 overflow-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
-            <table className="w-full text-left border-collapse min-w-[800px]">
+        <div className="flex-1 min-w-0 overflow-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
+            <table className="w-full text-left border-collapse min-w-[620px] md:min-w-[800px]">
                 <thead className="sticky top-0 bg-slate-50 dark:bg-black/20 z-10 shadow-sm">
                     {table.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id}>
@@ -48,7 +48,7 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
                                         )}
                                         style={{ width: header.getSize() !== 150 ? header.getSize() : 'auto' }}
                                     >
-                                        <div className="flex items-center gap-1">
+                                                <div className="flex min-w-0 items-center gap-1">
                                             {flexRender(header.column.columnDef.header, header.getContext())}
                                             {canSort && (
                                                 <div className="flex-shrink-0 text-slate-300">
@@ -73,7 +73,7 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
                             className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer group"
                         >
                             {row.getVisibleCells().map((cell) => (
-                                <td key={cell.id} className="py-1.5 px-3">
+                                <td key={cell.id} className="py-1.5 px-3 align-middle">
                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                 </td>
                             ))}

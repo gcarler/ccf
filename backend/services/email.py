@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import smtplib
+from html import escape
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from backend.core.config import get_settings
@@ -240,3 +241,93 @@ def render_reset_password(
 </table>"""
 
     return subject, _brand_wrap(body)
+
+
+def render_task_assignment_email(
+    *,
+    task_title: str,
+    task_url: str,
+    project_title: str | None = None,
+    assignee_name: str | None = None,
+    assigned_by_name: str | None = None,
+    priority: str | None = None,
+    due_date: str | None = None,
+    description: str | None = None,
+    frontend_url: str | None = None,
+) -> tuple[str, str, str]:
+    """Renderiza un correo de asignación de tarea con contexto operativo."""
+    base = (frontend_url or settings.frontend_url).rstrip("/")
+    open_link = task_url if task_url.startswith("http") else f"{base}{task_url}"
+    subject = f"Nueva tarea asignada: {task_title}"
+
+    priority_label = (priority or "normal").strip().lower()
+    priority_map = {
+        "urgent": "Urgente",
+        "high": "Alta",
+        "medium": "Normal",
+        "low": "Baja",
+    }
+    priority_text = priority_map.get(priority_label, priority_label.capitalize())
+    due_html = f"<p style=\"margin:0 0 8px 0;\"><strong>Fecha límite:</strong> {escape(due_date)}</p>" if due_date else ""
+    project_html = f"<p style=\"margin:0 0 8px 0;\"><strong>Proyecto:</strong> {escape(project_title)}</p>" if project_title else ""
+    assigned_by_html = f"<p style=\"margin:0 0 8px 0;\"><strong>Asignada por:</strong> {escape(assigned_by_name)}</p>" if assigned_by_name else ""
+    assignee_html = f"<p style=\"margin:0 0 8px 0;\"><strong>Responsable:</strong> {escape(assignee_name)}</p>" if assignee_name else ""
+    description_html = (
+        f"<div style=\"margin-top:20px;padding:16px 18px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;\">"
+        f"<p style=\"margin:0;font-size:14px;line-height:1.7;color:#374151;white-space:pre-line;\">{description.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')}</p>"
+        "</div>"
+        if description
+        else ""
+    )
+
+    body = f"""\
+<h2 style="font-size:22px;font-weight:800;color:{_CCF_DARK};margin:0 0 6px 0;letter-spacing:-0.3px;">
+  Tienes una nueva tarea asignada
+</h2>
+<p style="font-size:14px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:3px;margin:0 0 24px 0;">
+  {priority_text}
+</p>
+<p style="font-size:16px;color:#374151;line-height:1.7;margin:0 0 20px 0;">
+  Se te ha asignado la tarea <strong style="color:{_CCF_DARK};">{escape(task_title)}</strong>
+  dentro de la plataforma de El Faro.
+</p>
+{project_html}
+{assignee_html}
+{assigned_by_html}
+{due_html}
+<table cellpadding="0" cellspacing="0" style="margin:28px 0 24px 0;">
+  <tr>
+    <td style="background:{_CCF_BLUE};border-radius:10px;padding:14px 36px;text-align:center;">
+      <a href="{open_link}" style="color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:2px;text-transform:uppercase;display:inline-block;">
+        Abrir tarea &rarr;
+      </a>
+    </td>
+  </tr>
+</table>
+<p style="font-size:13px;color:#9ca3af;line-height:1.6;margin:0 0 4px 0;">
+  O copia este enlace en tu navegador:
+</p>
+<p style="font-size:12px;color:{_CCF_BLUE};word-break:break-all;margin:0;">
+  <a href="{open_link}" style="color:{_CCF_BLUE};text-decoration:none;">{open_link}</a>
+</p>
+{description_html}"""
+
+    text_lines = [
+        "Nueva tarea asignada",
+        f"Tarea: {task_title}",
+    ]
+    if project_title:
+        text_lines.append(f"Proyecto: {project_title}")
+    if assignee_name:
+        text_lines.append(f"Responsable: {assignee_name}")
+    if assigned_by_name:
+        text_lines.append(f"Asignada por: {assigned_by_name}")
+    if due_date:
+        text_lines.append(f"Fecha límite: {due_date}")
+    if description:
+        text_lines.append("")
+        text_lines.append(description)
+    text_lines.append("")
+    text_lines.append(f"Abrir tarea: {open_link}")
+
+    return subject, _brand_wrap(body), "\n".join(text_lines)

@@ -95,7 +95,7 @@ def get_page_content_versions(db: Session, page_key: str):
     )
 
 
-def restore_page_content_version(db: Session, page_key: str, version_id: int):
+def restore_page_content_version(db: Session, page_key: str, version_id: uuid.UUID):
     version = (
         db.query(models.PageContentVersion)
         .filter(
@@ -227,7 +227,7 @@ def list_cms_media_items(
     return q.order_by(models.CmsMediaItem.updated_at.desc()).limit(limit).all()
 
 
-def get_cms_media_item(db: Session, item_id: int):
+def get_cms_media_item(db: Session, item_id: uuid.UUID):
     return (
         db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
     )
@@ -235,7 +235,7 @@ def get_cms_media_item(db: Session, item_id: int):
 
 def update_cms_media_item(
     db: Session,
-    item_id: int,
+    item_id: uuid.UUID,
     *,
     url: str | None = None,
     alt_text: str | None = None,
@@ -270,7 +270,7 @@ def update_cms_media_item(
     return row
 
 
-def delete_cms_media_item(db: Session, item_id: int) -> bool:
+def delete_cms_media_item(db: Session, item_id: uuid.UUID) -> bool:
     row = get_cms_media_item(db, item_id)
     if not row:
         return False
@@ -294,7 +294,7 @@ def create_media_asset(
     return row
 
 
-def delete_media_asset(db: Session, asset_id: int) -> bool:
+def delete_media_asset(db: Session, asset_id: uuid.UUID) -> bool:
     row = db.query(models.MediaAsset).filter(models.MediaAsset.id == asset_id).first()
     if not row:
         return False
@@ -376,7 +376,7 @@ def archive_cms_site(db: Session, row: models.CmsSite) -> models.CmsSite:
     return row
 
 
-def list_cms_themes(db: Session, site_id: int):
+def list_cms_themes(db: Session, site_id: uuid.UUID):
     return (
         db.query(models.CmsTheme)
         .filter(models.CmsTheme.site_id == site_id)
@@ -386,7 +386,7 @@ def list_cms_themes(db: Session, site_id: int):
 
 
 def create_cms_theme(
-    db: Session, site_id: int, payload: schemas.CmsThemeCreate, created_by: int | None
+    db: Session, site_id: uuid.UUID, payload: schemas.CmsThemeCreate, created_by: int | None
 ):
     version = (
         db.query(func.max(models.CmsTheme.version))
@@ -415,7 +415,7 @@ def create_cms_theme(
     return row
 
 
-def get_cms_theme(db: Session, site_id: int, theme_id: int):
+def get_cms_theme(db: Session, site_id: uuid.UUID, theme_id: uuid.UUID):
     return (
         db.query(models.CmsTheme)
         .filter(models.CmsTheme.site_id == site_id, models.CmsTheme.id == theme_id)
@@ -448,7 +448,7 @@ def update_cms_theme(
     return row
 
 
-def activate_cms_theme(db: Session, site_id: int, theme_id: int):
+def activate_cms_theme(db: Session, site_id: uuid.UUID, theme_id: uuid.UUID):
     row = get_cms_theme(db, site_id, theme_id)
     if not row:
         return None
@@ -470,7 +470,7 @@ def archive_cms_theme(db: Session, row: models.CmsTheme) -> models.CmsTheme:
     return row
 
 
-def get_active_cms_theme(db: Session, site_id: int):
+def get_active_cms_theme(db: Session, site_id: uuid.UUID):
     return (
         db.query(models.CmsTheme)
         .filter(
@@ -486,7 +486,7 @@ def get_active_cms_theme(db: Session, site_id: int):
 # ── CMS v2 Menus ───────────────────────────────────────
 
 
-def list_cms_menus(db: Session, site_id: int):
+def list_cms_menus(db: Session, site_id: uuid.UUID):
     return (
         db.query(models.CmsMenu)
         .filter(models.CmsMenu.site_id == site_id)
@@ -495,7 +495,7 @@ def list_cms_menus(db: Session, site_id: int):
     )
 
 
-def get_cms_menu(db: Session, site_id: int, menu_key: str):
+def get_cms_menu(db: Session, site_id: uuid.UUID, menu_key: str):
     return (
         db.query(models.CmsMenu)
         .filter(models.CmsMenu.site_id == site_id, models.CmsMenu.menu_key == menu_key)
@@ -503,7 +503,7 @@ def get_cms_menu(db: Session, site_id: int, menu_key: str):
     )
 
 
-def create_cms_menu(db: Session, site_id: int, payload: schemas.CmsMenuCreate):
+def create_cms_menu(db: Session, site_id: uuid.UUID, payload: schemas.CmsMenuCreate):
     row = models.CmsMenu(
         site_id=site_id,
         menu_key=payload.menu_key.strip().lower(),
@@ -536,7 +536,7 @@ def delete_cms_menu(db: Session, row: models.CmsMenu) -> bool:
 # ── CMS v2 Menu Items ──────────────────────────────────
 
 
-def list_cms_menu_items(db: Session, menu_id: int):
+def list_cms_menu_items(db: Session, menu_id: uuid.UUID):
     return (
         db.query(models.CmsMenuItem)
         .filter(models.CmsMenuItem.menu_id == menu_id)
@@ -545,7 +545,7 @@ def list_cms_menu_items(db: Session, menu_id: int):
     )
 
 
-def create_cms_menu_item(db: Session, menu_id: int, payload: schemas.CmsMenuItemCreate):
+def create_cms_menu_item(db: Session, menu_id: uuid.UUID, payload: schemas.CmsMenuItemCreate):
     row = models.CmsMenuItem(
         menu_id=menu_id,
         parent_id=payload.parent_id,
@@ -563,7 +563,7 @@ def create_cms_menu_item(db: Session, menu_id: int, payload: schemas.CmsMenuItem
     return row
 
 
-def get_cms_menu_item(db: Session, menu_id: int, item_id: int):
+def get_cms_menu_item(db: Session, menu_id: uuid.UUID, item_id: uuid.UUID):
     return (
         db.query(models.CmsMenuItem)
         .filter(models.CmsMenuItem.menu_id == menu_id, models.CmsMenuItem.id == item_id)
@@ -596,7 +596,7 @@ def delete_cms_menu_item(db: Session, row: models.CmsMenuItem) -> bool:
 
 
 def reorder_cms_menu_items(
-    db: Session, menu_id: int, items: list[schemas.CmsMenuItemReorderItem]
+    db: Session, menu_id: uuid.UUID, items: list[schemas.CmsMenuItemReorderItem]
 ):
     rows_by_id = {
         row.id: row
@@ -617,7 +617,7 @@ def reorder_cms_menu_items(
 # ── CMS v2 Pages ───────────────────────────────────────
 
 
-def list_cms_pages(db: Session, site_id: int):
+def list_cms_pages(db: Session, site_id: uuid.UUID):
     return (
         db.query(models.CmsPage)
         .filter(models.CmsPage.site_id == site_id)
@@ -626,7 +626,7 @@ def list_cms_pages(db: Session, site_id: int):
     )
 
 
-def get_cms_page(db: Session, site_id: int, slug: str):
+def get_cms_page(db: Session, site_id: uuid.UUID, slug: str):
     return (
         db.query(models.CmsPage)
         .filter(models.CmsPage.site_id == site_id, models.CmsPage.slug == slug)
@@ -635,7 +635,7 @@ def get_cms_page(db: Session, site_id: int, slug: str):
 
 
 def create_cms_page(
-    db: Session, site_id: int, payload: schemas.CmsPageCreate, user_id: int | None
+    db: Session, site_id: uuid.UUID, payload: schemas.CmsPageCreate, user_id: int | None
 ):
     row = models.CmsPage(
         site_id=site_id,
@@ -683,7 +683,7 @@ def delete_cms_page(db: Session, row: models.CmsPage) -> bool:
 # ── CMS v2 Sections ────────────────────────────────────
 
 
-def list_cms_sections(db: Session, page_id: int):
+def list_cms_sections(db: Session, page_id: uuid.UUID):
     return (
         db.query(models.CmsSection)
         .filter(models.CmsSection.page_id == page_id)
@@ -692,7 +692,7 @@ def list_cms_sections(db: Session, page_id: int):
     )
 
 
-def create_cms_section(db: Session, page_id: int, payload: schemas.CmsSectionCreate):
+def create_cms_section(db: Session, page_id: uuid.UUID, payload: schemas.CmsSectionCreate):
     row = models.CmsSection(
         page_id=page_id,
         section_key=(payload.section_key or uuid.uuid4().hex),
@@ -708,7 +708,7 @@ def create_cms_section(db: Session, page_id: int, payload: schemas.CmsSectionCre
     return row
 
 
-def get_cms_section(db: Session, page_id: int, section_id: int):
+def get_cms_section(db: Session, page_id: uuid.UUID, section_id: uuid.UUID):
     return (
         db.query(models.CmsSection)
         .filter(
@@ -744,7 +744,7 @@ def archive_cms_section(db: Session, row: models.CmsSection) -> models.CmsSectio
 
 
 def reorder_cms_sections(
-    db: Session, page_id: int, items: list[schemas.CmsSectionReorderItem]
+    db: Session, page_id: uuid.UUID, items: list[schemas.CmsSectionReorderItem]
 ):
     rows_by_id = {
         row.id: row
@@ -812,7 +812,7 @@ def create_cms_page_version(
     return row
 
 
-def list_cms_page_versions(db: Session, page_id: int):
+def list_cms_page_versions(db: Session, page_id: uuid.UUID):
     return (
         db.query(models.CmsPageVersion)
         .filter(models.CmsPageVersion.page_id == page_id)
@@ -821,7 +821,7 @@ def list_cms_page_versions(db: Session, page_id: int):
     )
 
 
-def get_cms_page_version(db: Session, page_id: int, version_id: int):
+def get_cms_page_version(db: Session, page_id: uuid.UUID, version_id: uuid.UUID):
     return (
         db.query(models.CmsPageVersion)
         .filter(
@@ -833,7 +833,7 @@ def get_cms_page_version(db: Session, page_id: int, version_id: int):
 
 
 def list_cms_publish_logs(
-    db: Session, site_id: int, *, page_id: int | None = None, limit: int = 50
+    db: Session, site_id: uuid.UUID, *, page_id: uuid.UUID | None = None, limit: int = 50
 ):
     query = db.query(models.CmsPublishLog).filter(
         models.CmsPublishLog.site_id == site_id
@@ -923,7 +923,7 @@ def transition_cms_page_status(
     return page
 
 
-def get_public_cms_page(db: Session, site_id: int, slug: str):
+def get_public_cms_page(db: Session, site_id: uuid.UUID, slug: str):
     return (
         db.query(models.CmsPage)
         .filter(
@@ -969,7 +969,7 @@ def list_announcements(
     return query.order_by(models.Announcement.created_at.desc()).all()
 
 
-def get_announcement(db: Session, announcement_id: int) -> models.Announcement | None:
+def get_announcement(db: Session, announcement_id: uuid.UUID) -> models.Announcement | None:
     return (
         db.query(models.Announcement)
         .filter(models.Announcement.id == announcement_id)
@@ -1039,7 +1039,7 @@ def list_testimonials(
     return query.order_by(models.Testimonial.created_at.desc()).all()
 
 
-def get_testimonial(db: Session, testimonial_id: int) -> models.Testimonial | None:
+def get_testimonial(db: Session, testimonial_id: uuid.UUID) -> models.Testimonial | None:
     return (
         db.query(models.Testimonial)
         .filter(models.Testimonial.id == testimonial_id)

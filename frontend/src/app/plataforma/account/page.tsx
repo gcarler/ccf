@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { SITE_NAME } from '@/lib/site-config';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -90,7 +91,7 @@ export default function AccountSettingsPage() {
         <WorkspaceLayout sidebarTitle="Cuenta" sidebarSections={sidebarSections}>
             <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar 
-                breadcrumbs={[{ label: 'CCF Platform', icon: Layout }, { label: 'Ajustes de Cuenta', icon: SettingsIcon }]}
+                breadcrumbs={[{ label: SITE_NAME, icon: Layout }, { label: 'Ajustes de Cuenta', icon: SettingsIcon }]}
                 viewType={viewType}
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
@@ -124,8 +125,8 @@ export default function AccountSettingsPage() {
 
             {viewType === 'table' && (
                 <main className="flex-1 overflow-y-auto p-4">
-                    <div className="mx-auto max-w-4xl overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
-                        <table className="w-full text-left">
+                    <div className="mx-auto max-w-4xl overflow-x-auto rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+                        <table className="w-full min-w-[480px] text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr><th className="px-3 py-1.5">Sección</th><th className="px-3 py-1.5">Estado</th><th className="px-3 py-1.5">Acción</th></tr>
                             </thead>

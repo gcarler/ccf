@@ -199,8 +199,8 @@ export default function DonationsManagementPage() {
                         </div>
                     </div>
 
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
-                        <table className="w-full text-left">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm overflow-x-auto">
+                        <table className="w-full min-w-[520px] text-left">
                             <thead>
                                 <tr className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 border-b border-slate-100 dark:border-white/5">
                                     <th className="px-3 py-1.5">Donante</th>

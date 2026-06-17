@@ -137,8 +137,8 @@ export default function ActaManagementPage() {
     );
 
     const renderCourseTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/5">
-            <table className="w-full text-left">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+            <table className="w-full text-left min-w-[560px]">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
                         <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Curso</th>

@@ -1,5 +1,5 @@
 export interface CmsSite {
-  id: number;
+  id: string;
   site_key: string;
   name: string;
   base_path: string;
@@ -9,8 +9,8 @@ export interface CmsSite {
 }
 
 export interface CmsTheme {
-  id: number;
-  site_id: number;
+  id: string;
+  site_id: string;
   name: string;
   tokens_json: Record<string, string>;
   is_active: boolean;
@@ -21,8 +21,8 @@ export interface CmsTheme {
 }
 
 export interface CmsMenu {
-  id: number;
-  site_id: number;
+  id: string;
+  site_id: string;
   menu_key: string;
   name: string;
   is_active: boolean;
@@ -31,9 +31,9 @@ export interface CmsMenu {
 }
 
 export interface CmsMenuItem {
-  id: number;
-  menu_id: number;
-  parent_id: number | null;
+  id: string;
+  menu_id: string;
+  parent_id: string | null;
   label: string;
   href: string;
   target: string;
@@ -49,8 +49,8 @@ export interface CmsPublicMenu {
   site_key: string;
   menu_key: string;
   items: Array<{
-    id: number;
-    parent_id: number | null;
+    id: string;
+    parent_id: string | null;
     label: string;
     href: string;
     target: string;
@@ -62,20 +62,20 @@ export interface CmsPublicMenu {
 }
 
 export interface CmsPage {
-  id: number;
-  site_id: number;
+  id: string;
+  site_id: string;
   slug: string;
   title: string;
   status: "draft" | "in_review" | "approved" | "published" | "archived" | string;
   seo_json: Record<string, unknown>;
-  published_version_id: number | null;
+  published_version_id: string | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface CmsSection {
-  id: number;
-  page_id: number;
+  id: string;
+  page_id: string;
   section_key: string;
   type: string;
   props_json: Record<string, unknown>;
@@ -87,25 +87,24 @@ export interface CmsSection {
 }
 
 export interface CmsPageVersion {
-  id: number;
-  page_id: number;
+  id: string;
+  page_id: string;
   version_number: number;
   snapshot_json: Record<string, unknown>;
   notes: string | null;
-  created_by: number | null;
   created_at: string;
 }
 
 export interface CmsPublishLog {
-  id: number;
-  site_id: number;
-  page_id: number | null;
+  id: string;
+  site_id: string;
+  page_id: string | null;
   entity_type: string;
-  entity_id: number | null;
+  entity_id: string | null;
   action: string;
   from_status: string | null;
   to_status: string | null;
-  actor_user_id: number | null;
+  actor_user_id: string | null;
   metadata_json: Record<string, unknown>;
   created_at: string;
 }

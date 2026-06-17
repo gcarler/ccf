@@ -59,176 +59,260 @@ def global_search(
 
 @router.get("/calendar")
 def get_global_calendar(
+    view: str = Query("todo", pattern="^(todo|evangelismo|crm|proyectos|personal|cumpleanos)$"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
+    """
+    Calendario unificado con vistas modulares.
+    view: todo | evangelismo | crm | proyectos | personal
+    """
+    from sqlalchemy import func as sqlfunc
+    from backend.crud.crm import resolve_persona_id_for_user
+
     events = []
     sede_id = get_user_sede_id(db, current_user.id)
-    agenda_events = (
-        db.query(models.AgendaEvent)
-        .outerjoin(models.Persona, models.AgendaEvent.created_by_persona_id == models.Persona.id)
-        .filter(
-            models.AgendaEvent.deleted_at.is_(None),
-            or_(
-                models.AgendaEvent.created_by_persona_id.is_(None),
-                models.Persona.sede_id == sede_id,
-            ),
+    current_persona_id = resolve_persona_id_for_user(db, current_user.id)
+
+    # ── helpers ────────────────────────────────────────────────────────────
+
+    def _include(*views: str) -> bool:
+        return view == "todo" or view in views
+
+    # ── EVANGELISMO ────────────────────────────────────────────────────────
+
+    if _include("evangelismo"):
+        # Estrategias (fecha_inicio / fecha_fin)
+        estrategias = (
+            db.query(models.EstrategiaEvangelismo)
+            .filter(
+                models.EstrategiaEvangelismo.deleted_at.is_(None),
+                models.EstrategiaEvangelismo.activa.is_(True),
+                models.EstrategiaEvangelismo.sede_id == sede_id,
+                models.EstrategiaEvangelismo.fecha_inicio.isnot(None),
+            )
+            .all()
         )
-        .all()
-    )
-    for event in agenda_events:
-        events.append(
-            {
-                "id": f"agenda-{event.id}",
-                "title": event.title,
-                "start": event.start_at.isoformat(),
-                "end": event.end_at.isoformat() if event.end_at else None,
-                "type": "agenda_event",
-                "color": "red",
-                "allDay": event.is_all_day,
-                "href": f"/agenda/events/{event.id}",
-                "location": event.location,
-            }
+        for e in estrategias:
+            events.append({
+                "id": f"estrategia-{e.id}",
+                "title": e.nombre,
+                "start": e.fecha_inicio.isoformat(),
+                "end": e.fecha_fin.isoformat() if e.fecha_fin else None,
+                "type": "evangelism_strategy",
+                "allDay": True,
+                "href": f"/plataforma/evangelism/estrategias/{e.id}",
+            })
+
+        # Sesiones de grupos de evangelismo
+        sesiones = (
+            db.query(models.SesionGrupo)
+            .join(models.GrupoEvangelismo, models.SesionGrupo.grupo_id == models.GrupoEvangelismo.id)
+            .filter(
+                models.SesionGrupo.deleted_at.is_(None),
+                models.GrupoEvangelismo.sede_id == sede_id,
+            )
+            .all()
         )
-    evangelism_events = (
-        db.query(models.CrmEvent)
-        .filter(models.CrmEvent.event_date.isnot(None), models.CrmEvent.sede_id == sede_id)
-        .all()
-    )
-    for event in evangelism_events:
-        events.append(
-            {
-                "id": f"evangelism-{event.id}",
-                "title": event.name,
-                "start": event.event_date.isoformat(),
+        for s in sesiones:
+            grupo_name = s.grupo.nombre if s.grupo else "Grupo"
+            events.append({
+                "id": f"sesion-{s.id}",
+                "title": s.tema_estudio or f"Sesión — {grupo_name}",
+                "start": s.fecha_sesion.isoformat(),
+                "end": None,
+                "type": "evangelism_session",
+                "allDay": False,
+                "href": f"/plataforma/evangelism/grupos/{s.grupo_id}",
+            })
+
+        # Eventos evangelísticos (crm_events)
+        crm_events = (
+            db.query(models.CrmEvent)
+            .filter(
+                models.CrmEvent.event_date.isnot(None),
+                models.CrmEvent.sede_id == sede_id,
+            )
+            .all()
+        )
+        for ev in crm_events:
+            events.append({
+                "id": f"evangelism-{ev.id}",
+                "title": ev.name,
+                "start": ev.event_date.isoformat(),
                 "end": None,
                 "type": "evangelism_event",
-                "color": "green",
                 "allDay": False,
-                "href": f"/evangelism/events/{event.id}",
-                "location": event.location,
-            }
+                "href": f"/plataforma/evangelism/events/{ev.id}",
+                "location": ev.location,
+            })
+
+    # ── CRM / CONSOLIDACIÓN ────────────────────────────────────────────────
+
+    if _include("crm"):
+        # Casos con SLA de contacto
+        crm_casos = (
+            db.query(models.CasoCRM)
+            .filter(
+                models.CasoCRM.deleted_at.is_(None),
+                models.CasoCRM.sla_vencimiento_contacto.isnot(None),
+                models.CasoCRM.sede_id == sede_id,
+            )
+            .all()
         )
-    tasks = (
-        db.query(models.ProjectTask)
-        .join(models.Project, models.ProjectTask.project_id == models.Project.id)
-        .filter(
-            models.ProjectTask.due_date.isnot(None),
-            or_(
-                models.Project.sede_id.is_(None),
-                models.Project.sede_id == sede_id,
-            ),
+        for case in crm_casos:
+            persona_name = (
+                f"{case.persona.first_name} {case.persona.last_name}".strip()
+                if case.persona else "Caso CRM"
+            )
+            events.append({
+                "id": f"consolidation-case-{case.id}",
+                "title": f"Seguimiento: {persona_name}",
+                "start": case.sla_vencimiento_contacto.isoformat(),
+                "end": None,
+                "type": "consolidation_case",
+                "allDay": False,
+                "href": f"/plataforma/crm/pipeline/{case.id}",
+            })
+
+        # Tareas CRM
+        crm_tareas = (
+            db.query(models.TareaCRM)
+            .join(models.CasoCRM, models.TareaCRM.caso_id == models.CasoCRM.id)
+            .filter(
+                models.TareaCRM.deleted_at.is_(None),
+                models.TareaCRM.completada.is_(False),
+                models.CasoCRM.deleted_at.is_(None),
+                models.CasoCRM.sede_id == sede_id,
+            )
+            .all()
         )
-        .all()
-    )
-    for t in tasks:
-        events.append(
-            {
+        for task in crm_tareas:
+            events.append({
+                "id": f"consolidation-task-{task.id}",
+                "title": task.titulo,
+                "start": task.fecha_vencimiento.isoformat(),
+                "end": None,
+                "type": "consolidation_task",
+                "allDay": False,
+                "href": f"/plataforma/crm/pipeline/{task.caso_id}",
+            })
+
+    # ── PROYECTOS ──────────────────────────────────────────────────────────
+
+    if _include("proyectos"):
+        # Tareas de proyectos
+        proj_tasks = (
+            db.query(models.ProjectTask)
+            .join(models.Project, models.ProjectTask.project_id == models.Project.id)
+            .filter(
+                models.ProjectTask.due_date.isnot(None),
+                or_(
+                    models.Project.sede_id.is_(None),
+                    models.Project.sede_id == sede_id,
+                ),
+            )
+            .all()
+        )
+        for t in proj_tasks:
+            events.append({
                 "id": f"task-{t.id}",
                 "title": t.title,
                 "start": t.due_date.isoformat(),
                 "type": "task",
-                "color": "blue",
-                "href": f"/projects/{t.project_id}",
-            }
-        )
-
-    consolidation_cases = (
-        db.query(models.ConsolidationCase)
-        .filter(
-            models.ConsolidationCase.deleted_at.is_(None),
-            models.ConsolidationCase.next_contact_at.isnot(None),
-            or_(
-                models.ConsolidationCase.sede_id.is_(None),
-                models.ConsolidationCase.sede_id == sede_id,
-            ),
-        )
-        .all()
-    )
-    for case in consolidation_cases:
-        events.append(
-            {
-                "id": f"consolidation-case-{case.id}",
-                "title": f"Seguimiento: {case.persona.nombre_completo if case.persona else 'Caso de consolidación'}",
-                "start": case.next_contact_at.isoformat(),
-                "end": None,
-                "type": "consolidation_case",
-                "color": "orange",
                 "allDay": False,
-                "href": f"/plataforma/crm/pipeline/{case.id}",
-                "location": None,
-            }
-        )
+                "href": f"/plataforma/proyectos/{t.project_id}",
+            })
 
-    consolidation_tasks = (
-        db.query(models.ConsolidationTask)
-        .join(models.ConsolidationCase, models.ConsolidationTask.case_id == models.ConsolidationCase.id)
-        .filter(
-            models.ConsolidationTask.due_date.isnot(None),
-            models.ConsolidationCase.deleted_at.is_(None),
-            or_(
-                models.ConsolidationCase.sede_id.is_(None),
-                models.ConsolidationCase.sede_id == sede_id,
-            ),
-        )
-        .all()
-    )
-    for task in consolidation_tasks:
-        events.append(
-            {
-                "id": f"consolidation-task-{task.id}",
-                "title": task.title,
-                "start": task.due_date.isoformat(),
-                "end": None,
-                "type": "consolidation_task",
-                "color": "fuchsia",
-                "allDay": False,
-                "href": f"/plataforma/crm/pipeline/{task.case_id}",
-                "location": None,
-            }
-        )
-
-    # Birthday events from members
-    from sqlalchemy import func as sqlfunc
-
-    today = datetime.now(timezone.utc).date()
-    try:
-        personas = (
-            db.query(models.Persona)
+        # Hitos de proyectos
+        milestones = (
+            db.query(models.ProjectMilestone)
+            .join(models.Project, models.ProjectMilestone.project_id == models.Project.id)
             .filter(
-                models.Persona.birthday.isnot(None),
-                sqlfunc.extract("month", models.Persona.birthday) >= 1,
-                models.Persona.sede_id == sede_id,
+                models.ProjectMilestone.deleted_at.is_(None),
+                models.ProjectMilestone.target_date.isnot(None),
+                models.ProjectMilestone.is_completed.is_(False),
+                or_(
+                    models.Project.sede_id.is_(None),
+                    models.Project.sede_id == sede_id,
+                ),
             )
             .all()
         )
-    except Exception:
-        personas = []
+        for m in milestones:
+            events.append({
+                "id": f"milestone-{m.id}",
+                "title": f"🏁 {m.title}",
+                "start": m.target_date.isoformat(),
+                "end": None,
+                "type": "project_milestone",
+                "allDay": True,
+                "href": f"/plataforma/proyectos/{m.project_id}",
+            })
 
-    for m in personas:
-        if not m.birthday:
-            continue
+    # ── PERSONAL ───────────────────────────────────────────────────────────
+
+    if _include("personal"):
+        personal_filters = [
+            models.EventoAgenda.deleted_at.is_(None),
+            models.EventoAgenda.sede_id == sede_id,
+        ]
+        # In personal view, show only the user's own events
+        if view == "personal" and current_persona_id:
+            personal_filters.append(
+                models.EventoAgenda.organizador_persona_id == current_persona_id
+            )
+
+        agenda_events = db.query(models.EventoAgenda).filter(*personal_filters).all()
+        for ev in agenda_events:
+            events.append({
+                "id": f"agenda-{ev.id}",
+                "title": ev.titulo,
+                "start": ev.fecha_inicio.isoformat(),
+                "end": ev.fecha_fin.isoformat() if ev.fecha_fin else None,
+                "type": "agenda_event",
+                "allDay": ev.todo_el_dia,
+                "href": f"/plataforma/agenda/events/{ev.id}",
+                "location": ev.ubicacion_texto,
+            })
+
+    # ── CUMPLEAÑOS (todo + personal + cumpleanos) ──────────────────────────
+
+    if _include("personal", "cumpleanos"):
+        today = datetime.now(timezone.utc).date()
         try:
-            bday = m.birthday
-            if isinstance(bday, str):
-                bday = datetime.fromisoformat(bday).date()
-            # Show birthday on the current-year date
-            event_date = bday.replace(year=today.year)
-            age = today.year - bday.year
-            events.append(
-                {
+            personas_bday = (
+                db.query(models.Persona)
+                .filter(
+                    models.Persona.birthday.isnot(None),
+                    sqlfunc.extract("month", models.Persona.birthday) >= 1,
+                    models.Persona.sede_id == sede_id,
+                )
+                .all()
+            )
+        except Exception:
+            personas_bday = []
+
+        for m in personas_bday:
+            if not m.birthday:
+                continue
+            try:
+                bday = m.birthday
+                if isinstance(bday, str):
+                    bday = datetime.fromisoformat(bday).date()
+                event_date = bday.replace(year=today.year)
+                age = today.year - bday.year
+                events.append({
                     "id": f"birthday-{m.id}",
                     "title": f"🎂 {m.first_name} {m.last_name or ''} — {age} años".strip(),
                     "start": event_date.isoformat(),
                     "end": None,
                     "type": "birthday",
-                    "color": "pink",
                     "allDay": True,
-                    "href": f"/crm/members/{m.id}",
-                }
-            )
-        except Exception:
-            continue
+                    "href": f"/plataforma/crm/personas/{m.id}",
+                })
+            except Exception:
+                continue
 
     return events
 

@@ -66,9 +66,9 @@ const RICH_TEXT_CSS = `
 
     /* ── Links ── */
     .faro-rich-text a {
-        color: var(--faro-primary, #6366f1);
+        color: var(--site-primary, #6366f1);
         text-decoration: underline;
-        text-decoration-color: var(--faro-primary, #6366f1);
+        text-decoration-color: var(--site-primary, #6366f1);
         text-decoration-thickness: 2px;
         text-underline-offset: 2px;
         transition: opacity 0.2s;
@@ -100,14 +100,14 @@ const RICH_TEXT_CSS = `
         padding-left: 0.25rem;
     }
     .faro-rich-text li::marker {
-        color: var(--faro-primary, #6366f1);
+        color: var(--site-primary, #6366f1);
     }
 
     /* ── Blockquotes ── */
     .faro-rich-text blockquote {
         margin: 1.5rem 0;
         padding: 1rem 1.25rem;
-        border-left: 4px solid var(--faro-primary, #6366f1);
+        border-left: 4px solid var(--site-primary, #6366f1);
         background: rgba(99, 102, 241, 0.05);
         border-radius: 0 0.5rem 0.5rem 0;
         font-style: italic;
@@ -150,7 +150,7 @@ const RICH_TEXT_CSS = `
     .faro-rich-text hr {
         margin: 2rem 0;
         border: none;
-        border-top: 2px solid var(--faro-outline-variant, rgba(0,0,0,0.1));
+        border-top: 2px solid var(--site-outline-variant, rgba(0,0,0,0.1));
     }
 
     /* ── Images ── */
@@ -171,7 +171,7 @@ const RICH_TEXT_CSS = `
     .faro-rich-text th,
     .faro-rich-text td {
         padding: 0.75rem 1rem;
-        border: 1px solid var(--faro-outline-variant, rgba(0,0,0,0.1));
+        border: 1px solid var(--site-outline-variant, rgba(0,0,0,0.1));
         text-align: left;
     }
     .faro-rich-text th {

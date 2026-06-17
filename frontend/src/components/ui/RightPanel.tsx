@@ -67,7 +67,7 @@ function RightPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: width, opacity: 0 }}
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-            style={{ width, minWidth: width, maxWidth: width }}
+            style={{ width: `min(${width}px, 100vw)`, minWidth: 0, maxWidth: '100vw' }}
             className={clsx(
                 'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border-l border-slate-100 dark:border-white/5',
                 isControlled || rightMode === 'overlay'

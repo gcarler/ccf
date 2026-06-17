@@ -275,7 +275,7 @@ export default function IdentityManagementPage() {
                     </div>
 
                     {/* Users Table */}
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-x-auto">
                         {loading ? (
                             <div className="p-4 space-y-3">
                                 {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
@@ -286,7 +286,7 @@ export default function IdentityManagementPage() {
                                 <p className="text-sm font-medium text-slate-400">Sin resultados</p>
                             </div>
                         ) : (
-                            <table className="w-full text-left border-collapse">
+                            <table className="w-full min-w-[520px] text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/50 dark:bg-black/20 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                         <th className="px-4 py-2">Persona</th>

@@ -1,3 +1,5 @@
+import { SITE_KEY } from "@/lib/site-config";
+
 export interface CmsBlockDefinition {
   key: string;
   label: string;
@@ -6,64 +8,64 @@ export interface CmsBlockDefinition {
   sample: Record<string, unknown> | unknown[];
 }
 
-export const FARO_BLOCKS: CmsBlockDefinition[] = [
+export const SITE_BLOCKS: CmsBlockDefinition[] = [
   {
-    key: "faro_nav_items",
-    label: "Navegacion FARO",
-    description: "Enlaces del navbar publico de FARO.",
+    key: `${SITE_KEY}_nav_items`,
+    label: "Navegación Pública",
+    description: "Enlaces del navbar público del sitio.",
     page: "/",
     sample: {
       items: [
         { label: "Sobre Nosotros", href: "/nosotros" },
         { label: "Testimonios", href: "/testimonios" },
         { label: "Eventos", href: "/eventos" },
-        { label: "Predicas", href: "/predicas" },
+        { label: "Prédicas", href: "/predicas" },
         { label: "Cursos", href: "/cursos" },
         { label: "Sedes", href: "/sedes" }
       ]
     }
   },
   {
-    key: "faro_home_hero",
-    label: "Inicio hero",
+    key: `${SITE_KEY}_home_hero`,
+    label: "Inicio — Hero",
     description: "Copys y CTAs del hero principal.",
     page: "/",
     sample: {
-      eyebrow: "Comunidad FARO",
+      eyebrow: "Bienvenidos",
       title_lead: "Ilumina tu",
       title_accent: "Camino",
-      description: "Una comunidad vibrante donde la fe encuentra proposito.",
-      primary_cta: "Unete a nosotros",
+      description: "Una comunidad vibrante donde la fe encuentra propósito.",
+      primary_cta: "Únete a nosotros",
       secondary_cta: "Ver predicaciones"
     }
   },
   {
-    key: "faro_events_hero",
-    label: "Eventos hero",
+    key: `${SITE_KEY}_events_hero`,
+    label: "Eventos — Hero",
     description: "Titular y texto principal de eventos.",
     page: "/eventos",
     sample: {
       eyebrow: "Calendario de Comunidad",
       title: "Nuestra Agenda",
-      description: "Espacios disenados para el crecimiento y la conexion."
+      description: "Espacios diseñados para el crecimiento y la conexión."
     }
   },
   {
-    key: "faro_testimonios_hero",
-    label: "Testimonios hero",
-    description: "Titular y subtitulo de testimonios.",
+    key: `${SITE_KEY}_testimonios_hero`,
+    label: "Testimonios — Hero",
+    description: "Titular y subtítulo de testimonios.",
     page: "/testimonios",
     sample: {
       eyebrow: "Impacto Real",
       title_lead: "Historias de",
-      title_accent: "Transformacion",
-      description: "Descubre como la fe ha iluminado vidas reales."
+      title_accent: "Transformación",
+      description: "Descubre cómo la fe ha iluminado vidas reales."
     }
   },
   {
-    key: "faro_sermons_hero",
-    label: "Predicas hero",
-    description: "Mensaje principal de la pagina de predicas.",
+    key: `${SITE_KEY}_sermons_hero`,
+    label: "Prédicas — Hero",
+    description: "Mensaje principal de la página de prédicas.",
     page: "/predicas",
     sample: {
       eyebrow: "Mensaje Destacado",
@@ -73,82 +75,157 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     }
   },
   {
-    key: "faro_courses_hero",
-    label: "Cursos hero",
-    description: "Texto de portada para cursos y libreria.",
+    key: `${SITE_KEY}_courses_hero`,
+    label: "Cursos — Hero",
+    description: "Texto de portada para cursos y librería.",
     page: "/cursos",
     sample: {
-      eyebrow: "Formacion y Sabiduria",
-      title_lead: "El Camino",
-      title_accent: "del Faro",
+      eyebrow: "Formación y Sabiduría",
+      title_lead: "El Camino del",
+      title_accent: "Aprendizaje",
       description: "Explora cursos y recursos para profundizar tu fe."
     }
   },
   {
-    key: "faro_discover_hero",
-    label: "Conocer a Jesus hero",
+    key: `${SITE_KEY}_courses_feed`,
+    label: "Cursos — Contenido",
+    description: "Listado y configuración de cursos públicos.",
+    page: "/cursos",
+    sample: {
+      featured_course_id: null,
+      show_free_only: false
+    }
+  },
+  {
+    key: `${SITE_KEY}_discover_hero`,
+    label: "Conocer a Jesús — Hero",
     description: "Copys del encabezado principal.",
     page: "/conocer-a-jesus",
     sample: {
       eyebrow: "Inicia Tu Camino",
       title_lead: "La Luz que",
-      title_accent: "Guia",
+      title_accent: "Guía",
       title_tail: "Tu Vida.",
-      description: "El comienzo de una relacion que transforma tu historia.",
-      cta: "Quiero conocer a Jesus"
+      description: "El comienzo de una relación que transforma tu historia.",
+      cta: "Quiero conocer a Jesús"
     }
   },
   {
-    key: "faro_about_hero",
-    label: "Nosotros hero",
+    key: `${SITE_KEY}_discover_feed`,
+    label: "Conocer a Jesús — Contenido",
+    description: "Pasos, contacto y recursos para nuevos creyentes.",
+    page: "/conocer-a-jesus",
+    sample: {
+      contact_email: "",
+      contact_phone: "",
+      contact_address: ""
+    }
+  },
+  {
+    key: `${SITE_KEY}_about_hero`,
+    label: "Nosotros — Hero",
     description: "Mensaje principal de identidad institucional.",
     page: "/nosotros",
     sample: {
       eyebrow: "Nuestra Identidad",
-      title_lead: "Iluminando el",
-      title_accent: "camino juntos",
-      description: "Comunidad dedicada a guiar personas hacia una vida con proposito."
+      title_lead: "Caminando",
+      title_accent: "juntos",
+      description: "Comunidad dedicada a guiar personas hacia una vida con propósito."
     }
   },
   {
-    key: "faro_locations_hero",
-    label: "Sedes hero",
-    description: "Titulo y buscador para sedes y horarios.",
+    key: `${SITE_KEY}_about_feed`,
+    label: "Nosotros — Contenido",
+    description: "Historia, visión, misión, valores y fundadores.",
+    page: "/nosotros",
+    sample: {
+      vision_text: "Ser una comunidad de fe que <strong>transforma vidas, familias y ciudades</strong>.",
+      mision_text: "Guiar, equipar y movilizar a cada persona mediante la <strong>enseñanza bíblica profunda</strong>.",
+      founder_bio: "",
+      founder_bio2: "",
+      quote_text: "",
+      quote_author: "",
+      quote_subtitle: "",
+      stats: [
+        { value: "0+", label: "Miembros" },
+        { value: "0+", label: "Años" },
+        { value: "0", label: "Sedes" }
+      ],
+      valores: []
+    }
+  },
+  {
+    key: `${SITE_KEY}_locations_hero`,
+    label: "Sedes — Hero",
+    description: "Título y buscador para sedes y horarios.",
     page: "/sedes",
     sample: {
       eyebrow: "Nuestra Presencia",
       title: "Nuestras Sedes",
-      search_placeholder: "Buscar ciudad o direccion..."
+      search_placeholder: "Buscar ciudad o dirección..."
     }
   },
   {
-    key: "faro_testimonials_feed",
-    label: "Testimonios feed",
-    description: "Listado moderado de testimonios publicos.",
+    key: `${SITE_KEY}_locations_feed`,
+    label: "Sedes — Contenido",
+    description: "Mapa y listado de sedes con horarios.",
+    page: "/sedes",
+    sample: { show_map: true }
+  },
+  {
+    key: `${SITE_KEY}_pastores_hero`,
+    label: "Liderazgo — Hero",
+    description: "Titular de la página de pastores.",
+    page: "/pastores",
+    sample: {
+      eyebrow: "Nuestro Equipo",
+      title: "Liderazgo Pastoral",
+      description: "Personas llamadas a servir y guiar a la comunidad."
+    }
+  },
+  {
+    key: `${SITE_KEY}_pastores_feed`,
+    label: "Liderazgo — Contenido",
+    description: "Datos adicionales de la página de pastores.",
+    page: "/pastores",
+    sample: {}
+  },
+  {
+    key: `${SITE_KEY}_boletin_hero`,
+    label: "Boletín — Hero",
+    description: "Portada del boletín informativo.",
+    page: "/boletin",
+    sample: {
+      title: "Boletín de la Comunidad",
+      description: "Las noticias y anuncios más recientes."
+    }
+  },
+  {
+    key: `${SITE_KEY}_testimonials_feed`,
+    label: "Testimonios — Feed",
+    description: "Listado moderado de testimonios públicos.",
     page: "/testimonios",
     sample: [
       {
         id: 1,
-        content: "Llegue con ansiedad y hoy tengo paz y comunidad.",
-        emotion: "Restauracion",
+        content: "Llegué con ansiedad y hoy tengo paz y comunidad.",
+        emotion: "Restauración",
         is_approved: true,
         show_on_home: true,
-        author_id: 1,
-        author: { id: 1, username: "Comunidad FARO" },
         created_at: "2026-01-10T10:00:00Z"
       }
     ]
   },
   {
-    key: "faro_announcements_feed",
-    label: "Anuncios feed",
-    description: "Publicaciones breves de comunicacion oficial.",
+    key: `${SITE_KEY}_announcements_feed`,
+    label: "Anuncios — Feed",
+    description: "Publicaciones breves de comunicación oficial.",
     page: "/plataforma/community/announcements",
     sample: [
       {
         id: 1,
-        title: "Congreso de Jovenes",
-        content: "Inscripciones abiertas en recepcion y web.",
+        title: "Congreso de Jóvenes",
+        content: "Inscripciones abiertas en recepción y web.",
         category: "Eventos",
         is_active: true,
         created_at: "2026-01-10T10:00:00Z"
@@ -157,8 +234,15 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
   }
 ];
 
-export const FARO_MEDIA_BLOCK_KEY = "faro_media_gallery";
-export const FARO_EVENTS_BLOCK_KEY = "faro_public_events";
+// Keep FARO_BLOCKS as alias for backwards compat during transition
+export const FARO_BLOCKS = SITE_BLOCKS;
+
+export const SITE_EVENTS_BLOCK_KEY = `${SITE_KEY}_public_events`;
+export const SITE_MEDIA_BLOCK_KEY  = `${SITE_KEY}_media_gallery`;
+
+// Legacy aliases — remove after DB migration
+export const FARO_EVENTS_BLOCK_KEY = SITE_EVENTS_BLOCK_KEY;
+export const FARO_MEDIA_BLOCK_KEY  = SITE_MEDIA_BLOCK_KEY;
 
 export const CIVIC_BLOCKS: CmsBlockDefinition[] = [
   {
@@ -184,32 +268,7 @@ export const CIVIC_BLOCKS: CmsBlockDefinition[] = [
     sample: {
       title: "Convocatorias Vigentes",
       body: "Consulta las convocatorias activas y sus fechas límite.",
-      items: [
-        {
-          title: "Beca de Excelencia Académica 2025",
-          description: "Dirigida a estudiantes de nivel superior con promedio mínimo de 8.5.",
-          status: "abierta",
-          deadline: "31 de julio de 2025",
-          category: "Educación",
-          href: "/convocatorias/beca-excelencia-2025"
-        },
-        {
-          title: "Fondo para Proyectos Comunitarios",
-          description: "Apoya iniciativas de impacto social en comunidades vulnerables.",
-          status: "proxima",
-          deadline: "1 de septiembre de 2025",
-          category: "Desarrollo Social",
-          href: "/convocatorias/fondo-comunitario-2025"
-        },
-        {
-          title: "Premio Municipal de Arte 2024",
-          description: "Reconocimiento a creadores locales en artes plásticas y visuales.",
-          status: "cerrada",
-          deadline: "15 de marzo de 2024",
-          category: "Cultura",
-          href: "/convocatorias/premio-arte-2024"
-        }
-      ]
+      items: []
     }
   },
   {
@@ -219,18 +278,9 @@ export const CIVIC_BLOCKS: CmsBlockDefinition[] = [
     page: "*",
     sample: {
       title: "Trámites Frecuentes",
-      body: "Los servicios más solicitados por la ciudadanía.",
+      body: "Los servicios más solicitados.",
       columns: "4",
-      items: [
-        { icon: "🪪", label: "Credencial de Elector",   href: "/tramites/credencial",  description: "Trámite INE" },
-        { icon: "📋", label: "Acta de Nacimiento",      href: "/tramites/acta-nac",    description: "Registro Civil" },
-        { icon: "🏠", label: "Predial",                 href: "/tramites/predial",     description: "Pago en línea" },
-        { icon: "🚗", label: "Verificación Vehicular",  href: "/tramites/verificacion",description: "Programa 2025" },
-        { icon: "💊", label: "Citas Médicas",           href: "/servicios/citas",      description: "IMSS / ISSSTE" },
-        { icon: "🎓", label: "Becas Educativas",        href: "/becas",                description: "Ciclo 2025-2026" },
-        { icon: "🌱", label: "Licencias Ambientales",   href: "/tramites/ambiental",   description: "Impacto ambiental" },
-        { icon: "📞", label: "Contacto Ciudadano",      href: "/contacto",             description: "Atención directa" }
-      ]
+      items: []
     }
   },
   {
@@ -241,29 +291,7 @@ export const CIVIC_BLOCKS: CmsBlockDefinition[] = [
     sample: {
       title: "Documentos Disponibles",
       body: "Descarga los formatos y documentos oficiales.",
-      items: [
-        {
-          name: "Convocatoria Beca 2025.pdf",
-          file_url: "/docs/convocatoria-beca-2025.pdf",
-          format: "pdf",
-          size_label: "2.4 MB",
-          description: "Bases y condiciones generales"
-        },
-        {
-          name: "Formato de Solicitud.docx",
-          file_url: "/docs/formato-solicitud.docx",
-          format: "docx",
-          size_label: "180 KB",
-          description: "Llenar a máquina o a mano con tinta azul"
-        },
-        {
-          name: "Presupuesto Aprobado 2025.xlsx",
-          file_url: "/docs/presupuesto-2025.xlsx",
-          format: "xlsx",
-          size_label: "540 KB",
-          description: "Ejercicio fiscal enero–diciembre 2025"
-        }
-      ]
+      items: []
     }
   },
   {
@@ -272,20 +300,13 @@ export const CIVIC_BLOCKS: CmsBlockDefinition[] = [
     description: "Tabla HTML accesible con caption, encabezados scope=\"col\" y primera columna scope=\"row\".",
     page: "*",
     sample: {
-      title: "Resultados del Padrón 2025",
-      caption: "Distribución de beneficiarios por municipio — Padrón 2025",
+      title: "Resultados",
+      caption: "",
       highlight_first_col: true,
       striped: true,
-      footer_note: "Fuente: Dirección General de Desarrollo Social, junio 2025.",
-      headers: ["Municipio", "Solicitudes", "Aprobadas", "Rechazadas", "Pendientes"],
-      rows: [
-        ["Centro",        "1,240", "980",  "180", "80"],
-        ["Norte",         "870",   "640",  "150", "80"],
-        ["Sur",           "620",   "510",  "60",  "50"],
-        ["Oriente",       "490",   "380",  "70",  "40"],
-        ["Poniente",      "330",   "290",  "25",  "15"],
-        ["Total general", "3,550", "2,800","485", "265"]
-      ]
+      footer_note: "",
+      headers: [],
+      rows: []
     }
   },
   {
@@ -295,10 +316,10 @@ export const CIVIC_BLOCKS: CmsBlockDefinition[] = [
     page: "*",
     sample: {
       level: "warning",
-      title: "Mantenimiento Programado",
-      message: "El portal de trámites en línea estará fuera de servicio el sábado 28 de junio de 06:00 a 10:00 hrs.",
+      title: "Aviso Importante",
+      message: "",
       cta_label: "Más información",
-      cta_href: "/avisos/mantenimiento-junio-2025",
+      cta_href: "/avisos",
       dismissible: true
     }
   }

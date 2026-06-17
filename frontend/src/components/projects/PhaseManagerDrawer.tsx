@@ -94,8 +94,10 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
             addToast('Fases actualizadas', 'success');
             onClose();
         } catch (err: any) {
-            const detail = err?.detail || 'Error al guardar fases';
-            addToast(detail, 'error');
+            const detail = typeof err?.detail === 'string'
+                ? err.detail
+                : err?.detail?.detail || err?.detail?.message || (err?.detail ? JSON.stringify(err.detail) : '');
+            addToast(detail || 'Error al guardar fases', 'error');
         } finally {
             setSaving(false);
         }

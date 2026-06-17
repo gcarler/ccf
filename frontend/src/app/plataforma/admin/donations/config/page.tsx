@@ -163,8 +163,8 @@ export default function DonationConfig() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/5">
-            <table className="w-full text-left">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+            <table className="w-full min-w-[480px] text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
                         <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fondo</th>

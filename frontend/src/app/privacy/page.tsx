@@ -4,6 +4,7 @@ import React from 'react';
 import Navbar from '@/components/Navbar';
 import { ShieldAlert } from 'lucide-react';
 import { useContentBlock } from '@/hooks/useContent';
+import CmsPageOverride from '@/components/public/cms/CmsPageOverride';
 
 export default function PrivacyPage() {
     const { data: content } = useContentBlock('privacy_policy');
@@ -11,6 +12,7 @@ export default function PrivacyPage() {
     const rawContent = content?.content || "Cargando contenido...";
 
     return (
+        <CmsPageOverride slug="privacy">
         <div className="min-h-screen bg-slate-50 dark:bg-background-dark bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
             <Navbar />
             <div className="pt-32 pb-4 container mx-auto px-3 max-w-4xl relative z-10">
@@ -31,6 +33,7 @@ export default function PrivacyPage() {
                 </div>
             </div>
         </div>
+        </CmsPageOverride>
     );
 }
 

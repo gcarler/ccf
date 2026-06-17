@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -352,6 +352,7 @@ export default function CmsContentPage() {
   const [showMedia, setShowMedia] = useState(false);
   const [copiedMediaId, setCopiedMediaId] = useState<number | null>(null);
   const [newBlockName, setNewBlockName] = useState("");
+  const [isDirty, setIsDirty] = useState(false);
 
   const currentBlock = useMemo(() => FARO_BLOCKS.find(block => block.key === selectedKey), [selectedKey]);
   const knownKeys = useMemo(() => new Set(FARO_BLOCKS.map(block => block.key)), []);
@@ -424,14 +425,42 @@ export default function CmsContentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showMedia, token]);
 
-  const save = async () => {
+  // Reset dirty when block changes
+  useEffect(() => { setIsDirty(false); }, [selectedKey]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  // Ctrl+S / Cmd+S to save
+  const saveRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        saveRef.current();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const save = useCallback(async () => {
     if (!selectedKey || !token) return;
     setSaving(true);
     setMessage(null);
     try {
       const content = editorMode === "rich" ? richContent : JSON.stringify(structuredValue, null, 2);
       await apiFetch(`/content/${selectedKey}`, { method: "PUT", token, body: { title, content } });
-      setMessage("Bloque guardado como borrador.");
+      setIsDirty(false);
+      setMessage("Bloque guardado.");
       await Promise.all([loadBlock(), loadRecords()]);
     } catch (err) {
       const detail = err instanceof ApiError ? JSON.stringify(err.detail) : "";
@@ -439,7 +468,10 @@ export default function CmsContentPage() {
     } finally {
       setSaving(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedKey, token, editorMode, richContent, structuredValue, title]);
+
+  useEffect(() => { saveRef.current = save; }, [save]);
 
   const transition = async (action: string) => {
     if (!selectedKey || !token) return;
@@ -515,7 +547,7 @@ export default function CmsContentPage() {
         description="Edita textos, heroes, menus y bloques enriquecidos sin tocar JSON. La estructura se serializa solo al guardar."
         tags={["FARO", "Texto enriquecido", "Media"]}
         watchers={["Comunicaciones", "Web Team"]}
-        primaryAction={{ label: saving ? "Guardando..." : "Guardar bloque", icon: Save, onClick: save }}
+        primaryAction={{ label: saving ? "Guardando..." : isDirty ? "Guardar cambios ●" : "Guardar bloque", icon: Save, onClick: save }}
         secondaryAction={currentBlock ? { label: "Abrir pagina", icon: Eye, onClick: () => window.open(currentBlock.page, "_blank") } : undefined}
       />
 
@@ -546,7 +578,7 @@ export default function CmsContentPage() {
               <input
                 value={newBlockName}
                 onChange={event => setNewBlockName(event.target.value)}
-                placeholder="ej. faro_about_body"
+                placeholder="ej. site_about_body"
                 className="min-w-0 flex-1 rounded-md border border-slate-200 bg-transparent px-3 py-2 text-xs outline-none dark:border-white/10"
               />
               <button type="button" onClick={createRichBlock} className="rounded-md bg-primary px-3 text-white">
@@ -644,22 +676,27 @@ export default function CmsContentPage() {
           </div>
 
           {editorMode === "rich" ? (
-            <RichTextEditor value={richContent} onChange={setRichContent} />
+            <RichTextEditor value={richContent} onChange={v => { setRichContent(v); setIsDirty(true); }} />
           ) : (
-            <EditableNode root={structuredValue} path={[]} label="Contenido" onChange={setStructuredValue} />
+            <EditableNode root={structuredValue} path={[]} label="Contenido" onChange={v => { setStructuredValue(v); setIsDirty(true); }} />
           )}
 
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={save}
               disabled={saving || loading}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-3 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-60"
+              className={`inline-flex items-center gap-2 rounded-md px-3 py-3 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-60 transition-colors ${isDirty ? "bg-amber-500 hover:bg-amber-600" : "bg-primary"}`}
             >
-              <Save size={14} />
-              {saving ? "Guardando" : "Guardar"}
+              {saving ? (
+                <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+              ) : (
+                <Save size={14} />
+              )}
+              {saving ? "Guardando…" : isDirty ? "Guardar cambios ●" : "Guardar"}
             </button>
+            {isDirty && !saving && <p className="text-xs text-amber-500 font-medium">Cambios sin guardar · Ctrl+S</p>}
+            {!isDirty && message && <p className="text-xs text-emerald-500 font-medium">{message}</p>}
             {loading && <p className="text-sm text-slate-500">Cargando bloque...</p>}
-            {message && <p className="text-sm text-slate-500">{message}</p>}
           </div>
 
           <div className="rounded-md border border-slate-200 p-4 dark:border-white/10">
