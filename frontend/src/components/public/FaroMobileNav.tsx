@@ -4,6 +4,8 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Home, MapPin, Menu, PlayCircle } from "lucide-react";
+import { useContentBlock } from "@/hooks/useContent";
+import { SITE_KEY } from "@/lib/site-config";
 
 const navItems = [
     { href: "/", label: "Inicio", icon: Home },
@@ -13,8 +15,30 @@ const navItems = [
     { href: "/conocer-a-jesus", label: "Conectar", icon: Menu },
 ];
 
+const ICONS = {
+    home: Home,
+    calendar: CalendarDays,
+    play: PlayCircle,
+    "map-pin": MapPin,
+    menu: Menu,
+};
+
 export default function FaroMobileNav() {
     const pathname = usePathname();
+    const { data: mobileNavContent } = useContentBlock(`${SITE_KEY}_mobile_nav`);
+    const cmsItems = mobileNavContent?.parsed && typeof mobileNavContent.parsed === "object" && !Array.isArray(mobileNavContent.parsed)
+        ? (mobileNavContent.parsed as { items?: Array<Record<string, unknown>> }).items
+        : undefined;
+    const items = Array.isArray(cmsItems) && cmsItems.length > 0
+        ? cmsItems
+            .map((item) => {
+                const href = typeof item.href === "string" ? item.href : "";
+                const label = typeof item.label === "string" ? item.label : "";
+                const iconKey = typeof item.icon === "string" ? item.icon : "menu";
+                return { href, label, icon: ICONS[iconKey as keyof typeof ICONS] || Menu };
+            })
+            .filter((item) => item.href && item.label)
+        : navItems;
 
     return (
         <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-center z-50" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
@@ -25,7 +49,7 @@ export default function FaroMobileNav() {
                     boxShadow: "var(--site-mobile-nav-shadow)",
                 }}
             >
-                {navItems.map(({ href, label, icon: Icon }) => {
+                {items.map(({ href, label, icon: Icon }) => {
                     const isActive = pathname === href || (href !== "/" && pathname?.startsWith(href));
                     return (
                         <Link

@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Shield, ChevronRight, Mail, Calendar, ArrowUp } from "lucide-react";
-import { SITE_NAME, SITE_URL, SITE_EMAIL } from "@/lib/site-config";
+import { useContentBlock } from "@/hooks/useContent";
+import { SITE_NAME, SITE_URL, SITE_EMAIL, SITE_KEY } from "@/lib/site-config";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 const LAST_UPDATE = "12 de junio de 2026";
 
-const SECTIONS = [
+const FALLBACK_SECTIONS = [
     { id: "responsables", title: "1. Responsables del tratamiento" },
     { id: "datos-recopilados", title: "2. Datos que recopilamos" },
     { id: "finalidades", title: "3. Finalidades del tratamiento" },
@@ -27,11 +28,30 @@ const SECTIONS = [
 export default function PrivacidadPage() {
     const [activeSection, setActiveSection] = useState("");
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const { data: privacyContent } = useContentBlock(`${SITE_KEY}_privacy`);
+    const privacy = (privacyContent?.parsed && typeof privacyContent.parsed === "object" && !Array.isArray(privacyContent.parsed))
+        ? privacyContent.parsed as Record<string, unknown>
+        : {};
+    const lastUpdate = typeof privacy.last_update === "string" ? privacy.last_update : LAST_UPDATE;
+    const summary = typeof privacy.summary === "string"
+        ? privacy.summary
+        : "";
+    const sections = useMemo(() => (
+        Array.isArray(privacy.sections) && privacy.sections.length > 0
+            ? privacy.sections
+                .map((item) => item && typeof item === "object" ? item as Record<string, unknown> : {})
+                .map((item) => ({
+                    id: typeof item.id === "string" ? item.id : "",
+                    title: typeof item.title === "string" ? item.title : "",
+                }))
+                .filter((item) => item.id && item.title)
+            : FALLBACK_SECTIONS
+    ), [privacy.sections]);
 
     useEffect(() => {
         const onScroll = () => {
             setShowScrollTop(window.scrollY > 400);
-            for (const s of [...SECTIONS].reverse()) {
+            for (const s of [...sections].reverse()) {
                 const el = document.getElementById(s.id);
                 if (el && el.getBoundingClientRect().top <= 120) {
                     setActiveSection(s.id);
@@ -42,7 +62,7 @@ export default function PrivacidadPage() {
         };
         window.addEventListener("scroll", onScroll, { passive: true });
         return () => window.removeEventListener("scroll", onScroll);
-    }, []);
+    }, [sections]);
 
     const scrollTo = (id: string) => {
         const el = document.getElementById(id);
@@ -75,7 +95,7 @@ export default function PrivacidadPage() {
                             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
                                 <span className="inline-flex items-center gap-1.5">
                                     <Calendar size={12} />
-                                    Última actualización: {LAST_UPDATE}
+                                    Última actualización: {lastUpdate}
                                 </span>
                                 <span className="inline-flex items-center gap-1.5">
                                     <Shield size={12} />
@@ -88,11 +108,15 @@ export default function PrivacidadPage() {
                     {/* Resumen ejecutivo */}
                     <div className="mt-8 p-5 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))/0.06] to-transparent border border-[hsl(var(--primary))/0.12]">
                         <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                            Esta política describe cómo <strong className="text-slate-800 dark:text-white">PLES SAS</strong> y la{" "}
-                            <strong className="text-slate-800 dark:text-white">{SITE_NAME}</strong> recopilan,
-                            usan, almacenan y protegen tus datos personales cuando utilizas la plataforma{" "}
-                            <strong className="text-slate-800 dark:text-white">{SITE_URL}</strong>. Tu privacidad es un
-                            derecho fundamental y nos comprometemos a respetarlo en cada interacción.
+                            {summary || (
+                                <>
+                                    Esta política describe cómo <strong className="text-slate-800 dark:text-white">PLES SAS</strong> y la{" "}
+                                    <strong className="text-slate-800 dark:text-white">{SITE_NAME}</strong> recopilan,
+                                    usan, almacenan y protegen tus datos personales cuando utilizas la plataforma{" "}
+                                    <strong className="text-slate-800 dark:text-white">{SITE_URL}</strong>. Tu privacidad es un
+                                    derecho fundamental y nos comprometemos a respetarlo en cada interacción.
+                                </>
+                            )}
                         </p>
                     </div>
                 </div>
@@ -109,7 +133,7 @@ export default function PrivacidadPage() {
                                 Contenido
                             </p>
                             <nav className="space-y-1">
-                                {SECTIONS.map((s) => (
+                                {sections.map((s) => (
                                     <button
                                         key={s.id}
                                         onClick={() => scrollTo(s.id)}

@@ -75,6 +75,24 @@ export default function CursosPage() {
     const heroTitleLead = heroContent?.title_lead || "El Camino";
     const heroAccent = heroContent?.title_accent || "del Aprendizaje";
     const heroDescription = heroContent?.description || "Explora nuestra academia de cursos especializados y sumérgete en una selección literaria para iluminar tu entendimiento.";
+    const courseFeed = (coursesContent?.parsed && typeof coursesContent.parsed === "object" && !Array.isArray(coursesContent.parsed))
+        ? coursesContent.parsed as Record<string, unknown>
+        : {};
+    const heroImageUrl = typeof courseFeed.hero_image_url === "string"
+        ? courseFeed.hero_image_url
+        : "https://picsum.photos/seed/1481627834876-b7833e8f5570/1920/1080";
+    const featuredFallbackImageUrl = typeof courseFeed.featured_fallback_image_url === "string"
+        ? courseFeed.featured_fallback_image_url
+        : "https://picsum.photos/seed/1524178232363-1fb2b075b655/800/600";
+    const ctaImages = Array.isArray(courseFeed.cta_images) && courseFeed.cta_images.length >= 2
+        ? courseFeed.cta_images.map((item) => item && typeof item === "object" ? item as Record<string, unknown> : {}).map((item) => ({
+            src: typeof item.src === "string" ? item.src : "",
+            alt: typeof item.alt === "string" ? item.alt : "Academia",
+        })).filter((item) => item.src)
+        : [
+            { src: "https://picsum.photos/seed/academia1/800/800", alt: "Estudio" },
+            { src: "https://picsum.photos/seed/academia2/800/800", alt: "Librería" },
+        ];
 
     const cmsCourses: CourseItem[] = Array.isArray(coursesContent?.parsed) && coursesContent.parsed.length > 0 
         ? coursesContent.parsed as CourseItem[]
@@ -122,7 +140,7 @@ export default function CursosPage() {
             <section className="relative min-h-[380px] md:h-[560px] flex items-center px-4 sm:px-6 md:px-8 lg:px-12 overflow-hidden">
                 <div className="absolute inset-0 z-0">
                     <Image
-                        src="https://picsum.photos/seed/1481627834876-b7833e8f5570/1920/1080"
+                        src={heroImageUrl}
                         alt="Librería"
                         fill
                         priority
@@ -203,7 +221,7 @@ export default function CursosPage() {
                         >
                             <Link href={`/cursos/${featuredCourse.id || "1"}`} className="block absolute inset-0 z-20" />
                             <Image
-                                src={featuredCourse.imageUrl || "https://picsum.photos/seed/1524178232363-1fb2b075b655/800/600"}
+                                src={featuredCourse.imageUrl || featuredFallbackImageUrl}
                                 alt={featuredCourse.title}
                                 fill
                                 className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -471,8 +489,8 @@ export default function CursosPage() {
                                 style={{ background: "var(--site-surface)" }}
                             >
                                 <Image
-                                    src="https://picsum.photos/seed/academia1/800/800"
-                                    alt="Estudio"
+                                    src={ctaImages[0]?.src || "https://picsum.photos/seed/academia1/800/800"}
+                                    alt={ctaImages[0]?.alt || "Estudio"}
                                     fill
                                     className="object-cover"
                                     style={{ opacity: 0.9 }}
@@ -485,8 +503,8 @@ export default function CursosPage() {
                                 style={{ background: "var(--site-surface)" }}
                             >
                                 <Image
-                                    src="https://picsum.photos/seed/academia2/800/800"
-                                    alt="Librería"
+                                    src={ctaImages[1]?.src || "https://picsum.photos/seed/academia2/800/800"}
+                                    alt={ctaImages[1]?.alt || "Librería"}
                                     fill
                                     className="object-cover"
                                     style={{ opacity: 0.9 }}

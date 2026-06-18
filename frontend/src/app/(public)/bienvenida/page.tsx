@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { ArrowRight, BookOpen, HeartHandshake, Sparkles } from "lucide-react";
+import { useContentBlock } from "@/hooks/useContent";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
+import { SITE_KEY } from "@/lib/site-config";
 
 const HIGHLIGHTS = [
     {
@@ -19,13 +24,40 @@ const HIGHLIGHTS = [
     },
 ] as const;
 
-export default async function WelcomePage({
-    searchParams,
-}: {
-    searchParams?: Promise<{ name?: string; reason?: string }>;
-}) {
-    const params = searchParams ? await searchParams : undefined;
-    const name = typeof params?.name === "string" && params.name.trim() ? params.name.trim() : "amigo";
+const ICONS = {
+    book: BookOpen,
+    heart: HeartHandshake,
+};
+
+export default function WelcomePage() {
+    const [name, setName] = useState("amigo");
+    const { data: welcomeContent } = useContentBlock(`${SITE_KEY}_welcome`);
+    const content = (welcomeContent?.parsed && typeof welcomeContent.parsed === "object" && !Array.isArray(welcomeContent.parsed))
+        ? welcomeContent.parsed as Record<string, unknown>
+        : {};
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const nameParam = params.get("name");
+        if (typeof nameParam === "string" && nameParam.trim()) {
+            setName(nameParam.trim());
+        }
+    }, []);
+
+    const titleTemplate = typeof content.title_template === "string" ? content.title_template : "Hola, {name}.";
+    const description = typeof content.description === "string"
+        ? content.description
+        : "No encontramos una cuenta registrada todavía, pero no te dejamos en una pantalla vacía. Puedes empezar por la ruta pública de fe y crecimiento que preparamos para ti.";
+    const primaryCta = content.primary_cta && typeof content.primary_cta === "object" ? content.primary_cta as Record<string, unknown> : {};
+    const secondaryCta = content.secondary_cta && typeof content.secondary_cta === "object" ? content.secondary_cta as Record<string, unknown> : {};
+    const highlights = Array.isArray(content.highlights) && content.highlights.length > 0
+        ? content.highlights.map((item) => item && typeof item === "object" ? item as Record<string, unknown> : {}).map((item) => ({
+            title: typeof item.title === "string" ? item.title : "",
+            description: typeof item.description === "string" ? item.description : "",
+            href: typeof item.href === "string" ? item.href : "/",
+            cta: typeof item.cta === "string" ? item.cta : "Abrir",
+            icon: ICONS[(typeof item.icon === "string" ? item.icon : "book") as keyof typeof ICONS] || BookOpen,
+        })).filter((item) => item.title && item.description)
+        : [...HIGHLIGHTS];
 
     return (
         <CmsPageOverride slug="bienvenida">
@@ -35,30 +67,29 @@ export default async function WelcomePage({
                     <div className="p-6 md:p-10 lg:p-12" style={{ background: "linear-gradient(135deg, var(--site-surface-container-lowest), var(--site-surface-container-low))" }}>
                         <div className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide mb-4" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
                             <Sparkles size={14} />
-                            Bienvenida
+                            {typeof content.eyebrow === "string" ? content.eyebrow : "Bienvenida"}
                         </div>
                         <h1 className="text-2xl md:text-4xl font-black tracking-tight mb-4" style={{ color: "var(--site-on-background)" }}>
-                            Hola, {name}.
+                            {titleTemplate.replace("{name}", name)}
                         </h1>
                         <p className="text-lg md:text-xl leading-relaxed max-w-2xl mb-6" style={{ color: "var(--site-on-surface-variant)" }}>
-                            No encontramos una cuenta registrada todavía, pero no te dejamos en una pantalla vacía.
-                            Puedes empezar por la ruta pública de fe y crecimiento que preparamos para ti.
+                            {description}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3">
                             <Link
-                                href="/cursos"
+                                href={typeof primaryCta.href === "string" ? primaryCta.href : "/cursos"}
                                 className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold uppercase tracking-wide"
                                 style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
                             >
-                                Discipulado Básico
+                                {typeof primaryCta.label === "string" ? primaryCta.label : "Discipulado Básico"}
                                 <ArrowRight size={16} />
                             </Link>
                             <Link
-                                href="/conocer-a-jesus"
+                                href={typeof secondaryCta.href === "string" ? secondaryCta.href : "/conocer-a-jesus"}
                                 className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold uppercase tracking-wide border"
                                 style={{ borderColor: "var(--site-outline-variant)", color: "var(--site-on-surface)" }}
                             >
-                                Una nueva vida con Cristo
+                                {typeof secondaryCta.label === "string" ? secondaryCta.label : "Una nueva vida con Cristo"}
                                 <ArrowRight size={16} />
                             </Link>
                         </div>
@@ -66,7 +97,7 @@ export default async function WelcomePage({
 
                     <div className="p-6 md:p-10 lg:p-12 border-t lg:border-t-0 lg:border-l" style={{ background: "var(--site-surface-container)" , borderColor: "var(--site-outline-variant)" }}>
                         <div className="space-y-4">
-                            {HIGHLIGHTS.map(({ title, description, href, cta, icon: Icon }) => (
+                            {highlights.map(({ title, description, href, cta, icon: Icon }) => (
                                 <Link
                                     key={title}
                                     href={href}
