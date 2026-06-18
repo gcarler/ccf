@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { SITE_NAME } from '@/lib/site-config';
-import Image from 'next/image';
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import {
@@ -189,7 +189,7 @@ export default function AccountSettingsPage() {
                                     <section className="flex flex-col md:flex-row items-center gap-3 p-4 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 shadow-sm group">
                                         <div className="relative group cursor-pointer">
                                             <div className="size-10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-500 group-hover:shadow-2xl group-hover:scale-105 duration-500">
-                                                <Image src={`https://ui-avatars.com/api/?name=${user?.username}&background=2563eb&color=fff&size=128`} alt="Avatar" width={128} height={128} unoptimized />
+                                                <OptimizedImage src={`https://ui-avatars.com/api/?name=${user?.username}&background=2563eb&color=fff&size=128`} alt="Avatar" width={128} height={128} />
                                             </div>
                                             <div className="absolute -bottom-2 -right-2 size-10 bg-[hsl(var(--primary))] text-white rounded-lg flex items-center justify-center shadow-2xl border-4 border-white dark:border-[#1e1f21] group-hover:scale-110 transition-transform">
                                                 <Camera size={18} />

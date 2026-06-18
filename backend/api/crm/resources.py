@@ -1,13 +1,16 @@
 """CRM — Biblioteca de Recursos: categorías, plantillas, adjuntos y bitácora de envíos."""
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
+
+import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from backend.auth import require_module_access
 from backend.core.database import get_db
+from backend.services.messaging import MessagingGateway, get_messaging_gateway
 from backend.core.storage import storage_service
 from backend.core.uploads import ensure_allowed_extension, sanitize_filename
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_from_identity
@@ -40,6 +43,23 @@ from backend.schemas.crm_resources import (
     PlantillaMensajeOut,
     PlantillaMensajeUpdate,
     RecursoAdjuntoOut,
+    CampaignFromPlantillaPayload,
+    CampaignResultOut,
+)
+from backend.api.crm._shared import _resolve_campaign_members
+from backend.crud.crm_extended import (
+    create_crm_automation,
+    delete_crm_automation,
+    get_crm_automation,
+    get_crm_automations,
+    update_crm_automation,
+)
+from backend.schemas.crm_automation import (
+    AutomationTriggerPayload,
+    AutomationTriggerResult,
+    CrmAutomationCreate,
+    CrmAutomationOut,
+    CrmAutomationUpdate,
 )
 
 router = APIRouter(prefix="/resources", tags=["CRM Recursos"])
@@ -215,11 +235,12 @@ def del_adjunto(
 # ── Bitácora / Envíos ─────────────────────────────────────────────────────────
 
 @router.post("/plantillas/{plantilla_id}/enviar", response_model=BitacoraEnvioOut, status_code=201)
-def enviar_plantilla(
+async def enviar_plantilla(
     plantilla_id: str,
     payload: EnviarPlantillaPayload,
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
+    gateway: MessagingGateway = Depends(get_messaging_gateway),
 ):
     plantilla = get_plantilla(db, plantilla_id)
     if not plantilla:
@@ -230,10 +251,44 @@ def enviar_plantilla(
         texto = texto.replace(f"{{{{{var}}}}}", valor)
 
     canal_val = plantilla.canal.value if hasattr(plantilla.canal, "value") else str(plantilla.canal)
-    payload_log = {"variables": payload.variables, "texto_hidratado": texto, "canal": canal_val}
+    payload_log: dict = {"variables": payload.variables, "texto_hidratado": texto, "canal": canal_val}
 
     sede_id = get_user_sede_id(db, str(user.id))
     persona_id = resolve_persona_id_from_identity(db, str(user.id))
+
+    # ── Send through gateway ───────────────────────────────────────────
+    comms_log_id = None
+    external_id = None
+    outcome = None
+    log_error = None
+    canal_lower = canal_val.lower()
+
+    try:
+        if canal_lower == "whatsapp":
+            comms = await gateway.send_whatsapp(
+                db, payload.destinatario_id, texto, str(user.id),
+                campaign_name=plantilla.titulo,
+            )
+        elif canal_lower == "email":
+            comms = await gateway.send_email(
+                db, payload.destinatario_id, texto, str(user.id),
+                campaign_name=plantilla.titulo,
+            )
+        else:
+            comms = await gateway.send_sms(
+                db, payload.destinatario_id, texto, str(user.id),
+                campaign_name=plantilla.titulo,
+            )
+        comms_log_id = comms.id
+        external_id = comms.external_id
+        outcome = str(comms.outcome) if comms.outcome else "sent"
+        payload_log["comms_log_id"] = comms_log_id
+        payload_log["external_id"] = external_id
+        payload_log["outcome"] = outcome
+    except ValueError as exc:
+        log_error = str(exc)
+        outcome = "failed"
+        payload_log["error"] = log_error
 
     envio = create_envio(
         db,
@@ -244,8 +299,121 @@ def enviar_plantilla(
         destinatario_id=payload.destinatario_id,
         payload_hidratado=payload_log,
     )
-    envio = update_estado_envio(db, str(envio.id), "ENVIADO")
-    return BitacoraEnvioOut.from_orm_safe(envio)
+    estado_final = "FALLIDO" if log_error else "ENVIADO"
+    envio = update_estado_envio(db, str(envio.id), estado_final)
+    if log_error:
+        envio.log_error = log_error
+        db.commit()
+    return BitacoraEnvioOut.from_orm_safe(
+        envio,
+        communication_log_id=comms_log_id,
+        external_id=external_id,
+        outcome=outcome,
+    )
+
+
+# ── Campañas masivas ─────────────────────────────────────────────────────────
+
+
+@router.post("/plantillas/{plantilla_id}/campaign", response_model=CampaignResultOut, status_code=201)
+async def send_plantilla_campaign(
+    plantilla_id: str,
+    payload: CampaignFromPlantillaPayload,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+    gateway: MessagingGateway = Depends(get_messaging_gateway),
+):
+    plantilla = get_plantilla(db, plantilla_id)
+    if not plantilla:
+        raise HTTPException(404, "Plantilla no encontrada")
+
+    sede_id = get_user_sede_id(db, str(user.id))
+    sender_persona_id = resolve_persona_id_from_identity(db, str(user.id))
+
+    personas = _resolve_campaign_members(db, payload.target_segments, sede_id=sede_id)
+    if not personas:
+        raise HTTPException(404, detail="No se encontraron destinatarios para los segmentos seleccionados")
+
+    canal_val = plantilla.canal.value if hasattr(plantilla.canal, "value") else str(plantilla.canal)
+    canal_lower = canal_val.lower()
+    campaign_id = f"CMP-{uuid.uuid4().hex[:12]}"
+    delivered_count = 0
+    failed_count = 0
+    envio_ids: list[str] = []
+
+    for persona in personas:
+        merged_vars = dict(payload.default_variables)
+        persona_overrides = payload.variables_por_persona.get(str(persona.id), {})
+        merged_vars.update(persona_overrides)
+
+        texto = plantilla.contenido_texto
+        for var, valor in merged_vars.items():
+            texto = texto.replace(f"{{{{{var}}}}}", valor)
+
+        try:
+            if canal_lower == "whatsapp":
+                await gateway.send_whatsapp(
+                    db, str(persona.id), texto, str(user.id),
+                    campaign_name=payload.campaign_name, external_id=campaign_id,
+                )
+            elif canal_lower == "email":
+                await gateway.send_email(
+                    db, str(persona.id), texto, str(user.id),
+                    campaign_name=payload.campaign_name, external_id=campaign_id,
+                )
+            else:
+                await gateway.send_sms(
+                    db, str(persona.id), texto, str(user.id),
+                    campaign_name=payload.campaign_name, external_id=campaign_id,
+                )
+        except ValueError:
+            failed_count += 1
+            envio = create_envio(
+                db,
+                sede_id=sede_id,
+                plantilla_id=plantilla_id,
+                enviado_por_id=str(sender_persona_id) if sender_persona_id else None,
+                destinatario_id=str(persona.id),
+                payload_hidratado={
+                    "canal": canal_val,
+                    "campaign_id": campaign_id,
+                    "texto_hidratado": texto,
+                    "variables": merged_vars,
+                    "error": "Destinatario sin datos de contacto",
+                },
+            )
+            envio = update_estado_envio(db, str(envio.id), "FALLIDO")
+            envio_ids.append(str(envio.id))
+            continue
+
+        delivered_count += 1
+        payload_log = {
+            "canal": canal_val,
+            "campaign_id": campaign_id,
+            "campaign_name": payload.campaign_name,
+            "texto_hidratado": texto,
+            "variables": merged_vars,
+        }
+        envio = create_envio(
+            db,
+            sede_id=sede_id,
+            plantilla_id=plantilla_id,
+            enviado_por_id=str(sender_persona_id) if sender_persona_id else None,
+            destinatario_id=str(persona.id),
+            payload_hidratado=payload_log,
+        )
+        envio = update_estado_envio(db, str(envio.id), "ENVIADO")
+        envio_ids.append(str(envio.id))
+
+    return CampaignResultOut(
+        status="success" if not failed_count else "partial",
+        campaign_name=payload.campaign_name,
+        external_id=campaign_id,
+        target_count=len(personas),
+        delivered_count=delivered_count,
+        failed_count=failed_count,
+        envio_ids=envio_ids,
+    )
 
 
 @router.get("/plantillas/{plantilla_id}/bitacora", response_model=List[BitacoraEnvioOut])
@@ -270,3 +438,157 @@ def get_bitacora_sede(
     sede_id = get_user_sede_id(db, str(user.id))
     rows = list_envios_sede(db, sede_id=sede_id, skip=skip, limit=limit)
     return [BitacoraEnvioOut.from_orm_safe(r) for r in rows]
+
+
+# ---- Automatizaciones -------------------------------------------------------
+
+
+@router.get("/automations", response_model=List[CrmAutomationOut])
+def list_automations(
+    trigger_event: Optional[str] = None,
+    only_active: bool = True,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    rows = get_crm_automations(db, only_active=only_active, trigger_event=trigger_event)
+    return [CrmAutomationOut.from_orm_safe(r) for r in rows]
+
+
+@router.post("/automations", response_model=CrmAutomationOut, status_code=201)
+def create_automation(
+    payload: CrmAutomationCreate,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    obj = create_crm_automation(db, payload)
+    return CrmAutomationOut.from_orm_safe(obj)
+
+
+@router.get("/automations/{automation_id}", response_model=CrmAutomationOut)
+def get_one_automation(
+    automation_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    obj = get_crm_automation(db, automation_id)
+    if not obj:
+        raise HTTPException(404, "Automatizacion no encontrada")
+    return CrmAutomationOut.from_orm_safe(obj)
+
+
+@router.patch("/automations/{automation_id}", response_model=CrmAutomationOut)
+def patch_automation(
+    automation_id: int,
+    payload: CrmAutomationUpdate,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    obj = update_crm_automation(db, automation_id, payload)
+    if not obj:
+        raise HTTPException(404, "Automatizacion no encontrada")
+    return CrmAutomationOut.from_orm_safe(obj)
+
+
+@router.delete("/automations/{automation_id}", status_code=204)
+def del_automation(
+    automation_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    if not delete_crm_automation(db, automation_id):
+        raise HTTPException(404, "Automatizacion no encontrada")
+
+
+@router.post("/automations/trigger", response_model=List[AutomationTriggerResult])
+async def trigger_automations(
+    payload: AutomationTriggerPayload,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+    gateway: MessagingGateway = Depends(get_messaging_gateway),
+):
+    automations = get_crm_automations(db, only_active=True, trigger_event=payload.trigger_event)
+    if not automations:
+        return []
+
+    target_persona_id = payload.context.get("persona_id")
+    results: list[AutomationTriggerResult] = []
+
+    for automation in automations:
+        act = (automation.action_type or "").strip().lower()
+        ap = automation.action_payload or {}
+
+        if act != "send_plantilla":
+            results.append(AutomationTriggerResult(
+                automation_id=automation.id,
+                automation_name=automation.name,
+                status="skipped",
+                detail=f"Tipo de accion '{act}' no implementado",
+            ))
+            continue
+
+        plantilla_id = ap.get("plantilla_id")
+        if not plantilla_id:
+            results.append(AutomationTriggerResult(
+                automation_id=automation.id,
+                automation_name=automation.name,
+                status="skipped",
+                detail="action_payload.plantilla_id no especificado",
+            ))
+            continue
+
+        if not target_persona_id:
+            results.append(AutomationTriggerResult(
+                automation_id=automation.id,
+                automation_name=automation.name,
+                status="skipped",
+                detail="context.persona_id no especificado",
+            ))
+            continue
+
+        plantilla = get_plantilla(db, plantilla_id)
+        if not plantilla:
+            results.append(AutomationTriggerResult(
+                automation_id=automation.id,
+                automation_name=automation.name,
+                status="failed",
+                detail="Plantilla no encontrada",
+            ))
+            continue
+
+        texto = plantilla.contenido_texto
+        for var, valor in (ap.get("variables") or {}).items():
+            texto = texto.replace(f"{{{{{var}}}}}", str(valor))
+
+        canal = (ap.get("canal") or str(plantilla.canal)).lower()
+        ext_id = f"AUTO-{uuid.uuid4().hex[:12]}"
+
+        try:
+            if canal == "whatsapp":
+                await gateway.send_whatsapp(
+                    db, target_persona_id, texto, str(user.id),
+                    campaign_name=f"Auto: {automation.name}", external_id=ext_id,
+                )
+            elif canal == "email":
+                await gateway.send_email(
+                    db, target_persona_id, texto, str(user.id),
+                    campaign_name=f"Auto: {automation.name}", external_id=ext_id,
+                )
+            else:
+                await gateway.send_sms(
+                    db, target_persona_id, texto, str(user.id),
+                    campaign_name=f"Auto: {automation.name}", external_id=ext_id,
+                )
+            results.append(AutomationTriggerResult(
+                automation_id=automation.id,
+                automation_name=automation.name,
+                status="triggered",
+            ))
+        except ValueError as exc:
+            results.append(AutomationTriggerResult(
+                automation_id=automation.id,
+                automation_name=automation.name,
+                status="failed",
+                detail=str(exc),
+            ))
+
+    return results

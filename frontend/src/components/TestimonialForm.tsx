@@ -39,8 +39,8 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
       return;
     }
 
-    apiFetch<TestimonialMediaAsset[]>("/cms/media", { token, cache: "no-store" })
-      .then((data) => setMediaItems(Array.isArray(data) ? data : []))
+    apiFetch<{ items: TestimonialMediaAsset[]; total: number }>("/cms/media", { token, cache: "no-store" })
+      .then((data) => setMediaItems(data?.items || []))
       .catch(() => setMediaItems([]));
   }, [token]);
 

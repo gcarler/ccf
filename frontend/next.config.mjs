@@ -7,6 +7,10 @@ const apiProxyTarget =
 const nextConfig = {
     allowedDevOrigins: ['elfarocc.tech', 'www.elfarocc.tech'],
     images: {
+        // Enable WebP and AVIF automatic format negotiation
+        formats: ['image/webp', 'image/avif'],
+        deviceSizes: [640, 768, 1024, 1280, 1536, 1920],
+        imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
         remotePatterns: [
             {
                 protocol: 'https',
@@ -17,6 +21,43 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'picsum.photos',
                 pathname: '**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'ui-avatars.com',
+                pathname: '/api/**',
+            },
+            // Backend serving optimized images (WebP)
+            {
+                protocol: 'https',
+                hostname: 'elfarocc.tech',
+                pathname: '/api/static/**',
+            },
+            // Allow localhost for development
+            {
+                protocol: 'http',
+                hostname: 'localhost',
+                port: '8000',
+                pathname: '/api/static/**',
+            },
+            {
+                protocol: 'http',
+                hostname: '127.0.0.1',
+                port: '8000',
+                pathname: '/api/static/**',
+            },
+            // Backend proxy route
+            {
+                protocol: 'http',
+                hostname: 'backend',
+                port: '8000',
+                pathname: '/api/static/**',
+            },
+            // QR code generation for certificates
+            {
+                protocol: 'https',
+                hostname: 'api.qrserver.com',
+                pathname: '/v1/**',
             },
         ],
     },

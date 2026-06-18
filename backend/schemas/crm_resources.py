@@ -148,9 +148,12 @@ class BitacoraEnvioOut(BaseModel):
     estado: str
     payload_hidratado: Dict[str, Any]
     log_error: Optional[str] = None
+    communication_log_id: Optional[int] = None
+    external_id: Optional[str] = None
+    outcome: Optional[str] = None
 
     @classmethod
-    def from_orm_safe(cls, obj) -> "BitacoraEnvioOut":
+    def from_orm_safe(cls, obj, **extra) -> "BitacoraEnvioOut":
         return cls(
             id=str(obj.id),
             sede_id=str(obj.sede_id),
@@ -162,4 +165,27 @@ class BitacoraEnvioOut(BaseModel):
             estado=obj.estado.value if hasattr(obj.estado, "value") else str(obj.estado),
             payload_hidratado=obj.payload_hidratado or {},
             log_error=obj.log_error,
+            communication_log_id=extra.get("communication_log_id"),
+            external_id=extra.get("external_id"),
+            outcome=extra.get("outcome"),
         )
+
+
+# ── Campañas ──────────────────────────────────────────────────────────────────
+
+class CampaignFromPlantillaPayload(BaseModel):
+    campaign_name: str
+    target_segments: List[str]
+    variables_por_persona: Dict[str, Dict[str, str]] = {}
+    default_variables: Dict[str, str] = {}
+    note: Optional[str] = None
+
+
+class CampaignResultOut(BaseModel):
+    status: str = "success"
+    campaign_name: str
+    external_id: str
+    target_count: int
+    delivered_count: int
+    failed_count: int
+    envio_ids: List[str]

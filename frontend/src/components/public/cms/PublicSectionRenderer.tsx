@@ -2,6 +2,7 @@
 
 import { CmsSection } from "@/types/cms-v2";
 import { AnimatePresence,motion } from "framer-motion";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { Calendar,CheckCircle2,ChevronDown,ChevronRight,ChevronUp,Download,FileText,MapPin,Search,Send,Star,Upload,X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -66,7 +67,7 @@ function HeroSection({ section }: { section: CmsSection }) {
   if (imageUrl) {
     return (
       <section className="relative overflow-hidden rounded-2xl min-h-[520px] flex items-end">
-        <img src={imageUrl} alt={imageAlt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+        <OptimizedImage src={imageUrl} alt={imageAlt} fill sizes="100vw" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.3) 55%, transparent 100%)" }} />
         <div className="relative z-10 w-full p-6 md:p-10 lg:p-14">
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-3xl">
@@ -335,7 +336,7 @@ function GallerySection({ section }: { section: CmsSection }) {
         <div className={`grid gap-1 ${images.length === 2 ? "grid-cols-2" : images.length === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4"}`}>
           {images.map((img, i) => (
             <div key={i} className="relative aspect-square group overflow-hidden">
-              <img src={img.url} alt={img.alt} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <OptimizedImage src={img.url} alt={img.alt} fill sizes="(max-width: 768px) 50vw, 25vw" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               {img.caption && (
                 <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }}>
                   <p className="text-xs text-white font-medium">{img.caption}</p>
@@ -345,7 +346,7 @@ function GallerySection({ section }: { section: CmsSection }) {
           ))}
         </div>
       ) : (
-        <img src={images[0].url} alt={images[0].alt} loading="lazy" className="w-full max-h-[480px] object-cover" />
+        <OptimizedImage src={images[0].url} alt={images[0].alt} fill sizes="100vw" className="w-full max-h-[480px] object-cover" />
       )}
       {(title || body) && (
         <div className="p-6">
@@ -774,7 +775,7 @@ function ImageTextSection({ section }: { section: CmsSection }) {
 
   const imgCol = imageUrl ? (
     <div className="relative rounded-xl overflow-hidden aspect-[4/3]">
-      <img src={imageUrl} alt={imageAlt} loading="lazy" className="w-full h-full object-cover" />
+      <OptimizedImage src={imageUrl} alt={imageAlt} fill sizes="(max-width: 768px) 100vw, 50vw" className="w-full h-full object-cover" />
     </div>
   ) : null;
 
@@ -1403,7 +1404,7 @@ function ContentBlocksSection({ section }: { section: CmsSection }) {
           if (type === "text") return <div key={i} dangerouslySetInnerHTML={{ __html: sanitizeHtml(val(block, "content", "")) }} />;
           if (type === "image") return (
             <div key={i} className="rounded-lg overflow-hidden">
-              <img src={val(block, "image_url", "")} alt={val(block, "alt", "")} className="w-full h-auto" />
+              <OptimizedImage src={val(block, "image_url", "")} alt={val(block, "alt", "")} width={800} height={450} className="w-full h-auto" />
               {val(block, "caption") && <p className="text-xs mt-1 opacity-60 text-center">{val(block, "caption")}</p>}
             </div>
           );

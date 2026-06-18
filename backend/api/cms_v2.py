@@ -16,6 +16,7 @@ from backend.models_shared import _utcnow
 from backend import crud, models, schemas
 from backend.auth import normalize_role, require_module_access
 from backend.core.database import get_db
+from backend.schemas._common import PaginatedResponse
 
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
 
@@ -425,31 +426,42 @@ def reorder_menu_items(
     return crud.reorder_cms_menu_items(db, menu.id, payload.items)
 
 
-@router.get("/sites/{site_key}/pages", response_model=list[schemas.CmsPageRead])
+@router.get(
+    "/sites/{site_key}/pages",
+    response_model=PaginatedResponse[schemas.CmsPageRead],
+)
 def list_pages(
     site_key: str,
     db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    status: str | None = Query(None),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
-    pages = crud.list_cms_pages(db, site.id)
+    pages, total = crud.list_cms_pages(db, site.id, skip=skip, limit=limit, status=status)
     if pages:
-        return pages
+        return PaginatedResponse[schemas.CmsPageRead](
+            items=pages, total=total, skip=skip, limit=limit
+        )
 
+    # Legacy fallback
     legacy_contents = [
         row
         for row in crud.list_page_contents(db, limit=500)
         if not str(getattr(row, "page_key", "")).endswith("_wiki_notes")
     ]
     if not legacy_contents:
-        return []
+        return PaginatedResponse[schemas.CmsPageRead](
+            items=[], total=0, skip=skip, limit=limit
+        )
 
     publications = {
         row.page_key: row
         for row in crud.list_content_publications(db)
         if getattr(row, "page_key", None)
     }
-    return [
+    items = [
         schemas.CmsPageRead(
             id=row.id,
             site_id=site.id,
@@ -465,6 +477,9 @@ def list_pages(
         )
         for row in legacy_contents
     ]
+    return PaginatedResponse[schemas.CmsPageRead](
+        items=items, total=len(items), skip=skip, limit=limit
+    )
 
 
 @router.post(
@@ -532,17 +547,25 @@ def delete_page(
 
 @router.get(
     "/sites/{site_key}/pages/{slug}/sections",
-    response_model=list[schemas.CmsSectionRead],
+    response_model=PaginatedResponse[schemas.CmsSectionRead],
 )
 def list_sections(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    section_type: str | None = Query(None),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
-    return crud.list_cms_sections(db, page.id)
+    items, total = crud.list_cms_sections(db, page.id, skip=skip, limit=limit, section_type=section_type)
+    return PaginatedResponse[schemas.CmsSectionRead](
+        items=items, total=total, skip=skip, limit=limit
+    )
+
+
 
 
 @router.post(
@@ -635,37 +658,48 @@ def reorder_sections(
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
     return crud.reorder_cms_sections(db, page.id, payload.items)
-
-
 @router.get(
     "/sites/{site_key}/pages/{slug}/versions",
-    response_model=list[schemas.CmsPageVersionRead],
+    response_model=PaginatedResponse[schemas.CmsPageVersionRead],
 )
 def list_versions(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
-    return crud.list_cms_page_versions(db, page.id)
+    items, total = crud.list_cms_page_versions(db, page.id, skip=skip, limit=limit)
+    return PaginatedResponse[schemas.CmsPageVersionRead](
+        items=items, total=total, skip=skip, limit=limit
+    )
+
+
 
 
 @router.get(
     "/sites/{site_key}/pages/{slug}/publish-log",
-    response_model=list[schemas.CmsPublishLogRead],
+    response_model=PaginatedResponse[schemas.CmsPublishLogRead],
 )
 def list_publish_log(
     site_key: str,
     slug: str,
-    limit: int = Query(default=50, ge=1, le=200),
     db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
-    return crud.list_cms_publish_logs(db, site.id, page_id=page.id, limit=limit)
+    items, total = crud.list_cms_publish_logs(db, site.id, page_id=page.id, skip=skip, limit=limit)
+    return PaginatedResponse[schemas.CmsPublishLogRead](
+        items=items, total=total, skip=skip, limit=limit
+    )
+
+
 
 
 @router.get(
@@ -781,6 +815,139 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
     }
 
 
+def _get_system_var(db, site_key: str, var_key: str, default: str = "") -> str:
+    """Read a single SystemVariable by key, with optional site_key prefix."""
+    row = (
+        db.query(models.SystemVariable)
+        .filter(models.SystemVariable.key == f"{site_key}_{var_key}")
+        .first()
+    )
+    return row.value if row and row.value else default
+
+
+def _build_section_defaults(
+    db: Session, site_key: str, section_type: str, props: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Fill empty section props with data from SystemVariable / DB / hardcoded."""
+    # If the section already has meaningful content, skip defaults
+    if props and any(
+        key in props
+        for key in ("title", "subtitle", "body", "content", "items", "members", "stats", "testimonials", "faqs", "embed_url", "map_url")
+    ):
+        return props or {}
+
+    church_name = _get_system_var(db, site_key, "church_name", "Nuestra Iglesia")
+    mission = _get_system_var(db, site_key, "mission_statement", "Compartir el amor de Dios y hacer discípulos")
+    service_time = _get_system_var(db, site_key, "service_time", "Domingos 10:00 AM")
+    address = _get_system_var(db, site_key, "address", "Ciudad, País")
+    map_embed = _get_system_var(db, site_key, "map_embed_url", "")
+
+    if section_type == "hero":
+        welcome = _get_system_var(db, site_key, "welcome_title", "Bienvenidos a {church_name}")
+        return {
+            "title": welcome.replace("{church_name}", church_name),
+            "subtitle": mission,
+            "cta_text": _get_system_var(db, site_key, "cta_text", "Conócenos"),
+            "cta_link": _get_system_var(db, site_key, "cta_link", "/pastores"),
+        }
+
+    if section_type == "cta_banner":
+        return {
+            "title": _get_system_var(
+                db, site_key, "cta_title", "Únete a nuestra comunidad"
+            ),
+            "description": _get_system_var(
+                db, site_key, "cta_description",
+                "Te invitamos a ser parte de nuestra familia. Todos son bienvenidos.",
+            ),
+            "button_text": "Visítanos",
+            "button_link": "/contacto",
+        }
+
+    if section_type == "stats":
+        active_members = (
+            db.query(models.Persona)
+            .filter(models.Persona.estado_vital == "ACTIVO")
+            .count()
+        )
+        group_count = db.query(models.CellGroup).filter(models.CellGroup.status == "Activo").count()
+        return {
+            "stats": [
+                {"label": "Miembros Activos", "value": str(active_members or 0)},
+                {"label": "Grupos de Casa", "value": str(group_count or 0)},
+                {"label": "Años de Ministerio", "value": "25+"},
+            ]
+        }
+
+    if section_type == "team":
+        leaders = (
+            db.query(models.Persona)
+            .filter(models.Persona.is_pastoral_leader == True)
+            .order_by(models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc())
+            .all()
+        )
+        members = []
+        for p in leaders:
+            name = p.nombre_completo
+            slug = _slugify(name)
+            members.append({
+                "name": name,
+                "role": "Pastor Principal" if p.is_main_pastor else "Pastor",
+                "photo_url": p.photo_url or "",
+                "slug": slug,
+                "bio_short": p.bio_short or "",
+            })
+        if not members:
+            members = [{"name": "Pastor", "role": "Pastor Principal", "photo_url": "", "slug": "pastor", "bio_short": ""}]
+        return {"members": members, "title": "Nuestro Equipo Pastoral"}
+
+    if section_type == "testimonials":
+        rows = (
+            db.query(models.Testimonial)
+            .filter(
+                models.Testimonial.is_approved == True,
+                models.Testimonial.status == "published",
+            )
+            .order_by(models.Testimonial.created_at.desc())
+            .limit(6)
+            .all()
+        )
+        testimonials = []
+        for t in rows:
+            author_name = t.author.nombre_completo if t.author else "Anónimo"
+            testimonials.append({
+                "content": t.content,
+                "author": author_name,
+                "emotion": t.emotion or "Gratitud",
+                "image_url": t.image_url or "",
+            })
+        if not testimonials:
+            testimonials = [
+                {"content": "Dios ha sido fiel en cada etapa. Bendigo a esta iglesia por su amor y apoyo.", "author": "Miembro de la Iglesia", "emotion": "Gratitud", "image_url": ""},
+            ]
+        return {"testimonials": testimonials, "title": "Testimonios"}
+
+    if section_type == "faq":
+        return {
+            "faqs": [
+                {"question": "¿A qué hora son los servicios?", "answer": service_time},
+                {"question": "¿Dónde están ubicados?", "answer": address},
+                {"question": "¿Qué debo esperar en mi primera visita?", "answer": "Una comunidad cálida que te recibirá con los brazos abiertos. Ven tal como eres."},
+                {"question": "¿Tienen grupos de estudio?", "answer": "Sí, tenemos grupos de casa que se reúnen durante la semana. Contáctanos para más información."},
+            ],
+            "title": "Preguntas Frecuentes",
+        }
+
+    if section_type == "embed":
+        return {
+            "embed_url": map_embed or "",
+            "title": church_name,
+            "description": address,
+        }
+
+    return props or {}
+
+
 @router.get(
     "/public/sites/{site_key}/pages/{slug}", response_model=schemas.CmsPublicPageRead
 )
@@ -821,6 +988,18 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
             if section_data.get("is_visible", True) is not False
             and section_data.get("status", "active") != "archived"
         ]
+        # ── Inject default props for empty sections (published version path) ──
+        section_rows = [
+            schemas.CmsSectionRead(
+                **{
+                    **s.model_dump(),
+                    "props_json": _build_section_defaults(
+                        db, site_key, s.type, s.props_json
+                    ),
+                }
+            )
+            for s in section_rows
+        ]
         return schemas.CmsPublicPageRead(
             site_key=site.site_key,
             slug=(
@@ -847,28 +1026,135 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         for section in crud.list_cms_sections(db, page.id)
         if section.is_visible and getattr(section, "status", "active") != "archived"
     ]
+    section_reads = []
+    for section in sections:
+        sr = schemas.CmsSectionRead.model_validate(section)
+        sr.props_json = _build_section_defaults(db, site_key, sr.type, sr.props_json)
+        section_reads.append(sr)
     return schemas.CmsPublicPageRead(
         site_key=site.site_key,
         slug=page.slug,
         title=page.title,
         seo_json=page.seo_json or {},
-        sections=[
-            schemas.CmsSectionRead.model_validate(section) for section in sections
-        ],
+        sections=section_reads,
     )
 
 
-# ── GLOBAL BLOCKS (Phase 3) ────────────────────────────────────────────────────
+# ── Pastoral Team (public + CMS-managed) ───────────────────────────────────
 
-@router.get("/global-blocks", response_model=List[schemas.CmsSectionRead])
+
+def _pastoral_role(persona: models.Persona) -> str:
+    role = (getattr(persona, "church_role", None) or "").strip()
+    if role:
+        return role
+    return "Pastor Principal" if persona.is_main_pastor else "Pastor"
+
+
+@router.get(
+    "/public/sites/{site_key}/pastoral-team",
+    response_model=List[schemas.PastoralProfileRead],
+)
+def public_pastoral_team(site_key: str, db: Session = Depends(get_db)):
+    """Public endpoint: list pastoral leaders."""
+    # Verify site exists (no auth required for public)
+    _get_public_site_or_404(db, site_key)
+    leaders = crud.list_pastoral_team(db)
+    result = []
+    for p in leaders:
+        name = p.nombre_completo
+        result.append(
+            schemas.PastoralProfileRead(
+                id=str(p.id),
+                name=name,
+                slug=_slugify(name),
+                photo_url=p.photo_url,
+                bio_short=p.bio_short,
+                bio_full=p.bio_full,
+                role=_pastoral_role(p),
+                social_instagram=p.social_instagram,
+                social_facebook=p.social_facebook,
+                social_twitter=p.social_twitter,
+                is_main_pastor=p.is_main_pastor or False,
+            )
+        )
+    return result
+
+
+@router.get(
+    "/cms/pastoral-team",
+    response_model=List[schemas.PastoralProfileRead],
+)
+def cms_pastoral_team_list(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """CMS endpoint: list all pastoral leaders."""
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    leaders = crud.list_pastoral_team(db)
+    result = []
+    for p in leaders:
+        name = p.nombre_completo
+        result.append(
+            schemas.PastoralProfileRead(
+                id=str(p.id),
+                name=name,
+                slug=_slugify(name),
+                photo_url=p.photo_url,
+                bio_short=p.bio_short,
+                bio_full=p.bio_full,
+                role=_pastoral_role(p),
+                social_instagram=p.social_instagram,
+                social_facebook=p.social_facebook,
+                social_twitter=p.social_twitter,
+                is_main_pastor=p.is_main_pastor or False,
+            )
+        )
+    return result
+
+
+@router.patch(
+    "/cms/pastoral-team/{persona_id}",
+    response_model=schemas.PastoralProfileRead,
+)
+def cms_pastoral_profile_update(
+    persona_id: str,
+    payload: schemas.PastoralProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
+):
+    """CMS endpoint: update a pastoral leader's profile."""
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    persona = crud.get_persona_by_id(db, persona_id)
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
+    persona = crud.update_pastoral_profile(db, persona, payload)
+    name = persona.nombre_completo
+    return schemas.PastoralProfileRead(
+        id=str(persona.id),
+        name=name,
+        slug=_slugify(name),
+        photo_url=persona.photo_url,
+        bio_short=persona.bio_short,
+        bio_full=persona.bio_full,
+        role=_pastoral_role(persona),
+        social_instagram=persona.social_instagram,
+        social_facebook=persona.social_facebook,
+        social_twitter=persona.social_twitter,
+        is_main_pastor=persona.is_main_pastor or False,
+    )
+
+
+@router.get("/global-blocks", response_model=PaginatedResponse[schemas.CmsSectionRead])
 def list_global_blocks(
     site_key: str,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
-    blocks = (
+    base = (
         db.query(models.CmsSection)
         .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
         .filter(
@@ -877,10 +1163,15 @@ def list_global_blocks(
             models.CmsSection.is_visible,
             models.CmsSection.deleted_at.is_(None),
         )
-        .order_by(models.CmsSection.global_key)
-        .all()
     )
-    return [schemas.CmsSectionRead.model_validate(b) for b in blocks]
+    total = base.count()
+    blocks = base.order_by(models.CmsSection.global_key).offset(skip).limit(limit).all()
+    return PaginatedResponse(
+        items=[schemas.CmsSectionRead.model_validate(b) for b in blocks],
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.post("/global-blocks", response_model=schemas.CmsSectionRead, status_code=201)

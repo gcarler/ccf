@@ -259,6 +259,16 @@ export interface BitacoraEnvio {
 // ── Messaging ─────────────────────────────────────────────────────────────
 export type Channel = 'whatsapp' | 'email' | 'sms';
 
+export interface CampaignResult {
+  status: string;
+  campaign_name: string;
+  external_id: string;
+  target_count: number;
+  delivered_count: number;
+  failed_count: number;
+  envio_ids: string[];
+}
+
 export interface MessagingHistoryRow {
   id: number;
   name: string;

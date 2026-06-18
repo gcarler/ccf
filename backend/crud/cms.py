@@ -207,7 +207,8 @@ def list_cms_media_items(
     *,
     query: str | None = None,
     section: str | None = None,
-    limit: int = 250,
+    skip: int = 0,
+    limit: int = 50,
     include_archived: bool = False,
 ):
     q = db.query(models.CmsMediaItem)
@@ -224,7 +225,14 @@ def list_cms_media_items(
                 models.CmsMediaItem.filename.ilike(like),
             )
         )
-    return q.order_by(models.CmsMediaItem.updated_at.desc()).limit(limit).all()
+    total = q.count()
+    items = (
+        q.order_by(models.CmsMediaItem.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return items, total
 
 
 def get_cms_media_item(db: Session, item_id: uuid.UUID):
@@ -617,7 +625,32 @@ def reorder_cms_menu_items(
 # ── CMS v2 Pages ───────────────────────────────────────
 
 
-def list_cms_pages(db: Session, site_id: uuid.UUID):
+def list_cms_pages(
+    db: Session,
+    site_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 50,
+    status: str | None = None,
+):
+    query = (
+        db.query(models.CmsPage)
+        .filter(models.CmsPage.site_id == site_id)
+    )
+    if status:
+        query = query.filter(models.CmsPage.status == status)
+    total = query.count()
+    items = (
+        query
+        .order_by(models.CmsPage.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return items, total
+
+
+def list_cms_pages_all(db: Session, site_id: uuid.UUID):
+    """Return all pages for a site (legacy, unbounded)."""
     return (
         db.query(models.CmsPage)
         .filter(models.CmsPage.site_id == site_id)
@@ -683,13 +716,25 @@ def delete_cms_page(db: Session, row: models.CmsPage) -> bool:
 # ── CMS v2 Sections ────────────────────────────────────
 
 
-def list_cms_sections(db: Session, page_id: uuid.UUID):
-    return (
-        db.query(models.CmsSection)
-        .filter(models.CmsSection.page_id == page_id)
+def list_cms_sections(
+    db: Session,
+    page_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100,
+    section_type: str | None = None,
+):
+    query = db.query(models.CmsSection).filter(models.CmsSection.page_id == page_id)
+    if section_type:
+        query = query.filter(models.CmsSection.section_type == section_type)
+    total = query.count()
+    items = (
+        query
         .order_by(models.CmsSection.sort_order.asc(), models.CmsSection.id.asc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
+    return items, total
 
 
 def create_cms_section(db: Session, page_id: uuid.UUID, payload: schemas.CmsSectionCreate):
@@ -812,13 +857,22 @@ def create_cms_page_version(
     return row
 
 
-def list_cms_page_versions(db: Session, page_id: uuid.UUID):
-    return (
-        db.query(models.CmsPageVersion)
-        .filter(models.CmsPageVersion.page_id == page_id)
+def list_cms_page_versions(
+    db: Session,
+    page_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 20,
+):
+    query = db.query(models.CmsPageVersion).filter(models.CmsPageVersion.page_id == page_id)
+    total = query.count()
+    items = (
+        query
         .order_by(models.CmsPageVersion.version_number.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
+    return items, total
 
 
 def get_cms_page_version(db: Session, page_id: uuid.UUID, version_id: uuid.UUID):
@@ -833,14 +887,27 @@ def get_cms_page_version(db: Session, page_id: uuid.UUID, version_id: uuid.UUID)
 
 
 def list_cms_publish_logs(
-    db: Session, site_id: uuid.UUID, *, page_id: uuid.UUID | None = None, limit: int = 50
+    db: Session,
+    site_id: uuid.UUID,
+    *,
+    page_id: uuid.UUID | None = None,
+    skip: int = 0,
+    limit: int = 50,
 ):
     query = db.query(models.CmsPublishLog).filter(
         models.CmsPublishLog.site_id == site_id
     )
     if page_id is not None:
         query = query.filter(models.CmsPublishLog.page_id == page_id)
-    return query.order_by(models.CmsPublishLog.created_at.desc()).limit(limit).all()
+    total = query.count()
+    items = (
+        query
+        .order_by(models.CmsPublishLog.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return items, total
 
 
 def restore_cms_page_version(
@@ -1086,3 +1153,32 @@ def delete_testimonial(db: Session, row: models.Testimonial) -> bool:
     row.show_on_home = False
     db.commit()
     return True
+
+
+# ── Pastoral Profile ───────────────────────────────────────────────────────
+
+
+def list_pastoral_team(db: Session) -> list[models.Persona]:
+    return (
+        db.query(models.Persona)
+        .filter(models.Persona.is_pastoral_leader == True)
+        .order_by(models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc())
+        .all()
+    )
+
+
+def get_persona_by_id(db: Session, persona_id: str) -> models.Persona | None:
+    try:
+        uid = uuid.UUID(persona_id)
+    except ValueError:
+        return None
+    return db.query(models.Persona).filter(models.Persona.id == uid).first()
+
+
+def update_pastoral_profile(db: Session, persona: models.Persona, payload: schemas.PastoralProfileUpdate) -> models.Persona:
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(persona, key, value)
+    db.commit()
+    db.refresh(persona)
+    return persona

@@ -19,6 +19,7 @@ import {
   Palette,
   PanelsTopLeft,
   ShieldCheck,
+  Users,
   Video,
   Volume2,
 } from "lucide-react";
@@ -132,7 +133,7 @@ export default function CmsHomePage() {
       const [testimonialsResult, metricsResult, mediaResult] = await Promise.allSettled([
         apiFetch<TestimonialPreview[]>("/admin/testimonials", { token, cache: "no-store" }),
         apiFetch<CmsMetricsResponse>("/cms/metrics", { token, cache: "no-store" }),
-        apiFetch<MediaPreview[]>("/cms/media", { token, cache: "no-store", query: { include_archived: true } }),
+        apiFetch<{ items: MediaPreview[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: true } }),
       ]);
 
       const loadIssues: string[] = [];
@@ -140,8 +141,8 @@ export default function CmsHomePage() {
         ? testimonialsResult.value
         : [];
       const metrics = metricsResult.status === "fulfilled" ? metricsResult.value : null;
-      const media = mediaResult.status === "fulfilled" && Array.isArray(mediaResult.value)
-        ? mediaResult.value
+      const media = mediaResult.status === "fulfilled" && mediaResult.value?.items
+        ? mediaResult.value.items
         : [];
 
       if (testimonialsResult.status === "rejected") loadIssues.push("testimonios");
@@ -189,6 +190,7 @@ export default function CmsHomePage() {
       { label: "Builder", href: "/cms/builder", description: "Secciones visuales", icon: PanelsTopLeft, show: canEdit },
       { label: "Media", href: "/cms/media", description: "Archivos y accesibilidad", icon: ImageIcon, show: canEdit },
       { label: "Temas", href: "/cms/themes", description: "Tokens por sitio", icon: Palette, show: canEdit },
+      { label: "Equipo Pastoral", href: "/cms/pastoral-team", description: "Perfiles y redes sociales", icon: Users, show: canEdit },
       { label: "Sitios", href: "/cms/sites", description: "Portales y dominios", icon: Globe, show: canManage },
     ].filter((link) => link.show),
     [canEdit, canManage],

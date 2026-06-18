@@ -292,3 +292,33 @@ export async function getCmsPublicPage(siteKey: string, slug: string, options?: 
 export async function getCmsPagePreview(siteKey: string, slug: string, token?: string | null) {
   return apiFetch<CmsPublicPage>(`/cms/v2/sites/${siteKey}/pages/${slug}/preview`, { token, cache: "no-store" });
 }
+
+export interface PastoralProfile {
+  id: string;
+  name: string;
+  slug: string;
+  photo_url?: string | null;
+  bio_short?: string | null;
+  bio_full?: string | null;
+  role?: string | null;
+  social_instagram?: string | null;
+  social_facebook?: string | null;
+  social_twitter?: string | null;
+  is_main_pastor: boolean;
+}
+
+export async function getPublicPastoralTeam(siteKey: string): Promise<PastoralProfile[]> {
+  return apiFetch<PastoralProfile[]>(`/cms/v2/public/sites/${siteKey}/pastoral-team`);
+}
+
+export async function getCmsPastoralTeam(token?: string | null): Promise<PastoralProfile[]> {
+  return apiFetch<PastoralProfile[]>(`/cms/v2/cms/pastoral-team`, { token });
+}
+
+export async function updateCmsPastoralProfile(personaId: string, payload: Partial<PastoralProfile>, token?: string | null): Promise<PastoralProfile> {
+  return apiFetch<PastoralProfile>(`/cms/v2/cms/pastoral-team/${personaId}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}

@@ -470,3 +470,31 @@ class NewsletterSubscriptionRead(BaseModel):
     status: str
     created_at: datetime
     model_config = orm_config
+
+
+# ── Pastoral Profile ───────────────────────────────────────────────────────
+
+
+class PastoralProfileRead(BaseModel):
+    id: str
+    name: str
+    slug: str
+    photo_url: Optional[str] = None
+    bio_short: Optional[str] = None
+    bio_full: Optional[str] = None
+    role: Optional[str] = None
+    social_instagram: Optional[str] = None
+    social_facebook: Optional[str] = None
+    social_twitter: Optional[str] = None
+    is_main_pastor: bool = False
+
+
+class PastoralProfileUpdate(BaseModel):
+    photo_url: Optional[str] = None
+    bio_short: Optional[str] = None
+    bio_full: Optional[str] = None
+    social_instagram: Optional[str] = None
+    social_facebook: Optional[str] = None
+    social_twitter: Optional[str] = None
+    is_main_pastor: Optional[bool] = None
+    is_pastoral_leader: Optional[bool] = None

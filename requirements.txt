@@ -25,6 +25,8 @@ pytest>=9.0.3
 requests>=2.33.1
 pygments>=2.20.0
 duckdb
+# Image optimization
+Pillow>=10.0.0
 # Async SQLAlchemy (opcional) — instalar para endpoints async con get_db_async
 # asyncpg
 # aiosqlite

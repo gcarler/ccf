@@ -15,7 +15,7 @@ import {
     Smartphone,
     Clock
 } from 'lucide-react';
-import Image from 'next/image';
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -77,7 +77,7 @@ export default function AdminMembersPage() {
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
                     <div className="size-8 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-white/10 shrink-0">
-                        <Image src={`https://ui-avatars.com/api/?name=${row.original.username}&background=random&color=fff`} alt="AV" width={32} height={32} unoptimized />
+                        <OptimizedImage src={`https://ui-avatars.com/api/?name=${row.original.username}&background=random&color=fff`} alt="AV" width={32} height={32} />
                     </div>
                     <div className="truncate flex-1">
                         <p className="font-semibold text-slate-800 dark:text-white leading-tight truncate">{row.original.username}</p>
@@ -244,7 +244,7 @@ export default function AdminMembersPage() {
                 <div className="space-y-3 animate-fade-in">
                     <section className="flex items-center gap-3">
                         <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden shadow-xl">
-                            <Image src={`https://ui-avatars.com/api/?name=${selectedMember?.username}&background=random&color=fff`} alt="AV" width={80} height={80} unoptimized />
+                            <OptimizedImage src={`https://ui-avatars.com/api/?name=${selectedMember?.username}&background=random&color=fff`} alt="AV" width={80} height={80} />
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">{selectedMember?.username}</h3>

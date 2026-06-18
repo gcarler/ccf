@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     kafka_bootstrap_servers: str = Field(default="localhost:19092")
 
     uploads_dir: str = Field(default="uploads")
+    image_max_width: int = Field(default=1920, description="Max width for image optimization (px)")
+    image_quality: int = Field(default=82, description="WebP quality 1-100 for optimized images")
     analytics_db_path: str = Field(default="analytics/warehouse.duckdb")
     enable_otel: bool = Field(default=False)
     otel_endpoint: str = Field(default="http://localhost:4317")

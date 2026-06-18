@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import Link from "next/link";
 import {
   Bold,
@@ -371,8 +371,8 @@ export default function CmsContentPage() {
   const loadMedia = async () => {
     if (!token) return;
     try {
-      const data = await apiFetch<MediaItem[]>("/cms/media", { token, cache: "no-store" });
-      setMedia(Array.isArray(data) ? data : []);
+      const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", { token, cache: "no-store" });
+      setMedia(data?.items || []);
     } catch {
       setMedia([]);
     }
@@ -745,7 +745,7 @@ export default function CmsContentPage() {
                 <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
                   <div className="relative mb-3 aspect-video overflow-hidden rounded-md bg-slate-200 dark:bg-white/5">
                     {item.mime_type?.startsWith("image/") ? (
-                      <Image src={item.url} alt={item.alt_text || ""} fill unoptimized className="object-cover" />
+                      <OptimizedImage src={item.url} alt={item.alt_text || ""} fill sizes="(max-width: 768px) 100vw, 33vw" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-wide text-slate-400">
                         {item.mime_type?.startsWith("video/") ? "Video" : item.mime_type?.startsWith("audio/") ? "Podcast" : "Archivo"}

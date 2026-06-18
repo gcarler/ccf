@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import {
   Archive,
   Heart, MessageCircle, CheckCircle2, XCircle, Clock,
@@ -148,8 +149,8 @@ export default function CmsTestimonialsPage() {
 
     setMediaLoading(true);
     try {
-      const data = await apiFetch<MediaItem[]>("/cms/media", { token, cache: "no-store" });
-      setMediaItems(Array.isArray(data) ? data : []);
+      const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", { token, cache: "no-store" });
+      setMediaItems(data?.items || []);
     } catch {
       setMediaItems([]);
     } finally {
@@ -752,8 +753,7 @@ export default function CmsTestimonialsPage() {
                     {getTestimonialMediaUrl(selected) && (
                       <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 overflow-hidden">
                         {selected.media_type === "image" ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={getTestimonialMediaUrl(selected)} alt="" className="w-full max-h-48 object-cover" />
+                          <OptimizedImage src={getTestimonialMediaUrl(selected)} alt="" fill sizes="400px" className="w-full max-h-48 object-cover" />
                         ) : selected.media_type === "video" ? (
                           <video controls className="w-full max-h-48 bg-black">
                             <source src={getTestimonialMediaUrl(selected)} />

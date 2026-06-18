@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import {
   Archive,
   Copy, FileImage, FileText, Film, Loader2, Plus, Search,
@@ -90,8 +91,8 @@ export default function CmsMediaLibrary() {
     if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
-      const data = await apiFetch<MediaItem[]>("/cms/media", { token, cache: "no-store", query: { include_archived: true } });
-      setItems(Array.isArray(data) ? data : []);
+      const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: true } });
+      setItems(data?.items || []);
     } catch {
       setItems([]);
     } finally {
@@ -248,7 +249,7 @@ export default function CmsMediaLibrary() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="size-9 rounded-md overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-                      {isImage(item.mime_type) ? <img src={item.url} alt="" className="w-full h-full object-cover" /> : <FileIcon size={16} className="text-slate-400" />}
+                      {isImage(item.mime_type) ? <OptimizedImage src={item.url} alt="" width={36} height={36} className="w-full h-full object-cover" /> : <FileIcon size={16} className="text-slate-400" />}
                     </div>
                     <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate max-w-[260px]">{item.filename || "Archivo"}</span>
                     {item.status === "archived" && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</span>}
@@ -284,7 +285,7 @@ export default function CmsMediaLibrary() {
               return (
                 <button key={item.id} onClick={() => setSelectedItem(item)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-lg p-3 hover:border-blue-400 transition-all flex items-center gap-3", item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5")}>
                   <div className="size-10 rounded-md overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center shrink-0">
-                    {isImage(item.mime_type) ? <img src={item.url} alt="" className="w-full h-full object-cover" /> : <FileIcon size={18} className="text-slate-400" />}
+                    {isImage(item.mime_type) ? <OptimizedImage src={item.url} alt="" width={36} height={36} className="w-full h-full object-cover" /> : <FileIcon size={18} className="text-slate-400" />}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{item.filename || "Archivo"}</p>
@@ -429,8 +430,7 @@ export default function CmsMediaLibrary() {
                     )}
                   >
                     {isImage(item.mime_type) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.url} alt={item.alt_text || item.filename} className="w-full h-full object-cover" />
+                      <OptimizedImage src={item.url} alt="" width={40} height={40} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center gap-2">
                         <FileIcon size={32} strokeWidth={1} className="text-slate-400" />
@@ -512,52 +512,35 @@ export default function CmsMediaLibrary() {
                         : "border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] hover:border-blue-300 dark:hover:border-blue-700"
                     )}
                   >
-                    {/* Thumbnail */}
                     <div className="size-10 rounded-md overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                       {isImage(item.mime_type) ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.url} alt="" className="w-full h-full object-cover" />
+                        <OptimizedImage src={item.url} alt={item.alt_text || item.filename || ""} width={40} height={40} className="w-full h-full object-cover" />
                       ) : (
-                        <FileIcon size={18} strokeWidth={1} className="text-slate-400" />
+                        <FileIcon size={18} className="text-slate-400" />
                       )}
                     </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{item.filename || "Archivo"}</p>
-                        {item.status === "archived" && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</span>}
+                        <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">{item.filename || "Archivo"}</p>
+                        {item.status === "archived" && (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</span>
+                        )}
                       </div>
-                      <p className="text-[10px] text-slate-400 font-medium">{item.mime_type || "—"} · {formatBytes(item.file_size)}</p>
+                      <p className="text-[11px] text-slate-400 truncate">{item.mime_type || "Sin tipo"} · {formatBytes(item.file_size)}</p>
                     </div>
-
-                    {/* Date */}
-                    {item.created_at && (
-                      <p className="text-[10px] text-slate-400 font-bold shrink-0 hidden md:block">
-                        {new Date(item.created_at).toLocaleDateString()}
-                      </p>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={e => { e.stopPropagation(); copyUrl(item); }}
-                        className={clsx("p-2 rounded-md transition-all", copiedId === item.id ? "bg-emerald-50 text-emerald-600" : "hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-[hsl(var(--primary))]")}
+                        className="p-2 rounded-md hover:bg-blue-50 text-slate-400 hover:text-[hsl(var(--primary))] transition-colors"
+                        aria-label="Copiar URL"
                       >
                         {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
                       </button>
-                      <a href={item.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 transition-all">
-                        <Download size={14} />
-                      </a>
                       <button
                         onClick={e => { e.stopPropagation(); toggleArchiveItem(item); }}
                         disabled={deletingId === item.id}
-                        className={clsx(
-                          "p-2 rounded-md transition-all disabled:opacity-60",
-                          item.status === "archived"
-                            ? "hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-slate-400 hover:text-emerald-600"
-                            : "hover:bg-amber-50 dark:hover:bg-amber-500/10 text-slate-400 hover:text-amber-600"
-                        )}
+                        className="p-2 rounded-md hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-colors disabled:opacity-60"
+                        aria-label={item.status === "archived" ? "Restaurar" : "Archivar"}
                       >
                         {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : item.status === "archived" ? <RotateCcw size={14} /> : <Archive size={14} />}
                       </button>
@@ -568,161 +551,6 @@ export default function CmsMediaLibrary() {
             </div>
           )}
         </div>
-
-        {/* ── Detail panel ── */}
-        <AnimatePresence>
-          {selectedItem && (
-            <motion.aside
-              key="detail"
-              initial={{ x: 320, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 320, opacity: 0 }}
-              transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="w-80 shrink-0 border-l border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-[#111418] flex flex-col overflow-y-auto"
-            >
-              {/* Header */}
-              <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-white/5">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Detalle</p>
-                <button onClick={() => setSelectedItem(null)} className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 transition-all">
-                  <X size={14} />
-                </button>
-              </div>
-
-              {/* Preview */}
-              <div className="p-4">
-                {isImage(selectedItem.mime_type) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={selectedItem.url}
-                    alt={selectedItem.alt_text || selectedItem.filename}
-                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 object-cover max-h-56"
-                  />
-                ) : selectedItem.mime_type?.startsWith("video/") ? (
-                  <video controls className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-black max-h-56">
-                    <source src={selectedItem.url} type={selectedItem.mime_type} />
-                  </video>
-                ) : selectedItem.mime_type?.startsWith("audio/") ? (
-                  <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4">
-                    <audio controls src={selectedItem.url} className="w-full" />
-                  </div>
-                ) : (
-                  <div className="w-full h-40 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 flex flex-col items-center justify-center gap-3">
-                    {React.createElement(getFileTypeIcon(selectedItem.mime_type), { size: 40, strokeWidth: 1, className: "text-slate-300" })}
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">{selectedItem.mime_type}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Metadata */}
-              <div className="p-4 space-y-4 flex-1">
-                <div className="space-y-3">
-                  {[
-                    { label: "Nombre", val: selectedItem.filename || "—" },
-                    { label: "Estado", val: selectedItem.status === "archived" ? "Archivado" : "Activo" },
-                    { label: "Tipo", val: selectedItem.mime_type || "—" },
-                    { label: "Tamaño", val: formatBytes(selectedItem.file_size) },
-                    ...(selectedItem.width && selectedItem.height
-                      ? [{ label: "Dimensiones", val: `${selectedItem.width} × ${selectedItem.height} px` }]
-                      : []),
-                    ...(selectedItem.created_at
-                      ? [{ label: "Subido", val: new Date(selectedItem.created_at).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" }) }]
-                      : []),
-                  ].map(item => (
-                    <div key={item.label} className="flex items-start gap-3">
-                      <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide w-20 shrink-0 pt-0.5">{item.label}</p>
-                      <p className="text-[11px] font-bold text-slate-700 dark:text-slate-200 break-all">{item.val}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="space-y-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
-                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Metadata editable</p>
-                  <label className="block space-y-1.5">
-                    <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Alt / titulo accesible</span>
-                    <input
-                      value={selectedItem.alt_text || ""}
-                      onChange={event => updateSelectedItem({ alt_text: event.target.value })}
-                      className="w-full text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20"
-                    />
-                  </label>
-                  <label className="block space-y-1.5">
-                    <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Seccion</span>
-                    <input
-                      value={selectedItem.section || "general"}
-                      onChange={event => updateSelectedItem({ section: event.target.value })}
-                      className="w-full text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20"
-                    />
-                  </label>
-                  <label className="block space-y-1.5">
-                    <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Tags</span>
-                    <input
-                      value={tagsText}
-                      onChange={event => setTagsText(event.target.value)}
-                      placeholder="hero, testimonio, podcast"
-                      className="w-full text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20"
-                    />
-                  </label>
-                </div>
-
-                {/* URL field */}
-                <div className="space-y-1.5">
-                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">URL pública</p>
-                  <div className="flex gap-2">
-                    <input
-                      readOnly
-                      value={selectedItem.url}
-                      className="flex-1 min-w-0 text-[10px] font-mono bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none text-slate-600 dark:text-slate-300"
-                    />
-                    <button
-                      onClick={() => copyUrl(selectedItem)}
-                      className={clsx(
-                        "p-2 rounded-md border transition-all flex-shrink-0",
-                        copiedId === selectedItem.id
-                          ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                          : "border-slate-200 dark:border-white/10 text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-300"
-                      )}
-                    >
-                      {copiedId === selectedItem.id ? <Check size={14} /> : <Copy size={14} />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="p-4 border-t border-slate-200 dark:border-white/5 space-y-2">
-                <button
-                  onClick={saveMetadata}
-                  disabled={metadataSaving}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-60"
-                >
-                  {metadataSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  Guardar metadata
-                </button>
-                <a
-                  href={selectedItem.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:opacity-90 transition-all"
-                >
-                  <Download size={14} /> Descargar
-                </a>
-                <button
-                  onClick={() => toggleArchiveItem(selectedItem)}
-                  disabled={deletingId === selectedItem.id}
-                  className={clsx(
-                    "flex items-center justify-center gap-2 w-full py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all disabled:opacity-60",
-                    selectedItem.status === "archived"
-                      ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 hover:bg-emerald-100"
-                      : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 hover:bg-amber-100"
-                  )}
-                >
-                  {deletingId === selectedItem.id ? <Loader2 size={14} className="animate-spin" /> : selectedItem.status === "archived" ? <RotateCcw size={14} /> : <Archive size={14} />}
-                  {selectedItem.status === "archived" ? "Restaurar archivo" : "Archivar archivo"}
-                </button>
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import Image from 'next/image';
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { Award, Download, Share2 } from 'lucide-react';
 
 interface CertificateProps {
@@ -65,12 +65,11 @@ export default function CertificateView({ data }: CertificateProps) {
 
                     <div className="flex flex-col items-center gap-2">
                         <div className="relative size-10 border-2 border-slate-100 dark:border-white/10 rounded-lg overflow-hidden bg-[hsl(var(--bg-primary))] p-1">
-                            <Image
+                            <OptimizedImage
                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : 'https://ccf.la')}/academy/certificates/${data.certificate_code}`}
                                 alt="QR Code"
                                 fill
-                                unoptimized
-                                className="object-contain p-1"
+                                sizes="40px"
                             />
                         </div>
                         <p className="font-semibold text-slate-400 uppercase tracking-tighter">Validar: {data.certificate_code}</p>

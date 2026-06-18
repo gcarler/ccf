@@ -19,7 +19,8 @@ from backend.auth import (normalize_role, require_admin,
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db
-from backend.core.uploads import sanitize_filename, save_upload
+from backend.core.storage import storage_service
+from backend.core.uploads import sanitize_filename
 
 router = APIRouter()
 settings = get_settings()
@@ -734,16 +735,15 @@ async def upload_resource(
 ):
     original_name = file.filename or "resource"
     sanitized = sanitize_filename(cast(str, original_name))
-    unique_name = f"res_{lesson_id}_{uuid.uuid4().hex}_{sanitized}"
     try:
         contents = await file.read()
-        save_upload(contents, unique_name, settings.uploads_dir)
+        url = storage_service.save_file(contents, sanitized, subfolder="academy")
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
     db_resource = models.Resource(
         title=title,
-        file_url=f"/static/{unique_name}",
+        file_url=url,
         resource_type=file.content_type or "application/octet-stream",
         lesson_id=lesson_id,
     )
@@ -791,12 +791,9 @@ async def submit_assignment_file(
 
     original_name = file.filename or "assignment"
     sanitized = sanitize_filename(cast(str, original_name))
-    unique_name = (
-        f"assignment_{lesson_id}_{enrollment_id}_{uuid.uuid4().hex}_{sanitized}"
-    )
     try:
         contents = await file.read()
-        save_upload(contents, unique_name, settings.uploads_dir)
+        url = storage_service.save_file(contents, sanitized, subfolder="academy")
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -804,7 +801,7 @@ async def submit_assignment_file(
         db,
         enrollment_id=enrollment_id,
         lesson_id=lesson_id,
-        file_url=f"/static/{unique_name}",
+        file_url=url,
         comment=comment,
     )
     return submission

@@ -33,8 +33,8 @@ export default function AssetLibrary() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>("/cms/media", { token, cache: "no-store" });
-            setAssets((Array.isArray(data) ? data : []).map(normalizeAsset));
+            const data = await apiFetch<{ items: any[]; total: number }>("/cms/media", { token, cache: "no-store" });
+            setAssets((data?.items || []).map(normalizeAsset));
         } catch {
             setAssets([]);
             addToast("No se pudieron cargar los activos", "error");

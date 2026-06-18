@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { 
-    Layout, 
-    Quote, 
+import OptimizedImage from "@/components/ui/OptimizedImage";
+import {
+    Layout,
+    Quote,
     CheckCircle2,
     Archive,
     RotateCcw,
@@ -146,7 +147,7 @@ export default function CmsTestimonialDetailPage() {
                                     </div>
                                     <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-950 dark:border-white/10">
                                         {testimonial.media_type === 'image' ? (
-                                            <img src={mediaUrl} alt="" className="max-h-[420px] w-full object-contain" />
+                                            <OptimizedImage src={mediaUrl} alt="" fill sizes="(max-width: 768px) 100vw, 600px" className="max-h-[420px] w-full object-contain" />
                                         ) : testimonial.media_type === 'video' ? (
                                             <video controls className="w-full bg-black">
                                                 <source src={mediaUrl} />

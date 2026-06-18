@@ -6,6 +6,7 @@ volunteer_skills, chat_messages.
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from typing import List, Optional
 
@@ -505,7 +506,7 @@ def delete_crm_automation(db: Session, automation_id: int) -> bool:
     )
     if not row:
         return False
-    row.deleted_at = _utcnow()
+    row.is_active = False
     db.commit()
     return True
 
@@ -751,8 +752,6 @@ def delete_chat_message(db: Session, message_id: int) -> bool:
 
 # ── Conversations (DMs) ──────────────────────────────────────────────
 
-import uuid
-
 
 def create_conversation(db: Session, participant_ids: list[uuid.UUID]) -> models.Conversation:
     conv = models.Conversation()
@@ -805,7 +804,7 @@ def get_conversation_messages(
 ) -> list[models.ChatMessage]:
     q = db.query(models.ChatMessage).filter(
         models.ChatMessage.room_id == f"dm_{conversation_id}",
-        models.ChatMessage.deleted_at == None,
+        models.ChatMessage.deleted_at.is_(None),
     )
     if before_id:
         q = q.filter(models.ChatMessage.id < before_id)

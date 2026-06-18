@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { Quote, ArrowRight, Sparkles, Search, Users, Headphones, ImageIcon, PlayCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import RichText from "@/components/public/RichText";
@@ -62,7 +63,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                     {mediaUrl && (
                         <div className="mb-3 overflow-hidden rounded-lg border" style={{ borderColor: "var(--site-outline-variant)", background: "var(--site-surface-container)" }}>
                             {t.media_type === "image" ? (
-                                <img src={mediaUrl} alt="" className="h-48 w-full object-cover" />
+                                <OptimizedImage src={mediaUrl} alt="" width={400} height={192} className="h-48 w-full object-cover" />
                             ) : t.media_type === "video" ? (
                                 <video controls className="w-full bg-black">
                                     <source src={mediaUrl} />
@@ -103,7 +104,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                         <div className="flex items-center gap-4">
                             {t.author?.avatarUrl ? (
                                 <div className="w-12 h-8 rounded-full overflow-hidden border-2 shrink-0" style={{ borderColor: isHighlight ? "var(--site-primary)" : "var(--site-surface-container-highest)" }}>
-                                    <img src={t.author.avatarUrl} alt={t.author?.username || "Autor"} className="w-full h-full object-cover" />
+                                    <OptimizedImage src={t.author.avatarUrl} alt={t.author?.username || "Autor"} width={48} height={32} className="w-full h-full object-cover" />
                                 </div>
                             ) : (
                                 <div

@@ -407,6 +407,17 @@ class Persona(Base):
     talents = Column(Text, nullable=True)
     spiritual_gifts = Column(Text, nullable=True)
     pastoral_notes = Column(Text, nullable=True)
+
+    # ── Pastoral profile fields ───────────────────────────────────────────
+    photo_url = Column(String(500), nullable=True)
+    bio_short = Column(Text, nullable=True)
+    bio_full = Column(Text, nullable=True)
+    social_instagram = Column(String(200), nullable=True)
+    social_facebook = Column(String(200), nullable=True)
+    social_twitter = Column(String(200), nullable=True)
+    is_pastoral_leader = Column(Boolean, default=False, index=True)
+    is_main_pastor = Column(Boolean, default=False)
+
     tags = Column(JSON, nullable=True, default=list)
     origen_estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     origen_grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)

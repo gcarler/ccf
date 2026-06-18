@@ -4,13 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import {
     BookOpen, Check, ChevronRight, Download, FileText,
-    Loader2, Mail, MessageSquare, Paperclip, Plus,
-    Search, Send, Trash2, Upload, X, Pencil, Clock,
+    Loader2, Mail, Megaphone, MessageSquare, Paperclip, Plus,
+    Search, Send, Trash2, Upload, Users, X, Pencil, Clock,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import type {
-    BitacoraEnvio, CanalEnvio, CategoriaRecurso,
+    BitacoraEnvio, CampaignResult, CanalEnvio, CategoriaRecurso,
     PlantillaMensaje, RecursoAdjunto,
 } from '@/types/crm';
 
@@ -728,6 +728,18 @@ function CatDrawer({
 
 // ── Send drawer ───────────────────────────────────────────────────────────────
 
+const SEGMENTOS = ['active', 'new', 'staff', 'groups', 'low', 'vip'] as const;
+const LABEL_SEGMENTO: Record<string, string> = {
+    active: 'Personas activas',
+    new: 'Nuevos',
+    staff: 'Staff / Pastores',
+    groups: 'En grupos',
+    low: 'Poco contacto',
+    vip: 'Donantes frecuentes',
+};
+
+type ModoEnvio = 'individual' | 'campaign';
+
 function SendDrawer({
     open, onClose, plantilla, token, onSent,
 }: {
@@ -735,6 +747,7 @@ function SendDrawer({
     plantilla: PlantillaMensaje | null; token: string;
     onSent: (b: BitacoraEnvio) => void;
 }) {
+    const [modo, setModo] = useState<ModoEnvio>('individual');
     const [search, setSearch] = useState('');
     const [results, setResults] = useState<{ id: string; nombre: string }[]>([]);
     const [searching, setSearching] = useState(false);
@@ -742,8 +755,16 @@ function SendDrawer({
     const [vars, setVars] = useState<Record<string, string>>({});
     const [sending, setSending] = useState(false);
 
+    // Campaign state
+    const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
+    const [campaignName, setCampaignName] = useState('');
+    const [campResult, setCampResult] = useState<CampaignResult | null>(null);
+
     useEffect(() => {
-        if (!open) { setSearch(''); setDestinatario(null); setResults([]); setVars({}); }
+        if (!open) {
+            setSearch(''); setDestinatario(null); setResults([]); setVars({});
+            setModo('individual'); setSelectedSegments([]); setCampaignName(''); setCampResult(null);
+        }
     }, [open]);
 
     useEffect(() => {
@@ -751,10 +772,11 @@ function SendDrawer({
         const init: Record<string, string> = {};
         plantilla.variables_requeridas.forEach(v => { init[v] = ''; });
         setVars(init);
+        setCampaignName(plantilla.titulo);
     }, [plantilla?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
-        if (search.length < 2) { setResults([]); return; }
+        if (modo !== 'individual' || search.length < 2) { setResults([]); return; }
         const t = setTimeout(async () => {
             setSearching(true);
             try {
@@ -768,29 +790,96 @@ function SendDrawer({
             } finally { setSearching(false); }
         }, 300);
         return () => clearTimeout(t);
-    }, [search, token]);
+    }, [search, token, modo]);
 
     async function send() {
-        if (!plantilla || !destinatario) return;
+        if (!plantilla) return;
         setSending(true);
         try {
-            const res = await apiFetch<BitacoraEnvio>(`/crm/resources/plantillas/${plantilla.id}/enviar`, {
-                token, method: 'POST',
-                body: JSON.stringify({ destinatario_id: destinatario.id, variables: vars }),
-                headers: { 'Content-Type': 'application/json' },
-            });
-            if (res) { onSent(res); onClose(); }
+            if (modo === 'campaign') {
+                if (selectedSegments.length === 0) return;
+                const res = await apiFetch<CampaignResult>(`/crm/resources/plantillas/${plantilla.id}/campaign`, {
+                    token, method: 'POST',
+                    body: JSON.stringify({
+                        campaign_name: campaignName || plantilla.titulo,
+                        target_segments: selectedSegments,
+                        default_variables: vars,
+                    }),
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (res) setCampResult(res);
+            } else {
+                if (!destinatario) return;
+                const res = await apiFetch<BitacoraEnvio>(`/crm/resources/plantillas/${plantilla.id}/enviar`, {
+                    token, method: 'POST',
+                    body: JSON.stringify({ destinatario_id: destinatario.id, variables: vars }),
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (res) { onSent(res); onClose(); }
+            }
         } finally { setSending(false); }
+    }
+
+    function toggleSegment(seg: string) {
+        setSelectedSegments(prev =>
+            prev.includes(seg) ? prev.filter(s => s !== seg) : [...prev, seg]
+        );
     }
 
     const previewText = plantilla ? hydrate(plantilla.contenido_texto, vars) : '';
 
     if (!open || !plantilla) return null;
 
+    // ── Result screen (campaign) ──────────────────────────────────────────────
+    if (campResult) {
+        return (
+            <>
+                <div className="fixed inset-0 bg-black/40 z-40" onClick={() => { setCampResult(null); onClose(); }} />
+                <div className="fixed right-0 top-0 bottom-0 w-[420px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-white/10 z-50 flex flex-col shadow-2xl">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/10">
+                        <h2 className="text-sm font-semibold text-slate-800 dark:text-white">Campaña enviada</h2>
+                        <button onClick={() => { setCampResult(null); onClose(); }} className="size-7 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                            <X size={15} />
+                        </button>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center justify-center px-5 gap-5 text-center">
+                        <div className="size-16 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                            <Megaphone size={28} className="text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div>
+                            <p className="text-lg font-semibold text-slate-800 dark:text-white">{campResult.campaign_name}</p>
+                            <p className="text-xs text-slate-500 mt-1">ID: {campResult.external_id}</p>
+                        </div>
+                        <div className="flex gap-6">
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-slate-800 dark:text-white">{campResult.target_count}</p>
+                                <p className="text-[10px] font-semibold uppercase text-slate-400">Destinatarios</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-emerald-600">{campResult.delivered_count}</p>
+                                <p className="text-[10px] font-semibold uppercase text-emerald-600">Enviados</p>
+                            </div>
+                            {campResult.failed_count > 0 && (
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-rose-600">{campResult.failed_count}</p>
+                                    <p className="text-[10px] font-semibold uppercase text-rose-600">Fallidos</p>
+                                </div>
+                            )}
+                        </div>
+                        <button onClick={() => { setCampResult(null); onClose(); }}
+                            className="mt-4 h-9 px-6 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
     return (
         <>
             <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-            <div className="fixed right-0 top-0 bottom-0 w-[420px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-white/10 z-50 flex flex-col shadow-2xl">
+            <div className="fixed right-0 top-0 bottom-0 w-[460px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-white/10 z-50 flex flex-col shadow-2xl">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/10">
                     <div>
                         <h2 className="text-sm font-semibold text-slate-800 dark:text-white">Registrar envío</h2>
@@ -801,45 +890,112 @@ function SendDrawer({
                     </button>
                 </div>
 
+                {/* Mode toggle */}
+                <div className="flex border-b border-slate-200 dark:border-white/10">
+                    <button onClick={() => setModo('individual')}
+                        className={clsx('flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors',
+                            modo === 'individual'
+                                ? 'text-[hsl(var(--primary))] border-b-2 border-[hsl(var(--primary))]'
+                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                        )}>
+                        <Send size={12} />Individual
+                    </button>
+                    <button onClick={() => setModo('campaign')}
+                        className={clsx('flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors',
+                            modo === 'campaign'
+                                ? 'text-[hsl(var(--primary))] border-b-2 border-[hsl(var(--primary))]'
+                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                        )}>
+                        <Users size={12} />Campaña
+                    </button>
+                </div>
+
                 <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-                    {/* Destinatario */}
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Destinatario *</label>
-                        {destinatario ? (
-                            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30">
-                                <span className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">{destinatario.nombre}</span>
-                                <button onClick={() => setDestinatario(null)} className="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300">
-                                    <X size={13} />
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="relative">
-                                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                    placeholder="Buscar persona por nombre…"
-                                    className="w-full text-sm pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                                />
-                                {(searching || results.length > 0) && (
-                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-10 overflow-hidden">
-                                        {searching && <div className="p-3 text-xs text-slate-400 text-center"><Loader2 size={12} className="animate-spin inline mr-1" />Buscando…</div>}
-                                        {results.map(r => (
-                                            <button key={r.id} onClick={() => { setDestinatario(r); setSearch(''); setResults([]); }}
-                                                className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2">
-                                                <ChevronRight size={12} className="text-slate-400" />{r.nombre}
-                                            </button>
-                                        ))}
+                    {modo === 'individual' ? (
+                        <>
+                            {/* Destinatario */}
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Destinatario *</label>
+                                {destinatario ? (
+                                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30">
+                                        <span className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">{destinatario.nombre}</span>
+                                        <button onClick={() => setDestinatario(null)} className="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300">
+                                            <X size={13} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            value={search}
+                                            onChange={e => setSearch(e.target.value)}
+                                            placeholder="Buscar persona por nombre…"
+                                            className="w-full text-sm pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
+                                        />
+                                        {(searching || results.length > 0) && (
+                                            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-10 overflow-hidden">
+                                                {searching && <div className="p-3 text-xs text-slate-400 text-center"><Loader2 size={12} className="animate-spin inline mr-1" />Buscando…</div>}
+                                                {results.map(r => (
+                                                    <button key={r.id} onClick={() => { setDestinatario(r); setSearch(''); setResults([]); }}
+                                                        className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2">
+                                                        <ChevronRight size={12} className="text-slate-400" />{r.nombre}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
-                        )}
-                    </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* Campaign name */}
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Nombre de campaña</label>
+                                <input
+                                    value={campaignName}
+                                    onChange={e => setCampaignName(e.target.value)}
+                                    placeholder="Nombre de la campaña"
+                                    className="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
+                                />
+                            </div>
+
+                            {/* Segments */}
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Segmentos de audiencia</label>
+                                <div className="space-y-1.5">
+                                    {SEGMENTOS.map(seg => (
+                                        <label key={seg}
+                                            onClick={() => toggleSegment(seg)}
+                                            className={clsx(
+                                                'flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors',
+                                                selectedSegments.includes(seg)
+                                                    ? 'border-[hsl(var(--primary)/0.5)] bg-[hsl(var(--primary)/0.04)]'
+                                                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                            )}
+                                        >
+                                            <div className={clsx(
+                                                'size-4 rounded border-2 flex items-center justify-center transition-colors',
+                                                selectedSegments.includes(seg)
+                                                    ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]'
+                                                    : 'border-slate-300 dark:border-slate-600'
+                                            )}>
+                                                {selectedSegments.includes(seg) && <Check size={10} className="text-white" />}
+                                            </div>
+                                            <span className="text-sm text-slate-700 dark:text-slate-200">{LABEL_SEGMENTO[seg]}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     {/* Variables */}
                     {plantilla.variables_requeridas.length > 0 && (
                         <div>
-                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Variables</label>
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+                                {modo === 'campaign' ? 'Variables (aplican a todos)' : 'Variables'}
+                            </label>
                             <div className="space-y-2">
                                 {plantilla.variables_requeridas.map(v => (
                                     <div key={v} className="flex items-center gap-2">
@@ -867,10 +1023,10 @@ function SendDrawer({
 
                 <div className="px-5 py-4 border-t border-slate-200 dark:border-white/10 flex gap-2">
                     <button onClick={onClose} className="flex-1 h-9 rounded-lg border border-slate-200 dark:border-white/10 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">Cancelar</button>
-                    <button onClick={send} disabled={sending || !destinatario}
+                    <button onClick={send} disabled={sending || (modo === 'individual' ? !destinatario : selectedSegments.length === 0)}
                         className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity">
                         {sending && <Loader2 size={13} className="animate-spin" />}
-                        <Send size={13} />Registrar envío
+                        {modo === 'campaign' ? <><Users size={13} />Enviar campaña</> : <><Send size={13} />Registrar envío</>}
                     </button>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backend.schemas._common import orm_config
+from backend.schemas._common import orm_config, PaginatedResponse
 # ── Academy / LMS ────────────────────────────────────────────────────────────
 from backend.schemas.academy import (AcademyStudentProfile, Assessment,
                                      AssessmentAttempt,
@@ -42,6 +42,7 @@ from backend.schemas.cms import (AnnouncementCreate, AnnouncementRead,
                                  NewsletterSubscriptionCreate,
                                  NewsletterSubscriptionRead, PageContentRead,
                                  PageContentUpdate, PageContentVersionRead,
+                                 PastoralProfileRead, PastoralProfileUpdate,
                                  TestimonialAuthorRead, TestimonialCreate,
                                  TestimonialRead, TestimonialUpdate)
 # ── CRM / Pastoral ───────────────────────────────────────────────────────────

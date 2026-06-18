@@ -287,61 +287,8 @@ def _channel_label(channel: str) -> str:
     return "SMS"
 
 
-def _member_matches_segment(persona: models.Persona, segment: str, donation_persona_ids: set[str]) -> bool:
-    value = str(segment or "").strip().lower()
-    if value == "active":
-        return str(persona.church_role or "").strip().lower() in {
-            "miembro",
-            "servidor",
-            "lider",
-            "lÃ­der",
-            "pastor",
-            "coordinador",
-        }
-    if value == "new":
-        return str(persona.spiritual_status or "").strip().lower() == "nuevo"
-    if value == "staff":
-        return str(persona.church_role or "").strip().lower() in {
-            "pastor",
-            "coordinador",
-            "staff",
-            "administrador",
-            "admin",
-        }
-    if value == "groups":
-        return persona.family_id is not None
-    if value == "low":
-        return str(persona.spiritual_status or "").strip().lower() in {
-            "nuevo",
-            "creyente",
-        }
-    if value == "vip":
-        return persona.id in donation_persona_ids
-    return False
-
-
-def _resolve_campaign_members(db: Session, segments: list[str], sede_id=None) -> list[models.Persona]:
-    normalized_segments = [segment for segment in (s.strip().lower() for s in segments) if segment]
-    if not normalized_segments:
-        return []
-
-    donations_q = db.query(models.Donation.persona_id).filter(models.Donation.persona_id.isnot(None))
-    if sede_id:
-        donations_q = donations_q.filter(models.Donation.sede_id == sede_id)
-    donation_persona_ids = {persona_id for (persona_id,) in donations_q.distinct().all()}
-    personas_q = db.query(models.Persona)
-    if sede_id:
-        personas_q = personas_q.filter(models.Persona.sede_id == sede_id)
-    personas = personas_q.all()
-    selected = []
-    seen_ids: set[str] = set()
-    for persona in personas:
-        if persona.id in seen_ids:
-            continue
-        if any(_member_matches_segment(persona, segment, donation_persona_ids) for segment in normalized_segments):
-            selected.append(persona)
-            seen_ids.add(persona.id)
-    return selected
+# Audience resolution moved to crm/_shared.py, imported below:
+from backend.api.crm._shared import _resolve_campaign_members, _member_matches_segment  # noqa: E402, F401
 
 
 def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:

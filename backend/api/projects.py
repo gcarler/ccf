@@ -18,7 +18,8 @@ from backend.crud.crm import get_user_sede_id
 from backend.crud.projects import get_user_persona_id
 from backend.mesh_websockets import manager
 from backend.core.database import get_db
-from backend.core.uploads import sanitize_filename, save_upload
+from backend.core.storage import storage_service
+from backend.core.uploads import sanitize_filename
 from backend.services.task_notifications import notify_task_assigned
 
 settings = get_settings()
@@ -798,16 +799,15 @@ async def upload_task_attachment(
 ):
     task = _ensure_task_in_project(db, project_id, task_id)
     filename = sanitize_filename(file.filename or "file")
-    unique_name = f"task_{task_id}_{uuid.uuid4().hex[:8]}_{filename}"
     contents = await file.read()
 
-    save_upload(contents, unique_name, settings.uploads_dir)
+    url = storage_service.save_file(contents, filename, subfolder="projects")
 
     uploader_persona_id = get_user_persona_id(db, current_user.id)
     attachment = models.ProjectAttachment(
         task_id=_to_uuid(task_id),
         filename=filename,
-        file_url=f"/api/static/{unique_name}",
+        file_url=url,
         file_type=file.content_type,
         file_size=len(contents),
         uploader_id=uploader_persona_id,

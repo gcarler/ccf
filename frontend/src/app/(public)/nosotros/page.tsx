@@ -178,7 +178,7 @@ export default function NosotrosPage() {
                             <div className="relative h-[340px] sm:h-[420px] md:h-[520px] overflow-hidden">
                                 <div className="absolute left-0 top-0 w-[58%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-site-outline-variant/20 z-10">
                                     <Image
-                                        src={(about?.founder1_image as string) || "/pastores/luis_ricardo_meza_1777656765476.png"}
+                                        src={(about?.founder1_image as string) || "/images/pastores/luis_ricardo_meza.webp"}
                                         alt={(about?.founder1_name as string) || "Pastor Luis Ricardo Meza Gutiérrez"}
                                         fill
                                         className="object-cover object-top"
@@ -195,7 +195,7 @@ export default function NosotrosPage() {
                                 </div>
                                 <div className="absolute right-0 bottom-0 w-[55%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-site-outline-variant/20 z-20">
                                     <Image
-                                        src={(about?.founder2_image as string) || "/pastores/histar_ariza_1777656780660.png"}
+                                        src={(about?.founder2_image as string) || "/images/pastores/histar_ariza.webp"}
                                         alt={(about?.founder2_name as string) || "Pastor Histar Ariza Herrera"}
                                         fill
                                         className="object-cover object-top"

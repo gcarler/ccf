@@ -1,45 +1,39 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Quote, BookOpen, Cross, Sparkles, Instagram, Heart } from 'lucide-react';
-import { useContentBlock } from '@/hooks/useContent';
 import { SITE_KEY, SITE_NAME } from '@/lib/site-config';
-import { PASTORS } from '@/data/pastors';
 import ShareButtons from '@/components/public/ShareButtons';
+import { getPublicPastoralTeam, PastoralProfile } from '@/lib/cms/v2';
 
 export default function PastorDetailPage() {
     const params = useParams();
     const router = useRouter();
     const slug = params?.slug as string;
 
-    const { data: feedCms } = useContentBlock(`${SITE_KEY}_pastores_feed`);
+    const [pastor, setPastor] = useState<PastoralProfile | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    let cmsPastors: any[] = [];
-    if (feedCms?.content) {
-        try { cmsPastors = JSON.parse(feedCms.content).pastors || []; } catch { /* ignore */ }
+    useEffect(() => {
+        getPublicPastoralTeam(SITE_KEY)
+            .then(list => {
+                const found = list.find(p => p.slug === slug);
+                setPastor(found || null);
+            })
+            .catch(() => setPastor(null))
+            .finally(() => setLoading(false));
+    }, [slug]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] flex items-center justify-center pt-[88px]">
+                <div className="w-10 h-10 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
+            </div>
+        );
     }
-
-    const cmsPastor = cmsPastors.find((p: any) => p.slug === slug);
-    const fallback = PASTORS.find(p => p.id === slug);
-
-    const pastor = cmsPastor
-        ? {
-            id: cmsPastor.slug,
-            name: cmsPastor.name,
-            title: cmsPastor.role,
-            image: cmsPastor.image,
-            quote: cmsPastor.quote || fallback?.quote || '',
-            verse: cmsPastor.verse || fallback?.verse || '',
-            shortStory: cmsPastor.story || fallback?.shortStory || '',
-            fullStory: cmsPastor.story || fallback?.fullStory || '',
-            instagram: cmsPastor.instagram || fallback?.instagram,
-            facebook: cmsPastor.facebook || fallback?.facebook,
-            twitter: cmsPastor.twitter || fallback?.twitter,
-        }
-        : fallback;
 
     if (!pastor) {
         return (
@@ -84,7 +78,7 @@ export default function PastorDetailPage() {
                         <ArrowLeft size={15} className="group-hover:-translate-x-1 transition-transform" />
                         Todos los pastores
                     </Link>
-                    <ShareButtons title={`${pastor.name} — ${pastor.title} | ${SITE_NAME}`} />
+                    <ShareButtons title={`${pastor.name} — ${pastor.role || 'Pastor'} | ${SITE_NAME}`} />
                 </div>
 
                 {/* ════════════════════════════════════════
@@ -97,13 +91,19 @@ export default function PastorDetailPage() {
                             {/* ── Foto ── */}
                             <div className="w-full max-w-[400px] lg:w-5/12 relative shrink-0">
                                 <div className="relative aspect-[4/5] rounded-[1.25rem] overflow-hidden shadow-2xl shadow-black/15 dark:shadow-[0_30px_80px_rgba(0,0,0,0.6)] ring-1 ring-slate-200/50 dark:ring-white/[0.06]">
-                                    <Image
-                                        src={pastor.image}
-                                        alt={pastor.name}
-                                        fill
-                                        className="object-cover object-top"
-                                        priority
-                                    />
+                                    {pastor.photo_url ? (
+                                        <Image
+                                            src={pastor.photo_url}
+                                            alt={pastor.name}
+                                            fill
+                                            className="object-cover object-top"
+                                            priority
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.05]">
+                                            <span className="text-6xl font-bold text-[hsl(var(--primary))/0.2]">{pastor.name?.charAt(0) || '?'}</span>
+                                        </div>
+                                    )}
                                     {/* Gradiente inferior */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                                     {/* Esquina */}
@@ -126,7 +126,7 @@ export default function PastorDetailPage() {
                                     </h1>
                                     <div className="h-1 w-16 rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] mb-4" />
                                     <p className="text-lg md:text-xl font-bold text-[hsl(var(--primary))] tracking-wide">
-                                        {pastor.title}
+                                        {pastor.role || 'Pastor'}
                                     </p>
                                 </div>
 
@@ -134,7 +134,7 @@ export default function PastorDetailPage() {
                                 <div className="relative p-6 md:p-7 bg-gradient-to-br from-slate-50 to-white dark:from-white/[0.03] dark:to-white/[0.01] rounded-[1.25rem] border border-slate-200/50 dark:border-white/[0.05] shadow-lg shadow-slate-200/30 dark:shadow-none">
                                     <Quote className="absolute top-5 left-5 text-[hsl(var(--primary))/0.1]" size={40} />
                                     <p className="relative z-10 text-base md:text-lg text-slate-600 dark:text-slate-300 font-medium italic leading-relaxed pt-8 pl-1">
-                                        &ldquo;{pastor.quote}&rdquo;
+                                        &ldquo;{pastor.bio_full || 'El amor de Cristo nos impulsa a servir con alegría y dedicación.'}&rdquo;
                                     </p>
                                     <div className="flex items-center gap-3 mt-5 pl-1">
                                         <div className="h-px flex-1 bg-gradient-to-r from-[hsl(var(--primary))/0.3] to-transparent max-w-[80px]" />
@@ -163,8 +163,8 @@ export default function PastorDetailPage() {
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Síguelo en</span>
                                     <div className="flex items-center gap-2">
                                         {/* Instagram */}
-                                        {pastor.instagram ? (
-                                            <a href={pastor.instagram} target="_blank" rel="noopener noreferrer"
+                                        {pastor.social_instagram ? (
+                                            <a href={pastor.social_instagram} target="_blank" rel="noopener noreferrer"
                                                 className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
                                                 aria-label="Instagram">
                                                 <Instagram size={16} className="shrink-0" />
@@ -175,8 +175,8 @@ export default function PastorDetailPage() {
                                             </span>
                                         )}
                                         {/* Facebook */}
-                                        {pastor.facebook ? (
-                                            <a href={pastor.facebook} target="_blank" rel="noopener noreferrer"
+                                        {pastor.social_facebook ? (
+                                            <a href={pastor.social_facebook} target="_blank" rel="noopener noreferrer"
                                                 className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
                                                 aria-label="Facebook">
                                                 <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" className="shrink-0"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
@@ -187,8 +187,8 @@ export default function PastorDetailPage() {
                                             </span>
                                         )}
                                         {/* X */}
-                                        {pastor.twitter ? (
-                                            <a href={pastor.twitter} target="_blank" rel="noopener noreferrer"
+                                        {pastor.social_twitter ? (
+                                            <a href={pastor.social_twitter} target="_blank" rel="noopener noreferrer"
                                                 className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
                                                 aria-label="X">
                                                 <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" className="shrink-0"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -209,7 +209,7 @@ export default function PastorDetailPage() {
                                     <div>
                                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-1.5">Versículo Lema</p>
                                         <p className="text-base md:text-lg text-slate-700 dark:text-slate-200 font-medium leading-relaxed">
-                                            {pastor.verse}
+                                            {pastor.bio_short || 'Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree no se pierda, sino que tenga vida eterna. — Juan 3:16'}
                                         </p>
                                     </div>
                                 </div>
@@ -264,8 +264,8 @@ export default function PastorDetailPage() {
                                     [&_em]:text-slate-600 [&_em]:dark:text-slate-300
                                 "
                             >
-                                {/* Renderizar fullStory como HTML seguro */}
-                                <div dangerouslySetInnerHTML={{ __html: pastor.fullStory }} />
+                                {/* Renderizar bio_full como HTML seguro */}
+                                <div dangerouslySetInnerHTML={{ __html: pastor.bio_full || pastor.bio_short || 'Próximamente compartiremos más sobre su historia y ministerio.' }} />
                             </div>
 
                             {/* ── Footer decorativo ── */}

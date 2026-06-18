@@ -10,9 +10,11 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.auth import require_module_access
+from backend.schemas import PaginatedResponse
 from backend.core.config import get_settings
 from backend.core.database import get_db
-from backend.core.uploads import sanitize_filename, save_upload
+from backend.core.storage import storage_service
+from backend.core.uploads import sanitize_filename
 
 router = APIRouter(tags=["cms"])
 
@@ -204,17 +206,24 @@ def delete_admin_announcement(
 # ── CMS Media ───────────────────────────────────────────
 
 
-@router.get("/cms/media", response_model=list[schemas.CmsMediaRead])
+@router.get("/cms/media", response_model=PaginatedResponse[schemas.CmsMediaRead])
 def list_cms_media(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=500),
     query: str | None = Query(default=None),
     section: str | None = Query(default=None),
-    limit: int = Query(default=250, ge=1, le=500),
     include_archived: bool = Query(default=False),
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    return crud.list_cms_media_items(
-        db, query=query, section=section, limit=limit, include_archived=include_archived
+    items, total = crud.list_cms_media_items(
+        db, query=query, section=section, skip=skip, limit=limit, include_archived=include_archived
+    )
+    return PaginatedResponse(
+        items=[schemas.CmsMediaRead.model_validate(i) for i in items],
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -296,15 +305,15 @@ async def upload_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    original_name = sanitize_filename(file.filename or "asset.bin")
-    unique_name = f"cms_{uuid.uuid4().hex}_{original_name}"
     content = await file.read()
-    try:
-        save_upload(content, unique_name, settings.uploads_dir)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    original_name = sanitize_filename(file.filename or "asset.bin")
 
-    url = f"/api/static/{unique_name}"
+    # Validate file size first
+    from backend.core.uploads import MAX_UPLOAD_SIZE
+    if len(content) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="File exceeds maximum size")
+
+    url = storage_service.save_file(content, original_name, subfolder="cms")
     parsed_tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
     return crud.create_cms_media_item(
         db,

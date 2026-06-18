@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import {
     Home, Inbox, Users, GraduationCap, Target, Settings, Bell,
     ChevronDown, ChevronRight, Layout, Folder, ChevronLeft,
@@ -159,7 +160,7 @@ export default function UnifiedSidebar({
                 <div className="flex items-center gap-3 w-full">
                     <div className="w-8 h-8 rounded-md bg-slate-900 dark:bg-[hsl(var(--bg-primary))] flex items-center justify-center shrink-0 overflow-hidden">
                         {logoUrl ? (
-                            <img src={logoUrl} alt={logoDisplayName} className="w-full h-full object-contain p-1" />
+                            <OptimizedImage src={logoUrl} alt={logoDisplayName} fill className="w-full h-full object-contain p-1" />
                         ) : (
                             <div className="w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 relative">
                                 <div className="absolute top-[-2px] right-[-2px] w-1.5 h-1.5 bg-[hsl(var(--bg-primary))] dark:bg-slate-900" />

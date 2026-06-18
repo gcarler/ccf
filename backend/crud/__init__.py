@@ -97,6 +97,7 @@ from backend.crud.cms import (
     get_or_create_page_content,
     get_page_content,
     get_page_content_versions,
+    get_persona_by_id,
     get_public_cms_page,
     get_testimonial,
     increment_content_metric,
@@ -112,6 +113,7 @@ from backend.crud.cms import (
     list_cms_themes,
     list_content_publications,
     list_page_contents,
+    list_pastoral_team,
     list_testimonials,
     reorder_cms_menu_items,
     reorder_cms_sections,
@@ -128,6 +130,7 @@ from backend.crud.cms import (
     update_cms_theme,
     update_content_publication,
     update_page_content,
+    update_pastoral_profile,
     update_testimonial,
 )
 

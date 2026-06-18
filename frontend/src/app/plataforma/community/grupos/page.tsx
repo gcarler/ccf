@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { Users, MapPin, Clock, Search, Plus, Filter, X, ArrowLeft } from 'lucide-react';
 
 const groupsData = [
@@ -96,9 +97,8 @@ export default function CommunityGruposPage() {
             onClick={() => openDrawer(group)}
           >
             <div className="h-48 relative overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={group.image}
+              <OptimizedImage
+                src={group.image} fill sizes="(max-width: 768px) 100vw, 50vw"
                 alt={group.name}
                 className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-1000"
               />
@@ -167,9 +167,8 @@ export default function CommunityGruposPage() {
               <div className="space-y-4">
                 {/* Imagen */}
                 <div className="h-48 rounded-md overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={drawer.group.image}
+                  <OptimizedImage
+                    src={drawer.group.image} fill sizes="400px"
                     alt={drawer.group.name}
                     className="w-full h-full object-cover"
                   />

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { 
+import OptimizedImage from "@/components/ui/OptimizedImage";
+import {
     Archive,
-    Layout, 
-    Image as ImageIcon, 
+    Layout,
+    Image as ImageIcon,
     Save,
     RotateCcw,
     Download,
@@ -139,13 +140,12 @@ export default function CmsMediaDetailPage() {
                     <div className="space-y-3">
                         <div className="aspect-video rounded-lg bg-slate-900 overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl relative group">
                             {item.mime_type?.startsWith('image/') ? (
-                                <img
+                                <OptimizedImage
                                     src={item.url}
                                     alt={item.alt_text || item.filename || 'Media'}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 50vw"
                                     className="w-full h-full object-contain"
-                                    onError={(e) => {
-                                        (e.target as any).src = 'https://placehold.co/800x450/1e293b/64748b?text=Media+Preview';
-                                    }}
                                 />
                             ) : item.mime_type?.startsWith('video/') ? (
                                 <video controls className="w-full h-full bg-black">

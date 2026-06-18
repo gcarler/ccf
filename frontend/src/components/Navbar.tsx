@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import {
     Menu,
     X,
@@ -60,7 +61,7 @@ export default function Navbar() {
                     <Link href="/" className="flex items-center gap-2 group">
                         <div className="bg-[hsl(var(--primary))] p-1.5 rounded-md group-hover:scale-105 transition-transform shadow-md shadow-blue-500/20 overflow-hidden">
                             {logoUrl ? (
-                                <img src={logoUrl} alt={siteName} className="w-4 h-4 object-contain" />
+                                <OptimizedImage src={logoUrl} alt={siteName} width={16} height={16} className="w-4 h-4 object-contain" />
                             ) : (
                                 <Church size={16} className="text-white" />
                             )}

@@ -5,6 +5,7 @@ import { SITE_KEY } from "@/lib/site-config";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { Archive, Calendar, FileText, Globe, Plus, RotateCcw, Search, Zap, PenTool, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
@@ -597,7 +598,7 @@ export default function CmsPagesManagement() {
                   />
                   {(selectedPage.seo_json?.meta_image as string) && (
                     <div className="mt-2 rounded-md overflow-hidden border border-slate-200 dark:border-white/10 h-32 bg-slate-100 dark:bg-white/5 relative">
-                       <img src={selectedPage.seo_json?.meta_image as string} alt="OG Preview" className="absolute inset-0 w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                       <OptimizedImage src={selectedPage.seo_json?.meta_image as string} alt="OG Preview" fill sizes="400px" className="absolute inset-0 w-full h-full object-cover" />
                     </div>
                   )}
                 </div>

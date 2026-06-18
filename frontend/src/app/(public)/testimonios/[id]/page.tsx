@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { ArrowLeft, Quote, Share2, Heart, Send, CheckCircle2, Loader2, X, Headphones } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Testimonial } from "@/lib/data/testimonios";
@@ -110,7 +111,7 @@ export default function TestimonioDetailPage() {
                 >
                     {testimonial.author?.avatarUrl ? (
                         <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shadow-2xl shrink-0 border-4" style={{ borderColor: "var(--site-surface-container)" }}>
-                            <img src={testimonial.author.avatarUrl} alt={testimonial.author?.username || "Autor"} className="w-full h-full object-cover" />
+                            <OptimizedImage src={testimonial.author.avatarUrl} alt={testimonial.author?.username || "Autor"} width={160} height={160} className="w-full h-full object-cover" />
                         </div>
                     ) : (
                         <div
@@ -154,7 +155,7 @@ export default function TestimonioDetailPage() {
                         {mediaUrl && (
                             <div className="overflow-hidden rounded-lg border" style={{ borderColor: "var(--site-outline-variant)", background: "var(--site-surface-container)" }}>
                                 {testimonial.media_type === "image" ? (
-                                    <img src={mediaUrl} alt="" className="max-h-[520px] w-full object-cover" />
+                                    <OptimizedImage src={mediaUrl} alt="" width={800} height={520} className="max-h-[520px] w-full object-cover" />
                                 ) : testimonial.media_type === "video" ? (
                                     <video controls className="w-full bg-black">
                                         <source src={mediaUrl} />

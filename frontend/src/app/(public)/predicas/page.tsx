@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import {
     Play, Calendar, Youtube, RefreshCw, ExternalLink,
     Search, X, Check, Link2, MessageCircle, BookOpen, Eye,
@@ -110,11 +111,11 @@ function VideoCard({
         >
             {/* Thumbnail — clic abre reproductor */}
             <div className="relative overflow-hidden aspect-video bg-site-surface-container-lowest" onClick={onPlay}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <OptimizedImage
                     src={imgErr ? video.thumbnail_mq : video.thumbnail_hq}
                     alt={video.title}
-                    onError={() => setImgErr(true)}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

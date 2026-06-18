@@ -3,6 +3,7 @@
 import { useContentBlock } from "@/hooks/useContent";
 import { getCmsPublicMenu } from "@/lib/cms/v2";
 import { SITE_KEY, SITE_NAME } from "@/lib/site-config";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { MapPin,Menu,Sun,X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -109,7 +110,7 @@ export default function FaroNavbar() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-3 shrink-0">
                         {logoUrl ? (
-                            <img src={logoUrl} alt={logoName} className="h-8 object-contain" />
+                            <OptimizedImage src={logoUrl} alt={logoName} width={32} height={32} className="h-8 object-contain" />
                         ) : (
                             <div className="w-8 h-8 relative">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full text-site-primary">

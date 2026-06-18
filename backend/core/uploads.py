@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 from typing import Iterable
 
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf", "mp4", "mp3", "wav", "zip"}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "pdf", "mp4", "mp3", "wav", "zip"}
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 FILENAME_PATTERN = re.compile(r"[^a-zA-Z0-9._-]")
 
