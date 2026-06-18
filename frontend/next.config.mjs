@@ -27,6 +27,11 @@ const nextConfig = {
                 hostname: 'ui-avatars.com',
                 pathname: '/api/**',
             },
+            {
+                protocol: 'https',
+                hostname: 'img.youtube.com',
+                pathname: '/vi/**',
+            },
             // Backend serving optimized images (WebP)
             {
                 protocol: 'https',
