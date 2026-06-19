@@ -195,6 +195,7 @@ PAGE_CONTENT_DEFAULTS = {
             "description": "Una comunidad vibrante donde la fe encuentra propósito.",
             "primary_cta": "Únete a nosotros",
             "secondary_cta": "Ver Predicaciones",
+            "bg_image": "https://images.unsplash.com/photo-1504051771394-dd2e66b2e08f?auto=format&fit=crop&w=1800&q=80",
         },
     },
     "faro_events_hero": {
@@ -253,6 +254,24 @@ PAGE_CONTENT_DEFAULTS = {
             "description": "Explora cursos y recursos para profundizar tu fe.",
         },
     },
+    "faro_courses_feed": {
+        "title": "Cursos FARO — Contenido",
+        "content": {
+            "hero_image_url": "https://picsum.photos/seed/1481627834876-b7833e8f5570/1920/1080",
+            "featured_fallback_image_url": "https://picsum.photos/seed/1524178232363-1fb2b075b655/800/600",
+            "cta_images": [
+                {"src": "https://picsum.photos/seed/academia1/800/800", "alt": "Estudio"},
+                {"src": "https://picsum.photos/seed/academia2/800/800", "alt": "Librería"},
+            ],
+            "library_title": "Nuestra Librería",
+            "library_description": "Una curaduría de obras que han transformado generaciones.",
+            "empty_books_message": "Próximamente tendremos libros disponibles.",
+            "courses_title": "Cursos & Academia",
+            "courses_description": "Programas estructurados para líderes, estudiantes y buscadores de la verdad.",
+            "featured_course_id": None,
+            "show_free_only": False,
+        },
+    },
     "faro_discover_hero": {
         "title": "Conocer a Jesus FARO",
         "content": {
@@ -262,6 +281,39 @@ PAGE_CONTENT_DEFAULTS = {
             "title_tail": "Tu Vida.",
             "description": "El comienzo de una relación que transforma tu historia.",
             "cta": "Quiero conocer a Jesús",
+            "bg_image": "https://picsum.photos/seed/1518623489648-a173ef7824f3/800/600",
+        },
+    },
+    "faro_discover_feed": {
+        "title": "Conocer a Jesus FARO — Contenido",
+        "content": {
+            "intro_title": "Un Encuentro Personal",
+            "intro_paragraph_1": "En FARO, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: Ven y ve.",
+            "intro_paragraph_2": "Descubre un espacio donde las preguntas son bienvenidas y la gracia es el lenguaje principal.",
+            "testimonials_title": "Historias que iluminan",
+            "testimonials_empty_title": "Próximamente compartiremos historias de transformación.",
+            "contact_title": "Hablemos de Tu Caminar",
+            "contact_description": "¿Tienes dudas? ¿Quieres orar por algo específico? Nuestro equipo está aquí para acompañarte sin juicios.",
+            "contact_email": "",
+            "contact_phone": "",
+            "contact_address": "",
+            "name_label": "Nombre completo",
+            "name_placeholder": "Tu nombre",
+            "phone_label": "WhatsApp",
+            "phone_placeholder": "+57 300...",
+            "message_label": "¿En qué podemos ayudarte?",
+            "message_placeholder": "Cuéntanos un poco sobre ti o tu petición de oración...",
+            "submit_label": "Enviar mensaje y conectar",
+            "benefits": [
+                {"icon": "Heart", "title": "Gracia sin condenas", "desc": "Eres bienvenido tal como eres."},
+                {"icon": "Star", "title": "Propósito real", "desc": "Descubre para qué fuiste creado."},
+                {"icon": "Shield", "title": "Comunidad que cuida", "desc": "No estarás solo en este camino."},
+                {"icon": "ArrowRight", "title": "Primer paso simple", "desc": "Escríbenos y conectamos."},
+            ],
+            "contact_info": [
+                {"icon": "Clock", "text": "Respuesta en menos de 24 horas"},
+                {"icon": "Mail", "text": "soporte@ccf.la"},
+            ],
         },
     },
     "faro_about_hero": {
@@ -279,6 +331,50 @@ PAGE_CONTENT_DEFAULTS = {
             "eyebrow": "Nuestra Presencia",
             "title": "Nuestras Sedes",
             "search_placeholder": "Buscar ciudad o dirección...",
+            "map_embed_url": "https://www.google.com/maps/d/embed?mid=1VDNpplw_9z1tcEhx25wEFRR5gQmnHgM&ehbc=2E312F",
+        },
+    },
+    "faro_footer": {
+        "title": "Footer FARO",
+        "content": {
+            "description": (
+                "Iluminando el camino hacia una conexión profunda con lo divino "
+                "a través de la comunidad y la guía espiritual. "
+                "Una casa de fe abierta para toda la familia."
+            ),
+            "nav_links": [
+                {"href": "/", "label": "Inicio"},
+                {"href": "/nosotros", "label": "Sobre Nosotros"},
+                {"href": "/pastores", "label": "Pastores"},
+                {"href": "/eventos", "label": "Eventos"},
+                {"href": "/predicas", "label": "Prédicas"},
+                {"href": "/cursos", "label": "Cursos"},
+            ],
+            "resource_links": [
+                {"href": "/conocer-a-jesus", "label": "Conocer a Jesús"},
+                {"href": "/testimonios", "label": "Testimonios"},
+                {"href": "/sedes", "label": "Sedes"},
+                {"href": "/boletin", "label": "Boletín"},
+            ],
+            "social_links": [
+                {"href": "https://facebook.com/comunidadfaro", "label": "Facebook", "kind": "facebook"},
+                {"href": "https://instagram.com/comunidadfaro", "label": "Instagram", "kind": "instagram"},
+                {"href": "https://youtube.com/comunidadfaro", "label": "YouTube", "kind": "youtube"},
+            ],
+            "location_label": "Cartagena, Colombia",
+            "newsletter_label": "Boletín semanal",
+        },
+    },
+    "faro_mobile_nav": {
+        "title": "Navegación móvil FARO",
+        "content": {
+            "items": [
+                {"href": "/", "label": "Inicio", "icon": "home"},
+                {"href": "/eventos", "label": "Eventos", "icon": "calendar"},
+                {"href": "/predicas", "label": "Prédicas", "icon": "play"},
+                {"href": "/sedes", "label": "Sedes", "icon": "map-pin"},
+                {"href": "/conocer-a-jesus", "label": "Conectar", "icon": "menu"},
+            ]
         },
     },
     "faro_testimonials_feed": {

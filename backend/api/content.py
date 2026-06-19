@@ -34,6 +34,8 @@ BLOCK_REQUIRED_FIELDS: dict[str, list[str]] = {
 STRUCTURED_CONTENT_KEYS = set(BLOCK_REQUIRED_FIELDS) | {
     "faro_public_events",
     "faro_media_gallery",
+    "faro_footer",
+    "faro_mobile_nav",
     "faro_testimonials_feed",
     "faro_announcements_feed",
     "faro_nav_items",

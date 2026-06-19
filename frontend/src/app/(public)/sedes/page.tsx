@@ -7,7 +7,7 @@ import { Calendar,Clock,Home,Navigation,Phone,Search } from "lucide-react";
 import { useEffect,useState } from "react";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
-const MAP_EMBED_URL =
+const DEFAULT_MAP_EMBED_URL =
     "https://www.google.com/maps/d/embed?mid=1VDNpplw_9z1tcEhx25wEFRR5gQmnHgM&ehbc=2E312F";
 
 interface LocationItem {
@@ -45,6 +45,7 @@ const fallbackLocations: LocationItem[] = [
 export default function SedesPage() {
     const { data: heroContent } = useContentBlock(`${SITE_KEY}_locations_hero`);
     const { data: locationsContent } = useContentBlock(`${SITE_KEY}_locations_feed`);
+    const mapEmbedUrl = heroContent?.map_embed_url || DEFAULT_MAP_EMBED_URL;
 
     const parsedLocations: LocationItem[] = Array.isArray(locationsContent?.parsed)
         ? (locationsContent.parsed as LocationItem[])
@@ -200,7 +201,7 @@ export default function SedesPage() {
             {/* ── MAPA GOOGLE MY MAPS ────────────────────────────── */}
             <section className="flex-1 min-h-[50vh] md:h-[calc(100vh-88px)] md:sticky md:top-[88px]">
                 <iframe
-                    src={MAP_EMBED_URL}
+                    src={mapEmbedUrl}
                     className="w-full h-full border-0 block"
                     allowFullScreen
                     loading="lazy"

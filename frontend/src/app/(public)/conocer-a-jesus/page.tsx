@@ -43,6 +43,7 @@ export default function ConocerAJesusPage() {
     const heroTitleTail = heroContent?.title_tail || " Tu Vida.";
     const heroDescription = heroContent?.description || "Conocer a Jesús no es una religión, es el comienzo de una relación que transforma la oscuridad en un propósito eterno.";
     const heroCta = heroContent?.cta || "Quiero conocer a Jesús";
+    const heroBgImage = heroContent?.bg_image || null;
     const introTitle = (discoverData?.intro_title as string) || "Un Encuentro Personal";
     const introParagraph1 = (discoverData?.intro_paragraph_1 as string) || "En FARO, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: Ven y ve.";
     const introParagraph2 = (discoverData?.intro_paragraph_2 as string) || "Descubre un espacio donde las preguntas son bienvenidas y la gracia es el lenguaje principal. Jesús ofrece descanso para el alma y una dirección clara para el futuro.";
@@ -123,9 +124,8 @@ export default function ConocerAJesusPage() {
                 <div
                     className="absolute inset-0 bg-cover bg-center"
                     style={{
-                        backgroundImage:
-                            "url('https://picsum.photos/seed/1518623489648-a173ef7824f3/800/600')",
-                        filter: "brightness(0.25) saturate(0.4)",
+                        backgroundImage: heroBgImage ? `url('${heroBgImage}')` : "linear-gradient(135deg, #0a1628 0%, #0d2244 50%, #0a1628 100%)",
+                        filter: heroBgImage ? "brightness(0.25) saturate(0.4)" : undefined,
                     }}
                 />
                 <div
