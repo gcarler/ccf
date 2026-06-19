@@ -101,7 +101,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     }
   },
   {
-    key: `${SITE_KEY}_testimonios_hero`,
+    key: `${SITE_KEY}_testimonials_hero`,
     label: "Testimonios — Hero",
     description: "Titular y subtítulo de testimonios.",
     page: "/testimonios",
@@ -113,7 +113,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     }
   },
   {
-    key: `${SITE_KEY}_testimonios_feed`,
+    key: `${SITE_KEY}_testimonials_feed`,
     label: "Testimonios — Contenido",
     description: "Búsqueda, estados vacíos y llamada a publicar testimonios.",
     page: "/testimonios",
@@ -306,20 +306,40 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     }
   },
   {
-    key: `${SITE_KEY}_testimonials_feed`,
-    label: "Testimonios — Feed",
-    description: "Listado moderado de testimonios públicos.",
-    page: "/testimonios",
-    sample: [
-      {
-        id: 1,
-        content: "Llegué con ansiedad y hoy tengo paz y comunidad.",
-        emotion: "Restauración",
-        is_approved: true,
-        show_on_home: true,
-        created_at: "2026-01-10T10:00:00Z"
-      }
-    ]
+    key: `${SITE_KEY}_welcome`,
+    label: "Bienvenida — Pantalla",
+    description: "Título, CTA y tarjetas de acceso para la ruta de bienvenida.",
+    page: "/bienvenida",
+    sample: {
+      eyebrow: "Bienvenida",
+      title_template: "Hola, {name}.",
+      description: "No encontramos una cuenta registrada todavía, pero no te dejamos en una pantalla vacía.",
+      primary_cta: { href: "/cursos", label: "Discipulado Básico" },
+      secondary_cta: { href: "/conocer-a-jesus", label: "Una nueva vida con Cristo" },
+      highlights: [
+        {
+          title: "Discipulado Básico",
+          description: "Empieza por la ruta de fundamentos para crecer con orden y acompañamiento.",
+          href: "/cursos",
+          cta: "Ver academia",
+          icon: "book"
+        }
+      ]
+    }
+  },
+  {
+    key: `${SITE_KEY}_privacy`,
+    label: "Privacidad — Política",
+    description: "Cabecera y secciones de la política de privacidad pública.",
+    page: "/privacidad",
+    sample: {
+      last_update: "12 de junio de 2026",
+      summary: "Esta política describe cómo PLES SAS y la Comunidad Cristiana El Faro recopilan, usan, almacenan y protegen tus datos personales.",
+      sections: [
+        { id: "responsables", title: "1. Responsables del tratamiento" },
+        { id: "datos-recopilados", title: "2. Datos que recopilamos" }
+      ]
+    }
   },
   {
     key: `${SITE_KEY}_announcements_feed`,

@@ -160,8 +160,8 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
 }
 
 export default function TestimoniosPage() {
-    const { data: heroContent } = useContentBlock(`${SITE_KEY}_testimonios_hero`);
-    const { data: feedContent } = useContentBlock(`${SITE_KEY}_testimonios_feed`);
+    const { data: heroContent } = useContentBlock(`${SITE_KEY}_testimonials_hero`);
+    const { data: feedContent } = useContentBlock(`${SITE_KEY}_testimonials_feed`);
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");

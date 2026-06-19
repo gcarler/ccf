@@ -62,7 +62,16 @@ BLOCKS = {
             "no_results_description": "Intenta con otro término.",
         },
     },
-    "faro_testimonios_feed": {
+    "faro_testimonials_hero": {
+        "title": "Hero — Testimonios",
+        "content": {
+            "eyebrow": "Impacto Real",
+            "title_lead": "Historias de",
+            "title_accent": "Transformación",
+            "description": "Descubre cómo la fe y la comunidad han iluminado el camino de personas reales.",
+        },
+    },
+    "faro_testimonials_feed": {
         "title": "Contenido — Testimonios",
         "content": {
             "search_placeholder": "Buscar por tema, nombre o palabra clave",
@@ -332,6 +341,56 @@ BLOCKS = {
                 "services": ["Domingos 10 AM", "Miércoles 7 PM"],
             },
         ],
+    },
+
+    # ── BIENVENIDA / PRIVACIDAD ─────────────────────────────────────────────
+    "faro_welcome": {
+        "title": "Bienvenida pública FARO",
+        "content": {
+            "eyebrow": "Bienvenida",
+            "title_template": "Hola, {name}.",
+            "description": "No encontramos una cuenta registrada todavía, pero no te dejamos en una pantalla vacía.",
+            "primary_cta": {"href": "/cursos", "label": "Discipulado Básico"},
+            "secondary_cta": {"href": "/conocer-a-jesus", "label": "Una nueva vida con Cristo"},
+            "highlights": [
+                {
+                    "title": "Discipulado Básico",
+                    "description": "Empieza por la ruta de fundamentos para crecer con orden y acompañamiento.",
+                    "href": "/cursos",
+                    "cta": "Ver academia",
+                    "icon": "book",
+                },
+                {
+                    "title": "Una nueva vida con Cristo",
+                    "description": "Conoce el mensaje central del evangelio en una ruta pública y clara.",
+                    "href": "/conocer-a-jesus",
+                    "cta": "Abrir ruta",
+                    "icon": "heart",
+                },
+            ],
+        },
+    },
+    "faro_privacy": {
+        "title": "Política de privacidad FARO",
+        "content": {
+            "last_update": "12 de junio de 2026",
+            "summary": "Esta política describe cómo PLES SAS y la Comunidad Cristiana El Faro recopilan, usan, almacenan y protegen tus datos personales.",
+            "sections": [
+                {"id": "responsables", "title": "1. Responsables del tratamiento"},
+                {"id": "datos-recopilados", "title": "2. Datos que recopilamos"},
+                {"id": "finalidades", "title": "3. Finalidades del tratamiento"},
+                {"id": "bases-legales", "title": "4. Bases legales"},
+                {"id": "derechos", "title": "5. Derechos del titular"},
+                {"id": "procedimiento", "title": "6. Procedimiento para ejercer derechos"},
+                {"id": "terceros", "title": "7. Transferencia y transmisión a terceros"},
+                {"id": "cookies", "title": "8. Cookies y tecnologías similares"},
+                {"id": "menores", "title": "9. Menores de edad"},
+                {"id": "seguridad", "title": "10. Seguridad de la información"},
+                {"id": "conservacion", "title": "11. Conservación de datos"},
+                {"id": "cambios", "title": "12. Cambios a esta política"},
+                {"id": "contacto", "title": "13. Canal de atención"},
+            ],
+        },
     },
 
     # ── NAV GLOBAL ──────────────────────────────────────────────────────────

@@ -59,7 +59,16 @@ BLOCKS = {
             "no_results_description": "Intenta con otro término.",
         },
     },
-    "faro_testimonios_feed": {
+    "faro_testimonials_hero": {
+        "title": "Hero testimonios publico FARO",
+        "content": {
+            "eyebrow": "Impacto Real",
+            "title_lead": "Historias de",
+            "title_accent": "Transformación",
+            "description": "Descubre cómo la fe y la comunidad han iluminado el camino de personas reales.",
+        },
+    },
+    "faro_testimonials_feed": {
         "title": "Testimonios publico FARO",
         "content": {
             "search_placeholder": "Buscar por tema, nombre o palabra clave",
