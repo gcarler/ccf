@@ -40,6 +40,34 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     }
   },
   {
+    key: `${SITE_KEY}_home_feed`,
+    label: "Inicio — Contenido",
+    description: "Tarjetas editoriales e imágenes de entrada del home.",
+    page: "/",
+    sample: {
+      eyebrow: "Nuestra esencia",
+      section_title: "Bienvenidos a Casa",
+      section_description: "Rutas públicas para conocer la comunidad, profundizar en la fe y encontrar dónde dar el siguiente paso.",
+      featured_card: {
+        title: "Conocer a Jesús",
+        desc: "Descubre la base de nuestra fe a través de un viaje personal y transformador.",
+        href: "/conocer-a-jesus",
+        cta: "Empezar el camino",
+        img: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&q=80",
+        alt: "Reunión de personas en comunidad"
+      },
+      cards: [
+        {
+          title: "Librería",
+          desc: "Recursos para profundizar en tu estudio bíblico.",
+          href: "/cursos",
+          img: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80",
+          alt: "Libros y estudio"
+        }
+      ]
+    }
+  },
+  {
     key: `${SITE_KEY}_events_hero`,
     label: "Eventos — Hero",
     description: "Titular y texto principal de eventos.",

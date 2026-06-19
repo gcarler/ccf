@@ -33,6 +33,45 @@ BLOCKS = {
             "secondary_cta": "Ver Prédicas",
         },
     },
+    "faro_home_feed": {
+        "title": "Contenido — Inicio",
+        "content": {
+            "eyebrow": "Nuestra esencia",
+            "section_title": "Bienvenidos a Casa",
+            "section_description": "Rutas públicas para conocer la comunidad, profundizar en la fe y encontrar dónde dar el siguiente paso.",
+            "featured_card": {
+                "title": "Conocer a Jesús",
+                "desc": "Descubre la base de nuestra fe a través de un viaje personal y transformador. En FARO, te acompañamos en cada paso.",
+                "href": "/conocer-a-jesus",
+                "cta": "Empezar el camino",
+                "img": "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&q=80",
+                "alt": "Reunión de personas en comunidad",
+            },
+            "cards": [
+                {
+                    "title": "Librería",
+                    "desc": "Recursos para profundizar en tu estudio bíblico.",
+                    "href": "/cursos",
+                    "img": "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80",
+                    "alt": "Libros y estudio",
+                },
+                {
+                    "title": "Horarios",
+                    "desc": "Reuniones presenciales y online cada semana.",
+                    "href": "/eventos",
+                    "img": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80",
+                    "alt": "Conferencia y reunión",
+                },
+                {
+                    "title": "Sedes",
+                    "desc": "Encuéntranos en tu ciudad.",
+                    "href": "/sedes",
+                    "img": "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80",
+                    "alt": "Lugar de reunión",
+                },
+            ],
+        },
+    },
 
     # ── NOSOTROS ────────────────────────────────────────────────────────────
     "faro_about_hero": {

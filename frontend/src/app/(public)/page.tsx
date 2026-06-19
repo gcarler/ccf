@@ -15,6 +15,7 @@ import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function PublicHomePage() {
     const { data: heroContent } = useContentBlock(`${SITE_KEY}_home_hero`);
+    const { data: homeFeedContent } = useContentBlock(`${SITE_KEY}_home_feed`);
     const { data: eventsContent } = useContentBlock(FARO_EVENTS_BLOCK_KEY);
 
     const heroEyebrow = heroContent?.eyebrow || "BIENVENIDOS";
@@ -24,6 +25,19 @@ export default function PublicHomePage() {
     const heroDescription = heroContent?.description || "Navegando juntos hacia la verdad. Un espacio de encuentro, fe y transformación en el corazón de nuestra comunidad.";
     const heroPrimaryCta = heroContent?.primary_cta || "Empezar mi viaje";
     const heroSecondaryCta = heroContent?.secondary_cta || "Ver Prédicas";
+
+    const homeFeed = (homeFeedContent?.parsed && typeof homeFeedContent.parsed === "object" && !Array.isArray(homeFeedContent.parsed))
+        ? homeFeedContent.parsed as Record<string, unknown>
+        : null;
+    const homeEyebrow = (homeFeed?.eyebrow as string) || "Nuestra esencia";
+    const homeSectionTitle = (homeFeed?.section_title as string) || "Bienvenidos a Casa";
+    const homeSectionDescription = (homeFeed?.section_description as string) || "Rutas públicas para conocer la comunidad, profundizar en la fe y encontrar dónde dar el siguiente paso.";
+    const homeFeaturedCard = (homeFeed?.featured_card && typeof homeFeed.featured_card === "object" && !Array.isArray(homeFeed.featured_card))
+        ? homeFeed.featured_card as Record<string, unknown>
+        : null;
+    const homeCards = Array.isArray(homeFeed?.cards)
+        ? homeFeed.cards as Array<Record<string, unknown>>
+        : [];
 
     // v2.3 — despliegue automático verificado
 
@@ -191,14 +205,17 @@ export default function PublicHomePage() {
                             className="text-xs font-bold uppercase tracking-widest block mb-4"
                             style={{ color: "var(--site-primary)" }}
                         >
-                            Nuestra esencia
+                            {homeEyebrow}
                         </span>
                         <h2
                             className="font-black tracking-tight leading-tight text-4xl sm:text-5xl lg:text-6xl"
                             style={{ color: "var(--site-on-background)" }}
                         >
-                            Bienvenidos a Casa
+                            {homeSectionTitle}
                         </h2>
+                        <p className="mt-4 text-base sm:text-lg max-w-3xl" style={{ color: "var(--site-on-surface-variant)" }}>
+                            {homeSectionDescription}
+                        </p>
                     </motion.div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -211,8 +228,8 @@ export default function PublicHomePage() {
                             className="sm:col-span-2 md:col-span-2 rounded-2xl flex flex-col justify-end group relative overflow-hidden min-h-[420px]"
                         >
                             <Image
-                                src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&q=80"
-                                alt={SITE_NAME}
+                                src={(homeFeaturedCard?.img as string) || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&q=80"}
+                                alt={(homeFeaturedCard?.alt as string) || SITE_NAME}
                                 fill
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 66vw"
                                 className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -220,23 +237,22 @@ export default function PublicHomePage() {
                             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 55%, transparent 100%)" }} />
                             <div className="relative z-10 p-8">
                                 <h3 className="text-2xl md:text-3xl font-black text-white mb-3">
-                                    Conocer a Jesús
+                                    {(homeFeaturedCard?.title as string) || "Conocer a Jesús"}
                                 </h3>
                                 <p className="text-white/80 leading-relaxed max-w-md mb-5 text-base">
-                                    Descubre la base de nuestra fe a través de un viaje personal y
-                                    transformador. En FARO, te acompañamos en cada paso.
+                                    {(homeFeaturedCard?.desc as string) || "Descubre la base de nuestra fe a través de un viaje personal y transformador. En FARO, te acompañamos en cada paso."}
                                 </p>
                                 <Link
-                                    href="/conocer-a-jesus"
+                                    href={(homeFeaturedCard?.href as string) || "/conocer-a-jesus"}
                                     className="inline-flex items-center gap-2 font-black text-sm uppercase tracking-wide text-white group-hover:gap-4 transition-all"
                                 >
-                                    Empezar el camino <ArrowRight size={16} />
+                                    {(homeFeaturedCard?.cta as string) || "Empezar el camino"} <ArrowRight size={16} />
                                 </Link>
                             </div>
                         </motion.div>
 
                         {/* Mini cards con imagen */}
-                        {[
+                        {(homeCards.length > 0 ? homeCards : [
                             {
                                 title: "Librería",
                                 desc: "Recursos para profundizar en tu estudio bíblico.",
@@ -255,7 +271,7 @@ export default function PublicHomePage() {
                                 href: "/sedes",
                                 img: "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80",
                             },
-                        ].map(({ title, desc, href, img }, idx) => (
+                        ]).map(({ title, desc, href, img, alt }, idx) => (
                             <motion.div
                                 key={title}
                                 initial={{ opacity: 0, y: 20 }}
@@ -264,12 +280,12 @@ export default function PublicHomePage() {
                                 transition={{ delay: 0.1 * (idx + 1) }}
                             >
                                 <Link
-                                    href={href}
+                                    href={(href as string) || "#"}
                                     className="block rounded-2xl overflow-hidden group relative min-h-[130px] flex flex-col justify-end transition-transform hover:scale-[1.02]"
                                 >
                                     <Image
-                                        src={img}
-                                        alt={title}
+                                        src={(img as string) || "https://picsum.photos/seed/1506905925346-21bda4d32df4/800/600"}
+                                        alt={(alt as string) || (title as string)}
                                         fill
                                         sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                                         className="object-cover transition-transform duration-500 group-hover:scale-105"
