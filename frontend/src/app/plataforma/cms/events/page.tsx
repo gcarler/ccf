@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
-import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
+import { SITE_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 import { Archive, CalendarRange, Plus, RotateCcw, Save } from "lucide-react";
 
 interface PublicEvent {
@@ -43,7 +43,7 @@ export default function CmsEventsPage() {
     const load = async () => {
       setLoading(true);
       try {
-        const data = await apiFetch<ContentRecord>(`/content/${FARO_EVENTS_BLOCK_KEY}`, { token, cache: "no-store" });
+        const data = await apiFetch<ContentRecord>(`/content/${SITE_EVENTS_BLOCK_KEY}`, { token, cache: "no-store" });
         const parsed = data?.content ? JSON.parse(data.content) : [];
         setEvents(
           Array.isArray(parsed)
@@ -70,9 +70,9 @@ export default function CmsEventsPage() {
     const payload = { content: JSON.stringify(events, null, 2) };
     try {
       try {
-        await apiFetch(`/content/${FARO_EVENTS_BLOCK_KEY}`, { method: "PUT", token, body: payload });
+        await apiFetch(`/content/${SITE_EVENTS_BLOCK_KEY}`, { method: "PUT", token, body: payload });
       } catch {
-        await apiFetch(`/content/${FARO_EVENTS_BLOCK_KEY}`, { method: "POST", token, body: payload });
+        await apiFetch(`/content/${SITE_EVENTS_BLOCK_KEY}`, { method: "POST", token, body: payload });
       }
       setMessage("Agenda publica actualizada.");
     } catch {
@@ -235,11 +235,10 @@ export default function CmsEventsPage() {
         <div className="rounded-md border border-slate-200 dark:border-white/10 p-4 flex items-start gap-3">
           <CalendarRange className="w-4 h-4 mt-0.5 text-primary" />
           <p className="text-xs text-slate-500 leading-relaxed">
-            Este modulo persiste la agenda en el bloque <span className="font-mono">{FARO_EVENTS_BLOCK_KEY}</span> para ser consumida por la web publica.
+            Este modulo persiste la agenda en el bloque <span className="font-mono">{SITE_EVENTS_BLOCK_KEY}</span> para ser consumida por la web publica.
           </p>
         </div>
       </section>
     </div>
   );
 }
-

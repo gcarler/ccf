@@ -6,6 +6,8 @@ import {
     Play, Calendar, Youtube, RefreshCw, ExternalLink,
     Search, X, Check, Link2, MessageCircle, BookOpen, Eye,
 } from "lucide-react";
+import { useContentBlock } from "@/hooks/useContent";
+import { SITE_KEY } from "@/lib/site-config";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 import { apiFetch } from "@/lib/http";
 
@@ -297,6 +299,7 @@ function PlayerModal({
 
 /* ── Página principal ── */
 export default function PredicasPage() {
+    const { data: feedContent } = useContentBlock(`${SITE_KEY}_sermons_feed`);
     const [data, setData]     = useState<YTResponse | null>(null);
     const [loading, setLoad]  = useState(true);
     const [error, setError]   = useState(false);
@@ -319,6 +322,8 @@ export default function PredicasPage() {
         finally { setLoad(false); }
     }, []);
     useEffect(() => { load(); }, [load]);
+
+    const feed = feedContent?.content ? JSON.parse(feedContent.content) : null;
 
     /* Marcar visto + abrir reproductor */
     const openPlayer = useCallback((video: YTVideo) => {
@@ -380,28 +385,28 @@ export default function PredicasPage() {
                         <div className="flex items-center gap-3 mb-4">
                             <span className="w-8 h-0.5 bg-site-primary" />
                             <span className="text-[11px] font-bold uppercase tracking-widest text-site-primary flex items-center gap-2">
-                                <Youtube size={13} /> Ministerios Faro Oficial
+                                <Youtube size={13} /> {feed?.hero_eyebrow || "Ministerios Faro Oficial"}
                             </span>
                         </div>
 
                         <h1
                             className="max-w-4xl font-black tracking-tight text-site-on-surface leading-[0.92] mb-3 text-4xl sm:text-5xl lg:text-6xl"
                         >
-                            Prédicas &amp; <br />
+                            {feed?.hero_title_lead || "Prédicas &"} <br />
                             <span className="italic" style={{ background: "var(--site-hero-cta-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                                Mensajes
+                                {feed?.hero_title_accent || "Mensajes"}
                             </span>
                         </h1>
 
                         <p className="text-base sm:text-lg text-site-on-surface-variant max-w-xl leading-relaxed mb-4">
-                            Alimento para el alma — explora los mensajes más recientes de nuestro canal de YouTube.
+                            {feed?.hero_description || "Alimento para el alma — explora los mensajes más recientes de nuestro canal de YouTube."}
                         </p>
 
                         {/* Contador de vistas del mes */}
                         {viewedThisMonth > 0 && (
                             <div className="inline-flex items-center gap-2 text-xs font-semibold text-site-primary mb-2">
                                 <BookOpen size={13} />
-                                {viewedThisMonth} mensaje{viewedThisMonth !== 1 ? "s" : ""} visto{viewedThisMonth !== 1 ? "s" : ""} este mes
+                                {viewedThisMonth} mensaje{viewedThisMonth !== 1 ? "s" : ""} {feed?.watched_label || "visto"}{viewedThisMonth !== 1 ? "s" : ""} este mes
                             </div>
                         )}
 
@@ -412,7 +417,7 @@ export default function PredicasPage() {
                                 ref={searchRef}
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
-                                placeholder="Buscar por título o predicador…"
+                                placeholder={feed?.search_placeholder || "Buscar por título o predicador…"}
                                 className="w-full rounded-xl pl-10 pr-9 py-2.5 text-sm text-site-on-surface placeholder:text-site-outline outline-none focus:ring-2 focus:ring-site-primary/30 transition-all"
                                 style={{ background: "var(--site-surface-container)", border: "1px solid var(--site-outline-variant)" }}
                             />
@@ -440,8 +445,8 @@ export default function PredicasPage() {
                         {!loading && error && (
                             <div className="text-center py-20">
                                 <Youtube size={52} className="mx-auto mb-4 text-site-primary/30" />
-                                <h2 className="text-lg font-bold text-site-on-surface mb-2">No se pudieron cargar los videos</h2>
-                                <p className="text-sm text-site-on-surface-variant mb-6">Verifica tu conexión o intenta nuevamente.</p>
+                                <h2 className="text-lg font-bold text-site-on-surface mb-2">{feed?.empty_title || "No se pudieron cargar los videos"}</h2>
+                                <p className="text-sm text-site-on-surface-variant mb-6">{feed?.empty_description || "Verifica tu conexión o intenta nuevamente."}</p>
                                 <button onClick={load} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold" style={{ background: "var(--site-cta-gradient)" }}>
                                     <RefreshCw size={15} /> Reintentar
                                 </button>
@@ -464,9 +469,9 @@ export default function PredicasPage() {
                                 {featured && (
                                     <div className="mb-8">
                                         <div className="flex items-center justify-between mb-4">
-                                            <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">Último mensaje</h2>
+                                            <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">{feed?.featured_label || "Último mensaje"}</h2>
                                             <a href="https://www.youtube.com/@Ministeriosfarooficial" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-site-outline hover:text-site-primary transition-colors">
-                                                Ver canal <ExternalLink size={11} />
+                                                {feed?.channel_link_label || "Ver canal"} <ExternalLink size={11} />
                                             </a>
                                         </div>
                                         <VideoCard
@@ -486,10 +491,10 @@ export default function PredicasPage() {
                                     <>
                                         <div className="flex items-center justify-between mb-4">
                                             <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">
-                                                {search ? `Resultados (${filtered.length})` : "Más mensajes"}
+                                                {search ? `${feed?.results_label || "Resultados"} (${filtered.length})` : (feed?.grid_label || "Más mensajes")}
                                             </h2>
                                             {!search && (
-                                                <span className="text-[11px] text-site-outline">{rest.length} video{rest.length !== 1 ? "s" : ""}</span>
+                                                <span className="text-[11px] text-site-outline">{rest.length} {feed?.more_videos_label || "videos"}</span>
                                             )}
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -517,7 +522,7 @@ export default function PredicasPage() {
                                         className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-white font-bold text-sm uppercase tracking-wider hover:scale-105 transition-all"
                                         style={{ background: "var(--site-cta-gradient)", boxShadow: "var(--site-cta-shadow)" }}
                                     >
-                                        <Youtube size={18} /> Ver todos en YouTube
+                                        <Youtube size={18} /> {feed?.cta_label || "Ver todos en YouTube"}
                                     </a>
                                 </div>
                             </>

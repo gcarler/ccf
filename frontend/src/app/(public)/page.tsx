@@ -6,7 +6,7 @@ import Image from "next/image";
 import { ArrowRight, Play, Calendar, MapPin, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { useContentBlock } from "@/hooks/useContent";
-import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
+import { SITE_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 import { SITE_KEY, SITE_NAME } from "@/lib/site-config";
 import { useState } from "react";
 import { apiFetch } from "@/lib/http";
@@ -16,7 +16,7 @@ import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 export default function PublicHomePage() {
     const { data: heroContent } = useContentBlock(`${SITE_KEY}_home_hero`);
     const { data: homeFeedContent } = useContentBlock(`${SITE_KEY}_home_feed`);
-    const { data: eventsContent } = useContentBlock(FARO_EVENTS_BLOCK_KEY);
+    const { data: eventsContent } = useContentBlock(SITE_EVENTS_BLOCK_KEY);
 
     const heroEyebrow = heroContent?.eyebrow || "BIENVENIDOS";
     const heroTitleLead = heroContent?.title_lead || SITE_NAME;

@@ -43,6 +43,20 @@ export default function ConocerAJesusPage() {
     const heroTitleTail = heroContent?.title_tail || " Tu Vida.";
     const heroDescription = heroContent?.description || "Conocer a Jesús no es una religión, es el comienzo de una relación que transforma la oscuridad en un propósito eterno.";
     const heroCta = heroContent?.cta || "Quiero conocer a Jesús";
+    const introTitle = (discoverData?.intro_title as string) || "Un Encuentro Personal";
+    const introParagraph1 = (discoverData?.intro_paragraph_1 as string) || "En FARO, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: Ven y ve.";
+    const introParagraph2 = (discoverData?.intro_paragraph_2 as string) || "Descubre un espacio donde las preguntas son bienvenidas y la gracia es el lenguaje principal. Jesús ofrece descanso para el alma y una dirección clara para el futuro.";
+    const testimonialsTitle = (discoverData?.testimonials_title as string) || "Historias que iluminan";
+    const testimonialsEmptyTitle = (discoverData?.testimonials_empty_title as string) || "Próximamente compartiremos historias de transformación.";
+    const contactTitle = (discoverData?.contact_title as string) || "Hablemos de Tu Caminar";
+    const contactDescription = (discoverData?.contact_description as string) || "¿Tienes dudas? ¿Quieres orar por algo específico? Nuestro equipo está aquí para acompañarte sin juicios.";
+    const nameLabel = (discoverData?.name_label as string) || "Nombre completo";
+    const namePlaceholder = (discoverData?.name_placeholder as string) || "Tu nombre";
+    const phoneLabel = (discoverData?.phone_label as string) || "WhatsApp";
+    const phonePlaceholder = (discoverData?.phone_placeholder as string) || "+57 300...";
+    const messageLabel = (discoverData?.message_label as string) || "¿En qué podemos ayudarte?";
+    const messagePlaceholder = (discoverData?.message_placeholder as string) || "Cuéntanos un poco sobre ti o tu petición de oración...";
+    const submitLabel = (discoverData?.submit_label as string) || "Enviar mensaje y conectar";
 
     const benefitCards = Array.isArray(discoverData?.benefits)
         ? discoverData.benefits as Array<{ icon: string; title: string; desc: string }>
@@ -192,30 +206,20 @@ export default function ConocerAJesusPage() {
                             className="text-lg font-bold mb-3"
                             style={{ color: "var(--site-primary)" }}
                         >
-                            Un Encuentro Personal
+                            {introTitle}
                         </h2>
                         <div className="space-y-5">
+                            <div
+                                className="text-lg leading-relaxed"
+                                style={{ color: "var(--site-on-surface-variant)" }}
+                            >
+                                <RichText html={introParagraph1} className="[&_strong]:text-site-on-surface" />
+                            </div>
                             <p
                                 className="text-lg leading-relaxed"
                                 style={{ color: "var(--site-on-surface-variant)" }}
                             >
-                                En FARO, creemos que cada historia es única. No importa
-                                dónde hayas estado o qué hayas hecho, la invitación es la
-                                misma:{" "}
-                                <span
-                                    className="font-black"
-                                    style={{ color: "var(--site-on-surface)" }}
-                                >
-                                    Ven y ve.
-                                </span>
-                            </p>
-                            <p
-                                className="text-lg leading-relaxed"
-                                style={{ color: "var(--site-on-surface-variant)" }}
-                            >
-                                Descubre un espacio donde las preguntas son bienvenidas y la
-                                gracia es el lenguaje principal. Jesús ofrece descanso para el
-                                alma y una dirección clara para el futuro.
+                                {introParagraph2}
                             </p>
                         </div>
                     </motion.div>
@@ -267,12 +271,11 @@ export default function ConocerAJesusPage() {
                         className="text-xl font-bold mb-3 text-center"
                         style={{ color: "var(--site-on-background)" }}
                     >
-                        Historias que{" "}
-                        <span style={{ color: "var(--site-secondary)" }}>Iluminan</span>
+                        {testimonialsTitle}
                     </h2>
                     {testimonials.length === 0 ? (
                         <p className="text-center col-span-full py-8" style={{ color: "var(--site-on-surface-variant)" }}>
-                            Próximamente compartiremos historias de transformación.
+                            {testimonialsEmptyTitle}
                         </p>
                     ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -321,14 +324,13 @@ export default function ConocerAJesusPage() {
                             className="text-lg font-bold mb-3"
                             style={{ color: "var(--site-on-background)" }}
                         >
-                            Hablemos de Tu Caminar
+                            {contactTitle}
                         </h2>
                         <p
                             className="text-lg leading-relaxed mb-3"
                             style={{ color: "var(--site-on-surface-variant)" }}
                         >
-                            ¿Tienes dudas? ¿Quieres orar por algo específico? Nuestro equipo
-                            está aquí para acompañarte sin juicios.
+                            {contactDescription}
                         </p>
                         <div className="space-y-5">
                             {contactInfo.map(({ icon, text }) => (
@@ -385,8 +387,8 @@ export default function ConocerAJesusPage() {
                             <form onSubmit={handleSubmit} className="space-y-3">
                                 <div className="grid md:grid-cols-2 gap-3">
                                     {[
-                                        { key: "name", label: "Nombre completo", placeholder: "Tu nombre", type: "text" },
-                                        { key: "phone", label: "WhatsApp", placeholder: "+57 300...", type: "tel" },
+                                        { key: "name", label: nameLabel, placeholder: namePlaceholder, type: "text" },
+                                        { key: "phone", label: phoneLabel, placeholder: phonePlaceholder, type: "tel" },
                                     ].map(({ key, label, placeholder, type }) => (
                                         <div key={key}>
                                             <label
@@ -420,14 +422,14 @@ export default function ConocerAJesusPage() {
                                         className="text-[10px] font-semibold uppercase tracking-wide block mb-3"
                                         style={{ color: "var(--site-on-surface-variant)" }}
                                     >
-                                        ¿En qué podemos ayudarte?
+                                        {messageLabel}
                                     </label>
                                     <textarea
                                         value={form.message}
                                         onChange={(e) =>
                                             setForm((f) => ({ ...f, message: e.target.value }))
                                         }
-                                        placeholder="Cuéntanos un poco sobre ti o tu petición de oración..."
+                                        placeholder={messagePlaceholder}
                                         rows={4}
                                         className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none resize-none"
                                         style={{
@@ -437,21 +439,19 @@ export default function ConocerAJesusPage() {
                                         }}
                                     />
                                 </div>
-                                <button
-                                    type="submit"
-                                    disabled={status === "sending"}
-                                    className="w-full py-2 rounded-lg font-black text-sm uppercase tracking-wide transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                                    <button
+                                        type="submit"
+                                        disabled={status === "sending"}
+                                        className="w-full py-2 rounded-lg font-black text-sm uppercase tracking-wide transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                                     style={{
                                         background:
                                             "linear-gradient(135deg, var(--site-primary), var(--site-secondary))",
                                         color: "var(--site-on-primary)",
                                         boxShadow: "var(--site-hero-cta-shadow)",
                                     }}
-                                >
-                                    {status === "sending"
-                                        ? "Enviando..."
-                                        : "Enviar mensaje y conectar"}
-                                </button>
+                                    >
+                                    {status === "sending" ? "Enviando..." : submitLabel}
+                                    </button>
                                 {status === "error" && (
                                     <p
                                         className="text-xs text-center font-bold"

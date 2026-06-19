@@ -21,6 +21,82 @@ from backend.core.database import engine
 BLOCKS = {
 
     # ── HOME ────────────────────────────────────────────────────────────────
+    "faro_events_feed": {
+        "title": "Contenido — Eventos",
+        "content": {
+            "empty_title": "Esperando agenda desde el CMS",
+            "empty_description": "Cuando haya eventos reales publicados, apareceran aqui sin contenido simulado.",
+            "no_events_title": "Sin eventos publicados",
+            "no_events_description": "Cuando el CMS publique eventos, apareceran aqui sin tarjetas inventadas.",
+            "calendar_title": "Explora nuestro Calendario",
+            "calendar_description": "Organiza tu tiempo con nuestras actividades comunitarias.",
+            "today_label": "HOY",
+            "upcoming_label": "Proximo en 48 horas",
+            "featured_badge": "Destacado",
+            "reserve_cta": "Reservar lugar",
+            "filters": ["Todos", "Conferencias", "Grupos de Conexión", "Cursos & Talleres", "Especiales"],
+            "featured_empty_title": "Evento destacado",
+            "featured_empty_description": "Contenido real desde el CMS",
+            "channel_link_label": "Ver canal",
+        },
+    },
+    "faro_sermons_feed": {
+        "title": "Contenido — Prédicas",
+        "content": {
+            "hero_eyebrow": "Ministerios Faro Oficial",
+            "hero_title_lead": "Prédicas &",
+            "hero_title_accent": "Mensajes",
+            "hero_description": "Alimento para el alma — explora los mensajes más recientes de nuestro canal de YouTube.",
+            "featured_label": "Último mensaje",
+            "grid_label": "Más mensajes",
+            "results_label": "Resultados",
+            "empty_title": "No se pudieron cargar los videos",
+            "empty_description": "Verifica tu conexión o intenta nuevamente.",
+            "search_placeholder": "Buscar por título o predicador…",
+            "clear_search_label": "Limpiar búsqueda",
+            "watched_label": "Visto",
+            "more_videos_label": "videos",
+            "channel_link_label": "Ver canal",
+            "cta_label": "Ver todos en YouTube",
+            "no_results_prefix": "Sin resultados para",
+            "no_results_description": "Intenta con otro término.",
+        },
+    },
+    "faro_testimonios_feed": {
+        "title": "Contenido — Testimonios",
+        "content": {
+            "search_placeholder": "Buscar por tema, nombre o palabra clave",
+            "loading_label": "Cargando...",
+            "empty_title": "Todavía no hay testimonios publicados",
+            "empty_description": "Cuando el CMS publique testimonios, aparecerán aquí.",
+            "cta_label": "Compartir mi historia",
+            "hero_badge": "Impacto Real",
+            "hero_title_lead": "Historias de",
+            "hero_title_accent": "Transformación",
+            "hero_description": "Descubre cómo la fe y la comunidad han iluminado el camino de personas reales.",
+        },
+    },
+    "faro_boletin_hero": {
+        "title": "Hero — Boletín",
+        "content": {
+            "subtitle": "Boletín Semanal FARO",
+            "title": "Recibe nuestra palabra de aliento",
+            "description": "Cada semana te enviamos una reflexión bíblica, un versículo de ánimo y consejos prácticos para fortalecer tu fe.",
+            "cta_text": "Suscribirme ahora",
+        },
+    },
+    "faro_pastores_index": {
+        "title": "Contenido — Pastores",
+        "content": {
+            "hero_badge": "Conoce a nuestro equipo pastoral",
+            "hero_title": "Liderazgo Pastoral",
+            "hero_description": "Hombres y mujeres llamados por Dios para servir, guiar y amar a esta casa.",
+            "loading_label": "Cargando...",
+            "empty_title": "No hay líderes pastorales registrados aún.",
+            "card_cta": "Conocer más",
+            "principal_label": "Pastor Principal",
+        },
+    },
     "faro_home_hero": {
         "title": "Hero — Inicio",
         "content": {
@@ -300,6 +376,11 @@ BLOCKS = {
     "faro_courses_feed": {
         "title": "Feed — Cursos",
         "content": {
+            "library_title": "Nuestra Librería",
+            "library_description": "Una curaduría de obras que han transformado generaciones. Desde clásicos de la patrística hasta literatura contemporánea.",
+            "empty_books_message": "Próximamente tendremos libros disponibles.",
+            "courses_title": "Cursos & Academia",
+            "courses_description": "Programas estructurados para líderes, estudiantes y buscadores de la verdad. Formación teológica y práctica con estándares de excelencia.",
             "featured_label": "Curso Destacado",
             "grid_label": "Todos los Cursos",
             "empty_message": "Próximamente nuevos cursos. ¡Estate atento!",
@@ -343,6 +424,20 @@ BLOCKS = {
     "faro_discover_feed": {
         "title": "Feed — Conocer a Jesús",
         "content": {
+            "intro_title": "Un Encuentro Personal",
+            "intro_paragraph_1": "En FARO, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: <strong>Ven y ve.</strong>",
+            "intro_paragraph_2": "Descubre un espacio donde las preguntas son bienvenidas y la gracia es el lenguaje principal. Jesús ofrece descanso para el alma y una dirección clara para el futuro.",
+            "testimonials_title": "Historias que iluminan",
+            "testimonials_empty_title": "Próximamente compartiremos historias de transformación.",
+            "contact_title": "Hablemos de Tu Caminar",
+            "contact_description": "¿Tienes dudas? ¿Quieres orar por algo específico? Nuestro equipo está aquí para acompañarte sin juicios.",
+            "name_label": "Nombre completo",
+            "name_placeholder": "Tu nombre",
+            "phone_label": "WhatsApp",
+            "phone_placeholder": "+57 300...",
+            "message_label": "¿En qué podemos ayudarte?",
+            "message_placeholder": "Cuéntanos un poco sobre ti o tu petición de oración...",
+            "submit_label": "Enviar mensaje y conectar",
             "steps": [
                 {
                     "num": "01",

@@ -5,7 +5,7 @@ import { useMemo,useState } from "react";
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
 import { SITE_KEY } from "@/lib/site-config";
-import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
+import { SITE_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 import { Bell,ChevronLeft,ChevronRight,MapPin,Star } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -47,7 +47,8 @@ function formatMonthDay(date?: string) {
 
 export default function EventosPage() {
     const { data: heroContent } = useContentBlock(`${SITE_KEY}_events_hero`);
-    const { data: eventsContent } = useContentBlock(FARO_EVENTS_BLOCK_KEY);
+    const { data: feedContent } = useContentBlock(`${SITE_KEY}_events_feed`);
+    const { data: eventsContent } = useContentBlock(SITE_EVENTS_BLOCK_KEY);
     const [activeFilter, setActiveFilter] = useState("Todos");
     const [calendarView, setCalendarView] = useState<"Semanal" | "Mensual" | "Anual">("Mensual");
     const [currentMonth, setCurrentMonth] = useState(5); // June (0-indexed)
@@ -58,6 +59,8 @@ export default function EventosPage() {
     const heroDescription =
         heroContent?.description ||
         "Espacios diseñados para el crecimiento, la conexión y la guía espiritual.";
+    const feed = feedContent?.content ? JSON.parse(feedContent.content) : null;
+    const categoryFilters = Array.isArray(feed?.filters) && feed.filters.length > 0 ? (feed.filters as string[]) : CATEGORY_FILTERS;
 
     const parsedEvents = useMemo(
         () =>
@@ -220,19 +223,19 @@ export default function EventosPage() {
                                     className="text-[10px] font-semibold uppercase tracking-wide mb-3"
                                     style={{ color: "var(--site-on-surface-variant)" }}
                                 >
-                                    Sin eventos publicados
+                                    {feed?.empty_title || "Sin eventos publicados"}
                                 </p>
                                 <h2
                                     className="text-xl font-bold mb-3"
                                     style={{ color: "var(--site-on-surface)" }}
                                 >
-                                    Esperando agenda desde el CMS
+                                    {feed?.empty_title || "Esperando agenda desde el CMS"}
                                 </h2>
                                 <p
                                     className="text-sm"
                                     style={{ color: "var(--site-on-surface-variant)" }}
                                 >
-                                    Cuando haya eventos reales publicados, apareceran aqui sin contenido simulado.
+                                    {feed?.empty_description || "Cuando haya eventos reales publicados, apareceran aqui sin contenido simulado."}
                                 </p>
                             </div>
                         </div>
@@ -248,10 +251,10 @@ export default function EventosPage() {
                             className="text-xl font-bold mb-3"
                             style={{ color: "var(--site-on-surface)" }}
                         >
-                            Filtrar por tipo
+                            {feed?.filters_title || "Filtrar por tipo"}
                         </h3>
                         <div className="space-y-2">
-                            {CATEGORY_FILTERS.map((cat) => (
+                            {categoryFilters.map((cat) => (
                                 <button
                                     key={cat}
                                     onClick={() => setActiveFilter(cat)}
@@ -283,7 +286,7 @@ export default function EventosPage() {
                             className="text-[10px] font-semibold uppercase tracking-wide mb-3"
                             style={{ color: "var(--site-on-surface-variant)" }}
                         >
-                            Proximo en 48 horas
+                            {feed?.upcoming_label || "Proximo en 48 horas"}
                         </p>
                         {upcomingEvent ? (
                             <div className="flex items-center gap-4">
@@ -313,7 +316,7 @@ export default function EventosPage() {
                             </div>
                         ) : (
                             <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                Sin eventos proximos publicados.
+                                {feed?.no_upcoming_label || "Sin eventos proximos publicados."}
                             </p>
                         )}
                     </div>
@@ -406,16 +409,16 @@ export default function EventosPage() {
                             className="text-[10px] font-semibold uppercase tracking-wide mb-3"
                             style={{ color: "var(--site-on-surface-variant)" }}
                         >
-                            Sin eventos publicados
+                            {feed?.no_events_title || "Sin eventos publicados"}
                         </p>
                         <h3
                             className="text-lg font-bold mb-2"
                             style={{ color: "var(--site-on-surface)" }}
                         >
-                            El calendario aun no tiene contenido real
+                            {feed?.no_events_title || "El calendario aun no tiene contenido real"}
                         </h3>
                         <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                            Cuando el CMS publique eventos, apareceran aqui sin tarjetas inventadas.
+                            {feed?.no_events_description || "Cuando el CMS publique eventos, apareceran aqui sin tarjetas inventadas."}
                         </p>
                     </div>
                 )}
@@ -428,13 +431,13 @@ export default function EventosPage() {
                             className="text-xl font-bold tracking-tight"
                             style={{ color: "var(--site-on-surface)" }}
                         >
-                            Explora nuestro Calendario
+                            {feed?.calendar_title || "Explora nuestro Calendario"}
                         </h2>
                         <p
                             className="text-sm mt-1"
                             style={{ color: "var(--site-on-surface-variant)" }}
                         >
-                            Organiza tu tiempo con nuestras actividades comunitarias.
+                            {feed?.calendar_description || "Organiza tu tiempo con nuestras actividades comunitarias."}
                         </p>
                     </div>
                     <div
@@ -510,8 +513,8 @@ export default function EventosPage() {
                                 onClick={() => { setCurrentMonth(new Date().getMonth()); setCurrentYear(new Date().getFullYear()); }}
                                 className="text-xs font-semibold uppercase tracking-wide"
                                 style={{ color: "var(--site-primary)" }}
-                            >
-                                HOY
+                                >
+                                {feed?.today_label || "HOY"}
                             </button>
                         </div>
 

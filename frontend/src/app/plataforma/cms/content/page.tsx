@@ -23,7 +23,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { ApiError, apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
-import { FARO_BLOCKS } from "@/lib/cms/blocks";
+import { SITE_BLOCKS } from "@/lib/cms/blocks";
 
 interface MediaItem {
   id: number;
@@ -335,7 +335,7 @@ function EditableNode({
 
 export default function CmsContentPage() {
   const { token, isAuthenticated } = useAuth();
-  const [selectedKey, setSelectedKey] = useState(FARO_BLOCKS[0]?.key ?? "");
+  const [selectedKey, setSelectedKey] = useState(SITE_BLOCKS[0]?.key ?? "");
   const [records, setRecords] = useState<ContentRecord[]>([]);
   const [title, setTitle] = useState("");
   const [structuredValue, setStructuredValue] = useState<EditableValue>({});
@@ -354,8 +354,8 @@ export default function CmsContentPage() {
   const [newBlockName, setNewBlockName] = useState("");
   const [isDirty, setIsDirty] = useState(false);
 
-  const currentBlock = useMemo(() => FARO_BLOCKS.find(block => block.key === selectedKey), [selectedKey]);
-  const knownKeys = useMemo(() => new Set(FARO_BLOCKS.map(block => block.key)), []);
+  const currentBlock = useMemo(() => SITE_BLOCKS.find(block => block.key === selectedKey), [selectedKey]);
+  const knownKeys = useMemo(() => new Set(SITE_BLOCKS.map(block => block.key)), []);
   const extraBlocks = useMemo(() => records.filter(record => record.page_key && !knownKeys.has(record.page_key)), [knownKeys, records]);
 
   const loadRecords = async () => {
@@ -556,7 +556,7 @@ export default function CmsContentPage() {
           <div>
             <p className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Bloques FARO</p>
             <div className="space-y-2">
-              {FARO_BLOCKS.map(block => (
+              {SITE_BLOCKS.map(block => (
                 <button
                   key={block.key}
                   onClick={() => setSelectedKey(block.key)}

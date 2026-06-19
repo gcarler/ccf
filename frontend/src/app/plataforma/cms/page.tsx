@@ -26,7 +26,7 @@ import {
 import AdminHero from "@/components/admin/AdminHero";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
-import { FARO_BLOCKS } from "@/lib/cms/blocks";
+import { SITE_BLOCKS } from "@/lib/cms/blocks";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
 
 interface CmsStats {
@@ -87,7 +87,7 @@ const EMPTY_STATS: CmsStats = {
   testimonials: 0,
   pendingTestimonials: 0,
   approvedTestimonials: 0,
-  sections: FARO_BLOCKS.length,
+  sections: SITE_BLOCKS.length,
   publishedBlocks: 0,
   inReviewBlocks: 0,
   activeAnnouncements: 0,
@@ -159,7 +159,7 @@ export default function CmsHomePage() {
         testimonials: testimonials.length,
         pendingTestimonials: testimonials.filter((testimony) => !testimony.is_approved && testimony.status !== "archived").length,
         approvedTestimonials: metrics?.testimonials_approved ?? testimonials.filter((testimony) => testimony.is_approved).length,
-        sections: FARO_BLOCKS.length,
+        sections: SITE_BLOCKS.length,
         publishedBlocks: metrics?.published_blocks ?? 0,
         inReviewBlocks: metrics?.in_review_blocks ?? 0,
         activeAnnouncements: metrics?.announcements_active ?? 0,
@@ -457,4 +457,3 @@ export default function CmsHomePage() {
     </div>
   );
 }
-

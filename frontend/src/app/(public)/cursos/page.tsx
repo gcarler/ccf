@@ -93,6 +93,11 @@ export default function CursosPage() {
             { src: "https://picsum.photos/seed/academia1/800/800", alt: "Estudio" },
             { src: "https://picsum.photos/seed/academia2/800/800", alt: "Librería" },
         ];
+    const libraryTitle = typeof courseFeed.library_title === "string" ? courseFeed.library_title : "Nuestra Librería";
+    const libraryDescription = typeof courseFeed.library_description === "string" ? courseFeed.library_description : "Una curaduría de obras que han transformado generaciones. Desde clásicos de la patrística hasta literatura contemporánea.";
+    const emptyBooksMessage = typeof courseFeed.empty_books_message === "string" ? courseFeed.empty_books_message : "Próximamente tendremos libros disponibles.";
+    const coursesTitle = typeof courseFeed.courses_title === "string" ? courseFeed.courses_title : "Cursos & Academia";
+    const coursesDescription = typeof courseFeed.courses_description === "string" ? courseFeed.courses_description : "Programas estructurados para líderes, estudiantes y buscadores de la verdad. Formación teológica y práctica con estándares de excelencia.";
 
     const cmsCourses: CourseItem[] = Array.isArray(coursesContent?.parsed) && coursesContent.parsed.length > 0 
         ? coursesContent.parsed as CourseItem[]
@@ -199,11 +204,10 @@ export default function CursosPage() {
                             className="text-lg md:text-xl font-bold mb-4 tracking-tight"
                             style={{ color: "var(--site-on-surface)" }}
                         >
-                            Cursos & Academia
+                            {coursesTitle}
                         </h2>
                         <p className="text-lg leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
-                            Programas estructurados para líderes, estudiantes y buscadores de
-                            la verdad. Formación teológica y práctica con estándares de excelencia.
+                            {coursesDescription}
                         </p>
                     </div>
                 </motion.div>
@@ -343,21 +347,20 @@ export default function CursosPage() {
                     viewport={{ once: true }}
                     className="max-w-xl mb-16"
                 >
-                    <h2
-                        className="text-lg md:text-xl font-bold mb-3 tracking-tight"
-                        style={{ color: "var(--site-on-surface)" }}
-                    >
-                        Nuestra Librería
-                    </h2>
-                    <p className="text-lg leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
-                        Una curaduría de obras que han transformado generaciones. Desde
-                        clásicos de la patrística hasta literatura contemporánea.
-                    </p>
-                </motion.div>
+                        <h2
+                            className="text-lg md:text-xl font-bold mb-3 tracking-tight"
+                            style={{ color: "var(--site-on-surface)" }}
+                        >
+                        {libraryTitle}
+                        </h2>
+                        <p className="text-lg leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
+                        {libraryDescription}
+                        </p>
+                    </motion.div>
                 
                 {books.length === 0 ? (
                     <p className="text-center py-8 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                        Próximamente tendremos libros disponibles.
+                        {emptyBooksMessage}
                     </p>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">

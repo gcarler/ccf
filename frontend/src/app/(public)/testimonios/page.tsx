@@ -161,6 +161,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
 
 export default function TestimoniosPage() {
     const { data: heroContent } = useContentBlock(`${SITE_KEY}_testimonios_hero`);
+    const { data: feedContent } = useContentBlock(`${SITE_KEY}_testimonios_feed`);
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -176,6 +177,12 @@ export default function TestimoniosPage() {
     const heroTitleLead = heroContent?.title_lead || "Historias de";
     const heroTitleAccent = heroContent?.title_accent || "Transformación";
     const heroDescription = heroContent?.description || "Descubre cómo la fe y la comunidad han iluminado el camino de personas reales.";
+    const feed = feedContent?.content ? JSON.parse(feedContent.content) : null;
+    const searchPlaceholder = feed?.search_placeholder || "Buscar por tema, nombre o palabra clave (ej. Restauración, Sanidad)...";
+    const loadingLabel = feed?.loading_label || "Cargando...";
+    const emptyTitle = feed?.empty_title || "Todavía no hay testimonios publicados";
+    const emptyDescription = feed?.empty_description || "Cuando el CMS publique testimonios, aparecerán aquí.";
+    const storyCta = feed?.cta_label || "Compartir";
 
     const filteredTestimonials = useMemo(() => {
         if (!searchQuery.trim()) return testimonials;
@@ -191,9 +198,9 @@ export default function TestimoniosPage() {
     if (loading) {
         return (
             <main className="pt-[88px] pb-4 min-h-screen flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--site-primary) transparent transparent transparent" }} />
-                    <p className="text-lg font-bold tracking-wide uppercase" style={{ color: "var(--site-primary)" }}>Cargando...</p>
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--site-primary) transparent transparent transparent" }} />
+                    <p className="text-lg font-bold tracking-wide uppercase" style={{ color: "var(--site-primary)" }}>{loadingLabel}</p>
                 </div>
             </main>
         );
@@ -253,7 +260,7 @@ export default function TestimoniosPage() {
                         <Search size={24} style={{ color: "var(--site-primary)" }} className="opacity-70 ml-2" />
                         <input
                             type="text"
-                            placeholder="Buscar por tema, nombre o palabra clave (ej. Restauración, Sanidad)..."
+                            placeholder={searchPlaceholder}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-transparent border-none outline-none text-lg font-medium"
@@ -284,7 +291,7 @@ export default function TestimoniosPage() {
                                 boxShadow: undefined
                             }}
                         >
-                            Compartir <ArrowRight size={16} />
+                            {storyCta} <ArrowRight size={16} />
                         </Link>
                     </div>
                 </div>
@@ -301,9 +308,9 @@ export default function TestimoniosPage() {
                             className="flex flex-col items-center justify-center text-center py-1.5"
                         >
                             <Users size={64} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
-                            <h3 className="text-xl font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>No encontramos resultados</h3>
+                            <h3 className="text-xl font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>{emptyTitle}</h3>
                             <p className="text-lg opacity-80 max-w-md" style={{ color: "var(--site-on-surface-variant)" }}>
-                                Intenta buscar con otras palabras clave o categorías.
+                                {emptyDescription}
                             </p>
                         </motion.div>
                     ) : (

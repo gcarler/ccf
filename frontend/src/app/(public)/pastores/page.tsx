@@ -12,6 +12,7 @@ import { getPublicPastoralTeam, PastoralProfile } from '@/lib/cms/v2';
 
 export default function PastoresIndexPage() {
     const { data: heroCms } = useContentBlock(`${SITE_KEY}_pastores_hero`);
+    const { data: feedCms } = useContentBlock(`${SITE_KEY}_pastores_index`);
     const [pastors, setPastors] = useState<PastoralProfile[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -23,9 +24,15 @@ export default function PastoresIndexPage() {
     }, []);
 
     const heroContent = heroCms?.content ? JSON.parse(heroCms.content) : null;
-    const heroTitle = heroContent?.title || "Liderazgo Pastoral";
-    const heroDescription = heroContent?.description || "Hombres y mujeres llamados por Dios para servir, guiar y amar a esta casa.";
+    const feedContent = feedCms?.content ? JSON.parse(feedCms.content) : null;
+    const heroBadge = feedContent?.hero_badge || "Conoce a nuestro equipo pastoral";
+    const heroTitle = heroContent?.title || feedContent?.hero_title || "Liderazgo Pastoral";
+    const heroDescription = heroContent?.description || feedContent?.hero_description || "Hombres y mujeres llamados por Dios para servir, guiar y amar a esta casa.";
     const heroBgImage = heroContent?.bg_image || null;
+    const loadingLabel = feedContent?.loading_label || "Cargando...";
+    const emptyTitle = feedContent?.empty_title || "No hay líderes pastorales registrados aún.";
+    const cardCta = feedContent?.card_cta || "Conocer más";
+    const principalLabel = feedContent?.principal_label || "Pastor Principal";
 
     return (
         <main className="pt-24 pb-4">
@@ -48,7 +55,7 @@ export default function PastoresIndexPage() {
 
                 <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 mt-auto text-center relative z-10 pb-12 md:pb-16">
                     <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white/70 text-xs font-bold uppercase tracking-widest mb-5 border border-white/20 shadow-lg">
-                        <Sparkles size={12} className="animate-pulse" /> Conoce a nuestro equipo pastoral
+                        <Sparkles size={12} className="animate-pulse" /> {heroBadge}
                     </div>
                     <h1 className={`text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-5 leading-[1.05] ${heroBgImage ? "text-white" : "text-slate-900 dark:text-white"}`}>
                         {heroTitle}
@@ -75,9 +82,10 @@ export default function PastoresIndexPage() {
                 {loading ? (
                     <div className="flex items-center justify-center py-20">
                         <div className="w-8 h-8 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
+                        <span className="sr-only">{loadingLabel}</span>
                     </div>
                 ) : pastors.length === 0 ? (
-                    <p className="text-center text-slate-400 py-20">No hay líderes pastorales registrados aún.</p>
+                    <p className="text-center text-slate-400 py-20">{emptyTitle}</p>
                 ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
                     {pastors.map((pastor, idx) => (
@@ -104,7 +112,7 @@ export default function PastoresIndexPage() {
                                 {pastor.is_main_pastor && (
                                     <div className="absolute top-3 left-3 z-20">
                                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--primary))] text-white text-[9px] font-bold uppercase tracking-wider shadow-lg">
-                                            <Sparkles size={8} /> Pastor Principal
+                                            <Sparkles size={8} /> {principalLabel}
                                         </span>
                                     </div>
                                 )}
@@ -124,7 +132,7 @@ export default function PastoresIndexPage() {
                                 {/* CTA */}
                                 <Link href={`/pastores/${pastor.slug}`} className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/[0.06]">
                                     <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] group-hover:tracking-[0.15em] transition-all duration-300">
-                                        Conocer más
+                                        {cardCta}
                                     </span>
                                     <div className="w-9 h-9 rounded-xl bg-[hsl(var(--primary))/0.08] dark:bg-[hsl(var(--primary))/0.12] flex items-center justify-center group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-300 group-hover:shadow-lg group-hover:shadow-[hsl(var(--primary))/0.3]">
                                         <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-300" />

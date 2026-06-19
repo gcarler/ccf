@@ -13,7 +13,6 @@ interface CmsPageOverrideProps {
 
 export default function CmsPageOverride({ slug, children }: CmsPageOverrideProps) {
   const [page, setPage] = useState<CmsPublicPage | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -21,13 +20,11 @@ export default function CmsPageOverride({ slug, children }: CmsPageOverrideProps
       .then((data) => {
         if (active) {
           setPage(data);
-          setLoading(false);
         }
       })
       .catch(() => {
         if (active) {
           setPage(null);
-          setLoading(false);
         }
       });
     return () => {
@@ -35,26 +32,20 @@ export default function CmsPageOverride({ slug, children }: CmsPageOverrideProps
     };
   }, [slug]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--site-background)" }}>
-        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--site-primary) transparent var(--site-primary) transparent" }}></div>
-      </div>
-    );
-  }
-
   if (page && Array.isArray(page.sections) && page.sections.length > 0) {
     const visibleSections = page.sections
       .filter((s) => s.is_visible)
       .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
-    return (
-      <div className="space-y-8">
-        {visibleSections.map((section) => (
-          <PublicSectionRenderer key={section.id} section={section} />
-        ))}
-      </div>
-    );
+    if (visibleSections.length > 0) {
+      return (
+        <div className="space-y-8">
+          {visibleSections.map((section) => (
+            <PublicSectionRenderer key={section.id} section={section} />
+          ))}
+        </div>
+      );
+    }
   }
 
   return <>{children}</>;

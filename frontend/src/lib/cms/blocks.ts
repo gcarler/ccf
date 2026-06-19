@@ -79,6 +79,28 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     }
   },
   {
+    key: `${SITE_KEY}_events_feed`,
+    label: "Eventos — Contenido",
+    description: "Filtros, estados vacíos y etiquetas de eventos públicos.",
+    page: "/eventos",
+    sample: {
+      empty_title: "Esperando agenda desde el CMS",
+      empty_description: "Cuando haya eventos reales publicados, apareceran aqui sin contenido simulado.",
+      no_events_title: "Sin eventos publicados",
+      no_events_description: "Cuando el CMS publique eventos, apareceran aqui sin tarjetas inventadas.",
+      calendar_title: "Explora nuestro Calendario",
+      calendar_description: "Organiza tu tiempo con nuestras actividades comunitarias.",
+      today_label: "HOY",
+      upcoming_label: "Proximo en 48 horas",
+      featured_badge: "Destacado",
+      reserve_cta: "Reservar lugar",
+      filters: ["Todos", "Conferencias", "Grupos de Conexión", "Cursos & Talleres", "Especiales"],
+      featured_empty_title: "Evento destacado",
+      featured_empty_description: "Contenido real desde el CMS",
+      channel_link_label: "Ver canal"
+    }
+  },
+  {
     key: `${SITE_KEY}_testimonios_hero`,
     label: "Testimonios — Hero",
     description: "Titular y subtítulo de testimonios.",
@@ -91,6 +113,19 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     }
   },
   {
+    key: `${SITE_KEY}_testimonios_feed`,
+    label: "Testimonios — Contenido",
+    description: "Búsqueda, estados vacíos y llamada a publicar testimonios.",
+    page: "/testimonios",
+    sample: {
+      search_placeholder: "Buscar por tema, nombre o palabra clave",
+      loading_label: "Cargando...",
+      empty_title: "Todavía no hay testimonios publicados",
+      empty_description: "Cuando el CMS publique testimonios, aparecerán aquí.",
+      cta_label: "Compartir mi historia"
+    }
+  },
+  {
     key: `${SITE_KEY}_sermons_hero`,
     label: "Prédicas — Hero",
     description: "Mensaje principal de la página de prédicas.",
@@ -100,6 +135,31 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
       title_lead: "Alimento para el",
       title_accent: "Alma",
       description: "Biblioteca de mensajes para nutrir la fe."
+    }
+  },
+  {
+    key: `${SITE_KEY}_sermons_feed`,
+    label: "Prédicas — Contenido",
+    description: "Etiquetas y estados del catálogo de prédicas.",
+    page: "/predicas",
+    sample: {
+      hero_eyebrow: "Ministerios Faro Oficial",
+      hero_title_lead: "Prédicas &",
+      hero_title_accent: "Mensajes",
+      hero_description: "Alimento para el alma — explora los mensajes más recientes de nuestro canal de YouTube.",
+      featured_label: "Último mensaje",
+      grid_label: "Más mensajes",
+      results_label: "Resultados",
+      empty_title: "No se pudieron cargar los videos",
+      empty_description: "Verifica tu conexión o intenta nuevamente.",
+      search_placeholder: "Buscar por título o predicador…",
+      clear_search_label: "Limpiar búsqueda",
+      watched_label: "Visto",
+      more_videos_label: "videos",
+      channel_link_label: "Ver canal",
+      cta_label: "Ver todos en YouTube",
+      no_results_prefix: "Sin resultados para",
+      no_results_description: "Intenta con otro término."
     }
   },
   {
@@ -141,7 +201,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
   {
     key: `${SITE_KEY}_discover_feed`,
     label: "Conocer a Jesús — Contenido",
-    description: "Pasos, contacto y recursos para nuevos creyentes.",
+      description: "Pasos, contacto y recursos para nuevos creyentes.",
     page: "/conocer-a-jesus",
     sample: {
       contact_email: "",
@@ -214,9 +274,24 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
   {
     key: `${SITE_KEY}_pastores_feed`,
     label: "Liderazgo — Contenido",
-    description: "Datos adicionales de la página de pastores.",
+      description: "Datos adicionales de la página de pastores.",
     page: "/pastores",
     sample: {}
+  },
+  {
+    key: `${SITE_KEY}_pastores_index`,
+    label: "Liderazgo — Contenido",
+    description: "Hero y estados vacíos de la página de pastores.",
+    page: "/pastores",
+    sample: {
+      hero_badge: "Conoce a nuestro equipo pastoral",
+      hero_title: "Liderazgo Pastoral",
+      hero_description: "Hombres y mujeres llamados por Dios para servir, guiar y amar a esta casa.",
+      loading_label: "Cargando...",
+      empty_title: "No hay líderes pastorales registrados aún.",
+      card_cta: "Conocer más",
+      principal_label: "Pastor Principal"
+    }
   },
   {
     key: `${SITE_KEY}_boletin_hero`,
@@ -224,8 +299,10 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     description: "Portada del boletín informativo.",
     page: "/boletin",
     sample: {
-      title: "Boletín de la Comunidad",
-      description: "Las noticias y anuncios más recientes."
+      subtitle: "Boletín Semanal FARO",
+      title: "Recibe nuestra palabra de aliento",
+      description: "Cada semana te enviamos una reflexión bíblica, un versículo de ánimo y consejos prácticos para fortalecer tu fe.",
+      cta_text: "Suscribirme ahora"
     }
   },
   {
@@ -262,15 +339,8 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
   }
 ];
 
-// Keep FARO_BLOCKS as alias for backwards compat during transition
-export const FARO_BLOCKS = SITE_BLOCKS;
-
 export const SITE_EVENTS_BLOCK_KEY = `${SITE_KEY}_public_events`;
 export const SITE_MEDIA_BLOCK_KEY  = `${SITE_KEY}_media_gallery`;
-
-// Legacy aliases — remove after DB migration
-export const FARO_EVENTS_BLOCK_KEY = SITE_EVENTS_BLOCK_KEY;
-export const FARO_MEDIA_BLOCK_KEY  = SITE_MEDIA_BLOCK_KEY;
 
 export const CIVIC_BLOCKS: CmsBlockDefinition[] = [
   {
