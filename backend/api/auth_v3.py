@@ -157,7 +157,7 @@ class ChangePasswordRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    user_id: str
+    auth_user_id: str
     email: str
     platform_role: str
     needs_password_init: bool = False
@@ -441,7 +441,7 @@ def login(
 
     return TokenResponse(
         access_token=access_token,
-        user_id=str(user.id),
+        auth_user_id=str(user.id),
         email=user.email,
         platform_role=platform_role_name,
         needs_password_init=False,
@@ -597,7 +597,7 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
         pass
 
     return {
-        "user_id": str(user.id),
+        "auth_user_id": str(user.id),
         "email": user.email,
         "username": user.username,
         "is_verified": user.is_email_verified,
@@ -606,6 +606,81 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
         "permissions": permissions,
         "has_password": user.password_hash is not None,
         "is_gmail": user.email.lower().endswith("@gmail.com") if user.email else False,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 5b. UPDATE PROFILE (PATCH /me)
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class UpdateProfileRequest(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
+
+
+@router.patch("/me")
+def update_profile(
+    payload: UpdateProfileRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Actualiza username, email, o contraseña del usuario autenticado."""
+    token = request.cookies.get(settings.access_token_cookie_name) or ""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+
+    if not token:
+        raise HTTPException(status_code=401, detail="No autenticado")
+
+    try:
+        payload_jwt = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload_jwt.get("sub", "")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    user = db.query(Usuario).filter(Usuario.id == user_uuid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if payload.username:
+        existing = db.query(Usuario).filter(Usuario.username == payload.username, Usuario.id != user_uuid).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Nombre de usuario ya existe")
+        user.username = payload.username
+
+    if payload.email:
+        existing = db.query(Usuario).filter(Usuario.email == payload.email, Usuario.id != user_uuid).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Correo ya registrado")
+        user.email = payload.email
+        user.is_email_verified = False
+
+    if payload.new_password:
+        if not payload.current_password:
+            raise HTTPException(status_code=400, detail="Se requiere la contraseña actual")
+        if not verify_password(payload.current_password, user.password_hash):
+            raise HTTPException(status_code=403, detail="Contraseña actual incorrecta")
+        user.password_hash = get_password_hash(payload.new_password)
+        history = HistorialContrasena(user_id=user.id, password_hash=user.password_hash)
+        db.add(history)
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "auth_user_id": str(user.id),
+        "email": user.email,
+        "username": user.username,
+        "is_email_verified": user.is_email_verified,
     }
 
 
@@ -729,6 +804,99 @@ def _require_auth(request: Request, db: Session = Depends(get_db)):
         return payload.get("sub", "")
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 8. VERIFY EMAIL
+# ═══════════════════════════════════════════════════════════════════════
+
+
+@router.post("/verify-email")
+def verify_email(token: str, db: Session = Depends(get_db)):
+    """Verifica el correo electrónico usando un token enviado por email."""
+    from backend.models_auth import TokenVerificacionEmail
+
+    row = db.query(TokenVerificacionEmail).filter(TokenVerificacionEmail.token == token).first()
+    if not row or row.used:
+        raise HTTPException(status_code=400, detail="Token de verificación inválido o expirado")
+
+    expires_at = _as_aware(row.expires_at)
+    if expires_at is None or expires_at <= _utcnow():
+        raise HTTPException(status_code=400, detail="Token de verificación inválido o expirado")
+
+    row.used = True
+    user = db.query(Usuario).filter(Usuario.id == row.user_id).first()
+    if user:
+        user.is_email_verified = True
+    db.commit()
+
+    return {"status": "success", "message": "Correo verificado exitosamente"}
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 9. FORGOT PASSWORD (sends email with reset token)
+# ═══════════════════════════════════════════════════════════════════════
+
+
+@router.post("/forgot-password")
+def forgot_password(email: str, db: Session = Depends(get_db)):
+    """Solicita restablecimiento de contraseña. Envía email con token si el correo existe."""
+    from datetime import timedelta
+
+    from backend.models_auth import TokenResetContrasena
+    from backend.services.email import render_reset_password, send_email
+
+    user = _resolve_user(db, email)
+    if not user:
+        return {"status": "success", "message": "Si el correo existe, recibirás instrucciones"}
+
+    expires_at = _utcnow() + timedelta(minutes=60)
+    token_row = TokenResetContrasena(
+        user_id=user.id,
+        token=secrets.token_urlsafe(48),
+        expires_at=expires_at,
+        used=False,
+    )
+    db.add(token_row)
+    db.commit()
+    db.refresh(token_row)
+
+    subject, html = render_reset_password(token_row.token)
+    send_email(to=user.email, subject=subject, html=html)
+
+    return {"status": "success", "message": "Si el correo existe, recibirás instrucciones"}
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 10. RESET PASSWORD
+# ═══════════════════════════════════════════════════════════════════════
+
+
+@router.post("/reset-password")
+def reset_password(token: str, new_password: str, db: Session = Depends(get_db)):
+    """Restablece la contraseña usando un token enviado por email."""
+    from backend.models_auth import TokenResetContrasena
+
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 8 caracteres")
+
+    row = db.query(TokenResetContrasena).filter(TokenResetContrasena.token == token).first()
+    if not row or row.used:
+        raise HTTPException(status_code=400, detail="Token de restablecimiento inválido, expirado o ya utilizado")
+
+    expires_at = _as_aware(row.expires_at)
+    if expires_at is None or expires_at <= _utcnow():
+        raise HTTPException(status_code=400, detail="Token de restablecimiento inválido, expirado o ya utilizado")
+
+    row.used = True
+    user = db.query(Usuario).filter(Usuario.id == row.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    user.password_hash = get_password_hash(new_password)
+    db.commit()
+
+    return {"status": "success", "message": "Contraseña restablecida exitosamente"}
 
 
 # ─── Include this in the main app router ────────────────────────────

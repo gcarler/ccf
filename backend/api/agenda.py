@@ -60,7 +60,7 @@ def create_agenda_event(
 
 @router.get("/events/{event_id}", response_model=schemas.AgendaEvent)
 def get_agenda_event(
-    event_id: int,
+    event_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):
@@ -85,7 +85,7 @@ def get_agenda_event(
 
 @router.put("/events/{event_id}", response_model=schemas.AgendaEvent)
 def update_agenda_event(
-    event_id: int,
+    event_id: str,
     payload: schemas.AgendaEventCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
@@ -120,7 +120,7 @@ def update_agenda_event(
 
 @router.delete("/events/{event_id}", response_model=dict)
 def delete_agenda_event(
-    event_id: int,
+    event_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):

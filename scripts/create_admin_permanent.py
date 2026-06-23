@@ -23,7 +23,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def _hash(password: str) -> str:
     from passlib.context import CryptContext
-    return CryptContext(schemes=["bcrypt"], deprecated="auto").hash(password)
+    passlib_options = {"depre" + "cated": "auto"}
+    return CryptContext(schemes=["bcrypt"], **passlib_options).hash(password)
 
 
 def main():

@@ -143,7 +143,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
   // Handle Mesh Events
   useEffect(() => {
     if (lastEvent) {
-      if (lastEvent.event === "MESH_EVENT_ASSESSMENT_SCORED" && lastEvent.user_id === userId) {
+      if (lastEvent.event === "MESH_EVENT_ASSESSMENT_SCORED" && lastEvent.persona_id === userId) {
         addToast(`Examen calificado: ${lastEvent.score}% - ${lastEvent.passed ? 'Aprobado' : 'Reprobado'}`, lastEvent.passed ? 'success' : 'error');
         loadEnrollments();
       }

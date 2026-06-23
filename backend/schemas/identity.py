@@ -1,4 +1,5 @@
 from __future__ import annotations
+from uuid import UUID
 
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -10,7 +11,7 @@ from backend.schemas._common import orm_config
 
 class UserBase(BaseModel):
     username: str
-    email: str  # EmailStr removed — DB has legacy emails without @
+    email: str  # EmailStr removed because imported records may lack @
     role: str = "estudiante"
     role_id: Optional[int] = None
 
@@ -54,7 +55,7 @@ class UserSelfUpdate(BaseModel):
 
 
 class User(UserBase):
-    id: int
+    id: UUID
     xp: int = 0
     is_active: bool = True
     is_email_verified: bool = False
@@ -70,7 +71,7 @@ class Token(BaseModel):
 
 
 class TokenUser(BaseModel):
-    user_id: str
+    user_id: UUID
     username: str
     email: str
     role: str
@@ -92,5 +93,5 @@ class RoleCreate(RoleBase):
 
 
 class Role(RoleBase):
-    role_id: int
+    role_id: UUID
     model_config = orm_config

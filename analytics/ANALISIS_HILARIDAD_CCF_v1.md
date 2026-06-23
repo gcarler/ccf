@@ -15,7 +15,7 @@
 | **Frontend (Next.js)** | 🟠 ALTO | 2 | 4 | 3 |
 | **Tests** | 🟡 MEDIO | 0 | 3 | 2 |
 
-**Veredicto global:** La plataforma tiene una **arquitectura v2 bien diseñada** (Kernel UUID, soft deletes, sede_id, timezone) pero coexiste con **deuda técnica masiva de módulos legacy** que rompen todos los axiomas. Existen **cuellos de botella de rendimiento severos** (N+1 generalizado, falta de índices, duplicación de tablas) y **riesgos de pérdida de datos** (hard deletes, inconsistencias de tipo Integer/UUID). La **cobertura de tests es superficial**: 189 tests cubren APIs principales pero dejan **8 APIs, 16 CRUDs, 12 services y todo el middleware sin tests**. No hay tests E2E ni de carga.
+**Veredicto global:** La plataforma tiene una **arquitectura v2 bien diseñada** (Kernel UUID, soft deletes, sede_id, timezone) pero coexiste con **deuda técnica masiva de módulos compat** que rompen todos los axiomas. Existen **cuellos de botella de rendimiento severos** (N+1 generalizado, falta de índices, duplicación de tablas) y **riesgos de pérdida de datos** (hard deletes, inconsistencias de tipo Integer/UUID). La **cobertura de tests es superficial**: 189 tests cubren APIs principales pero dejan **8 APIs, 16 CRUDs, 12 services y todo el middleware sin tests**. No hay tests E2E ni de carga.
 
 ---
 
@@ -25,7 +25,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                              CAPA DE DATOS (PostgreSQL)                     │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │  personas   │  │   sedes     │  │  auth_users │  │  Tablas Legacy x2   │ │
+│  │  personas   │  │   sedes     │  │  auth_users │  │  Tablas Compat x2   │ │
 │  │  UUID PK    │  │  UUID PK    │  │  UUID PK    │  │  Integer PK ❌      │ │
 │  │  sede_id ✅ │  │  ─          │  │  sede_id ✅ │  │  sede_id ❌         │ │
 │  │  deleted_at │  │  deleted_at │  │  no soft-del│  │  no soft-del        │ │
@@ -45,7 +45,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            CAPA DE BACKEND (FastAPI)                        │
 │  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐  │
-│  │    CRUD v2 ✅       │  │   CRUD Legacy ⚠️    │  │    Routers v2 ✅    │  │
+│  │    CRUD v2 ✅       │  │   CRUD Compat ⚠️    │  │    Routers v2 ✅    │  │
 │  │  UUID + soft-del    │  │  Integer + hard-del │  │  sede_id filtrado   │  │
 │  │  timezone ✅        │  │  no sede_id ❌      │  │  lazy loading ❌    │  │
 │  │  eager loading ❌   │  │  N+1 masivo         │  │  auth JWT ✅        │  │
@@ -89,10 +89,10 @@
 
 ### 1. BASE DE DATOS — 6 Problemas Críticos
 
-#### 1.1 Duplicación Masiva Legacy vs V2 (Confusión de Esquema)
+#### 1.1 Duplicación Masiva Compat vs V2 (Confusión de Esquema)
 Existen **2-3 versiones de las mismas entidades** conviviendo en la misma BD:
 
-| Dominio | Tabla Legacy | Tabla V2 | Estado |
+| Dominio | Tabla Compat | Tabla V2 | Estado |
 |---|---|---|---|
 | Proyectos | `projects` | `proyectos` | Ambas activas |
 | Tareas | `project_tasks` | `tareas_proyecto` | Ambas activas |
@@ -211,10 +211,10 @@ db.query(Course).options(
 | `api/chat.py` | ❌ NO | Conversaciones cruzadas |
 | `api/graph.py` | ❌ NO | Grafo de conocimiento global |
 | `api/agents.py` | ❌ NO | Agentes ven todo |
-| `api/academy.py` (legacy) | ⚠️ PARCIAL | Algunos endpoints expuestos |
+| `api/academy.py` (compat) | ⚠️ PARCIAL | Algunos endpoints expuestos |
 | `api/cms_v2.py` | ❌ NO | CMS global por diseño |
 
-#### 2.4 Modelos Legacy con PK Integer (Riesgo IDOR)
+#### 2.4 Modelos Compat con PK Integer (Riesgo IDOR)
 ~80 tablas siguen usando `Integer` PK en lugar de `UUID`, violando REGLAS.md sección 2.A:
 
 | Tabla | PK Actual | Debería ser |
@@ -270,7 +270,7 @@ Ejemplos encontrados:
 | 1 | `@property` en modelos (riesgo de uso en `.filter()`) | `models_evangelism.py`, `models_academy.py` | Query rota en runtime |
 | 2 | `create_all()` en lifespan de FastAPI | `app.py` | Race condition con Alembic |
 | 3 | Endpoints sin documentación matricial | Todos | Sin auditoría de cambios |
-| 4 | CRUD `academy.py` (legacy) no filtra sede_id | `crud/academy.py` | Fuga de datos |
+| 4 | CRUD `academy.py` (compat) no filtra sede_id | `crud/academy.py` | Fuga de datos |
 | 5 | Servicios no aplican filtro sede_id | `services/*.py` | Acceso global |
 
 ### Frontend Medios
@@ -298,13 +298,13 @@ Ejemplos encontrados:
 
 | # Checklist | Estado | Hallazgo |
 |---|---|---|
-| 1. ¿Toda query filtra `sede_id`? | ❌ **NO** | Faltan en chat, graph, agents, cms, academy legacy |
+| 1. ¿Toda query filtra `sede_id`? | ❌ **NO** | Faltan en chat, graph, agents, cms, academy compat |
 | 2. ¿`persona_id` es `str` en schemas? | ✅ **SÍ** | Tipado correcto en todos los schemas |
 | 3. ¿`DateTime` usa `timezone=True`? | ⚠️ **PARCIAL** | 100% en modelos v2, faltan en migraciones antiguas |
 | 4. ¿Ausente `db.delete()` en transaccionales? | ❌ **NO** | 7 hard deletes encontrados |
-| 5. ¿FKs a `personas.id` usan `UUID`? | ✅ **SÍ** (v2) | Legacy tiene Integer PK pero FKs a personas sí usan UUID |
+| 5. ¿FKs a `personas.id` usan `UUID`? | ✅ **SÍ** (v2) | Compat tiene Integer PK pero FKs a personas sí usan UUID |
 | 6. ¿Usa `JSON` (no `JSONB`)? | ✅ **SÍ** | Pero en PostgreSQL productivo debería ser JSONB |
-| 7. ¿Tablas v2 (no legacy)? | ⚠️ **PARCIAL** | Coexisten 2-3 versiones de cada entidad |
+| 7. ¿Tablas v2 (no compat)? | ⚠️ **PARCIAL** | Coexisten 2-3 versiones de cada entidad |
 | 8. ¿Nombres reales de columnas (no `@property`)? | ⚠️ **RIESGO** | Existen @property pero no usados en .filter() detectados |
 | 9. ¿Nuevo módulo registrado? | ✅ **SÍ** | Todos registrados en models.py + api/__init__.py + app.py |
 | 10. ¿Documentación matricial? | ❌ **NO** | No se encontró formato JSON de entrega |
@@ -331,10 +331,10 @@ Ejemplos encontrados:
 - **Fix inmediato:** Dividir en sub-componentes por pestaña
 - **Esperado:** Tiempo de interacción < 100ms
 
-### Cuello #4: Duplicación Legacy vs V2 🟠
+### Cuello #4: Duplicación Compat vs V2 🟠
 - **Ubicación:** BD completa (Proyectos, Academy, CRM, Agenda, Usuarios)
 - **Impacto:** Confusión de desarrolladores, queries duplicadas, datos inconsistentes
-- **Fix:** Migrar todo a v2 y eliminar/renombrar tablas legacy con `_legacy_`
+- **Fix:** Migrar todo a v2 y eliminar/renombrar tablas compat con `_compat_`
 
 ### Cuello #5: Hard Deletes 🟠
 - **Ubicación:** 7 puntos en routers y CRUD
@@ -398,7 +398,7 @@ Ejemplos encontrados:
 #### CRUDs sin tests dedicados (16 módulos)
 | Módulo | Riesgo |
 |---|---|
-| `backend.crud.academy` | Legacy, no filtra `sede_id`, N+1 |
+| `backend.crud.academy` | Compat, no filtra `sede_id`, N+1 |
 | `backend.crud.academy_core` | Sin cobertura |
 | `backend.crud.agenda_core` | Sin cobertura |
 | `backend.crud.crm_core` | Sin cobertura |
@@ -431,7 +431,7 @@ Ejemplos encontrados:
 | **BD de tests = SQLite** | `sqlite://` in-memory por defecto | No detecta problemas de PostgreSQL (JSONB, GIN, GIST, constraints) |
 | **DROP SCHEMA por test** | `DROP SCHEMA public CASCADE` en PostgreSQL | Tests lentos, race conditions |
 | **Sin tests de carga** | No hay Locust/k6/JMeter | No se detectan cuellos de botella bajo stress |
-| **Cobertura estimada < 70% real** | Módulos legacy sin tests | Los tests pasan pero la cobertura real es baja |
+| **Cobertura estimada < 70% real** | Módulos compat sin tests | Los tests pasan pero la cobertura real es baja |
 
 ---
 
@@ -455,13 +455,13 @@ Ejemplos encontrados:
 
 ### Fase 4: Tests (Semana 5-6)
 11. **Crear tests para APIs sin cobertura** — empezar por `chat`, `dashboard`, `donations`, `finance`
-12. **Crear tests para CRUDs legacy** — `academy.py`, `evangelism.py`, `projects.py`
+12. **Crear tests para CRUDs compat** — `academy.py`, `evangelism.py`, `projects.py`
 13. **Crear tests para Services** — empezar por `payments.py`, `email.py`, `scheduler.py`
 14. **Migrar BD de tests a PostgreSQL** — usar `TEST_DATABASE_URL` con PostgreSQL para detectar problemas reales
 15. **Añadir tests de carga** — Locust o k6 para endpoints críticos (CRM listado, Academy cursos)
 
 ### Fase 5: Arquitectura (Mes 2-3)
-16. **Unificar esquema** — eliminar tablas legacy o renombrar con `_legacy_`
+16. **Unificar esquema** — eliminar tablas compat o renombrar con `_compat_`
 17. **Añadir `sede_id` NOT NULL** a tablas críticas
 18. **Convertir JSON → JSONB** en PostgreSQL productivo + índices GIN
 19. **Implementar constraint GIST** para `agenda_reserva_recursos`
@@ -489,7 +489,7 @@ Ejemplos encontrados:
 | `agenda_eventos` | UUID | ✅ | ✅ | ✅ |
 | `academy_enrollments` | UUID | ❌ | ✅ | ⚠️ |
 
-### Tablas Legacy (Integer PK + sin sede_id + sin soft delete)
+### Tablas Compat (Integer PK + sin sede_id + sin soft delete)
 | Tabla | PK | sede_id | deleted_at | Estado |
 |---|---|---|---|---|
 | `chat_messages` | Integer | ❌ | ❌ | ❌ |
@@ -503,4 +503,4 @@ Ejemplos encontrados:
 
 > **"El código que escribes hoy es la plataforma que administrarás mañana."**
 > 
-> — Este análisis encontró **7 hard deletes**, **~80 tablas con PK Integer**, **25+ FKs sin índice**, **N+1 en todos los CRUDs**, y **~1,500+ colores hardcodeados**. La arquitectura v2 es sólida, pero la deuda técnica legacy es masiva.
+> — Este análisis encontró **7 hard deletes**, **~80 tablas con PK Integer**, **25+ FKs sin índice**, **N+1 en todos los CRUDs**, y **~1,500+ colores hardcodeados**. La arquitectura v2 es sólida, pero la deuda técnica compat es masiva.

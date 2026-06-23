@@ -4,6 +4,8 @@ import datetime as dt
 import uuid
 from typing import List, Optional
 
+from backend.crud._utils import _to_uuid
+
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
@@ -11,7 +13,7 @@ from backend import models, schemas
 from backend.core.security import decrypt_data, encrypt_data
 from backend.crud._utils import _utcnow
 from backend.schemas.crm import CrmEventUpdate
-from backend.schemas.legacy import CommunityBoardCardUpdate
+from backend.schemas.compatibility import CommunityBoardCardUpdate
 from backend.schemas.notifications import CommunicationLogUpdate
 
 
@@ -46,7 +48,7 @@ def resolve_persona_id_from_identity(db: Session, identity: int | str | None):
     return resolve_persona_id_for_user(db, identity)
 
 
-def legacy_user_id_from_identity(identity: int | str | None):
+def numeric_user_id_from_identity(identity: int | str | None):
     if identity is None or _is_uuid_like(identity):
         return None
     try:
@@ -231,11 +233,11 @@ def search_personas(
 
 
 def get_persona(db: Session, persona_id: str) -> Optional[models.Persona]:
-    return db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    return db.query(models.Persona).filter(models.Persona.id == _to_uuid(persona_id)).first()
 
 
 def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate) -> Optional[models.Persona]:
-    row = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    row = db.query(models.Persona).filter(models.Persona.id == _to_uuid(persona_id)).first()
     if not row:
         return None
 
@@ -348,7 +350,7 @@ def _compute_days_in_state(db: Session, persona_id, state_name: str) -> int | No
 
 
 def delete_persona(db: Session, persona_id: str) -> bool:
-    row = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    row = db.query(models.Persona).filter(models.Persona.id == _to_uuid(persona_id)).first()
     if not row:
         return False
     # Soft-delete: nunca eliminar físicamente una Persona.
@@ -912,7 +914,7 @@ def create_family(db: Session, name: str):
 
 
 def get_persona_timeline(db: Session, persona_id: str):
-    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == _to_uuid(persona_id)).first()
     if not persona:
         return []
 
@@ -1033,7 +1035,7 @@ def get_user_notifications(db: Session, user_id: int | str, limit: int = 20) -> 
     )
 
 
-def mark_notification_as_read(db: Session, notification_id: int):
+def mark_notification_as_read(db: Session, notification_id: str):
     notification = db.query(models.Notification).filter(models.Notification.id == notification_id).first()
     if not notification:
         return None
@@ -1150,7 +1152,7 @@ def get_support_tickets(
     return q.offset(skip).limit(limit).all()
 
 
-def update_support_ticket(db: Session, ticket_id: int, new_status: str):
+def update_support_ticket(db: Session, ticket_id: str, new_status: str):
     ticket = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
     if not ticket:
         return None
@@ -1418,12 +1420,12 @@ def _emit_mesh_event(event_type: str, case_id: str, persona_id: str | None = Non
 # ── Communication Logs ─────────────────────────────────
 
 
-def get_communication_log(db: Session, log_id: int) -> Optional[models.CommunicationLog]:
+def get_communication_log(db: Session, log_id: str) -> Optional[models.CommunicationLog]:
     return db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
 
 
 def update_communication_log(
-    db: Session, log_id: int, payload: CommunicationLogUpdate
+    db: Session, log_id: str, payload: CommunicationLogUpdate
 ) -> Optional[models.CommunicationLog]:
     row = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
     if not row:
@@ -1435,7 +1437,7 @@ def update_communication_log(
     return row
 
 
-def delete_communication_log(db: Session, log_id: int) -> bool:
+def delete_communication_log(db: Session, log_id: str) -> bool:
     row = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
     if not row:
         return False
@@ -1518,11 +1520,11 @@ def delete_milestone(db: Session, milestone_id: int) -> bool:
 # ── Support Tickets ─────────────────────────────────────
 
 
-def get_support_ticket(db: Session, ticket_id: int) -> Optional[models.SupportTicket]:
+def get_support_ticket(db: Session, ticket_id: str) -> Optional[models.SupportTicket]:
     return db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
 
 
-def delete_support_ticket(db: Session, ticket_id: int) -> bool:
+def delete_support_ticket(db: Session, ticket_id: str) -> bool:
     row = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
     if not row:
         return False

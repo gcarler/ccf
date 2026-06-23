@@ -4,7 +4,7 @@ Revision ID: 20260605_acad_pers_backfill
 Revises: 20260604_personas_scanner_token
 Create Date: 2026-06-05
 
-Fills the legacy Academy runtime tables from personas.user_id so the app can
+Fills the compat Academy runtime tables from personas.user_id so the app can
 keep users.id as compatibility data while UUID/persona becomes canonical.
 """
 

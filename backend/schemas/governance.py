@@ -1,4 +1,5 @@
 from __future__ import annotations
+from uuid import UUID
 
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -10,7 +11,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 class AdminAuditLog(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
-    id: int
+    id: UUID
     actor_persona_id: Optional[str] = None
     action: str
     resource_type: Optional[str] = None
@@ -29,7 +30,7 @@ class AdminAuditLog(BaseModel):
 class AutomationRuleRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: UUID
     name: str
     trigger_type: str
     action_type: Optional[str] = None

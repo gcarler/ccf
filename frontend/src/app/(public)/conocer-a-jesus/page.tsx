@@ -58,6 +58,11 @@ export default function ConocerAJesusPage() {
     const messageLabel = (discoverData?.message_label as string) || "¿En qué podemos ayudarte?";
     const messagePlaceholder = (discoverData?.message_placeholder as string) || "Cuéntanos un poco sobre ti o tu petición de oración...";
     const submitLabel = (discoverData?.submit_label as string) || "Enviar mensaje y conectar";
+    const submitSending = (discoverData?.submit_sending as string) || "Enviando...";
+    const successTitle = (discoverData?.success_title as string) || "¡Gracias!";
+    const successDescription = (discoverData?.success_description as string) || "Hemos recibido tu mensaje. Te contactaremos pronto.";
+    const errorMessage = (discoverData?.error_message as string) || "Hubo un error. Intenta de nuevo o escríbenos directamente.";
+    const connectionError = (discoverData?.connection_error as string) || "Ocurrió un error inesperado de conexión.";
 
     const benefitCards = Array.isArray(discoverData?.benefits)
         ? discoverData.benefits as Array<{ icon: string; title: string; desc: string }>
@@ -107,11 +112,11 @@ export default function ConocerAJesusPage() {
             
             // Si no lanza un error (ApiError), asumimos que funcionó (porque apiFetch lanza excepción si no es ok)
             setStatus("sent");
-            toast.success("¡Mensaje enviado con éxito! Te contactaremos pronto.");
+            toast.success(successTitle);
 
         } catch {
             setStatus("error");
-            toast.error("Ocurrió un error inesperado de conexión.");
+            toast.error(connectionError);
         }
     };
 
@@ -377,10 +382,10 @@ export default function ConocerAJesusPage() {
                                     className="text-lg font-bold mb-3"
                                     style={{ color: "var(--site-on-surface)" }}
                                 >
-                                    ¡Gracias!
+                                    {successTitle}
                                 </h3>
                                 <p style={{ color: "var(--site-on-surface-variant)" }}>
-                                    Hemos recibido tu mensaje. Te contactaremos pronto.
+                                    {successDescription}
                                 </p>
                             </div>
                         ) : (
@@ -450,14 +455,14 @@ export default function ConocerAJesusPage() {
                                         boxShadow: "var(--site-hero-cta-shadow)",
                                     }}
                                     >
-                                    {status === "sending" ? "Enviando..." : submitLabel}
+                                    {status === "sending" ? submitSending : submitLabel}
                                     </button>
                                 {status === "error" && (
                                     <p
                                         className="text-xs text-center font-bold"
                                         style={{ color: "var(--site-error)" }}
                                     >
-                                        Hubo un error. Intenta de nuevo o escríbenos directamente.
+                                        {errorMessage}
                                     </p>
                                 )}
                             </form>

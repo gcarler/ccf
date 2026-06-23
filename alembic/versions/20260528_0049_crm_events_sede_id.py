@@ -38,7 +38,7 @@ def _col_exists(table: str, col: str) -> bool:
 
 
 def upgrade() -> None:
-    # crm_events may not exist if never bootstrapped (legacy model, no prior migration)
+    # crm_events may not exist if never bootstrapped (compat model, no prior migration)
     if not _table_exists("crm_events"):
         conn = op.get_bind()
         conn.execute(sa.text("""

@@ -2,10 +2,10 @@
 
 Este motor calcula permisos efectivos combinando:
 1. Roles de plataforma del Kernel (ADMINISTRADOR, GESTOR, EDITOR, LECTOR)
-2. Permisos del sistema legacy (roles strings + Role model)
+2. Permisos del modelo de roles y roles textuales
 3. Override por usuario (UserPermission)
 
-Resolución: Kernel RBAC > Legacy Role > UserPermission override
+Resolución: Kernel RBAC > Role model > UserPermission override
 """
 
 from __future__ import annotations
@@ -100,16 +100,15 @@ def _resolve_kernel_permissions(db: Session, user_id: int) -> Set[str]:
     return result
 
 
-def _resolve_legacy_permissions(db: Session, user) -> Set[str]:
-    """Resuelve permisos desde el sistema legacy (roles strings + Role model)."""
+def _resolve_role_model_permissions(db: Session, user) -> Set[str]:
+    """Resuelve permisos desde roles textuales y Role model."""
     from backend.core.permissions import (DEFAULT_ROLES,
                                           get_user_effective_permissions)
 
     result: Set[str] = set()
 
-    # Intentar con el sistema legacy completo
-    legacy = get_user_effective_permissions(db, user)
-    for perm_key, value in legacy.items():
+    role_permissions = get_user_effective_permissions(db, user)
+    for perm_key, value in role_permissions.items():
         if value == "allow":
             result.add(perm_key)
 
@@ -131,17 +130,16 @@ def resolve_effective_permissions(
 
     Orden de resolución:
     1. Kernel RBAC (Dimensión C — platform roles)
-    2. Legacy Role model
-    3. Legacy role string
+    2. Role model
+    3. Role string
     4. UserPermission override
 
     El resultado es la UNIÓN de todos los permisos resueltos.
     """
     kernel_perms = _resolve_kernel_permissions(db, user.id)
-    legacy_perms = _resolve_legacy_permissions(db, user)
+    role_model_perms = _resolve_role_model_permissions(db, user)
 
-    # Unir todos los permisos
-    return kernel_perms | legacy_perms
+    return kernel_perms | role_model_perms
 
 
 def has_permission(
@@ -194,7 +192,7 @@ def has_permission(
 def require_kernel_permission(permission: str):
     """Factory: dependencia FastAPI que verifica un permiso del Kernel.
 
-    Combina verificación de Kernel RBAC + estado vital + sistema legacy.
+    Combina verificación de Kernel RBAC + estado vital + permisos por rol.
     """
 
     async def _check(

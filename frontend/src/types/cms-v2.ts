@@ -104,7 +104,7 @@ export interface CmsPublishLog {
   action: string;
   from_status: string | null;
   to_status: string | null;
-  actor_user_id: string | null;
+  actor_persona_id: string | null;
   metadata_json: Record<string, unknown>;
   created_at: string;
 }

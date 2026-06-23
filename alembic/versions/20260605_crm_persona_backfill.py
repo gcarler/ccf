@@ -5,7 +5,7 @@ Revises: 20260605_acad_pers_backfill
 Create Date: 2026-06-05
 
 Moves CRM assignment/leadership fields toward personas.id while keeping
-legacy users.id columns as compatibility data.
+compat users.id columns as compatibility data.
 """
 
 from typing import Sequence, Union

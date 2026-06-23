@@ -1,6 +1,6 @@
 """Nuevo schema canónico de evangelismo.
 
-Elimina tablas legacy (evangelism_strategies, grupos_evangelismo, grupo_*).
+Elimina tablas compat (evangelism_strategies, grupos_evangelismo, grupo_*).
 Crea: sedes, categorias_estrategia, motivos_excusa, logs_auditoria,
       estrategias_evangelismo, estrategia_roles_personalizados,
       grupos_evangelismo, personas, grupo_participantes,
@@ -28,7 +28,7 @@ def upgrade():
     op.drop_index("ix_members_origen_estrategia_id", table_name="members")
     op.drop_index("ix_members_origen_grupo_id", table_name="members")
 
-    # ── 2. Eliminar tablas legacy (CASCADE elimina sus FKs dependientes) ──────
+    # ── 2. Eliminar tablas compat (CASCADE elimina sus FKs dependientes) ──────
     op.execute("DROP TABLE IF EXISTS asistencias CASCADE")
     op.execute("DROP TABLE IF EXISTS grupo_participantes CASCADE")
     op.execute("DROP TABLE IF EXISTS sesiones_grupo CASCADE")

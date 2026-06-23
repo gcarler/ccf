@@ -132,8 +132,8 @@ export default function ConsolidationPipelinePage() {
             size: 280,
             cell: ({ row }) => {
                 const l = row.original;
-                const initial1 = l.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? '' /* LEGACY: removed first_name fallback */;
-                const initial2 = l.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? '' /* LEGACY: removed last_name fallback */;
+                const initial1 = l.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? '';
+                const initial2 = l.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? '';
                 const initials = `${initial1}${initial2}`.toUpperCase();
                 return (
                     <div className="flex items-center gap-3">
@@ -342,7 +342,7 @@ export default function ConsolidationPipelinePage() {
                                                 >
                                                     <div className="flex items-center gap-3 mb-3">
                                                         <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20">
-                                                            {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? '' /* LEGACY: removed first_name fallback */}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? '' /* LEGACY: removed last_name fallback */}
+                                                            {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? ''}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? ''}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <p className="font-bold text-slate-800 dark:text-white text-sm truncate">{lead.nombre_completo || ''}</p>

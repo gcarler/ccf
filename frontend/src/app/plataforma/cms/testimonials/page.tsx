@@ -36,7 +36,6 @@ interface Testimonial {
   podcast_url?: string | null;
   created_at: string;
   author_persona_id?: string | null;
-  author_id?: number | null;
   published?: boolean;
   is_approved?: boolean;
   show_on_home?: boolean;
@@ -79,13 +78,12 @@ function getMediaLabel(testimonial: Pick<Testimonial, "media_type" | "media_url"
   return "Medio";
 }
 
-function identityKey(testimonial: Pick<Testimonial, "author_persona_id" | "author_id">): string {
-  return testimonial.author_persona_id || (testimonial.author_id != null ? String(testimonial.author_id) : "anon");
+function identityKey(testimonial: Pick<Testimonial, "author_persona_id">): string {
+  return testimonial.author_persona_id || "anon";
 }
 
-function authorLabel(testimonial: Pick<Testimonial, "author_persona_id" | "author_id">): string {
+function authorLabel(testimonial: Pick<Testimonial, "author_persona_id">): string {
   if (testimonial.author_persona_id) return `Persona ${testimonial.author_persona_id.slice(0, 8)}`;
-  if (testimonial.author_id != null) return `Legacy #${testimonial.author_id}`;
   return "Anonimo";
 }
 

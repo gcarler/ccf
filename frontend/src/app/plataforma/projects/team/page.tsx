@@ -16,7 +16,7 @@ import RightPanel from '@/components/ui/RightPanel';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 
 interface TeamMember {
-    user_id: string;
+    persona_id: string;
     name: string;
     load_status: string;
     open: number;
@@ -103,7 +103,7 @@ export default function TeamPage() {
                                 const isOverloaded = member.load_status === 'sobrecargado';
                                 return (
                                     <motion.div
-                                        key={member.user_id}
+                                        key={member.persona_id}
                                         initial={{ opacity: 0, scale: 0.97 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: idx * 0.05 }}
@@ -215,4 +215,3 @@ export default function TeamPage() {
         </ProjectsShell>
     );
 }
-

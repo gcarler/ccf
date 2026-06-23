@@ -45,17 +45,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const timer = setTimeout(() => { console.warn('[AUTH] timeout'); setLoading(false); }, 6000);
         try {
-            // Try v3 auth first (UUID-based), fallback to v1
+            // Try canonical auth first, fallback to v1.
             let data: any = null;
             let v3Data: any = null;
             try {
                 v3Data = await apiFetch<any>('/v3/auth/me', { cache: 'no-store', token: t });
             } catch { /* fallback to v1 */ }
             
-            if (v3Data && v3Data.user_id) {
-                // Map v3 response to v1-compatible shape
+            if (v3Data && v3Data.auth_user_id) {
                 data = {
-                    id: v3Data.user_id,
+                    id: v3Data.auth_user_id,
                     username: v3Data.username || v3Data.email?.split('@')[0],
                     email: v3Data.email,
                     role: (v3Data.platform_role || 'LECTOR').toLowerCase(),

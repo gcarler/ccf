@@ -82,7 +82,7 @@ class EstrategiaEvangelismoBase(BaseModel):
     clase_raiz: Optional[str] = None
     activa: bool = True
 
-    # Campos legacy (back-compat)
+    # Campos de compatibilidad
     typology: Optional[str] = None
     recurrence: Optional[str] = None
     day_of_week: Optional[str] = None
@@ -109,7 +109,7 @@ class EstrategiaEvangelismoUpdate(BaseModel):
     activa: Optional[bool] = None
     default_role_id: Optional[int] = None
 
-    # Campos legacy
+    # Campos de compatibilidad
     typology: Optional[str] = None
     recurrence: Optional[str] = None
     day_of_week: Optional[str] = None
@@ -124,7 +124,7 @@ class EstrategiaEvangelismoUpdate(BaseModel):
 
 
 class EstrategiaEvangelismoResponse(EstrategiaEvangelismoBase):
-    id: str
+    id: UUID
     codigo: Optional[str] = None
     default_role_id: Optional[int] = None
     created_at: datetime
@@ -146,7 +146,7 @@ class RolPersonalizadoEstrategiaCreate(RolPersonalizadoEstrategiaBase):
 
 
 class RolPersonalizadoEstrategiaResponse(RolPersonalizadoEstrategiaBase):
-    id: int
+    id: UUID
     estrategia_id: str
     created_at: datetime
     model_config = orm_config
@@ -164,7 +164,7 @@ class ParticipanteGrupoBase(BaseModel):
 
 class ParticipanteGrupoCreate(ParticipanteGrupoBase):
     grupo_id: UUID
-    persona_id: str
+    persona_id: UUID
 
 
 class ParticipanteGrupoUpdate(BaseModel):
@@ -174,9 +174,9 @@ class ParticipanteGrupoUpdate(BaseModel):
 
 
 class ParticipanteGrupoResponse(ParticipanteGrupoBase):
-    id: int
+    id: UUID
     grupo_id: UUID
-    persona_id: str
+    persona_id: UUID
     fecha_ingreso: Optional[datetime] = None
     model_config = orm_config
 
@@ -195,8 +195,8 @@ class AsistenciaSesionBase(BaseModel):
 
 
 class AsistenciaSesionCreate(AsistenciaSesionBase):
-    sesion_id: int
-    persona_id: str
+    sesion_id: str
+    persona_id: UUID
 
 
 class AsistenciaSesionUpdate(BaseModel):
@@ -209,9 +209,9 @@ class AsistenciaSesionUpdate(BaseModel):
 
 
 class AsistenciaSesionResponse(AsistenciaSesionBase):
-    id: int
-    sesion_id: int
-    persona_id: str
+    id: UUID
+    sesion_id: str
+    persona_id: UUID
     attended: Optional[bool] = None
     status: Optional[str] = None
     model_config = orm_config
@@ -232,7 +232,7 @@ class RegistroSeguimientoBase(BaseModel):
     # Alias de back-compat para el frontend que ya usa "notas" y "completado"
     @model_validator(mode="before")
     @classmethod
-    def _map_legacy_names(cls, data: Any) -> Any:
+    def _map_compat_names(cls, data: Any) -> Any:
         if isinstance(data, dict):
             if "notas" in data and "observaciones" not in data:
                 data["observaciones"] = data.pop("notas")
@@ -246,7 +246,7 @@ class RegistroSeguimientoBase(BaseModel):
 
 
 class RegistroSeguimientoCreate(RegistroSeguimientoBase):
-    asistencia_id: int
+    asistencia_id: str
     responsable_id: Optional[str] = None
 
 
@@ -259,7 +259,7 @@ class RegistroSeguimientoUpdate(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _map_legacy_names(cls, data: Any) -> Any:
+    def _map_compat_names(cls, data: Any) -> Any:
         if isinstance(data, dict):
             if "notas" in data and "observaciones" not in data:
                 data["observaciones"] = data.pop("notas")
@@ -273,8 +273,8 @@ class RegistroSeguimientoUpdate(BaseModel):
 
 
 class RegistroSeguimientoResponse(BaseModel):
-    id: int
-    asistencia_id: int
+    id: UUID
+    asistencia_id: str
     tipo: TipoSeguimientoEnum
     observaciones: Optional[str] = None
     fecha_seguimiento: Optional[datetime] = None
@@ -282,7 +282,7 @@ class RegistroSeguimientoResponse(BaseModel):
     responsable_id: Optional[str] = None
     created_at: datetime
 
-    # Back-compat: campos computados para frontend legacy (Pydantic v2 compatible)
+    # Back-compat: campos computados para frontend anterior (Pydantic v2 compatible)
     @computed_field
     @property
     def completado(self) -> bool:
@@ -335,7 +335,7 @@ class MotivoExcusaUpdate(BaseModel):
 
 
 class MotivoExcusaResponse(MotivoExcusaBase):
-    id: int
+    id: UUID
     es_del_sistema: bool
     model_config = orm_config
 
@@ -345,7 +345,7 @@ class MotivoExcusaResponse(MotivoExcusaBase):
 # ──────────────────────────────────────────────
 
 class AsistenciaBulkItem(BaseModel):
-    persona_id: str
+    persona_id: UUID
     estado: EstadoAsistenciaEnum = EstadoAsistenciaEnum.ASISTIO
     es_primera_vez: bool = False
     requiere_seguimiento: bool = False
@@ -353,7 +353,7 @@ class AsistenciaBulkItem(BaseModel):
 
 
 class AsistenciaBulkCreate(BaseModel):
-    sesion_id: int
+    sesion_id: str
     registros: List[AsistenciaBulkItem]
 
 
@@ -369,8 +369,8 @@ class GrupoCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
-    evangelism_strategy_id: Optional[str] = None
-    leader_id: Optional[str] = None
+    evangelism_strategy_id: Optional[UUID] = None
+    leader_id: Optional[UUID] = None
     assistant_id: Optional[str] = None
     host_id: Optional[str] = None
     capacity: int = 15
@@ -384,7 +384,7 @@ class GrupoCreate(BaseModel):
 
 # Schema para participantes de grupo
 class ParticipanteGrupoConRol(BaseModel):
-    persona_id: str
+    persona_id: UUID
     role: str = "participante"
     rol_personalizado_id: Optional[int] = None
 
@@ -394,7 +394,7 @@ class GrupoUpdate(BaseModel):
     name: Optional[str] = None
     zone: Optional[str] = None
     address: Optional[str] = None
-    leader_id: Optional[str] = None
+    leader_id: Optional[UUID] = None
     assistant_id: Optional[str] = None
     host_id: Optional[str] = None
     capacity: Optional[int] = None
@@ -433,7 +433,7 @@ class SesionGrupoUpdate(BaseModel):
 
 
 class AsistenciaGrupoCreate(BaseModel):
-    persona_id: str
+    persona_id: UUID
     status: str = "present"
     notes: Optional[str] = None
 

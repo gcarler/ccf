@@ -136,7 +136,7 @@ export default function MessagesPage() {
     };
 
     const getOtherParticipant = (conv: ConversationRead) =>
-        conv.participants.find((p) => p.user_id !== userId);
+        conv.participants.find((p) => p.persona_id !== userId);
 
     const filteredConversations = conversationFilter.trim()
         ? conversations.filter((c) => {

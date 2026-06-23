@@ -9,7 +9,7 @@ export interface ConversationRead {
 }
 
 export interface ConversationParticipantRead {
-  user_id: string;
+  persona_id: string;
   username: string;
   last_read_at: string | null;
 }

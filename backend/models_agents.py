@@ -1,4 +1,5 @@
 """Agent Identity Model — Canonical person identity for the CCF platform."""
+import uuid as _uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, UUID
@@ -14,7 +15,7 @@ def _utcnow():
 
 class Agent(Base):
     __tablename__ = "agents"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     code = Column(String(20), unique=True, nullable=False, index=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
@@ -43,8 +44,8 @@ class Agent(Base):
 class AgentAuth(Base):
     __tablename__ = "agent_auth"
     __table_args__ = (UniqueConstraint("agent_id", "provider", name="uq_agent_provider"),)
-    id = Column(Integer, primary_key=True, index=True)
-    agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=True)
     provider = Column(String(30), default="local")
@@ -57,24 +58,24 @@ class AgentAuth(Base):
 
 class AgentContact(Base):
     __tablename__ = "agent_contact"
-    id = Column(Integer, primary_key=True, index=True)
-    agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     type = Column(String(20), nullable=False, index=True)
     value = Column(String(500), nullable=False)
     is_primary = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
-    created_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=True)
     agent = relationship("Agent", back_populates="contacts", foreign_keys=[agent_id])
 
 
 class AgentRole(Base):
     __tablename__ = "agent_roles"
-    id = Column(Integer, primary_key=True, index=True)
-    agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     role_type = Column(String(30), nullable=False, index=True)
     role_value = Column(String(50), nullable=False, index=True)
-    context_id = Column(Integer, nullable=True)
+    context_id = Column(UUID(as_uuid=True), nullable=True)
     context_type = Column(String(30), nullable=True)
     started_at = Column(DateTime(timezone=True), default=_utcnow)
     ended_at = Column(DateTime(timezone=True), nullable=True)
@@ -85,11 +86,11 @@ class AgentRole(Base):
 
 class AgentActivity(Base):
     __tablename__ = "agent_activities"
-    id = Column(Integer, primary_key=True, index=True)
-    agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     activity_type = Column(String(40), nullable=False, index=True)
     source_type = Column(String(30), nullable=False, index=True)
-    source_id = Column(Integer, nullable=True)
+    source_id = Column(UUID(as_uuid=True), nullable=True)
     status = Column(String(30), nullable=True)
     notes = Column(Text, nullable=True)
     occurred_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, index=True)
@@ -100,23 +101,23 @@ class AgentActivity(Base):
 class AgentFamily(Base):
     __tablename__ = "agent_families"
     __table_args__ = (UniqueConstraint("agent_id", "related_agent_id", "relationship", name="uq_family_relationship"),)
-    id = Column(Integer, primary_key=True, index=True)
-    agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
-    related_agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    related_agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     relationship = Column(String(30), nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
 class AgentJourney(Base):
     __tablename__ = "agent_journey"
-    id = Column(Integer, primary_key=True, index=True)
-    agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     from_stage = Column(String(30), nullable=True)
     to_stage = Column(String(30), nullable=False)
     reason = Column(String(100), nullable=True)
     triggered_by = Column(String(30), nullable=True)
     triggered_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    triggered_by_id = Column(Integer, nullable=True)
+    triggered_by_id = Column(UUID(as_uuid=True), nullable=True)
     journey_data = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     agent = relationship("Agent", back_populates="journey_entries", foreign_keys=[agent_id])
@@ -125,8 +126,8 @@ class AgentJourney(Base):
 class AgentPermission(Base):
     __tablename__ = "agent_permissions"
     __table_args__ = (UniqueConstraint("agent_id", "permission", name="uq_agent_permission"),)
-    id = Column(Integer, primary_key=True, index=True)
-    agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     permission = Column(String(50), nullable=False, index=True)
     granted_via = Column(String(50), nullable=True)
     granted_at = Column(DateTime(timezone=True), default=_utcnow)
@@ -136,7 +137,7 @@ class AgentPermission(Base):
 
 class AgentTask(Base):
     __tablename__ = "agent_tasks"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=False, server_default="")
     priority = Column(String(20), nullable=False, server_default="medium")
@@ -152,7 +153,7 @@ class AgentTask(Base):
 
 class AgentInsight(Base):
     __tablename__ = "agent_insights"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=False, server_default="")
     insight_type = Column(String(50), nullable=False, server_default="observation")

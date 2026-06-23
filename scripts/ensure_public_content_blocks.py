@@ -103,6 +103,88 @@ BLOCKS = {
             "principal_label": "Pastor Principal",
         },
     },
+    "faro_pastores_feed": {
+        "title": "Pastores publico FARO",
+        "content": {
+            "pastors": [
+                {
+                    "slug": "luis-ricardo-meza",
+                    "name": "Luis Ricardo Meza Gutiérrez",
+                    "role": "Pastor Principal",
+                    "image": "/images/pastores/luis_ricardo_meza.webp",
+                    "isMain": True,
+                    "story": "Un testimonio de transformación profunda y pasión inagotable por la enseñanza de la Palabra.",
+                },
+                {
+                    "slug": "histar-ariza",
+                    "name": "Histar Ariza Herrera",
+                    "role": "Pastor Principal",
+                    "image": "/images/pastores/histar_ariza.webp",
+                    "isMain": True,
+                    "story": "El llamado pastoral, la visión de expansión y el corazón de paternidad espiritual que guía a nuestra congregación.",
+                },
+                {
+                    "slug": "alex-y-elvia",
+                    "name": "Alex y Elvia",
+                    "role": "Pastores de Familias",
+                    "image": "/images/pastores/alex_elvia.webp",
+                    "story": "Un testimonio vivo de gracia enfocado en la restauración matrimonial y el ministerio familiar.",
+                },
+                {
+                    "slug": "alba-arias",
+                    "name": "Alba Arias",
+                    "role": "Pastora",
+                    "image": "/images/pastores/camilo_alba.webp",
+                    "story": "Le apasiona enseñar, convencida de que la educación transforma vidas y le da el privilegio de sembrar conocimiento y valores.",
+                },
+                {
+                    "slug": "camilo-pajaro",
+                    "name": "Camilo Pájaro",
+                    "role": "Pastor",
+                    "image": "/images/pastores/camilo_alba.webp",
+                    "story": "Le apasiona habitar en la presencia del Padre y siente un profundo celo por apoyar y guiar a las almas perdidas.",
+                },
+                {
+                    "slug": "fernando-y-monica",
+                    "name": "Fernando y Mónica",
+                    "role": "Pastores de Discipulado",
+                    "image": "/images/pastores/fernando_monica.webp",
+                    "story": "La historia de la fidelidad, el servicio incondicional y el acompañamiento constante.",
+                },
+                {
+                    "slug": "nehemias-morales",
+                    "name": "Nehemías Morales",
+                    "role": "Pastor de Consolidación",
+                    "image": "/images/pastores/nehemias_morales.webp",
+                    "story": "Enfocado en la resiliencia, la construcción de comunidad y la fe inquebrantable.",
+                },
+                {
+                    "slug": "yair-macea",
+                    "name": "Yair Macea",
+                    "role": "Pastor Evangelístico",
+                    "image": "/images/pastores/yair_macea.webp",
+                    "story": "Un relato de gracia abrumadora, superación personal y un fuego evangelístico inextinguible.",
+                },
+                {
+                    "slug": "yanedith-wilches",
+                    "name": "Yanedith Wilches",
+                    "role": "Pastora de Intercesión",
+                    "image": "/images/pastores/yanedith_wilches.webp",
+                    "story": "La fuerza inquebrantable de una mujer virtuosa, la intercesión y la compasión por los vulnerables.",
+                },
+                {
+                    "slug": "martina-herrera",
+                    "name": "Martina Herrera",
+                    "role": "Pastora Fundadora",
+                    "image": "/images/pastores/martina_herrera.webp",
+                    "isMain": True,
+                    "story": "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
+                    "bio_short": "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
+                    "bio_full": "<p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana El Faro. Junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor, sembró con fe, oración y perseverancia las bases espirituales de esta casa.</p><blockquote>\"La obra de Dios se edifica con fe, obediencia y amor por las almas.\"</blockquote><p>Desde los primeros días del ministerio, la Pastora Martina ha sido un pilar de oración, fidelidad y cuidado pastoral. Su corazón maternal ha acompañado a generaciones de creyentes que encontraron en ella una pastora, una consejera y una madre espiritual.</p><p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana El Faro: una iglesia levantada para amar a Dios, servir a las personas y continuar la obra que el Señor puso en sus manos.</p>",
+                },
+            ]
+        },
+    },
     "faro_courses_feed": {
         "title": "Cursos publico FARO",
         "content": {

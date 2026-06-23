@@ -2,7 +2,7 @@
 # Barrel re-export file — all imports intentionally unused here
 
 # Identity & auth
-# Academy / LMS (legacy — Course, Enrollment, Lesson still in use via api/academy.py)
+# Academy / LMS (compat — Course, Enrollment, Lesson still in use via api/academy.py)
 from backend.models_academy import (
     AcademyActivityLog, Assessment, AssessmentAttempt, AssessmentOption,
     AssessmentQuestion, AssignmentSubmission, CampaignSeason, CellGroup,
@@ -17,17 +17,17 @@ from backend.models_cms import (  # noqa: F401
     CmsSite, CmsTheme, ContentMetric,
     ContentPublication, MediaAsset,
     PageContent,
-    PageContentVersion, Testimonial)
+    PageContentVersion, SavedView, Testimonial)
 # Personas (reemplaza Persona — UUID PK)
 from backend.models_personas import Persona
-Member = Persona  # Backward compatibility alias for legacy tests and CRUDs
+Member = Persona  # Backward compatibility alias for compat tests and CRUDs
 FaroSeason = CampaignSeason  # Backward compatibility alias for FaroSeason
 
 
 # CRM / Pastoral
 from backend.models_crm import (
     AgendaEvent, ChatMessage, ConsolidationAssignment,
-    ConsolidationCase, ConsolidationInteraction, ConsolidationTask,  # legacy (use CasoCRM from models_crm_core)
+    ConsolidationCase, ConsolidationInteraction, ConsolidationTask,  # compat (use CasoCRM from models_crm_core)
     CrmAutomation, CrmEvent,
     ColombianDepartment,
     CommunicationLog, CommunityBoardCard,
@@ -80,7 +80,7 @@ from backend.models_auth import (
     RecordatorioUsuario, RolPlataforma, TokenResetContrasena,
     TokenSesion, TokenVerificacionEmail, Usuario, UsuarioRolModulo)
 
-# Project legacy aliases removed; canonical projects live in models_projects.
+# Project compat aliases removed; canonical projects live in models_projects.
 
 # Agenda — Calendario Unificado, Recursos, Participantes
 from backend.models_agenda import (
@@ -113,6 +113,14 @@ from backend.services.conversation_memory import (
 
 # Knowledge Base
 from backend.services.knowledge_base import AgentKnowledgeBase
+
+# Enterprise CMS — Audit Trail, Permissions, Notifications, Webhooks, Custom Types, Search, Sessions
+from backend.models_enterprise import (  # noqa: F401
+    AuditLog, ContentPermission, CmsNotification, Webhook, WebhookDelivery,
+    CmsCustomType, CmsCustomEntry, CmsCustomEntryVersion, CmsGlossaryTerm,
+    SearchIndex, SearchPromotion, UserSession, MediaFolder,
+    MediaFileVersion, CmsRedirect, BrokenLinkCheck,
+)
 
 
 

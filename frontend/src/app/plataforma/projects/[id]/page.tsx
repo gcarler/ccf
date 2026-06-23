@@ -36,7 +36,7 @@ import type { ProjectActivityItem, ProjectMilestoneRecord, ProjectTaskRecord } f
 import { ProjectKanbanBoard, type PhaseDef } from '@/components/projects/ProjectKanbanBoard';
 import { PhaseManagerDrawer } from '@/components/projects/PhaseManagerDrawer';
 import { toast } from 'sonner';
-import UserSelect from '@/components/ui/UserSelect';
+import PersonaSelect from '@/components/ui/PersonaSelect';
 
 const PROJECT_DETAIL_VIEWS: ViewType[] = ['dashboard', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki', 'chat'];
 
@@ -343,7 +343,7 @@ export default function ProjectDetailPage() {
                             <option value="completed">Alcanzado</option>
                             <option value="archived">Archivado</option>
                         </select>
-                        <UserSelect
+                        <PersonaSelect
                             value={editOwnerId}
                             onChange={setEditOwnerId}
                             placeholder="Responsable del proyecto"

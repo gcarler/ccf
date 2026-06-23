@@ -26,9 +26,9 @@ Esto no significa que no exista deuda. Significa que la deuda restante esta inve
 
 La deuda restante esta concentrada en cuatro grupos:
 
-### 2.1 Identidad legacy con `users.id`
+### 2.1 Identidad compat con `users.id`
 
-Persisten FKs legacy a `users.id` en modelos que aun conviven con UUID:
+Persisten FKs compat a `users.id` en modelos que aun conviven con UUID:
 
 - `backend/models_crm.py`
 - `backend/models_cms.py`
@@ -43,7 +43,7 @@ Lectura operativa:
 - No debe crecer como identidad ministerial nueva.
 - Toda entidad nueva que represente personas debe apuntar a `personas.id`.
 
-### 2.2 Contratos legacy de auth y admin
+### 2.2 Contratos compat de auth y admin
 
 Siguen vivos contratos que usan `user_id:int`:
 
@@ -59,17 +59,17 @@ Saldo cerrado en 2026-06-05:
 - `/api/admin/users/{user_id}/permissions` ya resuelve UUID auth y queda como contrato admin vigente, no como deuda `user_id:int`.
 - `frontend/src/components/ui/UserSelect.tsx` consume `/api/admin/users` y opera con UUID string.
 - Academy frontend consume `/api/academy/me/...` y `/api/academy/personas...`; no quedan consumidores frontend de `/api/academy/users/{user_id}/...`.
-- Academy legacy tiene dual-write runtime y migracion Alembic de backfill UUID en `20260605_academy_persona_backfill`.
-- CRM legacy tiene dual-write runtime y migracion Alembic de backfill UUID en `20260605_crm_persona_backfill`.
+- Academy compat tiene dual-write runtime y migracion Alembic de backfill UUID en `20260605_academy_persona_backfill`.
+- CRM compat tiene dual-write runtime y migracion Alembic de backfill UUID en `20260605_crm_persona_backfill`.
 - CMS autoria/auditoria central tiene dual-write runtime y migracion Alembic de backfill UUID en `20260605_cms_persona_backfill`.
 - Agents/Governance tiene columnas UUID paralelas y migracion Alembic de backfill UUID en `20260605_agents_governance_persona_backfill`.
-- Las superficies frontend de CMS testimonios y auditoria admin ya usan `author_persona_id` / `actor_persona_id` como identidad principal, con enteros legacy solo como fallback visible.
+- Las superficies frontend de CMS testimonios y auditoria admin ya usan `author_persona_id` / `actor_persona_id` como identidad principal, con enteros compat solo como fallback visible.
 
 Esto es deuda conocida, no bug activo. Se conserva por compatibilidad hasta completar la migracion por lotes.
 
 ### 2.3 Superficies de CMS y auditoria
 
-Hay columnas legacy de auditoria y autoria que aun usan `users.id`:
+Hay columnas compat de auditoria y autoria que aun usan `users.id`:
 
 - `created_by`
 - `updated_by`
@@ -87,7 +87,7 @@ Siguen existiendo entidades con PK `Integer` por compatibilidad o por diseno leg
 - `consolidation_tasks`
 - `user_reminders`
 - varias tablas de CMS
-- varias tablas de Academy legacy
+- varias tablas de Academy compat
 
 No se migran todas al mismo tiempo. Se priorizan segun si representan identidad, transaccion o catalogo.
 
@@ -114,7 +114,7 @@ Accion:
 - documentar;
 - no tocar sin lote de migracion.
 
-### Legacy protegido
+### Compat protegido
 
 Existe para mantener consumidores activos.
 
@@ -145,10 +145,10 @@ Incluye:
 
 Objetivo:
 
-- separar autoria real de compatibilidad legacy;
+- separar autoria real de compatibilidad compat;
 - migrar solo campos que representen persona, no catalogo.
 
-### Lote 3: Transacciones legacy
+### Lote 3: Transacciones compat
 
 Objetivo:
 
@@ -159,7 +159,7 @@ Objetivo:
 
 Objetivo:
 
-- retirar aliases legacy solo cuando frontend, backend y datos ya hablen el mismo contrato.
+- retirar aliases compat solo cuando frontend, backend y datos ya hablen el mismo contrato.
 
 ---
 
@@ -173,13 +173,13 @@ La arquitectura puede declararse cerrada solo cuando se cumpla todo esto:
 4. No quedan nuevas referencias a `apiFetch("/api/...")` en frontend de plataforma.
 5. No quedan nuevas confirmaciones nativas en superficies de plataforma.
 6. Todo contrato nuevo de persona usa UUID.
-7. Cualquier legacy restante esta enumerado y atado a un lote de migracion reversible.
+7. Cualquier compat restante esta enumerado y atado a un lote de migracion reversible.
 
 ---
 
 ## 6. Conclusión Operativa
 
-La plataforma ya no esta en estado de inestabilidad funcional. Esta en estado de operacion estable con deuda legacy acotada.
+La plataforma ya no esta en estado de inestabilidad funcional. Esta en estado de operacion estable con deuda compat acotada.
 
 La frase correcta no es "ya esta 100% limpia".
 La frase correcta es:

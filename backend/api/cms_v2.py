@@ -445,13 +445,12 @@ def list_pages(
             items=pages, total=total, skip=skip, limit=limit
         )
 
-    # Legacy fallback
-    legacy_contents = [
+    fallback_contents = [
         row
         for row in crud.list_page_contents(db, limit=500)
         if not str(getattr(row, "page_key", "")).endswith("_wiki_notes")
     ]
-    if not legacy_contents:
+    if not fallback_contents:
         return PaginatedResponse[schemas.CmsPageRead](
             items=[], total=0, skip=skip, limit=limit
         )
@@ -475,7 +474,7 @@ def list_pages(
             created_at=row.created_at,
             updated_at=row.updated_at,
         )
-        for row in legacy_contents
+        for row in fallback_contents
     ]
     return PaginatedResponse[schemas.CmsPageRead](
         items=items, total=len(items), skip=skip, limit=limit
@@ -714,9 +713,10 @@ def preview_page(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
+    sections_list, _ = crud.list_cms_sections(db, page.id)
     sections = [
         section
-        for section in crud.list_cms_sections(db, page.id)
+        for section in sections_list
         if section.is_visible and getattr(section, "status", "active") != "archived"
     ]
     return schemas.CmsPublicPageRead(
@@ -1021,9 +1021,10 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
             sections=section_rows,
         )
 
+    sections_list, _ = crud.list_cms_sections(db, page.id)
     sections = [
         section
-        for section in crud.list_cms_sections(db, page.id)
+        for section in sections_list
         if section.is_visible and getattr(section, "status", "active") != "archived"
     ]
     section_reads = []

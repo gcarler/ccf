@@ -31,7 +31,7 @@ else:
 # Fase 1: conftest.py
 ct = (ROOT / "tests/conftest.py").read_text()
 print("\n--- FASE 1: Fix tests 403 ---")
-ok("persona.user_id = legacy_user.id" in ct)
+ok("persona.user_id = compat_user.id" in ct)
 
 # Fase 2: Soft delete
 print("\n--- FASE 2: Hard delete erradicado ---")

@@ -1,5 +1,6 @@
 """CRM Core 2.0 — Pydantic schemas (from backend.schemas._common import orm_config)."""
 from __future__ import annotations
+from uuid import UUID
 
 from datetime import datetime
 from typing import Optional, List
@@ -21,7 +22,7 @@ class PipelineCRMCreate(BaseModel):
 
 class PipelineCRMResponse(BaseModel):
     model_config = orm_config
-    id: int
+    id: UUID
     nombre: str
     tipo: str
     descripcion: Optional[str] = None
@@ -35,7 +36,7 @@ class PipelineCRMResponse(BaseModel):
 # ── Etapa Pipeline ──────────────────────────────────────
 
 class EtapaPipelineCreate(BaseModel):
-    pipeline_id: int
+    pipeline_id: UUID
     nombre: str
     orden: int
     color: Optional[str] = None
@@ -45,8 +46,8 @@ class EtapaPipelineCreate(BaseModel):
 
 class EtapaPipelineResponse(BaseModel):
     model_config = orm_config
-    id: int
-    pipeline_id: int
+    id: UUID
+    pipeline_id: UUID
     nombre: str
     orden: int
     color: Optional[str] = None
@@ -66,7 +67,7 @@ class PlantillaMensajeCreate(BaseModel):
 
 class PlantillaMensajeResponse(BaseModel):
     model_config = orm_config
-    id: int
+    id: UUID
     titulo: str
     canal: str
     contenido_texto: str
@@ -77,7 +78,7 @@ class PlantillaMensajeResponse(BaseModel):
 # ── Caso CRM ────────────────────────────────────────────
 
 class CasoCRMCreate(BaseModel):
-    persona_id: str
+    persona_id: UUID
     sede_id: str
     pipeline_id: Optional[int] = None
     etapa_actual_id: Optional[int] = None
@@ -96,7 +97,7 @@ class CasoCRMCreate(BaseModel):
 class CasoCRMResponse(BaseModel):
     model_config = orm_config
     id: str  # UUID as string
-    persona_id: str
+    persona_id: UUID
     sede_id: str
     pipeline_id: Optional[int] = None
     etapa_actual_id: Optional[int] = None
@@ -132,7 +133,7 @@ class InteraccionCRMCreate(BaseModel):
 
 class InteraccionCRMResponse(BaseModel):
     model_config = orm_config
-    id: int
+    id: UUID
     caso_id: str  # UUID as string
     tipo: str
     resumen: str

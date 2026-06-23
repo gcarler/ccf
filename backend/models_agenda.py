@@ -26,7 +26,7 @@ def _utcnow_tz():
 class RecursoFisico(Base):
     __tablename__ = "agenda_recursos"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     nombre = Column(String(100), nullable=False)
     tipo = Column(String(50), nullable=False)
@@ -79,7 +79,7 @@ class EventoAgenda(Base):
 class ParticipanteEvento(Base):
     __tablename__ = "agenda_participantes"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     evento_id = Column(UUID(as_uuid=True),
                        ForeignKey("agenda_eventos.id", ondelete="CASCADE"),
                        nullable=False)
@@ -100,11 +100,11 @@ class ParticipanteEvento(Base):
 class ReservaRecurso(Base):
     __tablename__ = "agenda_reserva_recursos"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     evento_id = Column(UUID(as_uuid=True),
                        ForeignKey("agenda_eventos.id", ondelete="CASCADE"),
                        nullable=False)
-    recurso_id = Column(Integer,
+    recurso_id = Column(UUID(as_uuid=True),
                         ForeignKey("agenda_recursos.id", ondelete="CASCADE"),
                         nullable=False)
     bloqueo_inicio = Column(DateTime(timezone=True), nullable=False)

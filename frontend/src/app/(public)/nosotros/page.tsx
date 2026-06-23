@@ -62,9 +62,17 @@ export default function NosotrosPage() {
 
     const founderBio  = (about?.founder_bio  as string) || "";
     const founderBio2 = (about?.founder_bio2 as string) || "";
+    const founderCtaTeam = (about?.founder_cta_team as string) || "Conoce al equipo";
+    const founderCtaVisit = (about?.founder_cta_visit as string) || "Visítanos";
+    const valuesEyebrow = (about?.values_eyebrow as string) || "Lo que nos define";
 
     const quoteText   = (about?.quote_text   as string) || "";
     const quoteAuthor = (about?.quote_author as string) || "";
+
+    const ctaViewSedes = (about?.cta_view_sedes as string) || "Ver sedes";
+    const ctaViewEvents = (about?.cta_view_events as string) || "Próximos eventos";
+    const breadcrumbInicio = (about?.breadcrumbInicio as string) || "Inicio";
+    const breadcrumbPage = (about?.breadcrumbPage as string) || "Quiénes Somos";
 
     return (
         <CmsPageOverride slug="nosotros">
@@ -84,9 +92,9 @@ export default function NosotrosPage() {
                     </div>
                     <div className="relative z-10 max-w-7xl mx-auto">
                         <div className="flex items-center gap-2 text-xs text-site-outline mb-8">
-                            <Link href="/" className="hover:text-site-primary transition-colors">Inicio</Link>
+                            <Link href="/" className="hover:text-site-primary transition-colors">{breadcrumbInicio}</Link>
                             <ChevronRight size={12} />
-                            <span className="text-site-on-surface-variant">Quiénes Somos</span>
+                            <span className="text-site-on-surface-variant">{breadcrumbPage}</span>
                         </div>
 
                         <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-site-primary mb-5">
@@ -242,13 +250,13 @@ export default function NosotrosPage() {
                                         boxShadow: "var(--site-cta-shadow)",
                                     }}
                                 >
-                                    Conoce al equipo <ArrowRight size={14} />
+                                    {founderCtaTeam} <ArrowRight size={14} />
                                 </Link>
                                 <Link
                                     href="/sedes"
                                     className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-site-surface-container text-site-on-surface-variant text-xs font-bold uppercase tracking-wider hover:scale-105 transition-all border border-site-outline-variant/30"
                                 >
-                                    Visítanos
+                                    {founderCtaVisit}
                                 </Link>
                             </div>
                         </div>
@@ -260,7 +268,7 @@ export default function NosotrosPage() {
                     <div className="max-w-7xl mx-auto">
                         <div className="text-center mb-14">
                             <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-site-primary mb-3">
-                                <Sparkles size={12} /> Lo que nos define
+                                <Sparkles size={12} /> {valuesEyebrow}
                             </span>
                             <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface tracking-tight mb-4">
                                 {(about?.valores_title as string) || "Valores que nos Guían"}
@@ -335,13 +343,13 @@ export default function NosotrosPage() {
                                         href="/sedes"
                                         className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-white text-site-primary text-xs font-black uppercase tracking-wider hover:scale-105 transition-all shadow-xl"
                                     >
-                                        Ver sedes <ArrowRight size={14} />
+                                        {ctaViewSedes} <ArrowRight size={14} />
                                     </Link>
                                     <Link
                                         href="/eventos"
                                         className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-white/15 border border-white/25 text-white text-xs font-bold uppercase tracking-wider hover:scale-105 hover:bg-white/20 transition-all"
                                     >
-                                        Próximos eventos
+                                        {ctaViewEvents}
                                     </Link>
                                 </div>
                             </div>

@@ -1,7 +1,7 @@
 -- ==========================================
 -- DDL: NUEVO MÓDULO DE AUTENTICACIÓN (CCF)
 -- ==========================================
--- Reemplaza las tablas legacy: users, roles, refresh_tokens, etc.
+-- Reemplaza las tablas compat: users, roles, refresh_tokens, etc.
 -- Las tablas viejas NO se tocan — conviven hasta migrar datos.
 --
 -- Principios:

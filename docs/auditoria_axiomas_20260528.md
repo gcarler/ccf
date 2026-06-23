@@ -10,15 +10,15 @@
 
 ## Axioma 2: Identidad Tridimensional ✅
 - `PersonaRoleAssignment` en Kernel (platform_role, ministry_office, church_role)
-- `church_role_effective` property implementada (fallback a columna legacy)
+- `church_role_effective` property implementada (fallback a columna compat)
 - `ChurchRoleDefinition` + `ChurchRoleGrant` para roles ministeriales
 - `ModulePermissionPolicy` para permisos por módulo
-- ⚠️ `personas.church_role` columna legacy marcada DEPRECADO
+- ⚠️ `personas.church_role` columna compat marcada DEPRECADO
 
 ## Axioma 3: Aislamiento Multi-Tenant ✅
 - `sede_id` en todas las tablas v2
 - 5 endpoints públicos sellados (admin.py)
-- ⚠️ ~35 endpoints legacy sin filtro sede_id (módulos no migrados)
+- ⚠️ ~35 endpoints compat sin filtro sede_id (módulos no migrados)
 
 ## UUIDs — 100% en tablas v2 ✅
 - CRM Core: CasoCRM.id UUID, persona_id UUID
@@ -34,5 +34,5 @@
 ## Timezones ⚠️
 - `agenda_eventos` usa DateTime(timezone=True) ✅
 - `_utcnow()` en models_shared.py NO incluye timezone ❌
-  → Afecta 40+ columnas DateTime en modelos legacy
+  → Afecta 40+ columnas DateTime en modelos compat
   → Fix: actualizar _utcnow() para incluir tzinfo

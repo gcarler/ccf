@@ -35,8 +35,8 @@ export const HOUR_HEIGHT = 60; // px per hour
 export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string; color: string }> = {
   task: {
     label: 'Tarea',
-    chip: 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300',
-    color: '#7c3aed',
+    chip: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+    color: '#3b82f6',
   },
   agenda_event: {
     label: 'Agenda',

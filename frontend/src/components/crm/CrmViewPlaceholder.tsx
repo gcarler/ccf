@@ -1,11 +1,12 @@
 "use client";
 
 import React from "react";
-import { CalendarDays, Construction, GanttChartSquare, Sparkles } from "lucide-react";
+import { CalendarDays, Construction, GanttChartSquare, List, Sparkles } from "lucide-react";
 import { ViewType } from "@/components/ViewSwitcher";
 import UniversalGanttView from "@/components/ui/UniversalGanttView";
 import UniversalCalendarView from "@/components/ui/UniversalCalendarView";
 import UniversalWikiView from "@/components/ui/UniversalWikiView";
+import UniversalListView from "@/components/ui/UniversalListView";
 
 const VIEW_LABEL: Record<ViewType, string> = {
   dashboard: "Resumen",
@@ -22,17 +23,20 @@ const VIEW_LABEL: Record<ViewType, string> = {
 
 type CalendarEvents = React.ComponentProps<typeof UniversalCalendarView>["events"];
 type GanttItems = React.ComponentProps<typeof UniversalGanttView>["items"];
+type ListItems = React.ComponentProps<typeof UniversalListView>["items"];
 
 export default function CrmViewPlaceholder({
   moduleName,
   viewType,
   calendarEvents,
   ganttItems,
+  listItems,
 }: {
   moduleName: string;
   viewType: ViewType;
   calendarEvents?: CalendarEvents;
   ganttItems?: GanttItems;
+  listItems?: ListItems;
 }) {
   if (viewType === "gantt") {
     if (ganttItems?.length) {
@@ -56,6 +60,19 @@ export default function CrmViewPlaceholder({
         icon={CalendarDays}
         title={`Sin calendario para ${moduleName}`}
         description="Esta vista no tiene eventos con fecha para mostrar. No se insertan ejemplos ni datos simulados."
+      />
+    );
+  }
+
+  if (viewType === "list") {
+    return (
+      <UniversalListView
+        items={listItems || []}
+        title={`${moduleName} — Lista`}
+        emptyMessage={`No hay elementos en la lista de ${moduleName}`}
+        onItemClick={(item) => {
+          console.log(`[List] Item clicked:`, item);
+        }}
       />
     );
   }

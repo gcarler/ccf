@@ -1,10 +1,11 @@
 from backend.models_shared import *
 from backend.models_shared import _utcnow
+import uuid as _uuid
 
 # 2. ACADEMY & FORUM
 class Course(Base):
     __tablename__ = "courses"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     code = Column(String(20), unique=True, index=True, nullable=False)
     title = Column(String(200), index=True, nullable=False)
     description = Column(Text, nullable=True)
@@ -29,15 +30,15 @@ class Course(Base):
 
 class CoursePrerequisite(Base):
     __tablename__ = "course_prerequisites"
-    id = Column(Integer, primary_key=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False, index=True)
     prerequisite_course_id = Column(
-        Integer, ForeignKey("courses.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False, index=True
     )
 
     __table_args__ = (
         UniqueConstraint(
-            "course_id", "prerequisite_course_id", name="uq_course_prerequisite_legacy"
+            "course_id", "prerequisite_course_id", name="uq_course_prerequisite_compat"
         ),
     )
 
@@ -48,8 +49,8 @@ class CoursePrerequisite(Base):
 
 class Lesson(Base):
     __tablename__ = "lessons"
-    id = Column(Integer, primary_key=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False, index=True)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
     content_type = Column(String(50), default="video")  # video, pdf, quiz
@@ -62,9 +63,9 @@ class Lesson(Base):
 
 class LessonProgress(Base):
     __tablename__ = "lesson_progress"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
-    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False, index=True)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=False, index=True)
     progress_percent = Column(Numeric(5, 2), default=0)
     last_position_seconds = Column(Integer, default=0)
     is_completed = Column(Boolean, default=False, index=True)
@@ -76,10 +77,10 @@ class LessonProgress(Base):
 
 class Assessment(Base):
     __tablename__ = "assessments"
-    id = Column(Integer, primary_key=True, index=True)
-    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=False, index=True)
     course_id = Column(
-        Integer, ForeignKey("courses.id"), nullable=True, index=True
+        UUID(as_uuid=True), ForeignKey("courses.id"), nullable=True, index=True
     )  # Direct course relation
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
@@ -92,9 +93,9 @@ class Assessment(Base):
 
 class AssessmentQuestion(Base):
     __tablename__ = "assessment_questions"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     assessment_id = Column(
-        Integer, ForeignKey("assessments.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("assessments.id"), nullable=False, index=True
     )
     question_text = Column(Text, nullable=False)
     question_type = Column(String(20), default="multiple_choice")
@@ -105,9 +106,9 @@ class AssessmentQuestion(Base):
 
 class AssessmentOption(Base):
     __tablename__ = "assessment_options"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     question_id = Column(
-        Integer, ForeignKey("assessment_questions.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("assessment_questions.id"), nullable=False, index=True
     )
     option_text = Column(Text, nullable=False)
     is_correct = Column(Boolean, default=False)
@@ -116,12 +117,12 @@ class AssessmentOption(Base):
 
 class AssessmentAttempt(Base):
     __tablename__ = "assessment_attempts"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     enrollment_id = Column(
-        Integer, ForeignKey("enrollments.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("enrollments.id"), nullable=False, index=True
     )
     assessment_id = Column(
-        Integer, ForeignKey("assessments.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("assessments.id"), nullable=False, index=True
     )
     score = Column(Numeric(5, 2), default=0)
     passed = Column(Boolean, default=False, index=True)
@@ -133,16 +134,16 @@ class AssessmentAttempt(Base):
 
 class AssessmentAnswer(Base):
     __tablename__ = "assessment_answers"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     attempt_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("assessment_attempts.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    question_id = Column(Integer, ForeignKey("assessment_questions.id"), nullable=False)
+    question_id = Column(UUID(as_uuid=True), ForeignKey("assessment_questions.id"), nullable=False)
     selected_option_id = Column(
-        Integer, ForeignKey("assessment_options.id"), nullable=True
+        UUID(as_uuid=True), ForeignKey("assessment_options.id"), nullable=True
     )
     text_response = Column(Text, nullable=True)
     is_correct = Column(Boolean, nullable=True)
@@ -154,8 +155,8 @@ class AssessmentAnswer(Base):
 
 class Resource(Base):
     __tablename__ = "resources"
-    id = Column(Integer, primary_key=True, index=True)
-    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=False)
     title = Column(String(200), nullable=False)
     file_url = Column(String(500), nullable=False)
     resource_type = Column(String(50), nullable=True)
@@ -164,11 +165,11 @@ class Resource(Base):
 
 class AssignmentSubmission(Base):
     __tablename__ = "assignment_submissions"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     enrollment_id = Column(
-        Integer, ForeignKey("enrollments.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("enrollments.id"), nullable=False, index=True
     )
-    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False, index=True)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=False, index=True)
     file_url = Column(String(500), nullable=False)
     comment = Column(Text, nullable=True)
     grade = Column(Numeric(5, 2), nullable=True)
@@ -177,8 +178,8 @@ class AssignmentSubmission(Base):
 
 class FormalActa(Base):
     __tablename__ = "formal_actas"
-    id = Column(Integer, primary_key=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False)
     closed_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     status = Column(String(20), default="closed")  # closed, archived
     min_grade_required = Column(Numeric(5, 2), default=70)
@@ -187,15 +188,15 @@ class FormalActa(Base):
 
 class ForumComment(Base):
     __tablename__ = "forum_comments"
-    id = Column(Integer, primary_key=True, index=True)
-    thread_id = Column(Integer, ForeignKey("forum_threads.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    thread_id = Column(UUID(as_uuid=True), ForeignKey("forum_threads.id"), nullable=False)
     author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 class Family(Base):
     __tablename__ = "families"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(100), nullable=False)
     address = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
@@ -203,7 +204,7 @@ class Family(Base):
 
 class CellGroup(Base):
     __tablename__ = "cell_groups"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     code = Column(String(30), unique=True, nullable=True, index=True)
     name = Column(String(100), nullable=False)
     zone = Column(String(100), nullable=True)
@@ -221,7 +222,7 @@ class CellGroup(Base):
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
 
     evangelism_strategy_id = Column(
-        UUID(as_uuid=True),
+        String(36),
         ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
@@ -275,7 +276,7 @@ class CampaignSeason(Base):
     """Represents an evangelistic campaign season (e.g. 'Temporada 2026')."""
 
     __tablename__ = "campaign_seasons"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(100), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
@@ -288,9 +289,9 @@ class CampaignSeason(Base):
 class Enrollment(Base):
     __tablename__ = "enrollments"
     __table_args__ = (UniqueConstraint("persona_id", "course_id", name="uq_persona_course"),)
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False, index=True)
     status = Column(String(20), default="active")  # active, completed, dropped
     progress_percent = Column(Float, default=0)
     final_grade = Column(Float, nullable=True)
@@ -309,11 +310,11 @@ class Enrollment(Base):
 
 class AcademyActivityLog(Base):
     __tablename__ = "academy_activity_logs"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     event_type = Column(
         String(50), nullable=False, index=True
     )  # enrollment, completion, drop, certificate
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=True)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=True)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     modality = Column(String(20), nullable=True)  # formal, no_formal
     value = Column(Numeric(10, 2), default=1.0)
@@ -321,7 +322,7 @@ class AcademyActivityLog(Base):
 
 class ForumThread(Base):
     __tablename__ = "forum_threads"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     title = Column(String(200), nullable=False, index=True)
     category = Column(String(50), nullable=False, index=True)
     author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
@@ -331,9 +332,9 @@ class ForumThread(Base):
 
 class CourseAttendance(Base):
     __tablename__ = "course_attendance"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     enrollment_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("enrollments.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -346,9 +347,9 @@ class CourseAttendance(Base):
 
 class Certificate(Base):
     __tablename__ = "certificates"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     enrollment_id = Column(
-        Integer, ForeignKey("enrollments.id"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("enrollments.id"), nullable=False, index=True
     )
     certificate_code = Column(String(64), unique=True, nullable=False, index=True)
     issued_at = Column(DateTime(timezone=True), default=_utcnow)

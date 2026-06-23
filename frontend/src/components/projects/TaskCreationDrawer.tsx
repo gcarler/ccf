@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { CheckSquare, Type, AlignLeft, Flag, Loader2, User } from 'lucide-react';
-import UserSelect from '@/components/ui/UserSelect';
+import PersonaSelect from '@/components/ui/PersonaSelect';
 import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
@@ -128,7 +128,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                     <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
                         <User size={12} /> Asignar a
                     </label>
-                    <UserSelect
+                    <PersonaSelect
                         value={assigneeId}
                         onChange={(v) => setValue('assignee_id', v)}
                         placeholder="Seleccionar responsable"

@@ -14,7 +14,7 @@ from backend.crud.crm import resolve_persona_id_for_user
 from backend.core.database import get_db
 from backend.core.permissions import require_active_user
 
-router = APIRouter(prefix="/api/tables", tags=["tables"])
+router = APIRouter(prefix="/tables", tags=["tables"])
 
 
 def _resolve_persona(db: Session, user) -> models.Persona | None:
@@ -28,11 +28,11 @@ def _resolve_persona(db: Session, user) -> models.Persona | None:
 
 class TableSchema(BaseModel):
     """Represents a configurable table schema."""
-    id: int
+    id: str
     name: str
     columns: List[Dict[str, Any]]
     view_name: Optional[str] = None
-    created_by: int
+    created_by: str
     created_at: str
 
 
@@ -48,7 +48,10 @@ def list_table_schemas(
     persona_id = persona.id if persona else None
     views = (
         db.query(models.SavedView)
-        .filter(models.SavedView.persona_id == persona_id)
+        .filter(
+            models.SavedView.persona_id == persona_id,
+            models.SavedView.deleted_at.is_(None),
+        )
         .all()
     )
     return [
@@ -90,7 +93,7 @@ def create_table_schema(
 
 @router.patch("/schemas/{view_id}", response_model=Dict[str, Any])
 def update_table_schema(
-    view_id: int,
+    view_id: str,
     payload: Dict[str, Any],
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
@@ -122,7 +125,7 @@ def update_table_schema(
 
 @router.delete("/schemas/{view_id}", response_model=Dict[str, Any])
 def delete_table_schema(
-    view_id: int,
+    view_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):

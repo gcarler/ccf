@@ -26,17 +26,14 @@ SCHEMAS_DIR = ROOT / "backend" / "schemas"
 ALLOWED_UNFILTERED = {
     "admin.py",             # Catálogos administrativos
     "community.py",         # Scoped por líder/grupo
-    "evangelism.py",        # Legacy — being refactored
-    "evangelism_events.py", # Legacy — being refactored
-    "evangelism_grupos.py", # Legacy — being refactored
+    "evangelism.py",        # Scoped internally by strategy/group/event
+    "evangelism_events.py", # Scoped internally by event/group
+    "evangelism_grupos.py", # Scoped internally by group
     "evangelism_shared.py", # Helper functions scoped by event/group
     "finance.py",           # Fund is catalog, Donation scoped by sede_id
     "projects.py",          # Scoped by project/user
-    "academy.py",            # Legacy — siendo reemplazado por academy_core.py
     "academy_core.py",       # Ya tiene sede_id en sus queries
-    "auth_v2.py",          # Catálogos (RolPlataforma, NivelGamificado, Medalla)
     "auth_v3.py",
-    "auth.py",             # Auth tokens, stats admin
     "cms_v2.py",           # Scoped por site_id
     "chat.py",             # Scoped por user_id / conversation_id
     "tables.py",           # Scoped por user_id
@@ -53,15 +50,15 @@ ALLOWED_UNFILTERED = {
     "governance.py",
     "graph.py",
     "support.py",
+    "enterprise_cms.py",  # Scoped por site_key (CMS multi-tenant)
     "spiritual_life.py",
     "messaging.py",
-    "content.py",
     "youtube.py",           # Proxy público RSS — sin queries de DB
     "system.py",            # sede_id en personal_filters (*unpack) — test no lo detecta en contexto
 }
 
-# Tablas legacy permitidas temporalmente (con redirect a v2)
-LEGACY_TABLES_ALLOWED = {
+# Tablas históricas bloqueadas para nuevas referencias directas
+OLD_TABLES_BLOCKED = {
     "consolidation_cases",
     "CellGroup",
 }
@@ -77,7 +74,7 @@ CATALOG_CLASSES = {
     "CmsSection", "SavedView", "AutomationRule",
 }
 
-ALLOWED_LEGACY_PERSON_INT_REFS = set()
+ALLOWED_OLD_PERSON_INT_REFS = set()
 
 
 # ── Tests ──────────────────────────────────────────────────────────────────
@@ -168,7 +165,7 @@ def test_no_new_person_identity_int_params():
                 if not match:
                     continue
                 identity_name = match.group(1)
-                if (rel, i, identity_name) in ALLOWED_LEGACY_PERSON_INT_REFS:
+                if (rel, i, identity_name) in ALLOWED_OLD_PERSON_INT_REFS:
                     continue
                 violations.append(f"  {fpath}:{i}: {line.strip()}")
 

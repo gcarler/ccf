@@ -401,7 +401,7 @@ Cada desarrollador que proponga un cambio de esquema o una funcionalidad nueva d
 | 2 | `persona_id: int` en schemas | `persona_id: int` | `persona_id: str` |
 | 3 | Hard DELETE | `db.delete(persona)` | `persona.estado_vital = 'INACTIVO'` |
 | 4 | Olvidar `sede_id` en queries | `db.query(Persona).all()` | `db.query(Persona).filter(Persona.sede_id == sede_id).all()` |
-| 5 | Tablas legacy | `ConsolidationCase` | `CasoCRM` |
+| 5 | Tablas compat | `ConsolidationCase` | `CasoCRM` |
 | 6 | DateTime sin timezone | `Column(DateTime)` | `Column(DateTime(timezone=True))` |
 | 7 | FK a users.id | `ForeignKey("users.id")` | `ForeignKey("personas.id")` |
 | 8 | JSONB en vez de JSON | `Column(JSONB)` | `Column(JSON)` |
@@ -420,7 +420,7 @@ Antes de cada commit o PR, verificar CADA UNO de estos puntos:
 - [ ] 4. ¿Está ausente `db.delete()` en tablas transaccionales (usando soft delete)?
 - [ ] 5. ¿Las FKs a `personas.id` usan tipo `UUID`?
 - [ ] 6. ¿Se usa `JSON` (no `JSONB`) para compatibilidad con SQLite?
-- [ ] 7. ¿Se referencian las tablas reales del esquema v2 (no las legacy)?
+- [ ] 7. ¿Se referencian las tablas reales del esquema v2 (no las compat)?
 - [ ] 8. ¿Se usan los nombres reales de columnas (no propiedades `@property`)?
 - [ ] 9. ¿El nuevo módulo está registrado en `models.py` + `api/__init__.py` + `app.py`?
 - [ ] 10. ¿Los cambios están documentados en el formato matricial de entrega?
@@ -447,7 +447,7 @@ Antes de cada commit o PR, verificar CADA UNO de estos puntos:
 | Gamificación | `xp_transactions` | `persona_id` |
 | Finanzas | `donations` | `persona_id` |
 
-### Tablas Legacy (NO USAR — fueron eliminadas en migración v2)
+### Tablas Compat (NO USAR — fueron eliminadas en migración v2)
 | ❌ Tabla eliminada | ✅ Reemplazo |
 |---|---|
 | `consolidation_cases` | `crm_casos` |
@@ -500,7 +500,7 @@ Antes de cada commit o PR, verificar CADA UNO de estos puntos:
   1. **`add_missing_idx`**: 12 índices B-Tree en FKs sin índice (academy, tareas, documentos)
   2. **`add_soft_delete`**: `deleted_at` + partial index `ix_*_active` en 12 tablas críticas
   3. **`add_sede_id`**: `sede_id UUID REFERENCES sedes(id)` en 5 tablas operativas
-  4. **`rename_legacy`**: Renombrado condicional de tablas legacy (solo si vacías o post-migración)
+  4. **`rename_compat`**: Renombrado condicional de tablas compat (solo si vacías o post-migración)
   5. **`add_gist`**: Constraint `EXCLUDE USING gist` para doble-booking en `agenda_reserva_recursos`
 - Todas las migraciones son **idempotentes** con helpers `_col_exists`, `_index_exists`, `_table_exists`, `_constraint_exists`
 
@@ -542,10 +542,10 @@ Antes de cada commit o PR, verificar CADA UNO de estos puntos:
 - **Resultado final suite completa**: **216 passed, 0 failed, 1 skipped, 18 xfailed** (antes: 77 passed, 36 failed, 110 errors)
 - Archivos modificados por fixes: `backend/api/evangelism_grupos.py`, `backend/crud/crm.py`, `backend/crud/audit.py`, `backend/core/audit.py`, `backend/models_governance.py`, `backend/models_projects.py`, `backend/api/projects.py`
 
-### ✅ Datos Legacy→v2 (Agent-9)
-- **Script de migración** creado: `scripts/migrate_legacy_to_v2.py` (579 líneas)
+### ✅ Datos Compat→v2 (Agent-9)
+- **Script de migración** creado: `scripts/migrate_compat_to_v2.py` (579 líneas)
   - Migra 9 tablas: `projects`, `courses`, `enrollments`, `users`, `roles`, `consolidation_cases`, `cell_groups`, `cell_group_sessions`, `agenda_events`
-  - Idempotente con `legacy_id_mapping` (UUID PK, tabla auxiliar)
+  - Idempotente con `compat_id_mapping` (UUID PK, tabla auxiliar)
   - Modo `--dry-run` para previsualizar sin escribir
   - Manejo de errores por registro (continúa ante fallos individuales)
   - Reporte final con totales/migrados/fallidos por tabla

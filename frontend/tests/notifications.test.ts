@@ -16,7 +16,7 @@ describe('notification helpers', () => {
     it('normalizes backend notifications for the UI', () => {
         expect(toUiNotification({
             id: 7,
-            user_id: 1,
+            persona_id: '00000000-0000-0000-0000-000000000001',
             title: 'Nuevo comentario',
             content: 'Hay una respuesta nueva',
             is_read: false,

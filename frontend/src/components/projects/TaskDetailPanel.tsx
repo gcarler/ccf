@@ -1,6 +1,6 @@
 "use client";
 
-import UserSelect from '@/components/ui/UserSelect';
+import PersonaSelect from '@/components/ui/PersonaSelect';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import type { ProjectTaskRecord,TaskSupplyRecord } from '@/types/projects';
@@ -852,7 +852,7 @@ export default function TaskDetailPanel({
                     <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05] space-y-2">
 
                         <MetaRow icon={<UserRound size={13} className="text-slate-400" />} label="Persona asignada">
-                            <UserSelect
+                            <PersonaSelect
                                 value={task.assignee_id ?? null}
                                 onChange={handleAssigneeChange}
                                 placeholder="Sin asignar"

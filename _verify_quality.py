@@ -43,7 +43,7 @@ check("fetch(" in content and "erradicado" in content, "Métrica: fetch directo 
 print("\n--- FASE 1: Fix tests 403 (conftest.py) ---")
 conftest = ROOT / "tests/conftest.py"
 ct = conftest.read_text(encoding="utf-8")
-check("persona.user_id = legacy_user.id" in ct, "seed_admin_v2 asigna persona.user_id")
+check("persona.user_id = compat_user.id" in ct, "seed_admin_v2 asigna persona.user_id")
 
 # ── Fase 2: Soft delete UsuarioRolModulo ──
 print("\n--- FASE 2: Hard delete erradicado ---")

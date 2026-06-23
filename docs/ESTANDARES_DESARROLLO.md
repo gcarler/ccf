@@ -380,7 +380,7 @@ def list_personas(db: Session, sede_id: int):
     return db.query(Persona).filter(Persona.sede_id == sede_id).all()
 ```
 
-### Error #5: Usar tablas legacy en queries
+### Error #5: Usar tablas compat en queries
 ```python
 # ❌ ROMPE: tabla eliminada
 db.query(ConsolidationCase).all()

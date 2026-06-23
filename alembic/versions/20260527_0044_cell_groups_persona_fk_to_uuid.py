@@ -6,7 +6,7 @@ Create Date: 2026-05-27
 
 Converts cell_groups.leader_persona_id, assistant_persona_id, host_persona_id
 from INTEGER to UUID to match the Persona model (UUID PK).
-Existing integer values are legacy member IDs with no valid persona UUID mapping,
+Existing integer values are compat member IDs with no valid persona UUID mapping,
 so they are cleared (set to NULL) during the migration.
 """
 

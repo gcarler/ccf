@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
 
 /**
  * RichText — pro typography for CMS content.
@@ -189,13 +190,14 @@ const RICH_TEXT_CSS = `
 
 export default function RichText({ html, className = "", as: Tag = "div" }: RichTextProps) {
     if (!html) return null;
+    const safeHtml = sanitizeCmsHtml(html);
 
     return (
         <>
             <style>{RICH_TEXT_CSS}</style>
             <Tag
                 className={`faro-rich-text ${className}`}
-                dangerouslySetInnerHTML={{ __html: html }}
+                dangerouslySetInnerHTML={{ __html: safeHtml }}
             />
         </>
     );

@@ -32,6 +32,18 @@ export default function PublicHomePage() {
     const homeEyebrow = (homeFeed?.eyebrow as string) || "Nuestra esencia";
     const homeSectionTitle = (homeFeed?.section_title as string) || "Bienvenidos a Casa";
     const homeSectionDescription = (homeFeed?.section_description as string) || "Rutas públicas para conocer la comunidad, profundizar en la fe y encontrar dónde dar el siguiente paso.";
+    const activitiesEyebrow = (homeFeed?.activities_eyebrow as string) || "Actualidad";
+    const activitiesTitle = (homeFeed?.activities_title as string) || "Actividades Recientes";
+    const activitiesViewAll = (homeFeed?.activities_view_all as string) || "Ver calendario →";
+    const activitiesEmpty = (homeFeed?.activities_empty as string) || "Próximamente encontrarás aquí nuestras actividades. Mientras tanto, síguenos en redes sociales.";
+    const scrollIndicator = (homeFeed?.scroll_indicator as string) || "Descubrir";
+    const newsletterEyebrow = (homeFeed?.newsletter_eyebrow as string) || "Boletín semanal";
+    const newsletterTitle = (homeFeed?.newsletter_title as string) || "¿Quieres recibir nuestras novedades?";
+    const newsletterDescription = (homeFeed?.newsletter_description as string) || "Meditaciones semanales, eventos exclusivos y más.\nDirecto a tu correo.";
+    const newsletterPlaceholder = (homeFeed?.newsletter_placeholder as string) || "Tu correo electrónico";
+    const newsletterSubmit = (homeFeed?.newsletter_submit as string) || "Suscribirme";
+    const newsletterSuccessTitle = (homeFeed?.newsletter_success_title as string) || "¡Gracias por suscribirte!";
+    const newsletterSuccessDesc = (homeFeed?.newsletter_success_desc as string) || "Recibirás meditaciones y novedades semanales.";
     const homeFeaturedCard = (homeFeed?.featured_card && typeof homeFeed.featured_card === "object" && !Array.isArray(homeFeed.featured_card))
         ? homeFeed.featured_card as Record<string, unknown>
         : null;
@@ -184,7 +196,7 @@ export default function PublicHomePage() {
                 >
                     <div className="w-px h-8 bg-[hsl(var(--bg-primary))] animate-pulse" />
                     <span className="text-white text-[9px] uppercase tracking-wide">
-                        Descubrir
+                        {scrollIndicator}
                     </span>
                 </motion.div>
             </section>
@@ -271,21 +283,27 @@ export default function PublicHomePage() {
                                 href: "/sedes",
                                 img: "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80",
                             },
-                        ]).map(({ title, desc, href, img, alt }, idx) => (
+                        ]).map((card, idx) => {
+                            const title = card.title as string;
+                            const desc = card.desc as string;
+                            const href = card.href as string;
+                            const img = card.img as string;
+                            const alt = card.alt as string;
+                            return (
                             <motion.div
-                                key={title}
+                                key={title || idx}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 * (idx + 1) }}
                             >
                                 <Link
-                                    href={(href as string) || "#"}
+                                    href={href || "#"}
                                     className="block rounded-2xl overflow-hidden group relative min-h-[130px] flex flex-col justify-end transition-transform hover:scale-[1.02]"
                                 >
                                     <Image
-                                        src={(img as string) || "https://picsum.photos/seed/1506905925346-21bda4d32df4/800/600"}
-                                        alt={(alt as string) || (title as string)}
+                                        src={img || "https://picsum.photos/seed/1506905925346-21bda4d32df4/800/600"}
+                                        alt={alt || title}
                                         fill
                                         sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                                         className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -297,7 +315,8 @@ export default function PublicHomePage() {
                                     </div>
                                 </Link>
                             </motion.div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </section>
@@ -319,13 +338,13 @@ export default function PublicHomePage() {
                                 className="text-xs font-bold uppercase tracking-wide block mb-3"
                                 style={{ color: "var(--site-primary)" }}
                             >
-                                Actualidad
+                                {activitiesEyebrow}
                             </span>
                             <h2
                                 className="font-bold text-2xl md:text-3xl tracking-tight"
                                 style={{ color: "var(--site-on-background)" }}
                             >
-                                Actividades Recientes
+                                {activitiesTitle}
                             </h2>
                         </div>
                         <Link
@@ -336,12 +355,12 @@ export default function PublicHomePage() {
                                 borderColor: "var(--site-primary)",
                             }}
                         >
-                            Ver calendario →
+                            {activitiesViewAll}
                         </Link>
                     </motion.div>
                     {publicEvents.length === 0 ? (
                         <p className="text-center py-1.5" style={{ color: "var(--site-on-surface-variant)" }}>
-                            Próximamente encontrarás aquí nuestras actividades. Mientras tanto, síguenos en redes sociales.
+                            {activitiesEmpty}
                         </p>
                     ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -411,23 +430,29 @@ export default function PublicHomePage() {
                     className="max-w-3xl mx-auto text-center"
                 >
                     <span className="inline-block text-xs font-bold uppercase tracking-widest mb-5 px-4 py-1.5 rounded-full" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
-                        Boletín semanal
+                        {newsletterEyebrow}
                     </span>
                     <h2
                         className="font-black tracking-tight mb-5 leading-tight text-3xl sm:text-4xl lg:text-5xl"
                         style={{ color: "var(--site-on-background)" }}
                     >
-                        ¿Quieres recibir nuestras novedades?
+                        {newsletterTitle}
                     </h2>
                     <p className="text-base sm:text-lg mb-10 leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
-                        Meditaciones semanales, eventos exclusivos y más.<br />
-                        <span style={{ color: "var(--site-primary)" }}>Directo a tu correo.</span>
+                        {newsletterDescription.split('\n').map((line, i) => (
+                            <React.Fragment key={i}>
+                                {i > 0 && <br />}
+                                {i === newsletterDescription.split('\n').length - 1 ? (
+                                    <span style={{ color: "var(--site-primary)" }}>{line}</span>
+                                ) : line}
+                            </React.Fragment>
+                        ))}
                     </p>
 
                     {nlStatus === "sent" ? (
                         <div className="py-6">
-                            <p className="text-2xl font-black mb-2" style={{ color: "var(--site-on-background)" }}>¡Gracias por suscribirte!</p>
-                            <p className="text-base" style={{ color: "var(--site-on-surface-variant)" }}>Recibirás meditaciones y novedades semanales.</p>
+                            <p className="text-2xl font-black mb-2" style={{ color: "var(--site-on-background)" }}>{newsletterSuccessTitle}</p>
+                            <p className="text-base" style={{ color: "var(--site-on-surface-variant)" }}>{newsletterSuccessDesc}</p>
                         </div>
                     ) : (
                         <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
@@ -435,7 +460,7 @@ export default function PublicHomePage() {
                                 type="email"
                                 value={nlEmail}
                                 onChange={(e) => setNlEmail(e.target.value)}
-                                placeholder="Tu correo electrónico"
+                                placeholder={newsletterPlaceholder}
                                 required
                                 disabled={nlStatus === "sending"}
                                 className="flex-grow rounded-full px-6 py-4 text-base focus:outline-none disabled:opacity-60 focus:ring-2"
@@ -454,7 +479,7 @@ export default function PublicHomePage() {
                                     boxShadow: "var(--site-cta-shadow)",
                                 }}
                             >
-                                {nlStatus === "sending" ? "Enviando..." : "Suscribirme"}
+                                {nlStatus === "sending" ? "Enviando..." : newsletterSubmit}
                             </button>
                         </form>
                     )}

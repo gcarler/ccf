@@ -89,6 +89,7 @@ function SkeletonCard() {
 /* ── Card de video ── */
 function VideoCard({
     video, featured = false, watched, onPlay, onShare, onCopy, copied,
+    featuredBadge, shareWhatsapp, copyLinkLabel,
 }: {
     video: YTVideo;
     featured?: boolean;
@@ -97,6 +98,9 @@ function VideoCard({
     onShare: () => void;
     onCopy: () => void;
     copied: boolean;
+    featuredBadge: string;
+    shareWhatsapp: string;
+    copyLinkLabel: string;
 }) {
     const [imgErr, setImgErr] = useState(false);
     const desc = cleanDesc(video.description);
@@ -133,7 +137,7 @@ function VideoCard({
                 <div className="absolute top-2.5 left-2.5 flex gap-1.5">
                     {featured && (
                         <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm">
-                            <Youtube size={9} /> Más reciente
+                            <Youtube size={9} /> {featuredBadge}
                         </span>
                     )}
                     {watched && (
@@ -180,14 +184,14 @@ function VideoCard({
                     <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button
                             onClick={(e) => { e.stopPropagation(); onShare(); }}
-                            title="Compartir en WhatsApp"
+                            title={shareWhatsapp}
                             className="p-1.5 rounded-lg hover:bg-site-primary/10 text-site-outline hover:text-site-on-surface transition-colors"
                         >
                             <MessageCircle size={14} />
                         </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); onCopy(); }}
-                            title="Copiar enlace"
+                            title={copyLinkLabel}
                             className="p-1.5 rounded-lg hover:bg-site-primary/10 text-site-outline hover:text-site-primary transition-colors"
                         >
                             {copied ? <Check size={14} /> : <Link2 size={14} />}
@@ -202,12 +206,17 @@ function VideoCard({
 /* ── Modal reproductor ── */
 function PlayerModal({
     video, onClose, onShare, onCopy, copied,
+    shareWhatsapp, copyLinkLabel, copiedLabel, viewOnYoutube,
 }: {
     video: YTVideo;
     onClose: () => void;
     onShare: () => void;
     onCopy: () => void;
     copied: boolean;
+    shareWhatsapp: string;
+    copyLinkLabel: string;
+    copiedLabel: string;
+    viewOnYoutube: string;
 }) {
     const desc = cleanDesc(video.description);
 
@@ -241,27 +250,27 @@ function PlayerModal({
                     <div className="flex items-center gap-1 shrink-0">
                         <button
                             onClick={onShare}
-                            title="Compartir en WhatsApp"
+                            title={shareWhatsapp}
                             className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold text-white/70 hover:text-white hover:bg-white/10 transition-all"
                         >
-                            <MessageCircle size={14} /> <span className="hidden sm:inline">WhatsApp</span>
+                            <MessageCircle size={14} /> <span className="hidden sm:inline">{shareWhatsapp}</span>
                         </button>
                         <button
                             onClick={onCopy}
-                            title="Copiar enlace"
+                            title={copyLinkLabel}
                             className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold transition-all"
                             style={{ color: copied ? "#22c55e" : "rgba(255,255,255,0.7)" }}
                         >
                             {copied
-                                ? <><Check size={14} /> <span className="hidden sm:inline">¡Copiado!</span></>
-                                : <><Link2 size={14} /> <span className="hidden sm:inline">Copiar</span></>
+                                ? <><Check size={14} /> <span className="hidden sm:inline">{copiedLabel}</span></>
+                                : <><Link2 size={14} /> <span className="hidden sm:inline">{copyLinkLabel}</span></>
                             }
                         </button>
                         <a
                             href={video.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            title="Ver en YouTube"
+                            title={viewOnYoutube}
                             className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all"
                         >
                             <ExternalLink size={16} />
@@ -324,6 +333,14 @@ export default function PredicasPage() {
     useEffect(() => { load(); }, [load]);
 
     const feed = feedContent?.content ? JSON.parse(feedContent.content) : null;
+
+    const featuredBadge = feed?.featured_badge || "Más reciente";
+    const retryLabel = feed?.retry_label || "Reintentar";
+    const shareWhatsapp = feed?.share_whatsapp || "WhatsApp";
+    const copyLinkLabel = feed?.copy_link || "Copiar";
+    const copiedLabel = feed?.copied_label || "¡Copiado!";
+    const viewOnYoutube = feed?.view_on_youtube || "Ver en YouTube";
+    const closeLabel = feed?.close || "Cerrar";
 
     /* Marcar visto + abrir reproductor */
     const openPlayer = useCallback((video: YTVideo) => {
@@ -415,6 +432,7 @@ export default function PredicasPage() {
                             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-site-outline pointer-events-none" />
                             <input
                                 ref={searchRef}
+                                type="text"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 placeholder={feed?.search_placeholder || "Buscar por título o predicador…"}
@@ -448,7 +466,7 @@ export default function PredicasPage() {
                                 <h2 className="text-lg font-bold text-site-on-surface mb-2">{feed?.empty_title || "No se pudieron cargar los videos"}</h2>
                                 <p className="text-sm text-site-on-surface-variant mb-6">{feed?.empty_description || "Verifica tu conexión o intenta nuevamente."}</p>
                                 <button onClick={load} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold" style={{ background: "var(--site-cta-gradient)" }}>
-                                    <RefreshCw size={15} /> Reintentar
+                                    <RefreshCw size={15} /> {retryLabel}
                                 </button>
                             </div>
                         )}
@@ -482,6 +500,9 @@ export default function PredicasPage() {
                                             onShare={() => shareWA(featured)}
                                             onCopy={() => copyLink(featured)}
                                             copied={copied === featured.id}
+                                            featuredBadge={featuredBadge}
+                                            shareWhatsapp={shareWhatsapp}
+                                            copyLinkLabel={copyLinkLabel}
                                         />
                                     </div>
                                 )}
@@ -507,6 +528,9 @@ export default function PredicasPage() {
                                                     onShare={() => shareWA(v)}
                                                     onCopy={() => copyLink(v)}
                                                     copied={copied === v.id}
+                                                    featuredBadge={featuredBadge}
+                                                    shareWhatsapp={shareWhatsapp}
+                                                    copyLinkLabel={copyLinkLabel}
                                                 />
                                             ))}
                                         </div>
@@ -538,6 +562,10 @@ export default function PredicasPage() {
                         onShare={() => shareWA(player)}
                         onCopy={() => copyLink(player)}
                         copied={copied === player.id}
+                        shareWhatsapp={shareWhatsapp}
+                        copyLinkLabel={copyLinkLabel}
+                        copiedLabel={copiedLabel}
+                        viewOnYoutube={viewOnYoutube}
                     />
                 )}
             </main>

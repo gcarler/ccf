@@ -136,7 +136,7 @@ from backend.schemas.dashboard import (AcademyDashboard, AdminGlobalDashboard,
 from backend.schemas.governance import (AdminAuditLog, AutomationRuleCreate,
                                         AutomationRuleRead,
                                         AutomationRuleUpdate)
-# ── Identity & Auth (legacy) ─────────────────────────────────────────────────
+# ── Identity & Auth ──────────────────────────────────────────────────────────
 from backend.schemas.identity import (RefreshTokenRequest, Role, RoleBase,
                                       RoleCreate, Token, TokenUser, User,
                                       UserBase, UserCreate, UserSelfUpdate,
@@ -156,13 +156,13 @@ from backend.schemas.auth_v2 import (
     UsuarioUpdate, UsuarioRolModuloBase, UsuarioRolModuloCreate,
     UsuarioRolModuloRead,
 )
-# ── Legacy / Misc ────────────────────────────────────────────────────────────
-from backend.schemas.legacy import (CommunityBoardCard,
-                                    CommunityBoardCardCreate,
-                                    CommunityBoardCardUpdate, Milestone,
-                                    MilestoneCreate, PastorRadarSchema,
-                                    PublicRegistrationCreate, SupportTicket,
-                                    SupportTicketCreate)
+# ── Compatibility / Misc ─────────────────────────────────────────────────────
+from backend.schemas.compatibility import (CommunityBoardCard,
+                                           CommunityBoardCardCreate,
+                                           CommunityBoardCardUpdate, Milestone,
+                                           MilestoneCreate, PastorRadarSchema,
+                                           PublicRegistrationCreate,
+                                           SupportTicket, SupportTicketCreate)
 # ── Notifications / Comms ────────────────────────────────────────────────────
 from backend.schemas.notifications import (CommunicationLog,
                                            CommunicationLogCreate,

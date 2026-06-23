@@ -52,7 +52,7 @@
 - `admin/content` ya no muestra tablero con datos simulados: redirige al editor CMS real.
 - Se retiro el fallback `PREMIUM_TESTIMONIALS`; la pagina publica y el detalle de testimonios ahora dependen del endpoint real del CMS y muestran estados vacios honestos.
 - Se agrego selector directo de biblioteca media en creacion y edicion de testimonios para no copiar/pegar URLs manualmente.
-- `admin/testimonials` ya no conserva un panel legacy sin multimedia: redirige a `/cms/testimonials`.
+- `admin/testimonials` ya no conserva un panel compat sin multimedia: redirige a `/cms/testimonials`.
 - El detalle `/cms/testimonials/[id]` muestra imagen, video o audio asociado y usa `status` real para aprobar, archivar y restaurar.
 - El dashboard CMS incorpora metricas de media total, imagenes, videos y podcasts.
 - Se retiro el editor de "JSON avanzado" del builder visual y se agregaron controles visuales para `video_hero`, columnas, countdown, popup, stats, team, pricing y testimonios manuales.

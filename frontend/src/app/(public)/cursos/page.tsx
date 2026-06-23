@@ -45,10 +45,10 @@ export default function CursosPage() {
                 method: "POST",
                 body: { email, source: "newsletter-web", landing_page: "/cursos" }
             });
-            showToast("¡Te has suscrito con éxito a nuestra academia!");
+            showToast(newsletterSuccessToast);
             setEmail("");
         } catch (error) {
-            showToast("Error al suscribirse. Inténtalo de nuevo.");
+            showToast(newsletterErrorToast);
         } finally {
             setIsSubmitting(false);
         }
@@ -64,9 +64,9 @@ export default function CursosPage() {
                 body: { title, landing_page: "/cursos" },
             });
             setWishlist((prev) => [...prev, title]);
-            showToast(`"${title}" añadido a tu lista — te contactaremos con info`);
+            showToast(`"${title}" ${wishlistSuccessPrefix}`);
         } catch {
-            showToast(`"${title}" guardado en tu lista`);
+            showToast(`"${title}" ${wishlistFallbackPrefix}`);
             setWishlist((prev) => [...prev, title]);
         }
     };
@@ -98,6 +98,14 @@ export default function CursosPage() {
     const emptyBooksMessage = typeof courseFeed.empty_books_message === "string" ? courseFeed.empty_books_message : "Próximamente tendremos libros disponibles.";
     const coursesTitle = typeof courseFeed.courses_title === "string" ? courseFeed.courses_title : "Cursos & Academia";
     const coursesDescription = typeof courseFeed.courses_description === "string" ? courseFeed.courses_description : "Programas estructurados para líderes, estudiantes y buscadores de la verdad. Formación teológica y práctica con estándares de excelencia.";
+    const ctaTitle = typeof courseFeed.cta_title === "string" ? courseFeed.cta_title : "Únete a la Academia FARO";
+    const ctaDescription = typeof courseFeed.cta_description === "string" ? courseFeed.cta_description : "Recibe actualizaciones sobre nuevos cursos, lanzamientos de libros y eventos exclusivos de formación directamente en tu correo.";
+    const ctaPlaceholder = typeof courseFeed.cta_placeholder === "string" ? courseFeed.cta_placeholder : "Tu correo electrónico";
+    const ctaSubmit = typeof courseFeed.cta_submit === "string" ? courseFeed.cta_submit : "Suscribirme";
+    const newsletterSuccessToast = typeof courseFeed.newsletter_success_toast === "string" ? courseFeed.newsletter_success_toast : "¡Te has suscrito con éxito a nuestra academia!";
+    const newsletterErrorToast = typeof courseFeed.newsletter_error_toast === "string" ? courseFeed.newsletter_error_toast : "Error al suscribirse. Inténtalo de nuevo.";
+    const wishlistSuccessPrefix = typeof courseFeed.wishlist_success_toast_prefix === "string" ? courseFeed.wishlist_success_toast_prefix : "añadido a tu lista — te contactaremos con info";
+    const wishlistFallbackPrefix = typeof courseFeed.wishlist_fallback_toast_prefix === "string" ? courseFeed.wishlist_fallback_toast_prefix : "guardado en tu lista";
 
     const cmsCourses: CourseItem[] = Array.isArray(coursesContent?.parsed) && coursesContent.parsed.length > 0 
         ? coursesContent.parsed as CourseItem[]
@@ -448,15 +456,13 @@ export default function CursosPage() {
                                 className="text-lg md:text-xl font-bold mb-3 tracking-tight leading-[1.1]"
                                 style={{ color: "var(--site-on-surface)" }}
                             >
-                                Únete a la <br/>Academia FARO
+                                {ctaTitle}
                             </h2>
                             <p
                                 className="text-xl leading-relaxed mb-3"
                                 style={{ color: "var(--site-on-surface-variant)" }}
                             >
-                                Recibe actualizaciones sobre nuevos cursos, lanzamientos de
-                                libros y eventos exclusivos de formación directamente en tu
-                                correo.
+                                {ctaDescription}
                             </p>
                             <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4">
                                 <input
@@ -464,7 +470,7 @@ export default function CursosPage() {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Tu correo electrónico"
+                                    placeholder={ctaPlaceholder}
                                     disabled={isSubmitting}
                                     className="flex-1 rounded-lg px-3 py-1.5 text-lg focus:outline-none transition-shadow focus:shadow-xl"
                                     style={{
@@ -480,7 +486,7 @@ export default function CursosPage() {
                                         background: "var(--site-cta-gradient)",
                                     }}
                                 >
-                                    Suscribirme
+                                    {ctaSubmit}
                                 </button>
                             </form>
                         </div>

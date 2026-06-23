@@ -1,33 +1,46 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Quote, BookOpen, Cross, Sparkles, Instagram, Heart } from 'lucide-react';
+import { PASTORS } from '@/data/pastors';
 import { SITE_KEY, SITE_NAME } from '@/lib/site-config';
 import ShareButtons from '@/components/public/ShareButtons';
-import { getPublicPastoralTeam, PastoralProfile } from '@/lib/cms/v2';
+import { useContentBlock } from '@/hooks/useContent';
+import { sanitizeCmsHtml } from '@/lib/cms/sanitize';
+
+type CmsPastor = {
+    id?: string;
+    slug: string;
+    name: string;
+    role?: string;
+    image?: string;
+    photo_url?: string;
+    story?: string;
+    bio_short?: string;
+    bio_full?: string;
+    social_instagram?: string;
+    social_facebook?: string;
+    social_twitter?: string;
+    is_main_pastor?: boolean;
+};
 
 export default function PastorDetailPage() {
     const params = useParams();
     const router = useRouter();
     const slug = params?.slug as string;
 
-    const [pastor, setPastor] = useState<PastoralProfile | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data: pastorsCms } = useContentBlock(`${SITE_KEY}_pastores_feed`);
+    const pastor = useMemo(() => {
+        const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
+        if (!Array.isArray(list)) return null;
+        return list.find(p => p.slug === slug) || null;
+    }, [pastorsCms, slug]);
+    const localPastor = useMemo(() => PASTORS.find(p => p.id === slug) || null, [slug]);
 
-    useEffect(() => {
-        getPublicPastoralTeam(SITE_KEY)
-            .then(list => {
-                const found = list.find(p => p.slug === slug);
-                setPastor(found || null);
-            })
-            .catch(() => setPastor(null))
-            .finally(() => setLoading(false));
-    }, [slug]);
-
-    if (loading) {
+    if (!pastorsCms) {
         return (
             <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] flex items-center justify-center pt-[88px]">
                 <div className="w-10 h-10 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
@@ -91,9 +104,9 @@ export default function PastorDetailPage() {
                             {/* ── Foto ── */}
                             <div className="w-full max-w-[400px] lg:w-5/12 relative shrink-0">
                                 <div className="relative aspect-[4/5] rounded-[1.25rem] overflow-hidden shadow-2xl shadow-black/15 dark:shadow-[0_30px_80px_rgba(0,0,0,0.6)] ring-1 ring-slate-200/50 dark:ring-white/[0.06]">
-                                    {pastor.photo_url ? (
+                                    {(pastor.photo_url || pastor.image) ? (
                                         <Image
-                                            src={pastor.photo_url}
+                                            src={pastor.photo_url || pastor.image || ""}
                                             alt={pastor.name}
                                             fill
                                             className="object-cover object-top"
@@ -134,7 +147,7 @@ export default function PastorDetailPage() {
                                 <div className="relative p-6 md:p-7 bg-gradient-to-br from-slate-50 to-white dark:from-white/[0.03] dark:to-white/[0.01] rounded-[1.25rem] border border-slate-200/50 dark:border-white/[0.05] shadow-lg shadow-slate-200/30 dark:shadow-none">
                                     <Quote className="absolute top-5 left-5 text-[hsl(var(--primary))/0.1]" size={40} />
                                     <p className="relative z-10 text-base md:text-lg text-slate-600 dark:text-slate-300 font-medium italic leading-relaxed pt-8 pl-1">
-                                        &ldquo;{pastor.bio_full || 'El amor de Cristo nos impulsa a servir con alegría y dedicación.'}&rdquo;
+                                        &ldquo;{pastor.bio_short || pastor.story || localPastor?.shortStory || 'El amor de Cristo nos impulsa a servir con alegría y dedicación.'}&rdquo;
                                     </p>
                                     <div className="flex items-center gap-3 mt-5 pl-1">
                                         <div className="h-px flex-1 bg-gradient-to-r from-[hsl(var(--primary))/0.3] to-transparent max-w-[80px]" />
@@ -209,7 +222,7 @@ export default function PastorDetailPage() {
                                     <div>
                                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-1.5">Versículo Lema</p>
                                         <p className="text-base md:text-lg text-slate-700 dark:text-slate-200 font-medium leading-relaxed">
-                                            {pastor.bio_short || 'Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree no se pierda, sino que tenga vida eterna. — Juan 3:16'}
+                                            {pastor.bio_short || pastor.story || localPastor?.shortStory || 'Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree no se pierda, sino que tenga vida eterna. — Juan 3:16'}
                                         </p>
                                     </div>
                                 </div>
@@ -265,7 +278,7 @@ export default function PastorDetailPage() {
                                 "
                             >
                                 {/* Renderizar bio_full como HTML seguro */}
-                                <div dangerouslySetInnerHTML={{ __html: pastor.bio_full || pastor.bio_short || 'Próximamente compartiremos más sobre su historia y ministerio.' }} />
+                                <div dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(pastor.bio_full || localPastor?.fullStory || pastor.bio_short || pastor.story || 'Próximamente compartiremos más sobre su historia y ministerio.') }} />
                             </div>
 
                             {/* ── Footer decorativo ── */}

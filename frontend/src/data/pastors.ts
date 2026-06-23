@@ -152,5 +152,21 @@ export const PASTORS: Pastor[] = [
             <p>Ella lidera los ejércitos de intercesores, las vigilias y el ministerio de mujeres. Su liderazgo compasivo, pero firme como el acero en el ámbito espiritual, ha inspirado a cientos de mujeres a levantarse como columnas en sus hogares y guerreras en el Reino.</p>
             <p>Yanedith combina una profunda dulzura pastoral con una autoridad espiritual que se hace evidente cada vez que dirige a la congregación a buscar el rostro de Dios en adoración y ruego.</p>
         `
+    },
+    {
+        id: "martina-herrera",
+        name: "Martina Herrera",
+        title: "Pastora Fundadora",
+        image: "/images/pastores/martina_herrera.webp",
+        isMain: true,
+        quote: "La obra de Dios se edifica con fe, obediencia y amor por las almas.",
+        verse: "1 Corintios 3:9 - 'Porque nosotros somos colaboradores de Dios, y vosotros sois labranza de Dios, edificio de Dios.'",
+        shortStory: "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
+        fullStory: `
+            <p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana El Faro. Junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor, sembró con fe, oración y perseverancia las bases espirituales de esta casa.</p>
+            <blockquote>"La obra de Dios se edifica con fe, obediencia y amor por las almas."</blockquote>
+            <p>Desde los primeros días del ministerio, la Pastora Martina ha sido un pilar de oración, fidelidad y cuidado pastoral. Su corazón maternal ha acompañado a generaciones de creyentes que encontraron en ella una pastora, una consejera y una madre espiritual.</p>
+            <p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana El Faro: una iglesia levantada para amar a Dios, servir a las personas y continuar la obra que el Señor puso en sus manos.</p>
+        `
     }
 ];

@@ -1,25 +1,26 @@
 from __future__ import annotations
+from uuid import UUID
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 from backend.schemas._common import orm_config
 
 
 class CoursePrerequisiteBase(BaseModel):
-    course_id: int
-    prerequisite_course_id: int
+    course_id: UUID
+    prerequisite_course_id: str
 
 
 class CoursePrerequisite(CoursePrerequisiteBase):
-    id: int
+    id: UUID
     model_config = orm_config
 
 
 class Course(BaseModel):
-    id: int
+    id: UUID
     code: str
     title: str
     description: Optional[str] = None
@@ -36,8 +37,8 @@ class Course(BaseModel):
 
 
 class Lesson(BaseModel):
-    id: int
-    course_id: int
+    id: UUID
+    course_id: UUID
     title: str
     content: Optional[str] = None
     content_type: str = "video"
@@ -48,13 +49,13 @@ class Lesson(BaseModel):
 
 
 class AssessmentOption(BaseModel):
-    id: int
+    id: UUID
     option_text: str
     model_config = orm_config
 
 
 class AssessmentQuestion(BaseModel):
-    id: int
+    id: UUID
     question_text: str
     question_type: str
     points: int
@@ -63,8 +64,8 @@ class AssessmentQuestion(BaseModel):
 
 
 class Assessment(BaseModel):
-    id: int
-    course_id: Optional[int] = None
+    id: UUID
+    course_id: Optional[UUID] = None
     title: str = "Assessment"
     description: Optional[str] = None
     min_score: float = 70
@@ -74,9 +75,9 @@ class Assessment(BaseModel):
 
 
 class AssessmentAttempt(BaseModel):
-    id: int
-    enrollment_id: int
-    assessment_id: int
+    id: UUID
+    enrollment_id: UUID
+    assessment_id: str
     score: float = 0.0
     passed: bool = False
     created_at: datetime | None = None
@@ -85,9 +86,9 @@ class AssessmentAttempt(BaseModel):
 
 
 class AssessmentAnswer(BaseModel):
-    id: int
-    question_id: int
-    selected_option_id: Optional[int] = None
+    id: UUID
+    question_id: str
+    selected_option_id: Optional[str] = None
     text_response: Optional[str] = None
     is_correct: Optional[bool] = None
     points_awarded: float = 0
@@ -95,8 +96,8 @@ class AssessmentAnswer(BaseModel):
 
 
 class AssessmentAnswerSubmit(BaseModel):
-    question_id: int
-    selected_option_id: Optional[int] = None
+    question_id: str
+    selected_option_id: Optional[str] = None
     text_response: Optional[str] = None
 
 
@@ -106,14 +107,14 @@ class AssessmentAttemptSubmit(BaseModel):
 
 
 class EnrollmentCreate(BaseModel):
-    user_id: int | str
-    course_id: int
+    persona_id: str = Field(validation_alias=AliasChoices("persona_id", "user_id"), serialization_alias="persona_id")
+    course_id: UUID
 
 
 class Enrollment(BaseModel):
-    id: int
-    user_id: int
-    course_id: int
+    id: UUID
+    persona_id: UUID = Field(validation_alias=AliasChoices("persona_id", "user_id"), serialization_alias="persona_id")
+    course_id: UUID
     status: str = "active"
     progress_percent: float = 0
     approved: bool = False
@@ -122,7 +123,7 @@ class Enrollment(BaseModel):
 
 
 class CourseAttendanceBase(BaseModel):
-    enrollment_id: int
+    enrollment_id: UUID
     status: str = "present"
     session_date: Optional[datetime] = None
 
@@ -132,7 +133,7 @@ class CourseAttendanceCreate(CourseAttendanceBase):
 
 
 class BulkAttendanceRecord(BaseModel):
-    enrollment_id: int
+    enrollment_id: UUID
     status: str
 
 
@@ -142,8 +143,8 @@ class BulkAttendanceCreate(BaseModel):
 
 
 class Certificate(BaseModel):
-    id: int
-    enrollment_id: int
+    id: UUID
+    enrollment_id: UUID
     certificate_code: str
     issued_at: datetime
     model_config = orm_config
@@ -160,8 +161,8 @@ class DashboardMetrics(BaseModel):
 
 
 class CourseAttendance(BaseModel):
-    id: int
-    enrollment_id: int
+    id: UUID
+    enrollment_id: UUID
     session_date: datetime
     status: str = "present"
     recorded_by_id: Optional[int] = None
@@ -180,16 +181,16 @@ class FormalActaCloseRequest(BaseModel):
 
 
 class FormalActa(BaseModel):
-    id: int
-    course_id: int
+    id: UUID
+    course_id: UUID
     status: str = "closed"
     created_at: datetime
     model_config = orm_config
 
 
 class Resource(BaseModel):
-    id: int
-    lesson_id: int
+    id: UUID
+    lesson_id: UUID
     title: str
     file_url: str
     resource_type: str
@@ -197,9 +198,9 @@ class Resource(BaseModel):
 
 
 class AssignmentSubmission(BaseModel):
-    id: int
-    enrollment_id: int
-    lesson_id: int
+    id: UUID
+    enrollment_id: UUID
+    lesson_id: UUID
     file_url: str
     comment: Optional[str] = None
     grade: Optional[float] = None
@@ -209,9 +210,9 @@ class AssignmentSubmission(BaseModel):
 
 
 class AssignmentSubmissionReview(BaseModel):
-    id: int
-    enrollment_id: int
-    lesson_id: int
+    id: UUID
+    enrollment_id: UUID
+    lesson_id: UUID
     student_name: str
     lesson_title: str
     file_url: str
@@ -226,7 +227,7 @@ Attendance = CourseAttendance
 
 
 class AcademyStudentProfile(BaseModel):
-    user_id: int | str
+    persona_id: str = Field(validation_alias=AliasChoices("persona_id", "user_id"), serialization_alias="persona_id")
     username: str
     total_progress: float = 0.0
     enrollments_count: int = 0
@@ -245,7 +246,7 @@ class ForumThreadCreate(ForumThreadBase):
 
 
 class ForumThread(BaseModel):
-    id: int
+    id: UUID
     title: str
     category: str
     author_persona_id: str  # UUID de Persona
@@ -255,8 +256,8 @@ class ForumThread(BaseModel):
 
 
 class ChatMessage(BaseModel):
-    id: int
-    sender_id: int
+    id: UUID
+    sender_id: str
     content: str
     created_at: datetime
     model_config = orm_config

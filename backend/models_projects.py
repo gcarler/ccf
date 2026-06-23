@@ -1,3 +1,4 @@
+import uuid as _uuid
 import uuid
 
 from sqlalchemy import (
@@ -47,7 +48,7 @@ class ProjectMilestone(Base):
 
 class ProjectActivityLog(Base):
     __tablename__ = "project_activity_logs"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     action_type = Column(String(50))
@@ -60,7 +61,7 @@ class ProjectActivityLog(Base):
 
 class ProjectWhiteboard(Base):
     __tablename__ = "project_whiteboards"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
     title = Column(String(200), nullable=False, default="Pizarra")
     elements_json = Column(Text, nullable=False, default="[]")
@@ -102,7 +103,7 @@ class ProjectTask(Base):
 
 class ProjectAttachment(Base):
     __tablename__ = "project_attachments"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=False, index=True)
     filename = Column(String(255), nullable=False)
     file_url = Column(Text, nullable=False)
@@ -118,7 +119,7 @@ class ProjectAttachment(Base):
 
 class TaskSupply(Base):
     __tablename__ = "task_supplies"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=False, index=True)
     item_name = Column(String(200), nullable=False)
     quantity = Column(Integer, default=1)
@@ -130,7 +131,7 @@ class TaskSupply(Base):
 
 class ProjectComment(Base):
     __tablename__ = "project_comments"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="SET NULL"), nullable=True)
     author_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
@@ -162,7 +163,7 @@ class ProjectPhase(Base):
 class ProjectInboxState(Base):
     __tablename__ = "project_inbox_state"
     __table_args__ = (UniqueConstraint("persona_id", "item_id", name="uq_persona_project_item"),)
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
     item_id = Column(String(80), nullable=False)
     is_read = Column(Boolean, default=False)
@@ -171,7 +172,7 @@ class ProjectInboxState(Base):
 
 class ProjectDocument(Base):
     __tablename__ = "project_documents"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(200), nullable=False, default="Wiki")
     content = Column(Text, nullable=False, default="")

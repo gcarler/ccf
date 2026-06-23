@@ -1,6 +1,7 @@
 """Academy 2.0 — Pydantic schemas (Create + Response) for all academy_core models."""
 
 from __future__ import annotations
+from uuid import UUID
 
 from datetime import datetime
 from typing import Literal, Optional
@@ -45,7 +46,7 @@ class CursoUpdate(BaseModel):
 
 
 class CursoResponse(BaseModel):
-    id: int
+    id: UUID
     sede_id: Optional[str] = None
     code: str
     title: str
@@ -65,7 +66,7 @@ class CursoResponse(BaseModel):
 
 
 class LeccionCreate(BaseModel):
-    course_id: int
+    course_id: UUID
     title: str
     content: str
     content_type: str = "video"
@@ -86,8 +87,8 @@ class LeccionUpdate(BaseModel):
 
 
 class LeccionResponse(BaseModel):
-    id: int
-    course_id: int
+    id: UUID
+    course_id: UUID
     title: str
     content: str
     content_type: str = "video"
@@ -99,14 +100,14 @@ class LeccionResponse(BaseModel):
 
 
 class PrerrequisitoCursoCreate(BaseModel):
-    course_id: int
-    prerequisite_course_id: int
+    course_id: UUID
+    prerequisite_course_id: str
 
 
 class PrerrequisitoCursoResponse(BaseModel):
-    id: int
-    course_id: int
-    prerequisite_course_id: int
+    id: UUID
+    course_id: UUID
+    prerequisite_course_id: str
     model_config = orm_config
 
 
@@ -115,8 +116,8 @@ class PrerrequisitoCursoResponse(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════
 
 class EvaluacionCreate(BaseModel):
-    course_id: int
-    lesson_id: Optional[int] = None
+    course_id: UUID
+    lesson_id: Optional[UUID] = None
     title: str
     description: Optional[str] = None
     max_score: float
@@ -126,9 +127,9 @@ class EvaluacionCreate(BaseModel):
 
 
 class EvaluacionResponse(BaseModel):
-    id: int
-    course_id: int
-    lesson_id: Optional[int] = None
+    id: UUID
+    course_id: UUID
+    lesson_id: Optional[UUID] = None
     title: str
     description: Optional[str] = None
     max_score: float
@@ -139,15 +140,15 @@ class EvaluacionResponse(BaseModel):
 
 
 class PreguntaCreate(BaseModel):
-    assessment_id: int
+    assessment_id: str
     question_text: str
     question_type: Optional[str] = None
     points: int = 1
 
 
 class PreguntaResponse(BaseModel):
-    id: int
-    assessment_id: int
+    id: UUID
+    assessment_id: str
     question_text: str
     question_type: Optional[str] = None
     points: int = 1
@@ -156,14 +157,14 @@ class PreguntaResponse(BaseModel):
 
 
 class OpcionCreate(BaseModel):
-    question_id: int
+    question_id: str
     option_text: str
     is_correct: bool = False
 
 
 class OpcionResponse(BaseModel):
-    id: int
-    question_id: int
+    id: UUID
+    question_id: str
     option_text: str
     is_correct: bool = False
     model_config = orm_config
@@ -174,8 +175,8 @@ class OpcionResponse(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════
 
 class MatriculaCreate(BaseModel):
-    persona_id: str
-    course_id: int
+    persona_id: UUID
+    course_id: UUID
     cohort_name: Optional[str] = None
     status: str = "ACTIVO"
     progress_percent: float = 0.0
@@ -187,9 +188,9 @@ class MatriculaCreate(BaseModel):
 
 
 class MatriculaResponse(BaseModel):
-    id: str
-    persona_id: str
-    course_id: int
+    id: UUID
+    persona_id: UUID
+    course_id: UUID
     cohort_name: Optional[str] = None
     status: str = "ACTIVO"
     progress_percent: float = 0.0
@@ -208,17 +209,17 @@ class ProgresoUpdate(BaseModel):
 
 
 class ProgresoLeccionCreate(BaseModel):
-    persona_id: str
-    lesson_id: int
+    persona_id: UUID
+    lesson_id: UUID
     progress_percent: float = 0.0
     is_completed: bool = False
     last_position_seconds: int = 0
 
 
 class ProgresoLeccionResponse(BaseModel):
-    id: int
-    persona_id: str
-    lesson_id: int
+    id: UUID
+    persona_id: UUID
+    lesson_id: UUID
     progress_percent: float = 0.0
     is_completed: bool = False
     last_position_seconds: int = 0
@@ -226,15 +227,15 @@ class ProgresoLeccionResponse(BaseModel):
 
 
 class AsistenciaClaseCreate(BaseModel):
-    enrollment_id: str
+    enrollment_id: UUID
     session_date: datetime
     status: str
     recorded_by_persona_id: str
 
 
 class AsistenciaClaseResponse(BaseModel):
-    id: int
-    enrollment_id: str
+    id: UUID
+    enrollment_id: UUID
     session_date: datetime
     status: str
     recorded_by_persona_id: str
@@ -242,16 +243,16 @@ class AsistenciaClaseResponse(BaseModel):
 
 
 class IntentoEvaluacionCreate(BaseModel):
-    assessment_id: int
-    enrollment_id: str
+    assessment_id: str
+    enrollment_id: UUID
     score: Optional[float] = None
     passed: bool = False
 
 
 class IntentoEvaluacionResponse(BaseModel):
-    id: str
-    assessment_id: int
-    enrollment_id: str
+    id: UUID
+    assessment_id: str
+    enrollment_id: UUID
     score: Optional[float] = None
     passed: bool = False
     submitted_at: Optional[datetime] = None
@@ -259,17 +260,17 @@ class IntentoEvaluacionResponse(BaseModel):
 
 
 class EntregaTareaCreate(BaseModel):
-    enrollment_id: str
-    lesson_id: int
+    enrollment_id: UUID
+    lesson_id: UUID
     seaweed_fid: str
     teacher_feedback: Optional[str] = None
     grade: Optional[float] = None
 
 
 class EntregaTareaResponse(BaseModel):
-    id: str
-    enrollment_id: str
-    lesson_id: int
+    id: UUID
+    enrollment_id: UUID
+    lesson_id: UUID
     seaweed_fid: str
     teacher_feedback: Optional[str] = None
     grade: Optional[float] = None
@@ -282,14 +283,14 @@ class EntregaTareaResponse(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════
 
 class CertificadoCreate(BaseModel):
-    enrollment_id: str
+    enrollment_id: UUID
     certificate_code: str
     certificate_type: Optional[str] = None
 
 
 class CertificadoResponse(BaseModel):
-    id: str
-    enrollment_id: str
+    id: UUID
+    enrollment_id: UUID
     certificate_code: str
     certificate_type: Optional[str] = None
     issued_at: Optional[datetime] = None
@@ -297,7 +298,7 @@ class CertificadoResponse(BaseModel):
 
 
 class ActaFormalCreate(BaseModel):
-    course_id: int
+    course_id: UUID
     cohort_name: str
     closed_by_persona_id: str
     min_grade: float
@@ -306,8 +307,8 @@ class ActaFormalCreate(BaseModel):
 
 
 class ActaFormalResponse(BaseModel):
-    id: int
-    course_id: int
+    id: UUID
+    course_id: UUID
     cohort_name: str
     closed_by_persona_id: str
     min_grade: float
@@ -321,15 +322,15 @@ class ActaFormalResponse(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════
 
 class HiloForoCreate(BaseModel):
-    course_id: int
+    course_id: UUID
     author_persona_id: str
     title: str
     content: str
 
 
 class HiloForoResponse(BaseModel):
-    id: int
-    course_id: int
+    id: UUID
+    course_id: UUID
     author_persona_id: str
     title: str
     content: str
@@ -338,15 +339,15 @@ class HiloForoResponse(BaseModel):
 
 
 class ComentarioForoCreate(BaseModel):
-    thread_id: int
+    thread_id: UUID
     parent_id: Optional[int] = None
     author_persona_id: str
     content: str
 
 
 class ComentarioForoResponse(BaseModel):
-    id: int
-    thread_id: int
+    id: UUID
+    thread_id: UUID
     parent_id: Optional[int] = None
     author_persona_id: str
     content: str

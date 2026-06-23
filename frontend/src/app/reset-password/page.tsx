@@ -60,10 +60,9 @@ function ResetPasswordContent() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const params = new URLSearchParams({ token, new_password: password });
+      const res = await fetch(`/api/v3/auth/reset-password?${params.toString()}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
       });
       if (!res.ok) {
         const err = await res.json();

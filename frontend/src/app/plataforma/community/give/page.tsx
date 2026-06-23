@@ -59,8 +59,7 @@ export default function GivingAndConnection() {
                     name: isAnonymous ? 'Anónimo' : (user?.username || 'Anónimo'),
                     request: prayerRequest,
                     category: 'General',
-                    is_anonymous: isAnonymous,
-                    user_id: user?.id
+                    is_anonymous: isAnonymous
                 },
             });
             addToast('Tu petición de oración ha sido enviada.', 'success');
@@ -288,4 +287,3 @@ export default function GivingAndConnection() {
         </div>
     );
 }
-

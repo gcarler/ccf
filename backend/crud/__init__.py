@@ -11,7 +11,7 @@ This package re-exports everything so that existing callers using
 from backend.crud._utils import _utcnow  # noqa: F401
 from backend.crud._utils import analyze_pastoral_priority, analyze_pastoral_sentiment
 
-# Academy (deprecated — replaced by Academy 2.0 but still used by legacy routes and tests)
+# Academy compatibility exports used by current routes and tests
 from backend.crud.academy import (  # noqa: F401
     get_courses,
     get_course,
@@ -134,7 +134,7 @@ from backend.crud.cms import (
     update_testimonial,
 )
 
-# Consolidation Extended (deprecated — dropped tables)
+# Consolidation Extended compatibility exports
 # CRM
 from backend.crud.crm import create_communication_log  # noqa: F401
 from backend.crud.crm import (
@@ -149,6 +149,7 @@ from backend.crud.crm import (
     create_persona,
     create_milestone,
     create_prayer_request,
+    create_support_ticket,
     delete_communication_log,
     delete_community_card,
     delete_counseling_ticket,

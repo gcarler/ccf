@@ -278,6 +278,7 @@ class SavedView(Base):
     conditional_format_json = Column(JSON, default=[])
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class Announcement(Base):

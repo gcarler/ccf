@@ -81,8 +81,16 @@ export default function FaroFooter() {
     const description = typeof footer.description === "string"
         ? footer.description
         : "Iluminando el camino hacia una conexión profunda con lo divino a través de la comunidad y la guía espiritual. Una casa de fe abierta para toda la familia.";
+    const brandName = typeof footer.brand_name === "string" ? footer.brand_name : SITE_NAME;
+    const navSectionTitle = typeof footer.nav_section_title === "string" ? footer.nav_section_title : "Navegación";
+    const resourceSectionTitle = typeof footer.resource_section_title === "string" ? footer.resource_section_title : "Recursos";
+    const contactSectionTitle = typeof footer.contact_section_title === "string" ? footer.contact_section_title : "Contáctanos";
     const locationLabel = typeof footer.location_label === "string" ? footer.location_label : "Cartagena, Colombia";
     const newsletterLabel = typeof footer.newsletter_label === "string" ? footer.newsletter_label : "Boletín semanal";
+    const copyrightCompany = typeof footer.copyright_company === "string" ? footer.copyright_company : "PLES SAS";
+    const copyrightCompanyUrl = typeof footer.copyright_company_url === "string" ? footer.copyright_company_url : "https://ples.com.co";
+    const copyrightText = typeof footer.copyright_text === "string" ? footer.copyright_text : "El uso inteligente de la experiencia. Todos los derechos reservados.";
+    const privacyLabel = typeof footer.privacy_label === "string" ? footer.privacy_label : "Política de Privacidad";
 
     return (
         <footer
@@ -110,7 +118,7 @@ export default function FaroFooter() {
                                 </div>
                                 <div>
                                     <div className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: "var(--site-on-surface)" }}>
-                                        {SITE_NAME}
+                                        {brandName}
                                     </div>
                                 </div>
                             </div>
@@ -140,7 +148,7 @@ export default function FaroFooter() {
                             style={{ borderColor: "var(--site-outline-variant)" }}
                         >
                             <h4 className="text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6" style={{ color: "var(--site-primary)" }}>
-                                Navegación
+                                {navSectionTitle}
                             </h4>
                             <ul className="grid gap-2.5 sm:gap-3">
                                 {navLinks.map(({ href, label }) => (
@@ -159,7 +167,7 @@ export default function FaroFooter() {
                             style={{ borderColor: "var(--site-outline-variant)" }}
                         >
                             <h4 className="text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6" style={{ color: "var(--site-primary)" }}>
-                                Recursos
+                                {resourceSectionTitle}
                             </h4>
                             <ul className="grid gap-2.5 sm:gap-3">
                                 {resourceLinks.map(({ href, label }) => (
@@ -178,7 +186,7 @@ export default function FaroFooter() {
                             style={{ borderColor: "var(--site-outline-variant)" }}
                         >
                             <h4 className="text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6" style={{ color: "var(--site-primary)" }}>
-                                Contáctanos
+                                {contactSectionTitle}
                             </h4>
                             <ul className="grid gap-2.5 sm:grid-cols-3 lg:grid-cols-1 sm:gap-3">
                                 <li>
@@ -216,14 +224,14 @@ export default function FaroFooter() {
                     >
                         © {new Date().getFullYear()}{" "}
                         <a
-                            href="https://ples.com.co"
+                            href={copyrightCompanyUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:underline hover:text-[var(--site-primary)] transition-colors"
                         >
-                            PLES SAS
+                            {copyrightCompany}
                         </a>
-                        {" "}— El uso inteligente de la experiencia. Todos los derechos reservados.
+                        {" "}— {copyrightText}
                     </p>
                     <div className="flex shrink-0 items-center justify-center gap-4">
                         <Link
@@ -233,7 +241,7 @@ export default function FaroFooter() {
                                 color: "var(--site-on-surface-variant)",
                             }}
                         >
-                            Política de Privacidad
+                            {privacyLabel}
                         </Link>
                     </div>
                 </div>

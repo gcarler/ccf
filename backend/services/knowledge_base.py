@@ -4,10 +4,11 @@ Modelo, indexador automático y búsqueda full-text para que los agentes
 tengan acceso a información real de la plataforma.
 """
 
+import uuid as _uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Index,
-                        Integer, String, Text, cast, func, inspect)
+                        Integer, String, Text, UUID, cast, func, inspect)
 from sqlalchemy.orm import Session
 
 from backend.core.database import Base
@@ -26,7 +27,7 @@ class AgentKnowledgeBase(Base):
         Index("ix_kb_active", "is_active"),
     )
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     title = Column(String(300), nullable=False)
     content = Column(Text, nullable=False)
     summary = Column(String(500), nullable=True)
@@ -38,7 +39,7 @@ class AgentKnowledgeBase(Base):
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
-    indexed_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
+    indexed_by = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=True)
 
     def __repr__(self):
         return f"<KB {self.title[:50]} [{self.category}]>"
@@ -168,7 +169,7 @@ class KnowledgeIndexer:
 
         total = self.db.query(models.Persona).count()
         by_role = {}
-        # Usa el rol del Kernel cuando existe, fallback a columna legacy
+        # Usa el rol del Kernel cuando existe, fallback a columna compat
         effective_role = func.coalesce(
             cast(models.PersonaRoleAssignment.church_role, String),
             models.Persona.church_role,

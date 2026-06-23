@@ -113,7 +113,7 @@ def get_transactions(
 
 @router.post("/donations")
 def register_donation(
-    fund_id: int,
+    fund_id: str,
     amount: float,
     donation_type: str = "Ofrenda",
     donor_name: Optional[str] = None,
@@ -189,7 +189,7 @@ def create_fund(
 
 @router.patch("/admin/funds/{fund_id}")
 def update_fund(
-    fund_id: int,
+    fund_id: str,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
@@ -216,7 +216,7 @@ def update_fund(
 
 @router.delete("/admin/funds/{fund_id}", status_code=204)
 def delete_fund(
-    fund_id: int,
+    fund_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):

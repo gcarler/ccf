@@ -35,7 +35,7 @@ export default function AuditDetailPage() {
                     id,
                     action: 'UPDATE_ROLE',
                     actor: 'Admin_Master',
-                    target: 'user_id: 125',
+                    target: 'persona: juan.perez',
                     timestamp: '2026-04-13T15:20:00Z',
                     description: 'Cambio de rol de "Estudiante" a "Docente" para el usuario juan.perez',
                     ip_address: '192.168.1.45',

@@ -62,7 +62,7 @@ def _index_exists(name: str) -> bool:
 
 def upgrade() -> None:
     _expand_personas_columns()
-    _migrate_legacy_nombre_completo()
+    _migrate_compat_nombre_completo()
     _add_persona_id_to_historial()
     _update_stored_procedures()
     _create_persona_engagement_view()
@@ -160,9 +160,9 @@ def _expand_personas_columns() -> None:
             op.create_index(idx, "personas", cols)
 
 
-def _migrate_legacy_nombre_completo() -> None:
+def _migrate_compat_nombre_completo() -> None:
     """Puebla first_name/last_name desde nombre_completo y phone desde telefono.
-    Solo aplica si las columnas legacy existen (migration 0037 style).
+    Solo aplica si las columnas compat existen (migration 0037 style).
     """
     if _col_exists("personas", "nombre_completo"):
         op.execute(sa.text("""
@@ -223,9 +223,9 @@ def _add_persona_id_to_historial() -> None:
 
 
 def _update_stored_procedures() -> None:
-    """Reemplaza SPs legacy de members con versiones para personas."""
+    """Reemplaza SPs compat de members con versiones para personas."""
 
-    # Eliminar SPs legacy
+    # Eliminar SPs compat
     for sp in [
         "fn_search_members",
         "fn_member_engagement_score",

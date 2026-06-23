@@ -1,6 +1,13 @@
 """Shared utilities for crud modules."""
 
 import datetime as dt
+import uuid as _uuid
+
+
+def _to_uuid(val) -> _uuid.UUID:
+    if isinstance(val, _uuid.UUID):
+        return val
+    return _uuid.UUID(str(val))
 
 
 def _utcnow() -> dt.datetime:

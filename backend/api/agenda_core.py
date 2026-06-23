@@ -51,7 +51,7 @@ def create_recurso(
 
 @router.get("/recursos/{recurso_id}", response_model=RecursoFisicoResponse)
 def get_recurso(
-    recurso_id: int,
+    recurso_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -64,7 +64,7 @@ def get_recurso(
 
 @router.put("/recursos/{recurso_id}", response_model=RecursoFisicoResponse)
 def update_recurso(
-    recurso_id: int,
+    recurso_id: str,
     payload: RecursoFisicoCreate,
     db: Session = Depends(get_db),
     current_user=Depends(require_pastor_or_admin),
@@ -82,7 +82,7 @@ def update_recurso(
 
 @router.delete("/recursos/{recurso_id}", status_code=204)
 def delete_recurso(
-    recurso_id: int,
+    recurso_id: str,
     db: Session = Depends(get_db),
     current_user=Depends(require_pastor_or_admin),
 ):
@@ -201,7 +201,7 @@ def create_participante(
 
 @router.get("/participantes/{participante_id}", response_model=ParticipanteEventoResponse)
 def get_participante(
-    participante_id: int,
+    participante_id: str,
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
 ):
@@ -213,7 +213,7 @@ def get_participante(
 
 @router.put("/participantes/{participante_id}", response_model=ParticipanteEventoResponse)
 def update_participante(
-    participante_id: int,
+    participante_id: str,
     payload: ParticipanteEventoCreate,
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
@@ -226,7 +226,7 @@ def update_participante(
 
 @router.delete("/participantes/{participante_id}", status_code=204)
 def delete_participante(
-    participante_id: int,
+    participante_id: str,
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
 ):
@@ -258,7 +258,7 @@ def create_reserva(
 
 @router.get("/reservas/{reserva_id}", response_model=ReservaRecursoResponse)
 def get_reserva(
-    reserva_id: int,
+    reserva_id: str,
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
 ):
@@ -270,7 +270,7 @@ def get_reserva(
 
 @router.put("/reservas/{reserva_id}", response_model=ReservaRecursoResponse)
 def update_reserva(
-    reserva_id: int,
+    reserva_id: str,
     payload: ReservaRecursoCreate,
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
@@ -283,7 +283,7 @@ def update_reserva(
 
 @router.delete("/reservas/{reserva_id}", status_code=204)
 def delete_reserva(
-    reserva_id: int,
+    reserva_id: str,
     db: Session = Depends(get_db),
     _user=Depends(require_pastor_or_admin),
 ):

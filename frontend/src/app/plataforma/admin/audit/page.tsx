@@ -12,7 +12,6 @@ import clsx from 'clsx';
 interface AuditLog {
     id: number;
     actor_persona_id?: string | null;
-    actor_user_id?: number | null;
     action: string;
     resource_type: string;
     resource_id: string;
@@ -141,7 +140,7 @@ export default function SecurityAuditPage() {
 
                                             <div className="flex-1 flex items-center gap-4 text-emerald-400/80 text-xs">
                                                 <User size={12} className="opacity-50" /> 
-                                                <span>{log.actor_persona_id ? `PERSONA: ${log.actor_persona_id.slice(0, 8)}` : log.actor_user_id ? `LEGACY: ${log.actor_user_id}` : 'SYS'}</span>
+                                                <span>{log.actor_persona_id ? `PERSONA: ${log.actor_persona_id.slice(0, 8)}` : 'SYS'}</span>
                                                 <span className="opacity-30">|</span>
                                                 <span>Target: <span className="text-emerald-300 font-bold">{log.resource_type?.toUpperCase()}</span> #{log.resource_id}</span>
                                             </div>

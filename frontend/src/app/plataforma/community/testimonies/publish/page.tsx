@@ -35,7 +35,6 @@ export default function PublishTestimony() {
         try {
             const authorPayload = {
                 ...(isUuid(user.id) ? { author_persona_id: user.id } : {}),
-                ...(typeof user.id === 'number' && user.id > 0 ? { author_id: user.id } : {}),
             };
             await apiFetch('/cms/testimonials', {
                 method: 'POST',

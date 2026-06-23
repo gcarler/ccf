@@ -46,6 +46,10 @@ export default function SedesPage() {
     const { data: heroContent } = useContentBlock(`${SITE_KEY}_locations_hero`);
     const { data: locationsContent } = useContentBlock(`${SITE_KEY}_locations_feed`);
     const mapEmbedUrl = heroContent?.map_embed_url || DEFAULT_MAP_EMBED_URL;
+    const mainBadge = heroContent?.main_badge || "Principal";
+    const directionsCta = heroContent?.directions_cta || "Cómo llegar";
+    const emptyLocations = heroContent?.empty_locations || "No hay sedes configuradas para mostrar.";
+    const emptySearch = heroContent?.empty_search || "No se encontraron sedes con ese criterio.";
 
     const parsedLocations: LocationItem[] = Array.isArray(locationsContent?.parsed)
         ? (locationsContent.parsed as LocationItem[])
@@ -107,7 +111,7 @@ export default function SedesPage() {
                         <div>
                             <Home size={40} className="mx-auto mb-4 opacity-20" style={{ color: "var(--site-primary)" }} />
                             <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                No hay sedes configuradas para mostrar.
+                                {emptyLocations}
                             </p>
                         </div>
                     </div>
@@ -136,7 +140,7 @@ export default function SedesPage() {
                                     </div>
                                     {loc.isMain && (
                                         <span className="text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full" style={{ background: "var(--site-cta-gradient)", color: "white" }}>
-                                            Principal
+                                            {mainBadge}
                                         </span>
                                     )}
                                 </div>
@@ -182,7 +186,7 @@ export default function SedesPage() {
                                                 style={{ background: "var(--site-cta-gradient)", color: "white" }}
                                             >
                                                 <Navigation size={13} />
-                                                Cómo llegar
+                                                {directionsCta}
                                             </button>
                                         </motion.div>
                                     )}
@@ -191,7 +195,7 @@ export default function SedesPage() {
                         ))}
                         {filtered.length === 0 && (
                             <div className="rounded-lg border border-dashed border-site-outline-variant/20 p-3 text-center text-sm text-site-on-surface-variant">
-                                No se encontraron sedes con ese criterio.
+                                {emptySearch}
                             </div>
                         )}
                     </div>

@@ -7,7 +7,7 @@ Create Date: 2026-05-28
 Corrige integridad referencial del módulo de evangelismo:
 
 A) Convierte grupo_participantes.persona_id y asistencias.persona_id de INTEGER
-   a UUID para alinearse con personas.id (UUID). Los datos legacy con IDs enteros
+   a UUID para alinearse con personas.id (UUID). Los datos compat con IDs enteros
    eran datos de prueba que no apuntan a personas reales.
 
 B) Añade FK constraints UUID→UUID en todas las tablas afectadas.
@@ -47,7 +47,7 @@ def _col_type(table: str, col: str) -> str:
 def upgrade() -> None:
     conn = op.get_bind()
 
-    # A) Convertir columnas INTEGER → UUID (datos legacy son de prueba)
+    # A) Convertir columnas INTEGER → UUID (datos compat son de prueba)
     int_to_uuid = [
         ("grupo_participantes",   "persona_id"),
         ("asistencias",           "persona_id"),

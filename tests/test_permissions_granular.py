@@ -23,23 +23,12 @@ from backend.core.security import get_password_hash
 
 def _login_as_admin(client: TestClient, db_session: Session) -> str:
     """Create admin user and return Bearer token."""
-    from backend import models as m
-    user = db_session.query(m.User).filter(m.User.role == "admin").first()
-    if not user:
-        user = m.User(
-            username="permadmin",
-            email="permadmin@ccf.test",
-            password_hash=get_password_hash("test123"),
-            role="admin",
-            is_active=True,
-        )
-        db_session.add(user)
-        db_session.commit()
-        db_session.refresh(user)
+    from tests.conftest import seed_admin_v2
+    admin, persona, sede = seed_admin_v2(db_session, email="permadmin@ccf.test", password="test123")
 
     resp = client.post(
-        "/api/auth/login",
-        data={"username": "permadmin@ccf.test", "password": "test123", "grant_type": "password"},
+        "/api/v3/auth/login",
+        json={"email": "permadmin@ccf.test", "password": "test123"},
     )
     assert resp.status_code == 200, f"login failed: {resp.text}"
     return resp.json()["access_token"]

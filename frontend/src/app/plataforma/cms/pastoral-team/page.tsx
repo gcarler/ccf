@@ -190,7 +190,7 @@ export default function PastoralTeamPage() {
       <AdminHero
         title="Equipo Pastoral"
         description="Gestiona los perfiles del equipo pastoral visibles en la página pública."
-        badge="CMS"
+        eyebrow="CMS"
       />
 
       {/* ── Actions Bar ── */}

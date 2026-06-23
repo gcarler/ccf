@@ -17,7 +17,6 @@ def create_support_ticket(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    # SupportTicket.user_id es UUID FK personas.id — obtener persona desde current_user.id (Integer)
     persona_id = resolve_persona_id_for_user(db, current_user.id)
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found for current user")
@@ -32,23 +31,26 @@ def read_support_tickets(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    # Axioma 3: Admin filtrado por sede, usuarios ven solo los suyos
     persona_id = resolve_persona_id_for_user(db, current_user.id)
     persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first() if persona_id else None
-    sede_id = persona.sede_id if persona else None
-    user_id = None if current_user.role in ["admin", "staff"] else persona.id if persona else None
-    return crud.get_support_tickets(db=db, user_id=user_id, skip=skip, limit=limit)
+    is_admin = current_user.rol_plataforma and current_user.rol_plataforma.nombre == "ADMIN"
+    persona_filter_id = None if is_admin else persona.id if persona else None
+    return crud.get_support_tickets(db=db, user_id=persona_filter_id, skip=skip, limit=limit)
 
 
 @router.patch("/{ticket_id}", response_model=schemas.SupportTicket)
 def patch_support_ticket(
-    ticket_id: int,
+    ticket_id: str,
     status_update: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    # Only staff/admin can change status for now
-    if current_user.role not in ["admin", "staff"]:
+    persona_id = resolve_persona_id_for_user(db, current_user.id)
+    if not persona_id:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    is_admin = current_user.rol_plataforma and current_user.rol_plataforma.nombre == "ADMIN"
+    if not is_admin:
         raise HTTPException(status_code=403, detail="Not authorized to update tickets")
 
     new_status = status_update.get("status")

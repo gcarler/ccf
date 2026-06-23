@@ -16,6 +16,14 @@ import {
   Palette,
   PanelsTopLeft,
   PackageOpen,
+  Shield,
+  Bell,
+  Webhook,
+  Puzzle,
+  Search,
+  FolderTree,
+  RotateCcw,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
@@ -32,6 +40,16 @@ const CMS_TABS = [
   { id: "resources", label: "Recursos", href: "/cms/resources", icon: PackageOpen },
   { id: "themes", label: "Temas", href: "/cms/themes", icon: Palette },
   { id: "sites", label: "Sitios", href: "/cms/sites", icon: Globe },
+  { id: "audit", label: "Auditoria", href: "/cms/audit", icon: Shield },
+  { id: "notifications", label: "Notificaciones", href: "/cms/notifications", icon: Bell },
+  { id: "webhooks", label: "Webhooks", href: "/cms/webhooks", icon: Webhook },
+  { id: "custom-types", label: "Tipos Custom", href: "/cms/custom-types", icon: Puzzle },
+  { id: "glossary", label: "Glosario", href: "/cms/glossary", icon: FileText },
+  { id: "search-admin", label: "Busqueda", href: "/cms/search-admin", icon: Search },
+  { id: "sessions", label: "Sesiones", href: "/cms/sessions", icon: Shield },
+  { id: "media-folders", label: "Carpetas", href: "/cms/media-folders", icon: FolderTree },
+  { id: "redirects", label: "Redirecciones", href: "/cms/redirects", icon: RotateCcw },
+  { id: "broken-links", label: "Links Rotos", href: "/cms/broken-links", icon: AlertTriangle },
 ] as const;
 
 export function CmsModuleNav() {

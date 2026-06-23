@@ -99,7 +99,7 @@ def donations_summary(
 
 @router.get("/{donation_id}/certificate")
 def download_certificate(
-    donation_id: int,
+    donation_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -204,7 +204,7 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/mercadopago/payments/{payment_id}")
-def mercadopago_payment_status(payment_id: int):
+def mercadopago_payment_status(payment_id: str):
     """Consulta el estado de un pago en MercadoPago."""
     try:
         from backend.services.payments import get_payment_status

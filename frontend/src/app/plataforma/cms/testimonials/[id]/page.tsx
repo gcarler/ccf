@@ -51,7 +51,7 @@ export default function CmsTestimonialDetailPage() {
                 const authorPersonaId = data?.author_persona_id ? String(data.author_persona_id) : null;
                 const normalized = data ? {
                     ...data,
-                    author_name: data.author?.username || (authorPersonaId ? `Persona ${authorPersonaId.slice(0, 8)}` : data.author_id ? `Legacy #${data.author_id}` : 'Anonimo'),
+                    author_name: data.author?.username || (authorPersonaId ? `Persona ${authorPersonaId.slice(0, 8)}` : 'Anonimo'),
                     author_role: 'Persona de la comunidad',
                     status: data.status || (data.is_approved ? 'approved' : 'pending'),
                     rating: 5,

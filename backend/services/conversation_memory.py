@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid as _uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
@@ -35,7 +36,7 @@ class AgentConversation(Base):
         Index("ix_conv_active", "persona_id", "is_active"),
     )
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     title = Column(String(300), nullable=True)
     agent_name = Column(String(100), nullable=False, server_default="Optimus")
@@ -56,9 +57,9 @@ class AgentMessage(Base):
         Index("ix_msg_conv", "conversation_id", "created_at"),
     )
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     conversation_id = Column(
-        Integer, ForeignKey("agent_conversations.id", ondelete="CASCADE"),
+        UUID(as_uuid=True), ForeignKey("agent_conversations.id", ondelete="CASCADE"),
         nullable=False, index=True,
     )
     role = Column(String(20), nullable=False)  # user, assistant, system
@@ -77,7 +78,7 @@ class AgentMessage(Base):
 
 def create_conversation(
     user_id: int | str, title: str = None, agent_name: str = "Optimus",
-) -> int:
+) -> str:
     """Crea una nueva conversación y retorna su ID."""
     db = SessionLocal()
     try:
@@ -140,7 +141,7 @@ def get_user_conversations(
 
 
 def get_conversation_history(
-    conversation_id: int, max_turns: int = 10,
+    conversation_id: str, max_turns: int = 10,
 ) -> List[Dict[str, str]]:
     """Obtiene historial de una conversación en formato LLM messages."""
     db = SessionLocal()
@@ -166,7 +167,7 @@ def get_conversation_history(
 
 
 def save_conversation_turn(
-    conversation_id: int,
+    conversation_id: str,
     role: str,
     content: str,
     tools_used: list = None,
@@ -197,7 +198,7 @@ def save_conversation_turn(
         db.close()
 
 
-def delete_conversation(conversation_id: int, user_id: int | str) -> bool:
+def delete_conversation(conversation_id: str, user_id: int | str) -> bool:
     """Elimina una conversación (soft delete)."""
     db = SessionLocal()
     try:
@@ -223,7 +224,7 @@ def delete_conversation(conversation_id: int, user_id: int | str) -> bool:
 
 
 def get_conversation_messages(
-    conversation_id: int, limit: int = 50,
+    conversation_id: str, limit: int = 50,
 ) -> List[Dict[str, Any]]:
     """Obtiene mensajes de una conversación."""
     db = SessionLocal()

@@ -8,7 +8,7 @@ type RouteContext = {
 
 const mockUser = {
   id: 42,
-  user_id: 'USR-42',
+  persona_id: 'PER-42',
   username: 'Demo Pastor',
   email: 'demo@ccf.la',
   role: 'admin',

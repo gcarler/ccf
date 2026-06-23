@@ -20,23 +20,23 @@ Tablas: users, roles, badges, notifications, user_badges, user_permissions,
         user_reminders, user_ui_preferences, refresh_tokens, reset_tokens,
         verification_tokens, levels
 
-### 2. ACADEMY LEGACY (models_academy.py) — CRÍTICO
+### 2. ACADEMY COMPAT (models_academy.py) — CRÍTICO
 Tablas: courses, lessons, enrollments, lesson_progress, course_attendance,
         course_prerequisites, formal_actas, forum_threads, forum_comments,
         resources, assessment_*, assignment_submissions, academy_activity_logs
-Nota: Ya existe Academy 2.0 (models_academy_core.py) — este es el legacy.
+Nota: Ya existe Academy 2.0 (models_academy_core.py) — este es el compat.
 
-### 3. CRM LEGACY (models_crm.py) — ALTO
+### 3. CRM COMPAT (models_crm.py) — ALTO
 Tablas: conversations, chat_messages, agenda_events, event_assignments,
         event_attendances, crm_automations, prayer_requests, support_tickets,
         volunteer_skills, role_definitions, donation_categories, funds
-Nota: Ya existe CRM Core 2.0 (models_crm_core.py) — este es el legacy.
+Nota: Ya existe CRM Core 2.0 (models_crm_core.py) — este es el compat.
 
-### 4. PROJECTS LEGACY (models_projects.py) — ALTO
+### 4. PROJECTS COMPAT (models_projects.py) — ALTO
 Tablas: projects, project_tasks, project_activity_logs, project_inbox_state,
         project_attachments, project_comments, project_documents,
         project_milestones, project_phases, project_whiteboards, task_supplies
-Nota: Ya existe Proyectos V2 (models_proyectos.py) — este es el legacy.
+Nota: Ya existe Proyectos V2 (models_proyectos.py) — este es el compat.
 
 ### 5. CMS (models_cms.py) — MEDIO
 Tablas: cms_pages, cms_menus, cms_publish_logs, cms_media_items, cms_sites,

@@ -15,7 +15,7 @@ router = APIRouter(prefix="/agents", tags=["agents"])
 analytics_router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
-def _resolve_legacy_user_id(user) -> int | None:
+def _resolve_numeric_user_id(user) -> int | None:
     return user.id if isinstance(user.id, int) else None
 
 
@@ -340,7 +340,7 @@ def add_agent_role(agent_id: int, role: AgentRoleCreate, db=Depends(get_db), cur
         context_id=role.context_id,
         context_type=role.context_type,
         is_primary=role.is_primary,
-        created_by=_resolve_legacy_user_id(current_user),
+        created_by=_resolve_numeric_user_id(current_user),
         created_by_persona_id=_resolve_persona_id(current_user, db),
     )
     db.add(new_role)
@@ -360,7 +360,7 @@ def create_agent(data: AgentCreate, db=Depends(get_db), current_user: models.Use
         phone=data.phone,
         avatar_url=data.avatar_url,
         spiritual_stage=data.spiritual_stage,
-        created_by=_resolve_legacy_user_id(current_user),
+        created_by=_resolve_numeric_user_id(current_user),
         created_by_persona_id=_resolve_persona_id(current_user, db),
     )
     db.add(agent)
@@ -376,7 +376,7 @@ def update_agent(agent_id: int, data: AgentUpdate, db=Depends(get_db), current_u
         raise HTTPException(404, "Agent not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(agent, field, value)
-    agent.updated_by = _resolve_legacy_user_id(current_user)
+    agent.updated_by = _resolve_numeric_user_id(current_user)
     agent.updated_by_persona_id = _resolve_persona_id(current_user, db)
     db.commit()
     db.refresh(agent)
@@ -390,7 +390,7 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
         raise HTTPException(404, "Agent not found")
     from_stage = agent.spiritual_stage
     agent.spiritual_stage = data.to_stage
-    agent.updated_by = _resolve_legacy_user_id(current_user)
+    agent.updated_by = _resolve_numeric_user_id(current_user)
     actor_persona_id = _resolve_persona_id(current_user, db)
     agent.updated_by_persona_id = actor_persona_id
     journey = AgentJourney(
@@ -399,7 +399,7 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
         to_stage=data.to_stage,
         reason=data.reason,
         triggered_by="manual",
-        triggered_by_id=_resolve_legacy_user_id(current_user),
+        triggered_by_id=_resolve_numeric_user_id(current_user),
         triggered_by_persona_id=actor_persona_id,
     )
     db.add(journey)

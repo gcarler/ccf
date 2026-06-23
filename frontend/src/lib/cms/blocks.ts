@@ -310,7 +310,18 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     label: "Liderazgo — Contenido",
       description: "Datos adicionales de la página de pastores.",
     page: "/pastores",
-    sample: {}
+    sample: {
+      pastors: [
+        {
+          slug: "martina-herrera",
+          name: "Martina Herrera",
+          role: "Pastora Fundadora",
+          image: "/images/pastores/martina_herrera.webp",
+          story: "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres.",
+          bio_short: "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres.",
+        }
+      ]
+    }
   },
   {
     key: `${SITE_KEY}_pastores_index`,

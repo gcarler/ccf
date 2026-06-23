@@ -16,7 +16,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # La tabla real en prod se llama 'academy_courses' (models_academy.py usa 'courses' como alias legacy)
+    # La tabla real en prod se llama 'academy_courses' (models_academy.py usa 'courses' como alias compat)
     op.add_column('academy_courses', sa.Column(
         'access_level',
         sa.String(length=20),

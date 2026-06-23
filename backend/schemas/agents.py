@@ -1,3 +1,4 @@
+from uuid import UUID
 """Pydantic schemas for Agent identity system."""
 from datetime import datetime
 from typing import List, Optional
@@ -28,7 +29,7 @@ class AgentUpdate(BaseModel):
 
 
 class AgentResponse(AgentBase):
-    id: int
+    id: UUID
     code: str
     full_name: str
     created_at: datetime
@@ -47,8 +48,8 @@ class AgentRoleCreate(BaseModel):
 
 
 class AgentRoleResponse(BaseModel):
-    id: int
-    agent_id: int
+    id: UUID
+    agent_id: UUID
     role_type: str
     role_value: str
     context_id: Optional[int] = None
@@ -70,8 +71,8 @@ class AgentActivityCreate(BaseModel):
 
 
 class AgentActivityResponse(BaseModel):
-    id: int
-    agent_id: int
+    id: UUID
+    agent_id: UUID
     activity_type: str
     source_type: str
     source_id: Optional[int] = None
@@ -101,7 +102,7 @@ class AgentProfileResponse(BaseModel):
 
 
 class AgentSearchResult(BaseModel):
-    id: int
+    id: UUID
     code: str
     full_name: str
     email: Optional[str]
@@ -117,7 +118,7 @@ class StageTransition(BaseModel):
     reason: Optional[str] = None
 
 
-# ── Legacy AgentTask/Insight (backwards compat with existing system) ──
+# ── AgentTask/Insight compatibility schemas ──
 class AgentTaskCreate(BaseModel):
     title: str
     description: str = ""
@@ -141,7 +142,7 @@ class AgentTaskUpdate(BaseModel):
 
 
 class AgentTask(BaseModel):
-    id: int
+    id: UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -159,7 +160,7 @@ class AgentInsightCreate(BaseModel):
 
 
 class AgentInsight(AgentInsightCreate):
-    id: int
+    id: UUID
     acknowledged: bool = False
     acknowledged_at: Optional[datetime] = None
     created_at: Optional[datetime] = None

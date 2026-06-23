@@ -2,25 +2,8 @@ from backend import crud, models, schemas
 
 
 def seed_user_and_persona(db_session):
-    user = models.User(
-        username="cms-editor",
-        email="cms-editor@example.com",
-        password_hash="x",
-        role="editor",
-        is_active=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    persona = models.Persona(
-        user_id=user.id,
-        first_name="Editor",
-        last_name="CMS",
-        email=user.email,
-    )
-    db_session.add(persona)
-    db_session.commit()
-    db_session.refresh(persona)
+    from tests.conftest import seed_admin_v2
+    user, persona, sede = seed_admin_v2(db_session, email="cms-editor@example.com")
     return user, persona
 
 

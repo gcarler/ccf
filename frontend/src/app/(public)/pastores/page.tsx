@@ -1,30 +1,38 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, Cross, Sparkles } from 'lucide-react';
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from '@/hooks/useContent';
-import { SITE_KEY, SITE_NAME } from '@/lib/site-config';
-import ShareButtons from '@/components/public/ShareButtons';
-import { getPublicPastoralTeam, PastoralProfile } from '@/lib/cms/v2';
+import { SITE_KEY } from '@/lib/site-config';
+import { sanitizeCmsHtml } from '@/lib/cms/sanitize';
+
+type CmsPastor = {
+    id?: string;
+    slug: string;
+    name: string;
+    role?: string;
+    image?: string;
+    photo_url?: string;
+    story?: string;
+    bio_short?: string;
+    isMain?: boolean;
+    is_main_pastor?: boolean;
+};
 
 export default function PastoresIndexPage() {
     const { data: heroCms } = useContentBlock(`${SITE_KEY}_pastores_hero`);
     const { data: feedCms } = useContentBlock(`${SITE_KEY}_pastores_index`);
-    const [pastors, setPastors] = useState<PastoralProfile[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        getPublicPastoralTeam(SITE_KEY)
-            .then(setPastors)
-            .catch(() => setPastors([]))
-            .finally(() => setLoading(false));
-    }, []);
+    const { data: pastorsCms } = useContentBlock(`${SITE_KEY}_pastores_feed`);
 
     const heroContent = heroCms?.content ? JSON.parse(heroCms.content) : null;
     const feedContent = feedCms?.content ? JSON.parse(feedCms.content) : null;
+    const pastors = useMemo(() => {
+        const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
+        return Array.isArray(list) ? list : [];
+    }, [pastorsCms]);
     const heroBadge = feedContent?.hero_badge || "Conoce a nuestro equipo pastoral";
     const heroTitle = heroContent?.title || feedContent?.hero_title || "Liderazgo Pastoral";
     const heroDescription = heroContent?.description || feedContent?.hero_description || "Hombres y mujeres llamados por Dios para servir, guiar y amar a esta casa.";
@@ -62,7 +70,7 @@ export default function PastoresIndexPage() {
                     </h1>
                     {heroBgImage ? (
                         <p className="text-base md:text-lg max-w-2xl mx-auto font-medium leading-relaxed" style={{ color: 'white' }}
-                            dangerouslySetInnerHTML={{ __html: heroDescription }} />
+                            dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(heroDescription) }} />
                     ) : (
                         <RichText
                             html={heroDescription}
@@ -79,7 +87,7 @@ export default function PastoresIndexPage() {
 
             {/* ── Pastors Grid ── */}
             <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 pt-[3cm] pb-20 md:pb-28">
-                {loading ? (
+                {!pastorsCms ? (
                     <div className="flex items-center justify-center py-20">
                         <div className="w-8 h-8 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
                         <span className="sr-only">{loadingLabel}</span>
@@ -89,15 +97,15 @@ export default function PastoresIndexPage() {
                 ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
                     {pastors.map((pastor, idx) => (
-                        <div key={pastor.id} className="group relative bg-white dark:bg-[#0f1117] rounded-2xl overflow-hidden border border-slate-200/70 dark:border-white/[0.06] shadow-lg shadow-slate-200/40 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-2xl hover:shadow-[hsl(var(--primary))/0.15] dark:hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col"
+                        <div key={pastor.id || pastor.slug} className="group relative bg-white dark:bg-[#0f1117] rounded-2xl overflow-hidden border border-slate-200/70 dark:border-white/[0.06] shadow-lg shadow-slate-200/40 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-2xl hover:shadow-[hsl(var(--primary))/0.15] dark:hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col"
                             style={{ animationDelay: `${idx * 100}ms` }}>
 
                             {/* Image */}
                             <Link href={`/pastores/${pastor.slug}`} className="relative h-52 w-full bg-slate-100 dark:bg-[#0a0c12] overflow-hidden block">
                                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-transparent pointer-events-none z-10" />
-                                {pastor.photo_url ? (
+                                {pastor.photo_url || pastor.image ? (
                                     <Image
-                                        src={pastor.photo_url}
+                                        src={pastor.photo_url || pastor.image || ""}
                                         alt={pastor.name}
                                         fill
                                         className="object-cover object-top transition-transform duration-700 group-hover:scale-110"
@@ -126,7 +134,7 @@ export default function PastoresIndexPage() {
                             {/* Content */}
                             <div className="p-4 flex-1 flex flex-col bg-white dark:bg-[#0f1117]">
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 flex-1 leading-relaxed line-clamp-3">
-                                    {pastor.bio_short || ''}
+                                    {pastor.bio_short || pastor.story || ''}
                                 </p>
 
                                 {/* CTA */}

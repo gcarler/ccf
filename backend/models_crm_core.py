@@ -74,7 +74,7 @@ class PipelineCRM(Base):
         UniqueConstraint("sede_id", "tipo", name="uq_pipeline_sede_tipo"),
     )
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     nombre = Column(String(100), nullable=False)
     tipo = Column(SAEnum(TipoPipelineEnum), nullable=False)
@@ -95,8 +95,8 @@ class EtapaPipeline(Base):
         UniqueConstraint("pipeline_id", "orden", name="uq_etapa_pipeline_orden"),
     )
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    pipeline_id = Column(Integer, ForeignKey("crm_pipelines.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    pipeline_id = Column(UUID(as_uuid=True), ForeignKey("crm_pipelines.id", ondelete="CASCADE"), nullable=False, index=True)
     nombre = Column(String(100), nullable=False)
     orden = Column(Integer, nullable=False)
     requiere_accion = Column(Boolean, default=True)
@@ -118,14 +118,14 @@ class CasoCRM(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
-    pipeline_id = Column(Integer, ForeignKey("crm_pipelines.id"), nullable=False, index=True)
-    etapa_actual_id = Column(Integer, ForeignKey("crm_etapas_pipeline.id"), nullable=False, index=True)
+    pipeline_id = Column(UUID(as_uuid=True), ForeignKey("crm_pipelines.id"), nullable=False, index=True)
+    etapa_actual_id = Column(UUID(as_uuid=True), ForeignKey("crm_etapas_pipeline.id"), nullable=False, index=True)
     titulo_caso = Column(String(200), nullable=False)
     prioridad = Column(SAEnum(PrioridadCasoEnum), default=PrioridadCasoEnum.MEDIA, index=True)
     estado = Column(SAEnum(EstadoCasoEnum), default=EstadoCasoEnum.ABIERTO, index=True)
     origen_canal = Column(SAEnum(CanalOrigenEnum), nullable=False, index=True)
     origen_detalle_id = Column(String(200), nullable=True, index=True)
-    origen_sesion_id = Column(Integer, ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
+    origen_sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
     origen_grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True)
     origen_estrategia_id = Column(String(36), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True)
     payload_web = Column(JSON, nullable=True)
@@ -162,7 +162,7 @@ class CasoCRM(Base):
 class InteraccionCRM(Base):
     __tablename__ = "crm_interacciones"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="CASCADE"), nullable=False, index=True)
     realizado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     tipo = Column(SAEnum(TipoInteraccionEnum), nullable=False, index=True)

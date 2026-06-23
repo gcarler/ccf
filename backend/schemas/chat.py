@@ -4,7 +4,7 @@ from datetime import datetime
 from uuid import UUID
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel, Field
 
 from backend.schemas._common import orm_config
 
@@ -14,14 +14,14 @@ class ConversationCreate(BaseModel):
 
 
 class ConversationParticipantRead(BaseModel):
-    user_id: UUID
+    persona_id: UUID = Field(validation_alias=AliasChoices("persona_id", "user_id"), serialization_alias="persona_id")
     username: str = ""
     last_read_at: Optional[datetime] = None
     model_config = orm_config
 
 
 class ConversationRead(BaseModel):
-    id: int
+    id: UUID
     participants: List[ConversationParticipantRead] = []
     last_message_content: Optional[str] = None
     last_message_at: Optional[datetime] = None
@@ -36,7 +36,7 @@ class DirectMessageCreate(BaseModel):
 
 
 class DirectMessageItem(BaseModel):
-    id: int
+    id: UUID
     sender_id: UUID
     sender_name: str = ""
     content: str

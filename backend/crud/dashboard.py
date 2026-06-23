@@ -130,7 +130,7 @@ def get_crm_dashboard(db: Session, sede_id: Optional[str] = None) -> CrmDashboar
             MetricCard(title="Personas Registradas", value=str(total), tone="blue", icon="Users"),
             MetricCard(title="Roles Asignados", value=str(with_role), trend=f"{conversion}% del total", tone="emerald", icon="FolderKanban"),
             MetricCard(title="Roles Distintos", value=str(len(funnel)), tone="amber", icon="BarChart3"),
-            MetricCard(title="Sin Seguimiento", value="0", tone="violet", icon="Bell"),
+            MetricCard(title="Sin Seguimiento", value="0", tone="blue", icon="Bell"),
         ],
         pipeline_funnel=funnel,
         growth_chart=growth_chart,
@@ -320,7 +320,7 @@ def get_evangelism_dashboard(
             MetricCard(title="Grupos Activos", value=str(total_grupos), trend=f"{total_participantes} participantes", tone="blue", icon="Users"),
             MetricCard(title="Tasa Asistencia", value=f"{attendance_rate}%", trend=f"{presentes} presentes (30d)", tone="emerald", icon="CheckCircle2"),
             MetricCard(title="Ausencias (30d)", value=str(ausentes), trend=f"{ausentes} ausentes", tone="amber", icon="AlertTriangle"),
-            MetricCard(title="Seguimientos Pend.", value=str(seguimientos), tone="violet", icon="Bell"),
+            MetricCard(title="Seguimientos Pend.", value=str(seguimientos), tone="blue", icon="Bell"),
         ],
         attendance_rate=attendance_rate,
         grupos_por_ubicacion=geo_buckets,
@@ -406,7 +406,7 @@ def get_academy_dashboard(db: Session) -> AcademyDashboard:
         cards=[
             MetricCard(title="Cursos", value=str(total_courses), tone="blue", icon="BookOpen"),
             MetricCard(title="Matrículas", value=str(total_enrollments), trend=f"{completed} completados", tone="emerald", icon="Users"),
-            MetricCard(title="Estudiantes", value=str(enrolled_users), tone="violet", icon="GraduationCap"),
+            MetricCard(title="Estudiantes", value=str(enrolled_users), tone="blue", icon="GraduationCap"),
             MetricCard(title="En Riesgo", value=str(at_risk), tone="amber", icon="AlertTriangle"),
         ],
         enrollment_trends=enrollment_trends,
@@ -474,7 +474,7 @@ def get_finance_dashboard(db: Session) -> FinanceDashboard:
         cards=[
             MetricCard(title="Total Donaciones", value=f"${total_amount:,.0f}", tone="blue", icon="PiggyBank"),
             MetricCard(title="Este Mes", value=f"${monthly:,.0f}", tone="emerald", icon="TrendingUp"),
-            MetricCard(title="Transacciones", value=str(total_donations), tone="violet", icon="Receipt"),
+            MetricCard(title="Transacciones", value=str(total_donations), tone="blue", icon="Receipt"),
             MetricCard(title="# Categorías", value=str(len(by_category)), tone="amber", icon="PieChart"),
         ],
         income_by_category=income_by_category,
@@ -518,7 +518,7 @@ def get_agenda_dashboard(db: Session) -> AgendaDashboard:
             MetricCard(title="Eventos", value=str(total), trend=f"{upcoming} próximos", tone="blue", icon="Calendar"),
             MetricCard(title="Próximos 30d", value=str(upcoming), tone="emerald", icon="CalendarCheck"),
             MetricCard(title="Colisiones", value="0", tone="amber", icon="AlertTriangle"),
-            MetricCard(title="Recursos", value="0", tone="violet", icon="Package"),
+            MetricCard(title="Recursos", value="0", tone="blue", icon="Package"),
         ],
         eventos_proximos=eventos_proximos,
         recursos_ocupados=[],
@@ -550,7 +550,7 @@ def get_cms_dashboard(db: Session) -> CmsDashboard:
             MetricCard(title="Páginas", value=str(total), trend=f"{published} publicadas", tone="blue", icon="FileText"),
             MetricCard(title="Versiones", value=str(versions), tone="emerald", icon="GitBranch"),
             MetricCard(title="Borradores", value=str(drafts), tone="amber", icon="Edit3"),
-            MetricCard(title="Publicación", value=f"{round(published/max(total,1)*100)}%", tone="violet", icon="TrendingUp"),
+            MetricCard(title="Publicación", value=f"{round(published/max(total,1)*100)}%", tone="blue", icon="TrendingUp"),
         ],
         versiones_por_pagina=[],
         publicaciones_por_mes=[],
@@ -599,7 +599,7 @@ def get_projects_dashboard(db: Session) -> ProjectsDashboard:
             MetricCard(title="Proyectos", value=str(total), trend=f"{active} activos", tone="blue", icon="FolderKanban"),
             MetricCard(title="Tareas", value=str(tasks), trend=f"{done} completadas", tone="emerald", icon="CheckSquare"),
             MetricCard(title="Tareas Vencidas", value=str(delayed), tone="amber", icon="AlertTriangle"),
-            MetricCard(title="Productividad", value=f"{round(done/max(tasks,1)*100)}%", tone="violet", icon="TrendingUp"),
+            MetricCard(title="Productividad", value=f"{round(done/max(tasks,1)*100)}%", tone="blue", icon="TrendingUp"),
         ],
         workload_distribution=workload_chart,
         delayed_tasks_count=delayed,
@@ -642,7 +642,7 @@ def get_admin_dashboard(db: Session) -> AdminGlobalDashboard:
         cards=[
             MetricCard(title="Usuarios", value=str(users), tone="blue", icon="Users"),
             MetricCard(title="Sesiones Activas", value=str(sessions), tone="emerald", icon="Activity"),
-            MetricCard(title="Personas", value=str(personas), tone="violet", icon="AddressBook"),
+            MetricCard(title="Personas", value=str(personas), tone="blue", icon="AddressBook"),
             MetricCard(title="Salud DB", value="✅ OK", tone="emerald", icon="CheckCircle2"),
         ],
         usuarios_por_rol=admin_combined_chart,
@@ -654,7 +654,7 @@ def get_admin_dashboard(db: Session) -> AdminGlobalDashboard:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# LEGACY BACKWARD COMPATIBILITY
+# Dashboard compatibility aliases
 # ═══════════════════════════════════════════════════════════════════
 
 def get_dashboard_metrics(db: Session):

@@ -203,6 +203,38 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _
   return parsed as T;
 }
 
+export async function apiFetchBlob(path: string, options: ApiFetchOptions = {}): Promise<Blob> {
+  const { method = "GET", token, headers, query, cache, credentials } = options;
+  const url = buildUrl(path, query);
+  const finalHeaders = buildHeaders(headers);
+
+  let activeToken = token;
+  if (!activeToken && typeof window !== "undefined") {
+    activeToken = sessionStorage.getItem("ccf_token");
+  }
+
+  if (activeToken) {
+    finalHeaders.set("Authorization", `Bearer ${activeToken}`);
+  }
+
+  const nativeFetch: typeof fetch =
+    (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
+  const response = await nativeFetch(url, {
+    method,
+    headers: finalHeaders,
+    cache,
+    credentials: credentials ?? "include",
+  });
+
+  if (!response.ok) {
+    const raw = await response.text();
+    const parsed = raw ? safeJsonParse(raw) : undefined;
+    throw new ApiError(response.statusText || "Request failed", response.status, parsed);
+  }
+
+  return response.blob();
+}
+
 function safeJsonParse(payload: string) {
   try {
     return JSON.parse(payload);
@@ -210,4 +242,3 @@ function safeJsonParse(payload: string) {
     return payload;
   }
 }
-

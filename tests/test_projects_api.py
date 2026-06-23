@@ -480,18 +480,18 @@ class TestComments:
         assert resp.status_code == 200
         assert len(resp.json()) >= 1
 
-    def test_create_comment_legacy(self, client, db_session):
-        """POST /projects/comments (body with project_id, content) — legacy route."""
+    def test_create_comment_with_project_id_body(self, client, db_session):
+        """POST /projects/comments with project_id in the body."""
         _, _, sede = seed_admin_v2(db_session)
         proj = create_project_factory(db_session)
         headers = auth_headers_v2(client)
         resp = client.post(
             "/api/projects/comments",
-            json={"project_id": str(proj.id), "content": "Legacy comment"},
+            json={"project_id": str(proj.id), "content": "Project comment"},
             headers=headers,
         )
         assert resp.status_code == 200
-        assert resp.json()["content"] == "Legacy comment"
+        assert resp.json()["content"] == "Project comment"
 
     def test_create_comment_by_project(self, client, db_session):
         """POST /projects/{id}/comments."""
@@ -877,5 +877,4 @@ class TestUUIDEdgeCases:
         # Verify gone
         resp = client.get("/api/projects", headers=headers)
         assert resp.json() == []
-
 

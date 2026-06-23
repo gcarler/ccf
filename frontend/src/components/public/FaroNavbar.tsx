@@ -35,6 +35,11 @@ export default function FaroNavbar() {
 
     // Dinamización vía CMS
     const { data: navContent } = useContentBlock(`${SITE_KEY}_nav_items`);
+    const navParsed = (navContent?.parsed && typeof navContent.parsed === "object" && !Array.isArray(navContent.parsed))
+        ? navContent.parsed as Record<string, unknown>
+        : null;
+    const locationTitle = (navParsed?.location_title as string) || "Nuestras Sedes";
+    const themeToggleTitle = (navParsed?.theme_toggle_title as string) || "Cambiar tema";
     const fallbackLinks = (Array.isArray(navContent?.items) ? navContent.items : DEFAULT_NAV_LINKS).map((item: any, index: number) => ({
         id: `fallback_${index}`,
         href: item.href,
@@ -186,7 +191,7 @@ export default function FaroNavbar() {
                             href="/sedes"
                             className="hidden md:flex items-center justify-center w-9 h-9 rounded-full transition-colors"
                             style={{ color: "var(--site-on-surface-variant)" }}
-                            title="Nuestras Sedes"
+                            title={locationTitle}
                         >
                             <MapPin size={18} />
                         </Link>
@@ -199,7 +204,7 @@ export default function FaroNavbar() {
                                 color: "var(--site-on-surface-variant)",
                                 background: "var(--site-surface-container)",
                             }}
-                            title="Cambiar tema"
+                            title={themeToggleTitle}
                         >
                             <Sun size={16} />
                         </button>

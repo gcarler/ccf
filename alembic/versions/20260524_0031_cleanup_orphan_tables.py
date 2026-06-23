@@ -1,6 +1,6 @@
 """Drop orphan tables (empty, no model) and cleanup
 
-Removes 8 legacy tables that have no SQLAlchemy models and are empty.
+Removes 8 compat tables that have no SQLAlchemy models and are empty.
 Also drops stale _alembic_tmp tables.
 
 Revision ID: 20260524_0031

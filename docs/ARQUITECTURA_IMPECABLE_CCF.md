@@ -13,7 +13,7 @@ La arquitectura CCF se considera impecable cuando cumple simultaneamente:
 1. La plataforma levanta con `./startccf` y se apaga con `./stopccf`.
 2. El quality gate pasa completo.
 3. Las reglas CCF pasan sin excepciones nuevas.
-4. La deuda legacy restante esta inventariada, protegida y asociada a una migracion o refactor reversible.
+4. La deuda compat restante esta inventariada, protegida y asociada a una migracion o refactor reversible.
 5. Ningun cambio funcional se mezcla con migraciones amplias, auth/RBAC o renombrados masivos.
 6. Toda identidad de persona y toda entidad transaccional nueva usa UUID, no enteros.
 
@@ -30,9 +30,9 @@ Reglas:
 - Toda FK que represente una persona debe apuntar a `personas.id`.
 - No se crean nuevas FKs a `users.id` para representar personas.
 - No se crean nuevas PK `Integer` en entidades transaccionales.
-- `users.id` entero solo puede existir como compatibilidad de autenticacion legacy, no como identidad ministerial ni pastoral.
+- `users.id` entero solo puede existir como compatibilidad de autenticacion compat, no como identidad ministerial ni pastoral.
 
-Las referencias actuales a enteros (`users.id`, `persona_id` como entero, PK/FK legacy) son deuda temporal protegida. No son excepciones arquitectonicas permanentes.
+Las referencias actuales a enteros (`users.id`, `persona_id` como entero, PK/FK compat) son deuda temporal protegida. No son excepciones arquitectonicas permanentes.
 
 Migrarlas requiere:
 
@@ -44,7 +44,7 @@ Migrarlas requiere:
 6. rollback documentado;
 7. smoke test de login, perfiles y modulos afectados.
 
-Prohibido eliminar una columna entera legacy antes de completar y verificar el backfill UUID.
+Prohibido eliminar una columna entera compat antes de completar y verificar el backfill UUID.
 
 ---
 
@@ -80,7 +80,7 @@ Auditoria del 2026-06-04 — commit `31774b6` (rama `main`, working tree con cam
 | Referencias `db.delete(` en backend | 0 ✔️ erradicado |
 | datetime.utcnow() erradicado | 0 |
 | `.replace(tzinfo=None)` en backend | 0 ✔️ erradicado |
-| FKs legacy a `users.id` | 31 (28 activas + 3 DEPRECATED en `models_crm.py`) |
+| FKs compat a `users.id` | 31 (28 activas + 3 DEPRECATED en `models_crm.py`) |
 | persona_id: int | 0 |
 | `fetch(` directo en frontend sin excepcion | 0 ✔️ erradicado |
 | Referencias `Dialog`/`Modal` en frontend | 0 ✔️ resuelto (solo nombres de variables) |
@@ -138,9 +138,9 @@ Estos numeros no autorizan correcciones masivas. Sirven para ordenar el saneamie
 
 ### Fase D: Migraciones Mayores
 
-- FKs legacy a `users.id`.
+- FKs compat a `users.id`.
 - PK Integer a UUID.
-- Alias legacy `Member`, `CellGroup`, `Enrollment`, `Project`.
+- Alias compat `Member`, `CellGroup`, `Enrollment`, `Project`.
 - Rutas ingles/espanol.
 
 Estas tareas requieren inventario, backfill, migracion reversible, smoke test y aprobacion explicita.

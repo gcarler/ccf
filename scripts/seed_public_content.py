@@ -38,6 +38,17 @@ BLOCKS = {
             "featured_empty_title": "Evento destacado",
             "featured_empty_description": "Contenido real desde el CMS",
             "channel_link_label": "Ver canal",
+            "filters_title": "Filtrar por tipo",
+            "sync_calendar_cta": "Sincronizar Calendario",
+            "sync_calendar_toast": "Calendario descargado — impórtalo en Google Calendar o Outlook",
+            "notifications_title": "Quieres recordatorios?",
+            "notifications_desc": "Recibe avisos de tus eventos favoritos.",
+            "notifications_toast": "Notificaciones de eventos próximamente — te avisaremos",
+            "highlights_title": "Destacados",
+            "highlights_empty": "Sin destacados publicados todavia.",
+            "event_card_default_excerpt": "Contenido real desde el CMS",
+            "no_upcoming_label": "Sin eventos proximos publicados.",
+            "no_location": "Sin ubicacion publicada",
         },
     },
     "faro_sermons_feed": {
@@ -60,6 +71,13 @@ BLOCKS = {
             "cta_label": "Ver todos en YouTube",
             "no_results_prefix": "Sin resultados para",
             "no_results_description": "Intenta con otro término.",
+            "featured_badge": "Más reciente",
+            "retry_label": "Reintentar",
+            "share_whatsapp": "WhatsApp",
+            "copy_link": "Copiar",
+            "copied_label": "¡Copiado!",
+            "view_on_youtube": "Ver en YouTube",
+            "close": "Cerrar",
         },
     },
     "faro_testimonials_hero": {
@@ -92,6 +110,10 @@ BLOCKS = {
             "title": "Recibe nuestra palabra de aliento",
             "description": "Cada semana te enviamos una reflexión bíblica, un versículo de ánimo y consejos prácticos para fortalecer tu fe.",
             "cta_text": "Suscribirme ahora",
+            "success_message": "¡Gracias por suscribirte!",
+            "error_message": "No se pudo suscribir. Intenta de nuevo.",
+            "email_placeholder": "Tu correo electrónico",
+            "sending_label": "Enviando...",
         },
     },
     "faro_pastores_index": {
@@ -164,10 +186,18 @@ BLOCKS = {
                 {"src": "https://picsum.photos/seed/academia2/800/800", "alt": "Librería"},
             ],
             "library_title": "Nuestra Librería",
-            "library_description": "Una curaduría de obras que han transformado generaciones.",
+            "library_description": "Una curaduría de obras que han transformado generaciones. Desde clásicos de la patrística hasta literatura contemporánea.",
             "empty_books_message": "Próximamente tendremos libros disponibles.",
             "courses_title": "Cursos & Academia",
-            "courses_description": "Programas estructurados para líderes, estudiantes y buscadores de la verdad.",
+            "courses_description": "Programas estructurados para líderes, estudiantes y buscadores de la verdad. Formación teológica y práctica con estándares de excelencia.",
+            "cta_title": "Únete a la Academia FARO",
+            "cta_description": "Recibe actualizaciones sobre nuevos cursos, lanzamientos de libros y eventos exclusivos de formación directamente en tu correo.",
+            "cta_placeholder": "Tu correo electrónico",
+            "cta_submit": "Suscribirme",
+            "newsletter_success_toast": "¡Te has suscrito con éxito a nuestra academia!",
+            "newsletter_error_toast": "Error al suscribirse. Inténtalo de nuevo.",
+            "wishlist_success_toast_prefix": "añadido a tu lista — te contactaremos con info",
+            "wishlist_fallback_toast_prefix": "guardado en tu lista",
         },
     },
     "faro_discover_hero": {
@@ -199,6 +229,11 @@ BLOCKS = {
             "message_label": "¿En qué podemos ayudarte?",
             "message_placeholder": "Cuéntanos un poco sobre ti o tu petición de oración...",
             "submit_label": "Enviar mensaje y conectar",
+            "submit_sending": "Enviando...",
+            "success_title": "¡Gracias!",
+            "success_description": "Hemos recibido tu mensaje. Te contactaremos pronto.",
+            "error_message": "Hubo un error. Intenta de nuevo o escríbenos directamente.",
+            "connection_error": "Ocurrió un error inesperado de conexión.",
             "benefits": [
                 {"icon": "Heart", "title": "Gracia sin condenas", "desc": "Eres bienvenido tal como eres."},
                 {"icon": "Star", "title": "Propósito real", "desc": "Descubre para qué fuiste creado."},
@@ -248,6 +283,18 @@ BLOCKS = {
                     "alt": "Lugar de reunión",
                 },
             ],
+            "activities_eyebrow": "Actualidad",
+            "activities_title": "Actividades Recientes",
+            "activities_view_all": "Ver calendario →",
+            "activities_empty": "Próximamente encontrarás aquí nuestras actividades. Mientras tanto, síguenos en redes sociales.",
+            "scroll_indicator": "Descubrir",
+            "newsletter_eyebrow": "Boletín semanal",
+            "newsletter_title": "¿Quieres recibir nuestras novedades?",
+            "newsletter_description": "Meditaciones semanales, eventos exclusivos y más.\nDirecto a tu correo.",
+            "newsletter_placeholder": "Tu correo electrónico",
+            "newsletter_submit": "Suscribirme",
+            "newsletter_success_title": "¡Gracias por suscribirte!",
+            "newsletter_success_desc": "Recibirás meditaciones y novedades semanales.",
         },
     },
 
@@ -285,6 +332,9 @@ BLOCKS = {
             "founder2_image": "/images/pastores/histar_ariza.webp",
             "founder_bio": "La Comunidad Cristiana El Faro nació de un profundo encuentro con la paternidad de Dios. Nuestros pastores principales, <strong>Luis Ricardo Meza Gutiérrez</strong> e <strong>Histar Ariza Herrera</strong>, han dedicado más de dos décadas a construir una iglesia que sea verdaderamente una casa — un lugar donde cada persona sea vista, amada y formada.",
             "founder_bio2": "Desde sus inicios, el ADN de El Faro ha sido claro: <em>sana doctrina, corazón pastoral y vida en comunidad</em>. Una iglesia que no teme enseñar la Palabra en su profundidad y que, al mismo tiempo, envuelve a cada persona con la calidez del amor de Cristo.",
+            "founder_cta_team": "Conoce al equipo",
+            "founder_cta_visit": "Visítanos",
+            "values_eyebrow": "Lo que nos define",
             "valores_title": "Valores que nos Guían",
             "valores": [
                 {"num": "01", "key": "palabra",    "title": "Palabra",       "desc": "La Escritura es nuestra brújula. Cada decisión, enseñanza y acción está fundamentada en la sana doctrina de la Biblia."},
@@ -299,6 +349,10 @@ BLOCKS = {
             "quote_subtitle": "Comunidad Cristiana El Faro",
             "cta_title": "¿Listo para ser parte?",
             "cta_desc": "Ven a conocernos. Tenemos puertas abiertas y un lugar reservado para ti y tu familia.",
+            "cta_view_sedes": "Ver sedes",
+            "cta_view_events": "Próximos eventos",
+            "breadcrumbInicio": "Inicio",
+            "breadcrumbPage": "Quiénes Somos",
         },
     },
 
@@ -387,6 +441,16 @@ BLOCKS = {
                     "image": "/images/pastores/yanedith_wilches.webp",
                     "story": "La fuerza inquebrantable de una mujer virtuosa, la intercesión y la compasión por los vulnerables.",
                 },
+                {
+                    "slug": "martina-herrera",
+                    "name": "Martina Herrera",
+                    "role": "Pastora Fundadora",
+                    "image": "/images/pastores/martina_herrera.webp",
+                    "isMain": True,
+                    "story": "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
+                    "bio_short": "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
+                    "bio_full": "<p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana El Faro. Junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor, sembró con fe, oración y perseverancia las bases espirituales de esta casa.</p><blockquote>\"La obra de Dios se edifica con fe, obediencia y amor por las almas.\"</blockquote><p>Desde los primeros días del ministerio, la Pastora Martina ha sido un pilar de oración, fidelidad y cuidado pastoral. Su corazón maternal ha acompañado a generaciones de creyentes que encontraron en ella una pastora, una consejera y una madre espiritual.</p><p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana El Faro: una iglesia levantada para amar a Dios, servir a las personas y continuar la obra que el Señor puso en sus manos.</p>",
+                },
             ]
         },
     },
@@ -399,6 +463,10 @@ BLOCKS = {
             "title": "Nuestras Sedes",
             "search_placeholder": "Buscar ciudad o dirección...",
             "map_embed_url": "https://www.google.com/maps/d/embed?mid=1VDNpplw_9z1tcEhx25wEFRR5gQmnHgM&ehbc=2E312F",
+            "main_badge": "Principal",
+            "directions_cta": "Cómo llegar",
+            "empty_locations": "No hay sedes configuradas para mostrar.",
+            "empty_search": "No se encontraron sedes con ese criterio.",
         },
     },
     "faro_locations_feed": {
@@ -444,6 +512,8 @@ BLOCKS = {
                 "a través de la comunidad y la guía espiritual. "
                 "Una casa de fe abierta para toda la familia."
             ),
+            "brand_name": "Comunidad Cristiana El Faro",
+            "nav_section_title": "Navegación",
             "nav_links": [
                 {"href": "/", "label": "Inicio"},
                 {"href": "/nosotros", "label": "Sobre Nosotros"},
@@ -452,12 +522,17 @@ BLOCKS = {
                 {"href": "/predicas", "label": "Prédicas"},
                 {"href": "/cursos", "label": "Cursos"},
             ],
+            "resource_section_title": "Recursos",
             "resource_links": [
                 {"href": "/conocer-a-jesus", "label": "Conocer a Jesús"},
                 {"href": "/testimonios", "label": "Testimonios"},
                 {"href": "/sedes", "label": "Sedes"},
                 {"href": "/boletin", "label": "Boletín"},
             ],
+            "contact_section_title": "Contáctanos",
+            "contact_email": "",
+            "contact_location_label": "Cartagena, Colombia",
+            "contact_newsletter_label": "Boletín semanal",
             "social_links": [
                 {"href": "https://facebook.com/comunidadfaro", "label": "Facebook", "kind": "facebook"},
                 {"href": "https://instagram.com/comunidadfaro", "label": "Instagram", "kind": "instagram"},
@@ -465,6 +540,10 @@ BLOCKS = {
             ],
             "location_label": "Cartagena, Colombia",
             "newsletter_label": "Boletín semanal",
+            "copyright_company": "PLES SAS",
+            "copyright_company_url": "https://ples.com.co",
+            "copyright_text": "El uso inteligente de la experiencia. Todos los derechos reservados.",
+            "privacy_label": "Política de Privacidad",
         },
     },
     "faro_mobile_nav": {
@@ -530,6 +609,150 @@ BLOCKS = {
         },
     },
 
+    # ── SEO META TAGS ───────────────────────────────────────────────────────
+    "faro_home_meta": {
+        "title": "Comunidad Cristiana El Faro — Iluminando el camino juntos",
+        "content": {
+            "title": "Comunidad Cristiana El Faro — Iluminando el camino juntos",
+            "description": "Una comunidad de fe viva y en crecimiento que existe para conectar corazones con Dios y entre sí. Únete a nosotros en Barranquilla.",
+            "image": "https://images.unsplash.com/photo-1504051771394-dd2e66b2e08f?auto=format&fit=crop&w=1200&q=80",
+            "type": "website",
+            "keywords": "iglesia, comunidad cristiana, fe, Barranquilla, Dios, evangelio, faro",
+            "author": "Comunidad Cristiana El Faro",
+            "twitter_card": "summary_large_image",
+            "locale": "es_CO",
+        },
+    },
+    "faro_nosotros_meta": {
+        "title": "Quiénes Somos — Comunidad Cristiana El Faro",
+        "content": {
+            "title": "Quiénes Somos — Comunidad Cristiana El Faro",
+            "description": "Conoce la historia, visión, misión y valores de la Comunidad Cristiana El Faro. Más de 20 años guiando vidas hacia la verdad.",
+            "image": "/images/pastores/luis_ricardo_meza.webp",
+            "type": "website",
+            "keywords": "sobre nosotros, historia, visión, misión, valores, iglesia, Barranquilla",
+            "author": "Comunidad Cristiana El Faro",
+            "twitter_card": "summary_large_image",
+            "locale": "es_CO",
+        },
+    },
+    "faro_pastores_meta": {
+        "title": "Liderazgo Pastoral — Comunidad Cristiana El Faro",
+        "content": {
+            "title": "Liderazgo Pastoral — Comunidad Cristiana El Faro",
+            "description": "Conoce a los pastores y líderes que guían la comunidad. Hombres y mujeres llamados por Dios para servir y amar.",
+            "image": "/images/pastores/martina_herrera.webp",
+            "type": "website",
+            "keywords": "pastores, liderazgo, equipo pastoral, iglesia, Barranquilla",
+            "author": "Comunidad Cristiana El Faro",
+            "twitter_card": "summary_large_image",
+            "locale": "es_CO",
+        },
+    },
+    "faro_conocer_meta": {
+        "title": "Conocer a Jesús — Comunidad Cristiana El Faro",
+        "content": {
+            "title": "Conocer a Jesús — Comunidad Cristiana El Faro",
+            "description": "El comienzo de una relación que transforma la oscuridad en un propósito eterno. Ven y descubre el amor de Cristo.",
+            "image": "https://picsum.photos/seed/1518623489648-a173ef7824f3/1200/630",
+            "type": "website",
+            "keywords": "conocer a Jesús, fe, evangelio, salvación, nuevo creyente, discipulado",
+            "author": "Comunidad Cristiana El Faro",
+            "twitter_card": "summary_large_image",
+            "locale": "es_CO",
+        },
+    },
+    "faro_eventos_meta": {
+        "title": "Eventos — Comunidad Cristiana El Faro",
+        "content": {
+            "title": "Eventos — Comunidad Cristiana El Faro",
+            "description": "Calendario de eventos comunitarios, conferencias, grupos de conexión y cursos. Espacios para el crecimiento y la conexión.",
+            "image": "https://picsum.photos/seed/eventos-faro/1200/630",
+            "type": "website",
+            "keywords": "eventos, conferencias, cursos, actividades, calendario, iglesia",
+            "author": "Comunidad Cristiana El Faro",
+            "twitter_card": "summary_large_image",
+            "locale": "es_CO",
+        },
+    },
+    "faro_predicas_meta": {
+        "title": "Prédicas — Comunidad Cristiana El Faro",
+        "content": {
+            "title": "Prédicas — Comunidad Cristiana El Faro",
+            "description": "Alimento para el alma. Explora los mensajes más recientes de nuestro canal de YouTube. Prédicas que iluminan el camino.",
+            "image": "https://picsum.photos/seed/predicas-faro/1200/630",
+            "type": "website",
+            "keywords": "prédicas, mensajes, YouTube, enseñanza bíblica,word, predicaciones",
+            "author": "Comunidad Cristiana El Faro",
+            "twitter_card": "summary_large_image",
+            "locale": "es_CO",
+        },
+    },
+    "faro_cursos_meta": {
+        "title": "Cursos y Librería — Comunidad Cristiana El Faro",
+        "content": {
+            "title": "Cursos y Librería — Comunidad Cristiana El Faro",
+            "description": "Academia de cursos especializados y selección literaria para iluminar tu entendimiento. Formación teológica y práctica.",
+            "image": "https://picsum.photos/seed/cursos-faro/1200/630",
+            "type": "website",
+            "keywords": "cursos, academia, librería, libros, formación, teología, estudios bíblicos",
+            "author": "Comunidad Cristiana El Faro",
+            "twitter_card": "summary_large_image",
+            "locale": "es_CO",
+        },
+    },
+    "faro_sedes_meta": {
+        "title": "Nuestras Sedes — Comunidad Cristiana El Faro",
+        "content": {
+            "title": "Nuestras Sedes — Comunidad Cristiana El Faro",
+            "description": "Encuéntranos en Barranquilla. Horarios, direcciones y contacto de nuestras sedes. Te esperamos.",
+            "image": "https://picsum.photos/seed/sedes-faro/1200/630",
+            "type": "website",
+            "keywords": "sedes, ubicaciones, horarios, dirección, Barranquilla, campus",
+            "author": "Comunidad Cristiana El Faro",
+            "twitter_card": "summary_large_image",
+            "locale": "es_CO",
+        },
+    },
+    "faro_boletin_meta": {
+        "title": "Boletín Semanal — Comunidad Cristiana El Faro",
+        "content": {
+            "title": "Boletín Semanal — Comunidad Cristiana El Faro",
+            "description": "Recibe cada semana una reflexión bíblica, un versículo de ánimo y consejos prácticos para fortalecer tu fe.",
+            "image": "https://picsum.photos/seed/boletin-faro/1200/630",
+            "type": "website",
+            "keywords": "boletín, newsletter, reflexión bíblica, devocional, semanal",
+            "author": "Comunidad Cristiana El Faro",
+            "twitter_card": "summary_large_image",
+            "locale": "es_CO",
+        },
+    },
+    "faro_testimonios_meta": {
+        "title": "Testimonios — Comunidad Cristiana El Faro",
+        "content": {
+            "title": "Testimonios — Comunidad Cristiana El Faro",
+            "description": "Historias reales de transformación. Descubre cómo la fe ha iluminado vidas en nuestra comunidad.",
+            "image": "https://picsum.photos/seed/testimonios-faro/1200/630",
+            "type": "website",
+            "keywords": "testimonios, historias, transformación, fe, comunidad",
+            "author": "Comunidad Cristiana El Faro",
+            "twitter_card": "summary_large_image",
+            "locale": "es_CO",
+        },
+    },
+    "faro_privacidad_meta": {
+        "title": "Política de Privacidad — Comunidad Cristiana El Faro",
+        "content": {
+            "title": "Política de Privacidad — Comunidad Cristiana El Faro",
+            "description": "Conoce cómo recopilamos, usamos y protegemos tus datos personales en la plataforma CCF.",
+            "type": "website",
+            "keywords": "privacidad, datos personales, política de privacidad, RGPD",
+            "author": "Comunidad Cristiana El Faro",
+            "robots": "noindex, nofollow",
+            "locale": "es_CO",
+        },
+    },
+
     # ── NAV GLOBAL ──────────────────────────────────────────────────────────
     "faro_nav_items": {
         "title": "Menú de Navegación",
@@ -543,7 +766,9 @@ BLOCKS = {
                 {"label": "Cursos",           "href": "/cursos"},
                 {"label": "Sedes",            "href": "/sedes"},
                 {"label": "Conocer a Jesús",  "href": "/conocer-a-jesus"},
-            ]
+            ],
+            "location_title": "Nuestras Sedes",
+            "theme_toggle_title": "Cambiar tema",
         },
     },
 }
@@ -552,6 +777,7 @@ BLOCKS = {
 # ── Runner ───────────────────────────────────────────────────────────────────
 
 def upsert_block(conn, page_key: str, title: str, content: dict | list):
+    import uuid
     content_str = json.dumps(content, ensure_ascii=False)
     
     # Query existing row
@@ -564,10 +790,10 @@ def upsert_block(conn, page_key: str, title: str, content: dict | list):
         # Save previous version
         conn.execute(
             text("""
-                INSERT INTO page_content_versions (page_key, title, content, created_at)
-                VALUES (:page_key, :title, :content, NOW())
+                INSERT INTO page_content_versions (id, page_key, title, content, created_at)
+                VALUES (:id, :page_key, :title, :content, NOW())
             """),
-            {"page_key": row[0], "title": row[1], "content": row[2]}
+            {"id": str(uuid.uuid4()), "page_key": row[0], "title": row[1], "content": row[2]}
         )
         # Update current row
         conn.execute(
@@ -583,10 +809,10 @@ def upsert_block(conn, page_key: str, title: str, content: dict | list):
         # Insert current row
         conn.execute(
             text("""
-                INSERT INTO page_contents (page_key, title, content, created_at, updated_at)
-                VALUES (:page_key, :title, :content, NOW(), NOW())
+                INSERT INTO page_contents (id, page_key, title, content, created_at, updated_at)
+                VALUES (:id, :page_key, :title, :content, NOW(), NOW())
             """),
-            {"page_key": page_key, "title": title, "content": content_str}
+            {"id": str(uuid.uuid4()), "page_key": page_key, "title": title, "content": content_str}
         )
         action = "created"
     

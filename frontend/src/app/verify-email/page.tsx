@@ -20,7 +20,7 @@ function VerifyEmailContent() {
       return;
     }
 
-    fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`)
+    fetch(`/api/v3/auth/verify-email?token=${encodeURIComponent(token)}`)
       .then(async (res) => {
         if (!res.ok) {
           const err = await res.json();

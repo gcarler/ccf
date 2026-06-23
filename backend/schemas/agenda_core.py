@@ -3,6 +3,7 @@
 RecursoFisico, EventoAgenda, ParticipanteEvento, ReservaRecurso.
 """
 from __future__ import annotations
+from uuid import UUID
 
 from datetime import datetime
 from typing import Optional
@@ -17,7 +18,7 @@ from backend.schemas._common import orm_config
 # ═══════════════════════════════════════════════════════════════════
 
 class RecursoFisicoResponse(BaseModel):
-    id: int
+    id: UUID
     sede_id: str
     nombre: str
     tipo: str
@@ -40,7 +41,7 @@ class RecursoFisicoCreate(BaseModel):
 # ═══════════════════════════════════════════════════════════════════
 
 class EventoAgendaResponse(BaseModel):
-    id: str
+    id: UUID
     sede_id: str
     modulo_origen: str
     entidad_origen_id: Optional[str] = None
@@ -94,9 +95,9 @@ class EventoAgendaCreate(BaseModel):
 # ═══════════════════════════════════════════════════════════════════
 
 class ParticipanteEventoResponse(BaseModel):
-    id: int
+    id: UUID
     evento_id: str
-    persona_id: str
+    persona_id: UUID
     estado_confirmacion: str
     es_requerido: bool
     fecha_confirmacion: Optional[datetime] = None
@@ -106,7 +107,7 @@ class ParticipanteEventoResponse(BaseModel):
 
 class ParticipanteEventoCreate(BaseModel):
     evento_id: str
-    persona_id: str
+    persona_id: UUID
     estado_confirmacion: str = "PENDIENTE"
     es_requerido: bool = True
     fecha_confirmacion: Optional[datetime] = None
@@ -117,9 +118,9 @@ class ParticipanteEventoCreate(BaseModel):
 # ═══════════════════════════════════════════════════════════════════
 
 class ReservaRecursoResponse(BaseModel):
-    id: int
+    id: UUID
     evento_id: str
-    recurso_id: int
+    recurso_id: str
     bloqueo_inicio: datetime
     bloqueo_fin: datetime
 
@@ -128,6 +129,6 @@ class ReservaRecursoResponse(BaseModel):
 
 class ReservaRecursoCreate(BaseModel):
     evento_id: str
-    recurso_id: int
+    recurso_id: str
     bloqueo_inicio: datetime
     bloqueo_fin: datetime

@@ -650,7 +650,7 @@ def list_cms_pages(
 
 
 def list_cms_pages_all(db: Session, site_id: uuid.UUID):
-    """Return all pages for a site (legacy, unbounded)."""
+    """Return all pages for a site without pagination."""
     return (
         db.query(models.CmsPage)
         .filter(models.CmsPage.site_id == site_id)

@@ -1,3 +1,4 @@
+import uuid as _uuid
 """Kernel — Protocolo de Identidad y Roles.
 
 Modelos para el protocolo de identidad desacoplada (3 dimensiones + estado vital).
@@ -69,7 +70,7 @@ class PersonaMinistry(Base):
     """Dimensión A — Ministerio espiritual de una persona (Efesios 4:11)."""
     __tablename__ = "persona_ministries"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
@@ -104,7 +105,7 @@ class PersonaRoleAssignment(Base):
     """
     __tablename__ = "persona_church_roles"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
@@ -130,7 +131,7 @@ class PersonaRoleHistory(Base):
     """Historial de cambios en el rol de iglesia (Dimensión B)."""
     __tablename__ = "persona_role_history"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
@@ -159,7 +160,7 @@ class PlatformRoleDefinition(Base):
     """Dimensión C — Definición de roles de plataforma con permisos predefinidos."""
     __tablename__ = "platform_role_definitions"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     role = Column(SAEnum(PlatformRole), unique=True, nullable=False, index=True)
     permissions = Column(
         JSON, nullable=False, default={
@@ -207,15 +208,14 @@ class PersonaPlatformRole(Base):
     """Dimensión C — Asignación de rol de plataforma a una persona."""
     __tablename__ = "persona_platform_roles"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    role_id = Column(
-        Integer, ForeignKey("platform_role_definitions.id"), nullable=False, index=True
+    role_id = Column(UUID(as_uuid=True), ForeignKey("platform_role_definitions.id"), nullable=False, index=True
     )
     assigned_at = Column(DateTime(timezone=True), default=_utcnow)
     assigned_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)

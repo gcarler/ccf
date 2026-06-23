@@ -61,6 +61,16 @@ export default function EventosPage() {
         "Espacios diseñados para el crecimiento, la conexión y la guía espiritual.";
     const feed = feedContent?.content ? JSON.parse(feedContent.content) : null;
     const categoryFilters = Array.isArray(feed?.filters) && feed.filters.length > 0 ? (feed.filters as string[]) : CATEGORY_FILTERS;
+    const filtersTitle = feed?.filters_title || "Filtrar por tipo";
+    const syncCalendarCta = feed?.sync_calendar_cta || "Sincronizar Calendario";
+    const syncCalendarToast = feed?.sync_calendar_toast || "Calendario descargado — impórtalo en Google Calendar o Outlook";
+    const notificationsTitle = feed?.notifications_title || "Quieres recordatorios?";
+    const notificationsDesc = feed?.notifications_desc || "Recibe avisos de tus eventos favoritos.";
+    const notificationsToast = feed?.notifications_toast || "Notificaciones de eventos próximamente — te avisaremos";
+    const highlightsTitle = feed?.highlights_title || "Destacados";
+    const highlightsEmpty = feed?.highlights_empty || "Sin destacados publicados todavia.";
+    const noUpcomingLabel = feed?.no_upcoming_label || "Sin eventos proximos publicados.";
+    const noLocation = feed?.no_location || "Sin ubicacion publicada";
 
     const parsedEvents = useMemo(
         () =>
@@ -251,7 +261,7 @@ export default function EventosPage() {
                             className="text-xl font-bold mb-3"
                             style={{ color: "var(--site-on-surface)" }}
                         >
-                            {feed?.filters_title || "Filtrar por tipo"}
+                            {filtersTitle}
                         </h3>
                         <div className="space-y-2">
                             {categoryFilters.map((cat) => (
@@ -310,13 +320,13 @@ export default function EventosPage() {
                                         className="text-xs italic"
                                         style={{ color: "var(--site-on-surface-variant)" }}
                                     >
-                                        {upcomingEvent.location || "Sin ubicacion publicada"}
+                                        {upcomingEvent.location || noLocation}
                                     </p>
                                 </div>
                             </div>
                         ) : (
                             <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                {feed?.no_upcoming_label || "Sin eventos proximos publicados."}
+                                {noUpcomingLabel}
                             </p>
                         )}
                     </div>
@@ -582,7 +592,7 @@ export default function EventosPage() {
                                 style={{ color: "var(--site-on-surface)" }}
                             >
                                 <Star size={18} style={{ color: "var(--site-primary)" }} />
-                                Destacados
+                                {highlightsTitle}
                             </h3>
                             <div className="space-y-5">
                                 {hasEvents ? (
@@ -620,7 +630,7 @@ export default function EventosPage() {
                                     ))
                                 ) : (
                                     <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                        Sin destacados publicados todavia.
+                                        {highlightsEmpty}
                                     </p>
                                 )}
                             </div>
@@ -634,7 +644,7 @@ export default function EventosPage() {
                                     const a = document.createElement("a");
                                     a.href = url; a.download = `${SITE_KEY}-eventos.ics`; a.click();
                                     URL.revokeObjectURL(url);
-                                    toast.success("Calendario descargado — impórtalo en Google Calendar o Outlook");
+                                    toast.success(syncCalendarToast);
                                 }}
                                 className="w-full mt-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-all hover:scale-105"
                                 style={{
@@ -642,12 +652,12 @@ export default function EventosPage() {
                                     color: "var(--site-primary)",
                                 }}
                             >
-                                Sincronizar Calendario
+                                {syncCalendarCta}
                             </button>
                         </div>
 
                         <div
-                            onClick={() => toast.info("Notificaciones de eventos próximamente — te avisaremos")}
+                            onClick={() => toast.info(notificationsToast)}
                             className="rounded-lg p-3 flex items-center gap-4 cursor-pointer transition-all hover:scale-[1.02]"
                             style={{
                                 background: "var(--site-primary-container)",
@@ -668,13 +678,13 @@ export default function EventosPage() {
                                     className="font-black text-sm"
                                     style={{ color: "var(--site-on-surface)" }}
                                 >
-                                    Quieres recordatorios?
+                                    {notificationsTitle}
                                 </h4>
                                 <p
                                     className="text-xs"
                                     style={{ color: "var(--site-on-surface-variant)" }}
                                 >
-                                    Recibe avisos de tus eventos favoritos.
+                                    {notificationsDesc}
                                 </p>
                             </div>
                         </div>

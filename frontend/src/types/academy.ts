@@ -87,7 +87,7 @@ export interface PilotReadiness {
 }
 
 export interface AcademyStudentProfile {
-  user_id: number;
+  persona_id: string;
   username: string;
   total_progress: number;
   enrollments_count: number;

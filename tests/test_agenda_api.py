@@ -58,7 +58,7 @@ def test_get_agenda_event(client, db_session):
     resp = client.get(f"/api/agenda/events/{event.id}", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
-    assert data["id"] == event.id
+    assert data["id"] == str(event.id)
     assert data["title"] == "Culto dominical"
 
 

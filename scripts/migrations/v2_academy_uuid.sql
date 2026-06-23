@@ -1,6 +1,6 @@
 -- ============================================================
 -- Migración: Academy Integer PKs → UUID
--- Copia datos de tablas legacy (courses, lessons, etc.)
+-- Copia datos de tablas compat (courses, lessons, etc.)
 -- a las nuevas tablas v2 (academy_courses, academy_lessons, etc.)
 -- ============================================================
 -- Ejecutar solo después de verificar que las tablas v2 existen

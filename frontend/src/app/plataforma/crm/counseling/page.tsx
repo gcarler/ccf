@@ -16,6 +16,7 @@ import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import CounselingDetailSidebar from '@/components/crm/CounselingDetailSidebar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import PersonaSelect from '@/components/ui/PersonaSelect';
 import { useRouter } from 'next/navigation';
 import { CounselingSession } from '@/types/crm';
 
@@ -40,7 +41,6 @@ export default function CounselingPage() {
         title: 'Wiki de consejeria CRM',
     });
 
-    const [members, setMembers] = useState<any[]>([]);
     const [newSession, setNewSession] = useState({
         pastor_id: user?.id || 1,
         persona_id: '',
@@ -64,18 +64,13 @@ export default function CounselingPage() {
     const fetchSessions = useCallback(async () => {
         if (!token) {
             setSessions([]);
-            setMembers([]);
             setLoading(false);
             return;
         }
         setLoading(true);
         try {
-            const [sessionsData, membersData] = await Promise.all([
-                apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store' }),
-                apiFetch<any[]>('/crm/personas', { token, cache: 'no-store' })
-            ]);
+            const sessionsData = await apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store' });
             setSessions(Array.isArray(sessionsData) ? sessionsData : []);
-            setMembers(Array.isArray(membersData) ? membersData : []);
         } catch (err) {
             console.error(err);
         } finally {
@@ -653,20 +648,11 @@ export default function CounselingPage() {
             <div className="space-y-3">
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Persona / Lead</label>
-                    <div className="relative">
-                        <select
-                            required
-                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold appearance-none"
-                            value={newSession.persona_id}
-                            onChange={(e) => setNewSession({ ...newSession, persona_id: e.target.value })}
-                        >
-                            <option value="" className="dark:bg-slate-900">Selecciona persona...</option>
-                            {members.map(m => (
-                                <option key={m.id} value={m.id} className="dark:bg-slate-900">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</option>
-                            ))}
-                        </select>
-                        <ChevronRight size={16} className="absolute right-5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
-                    </div>
+                    <PersonaSelect
+                        value={newSession.persona_id || null}
+                        onChange={(id) => setNewSession({ ...newSession, persona_id: id ?? '' })}
+                        placeholder="Selecciona persona..."
+                    />
                 </div>
 
                 <div className="space-y-2">

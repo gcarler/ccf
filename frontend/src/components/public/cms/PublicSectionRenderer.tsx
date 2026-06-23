@@ -7,6 +7,7 @@ import { Calendar,CheckCircle2,ChevronDown,ChevronRight,ChevronUp,Download,FileT
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React,{ useCallback,useEffect,useMemo,useRef,useState } from "react";
+import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
 
 function val(props: Record<string, unknown>, key: string, fallback = "") {
   const value = props?.[key];
@@ -1165,7 +1166,7 @@ function DividerSection({ section }: { section: CmsSection }) {
 // ─── Collapsible ───────────────────────────────────────────────────────────────
 
 function sanitizeHtml(html: string): string {
-  return html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/\bon\w+\s*=/gi, "data-removed=");
+  return sanitizeCmsHtml(html);
 }
 
 function CollapsibleSection({ section }: { section: CmsSection }) {

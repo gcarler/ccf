@@ -35,6 +35,7 @@ import {
   SectionRenderPreview,
 } from "@/components/cms/builder/SectionPreview";
 import MediaPicker from "@/components/cms/builder/MediaPicker";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 
 export default function CmsBuilderPage() {

@@ -337,7 +337,7 @@ def get_team_workload(
 
         result.append(
             {
-                "user_id": r.user_id,
+                "persona_id": r.user_id,
                 "name": r.full_name or r.username,
                 "total": r.total_tasks,
                 "open": open_tasks,

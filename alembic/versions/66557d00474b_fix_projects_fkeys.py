@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # 1. Drop old foreign key constraints pointing to legacy tables (idempotent)
+    # 1. Drop old foreign key constraints pointing to compat tables (idempotent)
     op.execute("ALTER TABLE project_documents DROP CONSTRAINT IF EXISTS project_documents_project_id_fkey")
     op.execute("ALTER TABLE project_attachments DROP CONSTRAINT IF EXISTS project_attachments_task_id_fkey")
     op.execute("ALTER TABLE task_supplies DROP CONSTRAINT IF EXISTS task_supplies_task_id_fkey")
@@ -27,7 +27,7 @@ def upgrade() -> None:
     op.execute("ALTER TABLE project_comments DROP CONSTRAINT IF EXISTS project_comments_task_id_fkey")
     op.execute("ALTER TABLE project_phases DROP CONSTRAINT IF EXISTS project_phases_project_id_fkey")
 
-    # 2. Drop legacy inbox state constraints and column (idempotent)
+    # 2. Drop compat inbox state constraints and column (idempotent)
     op.execute("ALTER TABLE project_inbox_state DROP CONSTRAINT IF EXISTS uq_user_project_item")
     op.execute("ALTER TABLE project_inbox_state DROP CONSTRAINT IF EXISTS project_inbox_state_user_id_fkey")
     op.execute("ALTER TABLE project_inbox_state DROP COLUMN IF EXISTS user_id")
@@ -91,27 +91,27 @@ def downgrade() -> None:
     # 3. Add user_id column back to project_inbox_state
     op.execute("ALTER TABLE project_inbox_state ADD COLUMN IF NOT EXISTS user_id integer")
 
-    # 4. Recreate old foreign key constraints pointing to legacy tables
+    # 4. Recreate old foreign key constraints pointing to compat tables
     op.execute("ALTER TABLE project_documents DROP CONSTRAINT IF EXISTS project_documents_project_id_fkey")
-    op.create_foreign_key('project_documents_project_id_fkey', 'project_documents', '_legacy_projects', ['project_id'], ['id'])
+    op.create_foreign_key('project_documents_project_id_fkey', 'project_documents', '_compat_projects', ['project_id'], ['id'])
     
     op.execute("ALTER TABLE project_attachments DROP CONSTRAINT IF EXISTS project_attachments_task_id_fkey")
-    op.create_foreign_key('project_attachments_task_id_fkey', 'project_attachments', '_legacy_project_tasks', ['task_id'], ['id'])
+    op.create_foreign_key('project_attachments_task_id_fkey', 'project_attachments', '_compat_project_tasks', ['task_id'], ['id'])
     
     op.execute("ALTER TABLE task_supplies DROP CONSTRAINT IF EXISTS task_supplies_task_id_fkey")
-    op.create_foreign_key('task_supplies_task_id_fkey', 'task_supplies', '_legacy_project_tasks', ['task_id'], ['id'])
+    op.create_foreign_key('task_supplies_task_id_fkey', 'task_supplies', '_compat_project_tasks', ['task_id'], ['id'])
     
     op.execute("ALTER TABLE project_comments DROP CONSTRAINT IF EXISTS project_comments_project_id_fkey")
-    op.create_foreign_key('project_comments_project_id_fkey', 'project_comments', '_legacy_projects', ['project_id'], ['id'])
+    op.create_foreign_key('project_comments_project_id_fkey', 'project_comments', '_compat_projects', ['project_id'], ['id'])
     
     op.execute("ALTER TABLE project_comments DROP CONSTRAINT IF EXISTS project_comments_task_id_fkey")
-    op.create_foreign_key('project_comments_task_id_fkey', 'project_comments', '_legacy_project_tasks', ['task_id'], ['id'])
+    op.create_foreign_key('project_comments_task_id_fkey', 'project_comments', '_compat_project_tasks', ['task_id'], ['id'])
     
     op.execute("ALTER TABLE project_phases DROP CONSTRAINT IF EXISTS project_phases_project_id_fkey")
-    op.create_foreign_key('project_phases_project_id_fkey', 'project_phases', '_legacy_projects', ['project_id'], ['id'])
+    op.create_foreign_key('project_phases_project_id_fkey', 'project_phases', '_compat_projects', ['project_id'], ['id'])
     
     op.execute("ALTER TABLE project_inbox_state DROP CONSTRAINT IF EXISTS project_inbox_state_user_id_fkey")
-    op.create_foreign_key('project_inbox_state_user_id_fkey', 'project_inbox_state', '_legacy_users', ['user_id'], ['id'], ondelete='CASCADE')
+    op.create_foreign_key('project_inbox_state_user_id_fkey', 'project_inbox_state', '_compat_users', ['user_id'], ['id'], ondelete='CASCADE')
 
     # 5. Recreate old unique constraint on project_inbox_state
     op.execute("ALTER TABLE project_inbox_state DROP CONSTRAINT IF EXISTS uq_user_project_item")

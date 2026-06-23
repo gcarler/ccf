@@ -124,14 +124,14 @@ def get_enrollments_by_user(db: Session, user_id: int):
 
 
 def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> models.Enrollment:
-    persona_id = resolve_persona_id_for_user(db, enrollment.user_id)
+    persona_id = resolve_persona_id_for_user(db, enrollment.persona_id)
     if persona_id is None:
         raise ValueError("No se pudo resolver la identidad del estudiante")
 
     existing = (
         db.query(models.Enrollment)
         .filter(
-            _identity_conditions(db, models.Enrollment, enrollment.user_id),
+            _identity_conditions(db, models.Enrollment, enrollment.persona_id),
             models.Enrollment.course_id == enrollment.course_id,
         )
         .first()
@@ -139,7 +139,7 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
     if existing:
         raise ValueError("El estudiante ya se encuentra inscrito en este curso")
 
-    if not check_user_meets_prerequisites(db, enrollment.user_id, enrollment.course_id):
+    if not check_user_meets_prerequisites(db, enrollment.persona_id, enrollment.course_id):
         raise ValueError("No se cumplen los prerrequisitos académicos para acceder a este nivel")
 
     db_course = db.query(models.Course).filter(models.Course.id == enrollment.course_id).first()

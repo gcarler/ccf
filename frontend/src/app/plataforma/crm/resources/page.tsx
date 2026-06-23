@@ -1229,7 +1229,7 @@ export default function RecursosPage() {
                 <div className="w-80 xl:w-96 shrink-0 overflow-y-auto">
                     <DetailPanel
                         plantilla={selected}
-                        token={token}
+                        token={token ?? ""}
                         onEdit={() => openEdit(selected)}
                         onSend={() => setSendOpen(true)}
                         onClose={() => setSelected(null)}
@@ -1244,21 +1244,21 @@ export default function RecursosPage() {
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
                 categorias={categorias}
-                token={token}
+                token={token ?? ""}
                 editing={editing}
                 onSaved={onSaved}
             />
             <CatDrawer
                 open={catDrawerOpen}
                 onClose={() => setCatDrawerOpen(false)}
-                token={token}
+                token={token ?? ""}
                 onSaved={c => { setCategorias(prev => [...prev, c].sort((a, b) => a.nombre.localeCompare(b.nombre))); }}
             />
             <SendDrawer
                 open={sendOpen}
                 onClose={() => setSendOpen(false)}
                 plantilla={selected}
-                token={token}
+                token={token ?? ""}
                 onSent={onSent}
             />
         </div>

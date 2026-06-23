@@ -191,10 +191,10 @@ Todas las llamadas al backend usan `apiFetch('/endpoint')` de `@/lib/http`:
 import { apiFetch } from '@/lib/http';
 
 // GET
-const data = await apiFetch('/api/grupos');
+const data = await apiFetch('/grupos');
 
 // POST
-const result = await apiFetch('/api/grupos', {
+const result = await apiFetch('/grupos', {
   method: 'POST',
   body: JSON.stringify(payload),
 });

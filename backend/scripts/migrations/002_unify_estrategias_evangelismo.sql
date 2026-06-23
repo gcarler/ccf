@@ -3,7 +3,7 @@
 -- ╔══════════════════════════════════════════════════════════════════════════╗
 -- ║  ANTI-DATA-LOSS PROTOCOL                                               ║
 -- ║  • Each step is idempotent (IF EXISTS / IF NOT EXISTS)                 ║
--- ║  • Data from BOTH legacy tables is captured before any DROP            ║
+-- ║  • Data from BOTH compat tables is captured before any DROP            ║
 -- ║  • Both old PK types (Integer + String) are mapped to new UUIDs        ║
 -- ║  • All FK references in grupos_evangelismo are re-pointed              ║
 -- ║  • Orphan detection BEFORE adding FK constraint                        ║
@@ -78,7 +78,7 @@ CREATE TEMP TABLE _estrategia_migration_map (
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- STEP 3: Migrate data from legacy evangelism_strategies (Integer PK)
+-- STEP 3: Migrate data from compat evangelism_strategies (Integer PK)
 -- ═══════════════════════════════════════════════════════════════════════════
 WITH migrated AS (
     INSERT INTO estrategias_evangelismo_v2 (
@@ -176,11 +176,11 @@ WHERE m.old_string_id IS NULL
 -- ═══════════════════════════════════════════════════════════════════════════
 -- STEP 6: Read and map evangelism_strategy_id values from grupos_evangelismo
 --         BEFORE dropping that column. This captures integer references from
---         the legacy FK for records that used the old Integer-based FK.
+--         the compat FK for records that used the old Integer-based FK.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- 6a: Save the old integer FK value in a temp table
-CREATE TEMP TABLE _grupo_legacy_fk AS
+CREATE TEMP TABLE _grupo_compat_fk AS
 SELECT id, evangelism_strategy_id
 FROM grupos_evangelismo
 WHERE evangelism_strategy_id IS NOT NULL;
@@ -203,7 +203,7 @@ ALTER TABLE grupos_evangelismo ADD COLUMN IF NOT EXISTS estrategia_uuid_id UUID;
 --     Since we migrated them in Step 3, we cross-reference by codigo.
 UPDATE grupos_evangelismo ge
 SET estrategia_uuid_id = m.new_uuid_id
-FROM _grupo_legacy_fk gk
+FROM _grupo_compat_fk gk
 JOIN _estrategia_migration_map m ON m.codigo IS NOT NULL
     AND EXISTS (
         SELECT 1 FROM evangelism_strategies es_old
@@ -219,16 +219,16 @@ UPDATE grupos_evangelismo ge
 SET estrategia_uuid_id = m.new_uuid_id
 FROM (
     SELECT DISTINCT gk.id AS grupo_id, es.id AS old_int_id
-    FROM _grupo_legacy_fk gk
+    FROM _grupo_compat_fk gk
     JOIN evangelism_strategies es ON es.id = gk.evangelism_strategy_id
-) legacy
+) compat
 JOIN _estrategia_migration_map m ON m.codigo IS NOT NULL
     AND EXISTS (
         SELECT 1 FROM evangelism_strategies es2
-        WHERE es2.id = legacy.old_int_id
+        WHERE es2.id = compat.old_int_id
           AND es2.codigo = m.codigo
     )
-WHERE ge.id = legacy.grupo_id;
+WHERE ge.id = compat.grupo_id;
 
 -- 7c: Map from old String FK (estrategia_id → new UUID)
 UPDATE grupos_evangelismo ge
@@ -267,7 +267,7 @@ END $$;
 -- STEP 9: Drop old FKs, columns, and rename
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- 9a: Drop old FK column (data already captured in _grupo_legacy_fk)
+-- 9a: Drop old FK column (data already captured in _grupo_compat_fk)
 ALTER TABLE grupos_evangelismo DROP COLUMN IF EXISTS evangelism_strategy_id;
 
 -- 9b: Drop old estrategia_id (String PK) column
@@ -305,7 +305,7 @@ CREATE INDEX IF NOT EXISTS ix_grupos_evangelismo_estrategia_id ON grupos_evangel
 -- CLEANUP
 -- ═══════════════════════════════════════════════════════════════════════════
 DROP TABLE IF EXISTS _estrategia_migration_map;
-DROP TABLE IF EXISTS _grupo_legacy_fk;
+DROP TABLE IF EXISTS _grupo_compat_fk;
 DROP TABLE IF EXISTS _grupo_string_fk;
 
 COMMIT;

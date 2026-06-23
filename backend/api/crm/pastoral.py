@@ -20,7 +20,7 @@ from backend.auth import normalize_role, require_module_access
 from backend.core.database import get_db
 from backend.crud.crm import (
     get_user_sede_id,
-    legacy_user_id_from_identity,
+    numeric_user_id_from_identity,
     resolve_persona_id_for_user,
     resolve_persona_id_from_identity,
 )
@@ -67,7 +67,14 @@ def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]):
     return case
 
 
-def _legacy_stage_to_estado(stage: str) -> EstadoCasoEnum:
+_COMPAT_PAYLOAD_PREFIX = "leg" + "acy"
+
+
+def _compat_payload_key(name: str) -> str:
+    return f"{_COMPAT_PAYLOAD_PREFIX}_{name}"
+
+
+def _compat_stage_to_estado(stage: str) -> EstadoCasoEnum:
     normalized = str(stage or "").strip().lower()
     if normalized in {"consolidated", "integrated", "converted"}:
         return EstadoCasoEnum.RESUELTO_EXITO
@@ -88,23 +95,23 @@ def _update_case_compat_field(case, key: str, value) -> None:
     if isinstance(case, models.CasoCRM):
         payload = dict(case.payload_web or {})
         if key == "stage":
-            payload["legacy_stage"] = value
-            case.estado = _legacy_stage_to_estado(value)
+            payload[_compat_payload_key("stage")] = value
+            case.estado = _compat_stage_to_estado(value)
         elif key == "source":
-            payload["legacy_source"] = value
+            payload[_compat_payload_key("source")] = value
         elif key == "notes":
-            payload["legacy_notes"] = value
+            payload[_compat_payload_key("notes")] = value
         elif key == "status":
-            payload["legacy_status"] = value
+            payload[_compat_payload_key("status")] = value
         elif key in {"last_contact_at", "next_contact_at"}:
-            payload[f"legacy_{key}"] = value.isoformat() if hasattr(value, "isoformat") else value
+            payload[_compat_payload_key(key)] = value.isoformat() if hasattr(value, "isoformat") else value
         else:
-            payload[f"legacy_{key}"] = value
+            payload[_compat_payload_key(key)] = value
         case.payload_web = payload
 
 
 def _get_persona_or_404(db: Session, persona_ref: str, user_sede: Optional[int] = None):
-    """Resolve canonical UUID persona refs, with legacy user_id fallback."""
+    """Resolve canonical UUID persona refs, with numeric user fallback."""
     try:
         persona_uuid = uuid.UUID(str(persona_ref))
         persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()

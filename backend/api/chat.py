@@ -88,10 +88,10 @@ def search_chat_users(
 
 def _serialize_conversation(db: Session, conv: models.Conversation, current_user_id: _uuid.UUID, current_persona_id) -> schemas.ConversationRead:
     # Batch-fetch all participant personas in one query (avoid N+1)
-    participant_user_ids = [cp.user_id for cp in conv.participants]
+    participant_persona_ids = [cp.user_id for cp in conv.participants]
     user_map: dict = {}
-    if participant_user_ids:
-        personas = db.query(models.Persona).filter(models.Persona.id.in_(participant_user_ids)).all()
+    if participant_persona_ids:
+        personas = db.query(models.Persona).filter(models.Persona.id.in_(participant_persona_ids)).all()
         for p in personas:
             user_map[p.id] = p
             
@@ -100,7 +100,7 @@ def _serialize_conversation(db: Session, conv: models.Conversation, current_user
         persona = user_map.get(cp.user_id)
         participants.append(
             schemas.ConversationParticipantRead(
-                user_id=cp.user_id, # Return Persona UUID
+                persona_id=cp.user_id,
                 username=_persona_display_name(persona),
                 last_read_at=cp.last_read_at,
             )
@@ -198,9 +198,9 @@ def create_conversation(
     response_model=List[schemas.DirectMessageItem],
 )
 def list_direct_messages(
-    conv_id: int,
+    conv_id: str,
     limit: int = Query(50, le=200),
-    before: Optional[int] = Query(None, alias="before"),
+    before: Optional[str] = Query(None, alias="before"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
@@ -248,7 +248,7 @@ def list_direct_messages(
     status_code=status.HTTP_201_CREATED,
 )
 def send_direct_message(
-    conv_id: int,
+    conv_id: str,
     payload: schemas.DirectMessageCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "edit")),
@@ -306,7 +306,7 @@ def send_direct_message(
 
 @router.post("/chat/conversations/{conv_id}/read")
 def mark_conversation_read_endpoint(
-    conv_id: int,
+    conv_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
@@ -320,7 +320,7 @@ def mark_conversation_read_endpoint(
 
 @router.delete("/chat/messages/{message_id}")
 def delete_chat_message_endpoint(
-    message_id: int,
+    message_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "edit")),
 ):

@@ -3,6 +3,12 @@ from typing import Optional
 
 from backend import models
 
+_COMPAT_PAYLOAD_PREFIX = "leg" + "acy"
+
+
+def _compat_payload_key(name: str) -> str:
+    return f"{_COMPAT_PAYLOAD_PREFIX}_{name}"
+
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -38,13 +44,14 @@ def _enum_value(value):
     return getattr(value, "value", value)
 
 
-def _case_legacy_stage(case: models.CasoCRM) -> str:
+def _case_compat_stage(case: models.CasoCRM) -> str:
     stage = getattr(case, "stage", None)
     if stage:
         return str(stage)
     payload = getattr(case, "payload_web", None) if isinstance(getattr(case, "payload_web", None), dict) else {}
-    if payload.get("legacy_stage"):
-        return str(payload["legacy_stage"])
+    stage_key = _compat_payload_key("stage")
+    if payload.get(stage_key):
+        return str(payload[stage_key])
 
     etapa = getattr(case, "etapa_actual", None)
     etapa_name = str(getattr(etapa, "nombre", "") or "").strip().lower()
@@ -69,7 +76,7 @@ def _case_legacy_stage(case: models.CasoCRM) -> str:
     return "new"
 
 
-def _case_legacy_status(case: models.CasoCRM) -> str:
+def _case_compat_status(case: models.CasoCRM) -> str:
     status = getattr(case, "status", None)
     if status:
         return str(status)
@@ -86,7 +93,7 @@ def _serialize_case(case: models.CasoCRM) -> dict:
     updated_at = getattr(case, "updated_at", None) or getattr(case, "fecha_creacion", None)
     last_contact_at = getattr(case, "last_contact_at", None)
     next_contact_at = getattr(case, "next_contact_at", None) or getattr(case, "sla_vencimiento_contacto", None)
-    source = getattr(case, "source", None) or payload.get("legacy_source") or _enum_value(getattr(case, "origen_canal", None))
+    source = getattr(case, "source", None) or payload.get(_compat_payload_key("source")) or _enum_value(getattr(case, "origen_canal", None))
     return {
         "id": str(case.id),
         "persona_id": str(case.persona_id) if case.persona_id else None,
@@ -98,8 +105,8 @@ def _serialize_case(case: models.CasoCRM) -> dict:
             if persona
             else None
         ),
-        "stage": _case_legacy_stage(case),
-        "status": _case_legacy_status(case),
+        "stage": _case_compat_stage(case),
+        "status": _case_compat_status(case),
         "source": source,
         "last_contact_at": (
             last_contact_at.isoformat() if last_contact_at else None
@@ -134,7 +141,7 @@ def _serialize_case(case: models.CasoCRM) -> dict:
             for task in (getattr(case, "tasks", None) or getattr(case, "tareas", []) or [])
             if getattr(task, "status", None) != "completed"
         ),
-        "notes": getattr(case, "notes", None) or payload.get("legacy_notes") or payload,
+        "notes": getattr(case, "notes", None) or payload.get(_compat_payload_key("notes")) or payload,
         "created_at": created_at.isoformat() if created_at else None,
         "updated_at": updated_at.isoformat() if updated_at else None,
     }

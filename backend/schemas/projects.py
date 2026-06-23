@@ -1,4 +1,5 @@
 from __future__ import annotations
+from uuid import UUID
 
 import uuid
 from datetime import datetime
@@ -33,7 +34,7 @@ class TaskSupplyUpdate(BaseModel):
 
 
 class TaskSupply(TaskSupplyBase):
-    id: int
+    id: UUID
     task_id: UUIDStr
     model_config = orm_config
 
@@ -55,7 +56,7 @@ class ProjectPhaseInput(BaseModel):
 
 
 class ProjectAttachment(BaseModel):
-    id: int
+    id: UUID
     task_id: UUIDStr
     filename: str
     file_url: str
@@ -202,7 +203,7 @@ class ProjectMilestone(ProjectMilestoneBase):
 
 
 class ProjectActivityLog(BaseModel):
-    id: int
+    id: UUID
     project_id: UUIDStr
     persona_id: Optional[UUIDStr] = None
     user_name: Optional[str] = "Sistema"
@@ -274,7 +275,7 @@ class ProjectCommentUpdate(BaseModel):
 
 
 class ProjectCommentItem(ProjectCommentBase):
-    id: int
+    id: UUID
     project_id: UUIDStr
     author_id: Optional[UUIDStr] = None
     author_name: str
@@ -288,7 +289,7 @@ class InboxReadToggle(BaseModel):
 
 
 class ProjectDocument(BaseModel):
-    id: int
+    id: UUID
     project_id: UUIDStr
     title: str
     content: Optional[str] = None
@@ -305,7 +306,7 @@ class ProjectDocumentUpdate(BaseModel):
 
 
 class ProjectWhiteboard(BaseModel):
-    id: int
+    id: UUID
     project_id: UUIDStr
     title: str
     elements_json: str = "[]"
@@ -345,7 +346,7 @@ class ProjectMessageCreate(BaseModel):
 
 
 class ProjectMessageItem(BaseModel):
-    id: int
+    id: UUID
     sender_id: str
     sender_name: str = ""
     content: str

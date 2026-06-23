@@ -67,11 +67,11 @@ def get_notifications(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
-    user_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
-    if user_id is None:
+    persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
+    if persona_id is None:
         return []
     return crud.get_user_notifications(
-        db, user_id=user_id, limit=limit
+        db, user_id=persona_id, limit=limit
     )
 
 
@@ -79,7 +79,7 @@ def get_notifications(
     "/messaging/notifications/{notification_id}", response_model=schemas.Notification
 )
 def update_notification(
-    notification_id: int,
+    notification_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
@@ -94,9 +94,9 @@ def mark_all_read(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
-    user_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
-    if user_id is not None:
-        crud.mark_all_notifications_read(db, user_id=user_id)
+    persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
+    if persona_id is not None:
+        crud.mark_all_notifications_read(db, user_id=persona_id)
     return {"status": "success"}
 
 

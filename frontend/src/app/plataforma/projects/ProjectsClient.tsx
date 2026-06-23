@@ -16,7 +16,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
-import UserSelect from '@/components/ui/UserSelect';
+import PersonaSelect from '@/components/ui/PersonaSelect';
 import { useAuth } from '@/context/AuthContext';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { DSCard } from '@/design/components/DSCard';
@@ -221,7 +221,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                             className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm font-medium"
                             placeholder="Título del proyecto"
                         />
-                        <UserSelect
+                        <PersonaSelect
                             value={newProjectOwner}
                             onChange={setNewProjectOwner}
                             placeholder="Asignar responsable del proyecto"

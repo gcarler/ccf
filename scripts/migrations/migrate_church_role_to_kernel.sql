@@ -1,4 +1,4 @@
--- Migración: church_role (String legacy) → PersonaRoleAssignment (Kernel)
+-- Migración: church_role (String compat) → PersonaRoleAssignment (Kernel)
 -- Ejecutar: PGPASSWORD=... psql -h localhost -U ccf_admin -d ccf_db -f este_script.sql
 
 -- 1. Verificar que la tabla existe

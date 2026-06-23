@@ -59,14 +59,14 @@ Cualquier ser humano registrado en el sistema. Su ficha vive en la tabla `person
 |---|---|
 | `/api/grupos` | CRUD de grupos de evangelismo |
 | `/api/grupos/mine` | Grupos del usuario autenticado |
-| `/api/faro` | Alias legacy para `/api/grupos` |
-| `/api/faro/mine` | Alias legacy para `/api/grupos/mine` |
+| `/api/faro` | Alias compat para `/api/grupos` |
+| `/api/faro/mine` | Alias compat para `/api/grupos/mine` |
 | `/api/sesiones` | Sesiones de grupos |
 | `/api/asistencias` | Asistencias a sesiones |
 
-## 🔄 Mapeo Legacy → v2
+## 🔄 Mapeo Compat → v2
 
-| Legacy (❌) | v2 (✅) |
+| Compat (❌) | v2 (✅) |
 |---|---|
 | `cell_groups` | `grupos_evangelismo` |
 | `cell_group_sessions` | `sesiones_grupo` |

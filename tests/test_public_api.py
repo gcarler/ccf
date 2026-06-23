@@ -17,7 +17,7 @@ def test_public_registration_creates_member_and_attendance(client, db_session):
     response = client.post(
         "/api/public/register",
         json={
-            "event_id": event.id,
+            "event_id": str(event.id),
             "first_name": "Ana",
             "last_name": "Perez",
             "email": "ana@example.com",
@@ -64,7 +64,7 @@ def test_public_registration_reuses_existing_member(client, db_session):
     db_session.refresh(event)
 
     payload = {
-        "event_id": event.id,
+        "event_id": str(event.id),
         "first_name": "Laura",
         "last_name": "Gomez",
         "email": "laura@example.com",
@@ -101,7 +101,7 @@ def test_public_registration_missing_event_returns_404(client, db_session):
     response = client.post(
         "/api/public/register",
         json={
-            "event_id": 9999,
+            "event_id": "00000000-0000-0000-0000-000000009999",
             "first_name": "Nadia",
             "last_name": "Lopez",
             "email": "nadia@example.com",

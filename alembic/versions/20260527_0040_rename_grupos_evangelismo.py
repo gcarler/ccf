@@ -1,10 +1,10 @@
-"""0040_rename_legacy_groups_to_grupos_evangelismo
+"""0040_rename_compat_groups_to_grupos_evangelismo
 
 Revision ID: 20260527_0040
 Revises: 20260527_0039
 Create Date: 2026-05-27
 
-Renames legacy group tables to canonical evangelism group tables.
+Renames compat group tables to canonical evangelism group tables.
 Only renames if tables exist (idempotent).
 """
 

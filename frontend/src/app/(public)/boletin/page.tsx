@@ -19,6 +19,10 @@ export default function BoletinPage() {
     const subtitle = content?.subtitle || "Boletín Semanal FARO";
     const description = content?.description || "Cada semana te enviamos una reflexión bíblica, un versículo de ánimo y consejos prácticos para fortalecer tu fe.";
     const ctaText = content?.cta_text || "Suscribirme ahora";
+    const successMessage = content?.success_message || "¡Gracias por suscribirte!";
+    const errorMessage = content?.error_message || "No se pudo suscribir. Intenta de nuevo.";
+    const emailPlaceholder = content?.email_placeholder || "Tu correo electrónico";
+    const sendingLabel = content?.sending_label || "Enviando...";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,7 +67,7 @@ export default function BoletinPage() {
                                 className="text-xl font-bold"
                                 style={{ color: "var(--site-primary)" }}
                             >
-                                ¡Gracias por suscribirte!
+                                {successMessage}
                             </motion.div>
                         ) : (
                             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
@@ -71,7 +75,7 @@ export default function BoletinPage() {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Tu correo electrónico"
+                                    placeholder={emailPlaceholder}
                                     required
                                     className="flex-grow rounded-xl px-5 py-3.5 text-base focus:outline-none focus:ring-2"
                                     style={{
@@ -86,7 +90,7 @@ export default function BoletinPage() {
                                     className="px-8 py-3.5 rounded-xl font-bold text-base text-white transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
                                     style={{ background: "var(--site-cta-gradient)" }}
                                 >
-                                    {status === "sending" ? "Enviando..." : ctaText}
+                                    {status === "sending" ? sendingLabel : ctaText}
                                 </button>
                             </form>
                         )}

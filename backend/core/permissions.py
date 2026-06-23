@@ -354,7 +354,7 @@ def get_default_roles() -> List[Dict[str, Any]]:
 def get_user_effective_permissions(db: Session, user) -> dict:
     """Compute effective permissions for a user.
 
-    Resolution order: admin bypass → v2 Role → legacy Role model → UserPermission override.
+    Resolution order: admin bypass → platform Role → Role model → UserPermission override.
     Returns a dict of {permission_key: "allow"}.
     """
     role = normalize_role(getattr(user, "role", ""))
@@ -379,7 +379,7 @@ def get_user_effective_permissions(db: Session, user) -> dict:
             for k in role_perms:
                 user_perms[k] = "allow"
 
-    # 2. Legacy Role-based permissions from Role model
+    # 2. Role-based permissions from Role model
     if not user_perms and getattr(user, "user_role_obj", None):
         role_perms = getattr(user.user_role_obj, "permissions", None) or {}
         if isinstance(role_perms, dict):
@@ -447,7 +447,7 @@ def create_refresh_token(db: Session, user_id: int | str, ip_address: str = None
     token = secrets.token_urlsafe(48)
     expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
 
-    # Bridge: UUID ids use auth_v2 storage; numeric legacy ids still use users.
+    # Bridge: UUID ids use auth storage; numeric ids still use users.
     if isinstance(user_id, (str, _uuid.UUID)) and not str(user_id).isdigit():
         from backend.models_auth import TokenSesion
 
@@ -515,7 +515,7 @@ async def get_current_user(
         user = crud.get_user(db, int(subject))
     else:
         try:
-            # Try to resolve as UUID for auth_v2
+            # Try to resolve as UUID for auth storage
             val = uuid.UUID(subject)
             from sqlalchemy.orm import joinedload
             from backend.models_auth import Usuario
@@ -608,7 +608,7 @@ def require_permission(permission: str):
         db_user = crud.get_user(db, current_user.id) if str(getattr(current_user, "id", "")).isdigit() else None
         user_perms: set[str] = set()
 
-        # 1. Role-based permissions (auth v1 legacy)
+        # 1. Role-based permissions from the numeric-user model
         if db_user and getattr(db_user, "user_role_obj", None):
             perms = getattr(db_user.user_role_obj, "permissions", None) or {}
             if isinstance(perms, dict):
@@ -616,7 +616,7 @@ def require_permission(permission: str):
             elif isinstance(perms, (list, set)):
                 user_perms.update(perms)
 
-        # 2. Per-user permission overrides (auth v1 legacy)
+        # 2. Per-user permission overrides from the numeric-user model
         if db_user and getattr(db_user, "permissions_override", None):
             override = getattr(db_user.permissions_override, "permissions", None) or {}
             if isinstance(override, dict):
@@ -690,7 +690,7 @@ async def require_pastor_or_admin(
     )
 
 
-# ── Legacy auth helpers ────────────────────────────────────────────────
+# ── Password auth helpers ──────────────────────────────────────────────
 
 
 def authenticate_user(db: Session, email: str, password: str):

@@ -242,7 +242,7 @@ def list_projects(
             _normalize_dates(m)
         for t in p.tasks:
             _normalize_dates(t)
-            # Backward compatibility for legacy rows where labels were stored as a scalar.
+            # Compatibility for rows where labels were stored as a scalar.
             labels = getattr(t, "labels", None)
             if isinstance(labels, str):
                 t.__dict__["labels"] = [labels] if labels.strip() else []
@@ -905,7 +905,7 @@ def create_task_supply(
 def update_task_supply(
     project_id: str,
     task_id: str,
-    supply_id: int,
+    supply_id: str,
     payload: schemas.TaskSupplyUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -932,7 +932,7 @@ def update_task_supply(
 def delete_task_supply(
     project_id: str,
     task_id: str,
-    supply_id: int,
+    supply_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -1059,7 +1059,7 @@ def create_comment(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Crea un comentario usando project_id en el body (ruta legacy)."""
+    """Crea un comentario usando project_id en el body."""
     project_id = payload.get("project_id")
     content = (payload.get("content") or "").strip()
     if not project_id or not content:
@@ -1137,7 +1137,7 @@ def create_project_comment(
 
 @router.patch("/comments/{comment_id}", response_model=schemas.ProjectCommentItem)
 def update_project_comment(
-    comment_id: int,
+    comment_id: str,
     payload: schemas.ProjectCommentUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -1269,7 +1269,7 @@ def delete_project_task(
 
 @router.delete("/comments/{comment_id}")
 def delete_project_comment(
-    comment_id: int,
+    comment_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -1377,7 +1377,7 @@ def send_project_message(
 @router.delete("/{project_id}/messages/{message_id}")
 def delete_project_message(
     project_id: str,
-    message_id: int,
+    message_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):

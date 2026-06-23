@@ -691,7 +691,7 @@ for i, p in enumerate(P):
             s(p[3]),   # second_name
             s(p[5]),   # second_last_name
             s(p[10]),  # email
-            None,      # phone (deprecated)
+            None,      # phone (deprecatado)
             s(p[9]),   # mobile_phone
             s(p[8]),   # landline_phone
             None,      # other_phone

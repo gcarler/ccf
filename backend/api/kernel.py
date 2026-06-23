@@ -478,7 +478,7 @@ def create_platform_role_definition(
 
 @router.patch("/admin/platform-role-definitions/{definition_id}")
 def update_platform_role_definition(
-    definition_id: int,
+    definition_id: str,
     payload: PlatformRoleDefinitionUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(require_kernel_permission("system:config")),
@@ -574,7 +574,7 @@ def list_all_persona_platform_roles(
 
 @router.delete("/admin/persona-platform-roles/{assignment_id}", status_code=204)
 def revoke_persona_platform_role(
-    assignment_id: int,
+    assignment_id: str,
     db: Session = Depends(get_db),
     current_user=Depends(require_kernel_permission("system:config")),
 ):

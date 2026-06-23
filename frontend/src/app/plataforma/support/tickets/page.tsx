@@ -21,7 +21,7 @@ import { apiFetch } from '@/lib/http';
 
 interface SupportTicket {
     id: number;
-    user_id: number;
+    persona_id?: string;
     subject: string;
     description: string;
     status: string;
@@ -110,7 +110,6 @@ export default function SupportTicketsPage() {
                 body: {
                     subject: draft.subject.trim(),
                     description: draft.description.trim(),
-                    user_id: user?.id,
                 },
             });
             setTickets((current) => [created, ...current]);

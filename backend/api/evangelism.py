@@ -66,13 +66,13 @@ def _persona_id_from_identity(identity) -> uuid.UUID | None:
     return _as_uuid(identity)
 
 
-def _warn_deprecated_crm_alias(alias_path: str, canonical_path: str) -> None:
+def _warn_canonical_crm_alias(alias_path: str, canonical_path: str) -> None:
     key = f"{alias_path}->{canonical_path}"
     if key in _DEPRECATED_ALIAS_HITS:
         return
     _DEPRECATED_ALIAS_HITS.add(key)
     logger.warning(
-        "Deprecated CRM alias in /api/evangelism is in use. alias=%s canonical=%s",
+        "Canonical CRM alias in /api/evangelism is in use. alias=%s canonical=%s",
         alias_path,
         canonical_path,
     )
@@ -85,7 +85,7 @@ def list_counseling_tickets(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/counseling/", "/api/crm/counseling/")
+    _warn_canonical_crm_alias("/api/evangelism/counseling/", "/api/crm/counseling/")
     tickets = crud.get_counseling_tickets(db, status=status)
     if persona_id:
         tickets = [t for t in tickets if t.persona_id == persona_id]
@@ -98,7 +98,7 @@ def get_counseling_ticket(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/counseling/{ticket_id}", "/api/crm/counseling/{ticket_id}")
+    _warn_canonical_crm_alias("/api/evangelism/counseling/{ticket_id}", "/api/crm/counseling/{ticket_id}")
     ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -143,7 +143,7 @@ def get_counseling_by_lead(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
+    _warn_canonical_crm_alias(
         "/api/evangelism/counseling/lead/{lead_id}",
         "/api/crm/counseling/lead/{lead_id}",
     )
@@ -175,7 +175,7 @@ def create_counseling_ticket(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/counseling/", "/api/crm/counseling/")
+    _warn_canonical_crm_alias("/api/evangelism/counseling/", "/api/crm/counseling/")
     return crud.create_counseling_ticket(db, payload)
 
 
@@ -186,7 +186,7 @@ def update_counseling_ticket(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/counseling/{ticket_id}", "/api/crm/counseling/{ticket_id}")
+    _warn_canonical_crm_alias("/api/evangelism/counseling/{ticket_id}", "/api/crm/counseling/{ticket_id}")
     ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(404, "Ticket not found")
@@ -203,7 +203,7 @@ def list_prayer_requests(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/prayer-requests/", "/api/crm/prayer-requests")
+    _warn_canonical_crm_alias("/api/evangelism/prayer-requests/", "/api/crm/prayer-requests")
     return crud.get_prayer_requests(db, status=status)
 
 
@@ -213,7 +213,7 @@ def create_prayer_request(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/prayer-requests/", "/api/crm/prayer-requests")
+    _warn_canonical_crm_alias("/api/evangelism/prayer-requests/", "/api/crm/prayer-requests")
     return crud.create_prayer_request(db, payload)
 
 
@@ -223,7 +223,7 @@ def get_prayer_request_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
+    _warn_canonical_crm_alias(
         "/api/evangelism/prayer-requests/{request_id}",
         "/api/crm/prayer-requests/{request_id}",
     )
@@ -249,7 +249,7 @@ def update_prayer_request(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
+    _warn_canonical_crm_alias(
         "/api/evangelism/prayer-requests/{request_id}",
         "/api/crm/prayer-requests/{request_id}",
     )
@@ -333,7 +333,7 @@ def get_messaging_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/messaging/history", "/api/crm/messaging/history")
+    _warn_canonical_crm_alias("/api/evangelism/messaging/history", "/api/crm/messaging/history")
     """Devuelve el historial de mensajes optimizado con JOIN para evitar N+1."""
     try:
         from sqlalchemy.orm import joinedload
@@ -368,7 +368,7 @@ def get_messaging_history_item(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias(
+    _warn_canonical_crm_alias(
         "/api/evangelism/messaging/history/{log_id}",
         "/api/crm/messaging/history/{log_id}",
     )
@@ -404,7 +404,7 @@ async def send_crm_message(
     current_user: models.User = Depends(require_pastor_or_admin),
     gateway: MessagingGateway = Depends(get_messaging_gateway),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/messaging/send", "/api/crm/messaging/send")
+    _warn_canonical_crm_alias("/api/evangelism/messaging/send", "/api/crm/messaging/send")
 
     persona_id = payload.get("persona_id")
     channel = _channel_label(payload.get("channel", "WhatsApp"))
@@ -565,7 +565,7 @@ def list_crm_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/tasks", "/api/crm/tasks")
+    _warn_canonical_crm_alias("/api/evangelism/tasks", "/api/crm/tasks")
     """Lista tareas pastorales optimizada con JOIN para evitar N+1."""
     try:
         from sqlalchemy.orm import joinedload
@@ -607,7 +607,7 @@ def list_my_crm_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("evangelism", "read")),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/tasks/mine", "/api/crm/tasks/mine")
+    _warn_canonical_crm_alias("/api/evangelism/tasks/mine", "/api/crm/tasks/mine")
     try:
         from sqlalchemy.orm import joinedload
 
@@ -640,7 +640,7 @@ def get_crm_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/tasks/{task_id}", "/api/crm/tasks/{task_id}")
+    _warn_canonical_crm_alias("/api/evangelism/tasks/{task_id}", "/api/crm/tasks/{task_id}")
     from sqlalchemy.orm import joinedload
 
     task = (
@@ -660,7 +660,7 @@ async def create_crm_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/tasks/", "/api/crm/tasks/")
+    _warn_canonical_crm_alias("/api/evangelism/tasks/", "/api/crm/tasks/")
     """Crea una nueva tarea pastoral y notifica vÃ­a WebSocket."""
     title = str(payload.get("title", "")).strip()
     if not title:
@@ -725,7 +725,7 @@ def update_crm_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/tasks/{task_id}", "/api/crm/tasks/{task_id}")
+    _warn_canonical_crm_alias("/api/evangelism/tasks/{task_id}", "/api/crm/tasks/{task_id}")
     task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not task:
         raise HTTPException(404, "Task not found")
@@ -767,7 +767,7 @@ def list_volunteer_shifts(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/volunteers/shifts", "/api/crm/volunteers")
+    _warn_canonical_crm_alias("/api/evangelism/volunteers/shifts", "/api/crm/volunteers")
     return crud.get_volunteer_shifts(db, persona_id=persona_id)
 
 
@@ -777,7 +777,7 @@ def create_shift(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/volunteers/shifts", "/api/crm/volunteers")
+    _warn_canonical_crm_alias("/api/evangelism/volunteers/shifts", "/api/crm/volunteers")
     return crud.create_volunteer_shift(db, payload)
 
 
@@ -787,7 +787,7 @@ def get_volunteer_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/volunteers/{persona_id}", "/api/crm/volunteers/{persona_id}")
+    _warn_canonical_crm_alias("/api/evangelism/volunteers/{persona_id}", "/api/crm/volunteers/{persona_id}")
     try:
         db_id = uuid.UUID(persona_id)
     except ValueError:
@@ -842,7 +842,7 @@ def apply_volunteer(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/volunteers/apply", "/api/crm/volunteers")
+    _warn_canonical_crm_alias("/api/evangelism/volunteers/apply", "/api/crm/volunteers")
     """Registra la postulaciÃ³n de un miembro a un equipo de voluntariado."""
     try:
         from datetime import timedelta
@@ -885,7 +885,7 @@ CRM_DEFAULTS = {"churchName": "CCF Faro", "timezone": "UTC"}
 
 @router.get("/settings", response_model=dict)
 def get_crm_settings(db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
-    _warn_deprecated_crm_alias("/api/evangelism/settings", "/api/crm/settings")
+    _warn_canonical_crm_alias("/api/evangelism/settings", "/api/crm/settings")
     """Lee la configuración de CRM desde system_variables."""
     settings = dict(CRM_DEFAULTS)
     rows = (
@@ -905,7 +905,7 @@ def update_crm_settings(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/settings", "/api/crm/settings")
+    _warn_canonical_crm_alias("/api/evangelism/settings", "/api/crm/settings")
     """Actualiza la configuración de CRM en system_variables."""
     mapping = {"churchName": "crm_church_name", "timezone": "crm_timezone"}
     for js_key, db_key in mapping.items():
@@ -1029,7 +1029,7 @@ def crm_analytics(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    _warn_deprecated_crm_alias("/api/evangelism/analytics", "/api/crm/analytics")
+    _warn_canonical_crm_alias("/api/evangelism/analytics", "/api/crm/analytics")
     """Métricas agregadas del CRM para el dashboard de analíticas, filtradas por sede."""
     from backend.core.tenant import require_user_sede_id
 

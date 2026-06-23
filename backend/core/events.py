@@ -105,4 +105,5 @@ def configure_event_bus() -> None:
         except Exception:
             log.warning("Kafka no disponible para EventBus")
 
+    event_bus = EventBus()
     log.info("EventBus en modo no-op (sin Redis ni Kafka)")

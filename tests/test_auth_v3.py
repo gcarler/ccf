@@ -130,7 +130,7 @@ class TestAuthV3Flow:
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == "meuser@ccf.com"
-        assert data["user_id"] == str(user.id)
+        assert data["auth_user_id"] == str(user.id)
         assert "permissions" in data
         assert "sede_id" in data
 
@@ -201,30 +201,3 @@ class TestAuthV3Flow:
         assert "email=gscarler%40gmail.com" in url
 
 
-class TestAuthV1V3Compat:
-    """Test que el /auth/me unificado funciona tanto para v1 como v3."""
-
-    def test_auth_me_v1_user(self, client: TestClient, db_session: Session):
-        """/auth/me debe funcionar para usuarios v1 (tabla users)."""
-        v1_user = models.User(
-            username="v1user",
-            email="v1user@ccf.com",
-            password_hash=get_password_hash("Pass123!"),
-            role="admin",
-            is_active=True,
-        )
-        db_session.add(v1_user)
-        db_session.commit()
-        
-        login_resp = client.post(
-            "/api/auth/login",
-            data={"username": "v1user@ccf.com", "password": "Pass123!", "grant_type": "password"},
-        )
-        assert login_resp.status_code == 200
-        token = login_resp.json()["access_token"]
-        
-        resp = client.get(
-            "/api/auth/me",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert resp.status_code == 200

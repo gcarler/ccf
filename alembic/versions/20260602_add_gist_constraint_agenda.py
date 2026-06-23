@@ -1,7 +1,7 @@
 """add_gist_constraint_agenda
 
 Revision ID: 20260602_add_gist_constraint_agenda
-Revises: 20260602_rename_legacy_tables
+Revises: 20260602_rename_compat_tables
 Create Date: 2026-06-02
 
 Activa constraint EXCLUDE USING gist en agenda_reserva_recursos para
@@ -16,7 +16,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "20260602_add_gist"
-down_revision: Union[str, None] = "20260602_rename_legacy"
+down_revision: Union[str, None] = "20260602_rename_compat"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -103,13 +103,41 @@ jobs:
         run: cd frontend && npm ci
 
       - name: Lint (ESLint)
-        run: cd frontend && npm run lint || true
+        run: cd frontend && npm run lint
 
       - name: Type check (TypeScript)
-        run: cd frontend && npx tsc --noEmit || true
+        run: cd frontend && npx tsc --noEmit
+
+      - name: Run unit tests with coverage
+        run: cd frontend && npx vitest run --coverage
+
+      - name: Run E2E smoke tests
+        run: cd frontend && npx playwright test --grep-invert @auth
+        env:
+          BASE_URL: http://localhost:4173
 
       - name: Build
         run: cd frontend && npm run build
+
+      - name: Upload frontend coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: frontend/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: false
+
+      - name: Check frontend coverage threshold
+        run: |
+          COVERAGE=$(cd frontend && npx vitest run --coverage --reporter=json 2>/dev/null | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          print(f\"{data.get('total', {}).get('lines', {}).get('pct', 0):.1f}\")
+          " 2>/dev/null || echo "0")
+          echo "Frontend Coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 40" | bc -l) )); then
+            echo "❌ Frontend coverage below 40% threshold"
+            exit 1
+          fi
 
   # ── Database Migrations Check ────────────────────────────────
   migrations-check:

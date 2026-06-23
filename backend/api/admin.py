@@ -401,10 +401,10 @@ def _serialize_auth_user_row(user):
         "username": user.username,
         "email": user.email,
         "role": display_role,
-        "role_id": user.platform_role_id,
+        "role_id": str(user.platform_role_id) if user.platform_role_id else None,
         "role_name": platform_role_name,
         "rol_plataforma_id": str(user.rol_plataforma_id) if user.rol_plataforma_id else None,
-        "platform_role_id": user.platform_role_id,
+        "platform_role_id": str(user.platform_role_id) if user.platform_role_id else None,
         "sede_id": str(user.sede_id) if user.sede_id else None,
         "xp": user.xp or 0,
         "is_active": user.is_active,
@@ -621,10 +621,24 @@ def update_admin_user(
                 raise HTTPException(status_code=400, detail="rol_plataforma_id invalido")
     if "platform_role_id" in payload:
         value = payload["platform_role_id"]
-        user.platform_role_id = int(value) if value not in (None, "", "null") else None
+        if value in (None, "", "null"):
+            user.platform_role_id = None
+        else:
+            import uuid
+            try:
+                user.platform_role_id = uuid.UUID(str(value))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="platform_role_id invalido")
     if "role_id" in payload:
         value = payload["role_id"]
-        user.platform_role_id = int(value) if value not in (None, "", "null") else None
+        if value in (None, "", "null"):
+            user.platform_role_id = None
+        else:
+            import uuid
+            try:
+                user.platform_role_id = uuid.UUID(str(value))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="role_id invalido")
     if "role" in payload:
         _assign_auth_user_role(db, user, str(payload["role"]))
 
@@ -662,8 +676,8 @@ def delete_admin_user(
 @router.patch("/users/{user_id}/role")
 def change_user_role(
     user_id: str,
-    platform_role_id: int | None = None,
-    role_id: int | None = None,
+    platform_role_id: str | None = None,
+    role_id: str | None = None,
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
 ):
@@ -685,7 +699,7 @@ def change_user_role(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    role = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == int(selected_role_id)).first()
+    role = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == _uuid.UUID(str(selected_role_id))).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
@@ -695,7 +709,7 @@ def change_user_role(
     return {
         "status": "success",
         "new_role": role.role.value if hasattr(role.role, "value") else str(role.role),
-        "platform_role_id": role.id,
+        "platform_role_id": str(role.id),
         "user": _serialize_auth_user_row(user),
     }
 
@@ -763,7 +777,7 @@ def list_all_comments(
 
 @router.delete("/comments/{comment_id}")
 def delete_comment(
-    comment_id: int,
+    comment_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -911,7 +925,7 @@ def create_automation(
 
 @router.patch("/automations/{rule_id}", response_model=schemas.AutomationRuleRead)
 def update_automation(
-    rule_id: int,
+    rule_id: str,
     payload: schemas.AutomationRuleUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
@@ -941,7 +955,7 @@ def update_automation(
 
 @router.delete("/automations/{rule_id}")
 def delete_automation(
-    rule_id: int,
+    rule_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):

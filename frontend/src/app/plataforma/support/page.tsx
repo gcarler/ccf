@@ -79,7 +79,7 @@ export default function SupportPage() {
             const created = await apiFetch('/support/', {
                 method: 'POST',
                 token,
-                body: { ...newTicket, user_id: user?.id }
+                body: newTicket
             });
             setTickets([created, ...tickets]);
             setNewTicket({ subject: '', description: '', category: 'General' });
@@ -430,4 +430,3 @@ function DrawerStat({ label, value, icon: Icon }: any) {
         </div>
     );
 }
-

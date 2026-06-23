@@ -1,20 +1,20 @@
-# Migración Legacy → v2
+# Migración Compat → v2
 
 ## Script principal
 
-`scripts/migrate_legacy_to_v2.py`
+`scripts/migrate_compat_to_v2.py`
 
-Script Python standalone que migra datos de tablas legacy (PK Integer) a tablas v2 (PK UUID) preservando integridad, relaciones e idempotencia.
+Script Python standalone que migra datos de tablas compat (PK Integer) a tablas v2 (PK UUID) preservando integridad, relaciones e idempotencia.
 
 ---
 
 ## Tablas migradas
 
-| Legacy               | v2                    | Notas                                           |
+| Compat               | v2                    | Notas                                           |
 |----------------------|-----------------------|-------------------------------------------------|
 | `projects`           | `proyectos`           | Genera código WBS; usa DEFAULT_SEDE_ID          |
 | `courses`            | `academy_courses`     | Mapeo directo de campos académicos              |
-| `enrollments`        | `academy_enrollments` | Resuelve FK `course_id` vía `legacy_id_mapping` |
+| `enrollments`        | `academy_enrollments` | Resuelve FK `course_id` vía `compat_id_mapping` |
 | `users`              | `auth_users`          | PK = `personas.id` vinculada por `user_id`      |
 | `roles`              | `auth_roles`          | Mapeo directo nombre → nombre, permisos         |
 | `consolidation_cases`| `crm_casos`           | Requiere pipeline por defecto en `crm_pipelines`|
@@ -57,35 +57,35 @@ export DATABASE_URL="postgresql://user:pass@localhost:5432/ccf"
 export DEFAULT_SEDE_ID="a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 export DEFAULT_PERSONA_ID="b2c3d4e5-f6a7-8901-bcde-f23456789012"
 
-python scripts/migrate_legacy_to_v2.py
+python scripts/migrate_compat_to_v2.py
 ```
 
 ### Modo dry-run (previsualización)
 
 ```bash
-python scripts/migrate_legacy_to_v2.py --dry-run
+python scripts/migrate_compat_to_v2.py --dry-run
 ```
 
 ### Batch size personalizado
 
 ```bash
-python scripts/migrate_legacy_to_v2.py --batch-size 500
+python scripts/migrate_compat_to_v2.py --batch-size 500
 ```
 
 ---
 
 ## Idempotencia
 
-El script crea automáticamente la tabla **`legacy_id_mapping`**:
+El script crea automáticamente la tabla **`compat_id_mapping`**:
 
 ```sql
-CREATE TABLE legacy_id_mapping (
+CREATE TABLE compat_id_mapping (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tabla VARCHAR(64) NOT NULL,
-    legacy_id INTEGER NOT NULL,
+    compat_id INTEGER NOT NULL,
     v2_id TEXT NOT NULL,
     migrated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    UNIQUE(tabla, legacy_id)
+    UNIQUE(tabla, compat_id)
 );
 ```
 
@@ -99,7 +99,7 @@ Antes de procesar cada registro, el script consulta esta tabla. Si ya existe un 
 
 - Si falla un registro individual, se loguea el error y se continúa con el siguiente.
 - Al finalizar se imprime un reporte con: total, migrados, fallidos y tablas completadas.
-- Las relaciones (FKs) se resuelven a través de `legacy_id_mapping` en tiempo de migración.
+- Las relaciones (FKs) se resuelven a través de `compat_id_mapping` en tiempo de migración.
 
 ---
 
@@ -122,7 +122,7 @@ El script ejecuta las migraciones en orden topológico para respetar FKs:
 ## Verificación de sintaxis
 
 ```bash
-python -m py_compile scripts/migrate_legacy_to_v2.py
+python -m py_compile scripts/migrate_compat_to_v2.py
 ```
 
 ---
@@ -131,7 +131,7 @@ python -m py_compile scripts/migrate_legacy_to_v2.py
 
 ### `users` → `auth_users`
 
-`auth_users.id` es FK a `personas.id` (ON DELETE CASCADE). Por tanto, el script **no genera un UUID aleatorio** para cada usuario; en su lugar busca en `personas` el registro cuyo `user_id` coincida con el `users.id` legacy. Si no existe persona vinculada, el usuario se omite con un warning.
+`auth_users.id` es FK a `personas.id` (ON DELETE CASCADE). Por tanto, el script **no genera un UUID aleatorio** para cada usuario; en su lugar busca en `personas` el registro cuyo `user_id` coincida con el `users.id` compat. Si no existe persona vinculada, el usuario se omite con un warning.
 
 ### `consolidation_cases` → `crm_casos`
 
@@ -139,24 +139,24 @@ python -m py_compile scripts/migrate_legacy_to_v2.py
 
 ### Soft deletes
 
-Si una tabla legacy tiene campo `is_active=False` y la tabla v2 tiene `deleted_at`, el script asigna `deleted_at = now()`. En la práctica, esto se refleja en tablas como `users` y en el flag `activo` → `deleted_at` de `grupos_evangelismo`.
+Si una tabla compat tiene campo `is_active=False` y la tabla v2 tiene `deleted_at`, el script asigna `deleted_at = now()`. En la práctica, esto se refleja en tablas como `users` y en el flag `activo` → `deleted_at` de `grupos_evangelismo`.
 
 ---
 
 ## Limpieza post-migración
 
-Una vez verificada la migración, las tablas legacy pueden renombrarse (no eliminar de inmediato) para evitar que el ORM las registre accidentalmente:
+Una vez verificada la migración, las tablas compat pueden renombrarse (no eliminar de inmediato) para evitar que el ORM las registre accidentalmente:
 
 ```sql
-ALTER TABLE projects RENAME TO _legacy_projects;
-ALTER TABLE courses RENAME TO _legacy_courses;
-ALTER TABLE enrollments RENAME TO _legacy_enrollments;
-ALTER TABLE users RENAME TO _legacy_users;
-ALTER TABLE roles RENAME TO _legacy_roles;
-ALTER TABLE consolidation_cases RENAME TO _legacy_consolidation_cases;
-ALTER TABLE cell_groups RENAME TO _legacy_cell_groups;
-ALTER TABLE cell_group_sessions RENAME TO _legacy_cell_group_sessions;
-ALTER TABLE agenda_events RENAME TO _legacy_agenda_events;
+ALTER TABLE projects RENAME TO _compat_projects;
+ALTER TABLE courses RENAME TO _compat_courses;
+ALTER TABLE enrollments RENAME TO _compat_enrollments;
+ALTER TABLE users RENAME TO _compat_users;
+ALTER TABLE roles RENAME TO _compat_roles;
+ALTER TABLE consolidation_cases RENAME TO _compat_consolidation_cases;
+ALTER TABLE cell_groups RENAME TO _compat_cell_groups;
+ALTER TABLE cell_group_sessions RENAME TO _compat_cell_group_sessions;
+ALTER TABLE agenda_events RENAME TO _compat_agenda_events;
 ```
 
-> En test/dev esto ya lo maneja la migración Alembic `20260602_rename_legacy`.
+> En test/dev esto ya lo maneja la migración Alembic `20260602_rename_compat`.

@@ -24,8 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { apiFetch } from '@/lib/http';
-import { apiUrl } from '@/lib/api';
+import { apiFetch, apiFetchBlob } from '@/lib/http';
 import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
@@ -255,18 +254,11 @@ export default function SystemSettings() {
             if (auditFilters.feature) params.set('feature_id', auditFilters.feature);
             if (auditFilters.actor) params.set('actor', auditFilters.actor);
 
-            const response = await fetch(apiUrl(`/workspace/flags/audit/export?${params.toString()}`), {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    Accept: format === 'csv' ? 'text/csv' : 'application/json',
-                },
+            const blob = await apiFetchBlob('/workspace/flags/audit/export', {
+                token,
+                query: Object.fromEntries(params),
+                headers: { Accept: format === 'csv' ? 'text/csv' : 'application/json' },
             });
-            if (!response.ok) {
-                throw new Error(`Audit export failed (${response.status})`);
-            }
-
-            const blob = await response.blob();
             const href = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
             anchor.href = href;
@@ -380,18 +372,11 @@ export default function SystemSettings() {
     const downloadIncidents = async (format: 'json' | 'csv') => {
         try {
             const params = new URLSearchParams({ format, limit: '1000' });
-            const response = await fetch(apiUrl(`/workspace/flags/incidents/export?${params.toString()}`), {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    Accept: format === 'csv' ? 'text/csv' : 'application/json',
-                },
+            const blob = await apiFetchBlob('/workspace/flags/incidents/export', {
+                token,
+                query: Object.fromEntries(params),
+                headers: { Accept: format === 'csv' ? 'text/csv' : 'application/json' },
             });
-            if (!response.ok) {
-                throw new Error(`Incident export failed (${response.status})`);
-            }
-
-            const blob = await response.blob();
             const href = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
             anchor.href = href;
@@ -417,16 +402,11 @@ export default function SystemSettings() {
                 actor_threshold: '10',
                 action_threshold: '20',
             });
-            const response = await fetch(apiUrl(`/workspace/flags/compliance/snapshot?${params.toString()}`), {
-                method: 'GET',
-                credentials: 'include',
+            const blob = await apiFetchBlob('/workspace/flags/compliance/snapshot', {
+                token,
+                query: Object.fromEntries(params),
                 headers: { Accept: 'application/json' },
             });
-            if (!response.ok) {
-                throw new Error(`Compliance snapshot failed (${response.status})`);
-            }
-
-            const blob = await response.blob();
             const href = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
             anchor.href = href;
@@ -444,16 +424,11 @@ export default function SystemSettings() {
 
     const downloadComplianceHistoryItem = async (snapshotId: string) => {
         try {
-            const response = await fetch(apiUrl(`/workspace/flags/compliance/history/${snapshotId}?download=true`), {
-                method: 'GET',
-                credentials: 'include',
+            const blob = await apiFetchBlob(`/workspace/flags/compliance/history/${snapshotId}`, {
+                token,
+                query: { download: true },
                 headers: { Accept: 'application/json' },
             });
-            if (!response.ok) {
-                throw new Error(`Compliance history item failed (${response.status})`);
-            }
-
-            const blob = await response.blob();
             const href = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
             anchor.href = href;

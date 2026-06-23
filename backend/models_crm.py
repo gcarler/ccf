@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import enum as _enum
 import uuid
+import uuid as _uuid
 
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -16,7 +17,7 @@ from backend.models_shared import _utcnow
 # 3. CRM & CHAT
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sender_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False, index=True)
     room_id = Column(String(100), nullable=True, index=True)
     content = Column(Text, nullable=False)
@@ -27,7 +28,7 @@ class ChatMessage(Base):
 
 class Conversation(Base):
     __tablename__ = "conversations"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     last_message_content = Column(Text, nullable=True)
@@ -40,9 +41,9 @@ class ConversationParticipant(Base):
     __table_args__ = (
         UniqueConstraint("conversation_id", "user_id", name="uq_conversation_user"),
     )
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     conversation_id = Column(
-        Integer, ForeignKey("conversations.id", ondelete="CASCADE"),
+        UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"),
         nullable=False, index=True,
     )
     user_id = Column(
@@ -60,7 +61,7 @@ class ConversationParticipant(Base):
 class AgendaEvent(Base):
     __tablename__ = "agenda_events"
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     title = Column(String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
     start_at = Column(DateTime(timezone=True), nullable=False, index=True)
@@ -76,7 +77,7 @@ class AgendaEvent(Base):
 
 class CrmEvent(Base):
     __tablename__ = "crm_events"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
     name = Column(String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
@@ -90,7 +91,7 @@ class CrmEvent(Base):
     status = Column(String(20), default="SCHEDULED", index=True)
     cancellation_reason = Column(Text, nullable=True)
     target_audience = Column(String(50), default="ALL")
-    target_role_id = Column(Integer, ForeignKey("role_definitions.id"), nullable=True)
+    target_role_id = Column(UUID(as_uuid=True), ForeignKey("role_definitions.id"), nullable=True)
     target_role_ids = Column(JSON, nullable=True)
     target_member_ids = Column(JSON, nullable=True)
     fixed_date = Column(DateTime(timezone=True), nullable=True)
@@ -114,9 +115,9 @@ class CrmEvent(Base):
 
 class EventAssignment(Base):
     __tablename__ = "event_assignments"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     event_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("crm_events.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -146,9 +147,9 @@ class EventAttendance(Base):
             "event_id", "session_date", "persona_id", name="uq_event_attendance"
         ),
     )
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     event_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("crm_events.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -181,7 +182,7 @@ class EventAttendance(Base):
 
 class CounselingTicket(Base):
     __tablename__ = "counseling_tickets"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
@@ -208,7 +209,7 @@ class CounselingTicket(Base):
 
 class PrayerRequest(Base):
     __tablename__ = "prayer_requests"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     requester_name = Column(String(200), nullable=False, index=True)
     request_text = Column(Text, nullable=False)
@@ -223,7 +224,7 @@ class PrayerRequest(Base):
 
 class Ministry(Base):
     __tablename__ = "ministries"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(100), unique=True, index=True, nullable=False)
     description = Column(Text, nullable=True)
     leader_persona_id = Column(
@@ -337,7 +338,7 @@ class BitacoraEnvioPlantilla(Base):
 
 class ColombianDepartment(Base):
     __tablename__ = "colombian_departments"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(50), unique=True, nullable=False)
     code = Column(String(3), unique=True, nullable=False)
     capital = Column(String(100), nullable=False)
@@ -346,8 +347,8 @@ class ColombianDepartment(Base):
 class Persona(Base):
     __tablename__ = "personas"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, unique=True, index=True)
-    family_id = Column(Integer, ForeignKey("families.id", ondelete="SET NULL"), nullable=True, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="SET NULL"), nullable=True, unique=True, index=True)
+    family_id = Column(UUID(as_uuid=True), ForeignKey("families.id", ondelete="SET NULL"), nullable=True, index=True)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     first_name = Column(String(100), nullable=False, index=True)
     last_name = Column(String(100), nullable=False, index=True)
@@ -397,7 +398,7 @@ class Persona(Base):
     group_name = Column(String(100), nullable=True)
     campus = Column(String(100), nullable=True)
     church_join_date = Column(Date, nullable=True)
-    colombian_department_id = Column(Integer, ForeignKey("colombian_departments.id", ondelete="SET NULL"), nullable=True, index=True)
+    colombian_department_id = Column(UUID(as_uuid=True), ForeignKey("colombian_departments.id", ondelete="SET NULL"), nullable=True, index=True)
     city = Column(String(100), nullable=True)
     latitud = Column(Numeric(10, 8), nullable=True)
     longitud = Column(Numeric(11, 8), nullable=True)
@@ -421,7 +422,7 @@ class Persona(Base):
     tags = Column(JSON, nullable=True, default=list)
     origen_estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     origen_grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
-    origen_sesion_id = Column(Integer, ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
+    origen_sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
     origen_fecha = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -457,14 +458,14 @@ class Persona(Base):
         """Rol en la iglesia resuelto desde el Kernel (PersonaRoleAssignment).
         
         Si existe un registro en persona_church_roles vinculado a esta persona,
-        devuelve ese valor. En caso contrario, hace fallback a la columna legacy.
+        devuelve ese valor. En caso contrario, hace fallback a la columna compat.
         """
         if self.rol_iglesia and self.rol_iglesia.church_role:
             val = self.rol_iglesia.church_role
             return val.value if hasattr(val, 'value') else str(val)
         return self.church_role or "Miembro"
 
-    user = relationship("User", backref=backref("member_profile", uselist=False))
+    user = relationship("Usuario", foreign_keys=[user_id], backref=backref("member_profile", uselist=False))
     family = relationship("Family", overlaps="family,members,personas")
     colombian_department = relationship("ColombianDepartment", foreign_keys=[colombian_department_id])
     origen_estrategia = relationship("EstrategiaEvangelismo", foreign_keys=[origen_estrategia_id])
@@ -492,7 +493,7 @@ class Persona(Base):
 
 class Position(Base):
     __tablename__ = "positions"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(100), unique=True, nullable=False, index=True)
     description = Column(Text, nullable=True)
     category = Column(String(50), nullable=True, index=True)
@@ -511,7 +512,7 @@ class MemberPosition(Base):
             "persona_id", "position_id", "start_date", name="uq_member_position_history"
         ),
     )
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
@@ -519,7 +520,7 @@ class MemberPosition(Base):
         index=True,
     )
     position_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("positions.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -593,7 +594,7 @@ class ConsolidationCase(Base):
 
 class ConsolidationAssignment(Base):
     __tablename__ = "consolidation_assignments"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     case_id = Column(
         UUID(as_uuid=True),
         ForeignKey("consolidation_cases.id", ondelete="CASCADE"),
@@ -639,7 +640,7 @@ class ConsolidationAssignment(Base):
 
 class ConsolidationInteraction(Base):
     __tablename__ = "consolidation_interactions"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     case_id = Column(
         UUID(as_uuid=True),
         ForeignKey("consolidation_cases.id", ondelete="CASCADE"),
@@ -669,7 +670,7 @@ class ConsolidationInteraction(Base):
 
 class ConsolidationTask(Base):
     __tablename__ = "consolidation_tasks"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     case_id = Column(
         UUID(as_uuid=True),
         ForeignKey("consolidation_cases.id", ondelete="CASCADE"),
@@ -677,7 +678,7 @@ class ConsolidationTask(Base):
         index=True,
     )
     assignment_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("consolidation_assignments.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
@@ -696,7 +697,7 @@ class ConsolidationTask(Base):
 
 class Donation(Base):
     __tablename__ = "donations"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="SET NULL"),
@@ -710,7 +711,7 @@ class Donation(Base):
     status = Column(String(20), default="completed", index=True)
     reference_code = Column(String(100), nullable=True)
     payment_method = Column(String(50), default="Transferencia")
-    fund_id = Column(Integer, ForeignKey("funds.fund_id", ondelete="SET NULL"), nullable=True, index=True)
+    fund_id = Column(UUID(as_uuid=True), ForeignKey("funds.fund_id", ondelete="SET NULL"), nullable=True, index=True)
     # donor_name/email solo para donaciones anónimas (persona_id IS NULL)
     donor_name = Column(String(100), nullable=True)
     donor_email = Column(String(200), nullable=True)
@@ -728,7 +729,7 @@ class Donation(Base):
 
 class DonationCategory(Base):
     __tablename__ = "donation_categories"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(100), nullable=False)
     description = Column(String(255))
     color_code = Column(String(50), default="blue")
@@ -737,7 +738,7 @@ class DonationCategory(Base):
 
 class CrmTask(Base):
     __tablename__ = "crm_tasks"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     category = Column(String(100), default="Pastoral", nullable=True, index=True)
@@ -760,7 +761,7 @@ class CrmTask(Base):
 
 class VolunteerShift(Base):
     __tablename__ = "volunteer_shifts"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id"),
@@ -784,7 +785,7 @@ class VolunteerShift(Base):
 
 class VolunteerSkill(Base):
     __tablename__ = "volunteer_skills"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(100), unique=True, nullable=False)
     category = Column(String(100))
 
@@ -800,7 +801,7 @@ member_volunteer_skills = Table(
     ),
     Column(
         "skill_id",
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("volunteer_skills.id", ondelete="CASCADE"),
         primary_key=True,
     ),
@@ -809,7 +810,7 @@ member_volunteer_skills = Table(
 
 class CommunicationLog(Base):
     __tablename__ = "communication_logs"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
@@ -836,7 +837,7 @@ class CommunicationLog(Base):
 
 class SpiritualMilestone(Base):
     __tablename__ = "spiritual_milestones"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     persona_id = Column(
         UUID(as_uuid=True),
@@ -861,7 +862,7 @@ class SpiritualMilestone(Base):
 
 class CrmAutomation(Base):
     __tablename__ = "crm_automations"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(100), nullable=False)
     trigger_event = Column(String(50), nullable=False)
     action_type = Column(String(50), nullable=False)
@@ -872,7 +873,7 @@ class CrmAutomation(Base):
 
 class RoleDefinition(Base):
     __tablename__ = "role_definitions"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(100), nullable=False, unique=True, index=True)
     color = Column(String(50), default="blue")
     is_leadership = Column(Boolean, default=False, index=True)
@@ -885,7 +886,7 @@ class MemberRole(Base):
     __table_args__ = (
         UniqueConstraint("persona_id", "role_id", name="uq_member_role"),
     )
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
@@ -893,7 +894,7 @@ class MemberRole(Base):
         index=True,
     )
     role_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("role_definitions.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -906,7 +907,7 @@ class MemberRole(Base):
 
 class PastoralCallLog(Base):
     __tablename__ = "pastoral_call_logs"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     case_id = Column(
         UUID(as_uuid=True),
         ForeignKey("consolidation_cases.id", ondelete="SET NULL"),
@@ -939,7 +940,7 @@ class MemberMinistry(Base):
     __table_args__ = (
         UniqueConstraint("persona_id", "ministry_id", name="uq_member_ministry"),
     )
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
@@ -947,7 +948,7 @@ class MemberMinistry(Base):
         index=True,
     )
     ministry_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("ministries.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -965,7 +966,7 @@ class MemberMinistry(Base):
 
 class Fund(Base):
     __tablename__ = "funds"
-    fund_id = Column(Integer, primary_key=True, index=True)
+    fund_id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(120), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     is_public = Column(Boolean, default=False)
@@ -976,7 +977,7 @@ class Fund(Base):
 
 class SupportTicket(Base):
     __tablename__ = "support_tickets"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     subject = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
@@ -991,7 +992,7 @@ class SupportTicket(Base):
 
 class CommunityBoardCard(Base):
     __tablename__ = "community_board_cards"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     column_id = Column(String(50), nullable=True, index=True)
     title = Column(String(200), nullable=False)
@@ -1003,6 +1004,6 @@ class CommunityBoardCard(Base):
 
 
 
-# ── Legacy compatibility aliases (cell_groups → grupos_evangelismo) ──
+# ── Compat compatibility aliases (cell_groups → grupos_evangelismo) ──
 # CellGroup and related classes are defined here for backward compat.
 # The v2 models live in models_evangelism.py (GrupoEvangelismo, etc.)

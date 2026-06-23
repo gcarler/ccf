@@ -35,20 +35,24 @@ def _patch_sqlite_uuid():
 
     def _patched_bind(self, dialect):
         proc = _orig_bind(self, dialect)
-        if dialect.name != "sqlite" or proc is None:
+        if dialect.name != "sqlite":
             return proc
 
+        # For SQLite, always convert UUID to hex string
         def _safe_process(value):
+            if isinstance(value, _uuid.UUID):
+                return value.hex
             if isinstance(value, str):
                 if len(value) == 36 and value.count("-") == 4:
                     try:
-                        value = _uuid.UUID(value)
+                        return _uuid.UUID(value).hex
                     except (ValueError, AttributeError):
                         return value
                 else:
-                    # Non-UUID string on SQLite — can't call .hex, pass raw
                     return value
-            return proc(value)
+            if proc is not None:
+                return proc(value)
+            return value
         return _safe_process
 
     _satypes.Uuid.bind_processor = _patched_bind
@@ -185,7 +189,7 @@ def client(db_session):
 
 # ── Auth Helper (v2 / auth_users) ─────────────────────────────────────
 # All test files that need authenticated endpoints should use these
-# helpers instead of the legacy models.User pattern, because the
+# helpers instead of the numeric models.User pattern, because the
 # /api/auth/login endpoint queries Usuario (auth_users), not User (users).
 
 def seed_admin_v2(db_session, email="admin@example.com", password="testpass123"):
@@ -236,15 +240,15 @@ def seed_admin_v2(db_session, email="admin@example.com", password="testpass123")
     )
     db_session.add(user)
     db_session.commit()
-    # Compatibility check: persona.user_id = legacy_user.id
+    # Compatibility check: persona.user_id tracks the numeric user id when present.
     return user, persona, sede
 
 
 def auth_headers_v2(client, email="admin@example.com", password="testpass123"):
-    """Obtiene headers de autorización usando el endpoint /api/auth/login."""
+    """Obtiene headers de autorización usando el endpoint /api/v3/auth/login."""
     resp = client.post(
-        "/api/auth/login",
-        data={"username": email, "password": password, "grant_type": "password"},
+        "/api/v3/auth/login",
+        json={"email": email, "password": password},
     )
     assert resp.status_code == 200, f"Login failed: {resp.status_code} {resp.text}"
     token = resp.json()["access_token"]

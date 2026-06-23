@@ -55,10 +55,10 @@ def downgrade() -> None:
     op.execute('ALTER TABLE conversations ALTER COLUMN last_sender_id TYPE integer USING NULL::integer')
     op.execute('ALTER TABLE conversation_participants ALTER COLUMN user_id TYPE integer USING NULL::integer')
     
-    # Add foreign keys back pointing to _legacy_users.id
-    op.create_foreign_key('chat_messages_sender_id_fkey', 'chat_messages', '_legacy_users', ['sender_id'], ['id'])
-    op.create_foreign_key('conversations_last_sender_id_fkey', 'conversations', '_legacy_users', ['last_sender_id'], ['id'])
-    op.create_foreign_key('conversation_participants_user_id_fkey', 'conversation_participants', '_legacy_users', ['user_id'], ['id'], ondelete='CASCADE')
+    # Add foreign keys back pointing to _compat_users.id
+    op.create_foreign_key('chat_messages_sender_id_fkey', 'chat_messages', '_compat_users', ['sender_id'], ['id'])
+    op.create_foreign_key('conversations_last_sender_id_fkey', 'conversations', '_compat_users', ['last_sender_id'], ['id'])
+    op.create_foreign_key('conversation_participants_user_id_fkey', 'conversation_participants', '_compat_users', ['user_id'], ['id'], ondelete='CASCADE')
     
     # Recreate unique constraint
     op.create_unique_constraint('uq_conversation_user', 'conversation_participants', ['conversation_id', 'user_id'])

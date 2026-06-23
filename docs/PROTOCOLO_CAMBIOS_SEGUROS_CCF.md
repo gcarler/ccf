@@ -9,7 +9,7 @@
 
 ## 1. Principio Rector
 
-La plataforma CCF tiene reglas arquitectonicas correctas, pero tambien tiene deuda legacy activa. Por lo tanto:
+La plataforma CCF tiene reglas arquitectonicas correctas, pero tambien tiene deuda compat activa. Por lo tanto:
 
 > Ninguna regla ideal se corrige de forma masiva si el cambio requiere migraciones, renombrados amplios, cambios de identidad, cambios de rutas o reescrituras de auth/RBAC.
 
@@ -23,8 +23,8 @@ Antes de tocar codigo se debe clasificar cada hallazgo como:
 |---|---|---|
 | Bloqueante operativo | Rompe seguridad, sede_id, login, build, arranque o datos | Corregir en microcambio con pruebas |
 | Correccion segura | Cambio local sin migracion ni contrato externo | Corregir con prueba enfocada |
-| Deuda conocida | Incumple regla ideal pero esta acoplado a DB/API/UI legacy | Documentar, no tocar sin plan |
-| Legacy protegido | Existe para compatibilidad activa | No renombrar ni eliminar |
+| Deuda conocida | Incumple regla ideal pero esta acoplado a DB/API/UI compat | Documentar, no tocar sin plan |
+| Compat protegido | Existe para compatibilidad activa | No renombrar ni eliminar |
 | Contradiccion documental | Reglas/documentos se contradicen | Corregir documento o test antes del codigo |
 
 ---
@@ -47,14 +47,14 @@ Si dos documentos discrepan, no corregir codigo todavia. Primero registrar la co
 Estas areas no deben modificarse como "fix rapido":
 
 - PK `Integer` a UUID en tablas existentes.
-- FKs legacy a `users.id`.
-- Columnas legacy en `personas` como `church_role`, `membership_type`, `user_id`.
+- FKs compat a `users.id`.
+- Columnas compat en `personas` como `church_role`, `membership_type`, `user_id`.
 - Rutas existentes `members`, `academy`, `evangelism`, `projects`.
-- Alias legacy como `Member = Persona`, `CellGroup = GrupoEvangelismo`.
+- Alias compat como `Member = Persona`, `CellGroup = GrupoEvangelismo`.
 - Auth v1/v2/v3, refresh tokens, cookies o `sessionStorage`.
 - `backend/models.py` como barrel de compatibilidad.
 - Migraciones Alembic que cambien tipos de PK/FK.
-- Eliminacion de tablas, columnas o relaciones legacy.
+- Eliminacion de tablas, columnas o relaciones compat.
 
 Estas areas solo se tocan con:
 
@@ -125,7 +125,7 @@ No migrar rutas a `/academia`, `/evangelismo` o `/proyectos` sin plan de redirec
 Regla inmediata:
 
 - UI visible: usar "personas", "integrantes" o "participantes".
-- Codigo legacy: no renombrar rutas/variables/archivos `members` sin plan.
+- Codigo compat: no renombrar rutas/variables/archivos `members` sin plan.
 
 ---
 
@@ -334,14 +334,14 @@ Prioridad recomendada:
 2. Corregir fugas obvias de `sede_id` en endpoints activos.
 3. Corregir `apiFetch`/`fetch` directo en frontend, modulo por modulo.
 4. Corregir textos visibles de UI.
-5. Planificar deuda UUID/FK/legacy en una migracion separada.
+5. Planificar deuda UUID/FK/compat en una migracion separada.
 
 No hacer primero:
 
 - Migraciones de PK/FK.
 - Renombrados masivos.
 - Reescritura de auth.
-- Limpieza global de modelos legacy.
+- Limpieza global de modelos compat.
 
 ---
 
@@ -354,7 +354,7 @@ Cada entrega debe reportar:
   "auditoria_ccf": {
     "capa_evaluada": "DB / BACKEND / FRONTEND / DOCS",
     "archivo_o_endpoint": "ruta o endpoint",
-    "categoria": "Bloqueante operativo / Correccion segura / Deuda conocida / Legacy protegido / Contradiccion documental",
+    "categoria": "Bloqueante operativo / Correccion segura / Deuda conocida / Compat protegido / Contradiccion documental",
     "estado": "PASS / PENDIENTE / BLOQUEADO",
     "violacion_axioma": "Ninguna / Axioma 1 / Axioma 2 / Axioma 3",
     "cambio_realizado": "Resumen breve",
@@ -372,9 +372,9 @@ No corregir automaticamente estos hallazgos:
 
 - Tablas nuevas o mixtas con PK `Integer` y FK a `personas.id`.
 - `Persona.church_role`, `Persona.membership_type`, `Persona.user_id`.
-- FKs a `users.id` en auditoria, CMS, agentes, auth legacy y entidades historicas.
+- FKs a `users.id` en auditoria, CMS, agentes, auth compat y entidades historicas.
 - Rutas y archivos `members`.
-- Alias legacy ingles/espanol en modelos y schemas.
+- Alias compat ingles/espanol en modelos y schemas.
 - Tests que documentan `xfail` o deuda conocida.
 
 Estas deudas deben pasar a un plan separado con migraciones, backfill, compatibilidad y rollback.

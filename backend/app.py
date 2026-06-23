@@ -1,6 +1,8 @@
 import logging
 import os
 import time
+import json
+import uuid as _uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -10,46 +12,19 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from backend.api import (
-    academy,
-    academy_core,
-    admin,
-    agenda,
-    agenda_core,
-    agents,
-    auth_v3,
-    analytics,
-    auth,
-    auth_v2,
-    chat,
-    cms,
-    cms_v2,
-    community,
-    content,
-    crm,
-    crm_core,
-    dashboard,
-    donations,
-    evangelism,
-    finance,
-    governance,
-    graph,
-    kernel,
-    messaging,
-    prayer,
-    projects,
-    public,
-    spiritual_life,
-    support,
-    system,
-    tables,
-    workspace,
-    youtube,
-)
 from backend.core.config import get_settings
 from backend.core.logging import request_id_middleware
 from backend.core.security_headers import mount_security_headers
 from backend.middleware.module_isolation import register_module_isolation
+
+from backend.api import (
+    academy_core, admin, agenda, agenda_core, agents,
+    auth_v3, analytics, chat, cms, cms_v2, community,
+    crm, crm_core, dashboard, donations, enterprise_cms,
+    evangelism, finance, governance, graph, kernel, messaging,
+    prayer, projects, public, spiritual_life, support, system,
+    tables, workspace, youtube,
+)
 
 logging.basicConfig(level=logging.INFO)  # Fallback; configure_logging() in core/logging overrides
 logger = logging.getLogger("CCF-Core")
@@ -58,11 +33,8 @@ settings = get_settings()
 
 ROUTER_REGISTRY = [
     (auth_v3.router, "/api", ["Auth v3"]),
-    (auth.router, "/api/auth", ["auth"]),
-    (auth_v2.router, "/api/auth", ["Auth v2"]),
     (projects.router, "/api/projects", ["projects"]),
     (kernel.router, "/api", ["kernel"]),
-    (academy.router, "/api/academy", ["academy"]),
     (academy_core.router, "/api", ["Academy v2"]),
     (crm.router, "/api/crm", ["crm"]),
     (crm_core.router, "/api", ["CRM v2"]),
@@ -74,7 +46,6 @@ ROUTER_REGISTRY = [
     (system.router, "/api/system", ["system"]),
     (cms.router, "/api", None),
     (cms_v2.router, "/api", None),
-    (content.router, "/api", None),
     (agents.router, "/api", None),
     (agents.analytics_router, "/api/agents", None),
     (admin.router, "/api/admin", ["admin"]),
@@ -92,6 +63,7 @@ ROUTER_REGISTRY = [
     (dashboard.router, "/api", ["dashboard"]),
     (tables.router, "/api", ["tables"]),
     (youtube.router, "/api", ["youtube"]),
+    (enterprise_cms.router, "/api", ["Enterprise CMS"]),
 ]
 
 

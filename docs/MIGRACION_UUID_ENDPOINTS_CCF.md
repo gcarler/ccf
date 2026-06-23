@@ -18,7 +18,7 @@ Inventario generado desde `backend.app:app`:
 | Tablas con FK a `users` | 28 |
 | Tablas con PK entera | 144 |
 
-La cifra de PK enteras incluye catalogos permitidos y tablas legacy. No se migra todo en bloque.
+La cifra de PK enteras incluye catalogos permitidos y tablas compat. No se migra todo en bloque.
 
 ---
 
@@ -30,7 +30,7 @@ La plataforma ya esta parcialmente orientada a UUID:
 - Auth v2/v3: `auth_users.id` UUID ligado a `personas.id`.
 - Modulos modernos: `crm_casos`, `crm_tareas`, `proyectos`, `tareas_proyecto`, `documentos_proyecto`, `agenda_eventos`, `academy_enrollments` usan UUID en zonas criticas.
 
-Pero todavia hay contratos legacy activos:
+Pero todavia hay contratos compat activos:
 
 - endpoints con `user_id:int`;
 - columnas `*_user_id` paralelas a `*_persona_id`;
@@ -45,14 +45,14 @@ Estos endpoints exponen identidad de persona como entero o dependen directamente
 
 | Prioridad | Endpoint | Modulo | Parametros actuales | Accion |
 |---|---|---|---|---|
-| P0 | `/api/crm/volunteers/{persona_id}` | `backend.api.crm.pastoral` | `persona_id:str` UUID, con fallback temporal a `Persona.user_id` legacy | Migrado contrato de ruta a UUID sin romper consumidores legacy |
+| P0 | `/api/crm/volunteers/{persona_id}` | `backend.api.crm.pastoral` | `persona_id:str` UUID, con fallback temporal a `Persona.user_id` compat | Migrado contrato de ruta a UUID sin romper consumidores compat |
 | P0 | `/api/spiritual-life/milestones/{person_id}` | `backend.api.spiritual_life` | `person_id:str` UUID | Migrado contrato y CRUD interno a `SpiritualMilestone.persona_id` |
-| P0 | `/api/auth/users/{user_id}` | `backend.api.auth` | `user_id:int` | Mantener solo como auth legacy; agregar/usar endpoint por `persona_id` |
+| P0 | `/api/auth/users/{user_id}` | `backend.api.auth` | `user_id:int` | Mantener solo como auth compat; agregar/usar endpoint por `persona_id` |
 | P0 | `/api/admin/users/{user_id}/permissions` | `backend.api.admin` | `user_id:int` | Resolver permisos por persona/auth UUID |
-| P0 | `/api/academy/users/{user_id}/enrollments` | `backend.api.academy` | `user_id` legacy | Migrar consumidores a persona/auth UUID |
-| P0 | `/api/academy/users/{user_id}/progress` | `backend.api.academy` | `user_id` legacy | Migrar consumidores a persona/auth UUID |
+| P0 | `/api/academy/users/{user_id}/enrollments` | `backend.api.academy` | `user_id` compat | Migrar consumidores a persona/auth UUID |
+| P0 | `/api/academy/users/{user_id}/progress` | `backend.api.academy` | `user_id` compat | Migrar consumidores a persona/auth UUID |
 
-Regla: estos cambios no deben eliminar de inmediato los endpoints legacy. Primero agregar ruta UUID o adaptar internamente con resolucion dual, luego migrar frontend, luego deprecar.
+Regla: estos cambios no deben eliminar de inmediato los endpoints compat. Primero agregar ruta UUID o adaptar internamente con resolucion dual, luego migrar frontend, luego deprecar.
 
 ---
 
@@ -60,14 +60,14 @@ Regla: estos cambios no deben eliminar de inmediato los endpoints legacy. Primer
 
 | Modulo | Rutas | Rutas con parametros `int` | Lectura |
 |---|---:|---:|---|
-| `backend.api.evangelism_grupos` | 50 | 22 | Grupos/sesiones/asistencias legacy |
-| `backend.api.academy` | 44 | 20 | Cursos/lecciones/evaluaciones v1 legacy |
+| `backend.api.evangelism_grupos` | 50 | 22 | Grupos/sesiones/asistencias compat |
+| `backend.api.academy` | 44 | 20 | Cursos/lecciones/evaluaciones v1 compat |
 | `backend.api.crm.pastoral` | 53 | 17 | CRM pastoral mixto |
 | `backend.api.cms_v2` | 47 | 13 | CMS: muchos enteros son catalogos/orden/secciones |
 | `backend.api.agents` | 26 | 12 | Agentes internos, no identidad pastoral directa |
-| `backend.api.evangelism_events` | 21 | 12 | Eventos CRM legacy |
+| `backend.api.evangelism_events` | 21 | 12 | Eventos CRM compat |
 | `backend.api.academy_core` | 19 | 11 | v2 academico todavia usa IDs enteros en catalogos/contenido |
-| `backend.api.cms` | 26 | 11 | CMS legacy |
+| `backend.api.cms` | 26 | 11 | CMS compat |
 | `backend.api.agenda_core` | 21 | 9 | Recursos/reservas/participantes |
 | `backend.api.crm_core` | 22 | 8 | Pipelines/etapas catalogables, casos ya UUID |
 
@@ -91,7 +91,7 @@ Estrategia:
 1. agregar columna UUID paralela si no existe;
 2. backfill desde `personas.user_id` o relacion historica equivalente;
 3. adaptar endpoints a UUID;
-4. mantener alias legacy temporal;
+4. mantener alias compat temporal;
 5. migrar frontend;
 6. retirar entero solo despues de smoke tests.
 
@@ -127,12 +127,12 @@ Cada excepcion debe quedar escrita en el modelo o en esta hoja de ruta.
 
 ### Lote 1: Contratos de Persona
 
-1. `backend.api.crm.pastoral`: migrar volunteers `persona_id:int` a UUID. **Completado:** contrato `str` UUID con fallback legacy por `Persona.user_id`.
+1. `backend.api.crm.pastoral`: migrar volunteers `persona_id:int` a UUID. **Completado:** contrato `str` UUID con fallback compat por `Persona.user_id`.
 2. `backend.api.spiritual_life`: reemplazar `person_id:int` por `persona_id:str`. **Completado:** ruta acepta UUID y CRUD usa `persona_id`.
 3. Tests de contrato para rechazar enteros en rutas nuevas de persona. **Completado:** `test_no_new_person_identity_int_params`.
-4. `backend.api.admin` y `backend.api.auth`: separar endpoints de auth legacy (`user_id`) de endpoints ministeriales (`persona_id`).
+4. `backend.api.admin` y `backend.api.auth`: separar endpoints de auth compat (`user_id`) de endpoints ministeriales (`persona_id`).
 
-### Lote 2: Academy Legacy
+### Lote 2: Academy Compat
 
 1. Mantener cursos/lecciones como catalogos si se decide que pueden ser enteros.
 2. Migrar enrollments/progress/certificados a `persona_id` UUID.
@@ -147,7 +147,7 @@ Cada excepcion debe quedar escrita en el modelo o en esta hoja de ruta.
 ### Lote 4: Donaciones y Auditoria
 
 1. `donations.id` a UUID si se considera transaccional externa/API.
-2. Actor de auditoria por `actor_persona_id`; `actor_user_id` solo legacy.
+2. Actor de auditoria por `actor_persona_id`; `actor_user_id` solo compat.
 3. Certificados y comprobantes deben aceptar UUID.
 
 ### Lote 5: Proyectos Complementarios
@@ -181,7 +181,7 @@ curl -f http://127.0.0.1:3000/
 
 ## 8. Regla Anti-Perdida de Datos
 
-Nunca eliminar una columna entera legacy antes de:
+Nunca eliminar una columna entera compat antes de:
 
 1. crear columna UUID temporal;
 2. completar backfill;

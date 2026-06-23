@@ -1,4 +1,5 @@
 from __future__ import annotations
+from uuid import UUID
 
 from typing import Any, Dict, List, Optional
 
@@ -49,7 +50,7 @@ class HeatmapItem(BaseModel):
 
 
 class TableRow(BaseModel):
-    id: str
+    id: UUID
     columns: Dict[str, Any]
     link: Optional[str] = None
 

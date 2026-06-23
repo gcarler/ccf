@@ -2,7 +2,7 @@ export type NotificationKind = 'mention' | 'comment' | 'task' | 'system' | 'ai' 
 
 export interface BackendNotification {
     id: number;
-    user_id: number;
+    persona_id?: string;
     title: string;
     content?: string | null;
     is_read: boolean;

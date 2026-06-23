@@ -84,11 +84,10 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
     const submittedMediaType = mediaType === "text" || !activeMediaUrl.trim() ? "text" : mediaType;
     const submittedMediaUrl = submittedMediaType === "text" ? null : activeMediaUrl.trim();
 
-    try {
-      const authorPayload = {
-        ...(authorPersonaId || isUuid(userId) ? { author_persona_id: authorPersonaId || String(userId) } : {}),
-        ...(typeof userId === "number" && userId > 0 ? { author_id: userId } : {}),
-      };
+	    try {
+	      const authorPayload = {
+	        ...(authorPersonaId || isUuid(userId) ? { author_persona_id: authorPersonaId || String(userId) } : {}),
+	      };
       await apiFetch("/cms/testimonials", {
         method: "POST",
         token,

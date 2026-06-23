@@ -10,7 +10,7 @@
 --   - Tablas del kernel (personas, sedes, roles)
 --   - Tablas de autenticación v3 (auth_*)
 --   - Tablas de módulos (evangelism, crm, academy, agenda, proyectos)
---   - Tablas legacy con NOTA de deprecación
+--   - Tablas compat con NOTA de deprecatacion
 --   - Índices y constraints
 --   - Seed data mínima
 -- ============================================================================
@@ -325,7 +325,7 @@ INSERT INTO platform_role_definitions (id, role, description, permissions) VALUE
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
--- SEED DATA — AUTH ROLES (v2 legacy)
+-- SEED DATA — AUTH ROLES (v2 compat)
 -- ============================================================================
 INSERT INTO auth_roles (id, nombre, permisos) VALUES
     (uuid_generate_v4(), 'ADMINISTRADOR', '{"system:config":"allow","crm:manage":"allow","academy:manage":"allow","projects:manage":"allow","evangelism:manage":"allow","community:manage":"allow","cms:manage":"allow","agenda:manage":"allow","finances:manage":"allow","messaging:edit":"allow","profile:manage":"allow"}'),
@@ -357,7 +357,7 @@ INSERT INTO auth_badges (id, name, description, icon_key, xp_reward) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- ============================================================================
--- NOTA: Las tablas legacy no se crean aquí.
+-- NOTA: Las tablas compat no se crean aquí.
 -- Las migraciones de Alembic las manejan (y eliminan progresivamente).
 -- ============================================================================
 

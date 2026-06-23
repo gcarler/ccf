@@ -27,7 +27,7 @@ def _utcnow():
 class Curso(Base):
     __tablename__ = "academy_courses"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True)
     code = Column(String(50), nullable=False, unique=True)
     slug = Column(String(200), nullable=True, unique=True, index=True)
@@ -60,9 +60,9 @@ class Curso(Base):
 class PrerrequisitoCurso(Base):
     __tablename__ = "academy_course_prerequisites"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
-    prerequisite_course_id = Column(Integer, ForeignKey("academy_courses.id"),
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
+    prerequisite_course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"),
                                     nullable=False)
 
     __table_args__ = (
@@ -74,8 +74,8 @@ class PrerrequisitoCurso(Base):
 class Leccion(Base):
     __tablename__ = "academy_lessons"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
     content_type = Column(String(50), default="video")
@@ -95,9 +95,9 @@ class Leccion(Base):
 class Evaluacion(Base):
     __tablename__ = "academy_assessments"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
-    lesson_id = Column(Integer, ForeignKey("academy_lessons.id"), nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=True)
     title = Column(String(200), nullable=False)
     description = Column(Text)
     max_score = Column(Float, nullable=False)
@@ -112,8 +112,8 @@ class Evaluacion(Base):
 class Pregunta(Base):
     __tablename__ = "academy_assessment_questions"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    assessment_id = Column(Integer, ForeignKey("academy_assessments.id"),
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    assessment_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessments.id"),
                            nullable=False)
     question_text = Column(Text, nullable=False)
     question_type = Column(String(50))
@@ -127,8 +127,8 @@ class Pregunta(Base):
 class Opcion(Base):
     __tablename__ = "academy_assessment_options"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    question_id = Column(Integer, ForeignKey("academy_assessment_questions.id"),
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    question_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessment_questions.id"),
                          nullable=False)
     option_text = Column(Text, nullable=False)
     is_correct = Column(Boolean, default=False)
@@ -146,7 +146,7 @@ class Matricula(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
                         nullable=False)
-    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
     cohort_name = Column(String(100))
     status = Column(String(50), nullable=False, default="ACTIVO")
     progress_percent = Column(Float, default=0.0)
@@ -169,10 +169,10 @@ class Matricula(Base):
 class ProgresoLeccion(Base):
     __tablename__ = "academy_lesson_progress"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
                         nullable=False)
-    lesson_id = Column(Integer, ForeignKey("academy_lessons.id"), nullable=False)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=False)
     progress_percent = Column(Numeric, default=0.0)
     is_completed = Column(Boolean, default=False)
     last_position_seconds = Column(Integer, default=0)
@@ -186,7 +186,7 @@ class ProgresoLeccion(Base):
 class AsistenciaClase(Base):
     __tablename__ = "academy_course_attendance"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     enrollment_id = Column(UUID(as_uuid=True),
                            ForeignKey("academy_enrollments.id"), nullable=False)
     session_date = Column(DateTime(timezone=True), nullable=False)
@@ -199,7 +199,7 @@ class IntentoEvaluacion(Base):
     __tablename__ = "academy_assessment_attempts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    assessment_id = Column(Integer, ForeignKey("academy_assessments.id"),
+    assessment_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessments.id"),
                            nullable=False)
     enrollment_id = Column(UUID(as_uuid=True),
                            ForeignKey("academy_enrollments.id"), nullable=False)
@@ -217,7 +217,7 @@ class EntregaTarea(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     enrollment_id = Column(UUID(as_uuid=True),
                            ForeignKey("academy_enrollments.id"), nullable=False)
-    lesson_id = Column(Integer, ForeignKey("academy_lessons.id"), nullable=False)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=False)
     seaweed_fid = Column(String(100), nullable=False)
     teacher_feedback = Column(Text, nullable=True)
     grade = Column(Float, nullable=True)
@@ -242,8 +242,8 @@ class Certificado(Base):
 class ActaFormal(Base):
     __tablename__ = "academy_formal_actas"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
     cohort_name = Column(String(100), nullable=False)
     closed_by_persona_id = Column(UUID(as_uuid=True),
                                   ForeignKey("personas.id"), nullable=False)
@@ -259,8 +259,8 @@ class ActaEntrada(Base):
     """Notas individuales de cada alumno en un acta."""
     __tablename__ = "academy_formal_acta_entries"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    acta_id = Column(Integer, ForeignKey("academy_formal_actas.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    acta_id = Column(UUID(as_uuid=True), ForeignKey("academy_formal_actas.id"), nullable=False)
     enrollment_id = Column(UUID(as_uuid=True),
                            ForeignKey("academy_enrollments.id"), nullable=False)
     final_grade = Column(Float, nullable=True)
@@ -278,8 +278,8 @@ class ActaEntrada(Base):
 class HiloForo(Base):
     __tablename__ = "academy_forum_threads"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, ForeignKey("academy_courses.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
     author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
                                nullable=False)
     title = Column(String(200), nullable=False)
@@ -290,10 +290,10 @@ class HiloForo(Base):
 class ComentarioForo(Base):
     __tablename__ = "academy_forum_comments"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    thread_id = Column(Integer, ForeignKey("academy_forum_threads.id"),
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    thread_id = Column(UUID(as_uuid=True), ForeignKey("academy_forum_threads.id"),
                        nullable=False)
-    parent_id = Column(Integer, ForeignKey("academy_forum_comments.id"),
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("academy_forum_comments.id"),
                        nullable=True)
     author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
                                nullable=False)

@@ -1,5 +1,6 @@
 """Schemas para la Biblioteca de Recursos CRM."""
 from __future__ import annotations
+from uuid import UUID
 
 from typing import Any, Dict, List, Optional
 
@@ -22,7 +23,7 @@ class CategoriaRecursoUpdate(BaseModel):
 
 
 class CategoriaRecursoOut(BaseModel):
-    id: str
+    id: UUID
     nombre: str
     descripcion: Optional[str] = None
     color_ui_hex: str
@@ -42,7 +43,7 @@ class CategoriaRecursoOut(BaseModel):
 # ── RecursoAdjunto ────────────────────────────────────────────────────────────
 
 class RecursoAdjuntoOut(BaseModel):
-    id: str
+    id: UUID
     sede_id: str
     plantilla_id: Optional[str] = None
     nombre_recurso: str
@@ -90,7 +91,7 @@ class PlantillaMensajeUpdate(BaseModel):
 
 
 class PlantillaMensajeOut(BaseModel):
-    id: str
+    id: UUID
     sede_id: str
     categoria_id: str
     titulo: str
@@ -138,7 +139,7 @@ class EnviarPlantillaPayload(BaseModel):
 
 
 class BitacoraEnvioOut(BaseModel):
-    id: str
+    id: UUID
     sede_id: str
     plantilla_id: Optional[str] = None
     caso_id: Optional[str] = None

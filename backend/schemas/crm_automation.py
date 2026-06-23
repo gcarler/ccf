@@ -1,5 +1,6 @@
 """Schemas para CrmAutomation (automatizaciones de mensajes)."""
 from __future__ import annotations
+from uuid import UUID
 
 from typing import Any, Dict, List, Optional
 
@@ -23,7 +24,7 @@ class CrmAutomationUpdate(BaseModel):
 
 
 class CrmAutomationOut(BaseModel):
-    id: int
+    id: UUID
     name: str
     trigger_event: str
     action_type: str
@@ -50,7 +51,7 @@ class AutomationTriggerPayload(BaseModel):
 
 
 class AutomationTriggerResult(BaseModel):
-    automation_id: int
+    automation_id: UUID
     automation_name: str
     status: str  # "triggered" | "skipped" | "failed"
     detail: Optional[str] = None

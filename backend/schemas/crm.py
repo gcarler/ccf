@@ -71,7 +71,7 @@ class CrmEventUpdate(BaseModel):
     cancellation_reason: Optional[str] = None
 
 class CrmEvent(CrmEventBase):
-    id: int
+    id: UUID
     created_at: datetime
     model_config = orm_config
 
@@ -87,16 +87,16 @@ class AgendaEventCreate(AgendaEventBase):
     pass
 
 class AgendaEvent(AgendaEventBase):
-    id: int
+    id: UUID
     created_by_persona_id: Optional[UUID] = None
-    created_by_user_id: Optional[int] = None
+    created_by_user_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
     model_config = orm_config
 
 class EventAttendanceBase(BaseModel):
-    event_id: int
-    persona_id: str
+    event_id: UUID
+    persona_id: UUID
     session_date: date = Field(default_factory=date.today)
     attended: bool = True
     status: str = "present"
@@ -111,12 +111,12 @@ class EventAttendanceCreate(EventAttendanceBase):
     pass
 
 class EventAttendance(EventAttendanceBase):
-    id: int
+    id: UUID
     scanned_at: Optional[datetime] = None
     model_config = orm_config
 
 class CounselingTicketBase(BaseModel):
-    persona_id: str
+    persona_id: UUID
     subject: str
     notes: Optional[str] = None
     status: str = "open"
@@ -134,7 +134,7 @@ class CounselingTicketUpdate(BaseModel):
     pastor_id: Optional[str] = None  # UUID string (personas.id)
 
 class CounselingTicket(CounselingTicketBase):
-    id: int
+    id: UUID
     pastor_id: Optional[str] = None  # UUID string (personas.id)
     priority_level: Optional[str] = None
     sentiment_score: Optional[float] = None
@@ -181,12 +181,12 @@ class PrayerRequestPublicCreate(BaseModel):
     campaign: Optional[str] = None
 
 class PrayerRequest(PrayerRequestBase):
-    id: int
+    id: UUID
     created_at: datetime
     model_config = orm_config
 
 class DonationBase(BaseModel):
-    persona_id: Optional[str] = None
+    persona_id: Optional[UUID] = None
     amount: float
     donation_type: str = "Diezmo"
     fund_id: Optional[int] = None
@@ -205,7 +205,7 @@ class DonationUpdate(BaseModel):
     method: Optional[str] = None
 
 class Donation(DonationBase):
-    id: int
+    id: UUID
     status: str = "completed"
     reference_code: Optional[str] = None
     payment_method: str = "Transferencia"
@@ -215,7 +215,7 @@ class Donation(DonationBase):
 class CrmTaskBase(BaseModel):
     title: str
     description: Optional[str] = None
-    persona_id: Optional[str] = None
+    persona_id: Optional[UUID] = None
     assignee_id: Optional[str] = None  # UUID string (personas.id)
     due_date: Optional[datetime] = None
     status: str = "todo"
@@ -232,12 +232,12 @@ class CrmTaskUpdate(BaseModel):
     due_date: Optional[datetime] = None
 
 class CrmTask(CrmTaskBase):
-    id: int
+    id: UUID
     created_at: datetime
     model_config = orm_config
 
 class VolunteerShiftBase(BaseModel):
-    persona_id: str
+    persona_id: UUID
     role_name: str
     team_name: str
     shift_start: datetime
@@ -249,7 +249,7 @@ class VolunteerShiftCreate(VolunteerShiftBase):
     pass
 
 class VolunteerShiftUpdate(BaseModel):
-    persona_id: Optional[str] = None
+    persona_id: Optional[UUID] = None
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None
     location: Optional[str] = None
@@ -258,18 +258,18 @@ class VolunteerShiftUpdate(BaseModel):
     notes: Optional[str] = None
 
 class VolunteerShift(VolunteerShiftBase):
-    id: int
+    id: UUID
     created_at: datetime
     model_config = orm_config
 
 class ColombianCity(BaseModel):
-    id: int
-    department_id: int
+    id: UUID
+    department_id: UUID
     name: str
     model_config = orm_config
 
 class ColombianDepartment(BaseModel):
-    id: int
+    id: UUID
     name: str
     code: str
     capital: str
@@ -284,7 +284,7 @@ class PersonaResponse(BaseModel):
     def coerce_id(cls, v):
         return str(v) if v is not None else v
 
-    id: str
+    id: UUID
     first_name: str
     last_name: str
     nombre_completo: Optional[str] = None
@@ -339,7 +339,7 @@ class PersonaResponse(BaseModel):
     city: Optional[str] = None
 
 class Persona(BaseModel):
-    id: str
+    id: UUID
     user_id: Optional[int] = None
     first_name: str
     last_name: str
@@ -531,7 +531,7 @@ class PositionUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 class Position(PositionBase):
-    id: int
+    id: UUID
     created_at: datetime
     model_config = orm_config
 
@@ -554,8 +554,8 @@ MINISTRY_ROLES = [
 ]
 
 class MemberMinistryBase(BaseModel):
-    persona_id: str
-    ministry_id: int
+    persona_id: UUID
+    ministry_id: UUID
     role: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -572,12 +572,12 @@ class MemberMinistryUpdate(BaseModel):
     notes: Optional[str] = None
 
 class MemberMinistry(MemberMinistryBase):
-    id: int
+    id: UUID
     model_config = orm_config
 
 class MemberPositionBase(BaseModel):
-    persona_id: str
-    position_id: int
+    persona_id: UUID
+    position_id: str
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     is_active: bool = True
@@ -594,7 +594,7 @@ class MemberPositionUpdate(BaseModel):
     notes: Optional[str] = None
 
 class MemberPosition(MemberPositionBase):
-    id: int
+    id: UUID
     model_config = orm_config
 
 class FormationLevelBase(BaseModel):
@@ -613,13 +613,13 @@ class FormationLevelUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 class FormationLevel(FormationLevelBase):
-    id: int
+    id: UUID
     created_at: datetime
     model_config = orm_config
 
 class MemberFormationBase(BaseModel):
-    persona_id: str
-    formation_level_id: int
+    persona_id: UUID
+    formation_level_id: str
     role_in_level: str = "student"
     cohort: Optional[str] = None
     start_date: Optional[datetime] = None
@@ -640,10 +640,10 @@ class MemberFormationUpdate(BaseModel):
     notes: Optional[str] = None
 
 class MemberFormation(MemberFormationBase):
-    id: int
+    id: UUID
     model_config = orm_config
 
-# ── Legacy EvangelismStrategy schemas — re-exported from canonical schemas/evangelism.py ──
+# ── EvangelismStrategy compatibility schemas — re-exported from canonical schemas/evangelism.py ──
 from backend.schemas.evangelism import (
     EstrategiaEvangelismoCreate as EvangelismStrategyCreate,
     EstrategiaEvangelismoUpdate as EvangelismStrategyUpdate,
@@ -652,7 +652,7 @@ from backend.schemas.evangelism import (
 from backend.schemas.evangelism import EstrategiaEvangelismoResponse as _EstrategiaEvangelismoResponse
 
 class EvangelismStrategyBase(BaseModel):
-    """Legacy schema — kept for backward compatibility in api/evangelism.py.
+    """Compatibility schema kept for api/evangelism.py.
 
     All fields are inherited from EstrategiaEvangelismoBase.
     The id type changes from int to str (UUID).
@@ -678,15 +678,15 @@ class EvangelismStrategyBase(BaseModel):
     group_count: Optional[int] = None
 
 class EvangelismStrategy(EvangelismStrategyBase):
-    """Legacy response schema — id is now str (UUID) from canonical model."""
-    id: str
+    """Compatibility response schema — id is str (UUID) from canonical model."""
+    id: UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     fecha_creacion: Optional[datetime] = None
     model_config = orm_config
 
 class MemberEvangelismBase(BaseModel):
-    persona_id: str
+    persona_id: UUID
     evangelism_strategy_id: str  # UUID string
     role: str = "assistant"
     start_date: Optional[datetime] = None
@@ -698,7 +698,7 @@ class MemberEvangelismCreate(MemberEvangelismBase):
     pass
 
 class MemberEvangelismUpdate(BaseModel):
-    evangelism_strategy_id: Optional[str] = None  # UUID string
+    evangelism_strategy_id: Optional[UUID] = None  # UUID string
     role: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -706,12 +706,12 @@ class MemberEvangelismUpdate(BaseModel):
     notes: Optional[str] = None
 
 class MemberEvangelism(MemberEvangelismBase):
-    id: int
+    id: UUID
     model_config = orm_config
 
 class TeachingAssignmentBase(BaseModel):
-    persona_id: str
-    formation_level_id: int
+    persona_id: UUID
+    formation_level_id: str
     subject: Optional[str] = None
     group_name: Optional[str] = None
     start_date: Optional[datetime] = None
@@ -732,11 +732,11 @@ class TeachingAssignmentUpdate(BaseModel):
     notes: Optional[str] = None
 
 class TeachingAssignment(TeachingAssignmentBase):
-    id: int
+    id: UUID
     model_config = orm_config
 
 class CasoCRMBase(BaseModel):  # v2 — replaces ConsolidationCaseBase
-    persona_id: str
+    persona_id: UUID
     stage: str = "new"
     status: str = "active"
     source: Optional[str] = None
@@ -765,7 +765,7 @@ class CasoCRMUpdate(BaseModel):  # v2
 
 class CasoCRM(CasoCRMBase):  # v2
 
-    id: str
+    id: UUID
     created_at: datetime
     updated_at: datetime
     model_config = orm_config
@@ -793,7 +793,7 @@ class ConsolidationAssignmentUpdate(BaseModel):
     status: Optional[str] = None
 
 class ConsolidationAssignment(ConsolidationAssignmentBase):
-    id: int
+    id: UUID
     created_at: datetime
     model_config = orm_config
 
@@ -817,7 +817,7 @@ class ConsolidationInteractionUpdate(BaseModel):
     next_action_date: Optional[datetime] = None
 
 class ConsolidationInteraction(ConsolidationInteractionBase):
-    id: int
+    id: UUID
     created_at: datetime
     model_config = orm_config
 
@@ -842,12 +842,12 @@ class ConsolidationTaskUpdate(BaseModel):
     completed_at: Optional[datetime] = None
 
 class ConsolidationTask(ConsolidationTaskBase):
-    id: int
+    id: UUID
     created_at: datetime
     model_config = orm_config
 
 class Family(BaseModel):
-    id: int
+    id: UUID
     name: str
     address: Optional[str] = None
     members_count: int = 0
@@ -855,14 +855,14 @@ class Family(BaseModel):
     model_config = orm_config
 
 class CellGroupMember(BaseModel):
-    id: int
+    id: UUID
     cell_group_id: str
-    persona_id: str
+    persona_id: UUID
     role: str
     model_config = orm_config
 
 class CellGroup(BaseModel):
-    id: int
+    id: UUID
     code: Optional[str] = None
     name: str
     zone: Optional[str] = None
@@ -870,10 +870,10 @@ class CellGroup(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
-    leader_id: Optional[str] = None
+    leader_id: Optional[UUID] = None
     assistant_id: Optional[str] = None
     host_id: Optional[str] = None
-    evangelism_strategy_id: int
+    evangelism_strategy_id: UUID
     members_count: int
     capacity: int
     status: str
@@ -891,8 +891,8 @@ class CellGroupCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
-    evangelism_strategy_id: Optional[str] = None  # UUID string
-    leader_id: Optional[str] = None
+    evangelism_strategy_id: Optional[UUID] = None  # UUID string
+    leader_id: Optional[UUID] = None
     assistant_id: Optional[str] = None
     host_id: Optional[str] = None
     capacity: int = 15
@@ -904,7 +904,7 @@ class CellGroupCreate(BaseModel):
     base_attendees_with_roles: Optional[List["CellGroupMemberWithRole"]] = None
 
 class CellGroupMemberWithRole(BaseModel):
-    persona_id: str
+    persona_id: UUID
     role: str = "participante"  # lider | colider | participante | visitante
     rol_personalizado_id: Optional[int] = None
 
@@ -913,7 +913,7 @@ class CellGroupUpdate(BaseModel):
     name: Optional[str] = None
     zone: Optional[str] = None
     address: Optional[str] = None
-    leader_id: Optional[str] = None
+    leader_id: Optional[UUID] = None
     assistant_id: Optional[str] = None
     host_id: Optional[str] = None
     capacity: Optional[int] = None
@@ -925,7 +925,7 @@ class CellGroupUpdate(BaseModel):
     base_attendees_with_roles: Optional[List[CellGroupMemberWithRole]] = None
 
 class FaroAttendanceReportItem(BaseModel):
-    persona_id: str
+    persona_id: UUID
     attended: bool = True
     absence_reason: Optional[str] = None
     absence_reason_detail: Optional[str] = None
@@ -945,7 +945,7 @@ class FaroSessionReportUpdate(BaseModel):
     attendees: Optional[List[FaroAttendanceReportItem]] = None
 
 class FaroSessionAttendanceItem(BaseModel):
-    persona_id: str
+    persona_id: UUID
     name: str
     role: Optional[str] = None
     attended: bool = True
@@ -956,7 +956,7 @@ class FaroSessionAttendanceItem(BaseModel):
     es_primera_vez: bool = False
 
 class FaroSessionAttendance(BaseModel):
-    session_id: int
+    session_id: UUID
     session_date: date
     cell_group_id: str
     status: str
@@ -975,7 +975,7 @@ class FaroSessionAttendance(BaseModel):
 
 class PastoralCallLogCreate(BaseModel):
     case_id: str = ""
-    persona_id: Optional[str] = None
+    persona_id: Optional[UUID] = None
     pastor_id: Optional[str] = None  # UUID string; resolved from current_user if omitted
     outcome: str
     notes: Optional[str] = None
@@ -983,9 +983,9 @@ class PastoralCallLogCreate(BaseModel):
     duration_seconds: int = 0
 
 class PastoralCallLog(BaseModel):
-    id: int
+    id: UUID
     case_id: Optional[str] = None
-    persona_id: Optional[str] = None
+    persona_id: Optional[UUID] = None
     pastor_id: str  # UUID string
     outcome: str
     notes: Optional[str] = None
@@ -1013,7 +1013,7 @@ class CellGroupSessionCreate(CellGroupSessionBase):
     pass
 
 class CellGroupSession(CellGroupSessionBase):
-    id: int
+    id: UUID
     reported_at: Optional[datetime] = None
     created_at: datetime
     model_config = orm_config
@@ -1030,8 +1030,8 @@ class CellGroupSessionUpdate(BaseModel):
     status: Optional[str] = None
 
 class CellGroupAttendanceBase(BaseModel):
-    session_id: int
-    persona_id: str
+    session_id: UUID
+    persona_id: UUID
     status: str = "present"  # present | absent | first_time
     notes: Optional[str] = None
 
@@ -1039,7 +1039,7 @@ class CellGroupAttendanceCreate(CellGroupAttendanceBase):
     pass
 
 class CellGroupAttendance(CellGroupAttendanceBase):
-    id: int
+    id: UUID
     model_config = orm_config
 
 # Backward compatibility aliases

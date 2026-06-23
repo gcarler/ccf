@@ -23,6 +23,7 @@ import { apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import PersonaSelect from '@/components/ui/PersonaSelect';
 import Skeleton from '@/components/ui/Skeleton';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
@@ -64,7 +65,6 @@ export default function CrmTasksPage() {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [members, setMembers] = useState<any[]>([]);
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_tasks_wiki_notes', {
         title: 'Wiki de tareas CRM',
     });
@@ -86,18 +86,9 @@ export default function CrmTasksPage() {
         }
     }, [token, addToast]);
 
-    const fetchMembers = useCallback(async () => {
-        if (!token) return;
-        try {
-            const data = await apiFetch<any[]>('/crm/personas?page_size=100', { token });
-            setMembers(Array.isArray(data) ? (data as any).items ?? data : []);
-        } catch { /* silent */ }
-    }, [token]);
-
     useEffect(() => {
         fetchTasks();
-        fetchMembers();
-    }, [fetchTasks, fetchMembers]);
+    }, [fetchTasks]);
 
 
     const updateTaskStatus = useCallback(async (id: number, status: string) => {
@@ -555,17 +546,14 @@ export default function CrmTasksPage() {
                             />
                         </div>
                     </div>
-                    {members.length > 0 && (
+                    {true && (
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Persona asociado</label>
-                            <select
-                                value={newTask.persona_id}
-                                onChange={e => setNewTask({ ...newTask, persona_id: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
-                            >
-                                <option value="">Sin asignar</option>
-                                {members.map((m: any) => <option key={m.id} value={m.id}>{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</option>)}
-                            </select>
+                            <PersonaSelect
+                                value={newTask.persona_id || null}
+                                onChange={(id) => setNewTask({ ...newTask, persona_id: id ?? '' })}
+                                placeholder="Sin asignar"
+                            />
                         </div>
                     )}
                 </form>

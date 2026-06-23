@@ -476,7 +476,7 @@ class NewsletterSubscriptionRead(BaseModel):
 
 
 class PastoralProfileRead(BaseModel):
-    id: str
+    id: UUID
     name: str
     slug: str
     photo_url: Optional[str] = None

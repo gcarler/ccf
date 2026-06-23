@@ -44,7 +44,6 @@ export default function SupportContactPage() {
                         '',
                         form.message.trim(),
                     ].join('\n'),
-                    user_id: user?.id,
                 },
             });
             setTicketId(created.id);

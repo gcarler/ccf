@@ -43,6 +43,7 @@ export default function CmsPagesManagement() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [selectedPage, setSelectedPage] = useState<CmsPage | null>(null);
+  const [pendingArchivePage, setPendingArchivePage] = useState<CmsPage | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const canEdit = canEditCms(user?.role);
 
@@ -133,12 +134,19 @@ export default function CmsPagesManagement() {
 
   const handleArchivePage = async (page: CmsPage) => {
     if (!token || !canEdit) return;
-    if (!window.confirm(`¿Archivar "${page.title}"? Puedes restaurarla después.`)) return;
+    setPendingArchivePage(page);
+  };
+
+  const confirmArchivePage = async () => {
+    const page = pendingArchivePage;
+    if (!token || !canEdit) return;
+    if (!page) return;
     try {
       await workflowCmsPage(siteKey, page.slug, "archive", "Archivada desde gestion de paginas", token);
       if (selectedPage?.id === page.id) {
         setSelectedPage({ ...page, status: "archived" });
       }
+      setPendingArchivePage(null);
       await fetchPages(siteKey);
     } catch (error) {
       console.error("Error archiving page:", error);
@@ -630,7 +638,39 @@ export default function CmsPagesManagement() {
           </div>
         )}
       </SidePanel>
+
+      <SidePanel
+        isOpen={!!pendingArchivePage}
+        onClose={() => setPendingArchivePage(null)}
+        title="Archivar pagina"
+        subtitle={pendingArchivePage ? `/${pendingArchivePage.slug}` : undefined}
+      >
+        {pendingArchivePage && (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+              <p className="text-sm font-semibold">{pendingArchivePage.title}</p>
+              <p className="mt-2 text-xs leading-5 text-amber-800 dark:text-amber-200">
+                La pagina quedara archivada y podras restaurarla despues.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPendingArchivePage(null)}
+                className="flex-1 rounded-md border border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition-all hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmArchivePage}
+                disabled={!canEdit}
+                className="flex-1 rounded-md bg-amber-500 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-amber-600 disabled:opacity-50"
+              >
+                Archivar
+              </button>
+            </div>
+          </div>
+        )}
+      </SidePanel>
     </div>
   );
 }
-

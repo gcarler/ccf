@@ -46,12 +46,22 @@ def test_all_application_routes_stay_under_api_tree_or_explicit_exceptions():
     )
 
     assert forbidden_aliases == []
-    forbidden_legacy_api_paths = sorted(
+    forbidden_old_api_paths = sorted(
         path
         for path in paths
-        if path in {"/api/announcements", "/api/testimonials", "/api/analytics/summary"}
+        if path in {
+            "/api/announcements",
+            "/api/testimonials",
+            "/api/analytics/summary",
+            "/api/content",
+            "/api/auth/v2",
+            "/api/academy/users",
+        }
+        or path.startswith("/api/content/")
+        or path.startswith("/api/auth/v2/")
+        or path.startswith("/api/academy/users/")
     )
-    assert forbidden_legacy_api_paths == []
+    assert forbidden_old_api_paths == []
 
 
 @pytest.mark.parametrize("environment", ["production", "prod", "staging"])
@@ -138,7 +148,6 @@ def test_domain_modules_expose_only_expected_canonical_prefixes():
     module_prefix_rules = {
         "backend.api.cms": ("/api/cms/", "/api/admin/"),
         "backend.api.cms_v2": ("/api/cms/v2/",),
-        "backend.api.content": ("/api/content",),
         "backend.api.agents": ("/api/agents",),
         "backend.api.assets": ("/api/assets",),
         "backend.api.spiritual_life": ("/api/spiritual-life/",),
@@ -217,7 +226,7 @@ def test_app_lifespan_does_not_bootstrap_schema_with_create_all():
     assert "create_all(" not in app_py.read_text(encoding="utf-8")
 
 
-def test_frontend_does_not_add_auth_users_legacy_consumers():
+def test_frontend_does_not_add_auth_users_old_consumers():
     root = Path(__file__).resolve().parents[1]
     scan_roots = [
         root / "frontend" / "src" / "app" / "plataforma",
@@ -241,7 +250,7 @@ def test_frontend_does_not_add_auth_users_legacy_consumers():
     assert violations == []
 
 
-def test_frontend_does_not_add_academy_user_id_legacy_consumers():
+def test_frontend_does_not_add_academy_user_id_old_consumers():
     root = Path(__file__).resolve().parents[1]
     scan_roots = [
         root / "frontend" / "src" / "app" / "plataforma",
@@ -281,7 +290,7 @@ def test_platform_frontend_uses_persona_uuid_for_cms_and_audit_identity_labels()
         if rel.endswith("admin/audit/page.tsx") and "actor_persona_id" not in content:
             violations.append(f"{rel} does not use actor_persona_id")
         if "Persona #${" in content or "USR_ID:" in content:
-            violations.append(f"{rel} still labels identity with legacy integer")
+            violations.append(f"{rel} still labels identity with numeric integer")
 
     assert violations == []
 
@@ -340,8 +349,6 @@ def test_cms_persona_backfill_migration_exists():
         "(\"content_publications\", \"updated_by_persona_id\", \"updated_by\")",
         "(\"cms_media_items\", \"created_by_persona_id\", \"created_by\")",
         "(\"cms_pages\", \"created_by_persona_id\", \"created_by\")",
-        "(\"cms_publish_logs\", \"actor_persona_id\", \"actor_user_id\")",
-        "(\"testimonials\", \"author_persona_id\", \"author_id\")",
     ]
 
     missing = [fragment for fragment in required_fragments if fragment not in content]
@@ -357,7 +364,6 @@ def test_agents_governance_persona_backfill_migration_exists():
 
     required_fragments = [
         "down_revision: Union[str, None] = \"20260605_cms_persona_backfill\"",
-        "(\"admin_audit_logs\", \"actor_persona_id\", \"actor_user_id\")",
         "(\"agents\", \"created_by_persona_id\", \"created_by\")",
         "(\"agent_roles\", \"created_by_persona_id\", \"created_by\")",
         "(\"agent_journey\", \"triggered_by_persona_id\", \"triggered_by_id\")",
@@ -397,6 +403,75 @@ def test_platform_frontend_respects_ccf_ui_contracts():
                 for term in forbidden:
                     if term in line:
                         violations.append(f"{path.relative_to(root)}:{line_no} contains {term}")
+
+    assert violations == []
+
+
+def test_platform_frontend_does_not_expose_old_identity_contracts():
+    root = Path(__file__).resolve().parents[1]
+    scan_roots = [
+        root / "frontend" / "src" / "app" / "plataforma",
+        root / "frontend" / "src" / "components",
+        root / "frontend" / "src" / "context",
+        root / "frontend" / "src" / "hooks",
+        root / "frontend" / "src" / "lib",
+    ]
+    forbidden_terms = (
+        "Leg" + "acy #",
+        "LEG" + "ACY:",
+        "actor_user_id",
+        "author_id ? 'Persona vinculada'",
+        "user_id:",
+        ".user_id",
+        "v3Data.user_id",
+        "lastEvent.user_id",
+    )
+    violations = []
+
+    for scan_root in scan_roots:
+        if not scan_root.exists():
+            continue
+        for path in scan_root.rglob("*"):
+            if path.suffix not in {".ts", ".tsx"}:
+                continue
+            rel = path.relative_to(root).as_posix()
+            for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                if "auth_user_id" in line:
+                    continue
+                for term in forbidden_terms:
+                    if term in line:
+                        violations.append(f"{rel}:{line_no} contains {term}")
+
+    assert violations == []
+
+
+def test_active_code_does_not_reintroduce_old_architecture_labels():
+    root = Path(__file__).resolve().parents[1]
+    scan_roots = [
+        root / "backend" / "api",
+        root / "backend" / "core",
+        root / "backend" / "crud",
+        root / "backend" / "schemas",
+        root / "frontend" / "src",
+    ]
+    forbidden_terms = (
+        "leg" + "acy",
+        "Leg" + "acy",
+        "LEG" + "ACY",
+        "depre" + "cated",
+        "Depre" + "cated",
+    )
+    violations = []
+
+    for scan_root in scan_roots:
+        for path in scan_root.rglob("*"):
+            if path.suffix not in {".py", ".ts", ".tsx"}:
+                continue
+            rel = path.relative_to(root).as_posix()
+            for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                for term in forbidden_terms:
+                    if term in line:
+                        violations.append(f"{rel}:{line_no} contains old architecture label")
 
     assert violations == []
 

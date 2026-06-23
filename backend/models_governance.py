@@ -1,10 +1,11 @@
+import uuid as _uuid
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
 
 class AdminAuditLog(Base):
     __tablename__ = "admin_audit_logs"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     actor_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     action = Column(String(120), nullable=False, index=True)
     resource_type = Column(String(120), nullable=True, index=True)
@@ -18,7 +19,7 @@ class AdminAuditLog(Base):
 
 class AutomationRule(Base):
     __tablename__ = "automation_rules"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(200), nullable=False, index=True)
     trigger_type = Column(String(100), nullable=False, index=True)
     action_type = Column(String(100), nullable=True, index=True)
