@@ -3,7 +3,7 @@
 
 from backend.api import (academy_core, admin, agenda, agenda_core, agents,
                          analytics,
-                         auth_v3, chat, cms, cms_v2, community, content, crm,
+                         auth_v3, chat, cms, cms_v2, cms_content, community, crm,
                          crm_core, dashboard, donations, enterprise_cms, evangelism, evangelism_multiplication,
                          evangelism_notifications, evangelism_rankings, evangelism_reports,
                          finance, governance,
@@ -22,7 +22,7 @@ __all__ = [
     "cms",
     "cms_v2",
     "community",
-    "content",
+    "cms_content",
     "crm",
     "crm_core",
     "dashboard",

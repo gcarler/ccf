@@ -20,7 +20,7 @@ from backend.middleware.module_isolation import register_module_isolation
 from backend.api import (
     academy_core, admin, agenda, agenda_core, agents,
     auth_v3, analytics, chat, cms, cms_v2, community,
-    content, crm, crm_core, dashboard, donations, enterprise_cms,
+    cms_content, crm, crm_core, dashboard, donations, enterprise_cms,
     evangelism, finance, governance, graph, kernel, messaging,
     prayer, projects, public, spiritual_life, support, system,
     tables, workspace, youtube,
@@ -46,7 +46,7 @@ ROUTER_REGISTRY = [
     (system.router, "/api/system", ["system"]),
     (cms.router, "/api", None),
     (cms_v2.router, "/api", None),
-    (content.router, "/api/cms", None),
+    (cms_content.router, "/api/cms", None),
     (agents.router, "/api", None),
     (agents.analytics_router, "/api/agents", None),
     (admin.router, "/api/admin", ["admin"]),
