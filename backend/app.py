@@ -1,8 +1,6 @@
 import logging
 import os
 import time
-import json
-import uuid as _uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
