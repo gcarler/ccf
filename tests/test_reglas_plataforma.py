@@ -57,10 +57,9 @@ ALLOWED_UNFILTERED = {
     "system.py",            # sede_id en personal_filters (*unpack) — test no lo detecta en contexto
 }
 
-# Tablas históricas bloqueadas para nuevas referencias directas
+# Tablas retiradas bloqueadas para nuevas referencias directas
 OLD_TABLES_BLOCKED = {
     "consolidation_cases",
-    "CellGroup",
 }
 
 # Modelos que son catálogos o tablas internas (< 100 registros esperados)

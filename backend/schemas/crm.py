@@ -867,76 +867,6 @@ class Family(BaseModel):
     created_at: datetime
     model_config = orm_config
 
-class CellGroupMember(BaseModel):
-    id: UUID
-    cell_group_id: str
-    persona_id: UUID
-    role: str
-    model_config = orm_config
-
-class CellGroup(BaseModel):
-    id: UUID
-    code: Optional[str] = None
-    name: str
-    zone: Optional[str] = None
-    address: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    leader_name: Optional[str] = None
-    leader_id: Optional[UUID] = None
-    assistant_id: Optional[str] = None
-    host_id: Optional[str] = None
-    evangelism_strategy_id: UUID
-    members_count: int
-    capacity: int
-    status: str
-    day_of_week: Optional[str] = None
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    created_at: datetime
-    model_config = orm_config
-
-class CellGroupCreate(BaseModel):
-    code: Optional[str] = None
-    name: Optional[str] = None
-    zone: Optional[str] = None
-    address: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    leader_name: Optional[str] = None
-    evangelism_strategy_id: Optional[UUID] = None  # UUID string
-    leader_id: Optional[UUID] = None
-    assistant_id: Optional[str] = None
-    host_id: Optional[str] = None
-    capacity: int = 15
-    status: Optional[str] = "Activo"
-    day_of_week: Optional[str] = None
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    base_attendee_ids: Optional[List[str]] = None
-    base_attendees_with_roles: Optional[List["CellGroupMemberWithRole"]] = None
-
-class CellGroupMemberWithRole(BaseModel):
-    persona_id: UUID
-    role: str = "participante"  # lider | colider | participante | visitante
-    rol_personalizado_id: Optional[int] = None
-
-class CellGroupUpdate(BaseModel):
-    code: Optional[str] = None
-    name: Optional[str] = None
-    zone: Optional[str] = None
-    address: Optional[str] = None
-    leader_id: Optional[UUID] = None
-    assistant_id: Optional[str] = None
-    host_id: Optional[str] = None
-    capacity: Optional[int] = None
-    status: Optional[str] = None
-    day_of_week: Optional[str] = None
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    base_attendee_ids: Optional[List[str]] = None
-    base_attendees_with_roles: Optional[List[CellGroupMemberWithRole]] = None
-
 class FaroAttendanceReportItem(BaseModel):
     persona_id: UUID
     attended: bool = True
@@ -1005,54 +935,6 @@ class PastoralCallLog(BaseModel):
     prayer_requests: Optional[str] = None
     duration_seconds: int = 0
     created_at: datetime
-    model_config = orm_config
-
-# ── Faro Sessions & Attendance ──
-
-class CellGroupSessionBase(BaseModel):
-    cell_group_id: str
-    season_id: Optional[int] = None
-    session_date: datetime
-    topic: Optional[str] = None
-    offering_amount: Optional[float] = None
-    report_notes: Optional[str] = None
-    novelty_type: Optional[str] = None
-    novelty_detail: Optional[str] = None
-    cancellation_reason: Optional[str] = None
-    reported_by_persona_id: Optional[str] = None
-    status: str = "Realizada"
-
-class CellGroupSessionCreate(CellGroupSessionBase):
-    pass
-
-class CellGroupSession(CellGroupSessionBase):
-    id: UUID
-    reported_at: Optional[datetime] = None
-    created_at: datetime
-    model_config = orm_config
-
-class CellGroupSessionUpdate(BaseModel):
-    session_date: Optional[datetime] = None
-    topic: Optional[str] = None
-    offering_amount: Optional[float] = None
-    report_notes: Optional[str] = None
-    novelty_type: Optional[str] = None
-    novelty_detail: Optional[str] = None
-    cancellation_reason: Optional[str] = None
-    reported_by_persona_id: Optional[str] = None
-    status: Optional[str] = None
-
-class CellGroupAttendanceBase(BaseModel):
-    session_id: UUID
-    persona_id: UUID
-    status: str = "present"  # present | absent | first_time
-    notes: Optional[str] = None
-
-class CellGroupAttendanceCreate(CellGroupAttendanceBase):
-    pass
-
-class CellGroupAttendance(CellGroupAttendanceBase):
-    id: UUID
     model_config = orm_config
 
 # Public schema aliases
