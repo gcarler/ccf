@@ -46,6 +46,27 @@ export default function AccountSettingsPage() {
         }));
     }, [user?.username, user?.email]);
 
+    useEffect(() => {
+        let cancelled = false;
+        const loadPersonaProfile = async () => {
+            if (!user?.id) return;
+            try {
+                const profile = await apiFetch<any>('/crm/personas/me/profile', { cache: 'no-store' });
+                if (cancelled || !profile) return;
+                setFormValues(f => ({
+                    ...f,
+                    firstName: profile.first_name ?? f.firstName,
+                    lastName: profile.last_name ?? f.lastName,
+                    phone: profile.phone ?? profile.mobile_phone ?? f.phone,
+                }));
+            } catch {
+                // Perfil ministerial no bloquea el perfil personal.
+            }
+        };
+        loadPersonaProfile();
+        return () => { cancelled = true; };
+    }, [user?.id]);
+
     const tabs = [
         { id: 'profile', label: 'Mi Perfil', icon: UserCircle },
         { id: 'security', label: 'Seguridad', icon: Shield },
@@ -56,15 +77,26 @@ export default function AccountSettingsPage() {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const body: Record<string, string> = {};
-            if (formValues.username !== user?.username) body.username = formValues.username;
-            if (formValues.email !== user?.email) body.email = formValues.email;
-            if (Object.keys(body).length === 0) {
+            const authBody: Record<string, string> = {};
+            if (formValues.username !== user?.username) authBody.username = formValues.username;
+            if (formValues.email !== user?.email) authBody.email = formValues.email;
+
+            const profileBody: Record<string, string> = {};
+            if (formValues.firstName) profileBody.first_name = formValues.firstName;
+            if (formValues.lastName) profileBody.last_name = formValues.lastName;
+            if (formValues.phone) profileBody.phone = formValues.phone;
+
+            if (Object.keys(authBody).length === 0 && Object.keys(profileBody).length === 0) {
                 addToast("No hay cambios para guardar", "info");
-                setIsSaving(false);
                 return;
             }
-            await apiFetch('/auth/me', { method: 'PATCH', body });
+
+            if (Object.keys(authBody).length > 0) {
+                await apiFetch('/auth/me', { method: 'PATCH', body: authBody });
+            }
+            if (Object.keys(profileBody).length > 0) {
+                await apiFetch('/crm/personas/me/profile', { method: 'PATCH', body: profileBody });
+            }
             await refresh();
             addToast("Perfil actualizado exitosamente", "success");
         } catch (err: any) {
@@ -400,4 +432,3 @@ function ThemeCard({ label, icon: Icon, active }: any) {
         </div>
     );
 }
-

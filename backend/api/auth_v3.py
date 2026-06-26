@@ -30,6 +30,7 @@ from backend.core.security import get_password_hash, verify_password
 from backend.models_auth import (
     HistorialContrasena,
     LogSeguridad,
+    RolPlataforma,
     TokenResetContrasena,
     Usuario,
 )
@@ -170,6 +171,24 @@ def _resolve_user(db: Session, email: str) -> Usuario | None:
     return db.query(Usuario).filter(Usuario.email == email).first()
 
 
+def _resolve_member_role(db: Session) -> RolPlataforma:
+    role = db.query(RolPlataforma).filter(RolPlataforma.nombre == "MIEMBRO").first()
+    if role:
+        return role
+
+    role = RolPlataforma(
+        nombre="MIEMBRO",
+        permisos={
+            "academy:study": "allow",
+            "profile:manage": "allow",
+        },
+    )
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+    return role
+
+
 def _resolve_token(db: Session, token: str) -> TokenResetContrasena | None:
     return (
         db.query(TokenResetContrasena)
@@ -285,6 +304,7 @@ def google_callback(
         ).first()
         if not lector_role:
             raise HTTPException(status_code=500, detail="Rol LECTOR no configurado. Contacta al administrador.")
+        member_role = _resolve_member_role(db)
 
         # sede_id es NOT NULL en Usuario — usar la sede del sistema si la Persona no tiene
         if not persona.sede_id:
@@ -303,6 +323,7 @@ def google_callback(
             email=google_email,
             password_hash=None,
             platform_role_id=lector_role.id,
+            rol_plataforma_id=member_role.id,
             is_active=True,
             is_email_verified=True,
         )
@@ -568,24 +589,13 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
 
-    # Resolve effective permissions: PlatformRoleDefinition + auth_roles granular perms
+    # Resolve effective permissions: prefer auth_roles granular perms for member access,
+    # and fall back to PlatformRoleDefinition only when no granular role exists.
     permissions = {}
     try:
         from backend.models_kernel import PlatformRoleDefinition
         from sqlalchemy.orm import joinedload
 
-        # Layer 1: base permissions from PlatformRoleDefinition
-        pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
-        if pr and pr.permissions:
-            if "*" in pr.permissions:
-                from backend.core.permissions import PERMISSIONS
-                for p_key in PERMISSIONS:
-                    permissions[p_key] = "allow"
-            else:
-                for p in pr.permissions:
-                    permissions[p] = "allow"
-
-        # Layer 2: granular permissions from auth_roles (RolPlataforma) — override/extend
         user_with_rol = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == user_uuid).first()
         if user_with_rol and user_with_rol.rol_plataforma:
             rol_perms = user_with_rol.rol_plataforma.permisos or {}
@@ -593,6 +603,35 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
                 for k, v in rol_perms.items():
                     if v:  # cualquier valor truthy ("read", "edit", "manage", "allow", True)
                         permissions[k] = "allow"
+        else:
+            # Base permissions from PlatformRoleDefinition for users without member override
+            pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
+            if pr and pr.permissions:
+                if isinstance(pr.permissions, dict):
+                    if "*" in pr.permissions:
+                        from backend.core.permissions import PERMISSIONS
+                        for p_key in PERMISSIONS:
+                            permissions[p_key] = "allow"
+                    else:
+                        for module, levels in pr.permissions.items():
+                            if module == "profile":
+                                for level in levels or []:
+                                    if level == "manage":
+                                        permissions["profile:manage"] = "allow"
+                                continue
+                            if module == "academy":
+                                for level in levels or []:
+                                    if level in {"read", "study", "edit", "manage"}:
+                                        permissions[f"academy:{level}"] = "allow"
+                                continue
+                            if module == "messaging":
+                                for level in levels or []:
+                                    if level in {"read", "edit"}:
+                                        permissions[f"messaging:{level}"] = "allow"
+                                continue
+                else:
+                    for p in pr.permissions:
+                        permissions[p] = "allow"
     except Exception:
         pass
 
@@ -726,7 +765,6 @@ def refresh_token(
     db: Session = Depends(get_db),
 ):
     """Refresca el access token usando un refresh token válido."""
-    from datetime import datetime, timezone
     from backend.models_auth import TokenSesion
 
     rt = (

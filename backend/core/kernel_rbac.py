@@ -68,15 +68,8 @@ KERNEL_ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "messaging:read",
     },
     "LECTOR": {
-        "crm:read",
-        "academy:read",
-        "projects:read",
-        "evangelism:read",
-        "cms:read",
-        "community:read",
-        "agenda:read",
+        "academy:study",
         "profile:manage",
-        "messaging:read",
     },
 }
 

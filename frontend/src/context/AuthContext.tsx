@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     const redirectByRole = useCallback(() => {
-        router.push('/plataforma/messages');
+        router.push('/plataforma/academy');
     }, [router]);
 
     const logout = useCallback(() => {
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         const data = await fetchUser(accessToken);
         if (data?.role) redirectByRole();
-        else if (accessToken) router.push('/plataforma/messages');
+        else if (accessToken) router.push('/plataforma/academy');
         
         // Auto-refresh permissions cache
         try {

@@ -89,7 +89,6 @@ class AgendaEventCreate(AgendaEventBase):
 class AgendaEvent(AgendaEventBase):
     id: UUID
     created_by_persona_id: Optional[UUID] = None
-    created_by_user_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
     model_config = orm_config
@@ -340,7 +339,6 @@ class PersonaResponse(BaseModel):
 
 class Persona(BaseModel):
     id: UUID
-    user_id: Optional[int] = None
     first_name: str
     last_name: str
     email: Optional[str] = None
@@ -511,6 +509,21 @@ class PersonaUpdate(BaseModel):
     campus: Optional[str] = None
     church_join_date: Optional[date] = None
     colombian_department_id: Optional[int] = None
+    city: Optional[str] = None
+
+
+class PersonaSelfProfileUpdate(BaseModel):
+    """Campos permitidos para que la persona edite su propio perfil."""
+
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    second_name: Optional[str] = None
+    second_last_name: Optional[str] = None
+    phone: Optional[str] = None
+    mobile_phone: Optional[str] = None
+    landline_phone: Optional[str] = None
+    address: Optional[str] = None
+    birthday: Optional[date] = None
     city: Optional[str] = None
 
 # ── PERSONA (reemplaza Persona — UUID PK) ────────────────────

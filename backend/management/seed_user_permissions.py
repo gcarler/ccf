@@ -108,6 +108,7 @@ def seed_rol_plataforma(db) -> None:
         "GESTOR": {m: "manage" for m in ["crm", "academy", "projects", "evangelism", "community", "messaging"]},
         "EDITOR": {m: "edit" for m in ["crm", "projects", "evangelism", "cms", "community", "messaging", "spiritual_life"]},
         "LECTOR": {m: "read" for m in MODULE_PERMISSION_MAP},
+        "MIEMBRO": {"academy": "study"},
     }
     # Special cases
     roles_config["GESTOR"].update({"finances": "read", "cms": "edit", "spiritual_life": "manage"})
@@ -165,7 +166,7 @@ def seed_default_permissions_for_users(db) -> None:
                 break
 
         if not default_perms:
-            default_perms = {"profile:manage": "allow"}
+            default_perms = {"profile:manage": "allow", "academy:study": "allow"}
 
         up = UserPermission(user_id=user.id, permissions=default_perms)
         db.add(up)

@@ -21,7 +21,7 @@ export default function WikiDocEditPage() {
         const fetchDoc = async () => {
             if (!token || !page_key) return;
             try {
-                const data = await apiFetch<any>(`/content/${page_key}`, { token });
+                const data = await apiFetch<any>(`/cms/content/${page_key}`, { token });
                 setDoc(data);
             } catch (error) {
                 console.error("Error fetching doc:", error);
@@ -34,7 +34,7 @@ export default function WikiDocEditPage() {
 
     const handleSave = async (newContent: string) => {
         if (!token || !page_key) return;
-        await apiFetch(`/content/${page_key}`, {
+        await apiFetch(`/cms/content/${page_key}`, {
             method: 'PATCH',
             token,
             body: {

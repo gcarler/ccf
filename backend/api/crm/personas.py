@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_module_access
+from backend.auth import require_module_access, require_permission
 from backend.core.database import get_db
 from backend.crud.crm import resolve_persona_id_for_user
 
@@ -50,6 +50,23 @@ def my_ministry_profile(
     if not persona:
         raise HTTPException(status_code=404, detail="No tienes un perfil ministerial vinculado")
     return schemas.PersonaResponse.model_validate(persona)
+
+
+@router.patch("/personas/me/profile", response_model=schemas.PersonaResponse)
+def update_my_profile(
+    payload: schemas.PersonaSelfProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_permission("profile:manage")),
+):
+    """Actualiza solo el perfil personal de la persona autenticada."""
+    persona_id = resolve_persona_id_for_user(db, current_user.id)
+    if not persona_id:
+        raise HTTPException(status_code=404, detail="No tienes un perfil personal vinculado")
+
+    persona = crud.update_persona(db, persona_id, schemas.PersonaUpdate(**payload.model_dump(exclude_unset=True)))
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
+    return persona
 
 
 @router.get("/personas/{persona_id}", response_model=schemas.PersonaResponse)

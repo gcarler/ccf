@@ -2,6 +2,7 @@
 
 import { MODULE_CONFIG } from '@/components/DashboardShell';
 import { DSCard } from '@/design/components/DSCard';
+import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import {
 ArrowRight,
@@ -28,6 +29,12 @@ const MODULES = [
 ];
 
 export default function DashboardOverviewClient() {
+    const { hasModuleAccess, hasPermission } = useAuth();
+    const visibleModules = MODULES.filter((mod) => {
+        if (mod.key === 'admin') return hasPermission('system:config');
+        return hasModuleAccess(mod.key, 'read');
+    });
+
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-transparent overflow-y-auto p-4 font-sans">
             <div className="mb-6">
@@ -51,7 +58,7 @@ export default function DashboardOverviewClient() {
                 animate={{ opacity: 1 }}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
             >
-                {MODULES.map((mod, i) => {
+                {visibleModules.map((mod, i) => {
                     const cfg = MODULE_CONFIG[mod.key];
                     const Icon = mod.icon;
                     return (

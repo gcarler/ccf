@@ -384,9 +384,9 @@ export default function CmsContentPage() {
     setMessage(null);
     try {
       const [data, wf, ver] = await Promise.all([
-        apiFetch<ContentRecord>(`/content/${selectedKey}`, { token, cache: "no-store" }),
-        apiFetch<ContentWorkflow>(`/content/${selectedKey}/workflow`, { token, cache: "no-store" }),
-        apiFetch<ContentVersion[]>(`/content/${selectedKey}/versions`, { token, cache: "no-store" }),
+        apiFetch<ContentRecord>(`/cms/content/${selectedKey}`, { token, cache: "no-store" }),
+        apiFetch<ContentWorkflow>(`/cms/content/${selectedKey}/workflow`, { token, cache: "no-store" }),
+        apiFetch<ContentVersion[]>(`/cms/content/${selectedKey}/versions`, { token, cache: "no-store" }),
       ]);
       const rich = isRichTextKey(selectedKey);
       setTitle(data?.title || currentBlock?.label || selectedKey);
@@ -458,7 +458,7 @@ export default function CmsContentPage() {
     setMessage(null);
     try {
       const content = editorMode === "rich" ? richContent : JSON.stringify(structuredValue, null, 2);
-      await apiFetch(`/content/${selectedKey}`, { method: "PUT", token, body: { title, content } });
+      await apiFetch(`/cms/content/${selectedKey}`, { method: "PUT", token, body: { title, content } });
       setIsDirty(false);
       setMessage("Bloque guardado.");
       await Promise.all([loadBlock(), loadRecords()]);
@@ -478,7 +478,7 @@ export default function CmsContentPage() {
     setSaving(true);
     setMessage(null);
     try {
-      await apiFetch(`/content/${selectedKey}/workflow`, {
+      await apiFetch(`/cms/content/${selectedKey}/workflow`, {
         method: "PATCH",
         token,
         body: {
@@ -502,7 +502,7 @@ export default function CmsContentPage() {
     setSaving(true);
     setMessage(null);
     try {
-      await apiFetch(`/content/${selectedKey}/rollback/${versionId}`, { method: "POST", token });
+      await apiFetch(`/cms/content/${selectedKey}/rollback/${versionId}`, { method: "POST", token });
       setMessage(`Version ${versionId} restaurada.`);
       await loadBlock();
     } catch {

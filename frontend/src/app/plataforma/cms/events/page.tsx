@@ -43,7 +43,7 @@ export default function CmsEventsPage() {
     const load = async () => {
       setLoading(true);
       try {
-        const data = await apiFetch<ContentRecord>(`/content/${SITE_EVENTS_BLOCK_KEY}`, { token, cache: "no-store" });
+        const data = await apiFetch<ContentRecord>(`/cms/content/${SITE_EVENTS_BLOCK_KEY}`, { token, cache: "no-store" });
         const parsed = data?.content ? JSON.parse(data.content) : [];
         setEvents(
           Array.isArray(parsed)
@@ -70,9 +70,9 @@ export default function CmsEventsPage() {
     const payload = { content: JSON.stringify(events, null, 2) };
     try {
       try {
-        await apiFetch(`/content/${SITE_EVENTS_BLOCK_KEY}`, { method: "PUT", token, body: payload });
+        await apiFetch(`/cms/content/${SITE_EVENTS_BLOCK_KEY}`, { method: "PUT", token, body: payload });
       } catch {
-        await apiFetch(`/content/${SITE_EVENTS_BLOCK_KEY}`, { method: "POST", token, body: payload });
+        await apiFetch(`/cms/content/${SITE_EVENTS_BLOCK_KEY}`, { method: "POST", token, body: payload });
       }
       setMessage("Agenda publica actualizada.");
     } catch {

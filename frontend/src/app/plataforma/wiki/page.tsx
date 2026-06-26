@@ -50,7 +50,7 @@ export default function WikiHomePage() {
 
         try {
             const page_key = `wiki_${newTitle.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "")}`;
-            await apiFetch(`/content/${page_key}`, {
+            await apiFetch(`/cms/content/${page_key}`, {
                 method: 'POST',
                 token,
                 body: {
@@ -222,4 +222,3 @@ export default function WikiHomePage() {
         </WorkspaceLayout>
     );
 }
-

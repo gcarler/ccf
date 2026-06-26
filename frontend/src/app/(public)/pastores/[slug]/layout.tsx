@@ -17,7 +17,7 @@ type CmsPastor = {
 
 async function getPastorsFeed(): Promise<CmsPastor[]> {
     try {
-        const block = await apiFetch<{ content?: string }>(`/content/${SITE_KEY}_pastores_feed`, {
+        const block = await apiFetch<{ content?: string }>(`/cms/content/${SITE_KEY}_pastores_feed`, {
             cache: "no-store",
             silent: true,
         });

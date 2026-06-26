@@ -283,10 +283,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
         "name": "Lector",
         "label": "Lector",
         "permissions": [
-            *expand_module_permissions("crm", "read"),
-            *expand_module_permissions("projects", "read"),
-            *expand_module_permissions("academy", "read"),
-            *expand_module_permissions("messaging", "read"),
+            *expand_module_permissions("academy", "study"),
             "profile:manage",
         ],
     },
@@ -295,7 +292,6 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
         "label": "Miembro",
         "permissions": [
             *expand_module_permissions("academy", "study"),
-            *expand_module_permissions("messaging", "read"),
             "profile:manage",
         ],
     },

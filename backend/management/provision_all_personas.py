@@ -6,25 +6,45 @@ One-shot provisioning script:
     - username derived from email prefix
     - default password: 1234567
     - role: LECTOR (PlatformRole)
+    - rol_plataforma: MIEMBRO (profile + academy only)
     - is_active: true
 
 Run:  python -m backend.management.provision_all_personas
 """
 
 import logging
-import uuid as _uuid
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
+import backend.models  # noqa: F401
 from backend.core.config import get_settings
 from backend.core.permissions import hash_password
-from backend.models_auth import Usuario
+from backend.models_auth import RolPlataforma, Usuario
 from backend.models_kernel import PlatformRoleDefinition, PlatformRole
 
 log = logging.getLogger(__name__)
 
 DEFAULT_PASSWORD = "1234567"
+MEMBER_ROLE_NAME = "MIEMBRO"
+
+
+def _resolve_member_role(db: Session) -> RolPlataforma:
+    role = db.query(RolPlataforma).filter(RolPlataforma.nombre == MEMBER_ROLE_NAME).first()
+    if role:
+        return role
+
+    role = RolPlataforma(
+        nombre=MEMBER_ROLE_NAME,
+        permisos={
+            "academy:study": "allow",
+            "profile:manage": "allow",
+        },
+    )
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+    return role
 
 
 def provision_all(db: Session) -> int:
@@ -43,6 +63,7 @@ def provision_all(db: Session) -> int:
     if not lector:
         log.error("No LECTOR PlatformRoleDefinition found in DB. Run seed script first.")
         return 0
+    member_role = _resolve_member_role(db)
 
     # Find the first sede (required FK for Usuario)
     sede_id = db.execute(
@@ -51,6 +72,23 @@ def provision_all(db: Session) -> int:
     if not sede_id:
         log.error("No sedes found in DB.")
         return 0
+
+    # Normalize existing auth users: if they are persona-linked and still only
+    # carry the default LECTOR platform role, attach the member role override.
+    existing_member_users = (
+        db.query(Usuario)
+        .filter(Usuario.rol_plataforma_id.is_(None))
+        .filter(Usuario.platform_role_id == lector.id)
+        .all()
+    )
+    normalized = 0
+    for user in existing_member_users:
+        user.rol_plataforma_id = member_role.id
+        normalized += 1
+
+    if normalized:
+        db.commit()
+        log.info("Normalized %d existing users to member role override", normalized)
 
     # Find personas with email that don't have an auth_user yet
     rows = db.execute(
@@ -104,6 +142,7 @@ def provision_all(db: Session) -> int:
             email=email,
             password_hash=hash_password(DEFAULT_PASSWORD),
             platform_role_id=lector.id,
+            rol_plataforma_id=member_role.id,
             is_active=True,
             is_email_verified=False,
         )

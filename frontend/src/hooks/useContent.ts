@@ -57,7 +57,7 @@ export function useContentBlock(key?: string, { enabled = true }: { enabled?: bo
     setLoading(true);
     setError(null);
     try {
-      const response = await apiFetch<ContentBlock>(`/content/${key}`, { cache: "no-store" });
+      const response = await apiFetch<ContentBlock>(`/cms/content/${key}`, { cache: "no-store" });
       setData(mergeContent(response));
     } catch (err) {
       setError(err as Error);
@@ -99,7 +99,7 @@ export function useContentBlocks(keys: string[], { enabled = true }: { enabled?:
       const entries = await Promise.all(
         normalizedKeys.map(async (key) => {
           try {
-            const response = await apiFetch<ContentBlock>(`/content/${key}`, { cache: "no-store" });
+            const response = await apiFetch<ContentBlock>(`/cms/content/${key}`, { cache: "no-store" });
             return [key, mergeContent(response)];
           } catch (err) {
             console.error(`Content block ${key} failed`, err);
