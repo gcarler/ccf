@@ -111,14 +111,14 @@ def main():
         if not r:
             db.execute(text("INSERT INTO persona_platform_roles (persona_id, role_id, assigned_at, is_active) VALUES (:pid, :prid, :now, true)"), {"pid": persona_id, "prid": plat_id, "now": now})
             db.commit()
-            print(f"✅ PPR creado")
+            print("✅ PPR creado")
         else:
-            print(f"ℹ️ PPR ya existe")
+            print("ℹ️ PPR ya existe")
 
-        print(f"\n🎉 ADMIN LISTO:")
+        print("\n🎉 ADMIN LISTO:")
         print(f"   Email:    {EMAIL}")
         print(f"   Password: {PASSWORD}")
-        print(f"   Login:    POST /api/auth/login")
+        print("   Login:    POST /api/auth/login")
         print(f"   Body:     {{\"username\":\"{EMAIL}\",\"password\":\"{PASSWORD}\",\"grant_type\":\"password\"}}")
 
     finally:

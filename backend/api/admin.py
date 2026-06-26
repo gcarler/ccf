@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 from backend.models_shared import _utcnow
 from backend import crud, models, schemas
 from backend.auth import require_active_user, require_admin
-from backend.crud.crm import get_user_sede_id
 from backend.core.database import get_db
 from backend.core.permissions import (MODULE_PERMISSION_MAP, PERMISSION_LEVELS,
                                       expand_module_permissions,
@@ -250,7 +249,6 @@ def set_user_permissions(
             resolved_perms["system:config"] = "allow"
 
     # Persist en RolPlataforma personal del usuario (nunca tocar roles compartidos)
-    from backend.models_auth import RolPlataforma
     from sqlalchemy.orm.attributes import flag_modified
 
     personal_nombre = f"PERSONALIZADO_{str(user.id).replace('-', '').upper()}"
@@ -466,7 +464,7 @@ def list_admin_users(
     db: Session = Depends(get_db), current_user=Depends(require_admin)
 ):
     """Lista usuarios de auth_users para gestión de permisos granulares."""
-    from backend.models_auth import Usuario, RolPlataforma
+    from backend.models_auth import Usuario
     from sqlalchemy.orm import joinedload
     users = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).all()
     return [_serialize_auth_user_row(u) for u in users]
@@ -1170,7 +1168,6 @@ def list_users_with_roles(
 
     Util para el panel de administracion de permisos granulares.
     """
-    import uuid
     from backend.models_auth import Usuario, RolPlataforma, UsuarioRolModulo
     from backend.models_crm import Persona
 

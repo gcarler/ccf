@@ -1,4 +1,3 @@
-import uuid as _uuid
 """Kernel — Protocolo de Identidad y Roles.
 
 Modelos para el protocolo de identidad desacoplada (3 dimensiones + estado vital).
@@ -12,6 +11,7 @@ Estado Vital: ACTIVO / INACTIVO
 from datetime import datetime, timezone
 
 import enum
+import uuid as _uuid
 
 from sqlalchemy import (Boolean, Column, DateTime, Enum as SAEnum, ForeignKey,
                         Index, Integer, JSON, String, Text, UniqueConstraint)
