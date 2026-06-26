@@ -160,7 +160,7 @@ class PlatformRoleDefinition(Base):
     """Dimensión C — Definición de roles de plataforma con permisos predefinidos."""
     __tablename__ = "platform_role_definitions"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     role = Column(SAEnum(PlatformRole), unique=True, nullable=False, index=True)
     permissions = Column(
         JSON, nullable=False, default={
@@ -208,24 +208,21 @@ class PersonaPlatformRole(Base):
     """Dimensión C — Asignación de rol de plataforma a una persona."""
     __tablename__ = "persona_platform_roles"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    role_id = Column(UUID(as_uuid=True), ForeignKey("platform_role_definitions.id"), nullable=False, index=True
+    role_id = Column(Integer, ForeignKey("platform_role_definitions.id"), nullable=False, index=True
     )
     assigned_at = Column(DateTime(timezone=True), default=_utcnow)
-    assigned_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    expires_at = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Boolean, default=True, index=True)
     notes = Column(Text, nullable=True)
 
     persona = relationship("Persona", foreign_keys=[persona_id], back_populates="roles_plataforma")
     role_definition = relationship("PlatformRoleDefinition", back_populates="persona_roles")
-    assigned_by_persona = relationship("Persona", foreign_keys=[assigned_by_persona_id])
 
     __table_args__ = (
         UniqueConstraint("persona_id", "role_id", name="uq_persona_platform_role"),

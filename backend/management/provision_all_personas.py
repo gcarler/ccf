@@ -93,7 +93,11 @@ def provision_all(db: Session) -> int:
     # Find personas with email that don't have an auth_user yet
     rows = db.execute(
         text("""
-            SELECT p.id, p.email, p.nombre_completo, p.first_name, p.last_name
+            SELECT p.id,
+                   p.email,
+                   concat_ws(' ', p.first_name, p.second_name, p.last_name, p.second_last_name) AS full_name,
+                   p.first_name,
+                   p.last_name
             FROM personas p
             WHERE (p.email IS NOT NULL AND p.email != '')
               AND NOT EXISTS (SELECT 1 FROM auth_users u WHERE u.id = p.id)

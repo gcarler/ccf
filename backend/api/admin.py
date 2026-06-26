@@ -454,6 +454,13 @@ def _assign_auth_user_role(db: Session, user, role_name: str) -> None:
             user.platform_role_id = definition.id
 
 
+def _parse_platform_role_id(value, field_name: str) -> int:
+    try:
+        return int(str(value))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail=f"{field_name} invalido")
+
+
 @router.get("/users", response_model=List[Dict[str, Any]])
 def list_admin_users(
     db: Session = Depends(get_db), current_user=Depends(require_admin)
@@ -624,21 +631,13 @@ def update_admin_user(
         if value in (None, "", "null"):
             user.platform_role_id = None
         else:
-            import uuid
-            try:
-                user.platform_role_id = uuid.UUID(str(value))
-            except ValueError:
-                raise HTTPException(status_code=400, detail="platform_role_id invalido")
+            user.platform_role_id = _parse_platform_role_id(value, "platform_role_id")
     if "role_id" in payload:
         value = payload["role_id"]
         if value in (None, "", "null"):
             user.platform_role_id = None
         else:
-            import uuid
-            try:
-                user.platform_role_id = uuid.UUID(str(value))
-            except ValueError:
-                raise HTTPException(status_code=400, detail="role_id invalido")
+            user.platform_role_id = _parse_platform_role_id(value, "role_id")
     if "role" in payload:
         _assign_auth_user_role(db, user, str(payload["role"]))
 
@@ -699,7 +698,9 @@ def change_user_role(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    role = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == _uuid.UUID(str(selected_role_id))).first()
+    role = db.query(PlatformRoleDefinition).filter(
+        PlatformRoleDefinition.id == _parse_platform_role_id(selected_role_id, "platform_role_id")
+    ).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
@@ -1227,7 +1228,11 @@ def provision_personas_sin_cuenta(
 
     rows = db.execute(
         text("""
-            SELECT p.id, p.email, p.nombre_completo, p.first_name, p.last_name
+            SELECT p.id,
+                   p.email,
+                   concat_ws(' ', p.first_name, p.second_name, p.last_name, p.second_last_name) AS full_name,
+                   p.first_name,
+                   p.last_name
             FROM personas p
             WHERE (p.email IS NOT NULL AND p.email != '')
               AND NOT EXISTS (SELECT 1 FROM auth_users u WHERE u.id = p.id)

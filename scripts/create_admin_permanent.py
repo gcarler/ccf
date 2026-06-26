@@ -109,7 +109,7 @@ def main():
         # 5. PersonaPlatformRole
         r = db.execute(text("SELECT id FROM persona_platform_roles WHERE persona_id = :pid AND role_id = :prid"), {"pid": persona_id, "prid": plat_id}).fetchone()
         if not r:
-            db.execute(text("INSERT INTO persona_platform_roles (persona_id, role_id, assigned_at, assigned_by_persona_id, is_active) VALUES (:pid, :prid, :now, :pid, true)"), {"pid": persona_id, "prid": plat_id, "now": now})
+            db.execute(text("INSERT INTO persona_platform_roles (persona_id, role_id, assigned_at, is_active) VALUES (:pid, :prid, :now, true)"), {"pid": persona_id, "prid": plat_id, "now": now})
             db.commit()
             print(f"✅ PPR creado")
         else:

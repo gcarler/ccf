@@ -11,7 +11,6 @@ Estado Vital: ACTIVO / INACTIVO
 import uuid
 from typing import List, Optional
 
-from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -299,7 +298,7 @@ def get_persona_platform_roles(db: Session, persona_id: str) -> List[dict]:
             "role": _enum_val(rd.role),
             "permissions": rd.permissions,
             "assigned_at": upr.assigned_at,
-            "expires_at": upr.expires_at,
+            "expires_at": None,
             "notes": upr.notes,
         }
         for upr, rd in rows
@@ -318,10 +317,6 @@ def get_persona_effective_permissions(db: Session, persona_id: str) -> dict:
         .filter(
             PersonaPlatformRole.persona_id == uuid.UUID(persona_id),
             PersonaPlatformRole.is_active,
-            or_(
-                PersonaPlatformRole.expires_at.is_(None),
-                PersonaPlatformRole.expires_at > _utcnow(),
-            ),
         )
         .all()
     )
@@ -507,8 +502,6 @@ def _assign_platform_role_by_persona(
     row = PersonaPlatformRole(
         persona_id=pid,
         role_id=role_def.id,
-        assigned_by_persona_id=assigned_by_persona_id,
-        expires_at=expires_at,
         notes=notes,
     )
     db.add(row)
@@ -518,7 +511,7 @@ def _assign_platform_role_by_persona(
         "id": row.id,
         "role": platform_role,
         "assigned_at": row.assigned_at,
-        "expires_at": row.expires_at,
+        "expires_at": None,
     }
 
 

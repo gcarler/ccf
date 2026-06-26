@@ -478,7 +478,7 @@ def create_platform_role_definition(
 
 @router.patch("/admin/platform-role-definitions/{definition_id}")
 def update_platform_role_definition(
-    definition_id: str,
+    definition_id: int,
     payload: PlatformRoleDefinitionUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(require_kernel_permission("system:config")),
@@ -565,7 +565,7 @@ def list_all_persona_platform_roles(
             "persona_name": f"{p.first_name} {p.last_name}",
             "role": rd.role if not hasattr(rd.role, "value") else rd.role.value,
             "assigned_at": upr.assigned_at,
-            "expires_at": upr.expires_at,
+            "expires_at": None,
             "notes": upr.notes,
         }
         for upr, rd, p in rows
