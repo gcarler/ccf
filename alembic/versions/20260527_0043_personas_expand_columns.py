@@ -469,7 +469,7 @@ def _migrate_kernel_data_to_persona() -> None:
             INSERT INTO persona_ministries (persona_id, ministry, is_primary, recognized_at, recognized_by, notes)
             SELECT p.id, um.ministry, um.is_primary, um.recognized_at, um.recognized_by, um.notes
             FROM user_ministries um
-            JOIN personas p ON p.user_id = um.user_id
+            JOIN personas p ON p.id::text = um.user_id::text
             ON CONFLICT (persona_id, ministry) DO NOTHING
         """))
 
@@ -479,7 +479,7 @@ def _migrate_kernel_data_to_persona() -> None:
             INSERT INTO persona_church_roles (persona_id, church_role, assigned_at, assigned_by, notes)
             SELECT p.id, ur.church_role, ur.assigned_at, ur.assigned_by, ur.notes
             FROM user_church_roles ur
-            JOIN personas p ON p.user_id = ur.user_id
+            JOIN personas p ON p.id::text = ur.user_id::text
             ON CONFLICT (persona_id) DO NOTHING
         """))
 
@@ -489,7 +489,7 @@ def _migrate_kernel_data_to_persona() -> None:
             INSERT INTO persona_role_history (persona_id, from_role, to_role, changed_at, changed_by, reason)
             SELECT p.id, rh.from_role, rh.to_role, rh.changed_at, rh.changed_by, rh.reason
             FROM user_role_history rh
-            JOIN personas p ON p.user_id = rh.user_id
+            JOIN personas p ON p.id::text = rh.user_id::text
         """))
 
     # user_platform_roles → persona_platform_roles
@@ -498,18 +498,18 @@ def _migrate_kernel_data_to_persona() -> None:
             INSERT INTO persona_platform_roles (persona_id, role_id, assigned_at, assigned_by, expires_at, notes, is_active)
             SELECT p.id, upr.role_id, upr.assigned_at, upr.assigned_by, upr.expires_at, upr.notes, upr.is_active
             FROM user_platform_roles upr
-            JOIN personas p ON p.user_id = upr.user_id
+            JOIN personas p ON p.id::text = upr.user_id::text
             ON CONFLICT (persona_id, role_id) DO NOTHING
         """))
 
-    # Sincronizar estado_vital desde users.is_active para personas con user_id
+    # Sincronizar estado_vital desde users.is_active para personas cuyo id canonico coincide
     conn.execute(sa.text("""
         UPDATE personas p
         SET estado_vital = CASE WHEN u.is_active THEN 'ACTIVO' ELSE 'INACTIVO' END
         FROM users u
-        WHERE p.user_id = u.id AND p.estado_vital IS NULL
+        WHERE p.id::text = u.id::text AND p.estado_vital IS NULL
     """))
-    # Personas sin user_id → ACTIVO por defecto
+    # Personas sin estado explicito -> ACTIVO por defecto
     conn.execute(sa.text("""
         UPDATE personas SET estado_vital = 'ACTIVO' WHERE estado_vital IS NULL
     """))

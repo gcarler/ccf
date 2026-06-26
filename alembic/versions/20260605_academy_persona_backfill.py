@@ -4,8 +4,8 @@ Revision ID: 20260605_acad_pers_backfill
 Revises: 20260604_personas_scanner_token
 Create Date: 2026-06-05
 
-Fills the compat Academy runtime tables from personas.user_id so the app can
-keep users.id as compatibility data while UUID/persona becomes canonical.
+Fills the compat Academy runtime tables from canonical personas.id so the app
+keeps UUID/persona identity as the only person contract.
 """
 
 from typing import Sequence, Union
@@ -189,12 +189,12 @@ def _backfill(table: str, target_col: str, source_col: str = "user_id") -> None:
             f"UPDATE {table} "
             f"SET {target_col} = ("
             f"SELECT personas.id FROM personas "
-            f"WHERE personas.user_id = {table}.{source_col}"
+            f"WHERE personas.id::text = {table}.{source_col}::text"
             f") "
             f"WHERE {target_col} IS NULL "
             f"AND {source_col} IS NOT NULL "
             f"AND EXISTS ("
-            f"SELECT 1 FROM personas WHERE personas.user_id = {table}.{source_col}"
+            f"SELECT 1 FROM personas WHERE personas.id::text = {table}.{source_col}::text"
             f")"
         )
     )

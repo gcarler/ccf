@@ -48,7 +48,7 @@ Estas areas no deben modificarse como "fix rapido":
 
 - PK `Integer` a UUID en tablas existentes.
 - FKs compat a `users.id`.
-- Columnas compat en `personas` como `church_role`, `membership_type`, `user_id`.
+- Columnas compat en `personas` como `church_role` o `membership_type`.
 - Rutas existentes `members`, `academy`, `evangelism`, `projects`.
 - Alias compat como `Member = Persona`, `CellGroup = GrupoEvangelismo`.
 - Auth v1/v2/v3, refresh tokens, cookies o `sessionStorage`.

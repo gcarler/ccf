@@ -15,7 +15,7 @@ Script Python standalone que migra datos de tablas compat (PK Integer) a tablas 
 | `projects`           | `proyectos`           | Genera código WBS; usa DEFAULT_SEDE_ID          |
 | `courses`            | `academy_courses`     | Mapeo directo de campos académicos              |
 | `enrollments`        | `academy_enrollments` | Resuelve FK `course_id` vía `compat_id_mapping` |
-| `users`              | `auth_users`          | PK = `personas.id` vinculada por `user_id`      |
+| `users`              | `auth_users`          | PK = `personas.id`; requiere persona canonica previa |
 | `roles`              | `auth_roles`          | Mapeo directo nombre → nombre, permisos         |
 | `consolidation_cases`| `crm_casos`           | Requiere pipeline por defecto en `crm_pipelines`|
 | `cell_groups`        | `grupos_evangelismo`  | Nota: tabla `crm_celulas` no existe en models   |
@@ -131,7 +131,7 @@ python -m py_compile scripts/migrate_compat_to_v2.py
 
 ### `users` → `auth_users`
 
-`auth_users.id` es FK a `personas.id` (ON DELETE CASCADE). Por tanto, el script **no genera un UUID aleatorio** para cada usuario; en su lugar busca en `personas` el registro cuyo `user_id` coincida con el `users.id` compat. Si no existe persona vinculada, el usuario se omite con un warning.
+`auth_users.id` es FK a `personas.id` (ON DELETE CASCADE). Por tanto, el script **no genera un UUID aleatorio** para cada usuario; en su lugar usa una persona canonica existente con el mismo UUID. Si no existe persona vinculada, el usuario se omite con un warning.
 
 ### `consolidation_cases` → `crm_casos`
 

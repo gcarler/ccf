@@ -142,12 +142,12 @@ def _backfill(table: str, target_col: str, source_col: str) -> None:
             f"UPDATE {table} "
             f"SET {target_col} = ("
             f"SELECT personas.id FROM personas "
-            f"WHERE personas.user_id = {table}.{source_col}"
+            f"WHERE personas.id::text = {table}.{source_col}::text"
             f") "
             f"WHERE {target_col} IS NULL "
             f"AND {source_col} IS NOT NULL "
             f"AND EXISTS ("
-            f"SELECT 1 FROM personas WHERE personas.user_id = {table}.{source_col}"
+            f"SELECT 1 FROM personas WHERE personas.id::text = {table}.{source_col}::text"
             f")"
         )
     )

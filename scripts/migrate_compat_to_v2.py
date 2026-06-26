@@ -28,7 +28,7 @@ import os
 import sys
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
@@ -366,11 +366,11 @@ class Migrator:
     def _map_users(self, row: Any, m: "Migrator") -> Optional[Dict[str, Any]]:
         # auth_users.id DEBE ser el UUID de la persona asociada
         persona = m.session.execute(
-            text("SELECT id FROM personas WHERE user_id = :uid"),
-            {"uid": row.id},
+            text("SELECT id FROM personas WHERE id::text = :uid"),
+            {"uid": str(row.id)},
         ).fetchone()
         if not persona:
-            logger.warning("User %s: no existe persona vinculada (user_id), omitiendo", row.id)
+            logger.warning("User %s: no existe persona canonica asociada, omitiendo", row.id)
             return None
 
         rol_v2 = m._resolve_fk("roles", row.role_id)
