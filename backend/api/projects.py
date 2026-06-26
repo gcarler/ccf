@@ -87,7 +87,7 @@ def _log_project_activity(db: Session, project_id: Any, user_id: Any, action_typ
 
 
 def _to_uuid(val):
-    """Convert string UUID to uuid.UUID object for SQLAlchemy compatibility with SQLite."""
+    """Convert string UUID to uuid.UUID for SQLAlchemy filters."""
     if isinstance(val, uuid.UUID):
         return val
     try:

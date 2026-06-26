@@ -187,7 +187,7 @@ class EstrategiaEvangelismo(Base):
         uselist=False,
     )
 
-    # English aliases for backward compatibility
+    # API field names
     name = synonym("nombre")
     description = synonym("descripcion")
     start_date = synonym("fecha_inicio")
@@ -266,7 +266,7 @@ class GrupoEvangelismo(Base):
     leader_persona_id = synonym("lider_persona_id")
     assistant_persona_id = synonym("asistente_persona_id")
     host_persona_id = synonym("anfitrion_persona_id")
-    # evangelism_strategy_id es columna directa (antes era synonym de estrategia_id compat)
+    # evangelism_strategy_id es columna directa.
 
     @hybrid_property
     def status(self):
@@ -450,7 +450,7 @@ class Asistencia(Base):
     requiere_seguimiento = Column(Boolean, default=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
-    # English aliases for compat support
+    # API field names
     session_id = synonym("sesion_id")
     member_id = synonym("persona_id")
     absence_reason = synonym("motivo_excusa_id")
@@ -459,7 +459,7 @@ class Asistencia(Base):
 
     @property
     def status(self):
-        # Determine the lowercase, normalized status string for frontend compatibility
+        # Determine the lowercase, normalized status string for frontend rendering.
         est = str(self.estado).strip().lower()
         if self.es_primera_vez or est in {"primera_vez", "first_time"}:
             return "first_time"

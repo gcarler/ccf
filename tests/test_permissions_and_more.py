@@ -141,7 +141,7 @@ class TestCreateRefreshToken:
     def test_create_refresh_token_int_id(self, db_session):
         from backend.core.permissions import create_refresh_token
         import pytest
-        pytest.skip("Compat int user_id path requires compat DB schema")
+        pytest.skip("Integer user_id path requires retired DB schema")
 
 
 class TestRecordSession:

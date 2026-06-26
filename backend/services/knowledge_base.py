@@ -169,7 +169,7 @@ class KnowledgeIndexer:
 
         total = self.db.query(models.Persona).count()
         by_role = {}
-        # Usa el rol del Kernel cuando existe, fallback a columna compat
+        # Usa el rol del Kernel cuando existe; si falta, usa el valor directo de la persona.
         effective_role = func.coalesce(
             cast(models.PersonaRoleAssignment.church_role, String),
             models.Persona.church_role,

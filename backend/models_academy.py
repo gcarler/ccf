@@ -38,7 +38,7 @@ class CoursePrerequisite(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "course_id", "prerequisite_course_id", name="uq_course_prerequisite_compat"
+            "course_id", "prerequisite_course_id", name="uq_course_prerequisite_pair"
         ),
     )
 
@@ -242,7 +242,7 @@ class CellGroup(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    # ── Alias properties for schema compatibility (leader_id → leader_persona_id) ──
+    # ── API properties mapped to persona identity fields ──
     @property
     def leader_id(self):
         return str(self.leader_persona_id) if self.leader_persona_id else None

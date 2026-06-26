@@ -629,7 +629,7 @@ def require_permission(permission: str):
         if _has_permission(role, user_perms, permission):
             return current_user
 
-        # Role-based fallback for backwards compatibility
+        # Role-based allowance for platform roles without explicit granular permissions.
         if role in {"admin", "administrador"}:
             return current_user
         if permission.startswith("crm:") and role == "pastor":
@@ -703,7 +703,7 @@ def authenticate_user(db: Session, email: str, password: str):
 
 
 def hash_password(password: str) -> str:
-    """Alias for get_password_hash kept for backward compatibility."""
+    """Hash a plaintext password using the platform security helper."""
     from backend.core.security import get_password_hash
 
     return get_password_hash(password)

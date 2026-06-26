@@ -68,7 +68,7 @@ _FRECUENCIA_A_PROVIDER: dict[str, _IncProvider] = {
     FrecuenciaEnum.SEMESTRAL.value: _IncProvider(relativedelta(months=6), dia_original=True),
     FrecuenciaEnum.ANUAL.value: _IncProvider(relativedelta(years=1), dia_original=True),
     FrecuenciaEnum.EVENTO_UNICO.value: _IncProvider(timedelta.max),
-    # Back-compat: datos compat
+    # Valores escritos por formularios historicos
     "Semanal": _IncProvider(timedelta(weeks=1)),
     "Quincenal": _IncProvider(timedelta(weeks=2)),
     "Mensual": _IncProvider(relativedelta(months=1), dia_original=True),
@@ -80,7 +80,7 @@ _FRECUENCIA_A_PROVIDER: dict[str, _IncProvider] = {
 
 
 def _normalizar_frecuencia(frecuencia: str) -> str:
-    """Convierte aliases humanos/compat a la clave canonica del enum."""
+    """Convierte variantes humanas a la clave canonica del enum."""
     if not str(frecuencia or "").strip():
         raise ValueError("La frecuencia es obligatoria.")
     normalized = unicodedata.normalize("NFKD", str(frecuencia).strip())
@@ -238,6 +238,6 @@ def calcular_sesiones(
 
 
 # ──────────────────────────────────────────────
-# Alias de back-compat
+# Nombre publico usado por el servicio de proyeccion
 # ──────────────────────────────────────────────
 proyectar_sesiones = calcular_sesiones

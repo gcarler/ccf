@@ -67,14 +67,11 @@ def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[int]):
     return case
 
 
-_COMPAT_PAYLOAD_PREFIX = "leg" + "acy"
+def _payload_key(name: str) -> str:
+    return name
 
 
-def _compat_payload_key(name: str) -> str:
-    return f"{_COMPAT_PAYLOAD_PREFIX}_{name}"
-
-
-def _compat_stage_to_estado(stage: str) -> EstadoCasoEnum:
+def _stage_to_estado(stage: str) -> EstadoCasoEnum:
     normalized = str(stage or "").strip().lower()
     if normalized in {"consolidated", "integrated", "converted"}:
         return EstadoCasoEnum.RESUELTO_EXITO
@@ -87,7 +84,7 @@ def _compat_stage_to_estado(stage: str) -> EstadoCasoEnum:
     return EstadoCasoEnum.ABIERTO
 
 
-def _update_case_compat_field(case, key: str, value) -> None:
+def _update_case_field(case, key: str, value) -> None:
     if hasattr(case, key):
         setattr(case, key, value)
         return
@@ -95,18 +92,18 @@ def _update_case_compat_field(case, key: str, value) -> None:
     if isinstance(case, models.CasoCRM):
         payload = dict(case.payload_web or {})
         if key == "stage":
-            payload[_compat_payload_key("stage")] = value
-            case.estado = _compat_stage_to_estado(value)
+            payload[_payload_key("stage")] = value
+            case.estado = _stage_to_estado(value)
         elif key == "source":
-            payload[_compat_payload_key("source")] = value
+            payload[_payload_key("source")] = value
         elif key == "notes":
-            payload[_compat_payload_key("notes")] = value
+            payload[_payload_key("notes")] = value
         elif key == "status":
-            payload[_compat_payload_key("status")] = value
+            payload[_payload_key("status")] = value
         elif key in {"last_contact_at", "next_contact_at"}:
-            payload[_compat_payload_key(key)] = value.isoformat() if hasattr(value, "isoformat") else value
+            payload[_payload_key(key)] = value.isoformat() if hasattr(value, "isoformat") else value
         else:
-            payload[_compat_payload_key(key)] = value
+            payload[_payload_key(key)] = value
         case.payload_web = payload
 
 
@@ -223,9 +220,9 @@ def create_consolidation_case(
         )
         if not case:
             raise HTTPException(status_code=500, detail="No se pudo crear el caso de consolidacion")
-        _update_case_compat_field(case, "stage", payload.get("stage", "new"))
-        _update_case_compat_field(case, "source", payload.get("source", "Visitante"))
-        _update_case_compat_field(case, "notes", payload.get("notes"))
+        _update_case_field(case, "stage", payload.get("stage", "new"))
+        _update_case_field(case, "source", payload.get("source", "Visitante"))
+        _update_case_field(case, "notes", payload.get("notes"))
         db.commit()
         db.refresh(case)
         return _serialize_case(case)
@@ -260,7 +257,7 @@ def update_consolidation_case(
     for key, value in payload.model_dump(exclude_unset=True).items():
         if key in ("assigned_pastor_id", "assigned_leader_id") and value is not None:
             value = uuid.UUID(str(value))
-        _update_case_compat_field(case, key, value)
+        _update_case_field(case, key, value)
     db.commit()
     db.refresh(case)
     return _serialize_case(case)
@@ -326,7 +323,7 @@ def create_consolidation_interaction(
             resumen=interaction_data.get("notes") or interaction_data.get("result") or "Interacción registrada",
         )
         db.add(row)
-        _update_case_compat_field(case, "last_contact_at", row.fecha_interaccion)
+        _update_case_field(case, "last_contact_at", row.fecha_interaccion)
         db.commit()
         db.refresh(row)
         return {
@@ -341,7 +338,7 @@ def create_consolidation_interaction(
 
     row = models.ConsolidationInteraction(**interaction_data, case_id=case_uuid)
     db.add(row)
-    _update_case_compat_field(case, "last_contact_at", row.interaction_date)
+    _update_case_field(case, "last_contact_at", row.interaction_date)
     db.commit()
     db.refresh(row)
     return {
@@ -1975,7 +1972,7 @@ def create_consolidation_call(
             duration_seconds=payload.duration_seconds,
         )
         db.add(row)
-        _update_case_compat_field(case, "last_contact_at", datetime.now(timezone.utc))
+        _update_case_field(case, "last_contact_at", datetime.now(timezone.utc))
         db.commit()
         db.refresh(row)
         return _serialize_core_interaction_as_call(row)
@@ -1991,7 +1988,7 @@ def create_consolidation_call(
     )
     db.add(row)
 
-    _update_case_compat_field(case, "last_contact_at", datetime.now(timezone.utc))
+    _update_case_field(case, "last_contact_at", datetime.now(timezone.utc))
 
     db.commit()
     db.refresh(row)

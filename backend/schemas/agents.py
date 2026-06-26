@@ -118,7 +118,7 @@ class StageTransition(BaseModel):
     reason: Optional[str] = None
 
 
-# ── AgentTask/Insight compatibility schemas ──
+# ── AgentTask/Insight schemas ──
 class AgentTaskCreate(BaseModel):
     title: str
     description: str = ""

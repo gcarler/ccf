@@ -654,7 +654,7 @@ def get_admin_dashboard(db: Session) -> AdminGlobalDashboard:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Dashboard compatibility aliases
+# Dashboard helpers
 # ═══════════════════════════════════════════════════════════════════
 
 def get_dashboard_metrics(db: Session):

@@ -135,7 +135,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
         "id": representative.id,
         "name": display_name,
         "campaign_name": campaign_name,
-        # Both keys provided for backward compatibility
+        # Both keys are part of the published response.
         "member_name": persona_name,
         "persona_name": persona_name,
         "channel": str(representative.channel).lower(),
@@ -169,7 +169,7 @@ def _serialize_crm_task(
         "category": task.category,
         "due_date": task.due_date.isoformat() if task.due_date else None,
         "persona_id": task.persona_id,
-        # Both keys provided for backward compatibility
+        # Both keys are part of the published response.
         "member_name": persona_name,
         "persona_name": persona_name,
         "contact_name": persona_name,

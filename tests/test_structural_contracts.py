@@ -481,7 +481,7 @@ def test_active_code_does_not_reintroduce_old_architecture_labels():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_backend_no_jsonb_columns():
-    """REGLAS §2.8 — usar JSON no JSONB. JSONB rompe compatibilidad con SQLite (tests)."""
+    """REGLAS §2.8 — usar JSON no JSONB. JSONB rompe soporte SQLite (tests)."""
     root = Path(__file__).resolve().parents[1]
     violations = []
     for path in (root / "backend").rglob("models*.py"):
@@ -490,7 +490,7 @@ def test_backend_no_jsonb_columns():
                 continue
             if "JSONB" in line:
                 violations.append(f"{path.relative_to(root)}:{line_no}: {line.strip()[:80]}")
-    assert violations == [], "Usar JSON en lugar de JSONB para compatibilidad con SQLite en tests"
+    assert violations == [], "Usar JSON en lugar de JSONB para soporte SQLite en tests"
 
 
 def test_backend_datetime_columns_always_have_timezone():

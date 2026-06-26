@@ -1,8 +1,4 @@
-"""CRUD del módulo de Evangelismo — Estrategias, roles, grupos, seguimiento.
-
-Las funciones existentes en crud/crm.py se mantienen para back-compat.
-Este archivo contiene el CRUD refactorizado con los nuevos esquemas.
-"""
+"""CRUD del modulo de Evangelismo: estrategias, roles, grupos y seguimiento."""
 
 from __future__ import annotations
 

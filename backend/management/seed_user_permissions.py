@@ -137,7 +137,7 @@ def seed_rol_plataforma(db) -> None:
 
 
 def seed_default_permissions_for_users(db) -> None:
-    """Assign default UserPermission records for any existing compat users who lack one."""
+    """Assign default UserPermission records for auth users who lack one."""
     from backend.core.permissions import DEFAULT_ROLES, normalize_role
     from backend.models_identity import User, UserPermission
 

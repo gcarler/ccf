@@ -8,7 +8,7 @@ for use by other modules.
 
 from fastapi import APIRouter
 
-# ── shared utilities (re-exported for backward compatibility) ──────────
+# ── shared utilities ───────────────────────────────────────────────────
 from backend.api.crm._shared import (_persona_full_name, _serialize_case,
                                      _serialize_member_position,
                                      _serialize_message_group, _serialize_task,

@@ -143,7 +143,7 @@ class CounselingTicket(CounselingTicketBase):
 
     @model_validator(mode="after")
     def restrict_counseling_notes(self) -> "CounselingTicket":
-        from backend.auth import is_crm_privileged
+        from backend.core.permissions import is_crm_privileged
 
         role = user_role_context.get()
         if role and not is_crm_privileged(role):
@@ -395,7 +395,7 @@ class Persona(BaseModel):
 
     @model_validator(mode="after")
     def restrict_crm_fields(self) -> "Persona":
-        from backend.auth import is_crm_privileged
+        from backend.core.permissions import is_crm_privileged
 
         role = user_role_context.get()
         if role and not is_crm_privileged(role):
@@ -656,16 +656,16 @@ class MemberFormation(MemberFormationBase):
     id: UUID
     model_config = orm_config
 
-# ── EvangelismStrategy compatibility schemas — re-exported from canonical schemas/evangelism.py ──
+# ── EvangelismStrategy schemas re-exported from canonical schemas/evangelism.py ──
 from backend.schemas.evangelism import (
     EstrategiaEvangelismoCreate as EvangelismStrategyCreate,
     EstrategiaEvangelismoUpdate as EvangelismStrategyUpdate,
 )
-# Response schema: id as str (UUID) for backward compatibility
+# Response schema: id as str (UUID)
 from backend.schemas.evangelism import EstrategiaEvangelismoResponse as _EstrategiaEvangelismoResponse
 
 class EvangelismStrategyBase(BaseModel):
-    """Compatibility schema kept for api/evangelism.py.
+    """Schema used by api/evangelism.py.
 
     All fields are inherited from EstrategiaEvangelismoBase.
     The id type changes from int to str (UUID).
@@ -1055,7 +1055,7 @@ class CellGroupAttendance(CellGroupAttendanceBase):
     id: UUID
     model_config = orm_config
 
-# Backward compatibility aliases
+# Public schema aliases
 ConsolidationCaseBase = CasoCRMBase
 ConsolidationCaseCreate = CasoCRMCreate
 ConsolidationCaseUpdate = CasoCRMUpdate

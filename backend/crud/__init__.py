@@ -11,7 +11,7 @@ This package re-exports everything so that existing callers using
 from backend.crud._utils import _utcnow  # noqa: F401
 from backend.crud._utils import analyze_pastoral_priority, analyze_pastoral_sentiment
 
-# Academy compatibility exports used by current routes and tests
+# Academy exports used by current routes and tests
 from backend.crud.academy import (  # noqa: F401
     get_courses,
     get_course,
@@ -134,7 +134,6 @@ from backend.crud.cms import (
     update_testimonial,
 )
 
-# Consolidation Extended compatibility exports
 # CRM
 from backend.crud.crm import create_communication_log  # noqa: F401
 from backend.crud.crm import (

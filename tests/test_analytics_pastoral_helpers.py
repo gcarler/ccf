@@ -173,28 +173,28 @@ class TestPastoralHelpers:
         user.rol_plataforma.nombre = "PASTOR"
         assert _get_user_role(user) == "pastor"
 
-    def test_compat_payload_key(self):
-        from backend.api.crm.pastoral import _compat_payload_key
-        key = _compat_payload_key("stage")
+    def test_payload_key(self):
+        from backend.api.crm.pastoral import _payload_key
+        key = _payload_key("stage")
         assert "stage" in key
 
-    def test_compat_stage_to_estado(self):
-        from backend.api.crm.pastoral import _compat_stage_to_estado
+    def test_stage_to_estado(self):
+        from backend.api.crm.pastoral import _stage_to_estado
         from backend.models_crm_core import EstadoCasoEnum
-        assert _compat_stage_to_estado("consolidated") == EstadoCasoEnum.RESUELTO_EXITO
-        assert _compat_stage_to_estado("lost") == EstadoCasoEnum.CERRADO_PERDIDO
-        assert _compat_stage_to_estado("call") == EstadoCasoEnum.ESPERANDO_RESPUESTA
-        assert _compat_stage_to_estado("visit") == EstadoCasoEnum.EN_PROGRESO
-        assert _compat_stage_to_estado("unknown") == EstadoCasoEnum.ABIERTO
-        assert _compat_stage_to_estado("") == EstadoCasoEnum.ABIERTO
-        assert _compat_stage_to_estado(None) == EstadoCasoEnum.ABIERTO
+        assert _stage_to_estado("consolidated") == EstadoCasoEnum.RESUELTO_EXITO
+        assert _stage_to_estado("lost") == EstadoCasoEnum.CERRADO_PERDIDO
+        assert _stage_to_estado("call") == EstadoCasoEnum.ESPERANDO_RESPUESTA
+        assert _stage_to_estado("visit") == EstadoCasoEnum.EN_PROGRESO
+        assert _stage_to_estado("unknown") == EstadoCasoEnum.ABIERTO
+        assert _stage_to_estado("") == EstadoCasoEnum.ABIERTO
+        assert _stage_to_estado(None) == EstadoCasoEnum.ABIERTO
 
-    def test_update_case_compat_field_on_crm(self):
-        from backend.api.crm.pastoral import _update_case_compat_field
+    def test_update_case_field_on_crm(self):
+        from backend.api.crm.pastoral import _update_case_field
         case = MagicMock(spec=["payload_web", "__class__"])
         case.__class__ = MagicMock()
         case.payload_web = {}
-        _update_case_compat_field(case, "stage", "visit")
+        _update_case_field(case, "stage", "visit")
         case.__class__ = MagicMock()  # won't match CasoCRM
 
     def test_get_case_or_404_not_found(self, db_session):
