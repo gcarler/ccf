@@ -6,6 +6,7 @@ Caché en memoria de 1 hora para no martillar YouTube en cada request.
 import re
 import time
 import logging
+import os
 import xml.etree.ElementTree as ET
 from typing import Optional
 
@@ -16,6 +17,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 YOUTUBE_HANDLE = "@Ministeriosfarooficial"
+YOUTUBE_CHANNEL_ID = os.getenv("YOUTUBE_CHANNEL_ID", "")
+_HTTP_TIMEOUT = httpx.Timeout(5.0, connect=3.0, read=5.0, write=3.0, pool=3.0)
 
 _NS = {
     "atom":  "http://www.w3.org/2005/Atom",
@@ -29,11 +32,19 @@ _cache_ts: float = 0
 _CACHE_TTL = 3600  # 1 hora
 
 
+def _external_http_disabled() -> bool:
+    return os.getenv("ENV") == "test" or os.getenv("CCF_DISABLE_EXTERNAL_HTTP") == "1"
+
+
+def _empty_response(error: str) -> dict:
+    return {"videos": [], "total": 0, "channel": YOUTUBE_HANDLE, "error": error}
+
+
 async def _resolve_channel_id(handle: str) -> Optional[str]:
     """Obtiene el channel ID leyendo la página del canal y extrayendo el JSON incrustado."""
     url = f"https://www.youtube.com/{handle}"
     try:
-        async with httpx.AsyncClient(timeout=12, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=_HTTP_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(
                 url,
                 headers={
@@ -65,7 +76,7 @@ async def _resolve_channel_id(handle: str) -> Optional[str]:
 async def _fetch_rss(channel_id: str) -> list[dict]:
     """Parsea el RSS de YouTube y devuelve lista de videos."""
     rss_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
-    async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=_HTTP_TIMEOUT, follow_redirects=True) as client:
         resp = await client.get(rss_url, headers={"User-Agent": "Mozilla/5.0"})
         resp.raise_for_status()
 
@@ -115,10 +126,13 @@ async def get_youtube_videos():
     if _videos_cache and (now - _cache_ts) < _CACHE_TTL:
         return _videos_cache
 
+    if _external_http_disabled():
+        return _empty_response("external_http_disabled")
+
     if not _channel_id_cache:
-        _channel_id_cache = await _resolve_channel_id(YOUTUBE_HANDLE)
+        _channel_id_cache = YOUTUBE_CHANNEL_ID or await _resolve_channel_id(YOUTUBE_HANDLE)
         if not _channel_id_cache:
-            return {"videos": [], "channel": YOUTUBE_HANDLE, "error": "canal_no_resuelto"}
+            return _empty_response("canal_no_resuelto")
 
     try:
         videos = await _fetch_rss(_channel_id_cache)
@@ -126,7 +140,7 @@ async def get_youtube_videos():
         logger.error("Error fetching YouTube RSS: %s", exc)
         if _videos_cache:
             return _videos_cache  # sirve caché vieja si hay error transitorio
-        return {"videos": [], "channel": YOUTUBE_HANDLE, "error": "rss_error"}
+        return _empty_response("rss_error")
 
     _videos_cache = {
         "videos":  videos,

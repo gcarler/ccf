@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from backend.schemas._common import orm_config
 
@@ -398,15 +398,6 @@ class TestimonialCreate(BaseModel):
     status: Optional[TestimonialStatus] = None
     author_persona_id: Optional[UUID] = None
 
-    @field_validator("author_persona_id", mode="before")
-    @classmethod
-    def _coerce_author_persona_id(cls, value):
-        if value is None:
-            return None
-        if isinstance(value, UUID):
-            return value
-        return UUID(str(value))
-
 
 class TestimonialUpdate(BaseModel):
     content: Optional[str] = None
@@ -443,15 +434,6 @@ class TestimonialRead(BaseModel):
     author: Optional[TestimonialAuthorRead] = None
     created_at: datetime
     model_config = orm_config
-
-    @field_validator("author_persona_id", mode="before")
-    @classmethod
-    def _coerce_author_persona_id(cls, value):
-        if value is None:
-            return None
-        if isinstance(value, UUID):
-            return value
-        return UUID(str(value))
 
 
 class NewsletterSubscriptionCreate(BaseModel):

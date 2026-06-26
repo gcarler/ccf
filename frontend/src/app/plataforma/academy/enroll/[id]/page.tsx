@@ -52,7 +52,7 @@ export default function EnrollmentWizard() {
             await apiFetch("/academy/enrollments/", {
                 method: "POST",
                 token,
-                body: { persona_id: user?.id, course_id: parseInt(courseId) }
+                body: { persona_id: user?.id, course_id: courseId }
             });
             addToast("¡Inscripción y pago exitosos!", "success");
             setStep(3); // Success step

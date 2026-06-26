@@ -16,7 +16,7 @@ from sqlalchemy import (
     Boolean, Column, DateTime, ForeignKey,
     Index, Integer, String, Text, UUID,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Session, relationship
 
 from backend.core.database import Base, SessionLocal
 from backend.crud.crm import resolve_persona_id_for_user
@@ -26,6 +26,12 @@ log = logging.getLogger(__name__)
 
 def _utcnow():
     return datetime.now(timezone.utc)
+
+
+def _get_session(db: Session | None = None) -> tuple[Session, bool]:
+    if db is not None:
+        return db, False
+    return SessionLocal(), True
 
 
 class AgentConversation(Base):
@@ -77,12 +83,14 @@ class AgentMessage(Base):
 # ──────────────────────────────────────────────
 
 def create_conversation(
-    user_id: int | str, title: str = None, agent_name: str = "Optimus",
+    user_id: int | str,
+    title: str = None,
+    agent_name: str = "Optimus",
+    db: Session | None = None,
 ) -> str:
     """Crea una nueva conversación y retorna su ID."""
-    db = SessionLocal()
+    db, should_close = _get_session(db)
     try:
-        from backend.models_crm import Persona
         persona_id = resolve_persona_id_for_user(db, user_id)
         if not persona_id:
             try:
@@ -101,14 +109,17 @@ def create_conversation(
         db.refresh(conv)
         return conv.id
     finally:
-        db.close()
+        if should_close:
+            db.close()
 
 
 def get_user_conversations(
-    user_id: int | str, limit: int = 20,
+    user_id: int | str,
+    limit: int = 20,
+    db: Session | None = None,
 ) -> List[Dict[str, Any]]:
     """Lista conversaciones de un usuario."""
-    db = SessionLocal()
+    db, should_close = _get_session(db)
     try:
         persona_id = resolve_persona_id_for_user(db, user_id)
         if not persona_id:
@@ -137,7 +148,8 @@ def get_user_conversations(
             for c in convs
         ]
     finally:
-        db.close()
+        if should_close:
+            db.close()
 
 
 def get_conversation_history(
@@ -198,9 +210,13 @@ def save_conversation_turn(
         db.close()
 
 
-def delete_conversation(conversation_id: str, user_id: int | str) -> bool:
+def delete_conversation(
+    conversation_id: str,
+    user_id: int | str,
+    db: Session | None = None,
+) -> bool:
     """Elimina una conversación (soft delete)."""
-    db = SessionLocal()
+    db, should_close = _get_session(db)
     try:
         persona_id = resolve_persona_id_for_user(db, user_id)
         if not persona_id:
@@ -220,14 +236,17 @@ def delete_conversation(conversation_id: str, user_id: int | str) -> bool:
         db.commit()
         return True
     finally:
-        db.close()
+        if should_close:
+            db.close()
 
 
 def get_conversation_messages(
-    conversation_id: str, limit: int = 50,
+    conversation_id: str,
+    limit: int = 50,
+    db: Session | None = None,
 ) -> List[Dict[str, Any]]:
     """Obtiene mensajes de una conversación."""
-    db = SessionLocal()
+    db, should_close = _get_session(db)
     try:
         messages = db.query(AgentMessage).filter(
             AgentMessage.conversation_id == conversation_id,
@@ -246,4 +265,5 @@ def get_conversation_messages(
             for m in messages
         ]
     finally:
-        db.close()
+        if should_close:
+            db.close()

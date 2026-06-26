@@ -347,7 +347,7 @@ def persona_has_permission(db: Session, persona_id: str, module: str, action: st
 
 
 # ──────────────────────────────────────────────
-# BACKWARD COMPAT (user_id → persona_id via personas.user_id)
+# BACKWARD COMPAT (auth user id is the canonical persona id)
 # ──────────────────────────────────────────────
 
 

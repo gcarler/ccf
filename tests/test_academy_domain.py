@@ -45,8 +45,9 @@ def seed_persona(db_session, user):
 
 def test_create_enrollment_prevents_duplicates(db_session):
     user = seed_user(db_session)
+    persona = seed_persona(db_session, user)
     course = seed_course(db_session)
-    payload = schemas.EnrollmentCreate(user_id=str(user.id), course_id=str(course.id))
+    payload = schemas.EnrollmentCreate(persona_id=persona.id, course_id=course.id)
     crud.create_enrollment(db_session, payload)
 
     with pytest.raises(ValueError):
@@ -57,7 +58,7 @@ def test_create_enrollment_dual_writes_persona_id(db_session):
     user = seed_user(db_session)
     persona = seed_persona(db_session, user)
     course = seed_course(db_session)
-    payload = schemas.EnrollmentCreate(user_id=str(user.id), course_id=str(course.id))
+    payload = schemas.EnrollmentCreate(persona_id=persona.id, course_id=course.id)
 
     enrollment = crud.create_enrollment(db_session, payload)
 

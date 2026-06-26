@@ -224,12 +224,12 @@ def normalize_role_scope_payload(payload: dict) -> dict:
     normalized = dict(payload)
     raw_role_ids = normalized.get("target_role_ids")
     raw_persona_ids = normalized.get("target_persona_ids")
-    normalized_role_ids: list[int] = []
+    normalized_role_ids: list[str] = []
     normalized_persona_ids: list[str] = []
     if isinstance(raw_role_ids, list):
         for raw_role_id in raw_role_ids:
             try:
-                normalized_role_ids.append(int(raw_role_id))
+                normalized_role_ids.append(str(UUID(str(raw_role_id))))
             except (TypeError, ValueError):
                 continue
     normalized_role_ids = list(dict.fromkeys(normalized_role_ids))
@@ -245,10 +245,10 @@ def normalize_role_scope_payload(payload: dict) -> dict:
             normalized["target_role_id"] = normalized_role_ids[0]
         elif normalized.get("target_role_id") is not None:
             try:
-                normalized_role_id = int(normalized["target_role_id"])
+                normalized_role_id = str(UUID(str(normalized["target_role_id"])))
             except (TypeError, ValueError):
                 normalized_role_id = None
-            normalized["target_role_id"] = normalized_role_id
+            normalized["target_role_id"] = UUID(normalized_role_id) if normalized_role_id else None
             normalized["target_role_ids"] = (
                 [normalized_role_id] if normalized_role_id is not None else None
             )
@@ -268,16 +268,16 @@ def normalize_role_scope_payload(payload: dict) -> dict:
     return normalized
 
 
-def resolve_target_role_ids(event: models.CrmEvent) -> list[int]:
+def resolve_target_role_ids(event: models.CrmEvent) -> list[UUID]:
     role_ids = []
     if isinstance(event.target_role_ids, list):
         for raw_role_id in event.target_role_ids:
             try:
-                role_ids.append(int(raw_role_id))
+                role_ids.append(UUID(str(raw_role_id)))
             except (TypeError, ValueError):
                 continue
     if not role_ids and event.target_role_id is not None:
-        role_ids.append(int(event.target_role_id))
+        role_ids.append(UUID(str(event.target_role_id)))
     return list(dict.fromkeys(role_ids))
 
 

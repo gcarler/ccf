@@ -7,6 +7,7 @@ import datetime
 import io
 import math
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -51,8 +52,8 @@ class RoleDefinitionUpdate(BaseModel):
 
 class EventAudienceUpdate(BaseModel):
     target_audience: schemas.EventAudienceType
-    target_role_id: Optional[int] = None
-    target_role_ids: Optional[List[int]] = None
+    target_role_id: Optional[UUID] = None
+    target_role_ids: Optional[List[UUID]] = None
     target_member_ids: Optional[List[str]] = None
 
 
@@ -100,7 +101,7 @@ def create_event(
 
 @router.put("/events/{event_id}", response_model=dict)
 def update_event(
-    event_id: int,
+    event_id: str,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -147,7 +148,7 @@ def update_event(
 
 @router.delete("/events/{event_id}", response_model=dict)
 def delete_event(
-    event_id: int,
+    event_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -171,7 +172,7 @@ def delete_event(
 
 @router.get("/events/{event_id}", response_model=dict)
 def get_event_detail(
-    event_id: int,
+    event_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
@@ -206,7 +207,7 @@ def get_event_detail(
 
 @router.put("/events/{event_id}/audience")
 def update_event_audience(
-    event_id: int,
+    event_id: str,
     payload: EventAudienceUpdate,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
@@ -395,7 +396,7 @@ def get_events_dashboard_stats(
 
 @router.get("/events/{event_id}/analytics")
 def get_event_analytics(
-    event_id: int,
+    event_id: str,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -448,7 +449,7 @@ def get_event_analytics(
 
 @router.get("/events/{event_id}/sessions/{session_date}/export")
 def export_event_session_report(
-    event_id: int,
+    event_id: str,
     session_date: datetime.date,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -536,7 +537,7 @@ def create_role(
 
 @router.put("/roles/{role_id}")
 def update_role(
-    role_id: int,
+    role_id: str,
     payload: RoleDefinitionUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -571,8 +572,8 @@ def update_role(
 
 @router.delete("/roles/{role_id}")
 def delete_role(
-    role_id: int,
-    fallback_id: int,
+    role_id: str,
+    fallback_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):

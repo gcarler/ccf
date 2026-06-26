@@ -4,9 +4,7 @@
 - `personas.id` = UUID (migrado, 968 registros)
 - 95 FKs activas, 0 huérfanas
 - 0 Integer FKs a personas.id en modelos Python
-- ⚠️ `users.id` sigue siendo Integer (37 FKs dependientes)
-  → Plan de migración: docs/migration_normalization.md
-  → FK invertida: `personas.user_id` → `users.id` (debería ser al revés)
+- `auth_users.id` comparte UUID con `personas.id`; no se debe recrear una columna inversa en `personas`.
 
 ## Axioma 2: Identidad Tridimensional ✅
 - `PersonaRoleAssignment` en Kernel (platform_role, ministry_office, church_role)

@@ -92,7 +92,7 @@ Estos numeros no autorizan correcciones masivas. Sirven para ordenar el saneamie
 
 | Hallazgo | Resuelto | Detalle |
 |---|---|---|
-| 9 tests con 403 en `test_crm_api.py` | ✅ Fix aplicado | `seed_admin_v2` y `seed_user_with_role_v2` ahora asignan `persona.user_id` |
+| 9 tests con 403 en `test_crm_api.py` | ✅ Fix aplicado | `seed_admin_v2` y `seed_user_with_role_v2` ahora crean `auth_users.id == personas.id` |
 | Hard delete en `admin.py:939` (`UsuarioRolModulo`) | ✅ Soft delete | `deleted_at` agregado al modelo + migración + filtro en query |
 | `datetime.utcnow()` en backend | ✅ 11 reemplazos | 4 archivos: community, proyectos, projects, agenda |
 | `fetch()` directo → `apiFetch()` | ✅ 4 reemplazos | useTableView, useAirTable, web-vitals, TaskDetailPanel |
@@ -111,7 +111,7 @@ Estos numeros no autorizan correcciones masivas. Sirven para ordenar el saneamie
 | `startccf` sin setsid ni limpiza de PIDs | ✅ `_launch_detached()` | Fallback setsid → double-fork + disown. `trap cleanup_exit EXIT INT TERM`. `.started_pids` file. |
 | `stopccf` no verificaba muerte de procesos | ✅ `_kill_with_verify()` | Espera 10s, SIGKILL si persiste. `timeout 3` en lsof. |
 | Tests xfail con `strict=True` | ✅ 0 restantes | Todos los xfail tienen `strict=False` o fueron removidos. |
-| Tests `test_crm_api.py` 403 en evangelismo/eventos | ✅ Resuelto (en tanda anterior) | Verificado: fix `persona.user_id` ya aplicado en `seed_admin_v2` y `seed_user_with_role_v2`. |
+| Tests `test_crm_api.py` 403 en evangelismo/eventos | ✅ Resuelto (en tanda anterior) | Verificado: seeds alineados a `auth_users.id == personas.id`. |
 
 ---
 

@@ -42,8 +42,8 @@ class CrmEventBase(BaseModel):
     description: Optional[str] = None
     event_type: EventType = EventType.PERMANENT
     target_audience: EventAudienceType = EventAudienceType.ALL
-    target_role_id: Optional[int] = None
-    target_role_ids: Optional[list[int]] = None
+    target_role_id: Optional[UUID] = None
+    target_role_ids: Optional[list[UUID]] = None
     target_persona_ids: Optional[list[str]] = None
     event_date: Optional[datetime] = None
     start_time: Optional[str] = None
@@ -63,7 +63,7 @@ class CrmEventUpdate(BaseModel):
     description: Optional[str] = None
     event_type: Optional[EventType] = None
     target_audience: Optional[EventAudienceType] = None
-    target_role_ids: Optional[list[int]] = None
+    target_role_ids: Optional[list[UUID]] = None
     target_persona_ids: Optional[list[str]] = None
     event_date: Optional[datetime] = None
     location: Optional[str] = None

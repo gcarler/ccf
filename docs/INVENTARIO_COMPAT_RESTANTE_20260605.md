@@ -72,8 +72,8 @@ Estado:
   - `lesson_progress.persona_id`;
   - `academy_activity_logs.persona_id`;
   - `formal_actas.closed_by_persona_id`.
-- El runtime ya hace dual-write cuando existe `personas.user_id`.
-- Existe migracion fisica de backfill desde `personas.user_id`.
+- El runtime ya usa `auth_users.id == personas.id`; no existe columna inversa en `personas`.
+- El backfill debe resolverse desde `auth_users.id == personas.id` o relaciones históricas documentadas, nunca recreando una columna inversa en `personas`.
 - Falta ejecutar/validar la migracion en staging/produccion y luego dejar de escribir enteros tras un release sin consumidores compat.
 
 Lote:

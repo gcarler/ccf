@@ -264,7 +264,7 @@ Orden recomendado:
 Patron de migracion por columna:
 
 1. agregar `*_persona_id UUID NULL`;
-2. backfill desde `personas.user_id = users.id` o `auth_users.id = personas.id`;
+2. backfill desde `auth_users.id = personas.id` o una relacion historica equivalente;
 3. validar cero huerfanos para filas activas;
 4. adaptar writes para llenar ambas columnas;
 5. adaptar reads para preferir UUID;

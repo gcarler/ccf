@@ -56,7 +56,7 @@ interface AudiencePreset {
  id: string;
  name: string;
  target_audience: 'ALL' | 'ROLE' | 'MANUAL';
- target_role_ids: number[];
+ target_role_ids: string[];
  target_persona_ids: string[];
 }
 
@@ -106,12 +106,12 @@ export default function EventsPage() {
 
  const [roles, setRoles] = useState<RoleDefinition[]>([]);
  const [editingEvent, setEditingEvent] = useState<MinistryEvent | null>(null);
- const [deletingEventId, setDeletingEventId] = useState<number | null>(null);
- const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+ const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+ const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
  const [savingCreateEvent, setSavingCreateEvent] = useState(false);
  const [savingAttendance, setSavingAttendance] = useState(false);
- const [updatingEventId, setUpdatingEventId] = useState<number | null>(null);
- const [deletingEventLoadingId, setDeletingEventLoadingId] = useState<number | null>(null);
+ const [updatingEventId, setUpdatingEventId] = useState<string | null>(null);
+ const [deletingEventLoadingId, setDeletingEventLoadingId] = useState<string | null>(null);
 
  useEffect(() => {
  if (token) {
@@ -270,7 +270,7 @@ export default function EventsPage() {
 
  const saveAudiencePreset = (source: { target_audience: string; target_role_ids?: Array<string | number>; target_persona_ids?: Array<string | number> }) => {
  const targetAudience = source.target_audience as AudiencePreset['target_audience'];
- const targetRoleIds = (source.target_role_ids || []).map((value) => Number(value)).filter((value) => Number.isFinite(value));
+ const targetRoleIds = (source.target_role_ids || []).map(String).filter(Boolean);
  const targetPersonaIds = (source.target_persona_ids || []).map(String);
 
  if (targetAudience === 'ROLE' && targetRoleIds.length === 0) {
@@ -311,15 +311,15 @@ export default function EventsPage() {
  .replace(/[\u0300-\u036f]/g, '');
 
  const existingNames = new Set(audiencePresets.map((preset) => normalized(preset.name)));
- const roleNameToId = new Map<string, number>(
+ const roleNameToId = new Map<string, string>(
  roles
- .filter((role) => role && typeof role.id === 'number' && typeof role.name === 'string')
+ .filter((role) => role && typeof role.id === 'string' && typeof role.name === 'string')
  .map((role) => [normalized(role.name), role.id])
  );
 
  const findRoleIdsByKeywords = (keywords: string[]) => {
  const wanted = keywords.map(normalized);
- const ids = new Set<number>();
+ const ids = new Set<string>();
  for (const [roleName, roleId] of roleNameToId.entries()) {
  if (wanted.some((kw) => roleName.includes(kw))) ids.add(roleId);
  }
@@ -401,8 +401,8 @@ export default function EventsPage() {
  description: string;
  event_type: string;
  target_audience: string;
- target_role_id: number | null;
- target_role_ids: number[];
+ target_role_id: string | null;
+ target_role_ids: string[];
  target_persona_ids: string[];
  start_time: string;
  end_time: string;
@@ -414,8 +414,8 @@ export default function EventsPage() {
  description: newEvent.description,
  event_type: newEvent.event_type,
  target_audience: newEvent.target_audience,
- target_role_id: newEvent.target_audience === 'ROLE' && newEvent.target_role_ids[0] ? Number(newEvent.target_role_ids[0]) : null,
- target_role_ids: newEvent.target_audience === 'ROLE' ? newEvent.target_role_ids.map((value) => Number(value)) : [],
+ target_role_id: newEvent.target_audience === 'ROLE' && newEvent.target_role_ids[0] ? newEvent.target_role_ids[0] : null,
+ target_role_ids: newEvent.target_audience === 'ROLE' ? newEvent.target_role_ids : [],
  target_persona_ids: newEvent.target_audience === 'MANUAL' ? newEvent.target_persona_ids : [],
  start_time: startParsed.normalized,
  end_time: endParsed.normalized,
@@ -671,7 +671,7 @@ export default function EventsPage() {
  },
  ];
 
- const handleDeleteEvent = async (evId: number) => {
+ const handleDeleteEvent = async (evId: string) => {
  if (!token) return;
  setDeletingEventLoadingId(evId);
  try {
@@ -686,9 +686,9 @@ export default function EventsPage() {
  }
  };
 
- const handleUpdateEvent = async (evId: number, payload: Partial<MinistryEvent> & {
+ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> & {
  target_audience?: string;
- target_role_ids?: number[];
+ target_role_ids?: string[];
  target_persona_ids?: string[];
  }) => {
  if (!token) return;
@@ -1566,9 +1566,9 @@ export default function EventsPage() {
  <select
  multiple
  disabled={(editingEvent.target_audience || 'ALL') !== 'ROLE'}
- value={(editingEvent.target_role_ids || getTargetRoleIds(editingEvent)).map((value: number) => String(value))}
+ value={(editingEvent.target_role_ids || getTargetRoleIds(editingEvent)).map((value: string) => String(value))}
  onChange={e => {
- const selectedValues = Array.from(e.target.selectedOptions).map((option) => Number(option.value));
+ const selectedValues = Array.from(e.target.selectedOptions).map((option) => option.value);
  setEditingEvent({ ...editingEvent, target_role_ids: selectedValues, target_role_id: selectedValues[0] || null });
  }}
  className="min-h-[140px] w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-[hsl(var(--text-primary))] disabled:opacity-50"

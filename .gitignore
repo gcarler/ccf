@@ -74,3 +74,7 @@ venv/
 ccf_final.db
 openapi_debug.json
 .env.backup
+# CCF: staging credentials (P0 baseline cleanup, 2026-06-26)
+backend/.env.staging
+frontend/.env.staging
+.env.staging

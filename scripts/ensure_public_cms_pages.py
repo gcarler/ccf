@@ -56,7 +56,45 @@ def ensure_page(db, site, slug: str, title: str) -> tuple[bool, bool]:
     elif page.title != title:
         page.title = title
 
+    # Obtener secciones actuales en db
+    sections = (
+        db.query(models.CmsSection)
+        .filter(models.CmsSection.page_id == page.id)
+        .order_by(models.CmsSection.sort_order.asc())
+        .all()
+    )
+    sections_data = [
+        {
+            "id": str(sec.id),
+            "section_key": sec.section_key,
+            "type": sec.type,
+            "props_json": sec.props_json or {},
+            "sort_order": sec.sort_order,
+            "is_visible": sec.is_visible,
+            "status": getattr(sec, "status", "active") or "active",
+        }
+        for sec in sections
+    ]
+
+    # Verificar si necesitamos publicar
+    needs_publish = False
     if page.status != "published" or page.published_version_id is None:
+        needs_publish = True
+    else:
+        current_version = db.query(models.CmsPageVersion).filter(models.CmsPageVersion.id == page.published_version_id).first()
+        if not current_version or not current_version.snapshot_json:
+            needs_publish = True
+        else:
+            snapshot_sections = current_version.snapshot_json.get("sections", [])
+            if len(snapshot_sections) != len(sections_data):
+                needs_publish = True
+            else:
+                for s1, s2 in zip(snapshot_sections, sections_data):
+                    if s1.get("section_key") != s2.get("section_key") or s1.get("props_json") != s2.get("props_json"):
+                        needs_publish = True
+                        break
+
+    if needs_publish:
         max_version = (
             db.query(func.max(models.CmsPageVersion.version_number))
             .filter(models.CmsPageVersion.page_id == page.id)
@@ -74,7 +112,7 @@ def ensure_page(db, site, slug: str, title: str) -> tuple[bool, bool]:
                     "seo_json": page.seo_json or {},
                     "status": "published",
                 },
-                "sections": [],
+                "sections": sections_data,
             },
             notes="Ensure public CMS page contract for production fallback route",
         )

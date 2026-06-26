@@ -45,7 +45,7 @@ Estos endpoints exponen identidad de persona como entero o dependen directamente
 
 | Prioridad | Endpoint | Modulo | Parametros actuales | Accion |
 |---|---|---|---|---|
-| P0 | `/api/crm/volunteers/{persona_id}` | `backend.api.crm.pastoral` | `persona_id:str` UUID, con fallback temporal a `Persona.user_id` compat | Migrado contrato de ruta a UUID sin romper consumidores compat |
+| P0 | `/api/crm/volunteers/{persona_id}` | `backend.api.crm.pastoral` | `persona_id:str` UUID | Migrado contrato de ruta a UUID sin depender de columna inversa en `personas` |
 | P0 | `/api/spiritual-life/milestones/{person_id}` | `backend.api.spiritual_life` | `person_id:str` UUID | Migrado contrato y CRUD interno a `SpiritualMilestone.persona_id` |
 | P0 | `/api/auth/users/{user_id}` | `backend.api.auth` | `user_id:int` | Mantener solo como auth compat; agregar/usar endpoint por `persona_id` |
 | P0 | `/api/admin/users/{user_id}/permissions` | `backend.api.admin` | `user_id:int` | Resolver permisos por persona/auth UUID |
@@ -89,7 +89,7 @@ Incluye:
 Estrategia:
 
 1. agregar columna UUID paralela si no existe;
-2. backfill desde `personas.user_id` o relacion historica equivalente;
+2. backfill desde `auth_users.id == personas.id` o relacion historica equivalente;
 3. adaptar endpoints a UUID;
 4. mantener alias compat temporal;
 5. migrar frontend;
@@ -127,7 +127,7 @@ Cada excepcion debe quedar escrita en el modelo o en esta hoja de ruta.
 
 ### Lote 1: Contratos de Persona
 
-1. `backend.api.crm.pastoral`: migrar volunteers `persona_id:int` a UUID. **Completado:** contrato `str` UUID con fallback compat por `Persona.user_id`.
+1. `backend.api.crm.pastoral`: migrar volunteers `persona_id:int` a UUID. **Completado:** contrato `str` UUID sin fallback por columna inversa en `personas`.
 2. `backend.api.spiritual_life`: reemplazar `person_id:int` por `persona_id:str`. **Completado:** ruta acepta UUID y CRUD usa `persona_id`.
 3. Tests de contrato para rechazar enteros en rutas nuevas de persona. **Completado:** `test_no_new_person_identity_int_params`.
 4. `backend.api.admin` y `backend.api.auth`: separar endpoints de auth compat (`user_id`) de endpoints ministeriales (`persona_id`).

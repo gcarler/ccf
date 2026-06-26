@@ -104,15 +104,29 @@ def _get_page_or_404(db: Session, site_id: int, slug: str) -> models.CmsPage:
 def _snapshot_section_read(
     section_data: dict[str, Any],
     *,
-    page_id: int,
+    page_id: uuid.UUID,
     index: int,
     timestamp: datetime,
 ) -> schemas.CmsSectionRead:
     section_id = section_data.get("id")
     sort_order = section_data.get("sort_order")
     props_json = section_data.get("props_json")
+
+    import uuid as py_uuid
+    valid_id = None
+    if section_id:
+        if isinstance(section_id, py_uuid.UUID):
+            valid_id = section_id
+        else:
+            try:
+                valid_id = py_uuid.UUID(str(section_id))
+            except (ValueError, AttributeError):
+                pass
+    if not valid_id:
+        valid_id = py_uuid.uuid5(py_uuid.NAMESPACE_DNS, f"section-fallback-{page_id}-{index}")
+
     return schemas.CmsSectionRead(
-        id=section_id if isinstance(section_id, int) else index + 1,
+        id=valid_id,
         page_id=page_id,
         section_key=str(section_data.get("section_key") or f"published-{index + 1}"),
         type=str(section_data.get("type") or "rich_text"),

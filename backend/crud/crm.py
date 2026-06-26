@@ -432,20 +432,20 @@ def search_members(
 
     personas = query.offset(skip).limit(limit).all()
 
-    user_ids = [p.user_id for p in personas if p.user_id]
+    persona_ids = [p.id for p in personas]
     progress_map = {}
-    if user_ids:
+    if persona_ids:
         progress_data = (
-            db.query(models.Enrollment.user_id, func.avg(models.Enrollment.progress_percent))
-            .filter(models.Enrollment.user_id.in_(user_ids))
-            .group_by(models.Enrollment.user_id)
+            db.query(models.Enrollment.persona_id, func.avg(models.Enrollment.progress_percent))
+            .filter(models.Enrollment.persona_id.in_(persona_ids))
+            .group_by(models.Enrollment.persona_id)
             .all()
         )
-        progress_map = {uid: avg for uid, avg in progress_data}
+        progress_map = {persona_id: avg for persona_id, avg in progress_data}
 
     for p in personas:
         p.spiritual_health = 0.5 + (abs(hash(p.first_name)) % 50) / 100.0
-        p.academy_progress = float(progress_map.get(p.user_id, 0.0))
+        p.academy_progress = float(progress_map.get(p.id, 0.0))
 
     return personas
 
@@ -491,20 +491,20 @@ def search_members_paginated(
 
     personas = query.offset(offset).limit(limit).all()
 
-    user_ids = [p.user_id for p in personas if p.user_id]
+    persona_ids = [p.id for p in personas]
     progress_map = {}
-    if user_ids:
+    if persona_ids:
         progress_data = (
-            db.query(models.Enrollment.user_id, func.avg(models.Enrollment.progress_percent))
-            .filter(models.Enrollment.user_id.in_(user_ids))
-            .group_by(models.Enrollment.user_id)
+            db.query(models.Enrollment.persona_id, func.avg(models.Enrollment.progress_percent))
+            .filter(models.Enrollment.persona_id.in_(persona_ids))
+            .group_by(models.Enrollment.persona_id)
             .all()
         )
-        progress_map = {uid: avg for uid, avg in progress_data}
+        progress_map = {persona_id: avg for persona_id, avg in progress_data}
 
     for p in personas:
         p.spiritual_health = 0.5 + (abs(hash(p.first_name)) % 50) / 100.0
-        p.academy_progress = float(progress_map.get(p.user_id, 0.0))
+        p.academy_progress = float(progress_map.get(p.id, 0.0))
 
     return {"items": personas, "total": total}
 
@@ -527,7 +527,7 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
     try:
         payload_data = payload.model_dump()
         role_ids = payload_data.get("target_role_ids") or []
-        payload_data["target_role_ids"] = role_ids or None
+        payload_data["target_role_ids"] = [str(role_id) for role_id in role_ids] or None
         if payload_data.get("target_audience") == "ROLE":
             payload_data["target_role_id"] = role_ids[0] if role_ids else payload_data.get("target_role_id")
         else:
@@ -931,30 +931,29 @@ def get_persona_timeline(db: Session, persona_id: str):
         }
     )
 
-    if persona.user_id:
-        enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == persona.user_id).all()
-        for en in enrollments:
+    enrollments = db.query(models.Enrollment).filter(models.Enrollment.persona_id == persona.id).all()
+    for en in enrollments:
+        timeline.append(
+            {
+                "type": "academy",
+                "title": "Inscripción Academia",
+                "description": f"Inició el curso {en.course.title if en.course else 'de formación'}.",
+                "date": en.created_at.isoformat(),
+                "icon": "GraduationCap",
+                "color": "bg-emerald-500",
+            }
+        )
+        if en.certificate_issued:
             timeline.append(
                 {
-                    "type": "academy",
-                    "title": "Inscripción Academia",
-                    "description": f"Inició el curso {en.course.title if en.course else 'de formación'}.",
-                    "date": en.created_at.isoformat(),
-                    "icon": "GraduationCap",
-                    "color": "bg-emerald-500",
+                    "type": "certificate",
+                    "title": "Certificación Obtenida",
+                    "description": f"Completó con éxito el curso: {en.course.title if en.course else 'de formación'}.",
+                    "date": (en.created_at + dt.timedelta(days=30)).isoformat(),
+                    "icon": "Award",
+                    "color": "bg-amber-500",
                 }
             )
-            if en.certificate_issued:
-                timeline.append(
-                    {
-                        "type": "certificate",
-                        "title": "Certificación Obtenida",
-                        "description": f"Completó con éxito el curso: {en.course.title if en.course else 'de formación'}.",
-                        "date": (en.created_at + dt.timedelta(days=30)).isoformat(),
-                        "icon": "Award",
-                        "color": "bg-amber-500",
-                    }
-                )
 
     ministries = db.query(models.MemberMinistry).filter(models.MemberMinistry.persona_id == persona_id).all()
     for mm in ministries:

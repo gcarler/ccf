@@ -19,7 +19,7 @@ SECTION_MAP: dict[str, tuple[str, int]] = {
     "faro_home_hero":        ("inicio",           0),
     "faro_about_hero":       ("nosotros",          0),
     "faro_about_feed":       ("nosotros",          1),
-    "faro_pastors_feed":     ("nosotros",          2),
+    "faro_pastores_feed":     ("nosotros",          2),
     "faro_events_hero":      ("eventos",           0),
     "faro_public_events":    ("eventos",           1),
     "faro_sermons_hero":     ("predicas",          0),
@@ -105,15 +105,6 @@ def run():
 
         for section_key, (slug, sort_order) in SECTION_MAP.items():
             page = page_objs[slug]
-            existing = (
-                db.query(models.CmsSection)
-                .filter_by(page_id=page.id, section_key=section_key)
-                .first()
-            )
-            if existing:
-                print(f"  cms_sections: '{section_key}' already exists")
-                continue
-
             pc = page_contents.get(section_key)
             if pc:
                 try:
@@ -127,18 +118,30 @@ def run():
 
             section_type = "hero" if section_key.endswith("_hero") else "feed"
 
-            section = models.CmsSection(
-                page_id=page.id,
-                section_key=section_key,
-                type=section_type,
-                props_json=props,
-                sort_order=sort_order,
-                is_visible=True,
-                status="active",
+            existing = (
+                db.query(models.CmsSection)
+                .filter_by(page_id=page.id, section_key=section_key)
+                .first()
             )
-            db.add(section)
+            if existing:
+                existing.props_json = props
+                existing.type = section_type
+                existing.sort_order = sort_order
+                db.add(existing)
+                print(f"✓ cms_sections: updated existing '{section_key}'")
+            else:
+                section = models.CmsSection(
+                    page_id=page.id,
+                    section_key=section_key,
+                    type=section_type,
+                    props_json=props,
+                    sort_order=sort_order,
+                    is_visible=True,
+                    status="active",
+                )
+                db.add(section)
+                print(f"✓ cms_sections: created '{section_key}' → page '{slug}'")
             db.commit()
-            print(f"✓ cms_sections: '{section_key}' → page '{slug}'")
 
         print("\n✅ Migration complete.")
     finally:

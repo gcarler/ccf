@@ -1,14 +1,14 @@
 export type EventAudience = 'ALL' | 'ROLE' | 'MANUAL';
 
 export interface RoleDefinition {
- id: number;
+ id: string;
  name: string;
  color?: string;
  is_leadership?: boolean;
 }
 
 export interface MinistryEvent {
- id: number;
+ id: string;
  name: string;
  description: string;
  event_type: string;
@@ -17,8 +17,8 @@ export interface MinistryEvent {
  start_time?: string | null;
  end_time?: string | null;
  target_audience?: EventAudience;
- target_role_id?: number | null;
- target_role_ids?: number[];
+ target_role_id?: string | null;
+ target_role_ids?: string[];
  target_persona_ids?: string[];
  day_of_week?: number;
  month_day?: string;
@@ -37,7 +37,7 @@ export interface Persona {
 export type Member = Persona;
 
 export interface EventDashboardStat {
- event_id: number;
+ event_id: string;
  latest_session: string | null;
  attended: number;
  expected: number;

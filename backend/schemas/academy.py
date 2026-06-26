@@ -4,7 +4,7 @@ from uuid import UUID
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import BaseModel, Field
 
 from backend.schemas._common import orm_config
 
@@ -107,13 +107,13 @@ class AssessmentAttemptSubmit(BaseModel):
 
 
 class EnrollmentCreate(BaseModel):
-    persona_id: str = Field(validation_alias=AliasChoices("persona_id", "user_id"), serialization_alias="persona_id")
+    persona_id: UUID
     course_id: UUID
 
 
 class Enrollment(BaseModel):
     id: UUID
-    persona_id: UUID = Field(validation_alias=AliasChoices("persona_id", "user_id"), serialization_alias="persona_id")
+    persona_id: UUID
     course_id: UUID
     status: str = "active"
     progress_percent: float = 0
@@ -227,7 +227,7 @@ Attendance = CourseAttendance
 
 
 class AcademyStudentProfile(BaseModel):
-    persona_id: str = Field(validation_alias=AliasChoices("persona_id", "user_id"), serialization_alias="persona_id")
+    persona_id: UUID
     username: str
     total_progress: float = 0.0
     enrollments_count: int = 0

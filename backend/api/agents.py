@@ -416,20 +416,12 @@ from backend.models_agents import AgentAuth as AgentModelAuth  # noqa: E402
 
 def sync_persona_to_agent(db: Session, persona) -> int:
     """Create an Agent from a Persona if one doesn't exist yet."""
-    if persona.user_id:
-        existing = db.query(AgentModel).filter(
-            or_(
-                AgentModel.email == persona.email,
-                AgentModel.phone == persona.phone,
-            )
-        ).first()
-    else:
-        existing = db.query(AgentModel).filter(
-            or_(
-                AgentModel.email == persona.email,
-                AgentModel.phone == persona.phone,
-            )
-        ).first()
+    existing = db.query(AgentModel).filter(
+        or_(
+            AgentModel.email == persona.email,
+            AgentModel.phone == persona.phone,
+        )
+    ).first()
 
     if existing:
         return existing.id
@@ -445,15 +437,14 @@ def sync_persona_to_agent(db: Session, persona) -> int:
     db.add(agent)
     db.flush()
 
-    if persona.user_id:
-        user = db.query(User).filter(User.id == persona.user_id).first()
-        if user:
-            auth = AgentModelAuth(
-                agent_id=agent.id,
-                username=user.username,
-                provider="local",
-            )
-            db.add(auth)
+    user = db.query(User).filter(User.id == persona.id).first()
+    if user:
+        auth = AgentModelAuth(
+            agent_id=agent.id,
+            username=user.username,
+            provider="local",
+        )
+        db.add(auth)
 
     if persona.church_role:
         db.add(AgentRole(
@@ -595,7 +586,10 @@ def create_conv(
 ):
     """Crea una nueva conversación."""
     conv_id = create_conversation(
-        current_user.id, title=data.title, agent_name=data.agent_name,
+        current_user.id,
+        title=data.title,
+        agent_name=data.agent_name,
+        db=db,
     )
     return {"id": conv_id, "title": data.title or data.agent_name}
 
@@ -607,28 +601,28 @@ def list_convs(
     current_user: models.User = Depends(require_active_user),
 ):
     """Lista conversaciones del usuario."""
-    return get_user_conversations(current_user.id, limit=limit)
+    return get_user_conversations(current_user.id, limit=limit, db=db)
 
 
 @router.get("/conversations/{conv_id}/messages")
 def get_conv_messages(
-    conv_id: int,
+    conv_id: str,
     limit: int = 50,
     db=Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
     """Obtiene mensajes de una conversación."""
-    return get_conversation_messages(conv_id, limit=limit)
+    return get_conversation_messages(conv_id, limit=limit, db=db)
 
 
 @router.delete("/conversations/{conv_id}")
 def delete_conv(
-    conv_id: int,
+    conv_id: str,
     db=Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
     """Elimina una conversación."""
-    success = delete_conversation(conv_id, current_user.id)
+    success = delete_conversation(conv_id, current_user.id, db=db)
     if not success:
         raise HTTPException(404, "Conversation not found")
     return {"status": "ok"}

@@ -202,8 +202,8 @@ persona_id: int  # Tipado genérico incorrecto
 El backend no debe confiar en los datos de sede que envía el frontend. El `sede_id` debe inyectarse desde el token JWT:
 
 ```python
-def get_user_sede_id(db: Session, user_id: int) -> Optional[int]:
-    persona = db.query(Persona).filter(Persona.user_id == user_id).first()
+def get_user_sede_id(db: Session, user_id: str) -> Optional[str]:
+    persona = db.query(Persona).filter(Persona.id == user_id).first()
     return persona.sede_id if persona else None
 
 @router.get("/personas")

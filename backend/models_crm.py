@@ -347,7 +347,6 @@ class ColombianDepartment(Base):
 class Persona(Base):
     __tablename__ = "personas"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="SET NULL"), nullable=True, unique=True, index=True)
     family_id = Column(UUID(as_uuid=True), ForeignKey("families.id", ondelete="SET NULL"), nullable=True, index=True)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     first_name = Column(String(100), nullable=False, index=True)
@@ -465,7 +464,6 @@ class Persona(Base):
             return val.value if hasattr(val, 'value') else str(val)
         return self.church_role or "Miembro"
 
-    user = relationship("Usuario", foreign_keys=[user_id], backref=backref("member_profile", uselist=False))
     family = relationship("Family", overlaps="family,members,personas")
     colombian_department = relationship("ColombianDepartment", foreign_keys=[colombian_department_id])
     origen_estrategia = relationship("EstrategiaEvangelismo", foreign_keys=[origen_estrategia_id])

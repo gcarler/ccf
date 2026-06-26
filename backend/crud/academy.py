@@ -584,7 +584,7 @@ def list_assignment_submissions_with_meta(db: Session, limit: int = 100):
             models.AssignmentSubmission.enrollment_id == models.Enrollment.id,
         )
         .join(models.Persona, models.Enrollment.persona_id == models.Persona.id)
-        .join(models.User, models.Persona.user_id == models.User.id)
+        .join(models.User, models.Persona.id == models.User.id)
         .limit(limit)
         .all()
     )
@@ -604,7 +604,7 @@ def get_assignment_submission_with_meta(db: Session, submission_id: int):
             models.AssignmentSubmission.enrollment_id == models.Enrollment.id,
         )
         .join(models.Persona, models.Enrollment.persona_id == models.Persona.id)
-        .join(models.User, models.Persona.user_id == models.User.id)
+        .join(models.User, models.Persona.id == models.User.id)
         .first()
     )
 
@@ -631,8 +631,10 @@ def grade_assignment_submission(
 
 
 def get_academy_candidates(db: Session):
-    enrolled_user_ids = db.query(models.Persona.user_id).join(models.Enrollment, models.Persona.id == models.Enrollment.persona_id).filter(models.Persona.user_id.is_not(None)).distinct()
-    return db.query(models.User).filter(models.User.id.notin_(enrolled_user_ids)).all()
+    enrolled_persona_ids = db.query(models.Enrollment.persona_id).filter(
+        models.Enrollment.persona_id.is_not(None)
+    ).distinct()
+    return db.query(models.User).filter(models.User.id.notin_(enrolled_persona_ids)).all()
 
 
 def get_forum_threads(db: Session):

@@ -371,7 +371,7 @@ Cada entrega debe reportar:
 No corregir automaticamente estos hallazgos:
 
 - Tablas nuevas o mixtas con PK `Integer` y FK a `personas.id`.
-- `Persona.church_role`, `Persona.membership_type`, `Persona.user_id`.
+- `Persona.church_role`, `Persona.membership_type`.
 - FKs a `users.id` en auditoria, CMS, agentes, auth compat y entidades historicas.
 - Rutas y archivos `members`.
 - Alias compat ingles/espanol en modelos y schemas.
