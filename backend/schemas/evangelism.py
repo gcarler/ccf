@@ -1,8 +1,4 @@
-"""Esquemas Pydantic del módulo de Evangelismo refactorizado.
-
-Contiene los nuevos esquemas con nomenclatura en español y enums.
-Los esquemas antiguos en schemas/crm.py se mantienen para back-compat.
-"""
+"""Esquemas Pydantic del modulo de Evangelismo."""
 
 from __future__ import annotations
 
@@ -82,7 +78,7 @@ class EstrategiaEvangelismoBase(BaseModel):
     clase_raiz: Optional[str] = None
     activa: bool = True
 
-    # Campos de compatibilidad
+    # Campos publicados por la API de estrategia
     typology: Optional[str] = None
     recurrence: Optional[str] = None
     day_of_week: Optional[str] = None
@@ -109,7 +105,7 @@ class EstrategiaEvangelismoUpdate(BaseModel):
     activa: Optional[bool] = None
     default_role_id: Optional[int] = None
 
-    # Campos de compatibilidad
+    # Campos publicados por la API de estrategia
     typology: Optional[str] = None
     recurrence: Optional[str] = None
     day_of_week: Optional[str] = None
@@ -229,10 +225,9 @@ class RegistroSeguimientoBase(BaseModel):
     fecha_seguimiento: Optional[datetime] = None
     estado_completado: bool = True
 
-    # Alias de back-compat para el frontend que ya usa "notas" y "completado"
     @model_validator(mode="before")
     @classmethod
-    def _map_compat_names(cls, data: Any) -> Any:
+    def _map_public_names(cls, data: Any) -> Any:
         if isinstance(data, dict):
             if "notas" in data and "observaciones" not in data:
                 data["observaciones"] = data.pop("notas")
@@ -259,7 +254,7 @@ class RegistroSeguimientoUpdate(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _map_compat_names(cls, data: Any) -> Any:
+    def _map_public_names(cls, data: Any) -> Any:
         if isinstance(data, dict):
             if "notas" in data and "observaciones" not in data:
                 data["observaciones"] = data.pop("notas")
@@ -282,7 +277,6 @@ class RegistroSeguimientoResponse(BaseModel):
     responsable_id: Optional[str] = None
     created_at: datetime
 
-    # Back-compat: campos computados para frontend anterior (Pydantic v2 compatible)
     @computed_field
     @property
     def completado(self) -> bool:
@@ -358,10 +352,10 @@ class AsistenciaBulkCreate(BaseModel):
 
 
 # ──────────────────────────────────────────────
-# GRUPO EVANGELISMO (back-compat con CellGroup)
+# GRUPO EVANGELISMO
 # ──────────────────────────────────────────────
 
-class GrupoCreate(BaseModel):
+class GrupoEvangelismoCreate(BaseModel):
     code: Optional[str] = None
     name: Optional[str] = None
     zone: Optional[str] = None
@@ -389,7 +383,7 @@ class ParticipanteGrupoConRol(BaseModel):
     rol_personalizado_id: Optional[int] = None
 
 
-class GrupoUpdate(BaseModel):
+class GrupoEvangelismoUpdate(BaseModel):
     code: Optional[str] = None
     name: Optional[str] = None
     zone: Optional[str] = None
@@ -403,7 +397,7 @@ class GrupoUpdate(BaseModel):
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     base_attendee_ids: Optional[List[str]] = None
-    base_attendees_with_roles: Optional[List[CellGroupMemberWithRole]] = None
+    base_attendees_with_roles: Optional[List[ParticipanteGrupoConRol]] = None
 
 
 class SesionGrupoCreate(BaseModel):
@@ -436,9 +430,3 @@ class AsistenciaGrupoCreate(BaseModel):
     persona_id: UUID
     status: str = "present"
     notes: Optional[str] = None
-
-
-# ── Backward compatibility aliases ────────────────────────────────
-GrupoEvangelismoCreate = GrupoCreate
-GrupoEvangelismoUpdate = GrupoUpdate
-CellGroupMemberWithRole = ParticipanteGrupoConRol

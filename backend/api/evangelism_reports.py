@@ -21,7 +21,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from backend.auth import require_active_user
+from backend.core.permissions import require_active_user
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 from backend import models

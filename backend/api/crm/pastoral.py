@@ -16,7 +16,7 @@ from backend.api.crm._shared import (
     _serialize_task,
     utc_now,
 )
-from backend.auth import normalize_role, require_module_access
+from backend.core.permissions import normalize_role, require_module_access
 from backend.core.database import get_db
 from backend.crud.crm import (
     get_user_sede_id,

@@ -60,7 +60,7 @@ from backend.schemas.evangelism import (AsistenciaBulkCreate, AsistenciaBulkItem
     RolPersonalizadoEstrategiaCreate, RolPersonalizadoEstrategiaResponse,
     TipoSeguimientoEnum, MotivoExcusaBase, MotivoExcusaCreate,
     MotivoExcusaUpdate, MotivoExcusaResponse,
-    GrupoEvangelismoCreate, GrupoEvangelismoUpdate, CellGroupMemberWithRole,
+    GrupoEvangelismoCreate, GrupoEvangelismoUpdate, ParticipanteGrupoConRol,
     SesionGrupoCreate, SesionGrupoUpdate, AsistenciaGrupoCreate,
 )
 
@@ -157,13 +157,13 @@ from backend.schemas.auth_v2 import (
     UsuarioUpdate, UsuarioRolModuloBase, UsuarioRolModuloCreate,
     UsuarioRolModuloRead,
 )
-# ── Compatibility / Misc ─────────────────────────────────────────────────────
-from backend.schemas.compatibility import (CommunityBoardCard,
-                                           CommunityBoardCardCreate,
-                                           CommunityBoardCardUpdate, Milestone,
-                                           MilestoneCreate, PastorRadarSchema,
-                                           PublicRegistrationCreate,
-                                           SupportTicket, SupportTicketCreate)
+# ── Operational / Misc ───────────────────────────────────────────────────────
+from backend.schemas.operational import (CommunityBoardCard,
+                                         CommunityBoardCardCreate,
+                                         CommunityBoardCardUpdate, Milestone,
+                                         MilestoneCreate, PastorRadarSchema,
+                                         PublicRegistrationCreate,
+                                         SupportTicket, SupportTicketCreate)
 # ── Notifications / Comms ────────────────────────────────────────────────────
 from backend.schemas.notifications import (CommunicationLog,
                                            CommunicationLogCreate,

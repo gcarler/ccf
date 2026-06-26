@@ -16,7 +16,7 @@ from backend.api.evangelism_shared import (
     _check_absence_trigger,
     _check_first_time_lead_trigger,
 )
-from backend.auth import get_current_user, require_pastor_or_admin
+from backend.core.permissions import get_current_user, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 
@@ -335,7 +335,7 @@ def submit_attendance(
 
     # ── CRM Bridge: first-time / seguimiento ──
     from backend.services.evangelism_crm_bridge import crear_caso_desde_asistencia
-    from backend.models_personas import Persona
+    from backend.models_crm import Persona
 
     evento = None
     for att in submitted:

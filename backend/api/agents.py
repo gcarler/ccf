@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from backend.models_shared import _utcnow
 from backend import crud, models, schemas
 from backend.agents.orchestrator import AgentOrchestrator
-from backend.auth import require_active_user, require_admin
+from backend.core.permissions import require_active_user, require_admin
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.crud.crm import resolve_persona_id_for_user

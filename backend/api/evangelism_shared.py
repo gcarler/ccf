@@ -48,7 +48,7 @@ def is_excused_status(value) -> bool:
 
 def _is_crm_admin_or_pastor(user) -> bool:
     """Check if user has admin/pastor role (shared helper)."""
-    from backend.auth import normalize_role
+    from backend.core.permissions import normalize_role
 
     role = normalize_role(str(getattr(user, "role", "")))
     if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
@@ -85,7 +85,7 @@ def _check_absence_trigger(db: Session, session_id: int, sede_id):
         GrupoEvangelismo,
         ParticipanteGrupo,
     )
-    from backend.models_personas import Persona
+    from backend.models_crm import Persona
     from backend.models_evangelism import EstadoAsistenciaEnum
 
     session = (
@@ -172,7 +172,7 @@ def _check_absence_trigger(db: Session, session_id: int, sede_id):
 
 def _check_first_time_lead_trigger(db: Session, session_id: int):
     """If a first_time attendee is recorded, mark as LEAD_NUEVO in CRM."""
-    from backend.models_personas import Persona
+    from backend.models_crm import Persona
     from backend.models_evangelism import Asistencia
 
     first_timers = (

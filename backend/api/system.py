@@ -8,7 +8,7 @@ from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.auth import require_active_user, require_admin
+from backend.core.permissions import require_active_user, require_admin
 from backend.core.ai import generate_ministerial_content
 from backend.core.database import get_db
 from backend.crud.crm import get_user_sede_id

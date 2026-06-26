@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.auth import require_pastor_or_admin
+from backend.core.permissions import require_pastor_or_admin
 from backend.core.database import get_db
 
 roles_router = APIRouter(tags=["Evangelismo - Roles y Excusas"])

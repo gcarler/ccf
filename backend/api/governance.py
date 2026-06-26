@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_admin
+from backend.core.permissions import require_admin
 from backend.core.database import get_db
 
 router = APIRouter(prefix="/governance", tags=["governance"])

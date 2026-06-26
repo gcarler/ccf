@@ -227,15 +227,3 @@ class PersonaPlatformRole(Base):
     __table_args__ = (
         UniqueConstraint("persona_id", "role_id", name="uq_persona_platform_role"),
     )
-
-
-# ──────────────────────────────────────────────
-# BACKWARD COMPAT ALIASES (tablas viejas user_*)
-# Los stubs permiten que código legado que aún importe estas clases
-# no rompa mientras se migra gradualmente.
-# ──────────────────────────────────────────────
-
-UserMinistry = PersonaMinistry
-UserRoleAssignment = PersonaRoleAssignment
-UserRoleHistory = PersonaRoleHistory
-UserPlatformRole = PersonaPlatformRole

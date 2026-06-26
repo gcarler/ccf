@@ -12,7 +12,7 @@ import uuid as _uuid
 
 import pytest
 
-from backend.models_personas import Persona
+from backend.models_crm import Persona
 from backend.models_crm import ChatMessage  # noqa: F401 — register for import side effects
 from tests.conftest import seed_admin_v2, auth_headers_v2
 from tests.factories_projects import (
@@ -877,4 +877,3 @@ class TestUUIDEdgeCases:
         # Verify gone
         resp = client.get("/api/projects", headers=headers)
         assert resp.json() == []
-

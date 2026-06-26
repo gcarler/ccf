@@ -358,10 +358,7 @@ class Persona(Base):
     mobile_phone = Column(String(20), nullable=True)
     landline_phone = Column(String(20), nullable=True)
     other_phone = Column(String(20), nullable=True)
-    # DEPRECADO: usar church_role_effective (resuelto desde Kernel PersonaRoleAssignment)
-    # La columna física se mantiene por compatibilidad DB pero NO se debe usar en código nuevo.
-    # El @property church_role_effective resuelve desde Kernel PersonaRoleAssignment.
-    church_role = Column(String(50), default="Miembro", index=True)  # DEPRECATED — do not use in new code
+    church_role = Column(String(50), default="Miembro", index=True)
     is_baptized = Column(Boolean, default=False, index=True)
     fecha_bautismo = Column(Date, nullable=True)
     spiritual_status = Column(String(50), default="Nuevo", index=True)
@@ -430,7 +427,6 @@ class Persona(Base):
     scanner_token_hash = Column(String(128), nullable=True, index=True, comment="SHA-256 hash del scanner token")
     scanner_token_expires_at = Column(DateTime(timezone=True), nullable=True, comment="Fecha de expiración del scanner token")
 
-    # Computed aliases used by evangelism module
     @hybrid_property
     def nombre_completo(self):
         parts = [self.first_name or "", self.last_name or ""]
@@ -450,15 +446,9 @@ class Persona(Base):
     def telefono(cls):
         return _func.coalesce(cls.phone, cls.mobile_phone)
 
-    # ── church_role deprecado: usar Kernel PersonaRoleAssignment ──
-    # Migración pendiente: eliminar la columna física y usar solo Kernel.
     @property
     def church_role_effective(self) -> str:
-        """Rol en la iglesia resuelto desde el Kernel (PersonaRoleAssignment).
-        
-        Si existe un registro en persona_church_roles vinculado a esta persona,
-        devuelve ese valor. En caso contrario, hace fallback a la columna compat.
-        """
+        """Rol en la iglesia resuelto desde el Kernel."""
         if self.rol_iglesia and self.rol_iglesia.church_role:
             val = self.rol_iglesia.church_role
             return val.value if hasattr(val, 'value') else str(val)
@@ -998,10 +988,3 @@ class CommunityBoardCard(Base):
     position = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-
-
-
-
-# ── Compat compatibility aliases (cell_groups → grupos_evangelismo) ──
-# CellGroup and related classes are defined here for backward compat.
-# The v2 models live in models_evangelism.py (GrupoEvangelismo, etc.)

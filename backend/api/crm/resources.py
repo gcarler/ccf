@@ -8,7 +8,7 @@ import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from backend.auth import require_module_access
+from backend.core.permissions import require_module_access
 from backend.core.database import get_db
 from backend.services.messaging import MessagingGateway, get_messaging_gateway
 from backend.core.storage import storage_service

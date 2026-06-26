@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_module_access
+from backend.core.permissions import require_module_access
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
 from backend.models_shared import _utcnow

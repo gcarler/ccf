@@ -10,7 +10,7 @@ from backend.api.workspace_shared import (_detect_anomalies,
                                           _enrich_audit_rows,
                                           _filter_audit_rows,
                                           _read_audit_events, _summarize_audit)
-from backend.auth import require_admin
+from backend.core.permissions import require_admin
 from backend.core.rate_limit import rate_limiter
 
 router = APIRouter(tags=["workspace"])

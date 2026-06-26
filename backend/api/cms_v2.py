@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from backend.models_shared import _utcnow
 from backend import crud, models, schemas
-from backend.auth import normalize_role, require_module_access
+from backend.core.permissions import normalize_role, require_module_access
 from backend.core.database import get_db
 from backend.schemas._common import PaginatedResponse
 
@@ -884,7 +884,7 @@ def _build_section_defaults(
             .filter(models.Persona.estado_vital == "ACTIVO")
             .count()
         )
-        group_count = db.query(models.CellGroup).filter(models.CellGroup.status == "Activo").count()
+        group_count = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.status == "Activo").count()
         return {
             "stats": [
                 {"label": "Miembros Activos", "value": str(active_members or 0)},

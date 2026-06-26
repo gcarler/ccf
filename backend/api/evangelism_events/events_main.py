@@ -25,7 +25,7 @@ from backend.api.evangelism_shared import (
     normalize_role_scope_payload,
     utc_now,
 )
-from backend.auth import (
+from backend.core.permissions import (
     normalize_role,
     require_active_user,
     require_module_access,

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.models_shared import _utcnow
 from backend import models
-from backend.auth import require_admin, require_module_access
+from backend.core.permissions import require_admin, require_module_access
 from backend.core.database import get_db
 
 router = APIRouter(prefix="/finance", tags=["Finance"])

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_module_access, require_permission
+from backend.core.permissions import require_module_access, require_permission
 from backend.core.database import get_db
 from backend.crud.crm import resolve_persona_id_for_user
 

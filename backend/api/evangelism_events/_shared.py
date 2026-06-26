@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.auth import normalize_role
+from backend.core.permissions import normalize_role
 from backend.core.tenant import require_user_sede_id
 
 

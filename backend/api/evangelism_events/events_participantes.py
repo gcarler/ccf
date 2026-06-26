@@ -16,7 +16,7 @@ from backend.api.evangelism_shared import (
     parse_session_date,
     utc_now,
 )
-from backend.auth import require_active_user, require_pastor_or_admin
+from backend.core.permissions import require_active_user, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.crud._utils import _utcnow
 

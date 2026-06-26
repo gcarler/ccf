@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.auth import require_pastor_or_admin
+from backend.core.permissions import require_pastor_or_admin
 from backend.crud.crm import get_user_sede_id
 from backend.core.database import get_db
 from backend.api.evangelism_shared import utc_now

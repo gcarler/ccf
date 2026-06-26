@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend import crud, models
-from backend.auth import require_pastor_or_admin
+from backend.core.permissions import require_pastor_or_admin
 from backend.core.database import get_db
 from backend.crud.evangelism import (
     create_estrategia as create_evangelism_strategy,

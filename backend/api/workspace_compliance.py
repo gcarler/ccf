@@ -25,7 +25,7 @@ from backend.api.workspace_shared import (DEFAULT_COMPLIANCE_POLICY,
                                           _save_workspace_config,
                                           _verify_snapshot_history_item,
                                           _weekly_snapshot_summary)
-from backend.auth import require_admin
+from backend.core.permissions import require_admin
 from backend.core.rate_limit import rate_limiter
 
 router = APIRouter(tags=["workspace"])

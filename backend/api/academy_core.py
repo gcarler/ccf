@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.auth import require_pastor_or_admin
+from backend.core.permissions import require_pastor_or_admin
 from backend.core.database import get_db
 from backend.crud import academy_core as crud
 from backend.crud.crm import get_user_sede_id

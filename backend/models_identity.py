@@ -1,18 +1,7 @@
-"""
-Identity Models — Updated to match actual database schema.
-
-All auth_* tables already have UUID PKs in the database.
-This file provides backward-compatible aliases and defines
-non-auth tables that still use Integer PKs.
-"""
+"""Identity support models for auth-adjacent preferences and notifications."""
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Backward-compatible aliases for auth models (defined in models_auth.py)
-# These are kept for code that imports from models_identity
-# ═══════════════════════════════════════════════════════════════════════════════
 
 from backend.models_auth import (
     Usuario as User,
@@ -28,14 +17,9 @@ from backend.models_auth import (
     NivelGamificado as Level,
 )
 
-# Re-export User for backward compatibility
 __all__ = ["User", "Role", "RefreshToken", "ResetToken", "VerificationToken",
            "Badge", "UserBadge", "UserUIPreference", "Notification", "UserReminder", "Level"]
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Non-auth Identity Models (still need migration)
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class Level(Base):
     __tablename__ = "levels"

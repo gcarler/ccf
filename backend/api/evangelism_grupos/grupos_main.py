@@ -18,7 +18,7 @@ from backend.api.evangelism_shared import (
     _get_persona_for_user,
     _can_manage_grupo,
 )
-from backend.auth import get_current_user, require_active_user, require_pastor_or_admin
+from backend.core.permissions import get_current_user, require_active_user, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 

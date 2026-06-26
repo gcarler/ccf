@@ -11,7 +11,7 @@ from sqlalchemy import cast, func, Integer
 from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
-from backend.auth import normalize_role, require_module_access, require_staff_or_admin
+from backend.core.permissions import normalize_role, require_module_access, require_staff_or_admin
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.crud.crm import get_user_sede_id

@@ -17,7 +17,7 @@ from backend.api.evangelism_shared import (
     _is_crm_admin_or_pastor,
     _get_persona_for_user,
 )
-from backend.auth import get_current_user, require_pastor_or_admin
+from backend.core.permissions import get_current_user, require_pastor_or_admin
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 
@@ -381,7 +381,7 @@ def get_session_detail(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Get session with attendance records including member names."""
-    from backend.models_personas import Persona
+    from backend.models_crm import Persona
 
     session = (
         db.query(SesionGrupo)

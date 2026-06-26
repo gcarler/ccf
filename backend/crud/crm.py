@@ -13,8 +13,8 @@ from backend import models, schemas
 from backend.core.security import decrypt_data, encrypt_data
 from backend.crud._utils import _utcnow
 from backend.schemas.crm import CrmEventUpdate
-from backend.schemas.compatibility import CommunityBoardCardUpdate
 from backend.schemas.notifications import CommunicationLogUpdate
+from backend.schemas.operational import CommunityBoardCardUpdate
 
 
 def _is_uuid_like(value) -> bool:
@@ -709,7 +709,7 @@ def create_prayer_request(db: Session, payload: schemas.PrayerRequestCreate) -> 
 
 
 def get_cell_groups(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.CellGroup).offset(skip).limit(limit).all()
+    return db.query(models.GrupoEvangelismo).offset(skip).limit(limit).all()
 
 
 def _group_member_role_values(item):
@@ -724,9 +724,9 @@ def _group_member_role_values(item):
     return role or "participante", custom_role_id
 
 
-def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: str | None = None):
+def create_cell_group(db: Session, payload: schemas.GrupoEvangelismoCreate, sede_id: str | None = None):
     data = payload.model_dump(exclude={"base_attendee_ids", "base_attendees_with_roles"})
-    # Map evangelism_strategy_id -> estrategia_id (CellGroup = GrupoEvangelismo uses estrategia_id)
+    # Map evangelism_strategy_id -> estrategia_id.
     if data.get("evangelism_strategy_id") and not data.get("estrategia_id"):
         data["estrategia_id"] = data.pop("evangelism_strategy_id")
     # Infer sede_id from user if not provided in payload
@@ -741,7 +741,7 @@ def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: st
     if not str(data.get("name") or "").strip():
         fallback_name = str(data.get("address") or data["code"]).strip()
         data["name"] = f"Faro pendiente - {fallback_name}"
-    db_obj = models.CellGroup(**data)
+    db_obj = models.GrupoEvangelismo(**data)
     db.add(db_obj)
 
     base_attendees_with_roles = getattr(payload, "base_attendees_with_roles", None)
@@ -749,7 +749,7 @@ def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: st
         db.flush()  # Get the ID without committing
         for item in base_attendees_with_roles:
             role, custom_role_id = _group_member_role_values(item)
-            attendee = models.CellGroupMember(
+            attendee = models.ParticipanteGrupo(
                 cell_group_id=db_obj.id,
                 persona_id=uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id,
                 role=role,
@@ -759,7 +759,7 @@ def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: st
     elif payload.base_attendee_ids:
         db.flush()  # Get the ID without committing
         for persona_id in payload.base_attendee_ids:
-            attendee = models.CellGroupMember(cell_group_id=db_obj.id, persona_id=persona_id, role="asistente")
+            attendee = models.ParticipanteGrupo(cell_group_id=db_obj.id, persona_id=persona_id, role="asistente")
             db.add(attendee)
 
     db.commit()
@@ -767,8 +767,8 @@ def create_cell_group(db: Session, payload: schemas.CellGroupCreate, sede_id: st
     return db_obj
 
 
-def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGroupUpdate):
-    house = db.query(models.CellGroup).filter(models.CellGroup.id == house_id).first()
+def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangelismoUpdate):
+    house = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == house_id).first()
     if not house:
         return None
 
@@ -782,16 +782,16 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
         setattr(house, key, value)
 
     if payload.base_attendees_with_roles is not None:
-        db.query(models.CellGroupMember).filter(models.CellGroupMember.cell_group_id == house_id).update(
-            {models.CellGroupMember.deleted_at: _utcnow(), models.CellGroupMember.activo: False},
+        db.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.cell_group_id == house_id).update(
+            {models.ParticipanteGrupo.deleted_at: _utcnow(), models.ParticipanteGrupo.activo: False},
             synchronize_session=False,
         )
         for item in payload.base_attendees_with_roles:
             role, custom_role_id = _group_member_role_values(item)
             p_id = uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id
-            existing = db.query(models.CellGroupMember).filter(
-                models.CellGroupMember.cell_group_id == house_id,
-                models.CellGroupMember.persona_id == p_id
+            existing = db.query(models.ParticipanteGrupo).filter(
+                models.ParticipanteGrupo.cell_group_id == house_id,
+                models.ParticipanteGrupo.persona_id == p_id
             ).first()
             if existing:
                 existing.deleted_at = None
@@ -800,7 +800,7 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
                 existing.rol_personalizado_id = custom_role_id
             else:
                 db.add(
-                    models.CellGroupMember(
+                    models.ParticipanteGrupo(
                         cell_group_id=house_id,
                         persona_id=p_id,
                         role=role,
@@ -850,15 +850,15 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
         house.asistente_persona_id = new_assistant_id
         house.anfitrion_persona_id = new_host_id
     elif payload.base_attendee_ids is not None:
-        db.query(models.CellGroupMember).filter(models.CellGroupMember.cell_group_id == house_id).update(
-            {models.CellGroupMember.deleted_at: _utcnow(), models.CellGroupMember.activo: False},
+        db.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.cell_group_id == house_id).update(
+            {models.ParticipanteGrupo.deleted_at: _utcnow(), models.ParticipanteGrupo.activo: False},
             synchronize_session=False,
         )
         for persona_id in payload.base_attendee_ids:
             p_id = uuid.UUID(str(persona_id)) if isinstance(persona_id, str) else persona_id
-            existing = db.query(models.CellGroupMember).filter(
-                models.CellGroupMember.cell_group_id == house_id,
-                models.CellGroupMember.persona_id == p_id
+            existing = db.query(models.ParticipanteGrupo).filter(
+                models.ParticipanteGrupo.cell_group_id == house_id,
+                models.ParticipanteGrupo.persona_id == p_id
             ).first()
             if existing:
                 existing.deleted_at = None
@@ -866,7 +866,7 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
                 existing.role = "miembro"
             else:
                 db.add(
-                    models.CellGroupMember(
+                    models.ParticipanteGrupo(
                         cell_group_id=house_id,
                         persona_id=p_id,
                         role="miembro",
@@ -875,10 +875,10 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.CellGro
 
     db.flush()
     house.members_count = (
-        db.query(models.CellGroupMember)
+        db.query(models.ParticipanteGrupo)
         .filter(
-            models.CellGroupMember.cell_group_id == house_id,
-            models.CellGroupMember.deleted_at.is_(None),
+            models.ParticipanteGrupo.cell_group_id == house_id,
+            models.ParticipanteGrupo.deleted_at.is_(None),
         )
         .count()
     )
@@ -1345,12 +1345,12 @@ def delete_prayer_request(db: Session, request_id: int) -> bool:
 # ── Grupos ───────────────────────────────────────
 
 
-def get_cell_group(db: Session, house_id: uuid.UUID) -> Optional[models.CellGroup]:
-    return db.query(models.CellGroup).filter(models.CellGroup.id == house_id).first()
+def get_cell_group(db: Session, house_id: uuid.UUID) -> Optional[models.GrupoEvangelismo]:
+    return db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == house_id).first()
 
 
 def delete_cell_group(db: Session, house_id: uuid.UUID) -> bool:
-    row = db.query(models.CellGroup).filter(models.CellGroup.id == house_id).first()
+    row = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == house_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()

@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app import app
-from backend.auth import require_active_user
+from backend.core.permissions import require_active_user
 from backend.mesh_websockets import manager
 
 

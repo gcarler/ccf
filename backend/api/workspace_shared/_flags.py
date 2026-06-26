@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from backend import models
 from backend.api.workspace_shared import (ALLOWED_RULE_KEYS, MAX_LIST_ITEMS,
                                           MAX_USER_REF_LENGTH)
-from backend.auth import VALID_ROLES
+from backend.core.permissions import VALID_ROLES
 
 
 def _sanitize_feature_payload(

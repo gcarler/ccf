@@ -432,9 +432,9 @@ class TestModelsCoverage:
         from backend import models_other
         assert models_other is not None
 
-    def test_personas_models(self):
-        from backend import models_personas
-        assert models_personas is not None
+    def test_persona_model(self):
+        from backend.models_crm import Persona
+        assert Persona is not None
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -493,13 +493,13 @@ class TestBackendScheduler:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# AUTH MODULE (auth.py, security.py)
+# PERMISSIONS MODULE (permissions.py, security.py)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestAuthModule:
     def test_import(self):
-        from backend import auth
-        assert auth is not None
+        from backend.core import permissions
+        assert permissions is not None
 
     def test_security_import(self):
         from backend import security

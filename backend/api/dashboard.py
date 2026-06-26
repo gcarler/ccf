@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from backend.auth import get_user_effective_permissions, normalize_role, require_active_user
+from backend.core.permissions import get_user_effective_permissions, normalize_role, require_active_user
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 from backend.crud.dashboard import (

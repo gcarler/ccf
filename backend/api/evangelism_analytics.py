@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.api.evangelism_shared import ATTENDED_STATES
-from backend.auth import require_active_user
+from backend.core.permissions import require_active_user
 from backend.core.database import get_db
 from backend.core.tenant import get_user_sede_id
 

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend.models_shared import _utcnow
 from backend import crud, models, schemas
-from backend.auth import require_active_user, require_admin
+from backend.core.permissions import require_active_user, require_admin
 from backend.core.database import get_db
 from backend.core.permissions import (MODULE_PERMISSION_MAP, PERMISSION_LEVELS,
                                       expand_module_permissions,

@@ -9,7 +9,7 @@ from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_module_access
+from backend.core.permissions import require_module_access
 from backend.schemas import PaginatedResponse
 from backend.core.config import get_settings
 from backend.core.database import get_db

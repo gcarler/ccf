@@ -23,7 +23,7 @@ from backend.api.evangelism_rankings import router as rankings_router
 from backend.api.evangelism_reports import router as reports_router
 from backend.api.evangelism_analytics import router as analytics_router
 from backend.api.evangelism_shared import utc_now
-from backend.auth import (
+from backend.core.permissions import (
     require_active_user,
     require_admin,
     require_module_access,
@@ -1070,7 +1070,7 @@ def crm_analytics(
     )
 
     # Grupos
-    total_groups = db.query(models.CellGroup).filter(models.CellGroup.sede_id == sede_id).count()
+    total_groups = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.sede_id == sede_id).count()
 
     # Familia (no tiene sede_id directo, contar miembros de la sede)
     from sqlalchemy import exists

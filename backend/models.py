@@ -2,10 +2,10 @@
 # Barrel re-export file — all imports intentionally unused here
 
 # Identity & auth
-# Academy / LMS (compat — Course, Enrollment, Lesson still in use via api/academy.py)
+# Academy / LMS
 from backend.models_academy import (
     AcademyActivityLog, Assessment, AssessmentAttempt, AssessmentOption,
-    AssessmentQuestion, AssignmentSubmission, CampaignSeason, CellGroup,
+    AssessmentQuestion, AssignmentSubmission, CampaignSeason,
     Certificate, Course, CourseAttendance, CoursePrerequisite, Enrollment,
     Family, FormalActa, ForumComment, ForumThread, Lesson, LessonProgress,
     Resource)
@@ -18,16 +18,10 @@ from backend.models_cms import (  # noqa: F401
     ContentPublication, MediaAsset,
     PageContent,
     PageContentVersion, SavedView, Testimonial)
-# Personas (reemplaza Persona — UUID PK)
-from backend.models_personas import Persona
-Member = Persona  # Backward compatibility alias for compat tests and CRUDs
-FaroSeason = CampaignSeason  # Backward compatibility alias for FaroSeason
-
-
 # CRM / Pastoral
 from backend.models_crm import (
     AgendaEvent, ChatMessage, ConsolidationAssignment,
-    ConsolidationCase, ConsolidationInteraction, ConsolidationTask,  # compat (use CasoCRM from models_crm_core)
+    ConsolidationCase, ConsolidationInteraction, ConsolidationTask,
     CrmAutomation, CrmEvent,
     ColombianDepartment,
     CommunicationLog, CommunityBoardCard,
@@ -35,7 +29,7 @@ from backend.models_crm import (
     CounselingTicket, CrmTask, Donation, DonationCategory, EventAssignment,
     EventAttendance, Fund, MemberMinistry,
     MemberPosition, MemberRole, Ministry, PastoralCallLog, Position,
-    PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
+    Persona, PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
     VolunteerShift, VolunteerSkill, member_volunteer_skills)
 
 # Projects (canonical)
@@ -80,8 +74,6 @@ from backend.models_auth import (
     RecordatorioUsuario, RolPlataforma, TokenResetContrasena,
     TokenSesion, TokenVerificacionEmail, Usuario, UsuarioRolModulo)
 
-# Project compat aliases removed; canonical projects live in models_projects.
-
 # Agenda — Calendario Unificado, Recursos, Participantes
 from backend.models_agenda import (
     EventoAgenda, ParticipanteEvento, RecursoFisico, ReservaRecurso,
@@ -121,10 +113,3 @@ from backend.models_enterprise import (  # noqa: F401
     SearchIndex, SearchPromotion, UserSession, MediaFolder,
     MediaFileVersion, CmsRedirect, BrokenLinkCheck,
 )
-
-
-
-CellGroup = GrupoEvangelismo
-CellGroupMember = ParticipanteGrupo
-CellGroupSession = SesionGrupo
-CellGroupAttendance = Asistencia
