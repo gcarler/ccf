@@ -1,6 +1,6 @@
 """CRUD for models missing dedicated functions:
-positions, event_assignments, ministries, member_ministries,
-crm_automations, role_definitions, member_roles, funds,
+positions, event_assignments, ministries, persona_ministry_assignments,
+crm_automations, role_definitions, persona_role_links, funds,
 volunteer_skills, chat_messages.
 """
 
@@ -32,7 +32,7 @@ class PositionUpdate(BaseModel):
     is_active: bool | None = None
 
 
-class MemberPositionCreate(BaseModel):
+class PersonaPositionCreate(BaseModel):
     persona_id: str
     position_id: int
     start_date: datetime | None = None
@@ -41,7 +41,7 @@ class MemberPositionCreate(BaseModel):
     notes: str | None = None
 
 
-class MemberPositionUpdate(BaseModel):
+class PersonaPositionUpdate(BaseModel):
     end_date: datetime | None = None
     is_active: bool | None = None
     notes: str | None = None
@@ -70,7 +70,7 @@ class MinistryUpdate(BaseModel):
     leader_id: int | None = None
 
 
-class MemberMinistryCreate(BaseModel):
+class PersonaMinistryAssignmentCreate(BaseModel):
     persona_id: str
     ministry_id: int
     role: str | None = None
@@ -80,7 +80,7 @@ class MemberMinistryCreate(BaseModel):
     notes: str | None = None
 
 
-class MemberMinistryUpdate(BaseModel):
+class PersonaMinistryAssignmentUpdate(BaseModel):
     role: str | None = None
     start_date: datetime | None = None
     end_date: datetime | None = None
@@ -117,7 +117,7 @@ class RoleDefinitionUpdate(BaseModel):
     is_system_locked: bool | None = None
 
 
-class MemberRoleCreate(BaseModel):
+class PersonaRoleLinkCreate(BaseModel):
     persona_id: str
     role_id: int
 
@@ -207,43 +207,43 @@ def delete_position(db: Session, position_id: int) -> bool:
 # ── Persona Positions ─────────────────────────────────────────────────────
 
 
-def get_member_positions(
+def get_persona_positions(
     db: Session,
     persona_id: str | None = None,
     only_active: bool = False,
-) -> List[models.MemberPosition]:
-    q = db.query(models.MemberPosition)
+) -> List[models.PersonaPosition]:
+    q = db.query(models.PersonaPosition)
     if persona_id is not None:
-        q = q.filter(models.MemberPosition.persona_id == persona_id)
+        q = q.filter(models.PersonaPosition.persona_id == persona_id)
     if only_active:
-        q = q.filter(models.MemberPosition.is_active)
-    return q.order_by(models.MemberPosition.created_at.desc()).all()
+        q = q.filter(models.PersonaPosition.is_active)
+    return q.order_by(models.PersonaPosition.created_at.desc()).all()
 
 
-def get_member_position(db: Session, mp_id: int) -> Optional[models.MemberPosition]:
+def get_persona_position(db: Session, mp_id: int) -> Optional[models.PersonaPosition]:
     return (
-        db.query(models.MemberPosition)
-        .filter(models.MemberPosition.id == mp_id)
+        db.query(models.PersonaPosition)
+        .filter(models.PersonaPosition.id == mp_id)
         .first()
     )
 
 
-def create_member_position(
-    db: Session, payload: MemberPositionCreate
-) -> models.MemberPosition:
-    row = models.MemberPosition(**payload.model_dump())
+def create_persona_position(
+    db: Session, payload: PersonaPositionCreate
+) -> models.PersonaPosition:
+    row = models.PersonaPosition(**payload.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
     return row
 
 
-def update_member_position(
-    db: Session, mp_id: int, payload: MemberPositionUpdate
-) -> Optional[models.MemberPosition]:
+def update_persona_position(
+    db: Session, mp_id: int, payload: PersonaPositionUpdate
+) -> Optional[models.PersonaPosition]:
     row = (
-        db.query(models.MemberPosition)
-        .filter(models.MemberPosition.id == mp_id)
+        db.query(models.PersonaPosition)
+        .filter(models.PersonaPosition.id == mp_id)
         .first()
     )
     if not row:
@@ -255,10 +255,10 @@ def update_member_position(
     return row
 
 
-def delete_member_position(db: Session, mp_id: int) -> bool:
+def delete_persona_position(db: Session, mp_id: int) -> bool:
     row = (
-        db.query(models.MemberPosition)
-        .filter(models.MemberPosition.id == mp_id)
+        db.query(models.PersonaPosition)
+        .filter(models.PersonaPosition.id == mp_id)
         .first()
     )
     if not row:
@@ -379,46 +379,46 @@ def delete_ministry(db: Session, ministry_id: int) -> bool:
 # ── Persona Ministries ────────────────────────────────────────────────────
 
 
-def get_member_ministries(
+def get_persona_ministry_assignments(
     db: Session,
     persona_id: str | None = None,
     ministry_id: int | None = None,
     only_active: bool = False,
-) -> List[models.MemberMinistry]:
-    q = db.query(models.MemberMinistry)
+) -> List[models.PersonaMinistryAssignment]:
+    q = db.query(models.PersonaMinistryAssignment)
     if persona_id is not None:
-        q = q.filter(models.MemberMinistry.persona_id == persona_id)
+        q = q.filter(models.PersonaMinistryAssignment.persona_id == persona_id)
     if ministry_id is not None:
-        q = q.filter(models.MemberMinistry.ministry_id == ministry_id)
+        q = q.filter(models.PersonaMinistryAssignment.ministry_id == ministry_id)
     if only_active:
-        q = q.filter(models.MemberMinistry.is_active)
+        q = q.filter(models.PersonaMinistryAssignment.is_active)
     return q.all()
 
 
-def get_member_ministry(db: Session, mm_id: int) -> Optional[models.MemberMinistry]:
+def get_persona_ministry_assignment(db: Session, mm_id: int) -> Optional[models.PersonaMinistryAssignment]:
     return (
-        db.query(models.MemberMinistry)
-        .filter(models.MemberMinistry.id == mm_id)
+        db.query(models.PersonaMinistryAssignment)
+        .filter(models.PersonaMinistryAssignment.id == mm_id)
         .first()
     )
 
 
-def create_member_ministry(
-    db: Session, payload: MemberMinistryCreate
-) -> models.MemberMinistry:
-    row = models.MemberMinistry(**payload.model_dump())
+def create_persona_ministry_assignment(
+    db: Session, payload: PersonaMinistryAssignmentCreate
+) -> models.PersonaMinistryAssignment:
+    row = models.PersonaMinistryAssignment(**payload.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
     return row
 
 
-def update_member_ministry(
-    db: Session, mm_id: int, payload: MemberMinistryUpdate
-) -> Optional[models.MemberMinistry]:
+def update_persona_ministry_assignment(
+    db: Session, mm_id: int, payload: PersonaMinistryAssignmentUpdate
+) -> Optional[models.PersonaMinistryAssignment]:
     row = (
-        db.query(models.MemberMinistry)
-        .filter(models.MemberMinistry.id == mm_id)
+        db.query(models.PersonaMinistryAssignment)
+        .filter(models.PersonaMinistryAssignment.id == mm_id)
         .first()
     )
     if not row:
@@ -430,10 +430,10 @@ def update_member_ministry(
     return row
 
 
-def delete_member_ministry(db: Session, mm_id: int) -> bool:
+def delete_persona_ministry_assignment(db: Session, mm_id: int) -> bool:
     row = (
-        db.query(models.MemberMinistry)
-        .filter(models.MemberMinistry.id == mm_id)
+        db.query(models.PersonaMinistryAssignment)
+        .filter(models.PersonaMinistryAssignment.id == mm_id)
         .first()
     )
     if not row:
@@ -574,29 +574,29 @@ def delete_role_definition(db: Session, role_id: int) -> bool:
 # ── Persona Roles ─────────────────────────────────────────────────────────
 
 
-def get_member_roles(
+def get_persona_role_links(
     db: Session,
     persona_id: str | None = None,
     role_id: int | None = None,
-) -> List[models.MemberRole]:
-    q = db.query(models.MemberRole)
+) -> List[models.PersonaRoleLink]:
+    q = db.query(models.PersonaRoleLink)
     if persona_id is not None:
-        q = q.filter(models.MemberRole.persona_id == persona_id)
+        q = q.filter(models.PersonaRoleLink.persona_id == persona_id)
     if role_id is not None:
-        q = q.filter(models.MemberRole.role_id == role_id)
-    return q.order_by(models.MemberRole.created_at.desc()).all()
+        q = q.filter(models.PersonaRoleLink.role_id == role_id)
+    return q.order_by(models.PersonaRoleLink.created_at.desc()).all()
 
 
-def create_member_role(db: Session, payload: MemberRoleCreate) -> models.MemberRole:
-    row = models.MemberRole(**payload.model_dump())
+def create_persona_role_link(db: Session, payload: PersonaRoleLinkCreate) -> models.PersonaRoleLink:
+    row = models.PersonaRoleLink(**payload.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
     return row
 
 
-def delete_member_role(db: Session, mr_id: int) -> bool:
-    row = db.query(models.MemberRole).filter(models.MemberRole.id == mr_id).first()
+def delete_persona_role_link(db: Session, mr_id: int) -> bool:
+    row = db.query(models.PersonaRoleLink).filter(models.PersonaRoleLink.id == mr_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()

@@ -9,7 +9,7 @@ import { Calendar, MapPin, Users, CheckCircle2, ArrowLeft, Mic, Save, X, Search,
 import { DSCard } from "@/design/components/DSCard";
 import { toast } from "sonner";
 import clsx from "clsx";
-import type { Member } from "@/app/plataforma/evangelism/types";
+import type { Persona } from "@/app/plataforma/evangelism/types";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 
 type MinistryEventDetail = {
@@ -24,7 +24,7 @@ type MinistryEventDetail = {
  created_at: string | null;
 };
 
-type Assignment = { persona_id: string; role: string; member_name?: string };
+type Assignment = { persona_id: string; role: string; persona_name?: string };
 type SessionData = {
  event_id: number;
  session_date: string;
@@ -38,8 +38,8 @@ type SessionData = {
  total_expected: number;
  attendance_rate: number;
 };
-interface MemberSelectProps {
- members: Member[];
+interface PersonaSelectProps {
+ personas: Persona[];
  value: string | string[] | null;
  onChange: (next: string | string[] | null) => void;
  label: string;
@@ -58,19 +58,19 @@ type EventAnalyticsData = {
  }>;
 };
 
-function MemberSelect({ members, value, onChange, label, multi = false }: MemberSelectProps) {
+function PersonaSelect({ personas, value, onChange, label, multi = false }: PersonaSelectProps) {
  const [search, setSearch] = useState('');
  const [open, setOpen] = useState(false);
 
  const filtered = useMemo(() => {
- if (!search) return members.slice(0, 50);
+ if (!search) return personas.slice(0, 50);
  const q = search.toLowerCase();
- return members.filter((m) =>
+ return personas.filter((m) =>
  m.nombre_completo.toLowerCase().includes(q)
  ).slice(0, 50);
- }, [members, search]);
+ }, [personas, search]);
 
- const handleSelect = (m: Member) => {
+ const handleSelect = (m: Persona) => {
  if (multi) {
  const selected = Array.isArray(value) ? value : [];
  if (!selected.includes(m.id)) onChange([...selected, m.id]);
@@ -91,11 +91,11 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
  return (
  <div className="relative">
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">{label}</label>
- 
+
  {multi ? (
  <div className="flex flex-wrap gap-2 mb-2">
  {(Array.isArray(value) ? value : []).map((id) => {
- const m = members.find((x) => x.id === id);
+ const m = personas.find((x) => x.id === id);
  if (!m) return null;
  return (
  <div key={id} className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-blue-300 rounded-lg text-sm font-bold">
@@ -109,7 +109,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
  <div className="flex items-center justify-between px-4 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-2">
  <span className="text-sm font-bold text-blue-800 dark:text-blue-300">
  {(() => {
- const m = members.find((x) => x.id === value);
+ const m = personas.find((x) => x.id === value);
  return m ? m.nombre_completo : 'Cargando...';
  })()}
  </span>
@@ -121,7 +121,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
  <div>
  <div className="relative">
  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
- <input 
+ <input
  aria-label={label}
  value={search}
  onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
@@ -132,7 +132,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
  </div>
  {open && search && (
  <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-60 overflow-y-auto">
- {filtered.map((m: Member) => (
+ {filtered.map((m: Persona) => (
  <button
  key={m.id}
  onClick={() => handleSelect(m)}
@@ -156,13 +156,13 @@ export default function EventDetailPage() {
  const router = useRouter();
  const id = params?.id as string;
  const { token } = useAuth();
- 
+
  const [event, setEvent] = useState<MinistryEventDetail | null>(null);
  const [loading, setLoading] = useState(true);
  const [activeTab, setActiveTab] = useState<'details' | 'session' | 'analytics'>('details');
  const [analytics, setAnalytics] = useState<EventAnalyticsData | null>(null);
  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
- 
+
  // Session State
  const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().split('T')[0]);
  const [sessionData, setSessionData] = useState<SessionData | null>(null);
@@ -174,9 +174,9 @@ export default function EventDetailPage() {
  const [savingSession, setSavingSession] = useState(false);
  const [exportingCsv, setExportingCsv] = useState(false);
  const [savingVisitor, setSavingVisitor] = useState(false);
- 
+
  // Agenda Form State
- const [members, setMembers] = useState<Member[]>([]);
+ const [personas, setPersonas] = useState<Persona[]>([]);
  const [mcId, setMcId] = useState<string | null>(null);
  const [preacherIds, setPreacherIds] = useState<string[]>([]);
  const [offeringId, setOfferingId] = useState<string | null>(null);
@@ -215,7 +215,7 @@ export default function EventDetailPage() {
 
  useEffect(() => {
  if (activeTab === 'session' && token) {
- apiFetch<Member[]>('/crm/personas', { token, query: { limit: 1000 } }).then(setMembers).catch(() => toast.error('Error al cargar personas'));
+ apiFetch<Persona[]>('/crm/personas', { token, query: { limit: 1000 } }).then(setPersonas).catch(() => toast.error('Error al cargar personas'));
  }
  }, [activeTab, token]);
 
@@ -226,12 +226,12 @@ export default function EventDetailPage() {
  setSessionLoading(true);
  const data = await apiFetch<SessionData>(`/evangelism/events/${id}/sessions/${sessionDate}`, { token });
  setSessionData(data);
- 
+
  // Pre-fill forms
  const mc = data.assignments.find(a => a.role === 'MC');
  const pre = data.assignments.filter(a => a.role === 'PREACHER');
  const off = data.assignments.find(a => a.role === 'OFFERING');
- 
+
  setMcId(mc?.persona_id || null);
  setPreacherIds(pre.map(a => a.persona_id));
  setOfferingId(off?.persona_id || null);
@@ -370,15 +370,15 @@ export default function EventDetailPage() {
  </span>
  </div>
  <div className="flex bg-[hsl(var(--bg-muted))] p-1 rounded-lg">
- <button 
+ <button
  onClick={() => setActiveTab('details')}
  className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'details' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
  >Detalles Generales</button>
- <button 
+ <button
  onClick={() => setActiveTab('session')}
  className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'session' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
  >Configurar Sesion</button>
- <button 
+ <button
  onClick={() => setActiveTab('analytics')}
  className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'analytics' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
  >Analitica</button>
@@ -431,11 +431,11 @@ export default function EventDetailPage() {
  <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">{analytics.kpis.peak_month.month}</p>
  </div>
  </div>
- 
+
  {/* Gráfico de Barras CSS */}
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm">
  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Asistencia Promedio por Mes</h3>
- 
+
  {analytics.monthly_data.length === 0 ? (
  <div className="text-center py-2 text-[hsl(var(--text-secondary))] text-sm">No hay datos suficientes para graficar.</div>
  ) : (
@@ -444,14 +444,14 @@ export default function EventDetailPage() {
  // Calculate height percentage relative to peak month
  const maxAvg = analytics.kpis.peak_month.avg || 1;
  const heightPct = Math.max(5, Math.round((d.avg_attendance / maxAvg) * 100));
- 
+
  return (
  <div key={d.month} className="flex-1 min-w-[40px] max-w-[80px] flex flex-col items-center justify-end group">
  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-[hsl(var(--bg-primary))] text-white text-[10px] font-bold px-2 py-1 rounded-md mb-2 whitespace-nowrap">
  {d.avg_attendance} asis.
  </div>
- <div 
- className="w-full bg-blue-100 dark:bg-blue-900/40 hover:bg-[hsl(var(--primary))] dark:hover:bg-[hsl(var(--primary))] rounded-t-lg transition-all duration-500" 
+ <div
+ className="w-full bg-blue-100 dark:bg-blue-900/40 hover:bg-[hsl(var(--primary))] dark:hover:bg-[hsl(var(--primary))] rounded-t-lg transition-all duration-500"
  style={{ height: `${heightPct}%` }}
  ></div>
  <div className="mt-2 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] rotate-[-45deg] origin-top-left translate-y-2 translate-x-2">
@@ -467,7 +467,7 @@ export default function EventDetailPage() {
  )}
  </div>
  )}
- 
+
  {activeTab === 'session' && (
  <div className="space-y-3">
  {/* Toolbar de Sesion */}
@@ -476,8 +476,8 @@ export default function EventDetailPage() {
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Fecha de la Sesion</label>
  <div className="relative">
  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
- <input 
- type="date" 
+ <input
+ type="date"
  value={sessionDate}
  onChange={(e) => setSessionDate(e.target.value)}
  className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 pl-11 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
@@ -491,7 +491,7 @@ export default function EventDetailPage() {
  >
  <UserPlus size={16}/> Registrar Visitante
  </button>
- <button 
+ <button
  onClick={saveSession}
  disabled={savingSession || !sessionDate}
  className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/30 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-60 disabled:hover:scale-100"
@@ -511,24 +511,24 @@ export default function EventDetailPage() {
  <Mic className="text-[hsl(var(--primary))]" size={18}/> Agenda de la Reunion
  </h3>
  <div className="space-y-3">
- <MemberSelect 
+ <PersonaSelect
  label="Maestro de Ceremonia"
- members={members}
+ personas={personas}
  value={mcId}
  onChange={(next) => setMcId(typeof next === 'string' ? next : null)}
  />
  <div className="h-px bg-[hsl(var(--bg-muted))] w-full my-4" />
- <MemberSelect 
+ <PersonaSelect
  label="Predicador(es)"
- members={members}
+ personas={personas}
  value={preacherIds}
  onChange={(next) => setPreacherIds(Array.isArray(next) ? next : [])}
  multi
  />
  <div className="h-px bg-[hsl(var(--bg-muted))] w-full my-4" />
- <MemberSelect 
+ <PersonaSelect
  label="Palabra de Ofrenda"
- members={members}
+ personas={personas}
  value={offeringId}
  onChange={(next) => setOfferingId(typeof next === 'string' ? next : null)}
  />

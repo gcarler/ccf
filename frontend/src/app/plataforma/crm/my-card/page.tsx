@@ -9,7 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 
-interface Member {
+interface Persona {
     id: string;
     nombre_completo?: string;
     first_name?: string;
@@ -20,19 +20,19 @@ interface Member {
 }
 
 export default function MyCardPage() {
-    const [member, setMember] = useState<Member | null>(null);
+    const [persona, setPersona] = useState<Persona | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const { token } = useAuth();
 
-    const fetchMyMemberData = useCallback(async () => {
+    const fetchMyPersonaData = useCallback(async () => {
         if (!token) {
             setLoading(false);
             return;
         }
         try {
-            const data = await apiFetch<Member>('/crm/personas/me', { token, cache: 'no-store' });
-            setMember(data);
+            const data = await apiFetch<Persona>('/crm/personas/me', { token, cache: 'no-store' });
+            setPersona(data);
         } catch (err) {
             console.error(err);
         } finally {
@@ -41,8 +41,8 @@ export default function MyCardPage() {
     }, [token]);
 
     useEffect(() => {
-        fetchMyMemberData();
-    }, [fetchMyMemberData]);
+        fetchMyPersonaData();
+    }, [fetchMyPersonaData]);
 
     if (loading) {
         return (
@@ -53,7 +53,7 @@ export default function MyCardPage() {
         );
     }
 
-    if (!member) {
+    if (!persona) {
         return (
             <div className="min-h-screen bg-[hsl(var(--bg-primary))] flex flex-col items-center justify-center p-4 text-center space-y-3">
                 <div className="p-4 bg-rose-500/10 rounded-full text-rose-500">
@@ -118,7 +118,7 @@ export default function MyCardPage() {
         }
     };
 
-    const theme = getRoleTheme(member.church_role);
+    const theme = getRoleTheme(persona.church_role);
 
     return (
         <CrmShell
@@ -166,10 +166,10 @@ export default function MyCardPage() {
                     </div>
                     <div>
                         <h1 className="text-lg font-bold text-white tracking-tight leading-tight">
-                            {member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}
+                            {persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}
                         </h1>
                         <p className={`text-[10px] font-bold uppercase tracking-wide mt-2 ${theme.accent}`}>
-                            {member.church_role} • ID: CCF-{member.id.toString().padStart(4, '0')}
+                            {persona.church_role} • ID: CCF-{persona.id.toString().padStart(4, '0')}
                         </p>
                     </div>
                 </div>
@@ -178,7 +178,7 @@ export default function MyCardPage() {
                 <div className="flex-1 flex flex-col items-center justify-center relative z-10">
                     <div className="p-4 bg-[hsl(var(--surface-1))] rounded-md shadow-2xl relative group-hover:rotate-1 transition-transform duration-500">
                         <QRCodeSVG
-                            value={member.qr_token}
+                            value={persona.qr_token}
                             size={140}
                             level="H"
                             includeMargin={false}
@@ -201,7 +201,7 @@ export default function MyCardPage() {
                 <div className="mt-3 pt-6 border-t border-white/10 relative z-10 flex justify-between items-end">
                     <div className="space-y-1">
                         <p className="text-[7px] font-bold text-white/50 uppercase tracking-wide">Persona Desde</p>
-                        <p className="text-[10px] font-bold text-white">{new Date(member.join_date).toLocaleDateString()}</p>
+                        <p className="text-[10px] font-bold text-white">{new Date(persona.join_date).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
                         <p className="text-[7px] font-bold text-white/50 uppercase tracking-wide">Vigencia</p>

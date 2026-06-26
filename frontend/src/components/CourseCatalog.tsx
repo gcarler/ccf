@@ -10,16 +10,16 @@ import { useWikiDocument } from "@/hooks/useWikiDocument";
 
 type Modality = "formal" | "no_formal";
 
-type AccessLevel = "open" | "member" | "advanced";
+type AccessLevel = "open" | "persona" | "advanced";
 
 const ACCESS_LABEL: Record<AccessLevel, string> = {
   open: "Abierto",
-  member: "Congregantes",
+  persona: "Congregantes",
   advanced: "Formadores",
 };
 const ACCESS_COLOR: Record<AccessLevel, string> = {
   open: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  member: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  persona: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   advanced: "bg-amber-500/10 text-amber-400 border-amber-500/20",
 };
 
@@ -189,8 +189,8 @@ export default function CourseCatalog({
                     <div className="flex justify-between items-start mb-1">
                       <h3 className="font-bold text-base text-white truncate pr-2">{course.title}</h3>
                       <div className="flex items-center gap-1 shrink-0">
-                        {course.access_level && course.access_level !== 'member' && (
-                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${ACCESS_COLOR[course.access_level] ?? ACCESS_COLOR.member}`}>
+                        {course.access_level && course.access_level !== 'persona' && (
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${ACCESS_COLOR[course.access_level] ?? ACCESS_COLOR.persona}`}>
                             {ACCESS_LABEL[course.access_level] ?? course.access_level}
                           </span>
                         )}

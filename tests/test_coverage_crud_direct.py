@@ -83,10 +83,10 @@ class TestCRMCRUD:
         except Exception:
             pass
 
-    def test_search_members(self, db, admin_persona):
+    def test_search_personas(self, db, admin_persona):
         from backend.crud import crm
         try:
-            results = crm.search_members(db, "test", sede_id=None)
+            results = crm.search_personas(db, "test", sede_id=None)
         except Exception:
             pass
 
@@ -248,24 +248,24 @@ class TestCRMCRUD:
         except Exception:
             pass
 
-    def test_get_member_positions(self, db, admin_persona):
+    def test_get_persona_positions(self, db, admin_persona):
         from backend.crud import crm
         try:
-            positions = crm.get_member_positions(db)
+            positions = crm.get_persona_positions(db)
         except Exception:
             pass
 
-    def test_get_member_ministries(self, db, admin_persona):
+    def test_get_persona_ministry_assignments(self, db, admin_persona):
         from backend.crud import crm
         try:
-            ministries = crm.get_member_ministries(db)
+            ministries = crm.get_persona_ministry_assignments(db)
         except Exception:
             pass
 
-    def test_get_member_roles(self, db, admin_persona):
+    def test_get_persona_role_links(self, db, admin_persona):
         from backend.crud import crm
         try:
-            roles = crm.get_member_roles(db)
+            roles = crm.get_persona_role_links(db)
         except Exception:
             pass
 
@@ -778,7 +778,7 @@ class TestSchemaCoverage:
             crm.AgendaEventBase, crm.AgendaEventCreate,
             crm.CounselingTicketBase, crm.CounselingTicketCreate,
             crm.ConsolidationCaseBase, crm.ConsolidationCaseCreate,
-            crm.CellGroupCreate, crm.CellGroupSessionCreate,
+            crm.GrupoCreate, crm.GrupoSessionCreate,
         ]
         for s in schemas_list:
             assert s is not None

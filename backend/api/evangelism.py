@@ -115,7 +115,7 @@ def get_counseling_ticket(
     return {
         "id": ticket.id,
         "persona_id": ticket.persona_id,
-        "member_name": (f"{persona.first_name} {persona.last_name}" if persona else "Miembro CCF"),
+        "persona_name": (f"{persona.first_name} {persona.last_name}" if persona else "Miembro CCF"),
         "pastor_id": ticket.pastor_id,
         "topic": ticket.subject,
         "summary": ticket.subject,
@@ -147,9 +147,9 @@ def get_counseling_by_lead(
         "/api/evangelism/counseling/lead/{lead_id}",
         "/api/crm/counseling/lead/{lead_id}",
     )
-    """Devuelve sesiones de consejerÃ­a asociadas a un prospecto (por lead_id o member_id combinado)."""
+    """Devuelve sesiones de consejerÃ­a asociadas a un prospecto (por lead_id o persona_id combinado)."""
     try:
-        # Buscar tickets donde el member_id coincida (lead puede haberse convertido en miembro)
+        # Buscar tickets donde el persona_id coincida (lead puede haberse convertido en miembro)
         tickets = db.query(models.CounselingTicket).filter(models.CounselingTicket.persona_id == lead_id).all()
         return [
             {
@@ -288,14 +288,14 @@ def _channel_label(channel: str) -> str:
 
 
 # Audience resolution moved to crm/_shared.py, imported below:
-from backend.api.crm._shared import _resolve_campaign_members, _member_matches_segment  # noqa: E402, F401
+from backend.api.crm._shared import _resolve_campaign_personas, _persona_matches_segment  # noqa: E402, F401
 
 
 def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     ordered = sorted(logs, key=lambda log: log.created_at or datetime.min, reverse=True)
     representative = ordered[0]
     persona = getattr(representative, "persona", None)
-    member_name = f"{persona.first_name} {persona.last_name}" if persona else "Desconocido"
+    persona_name = f"{persona.first_name} {persona.last_name}" if persona else "Desconocido"
     campaign_name = next((log.campaign_name for log in ordered if log.campaign_name), None)
     sent_at_dt = ordered[0].created_at
     delivered_count = sum(1 for log in ordered if str(log.outcome).lower() in {"sent", "delivered"})
@@ -307,13 +307,13 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     else:
         status = str(representative.outcome or "sent").lower()
     display_name = campaign_name or (
-        f"Mensaje a {member_name}" if len(ordered) == 1 else f"CampaÃ±a a {len(ordered)} contactos"
+        f"Mensaje a {persona_name}" if len(ordered) == 1 else f"CampaÃ±a a {len(ordered)} contactos"
     )
     return {
         "id": representative.id,
         "name": display_name,
         "campaign_name": campaign_name,
-        "member_name": member_name,
+        "persona_name": persona_name,
         "channel": str(representative.channel).lower(),
         "status": status,
         "sent_at": sent_at_dt.isoformat() if sent_at_dt else None,
@@ -415,7 +415,7 @@ async def send_crm_message(
         if target_segments:
             if not campaign_name or not content:
                 raise HTTPException(status_code=400, detail="campaign_name and content required")
-            personas = _resolve_campaign_members(
+            personas = _resolve_campaign_personas(
                 db,
                 list(target_segments),
                 sede_id=crud.get_user_sede_id(db, current_user.id),
@@ -538,7 +538,7 @@ def _serialize_crm_task(
     assignee_name: Optional[str] = None,
 ) -> dict:
     persona = getattr(task, "persona", None)
-    member_name = contact_name or (f"{persona.first_name} {persona.last_name}" if persona else None)
+    persona_name = contact_name or (f"{persona.first_name} {persona.last_name}" if persona else None)
     assignee = getattr(task, "assignee", None)
     assigned_to = assignee_name or (assignee.nombre_completo if assignee else None)
     return {
@@ -550,8 +550,8 @@ def _serialize_crm_task(
         "category": task.category,
         "due_date": task.due_date.isoformat() if task.due_date else None,
         "persona_id": task.persona_id,
-        "member_name": member_name,
-        "contact_name": member_name,
+        "persona_name": persona_name,
+        "contact_name": persona_name,
         "assigned_to": assigned_to,
         "created_at": task.created_at.isoformat() if task.created_at else None,
     }
@@ -814,10 +814,10 @@ def get_volunteer_detail(
         for (skill_name,) in (
             db.query(models.VolunteerSkill.name)
             .join(
-                models.member_volunteer_skills,
-                models.VolunteerSkill.id == models.member_volunteer_skills.c.skill_id,
+                models.persona_volunteer_skills,
+                models.VolunteerSkill.id == models.persona_volunteer_skills.c.skill_id,
             )
-            .filter(models.member_volunteer_skills.c.persona_id == db_id)
+            .filter(models.persona_volunteer_skills.c.persona_id == db_id)
             .order_by(models.VolunteerSkill.name.asc())
             .all()
         )
@@ -1035,8 +1035,8 @@ def crm_analytics(
 
     sede_id = require_user_sede_id(db, current_user)
 
-    total_members = db.query(models.Persona).filter(models.Persona.sede_id == sede_id).count()
-    active_members = (
+    total_personas = db.query(models.Persona).filter(models.Persona.sede_id == sede_id).count()
+    active_personas = (
         db.query(models.Persona)
         .filter(
             models.Persona.sede_id == sede_id,
@@ -1086,8 +1086,8 @@ def crm_analytics(
     )
 
     return {
-        "total_members": total_members,
-        "active_members": active_members,
+        "total_personas": total_personas,
+        "active_personas": active_personas,
         "open_counseling": open_counseling,
         "events_this_month": events_this_month,
         "total_groups": total_groups,

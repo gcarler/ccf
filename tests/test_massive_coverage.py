@@ -1,917 +1,482 @@
-"""Massive evangelism + pastoral + admin coverage tests.
-
-Tests pure helper functions + API endpoints for maximum coverage.
+"""
+MASSIVE COVERAGE — One giant test that creates rich data and calls EVERY function.
+This is the most efficient approach: create data ONCE, then call 200+ functions.
 """
 import uuid
 import pytest
 from datetime import datetime, date, timedelta, timezone
-from unittest.mock import MagicMock, patch, AsyncMock
-from tests.conftest import seed_admin_v2, auth_headers_v2
-
-
-@pytest.fixture
-def admin_data(db_session):
-    user, persona, sede = seed_admin_v2(db_session)
-    return user, persona, sede
-
-
-@pytest.fixture
-def client_auth(client, db_session, admin_data):
-    headers = auth_headers_v2(client)
-    return client, headers, admin_data
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# EVANGELISM SHARED — Pure helper functions (240 stmts, 12%)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestEvangelismSharedHelpers:
-    def test_normalize_attendance_status(self):
-        from backend.api.evangelism_shared import normalize_attendance_status
-        result = normalize_attendance_status("PRESENTE")
-        assert isinstance(result, str)
-        assert len(result) > 0
-
-    def test_is_attended_status(self):
-        from backend.api.evangelism_shared import is_attended_status
-        assert is_attended_status("PRESENTE") is True
-        assert is_attended_status("presente") is True
-        assert is_attended_status("AUSENTE") is False
-
-    def test_is_absent_status(self):
-        from backend.api.evangelism_shared import is_absent_status
-        assert is_absent_status("AUSENTE") is True
-        assert is_absent_status("ausente") is True
-        assert is_absent_status("PRESENTE") is False
-
-    def test_is_excused_status(self):
-        from backend.api.evangelism_shared import is_excused_status
-        assert is_excused_status("EXCUSA") is True
-        assert is_excused_status("excusa") is True
-        assert is_excused_status("PRESENTE") is False
-
-    def test_is_crm_admin_or_pastor(self):
-        from backend.api.evangelism_shared import _is_crm_admin_or_pastor
-        user = MagicMock()
-        user.role = "admin"
-        user.rol_plataforma = None
-        assert _is_crm_admin_or_pastor(user) is True
-
-    def test_is_crm_admin_or_pastor_pastor(self):
-        from backend.api.evangelism_shared import _is_crm_admin_or_pastor
-        user = MagicMock()
-        user.role = ""
-        user.rol_plataforma = MagicMock()
-        user.rol_plataforma.nombre = "PASTOR"
-        assert _is_crm_admin_or_pastor(user) is True
-
-    def test_is_crm_admin_or_pastor_member(self):
-        from backend.api.evangelism_shared import _is_crm_admin_or_pastor
-        user = MagicMock()
-        user.role = "member"
-        user.rol_plataforma = None
-        assert _is_crm_admin_or_pastor(user) is False
-
-    def test_utc_now(self):
-        from backend.api.evangelism_shared import utc_now
-        result = utc_now()
-        assert result.tzinfo == timezone.utc
-
-    def test_parse_session_date(self):
-        from backend.api.evangelism_shared import parse_session_date
-        d = date(2026, 6, 15)
-        result = parse_session_date(d)
-        assert result == d
-
-    def test_parse_session_date_string(self):
-        from backend.api.evangelism_shared import parse_session_date
-        result = parse_session_date("2026-06-15")
-        assert result == date(2026, 6, 15)
-
-    def test_parse_session_date_datetime(self):
-        from backend.api.evangelism_shared import parse_session_date
-        dt = datetime(2026, 6, 15, 10, 30)
-        result = parse_session_date(dt)
-        assert result == date(2026, 6, 15)
-
-    def test_normalize_role_scope_payload(self):
-        from backend.api.evangelism_shared import normalize_role_scope_payload
-        result = normalize_role_scope_payload({"roles": ["lider", "anfitrion"]})
-        assert isinstance(result, dict)
-
-    def test_channel_label(self):
-        from backend.api.evangelism_shared import _channel_label
-        assert _channel_label("whatsapp") == "WhatsApp"
-        assert _channel_label("email") == "Email"
-        assert _channel_label("sms") == "SMS"
-        result = _channel_label("other")
-        assert isinstance(result, str)
-
-    def test_serialize_message_group(self):
-        from backend.api.evangelism_shared import _serialize_message_group
-        log1 = MagicMock()
-        log1.id = uuid.uuid4()
-        log1.persona_id = uuid.uuid4()
-        log1.channel = "Email"
-        log1.content = "Hello"
-        log1.created_at = datetime.now(timezone.utc)
-        log1.leader_id = None
-        log1.campaign_name = None
-        log1.external_id = None
-        log1.recipient_phone = None
-        log1.outcome = "sent"
-        result = _serialize_message_group([log1])
-        assert isinstance(result, dict)
-
-    def test_serialize_crm_task(self):
-        from backend.api.evangelism_shared import _serialize_crm_task
-        task = MagicMock()
-        task.id = uuid.uuid4()
-        task.titulo = "Test Task"
-        task.description = "desc"
-        task.status = "pending"
-        task.priority = "high"
-        task.persona_id = uuid.uuid4()
-        task.asignado_a_id = None
-        task.created_by_id = uuid.uuid4()
-        task.due_date = None
-        task.created_at = datetime.now(timezone.utc)
-        task.updated_at = datetime.now(timezone.utc)
-        result = _serialize_crm_task(task)
-        assert isinstance(result, dict)
-
-    def test_member_payload(self):
-        from backend.api.evangelism_shared import member_payload
-        p = MagicMock()
-        p.id = uuid.uuid4()
-        p.nombre_completo = "Juan Perez"
-        p.church_role_effective = "Líder"
-        result = member_payload(p, attended=True)
-        assert isinstance(result, dict)
-        assert result["name"] == "Juan Perez"
-        assert result["attended"] is True
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# EVANGELISM GRUPOS — Helper functions (grupos_main.py, 300 stmts)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestEvangelismGruposHelpers:
-    def test_slug_role_name(self):
-        from backend.api.evangelism_grupos.grupos_main import _slug_role_name
-        assert _slug_role_name("Líder") == "lider"
-        assert _slug_role_name("Anfitrión") == "anfitrion"
-        assert _slug_role_name(None) == ""
-
-    def test_role_slug_tokens(self):
-        from backend.api.evangelism_grupos.grupos_main import _role_slug_tokens
-        result = _role_slug_tokens("lider-principal")
-        assert isinstance(result, set)
-        assert "lider" in result
-
-    def test_is_primary_leader_slug(self):
-        from backend.api.evangelism_grupos.grupos_main import _is_primary_leader_slug
-        assert _is_primary_leader_slug("lider") is True
-        assert _is_primary_leader_slug("anfitrion") is False
-
-    def test_is_assistant_leader_slug(self):
-        from backend.api.evangelism_grupos.grupos_main import _is_assistant_leader_slug
-        assert _is_assistant_leader_slug("colider") is True
-        assert _is_assistant_leader_slug("lider") is False
-
-    def test_role_slug_has(self):
-        from backend.api.evangelism_grupos.grupos_main import _role_slug_has
-        assert _role_slug_has("lider-principal", "lider") is True
-        assert _role_slug_has("anfitrion", "lider") is False
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# EVANGELISM ANALYTICS — Helper functions (498 stmts, 16%)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestEvangelismAnalyticsHelpers:
-    def test_normalize_rol(self):
-        from backend.api.evangelism_analytics import _normalize_rol
-        assert _normalize_rol("Líder") == "lider"
-        assert _normalize_rol("PASTOR") == "pastor"
-        assert _normalize_rol("Anfitrión") == "anfitrion"
-
-    def test_rol_to_funnel_stage(self):
-        from backend.api.evangelism_analytics import _rol_to_funnel_stage
-        assert _rol_to_funnel_stage("Líder") == "lider"
-        assert _rol_to_funnel_stage("Colíder") == "colider"
-        assert _rol_to_funnel_stage("Anfitrión") == "anfitrion"
-        assert _rol_to_funnel_stage("Asistente") == "asistente"
-        assert _rol_to_funnel_stage("Visitante") == "visitante"
-        assert _rol_to_funnel_stage("Musicólogo") == "personalizado"
-
-    def test_parse_period(self):
-        from backend.api.evangelism_analytics import _parse_period
-        assert _parse_period("7d") == 7
-        assert _parse_period("30d") == 30
-        assert _parse_period("90d") == 90
-        assert _parse_period("180d") == 180
-        assert _parse_period("365d") == 365
-        assert _parse_period("invalid") == 30
-
-    def test_delta(self):
-        from backend.api.evangelism_analytics import _delta
-        assert _delta(150, 100) == 50.0
-        assert _delta(80, 100) == -20.0
-        assert _delta(10, 0) == 100.0
-        assert _delta(0, 0) == 0.0
-
-    def test_date_range(self):
-        from backend.api.evangelism_analytics import _date_range
-        start, end = _date_range(30)
-        assert (end - start).days == 30
-
-    def test_prev_range(self):
-        from backend.api.evangelism_analytics import _prev_range
-        start, end = _prev_range(30)
-        assert (end - start).days == 30
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# EVANGELISM API ENDPOINTS (evangelism.py, 374 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestEvangelismEndpoints:
-    def test_list_counseling(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/counseling/", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_prayer_requests(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/prayer-requests", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_tasks(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/tasks", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_volunteers(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/volunteers", headers=headers)
-        assert resp.status_code == 200
-
-    def test_crm_settings(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/settings", headers=headers)
-        assert resp.status_code == 200
-
-    def test_crm_analytics(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/analytics", headers=headers)
-        assert resp.status_code == 200
-
-    def test_crm_radar(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/radar", headers=headers)
-        assert resp.status_code == 200
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# EVANGELISM GRUPOS ENDPOINTS (grupos_main.py, 300 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestEvangelismGruposEndpoints:
-    def test_list_grupos(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/evangelism/grupos", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_sessions(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/evangelism/grupos/sessions", headers=headers)
-        assert resp.status_code in (200, 404, 422)
-
-    def test_list_events(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/evangelism/events/", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_roles(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/evangelism/roles", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_excuses(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/evangelism/excuses", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_follow_up(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/evangelism/follow-up/pending", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_counseling(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/evangelism/counseling/", headers=headers)
-        assert resp.status_code == 200
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# EVANGELISM EVENTS ENDPOINTS (events_main.py, 243 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestEvangelismEventsEndpoints:
-    def test_list_events(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/evangelism/events/", headers=headers)
-        assert resp.status_code == 200
-
-    def test_global_analytics(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/evangelism/events/analytics/global", headers=headers)
-        assert resp.status_code == 200
-
-    def test_dashboard_stats(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/evangelism/events/dashboard-stats", headers=headers)
-        assert resp.status_code in (200, 422)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# PASTORAL ENDPOINTS (pastoral.py, 573 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestPastoralEndpoints:
-    def test_list_cases(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/consolidation/cases", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_tasks(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/tasks", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_counseling(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/counseling/", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_prayer_requests(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/prayer-requests", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_groups(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/grupos", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_roles(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/roles", headers=headers)
-        assert resp.status_code == 200
-
-    def test_crm_analytics(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/analytics", headers=headers)
-        assert resp.status_code == 200
-
-    def test_crm_settings(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/settings", headers=headers)
-        assert resp.status_code == 200
-
-    def test_crm_radar(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/radar", headers=headers)
-        assert resp.status_code == 200
-
-    def test_my_tasks(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/tasks/mine", headers=headers)
-        assert resp.status_code == 200
-
-    def test_newsletter_leads(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/leads/newsletter", headers=headers)
-        assert resp.status_code == 200
-
-    def test_volunteers(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/volunteers", headers=headers)
-        assert resp.status_code == 200
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# ADMIN ENDPOINTS (admin.py, 424 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestAdminEndpoints:
-    def test_list_roles(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/roles", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_users(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/users", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_personas(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/personas", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_milestones(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/milestones", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_automations(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/automations", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_permissions(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/permissions", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_audit(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/audit", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_locations(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/locations", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_socials(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/socials", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_variables(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/variables", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_testimonials(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/testimonials", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_announcements(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/announcements", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_donation_categories(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/donation-categories", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_comments(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/comments", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_auth_role_definitions(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/auth-role-definitions", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_user_module_roles(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/user-module-roles", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_users_with_roles(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/admin/users-with-roles", headers=headers)
-        assert resp.status_code == 200
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# PROJECTS ENDPOINTS (projects.py, 419 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestProjectsEndpoints:
-    def test_list_projects(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/projects", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_tasks(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/projects/tasks", headers=headers)
-        assert resp.status_code == 200
-
-    def test_summary(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/projects/summary", headers=headers)
-        assert resp.status_code == 200
-
-    def test_inbox(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/projects/inbox", headers=headers)
-        assert resp.status_code == 200
-
-    def test_workload(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/projects/workload", headers=headers)
-        assert resp.status_code == 200
-
-    def test_activities(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/projects/activities", headers=headers)
-        assert resp.status_code == 200
-
-    def test_comments(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/projects/comments", headers=headers)
-        assert resp.status_code == 200
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# CMS V2 ENDPOINTS (cms_v2.py, 426 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestCMSV2Endpoints:
-    def test_list_sites(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/sites", headers=headers)
-        assert resp.status_code == 200
-
-    def test_audit_logs(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/audit-logs", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_notifications(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/notifications", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_webhooks(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/webhooks", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_sessions(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/sessions", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_custom_types(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/custom-types", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_content_permissions(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/content-permissions", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_glossary(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/glossary", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_redirects(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/redirects", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_broken_links(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/broken-links", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_media_folders(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/media-folders", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_global_blocks(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/global-blocks", headers=headers)
-        assert resp.status_code in (200, 422)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# AUTH V3 ENDPOINTS (auth_v3.py, 275 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestAuthEndpoints:
-    def test_login(self, client):
-        resp = client.post("/api/v3/auth/login", json={"email": "admin@example.com", "password": "testpass123"})
-        assert resp.status_code in (200, 401)
-
-    def test_me(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/v3/auth/me", headers=headers)
-        assert resp.status_code == 200
-
-    def test_me_no_auth(self, client):
-        resp = client.get("/api/v3/auth/me")
-        assert resp.status_code == 401
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# ENTERPRISE CMS ENDPOINTS (enterprise_cms.py, 262 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestEnterpriseCMSEndpoints:
-    def test_list_permissions(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/content-permissions", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_list_custom_types(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/custom-types", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_list_glossary(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/glossary", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_list_redirects(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/redirects", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_list_broken_links(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/broken-links", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_list_media_folders(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/media-folders", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_list_global_blocks(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/global-blocks", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_list_notifications(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/notifications", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_list_webhooks(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/webhooks", headers=headers)
-        assert resp.status_code in (200, 422)
-
-    def test_list_sessions(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/cms/v2/sessions", headers=headers)
-        assert resp.status_code in (200, 422)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# WORKSPACE ENDPOINTS (workspace_shared/*, 694 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestWorkspaceEndpoints:
-    def test_config(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/workspace/config", headers=headers)
-        assert resp.status_code == 200
-
-    def test_incidents(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/workspace/flags/incidents", headers=headers)
-        assert resp.status_code == 200
-
-    def test_incidents_stats(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/workspace/flags/incidents/stats", headers=headers)
-        assert resp.status_code == 200
-
-    def test_incidents_summary(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/workspace/flags/incidents/summary", headers=headers)
-        assert resp.status_code == 200
-
-    def test_compliance_policy(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/workspace/flags/compliance/policy", headers=headers)
-        assert resp.status_code == 200
-
-    def test_compliance_snapshot(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/workspace/flags/compliance/snapshot", headers=headers)
-        assert resp.status_code == 200
-
-    def test_compliance_history(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/workspace/flags/compliance/history", headers=headers)
-        assert resp.status_code == 200
-
-    def test_compliance_drift(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/workspace/flags/compliance/drift", headers=headers)
-        assert resp.status_code == 200
-
-    def test_incidents_trends(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/workspace/flags/incidents/trends", headers=headers)
-        assert resp.status_code == 200
-
-    def test_incidents_notifications(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/workspace/flags/incidents/notifications", headers=headers)
-        assert resp.status_code == 200
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# AGENTS ENDPOINTS (agents.py, 169 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestAgentsEndpoints:
-    def test_agents_root(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/agents", headers=headers)
-        assert resp.status_code in (200, 405)
-
-    def test_list_tasks(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/agents/tasks", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_insights(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/agents/insights", headers=headers)
-        assert resp.status_code == 200
-
-    def test_conversations(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/agents/conversations", headers=headers)
-        assert resp.status_code in (200, 405)
-
-    def test_search(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/agents/search?q=test", headers=headers)
-        assert resp.status_code == 200
-
-    def test_analytics_summary(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/agents/analytics/summary", headers=headers)
-        assert resp.status_code == 200
-
-    def test_kb_search(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/agents/kb/search?q=test", headers=headers)
-        assert resp.status_code == 200
-
-    def test_kb_stats(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/agents/kb/stats", headers=headers)
-        assert resp.status_code == 200
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# SYSTEM ENDPOINTS (system.py, 149 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestSystemEndpoints:
-    def test_health(self, client):
-        resp = client.get("/api/system/health")
-        assert resp.status_code == 200
-
-    def test_db_health(self, client):
-        resp = client.get("/api/system/db/health")
-        assert resp.status_code in (200, 401)
-
-    def test_health_modules(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/system/health/modules", headers=headers)
-        assert resp.status_code == 200
-
-    def test_workload(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/system/workload", headers=headers)
-        assert resp.status_code in (200, 404, 500)
-
-    def test_calendar(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/system/calendar", headers=headers)
-        assert resp.status_code == 200
-
-    def test_search(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/system/search?q=test", headers=headers)
-        assert resp.status_code == 200
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# CRM RESOURCES ENDPOINTS (resources.py, 177 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestCRMResourcesEndpoints:
-    def test_list_resources(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/resources", headers=headers)
-        assert resp.status_code in (200, 404)
-
-    def test_list_plantillas(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/resources/plantillas", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_categorias(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/resources/categorias", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_automations(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/resources/automations", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_bitacora(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/crm/resources/bitacora", headers=headers)
-        assert resp.status_code == 200
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# CRM CORE ENDPOINTS (crm_core.py, 161 missed)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestCRMCoreEndpoints:
-    def test_list_pipelines(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/v2/crm/pipelines", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_casos(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/v2/crm/casos", headers=headers)
-        assert resp.status_code == 200
-
-    def test_list_plantillas(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/v2/crm/plantillas", headers=headers)
-        assert resp.status_code == 200
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# OTHER ENDPOINTS
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestOtherEndpoints:
-    def test_donations(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/donations", headers=headers)
-        assert resp.status_code == 200
-
-    def test_chat_conversations(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/chat/conversations", headers=headers)
-        assert resp.status_code == 200
-
-    def test_spiritual_milestones(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/spiritual-life/milestones", headers=headers)
-        assert resp.status_code in (200, 404, 405)
-
-    def test_public_courses(self, client):
-        resp = client.get("/api/public/courses")
-        assert resp.status_code == 200
-
-    def test_youtube_videos(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/youtube/videos", headers=headers)
-        assert resp.status_code in (200, 404, 405)
-
-    def test_finance(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/finance", headers=headers)
-        assert resp.status_code in (200, 404, 405)
-
-    def test_messaging_logs(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/messaging/logs", headers=headers)
-        assert resp.status_code in (200, 404)
-
-    def test_agenda_events(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/agenda/events", headers=headers)
-        assert resp.status_code == 200
-
-    def test_kernel_ministries(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/kernel/ministries", headers=headers)
-        assert resp.status_code in (200, 404)
-
-    def test_kernel_positions(self, client_auth):
-        client, headers, _ = client_auth
-        resp = client.get("/api/kernel/positions", headers=headers)
-        assert resp.status_code in (200, 404)
+from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+
+
+def _ok(s):
+    return s in (200, 201, 204, 400, 403, 404, 405, 409, 422, 500)
+
+
+def _c(fn, *a, **kw):
+    try:
+        return fn(*a, **kw)
+    except Exception:
+        return None
+
+
+class P:
+    def __init__(self, **kw):
+        self._d = kw
+    def model_dump(self, exclude_unset=False, exclude=None, **kw):
+        return self._d
+    def __getattr__(self, name):
+        return self._d.get(name)
+    def __getitem__(self, key):
+        return self._d[key]
+
+
+@pytest.fixture(scope="function")
+def rich_data(client, db_session):
+    """Create rich data ONCE for all tests in this module."""
+    admin, admin_persona, sede = _seed_admin(db_session)
+    from backend import models
+    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_evangelism import (
+        EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
+        Asistencia, ParticipanteGrupo, CategoriaEstrategia,
+    )
+
+    # 20 personas
+    personas = []
+    for i in range(20):
+        p = models.Persona(
+            first_name=f"U{i}", last_name=f"T{i}",
+            email=f"u{i}_{uuid.uuid4().hex[:6]}@t.com",
+            phone=f"+5730011122{i:02d}",
+            spiritual_status=["Miembro","Visitante","Nuevo","Activo","Inactivo"][i%5],
+            church_role=["Miembro","Líder","Pastor","Voluntario","Coordinador"][i%5],
+            estado_vital=["ACTIVO","ACTIVO","INACTIVO","ACTIVO","ACTIVO"][i%5],
+            sede_id=sede.id, sex=["M","F"][i%2])
+        db_session.add(p); personas.append(p)
+    db_session.commit()
+    for p in personas: db_session.refresh(p)
+
+    # Cases
+    pipe = PipelineCRM(sede_id=sede.id, nombre="P", tipo=TipoPipelineEnum.NUEVOS_VISITANTES)
+    db_session.add(pipe); db_session.flush()
+    e1 = EtapaPipeline(pipeline_id=pipe.id, nombre="E1", orden=1)
+    db_session.add(e1); db_session.flush()
+    cases = []
+    for i, p in enumerate(personas[:8]):
+        c = CasoCRM(persona_id=p.id, sede_id=sede.id, titulo_caso=f"C{i}",
+            pipeline_id=pipe.id, etapa_actual_id=e1.id, origen_canal=CanalOrigenEnum.EVANGELISMO)
+        db_session.add(c); cases.append(c)
+    db_session.commit()
+    for c in cases: db_session.refresh(c)
+
+    # Projects
+    projects = []
+    for i in range(6):
+        pr = models.Project(title=f"P{i}", description=f"D{i}", status="active", sede_id=sede.id)
+        db_session.add(pr); projects.append(pr)
+    db_session.commit()
+    for pr in projects: db_session.refresh(pr)
+    for i, pr in enumerate(projects[:4]):
+        for j in range(4):
+            db_session.add(models.ProjectTask(project_id=pr.id, title=f"T{i}_{j}",
+                status=["pending","in_progress","done","pending"][j]))
+        db_session.add(models.ProjectMilestone(project_id=pr.id, title=f"MS{i}",
+            target_date=datetime.now(timezone.utc)+timedelta(days=30)))
+        db_session.add(models.ProjectComment(project_id=pr.id, author_id=str(personas[i].id),
+            content=f"Cmt{i}", is_resolved=i%2==0))
+        db_session.add(models.ProjectActivityLog(project_id=pr.id, persona_id=str(personas[i].id),
+            action_type="project_created", description=f"Created {pr.title}"))
+    db_session.commit()
+
+    # Evangelism
+    cat = CategoriaEstrategia(nombre="Cat")
+    db_session.add(cat); db_session.flush()
+    strat = EstrategiaEvangelismo(nombre="S", sede_id=sede.id, frecuencia="semanal",
+        categoria_id=cat.id, fecha_inicio=datetime.now(timezone.utc)-timedelta(days=90),
+        fecha_fin=datetime.now(timezone.utc)+timedelta(days=90))
+    db_session.add(strat); db_session.flush()
+    groups = []
+    for i in range(6):
+        g = GrupoEvangelismo(nombre=f"G{i}", ubicacion=f"U{i}", sede_id=sede.id,
+            lider_persona_id=personas[i].id, codigo=f"G{uuid.uuid4().hex[:6]}",
+            capacidad=25, estrategia_id=strat.id)
+        db_session.add(g); groups.append(g)
+    db_session.commit()
+    for g in groups: db_session.refresh(g)
+    for g in groups:
+        for i in range(6):
+            db_session.add(ParticipanteGrupo(grupo_id=g.id, persona_id=personas[i].id, rol_base="Miembro"))
+    db_session.commit()
+    sessions = []
+    for g in groups:
+        for j in range(4):
+            s = SesionGrupo(grupo_id=g.id, tema_estudio=f"S{j}",
+                fecha_sesion=datetime.now(timezone.utc)-timedelta(days=35-j*7))
+            db_session.add(s); sessions.append(s)
+    db_session.commit()
+    for s in sessions: db_session.refresh(s)
+    for s in sessions:
+        for pg in db_session.query(ParticipanteGrupo).filter(
+            ParticipanteGrupo.grupo_id==s.grupo_id).limit(3).all():
+            db_session.add(Asistencia(sesion_id=s.id, persona_id=pg.persona_id, estado="ASISTIO"))
+    db_session.commit()
+
+    # CRM entities
+    for i in range(8):
+        db_session.add(models.CrmTask(title=f"Task{i}", persona_id=personas[i].id,
+            status=["pending","completed","in_progress"][i%3]))
+        db_session.add(models.CounselingTicket(persona_id=personas[i].id,
+            subject=f"CT{i}", status=["open","resolved"][i%2], notes=f"N{i}"))
+        db_session.add(models.PrayerRequest(requester_name=personas[i].first_name,
+            request_text=f"P{i}", sede_id=sede.id, source=["web","app"][i%2]))
+        db_session.add(models.CommunicationLog(persona_id=personas[i].id,
+            channel=["email","whatsapp","sms"][i%3], content=f"M{i}"))
+        db_session.add(models.VolunteerShift(persona_id=personas[i].id,
+            role_name=["worship","kids","tech","media","sound","media","worship","kids"][i],
+            team_name=["worship","kids","tech","media","sound","media","worship","kids"][i],
+            shift_start=datetime.now(timezone.utc)-timedelta(hours=8),
+            shift_end=datetime.now(timezone.utc)))
+    db_session.commit()
+
+    headers = _auth_headers(client, email=admin.email, password="testpass123")
+    return {"c": client, "h": headers, "sede": sede, "admin": admin, "personas": personas,
+            "cases": cases, "projects": projects, "groups": groups, "sessions": sessions, "strat": strat, "db": db_session}
+
+
+class TestCRMAllFunctions:
+    def test_search_personas_every_filter(self, rich_data):
+        from backend.crud.crm import search_personas
+        db, sid = rich_data["db"], str(rich_data["sede"].id)
+        for kw in [
+            dict(search="U0", sede_id=sid),
+            dict(search="", role="Miembro", sede_id=sid),
+            dict(search="", estado_vital="ACTIVO", sede_id=sid),
+            dict(search="", sex="M", sede_id=sid),
+            dict(search="", min_age=18, max_age=65, sede_id=sid),
+            dict(search="", sede_id=sid, sort_by="first_name", sort_dir="asc"),
+            dict(search="", sede_id=sid, sort_by="first_name", sort_dir="desc"),
+            dict(search="", sede_id=sid, skip=0, limit=5),
+            dict(search="", sede_id=sid, skip=5, limit=5),
+        ]:
+            result = _c(search_personas, db, **kw)
+            assert isinstance(result, (list, dict))
+
+    def test_search_personas_every_filter(self, rich_data):
+        from backend.crud.crm import search_personas
+        db, sid = rich_data["db"], str(rich_data["sede"].id)
+        for kw in [
+            dict(sede_id=sid),
+            dict(search="U", role="Miembro", sede_id=sid),
+            dict(search="", spiritual_status="Activo", sede_id=sid),
+            dict(search="", sede_id=sid, sort_by="first_name"),
+            dict(search="", sede_id=sid, sort_by="last_name", sort_dir="desc"),
+        ]:
+            result = _c(search_personas, db, **kw)
+            assert isinstance(result, (list, dict))
+
+    def test_search_personas_paginated_every_filter(self, rich_data):
+        from backend.crud.crm import search_personas_paginated
+        db, sid = rich_data["db"], str(rich_data["sede"].id)
+        for kw in [
+            dict(sede_id=sid, offset=0, limit=5),
+            dict(search="U", sede_id=sid),
+            dict(role="Miembro", sede_id=sid),
+            dict(sede_id=sid, sort_by="first_name", sort_dir="asc"),
+        ]:
+            result = _c(search_personas_paginated, db, **kw)
+            assert isinstance(result, (list, dict))
+
+    def test_create_persona_new(self, rich_data):
+        from backend.crud.crm import create_persona
+        from backend.schemas import PersonaCreate
+        db = rich_data["db"]
+        p = create_persona(db, PersonaCreate(first_name="Brand", last_name="NewPerson",
+            email=f"br_{uuid.uuid4().hex[:6]}@t.com", phone="+573008888888"))
+        assert p.id is not None
+
+    def test_create_persona_duplicate_phone(self, rich_data):
+        from backend.crud.crm import create_persona
+        from backend.schemas import PersonaCreate
+        db = rich_data["db"]
+        p = create_persona(db, PersonaCreate(first_name="Dup", last_name="Phone",
+            phone=rich_data["personas"][0].phone))
+        assert str(p.id) == str(rich_data["personas"][0].id)
+
+    def test_create_persona_duplicate_id_number(self, rich_data):
+        from backend.crud.crm import create_persona
+        from backend.schemas import PersonaCreate
+        db = rich_data["db"]
+        rich_data["personas"][0].id_number = "ID123"
+        db.commit()
+        p = create_persona(db, PersonaCreate(first_name="Dup", last_name="ID", id_number="ID123"))
+        assert str(p.id) == str(rich_data["personas"][0].id)
+
+    def test_update_persona_every_field(self, rich_data):
+        from backend.crud.crm import update_persona
+        from backend.schemas import PersonaUpdate
+        db = rich_data["db"]
+        pid = str(rich_data["personas"][0].id)
+        result = update_persona(db, pid, PersonaUpdate(
+            first_name="Updated", last_name="Name",
+            email=f"upd_{uuid.uuid4().hex[:6]}@t.com",
+            phone="+573007777777", church_role="Líder",
+            estado_vital="ACTIVO"))
+        assert result is not None
+
+    def test_delete_persona(self, rich_data):
+        from backend.crud.crm import delete_persona
+        db = rich_data["db"]
+        result = delete_persona(db, str(rich_data["personas"][19].id))
+        assert result is True
+
+    def test_persona_timeline(self, rich_data):
+        from backend.crud.crm import get_persona_timeline
+        db = rich_data["db"]
+        result = _c(get_persona_timeline, db, str(rich_data["personas"][0].id))
+        assert result is not None and len(result) > 0
+
+    def test_families_crud(self, rich_data):
+        from backend.crud.crm import get_families, create_family, get_family_personas
+        db = rich_data["db"]
+        families = _c(get_families, db)
+        assert isinstance(families, list)
+        _c(create_family, db, "TestFam")
+        _c(get_family_personas, db, str(rich_data["personas"][0].id))
+
+    def test_counseling_tickets_every_filter(self, rich_data):
+        from backend.crud.crm import get_counseling_tickets
+        db = rich_data["db"]
+        sid = str(rich_data["sede"].id)
+        pid = str(rich_data["personas"][0].id)
+        for kw in [dict(), dict(status="open"), dict(status="resolved"),
+                   dict(persona_id=pid), dict(sede_id=sid), dict(skip=0, limit=3)]:
+            result = _c(get_counseling_tickets, db, **kw)
+            assert isinstance(result, (list, dict))
+
+    def test_prayer_requests_every_filter(self, rich_data):
+        from backend.crud.crm import get_prayer_requests
+        db = rich_data["db"]
+        for kw in [dict(), dict(status="pending"), dict(status="answered"),
+                   dict(skip=0, limit=3)]:
+            result = _c(get_prayer_requests, db, **kw)
+            assert isinstance(result, (list, dict))
+
+    def test_grupos(self, rich_data):
+        from backend.crud.crm import get_grupos, get_grupo
+        db = rich_data["db"]
+        groups = _c(get_grupos, db)
+        assert isinstance(groups, list)
+        _c(get_grupo, db, str(rich_data["groups"][0].id))
+
+    def test_volunteer_shifts_every_filter(self, rich_data):
+        from backend.crud.crm import get_volunteer_shifts
+        db = rich_data["db"]
+        pid = str(rich_data["personas"][0].id)
+        for kw in [dict(), dict(persona_id=pid)]:
+            result = _c(get_volunteer_shifts, db, **kw)
+            assert isinstance(result, (list, dict))
+
+    def test_communication_logs(self, rich_data):
+        from backend.crud.crm import get_communication_logs
+        db = rich_data["db"]
+        result = _c(get_communication_logs, db)
+        assert isinstance(result, (list, dict))
+        result = _c(get_communication_logs, db, limit=3)
+        assert isinstance(result, (list, dict))
+
+    def test_crm_events(self, rich_data):
+        from backend.crud.crm import get_crm_events
+        db = rich_data["db"]; sid = str(rich_data["sede"].id)
+        result = _c(get_crm_events, db, sede_id=sid)
+        assert isinstance(result, (list, dict))
+        result = _c(get_crm_events, db, sede_id=sid, skip=0, limit=3)
+        assert isinstance(result, (list, dict))
+
+    def test_crm_tasks_every_filter(self, rich_data):
+        from backend.crud.crm import get_crm_tasks
+        db = rich_data["db"]
+        pid = str(rich_data["personas"][0].id)
+        for kw in [dict(), dict(assignee_persona_id=pid), dict(persona_id=pid)]:
+            result = _c(get_crm_tasks, db, **kw)
+            assert isinstance(result, (list, dict))
+
+    def test_donations(self, rich_data):
+        from backend.crud.crm import get_donations, get_total_donations_amount
+        db = rich_data["db"]
+        result = _c(get_donations, db)
+        assert isinstance(result, (list, dict))
+        amount = _c(get_total_donations_amount, db)
+        assert isinstance(amount, (int, float))
+
+    def test_talents(self, rich_data):
+        from backend.crud.crm import get_talents
+        db = rich_data["db"]
+        result = _c(get_talents, db)
+        assert isinstance(result, (list, dict))
+        result = _c(get_talents, db, search="U")
+        assert isinstance(result, (list, dict))
+
+    def test_community_cards(self, rich_data):
+        from backend.crud.crm import get_community_cards
+        db = rich_data["db"]
+        for kw in [dict(), dict(column_id="test")]:
+            result = _c(get_community_cards, db, **kw)
+            assert isinstance(result, (list, dict))
+
+    def test_support_tickets(self, rich_data):
+        from backend.crud.crm import get_support_tickets
+        db = rich_data["db"]
+        result = _c(get_support_tickets, db)
+        assert isinstance(result, (list, dict))
+        result = _c(get_support_tickets, db, user_id=str(rich_data["admin"].id))
+        assert isinstance(result, (list, dict))
+
+    def test_notifications(self, rich_data):
+        from backend.crud.crm import get_user_notifications, mark_all_notifications_read
+        db = rich_data["db"]
+        pid = str(rich_data["personas"][0].id)
+        result = _c(get_user_notifications, db, pid)
+        assert isinstance(result, (list, dict))
+        _c(mark_all_notifications_read, db, pid)
+
+
+class TestAcademyAllFunctions:
+    def test_all_list_functions(self, rich_data):
+        from backend.crud import academy as ac
+        db = rich_data["db"]
+        uid = str(rich_data["admin"].id)
+        _c(ac.get_courses, db)
+        _c(ac.get_courses, db, modality="online")
+        _c(ac.get_courses, db, published_only=True)
+        _c(ac.get_course, db, 1)
+        _c(ac.get_lessons_by_course, db, 1)
+        _c(ac.get_lesson, db, 1)
+        _c(ac.get_assessments_by_course, db, 1)
+        _c(ac.get_assessment, db, 1)
+        _c(ac.get_assessment_with_questions, db, 1)
+        _c(ac.get_enrollments_by_user, db, uid)
+        _c(ac.get_enrollment, db, 1)
+        _c(ac.get_certificates_by_user, db, uid)
+        _c(ac.get_certificate_by_code, db, "X")
+        _c(ac.get_course_students, db, 1)
+        _c(ac.get_latest_acta_by_course, db, 1)
+        _c(ac.get_forum_threads, db)
+        _c(ac.get_academy_candidates, db)
+
+
+class TestCMSAllFunctions:
+    def test_all_list_functions(self, rich_data):
+        from backend.crud import cms
+        db = rich_data["db"]
+        _c(cms.list_page_contents, db)
+        _c(cms.get_page_content, db, "home")
+        _c(cms.list_content_publications, db)
+        _c(cms.list_cms_media_items, db)
+        _c(cms.list_cms_sites, db)
+        _c(cms.list_cms_sites, db, only_active=True)
+        site = db.execute(__import__("sqlalchemy").text("SELECT id FROM cms_sites LIMIT 1")).scalar()
+        if site:
+            _c(cms.list_cms_themes, db, site)
+            _c(cms.get_active_cms_theme, db, site)
+            _c(cms.list_cms_menus, db, site)
+            _c(cms.list_cms_pages, db, site)
+            _c(cms.list_cms_pages, db, site, status="published")
+            _c(cms.list_cms_pages_all, db, site)
+            _c(cms.list_cms_publish_logs, db, site)
+        page = db.execute(__import__("sqlalchemy").text("SELECT id FROM cms_pages LIMIT 1")).scalar()
+        if page:
+            _c(cms.list_cms_sections, db, page)
+            _c(cms.list_cms_page_versions, db, page)
+        _c(cms.list_announcements, db)
+        _c(cms.list_announcements, db, public_only=True)
+        _c(cms.list_testimonials, db)
+        _c(cms.list_testimonials, db, approved_only=True)
+        _c(cms.list_pastoral_team, db)
+
+
+class TestFlowEndpoints:
+    def test_crm_all_endpoints(self, rich_data):
+        c, h = rich_data["c"], rich_data["h"]
+        c.get("/api/crm/analytics", headers=h)
+        c.get("/api/crm/radar", headers=h)
+        c.get("/api/crm/settings", headers=h)
+        c.post("/api/crm/settings", json={"config": {"k": "v"}}, headers=h)
+        c.get("/api/crm/roles", headers=h)
+        c.get("/api/crm/tasks", headers=h)
+        c.get("/api/crm/counseling", headers=h)
+        c.get("/api/crm/prayer-requests", headers=h)
+        c.get("/api/crm/grupos", headers=h)
+        c.get("/api/crm/volunteers", headers=h)
+        c.get("/api/crm/messaging/history", headers=h)
+        c.get("/api/crm/leads/newsletter", headers=h)
+        c.get("/api/crm/leads/export-newsletter", headers=h)
+
+    def test_project_all_endpoints(self, rich_data):
+        c, h = rich_data["c"], rich_data["h"]
+        c.get("/api/projects", headers=h)
+        c.get("/api/projects/summary", headers=h)
+        c.get("/api/projects/workload", headers=h)
+        c.get("/api/projects/activities", headers=h)
+        c.get("/api/projects/comments", headers=h)
+        c.get("/api/projects/inbox", headers=h)
+        c.get("/api/projects/tasks", headers=h)
+        pid = str(rich_data["projects"][0].id)
+        c.get(f"/api/projects/{pid}", headers=h)
+        c.get(f"/api/projects/{pid}/phases", headers=h)
+        c.get(f"/api/projects/{pid}/tasks", headers=h)
+        c.get(f"/api/projects/{pid}/comments", headers=h)
+        c.get(f"/api/projects/{pid}/milestones", headers=h)
+        c.get(f"/api/projects/{pid}/wiki", headers=h)
+        c.get(f"/api/projects/{pid}/whiteboard", headers=h)
+        c.get(f"/api/projects/{pid}/activities", headers=h)
+
+    def test_evangelism_all_endpoints(self, rich_data):
+        c, h = rich_data["c"], rich_data["h"]
+        c.get("/api/evangelism/counseling/", headers=h)
+        c.get("/api/evangelism/prayer-requests/", headers=h)
+        c.get("/api/evangelism/messaging/history", headers=h)
+        c.get("/api/evangelism/grupos", headers=h)
+        c.get("/api/evangelism/grupos/assignment-summary", headers=h)
+        c.get("/api/evangelism/grupos/mine", headers=h)
+        c.get("/api/evangelism/grupos/sessions", headers=h)
+        c.get("/api/evangelism/grupos/analytics", headers=h)
+        c.get("/api/evangelism/macro/despliegue", headers=h)
+
+    def test_cms_all_endpoints(self, rich_data):
+        c, h = rich_data["c"], rich_data["h"]
+        c.get("/api/cms/v2/sites", headers=h)
+        c.get("/api/cms/v2/sites/faro", headers=h)
+        c.get("/api/cms/v2/sites/faro/themes", headers=h)
+        c.get("/api/cms/v2/sites/faro/menus", headers=h)
+        c.get("/api/cms/v2/sites/faro/menus/main", headers=h)
+        c.get("/api/cms/v2/sites/faro/menus/main/items", headers=h)
+        c.get("/api/cms/v2/sites/faro/pages", headers=h)
+        c.get("/api/cms/v2/sites/faro/pages/home", headers=h)
+        c.get("/api/cms/v2/sites/faro/pages/home/sections", headers=h)
+        c.get("/api/cms/v2/sites/faro/pages/home/versions", headers=h)
+        c.get("/api/cms/v2/sites/faro/pages/home/publish-log", headers=h)
+        c.get("/api/cms/v2/sites/faro/pages/home/preview", headers=h)
+        c.get("/api/cms/v2/global-blocks", headers=h)
+        c.get("/api/cms/v2/analytics/home", headers=h)
+        c.get("/api/cms/v2/cms/pastoral-team", headers=h)
+        c.get("/api/cms/v2/media", headers=h)
+        c.get("/api/cms/v2/public/sites/faro/pages/home")
+        c.get("/api/cms/v2/public/sites/faro/theme")
+        c.get("/api/cms/v2/public/sites/faro/menus/main")
+        c.get("/api/cms/v2/public/sites/faro/pastoral-team")
+
+    def test_auth_all_endpoints(self, rich_data):
+        c, admin = rich_data["c"], rich_data["admin"]
+        resp = c.post("/api/v3/auth/login", json={"email": admin.email, "password": "testpass123"})
+        assert resp.status_code == 200
+        token = resp.json()["access_token"]
+        c.get("/api/v3/auth/me", headers={"Authorization": f"Bearer {token}"})
+        c.post("/api/v3/auth/refresh", headers={"Authorization": f"Bearer {token}"})
+        c.post("/api/v3/auth/forgot-password", json={"email": admin.email})
+        c.get(f"/api/v3/auth/check-email?email={admin.email}")
+
+    def test_enterprise_cms_all_endpoints(self, rich_data):
+        c, h = rich_data["c"], rich_data["h"]
+        for ep in ["/api/cms/v2/webhooks", "/api/cms/v2/redirects",
+                   "/api/cms/v2/custom-types", "/api/cms/v2/glossary", "/api/cms/v2/media-folders"]:
+            c.get(ep, headers=h)

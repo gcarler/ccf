@@ -2,13 +2,13 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Command } from "cmdk";
-import { 
-    Search, 
-    Users, 
-    Layers, 
-    GraduationCap, 
-    Settings, 
-    LifeBuoy, 
+import {
+    Search,
+    Users,
+    Layers,
+    GraduationCap,
+    Settings,
+    LifeBuoy,
     Plus,
     Zap,
     Hash,
@@ -55,7 +55,7 @@ export function CommandCenter() {
         { id: "academy", label: "Academia Faro", icon: GraduationCap, shortcut: "G A", group: "Acceso Rápido", action: () => router.push('/plataforma/academy') },
         { id: "cms", label: "Panel CMS", icon: Globe, group: "Acceso Rápido", action: () => router.push('/plataforma/cms') },
         { id: "new-task", label: "Nueva Tarea...", icon: Plus, shortcut: "N T", group: "Acciones", action: () => openModal('task') },
-        { id: "new-member", label: "Registrar Persona...", icon: Plus, shortcut: "N M", group: "Acciones", action: () => router.push('/plataforma/crm/personas') },
+        { id: "new-persona", label: "Registrar Persona...", icon: Plus, shortcut: "N M", group: "Acciones", action: () => router.push('/plataforma/crm/personas') },
         { id: "send-message", label: "Enviar Mensaje...", icon: MessageSquare, group: "Acciones", action: () => router.push('/plataforma/crm/messaging') },
         { id: "account-settings", label: "Configuración de Cuenta", icon: Settings, group: "Soporte y Ajustes", action: () => router.push('/plataforma/account') },
         { id: "help-center", label: "Centro de Ayuda", icon: LifeBuoy, group: "Soporte y Ajustes", action: () => router.push('/plataforma/support') },
@@ -114,15 +114,15 @@ export function CommandCenter() {
         <AnimatePresence>
             {open && (
                 <div className="fixed inset-0 z-[10000] flex items-start justify-center pt-[10vh] p-4 sm:p-3 md:p-4">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setOpen(false)}
-                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" 
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
                     />
-                    
-                    <motion.div 
+
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
@@ -141,10 +141,10 @@ export function CommandCenter() {
                                     ESC
                                 </div>
                             </div>
-                            
+
                             <Command.List className="max-h-[450px] overflow-y-auto overflow-x-hidden p-3 scrollbar-hide">
                                 {isSearching && <div className="p-4 text-center text-slate-400 text-xs font-bold uppercase tracking-wide animate-pulse">Consultando Optimus Brain...</div>}
-                                
+
                                 {!isSearching && search.length > 0 && results.length === 0 && visibleCommands.length === 0 && (
                                     <Command.Empty className="py-14 text-center">
                                         <div className="size-7 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-4">
@@ -158,12 +158,12 @@ export function CommandCenter() {
                                 {results.length > 0 && (
                                     <Command.Group heading="Resultados de Inteligencia" className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                                         {results.map((item) => (
-                                            <Item 
-                                                key={`${item.type}-${item.id}`} 
-                                                icon={item.type === 'project' ? Layers : item.type === 'member' ? Users : Hash} 
-                                                label={item.title} 
-                                                description={item.detail} 
-                                                onSelect={() => runCommand(() => router.push(item.href))} 
+                                            <Item
+                                                key={`${item.type}-${item.id}`}
+                                                icon={item.type === 'project' ? Layers : item.type === 'persona' ? Users : Hash}
+                                                label={item.title}
+                                                description={item.detail}
+                                                onSelect={() => runCommand(() => router.push(item.href))}
                                             />
                                         ))}
                                     </Command.Group>

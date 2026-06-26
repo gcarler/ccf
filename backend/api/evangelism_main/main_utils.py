@@ -25,7 +25,7 @@ def _channel_label(channel: str) -> str:
     return "SMS"
 
 
-def _member_matches_segment(
+def _persona_matches_segment(
     persona: models.Persona,
     segment: str,
     donation_persona_ids: set[str],
@@ -63,7 +63,7 @@ def _member_matches_segment(
     return False
 
 
-def _resolve_campaign_members(
+def _resolve_campaign_personas(
     db: Session,
     segments: list[str],
     sede_id=None,
@@ -96,7 +96,7 @@ def _resolve_campaign_members(
         if persona.id in seen_ids:
             continue
         if any(
-            _member_matches_segment(persona, segment, donation_persona_ids)
+            _persona_matches_segment(persona, segment, donation_persona_ids)
             for segment in normalized_segments
         ):
             selected.append(persona)
@@ -136,7 +136,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
         "name": display_name,
         "campaign_name": campaign_name,
         # Both keys are part of the published response.
-        "member_name": persona_name,
+        "persona_name": persona_name,
         "persona_name": persona_name,
         "channel": str(representative.channel).lower(),
         "status": status,
@@ -170,7 +170,7 @@ def _serialize_crm_task(
         "due_date": task.due_date.isoformat() if task.due_date else None,
         "persona_id": task.persona_id,
         # Both keys are part of the published response.
-        "member_name": persona_name,
+        "persona_name": persona_name,
         "persona_name": persona_name,
         "contact_name": persona_name,
         "assigned_to": assigned_to,

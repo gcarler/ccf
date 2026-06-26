@@ -40,7 +40,7 @@ class TestRoleIn:
 
     def test_not_in_set(self):
         from backend.core.permissions import role_in
-        assert role_in("member", {"admin", "pastor"}) is False
+        assert role_in("persona", {"admin", "pastor"}) is False
 
 
 class TestIsCrmPrivileged:
@@ -52,9 +52,9 @@ class TestIsCrmPrivileged:
         from backend.core.permissions import is_crm_privileged
         assert is_crm_privileged("pastor") is True
 
-    def test_member(self):
+    def test_persona(self):
         from backend.core.permissions import is_crm_privileged
-        assert is_crm_privileged("member") is False
+        assert is_crm_privileged("persona") is False
 
 
 class TestGetAllPermissions:
@@ -108,7 +108,7 @@ class TestHasPermission:
 
     def test_unknown_level(self):
         from backend.core.permissions import _has_permission
-        assert _has_permission("member", {"crm:read"}, "crm:unknown") is False
+        assert _has_permission("persona", {"crm:read"}, "crm:unknown") is False
 
     def test_administrador_bypass(self):
         from backend.core.permissions import _has_permission

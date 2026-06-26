@@ -11,27 +11,27 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _serialize_member_position(member_position: models.MemberPosition) -> dict:
-    position = member_position.position
+def _serialize_persona_position(persona_position: models.PersonaPosition) -> dict:
+    position = persona_position.position
     return {
-        "id": member_position.id,
-        "persona_id": member_position.persona_id,
-        "position_id": member_position.position_id,
+        "id": persona_position.id,
+        "persona_id": persona_position.persona_id,
+        "position_id": persona_position.position_id,
         "position_name": position.name if position else None,
         "category": position.category if position else None,
         "start_date": (
-            member_position.start_date.isoformat()
-            if member_position.start_date
+            persona_position.start_date.isoformat()
+            if persona_position.start_date
             else None
         ),
         "end_date": (
-            member_position.end_date.isoformat() if member_position.end_date else None
+            persona_position.end_date.isoformat() if persona_position.end_date else None
         ),
-        "is_active": member_position.is_active,
-        "notes": member_position.notes,
+        "is_active": persona_position.is_active,
+        "notes": persona_position.notes,
         "created_at": (
-            member_position.created_at.isoformat()
-            if member_position.created_at
+            persona_position.created_at.isoformat()
+            if persona_position.created_at
             else None
         ),
     }
@@ -194,7 +194,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
         "failed_count": failed_count,
         "sent_at": first.created_at.isoformat() if first.created_at else None,
         "campaign_name": campaign_name,
-        "member_name": persona_name,
+        "persona_name": persona_name,
         "content": first.content or "",
         "recipient_phone": first.recipient_phone,
         "external_id": first.external_id,
@@ -202,7 +202,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     }
 
 
-def _member_matches_segment(persona, segment: str, donation_persona_ids: set) -> bool:
+def _persona_matches_segment(persona, segment: str, donation_persona_ids: set) -> bool:
     value = str(segment or "").strip().lower()
     if value == "active":
         return str(persona.church_role or "").strip().lower() in {
@@ -225,7 +225,7 @@ def _member_matches_segment(persona, segment: str, donation_persona_ids: set) ->
     return False
 
 
-def _resolve_campaign_members(db, segments: list, sede_id=None) -> list:
+def _resolve_campaign_personas(db, segments: list, sede_id=None) -> list:
     normalized_segments = [s for s in (seg.strip().lower() for seg in segments) if s]
     if not normalized_segments:
         return []
@@ -243,7 +243,7 @@ def _resolve_campaign_members(db, segments: list, sede_id=None) -> list:
     for persona in personas:
         if persona.id in seen_ids:
             continue
-        if any(_member_matches_segment(persona, segment, donation_persona_ids) for segment in normalized_segments):
+        if any(_persona_matches_segment(persona, segment, donation_persona_ids) for segment in normalized_segments):
             selected.append(persona)
             seen_ids.add(persona.id)
     return selected

@@ -254,7 +254,7 @@ def auth_headers_v2(client, email="admin@example.com", password="testpass123"):
     return {"Authorization": f"Bearer {token}"}
 
 
-def seed_user_with_role_v2(db_session, role_name="member", email="user@example.com", password="testpass123"):
+def seed_user_with_role_v2(db_session, role_name="persona", email="user@example.com", password="testpass123"):
     """Crea un usuario v2 (auth_users) con rol específico en RolPlataforma.
 
     Retorna (user, persona, sede).

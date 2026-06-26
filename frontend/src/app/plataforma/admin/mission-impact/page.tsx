@@ -45,7 +45,7 @@ export default function AdminMissionImpactPage() {
     const [stats, setStats] = useState({
         projects: IMPACT_ITEMS.filter((item) => item.status !== 'Completado').length,
         families: 0,
-        members: 0,
+        personas: 0,
     });
     const [viewType, setViewType] = useState<ViewType>('grid');
 
@@ -58,7 +58,7 @@ export default function AdminMissionImpactPage() {
                 setStats((current) => ({
                     ...current,
                     families: data.total_familias,
-                    members: data.total_personas,
+                    personas: data.total_personas,
                 }));
             } catch (err) {
                 console.error(err);
@@ -292,7 +292,7 @@ export default function AdminMissionImpactPage() {
                                 </h3>
                                 
                                 <div className="space-y-3 relative z-10">
-                                    <GoalProgress label="Personas registrados" current={stats.members} target={1000} color="bg-[hsl(var(--primary))]" />
+                                    <GoalProgress label="Personas registrados" current={stats.personas} target={1000} color="bg-[hsl(var(--primary))]" />
                                     <GoalProgress label="Impacto Social" current={12000} target={20000} color="bg-[hsl(var(--primary))]" />
                                     <GoalProgress label="Nuevas Sedes" current={3} target={5} color="bg-emerald-500" />
                                 </div>

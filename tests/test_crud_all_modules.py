@@ -437,14 +437,14 @@ class TestCRMExtended:
         import pytest
         pytest.skip("MinistryCreate schema has leader_id field not in model")
 
-    def test_get_member_positions(self, db_session):
-        from backend.crud.crm_extended import get_member_positions
-        result = get_member_positions(db_session)
+    def test_get_persona_positions(self, db_session):
+        from backend.crud.crm_extended import get_persona_positions
+        result = get_persona_positions(db_session)
         assert isinstance(result, list)
 
-    def test_get_member_ministries(self, db_session):
-        from backend.crud.crm_extended import get_member_ministries
-        result = get_member_ministries(db_session)
+    def test_get_persona_ministry_assignments(self, db_session):
+        from backend.crud.crm_extended import get_persona_ministry_assignments
+        result = get_persona_ministry_assignments(db_session)
         assert isinstance(result, list)
 
     def test_get_role_definitions(self, db_session):
@@ -462,9 +462,9 @@ class TestCRMExtended:
         result = get_funds(db_session)
         assert isinstance(result, list)
 
-    def test_get_member_roles(self, db_session):
-        from backend.crud.crm_extended import get_member_roles
-        result = get_member_roles(db_session)
+    def test_get_persona_role_links(self, db_session):
+        from backend.crud.crm_extended import get_persona_role_links
+        result = get_persona_role_links(db_session)
         assert isinstance(result, list)
 
     def test_get_event_assignments(self, db_session):

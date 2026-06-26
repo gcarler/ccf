@@ -21,7 +21,7 @@ from backend.api.evangelism_events._shared import (
     require_event_access,
 )
 from backend.api.evangelism_shared import (
-    get_expected_members_for_event,
+    get_expected_personas_for_event,
     normalize_role_scope_payload,
     utc_now,
 )
@@ -54,7 +54,7 @@ class EventAudienceUpdate(BaseModel):
     target_audience: schemas.EventAudienceType
     target_role_id: Optional[UUID] = None
     target_role_ids: Optional[List[UUID]] = None
-    target_member_ids: Optional[List[str]] = None
+    target_persona_ids: Optional[List[str]] = None
 
 
 @router.get("/events/", response_model=List[schemas.CrmEvent])
@@ -119,7 +119,7 @@ def update_event(
         "target_audience",
         "target_role_id",
         "target_role_ids",
-        "target_member_ids",
+        "target_persona_ids",
         "status",
         "cancellation_reason",
         "start_time",
@@ -220,7 +220,7 @@ def update_event_audience(
     event.target_audience = normalized["target_audience"]
     event.target_role_id = normalized.get("target_role_id")
     event.target_role_ids = normalized.get("target_role_ids")
-    event.target_member_ids = normalized.get("target_member_ids")
+    event.target_persona_ids = normalized.get("target_persona_ids")
     db.commit()
     return {"success": True}
 
@@ -369,7 +369,7 @@ def get_events_dashboard_stats(
         latest_date = latest_dates.get(event.id)
         if latest_date:
             attended = attendance_counts.get((event.id, latest_date), 0)
-            expected = len(get_expected_members_for_event(db, event))
+            expected = len(get_expected_personas_for_event(db, event))
             rate = round((attended / expected) * 100, 1) if expected > 0 else 0
             stats.append(
                 {
@@ -467,13 +467,13 @@ def export_event_session_report(
         .all()
     )
     attended_ids = {row.persona_id for row in attendances_db}
-    expected_members = get_expected_members_for_event(db, event)
+    expected_personas = get_expected_personas_for_event(db, event)
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=",", quoting=csv.QUOTE_MINIMAL)
     writer.writerow(["Nombre Completo", "Telefono", "Email", "Rol", "Estado Asistencia"])
 
-    for persona in expected_members:
+    for persona in expected_personas:
         status = "Presente" if persona.id in attended_ids else "Ausente"
         writer.writerow(
             [
@@ -485,7 +485,7 @@ def export_event_session_report(
             ]
         )
 
-    expected_ids = {persona.id for persona in expected_members}
+    expected_ids = {persona.id for persona in expected_personas}
     for attendance in attendances_db:
         if attendance.persona_id not in expected_ids and attendance.persona:
             persona = attendance.persona

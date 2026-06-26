@@ -28,7 +28,7 @@ interface Leader {
     role: string;
 }
 
-interface Member {
+interface Persona {
     id: string;
     nombre_completo?: string;
     first_name?: string;
@@ -43,11 +43,11 @@ export default function TaskAssignment() {
     const router = useRouter();
     
     const [leaders, setLeaders] = useState<Leader[]>([]);
-    const [members, setMembers] = useState<Member[]>([]);
+    const [personas, setPersonas] = useState<Persona[]>([]);
     const [loading, setLoading] = useState(true);
     
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+    const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
     const [selectedLeaderId, setSelectedLeaderId] = useState<string>('');
     const [taskTitle, setTaskTitle] = useState('Llamada de seguimiento');
     const [taskDescription, setTaskDescription] = useState('');
@@ -57,14 +57,14 @@ export default function TaskAssignment() {
         if (!token) return;
         setLoading(true);
         try {
-            const [usersData, membersData] = await Promise.all([
+            const [usersData, personasData] = await Promise.all([
                 apiFetch<any[]>('/admin/users', { token }),
                 apiFetch<any[]>('/crm/personas', { token })
             ]);
             
             // Filtrar solo líderes/admin/staff para asignar
             setLeaders(usersData.filter(u => ['admin', 'pastor', 'coordinador', 'docente'].includes(u.role)));
-            setMembers(Array.isArray(membersData) ? membersData : []);
+            setPersonas(Array.isArray(personasData) ? personasData : []);
         } catch (err) {
             console.error(err);
             addToast("Error al cargar datos de asignación", "error");
@@ -77,14 +77,14 @@ export default function TaskAssignment() {
         if (isAuthenticated) fetchData();
     }, [isAuthenticated, fetchData]);
 
-    const filteredMembers = useMemo(() => {
-        return members.filter(m =>
+    const filteredPersonas = useMemo(() => {
+        return personas.filter(m =>
             (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()).toLowerCase().includes(searchQuery.toLowerCase())
         ).slice(0, 10); // Limit to 10 for assignment UI
-    }, [members, searchQuery]);
+    }, [personas, searchQuery]);
 
     const handleAssign = async () => {
-        if (!selectedMemberId || !selectedLeaderId || !taskTitle) {
+        if (!selectedPersonaId || !selectedLeaderId || !taskTitle) {
             addToast("Completa todos los campos obligatorios", "warning");
             return;
         }
@@ -97,7 +97,7 @@ export default function TaskAssignment() {
                 body: {
                     title: taskTitle,
                     description: taskDescription,
-                    persona_id: selectedMemberId,
+                    persona_id: selectedPersonaId,
                     assignee_id: selectedLeaderId,
                     priority: 'normal',
                     due_date: new Date(Date.now() + 86400000 * 2).toISOString() // Default 2 days
@@ -105,7 +105,7 @@ export default function TaskAssignment() {
             });
             addToast("Tarea asignada exitosamente", "success");
             setTaskDescription('');
-            setSelectedMemberId(null);
+            setSelectedPersonaId(null);
             setSelectedLeaderId('');
         } catch (err) {
             addToast("Error al asignar tarea", "error");
@@ -116,7 +116,7 @@ export default function TaskAssignment() {
 
     if (!isAuthenticated) return null;
 
-    const selectedMember = members.find(m => m.id === selectedMemberId);
+    const selectedPersona = personas.find(m => m.id === selectedPersonaId);
 
     return (
         <CrmShell
@@ -177,7 +177,7 @@ export default function TaskAssignment() {
                 <div className="bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] rounded-lg p-4 shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Resultados de Búsqueda</h3>
-                        <span className="px-3 py-1 bg-blue-50 text-[hsl(var(--primary))] rounded-full text-[9px] font-bold uppercase">{filteredMembers.length} Personas</span>
+                        <span className="px-3 py-1 bg-blue-50 text-[hsl(var(--primary))] rounded-full text-[9px] font-bold uppercase">{filteredPersonas.length} Personas</span>
                     </div>
 
                     <div className="space-y-4">
@@ -186,33 +186,33 @@ export default function TaskAssignment() {
                                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={32} />
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Cargando congregación...</p>
                             </div>
-                        ) : filteredMembers.map((m, idx) => (
+                        ) : filteredPersonas.map((m, idx) => (
                             <motion.div 
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.05 }}
                                 key={m.id}
-                                onClick={() => setSelectedMemberId(m.id)}
+                                onClick={() => setSelectedPersonaId(m.id)}
                                 className={clsx(
                                     "p-3 rounded-md border transition-all cursor-pointer flex items-center justify-between group",
-                                    selectedMemberId === m.id ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-xl shadow-blue-500/20" : "bg-slate-50 dark:bg-white/5 border-transparent hover:border-blue-200"
+                                    selectedPersonaId === m.id ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-xl shadow-blue-500/20" : "bg-slate-50 dark:bg-white/5 border-transparent hover:border-blue-200"
                                 )}
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={clsx(
                                         "size-9 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm",
-                                        selectedMemberId === m.id ? "bg-white/20" : "bg-[hsl(var(--surface-1))] dark:bg-white/10 text-[hsl(var(--primary))]"
+                                        selectedPersonaId === m.id ? "bg-white/20" : "bg-[hsl(var(--surface-1))] dark:bg-white/10 text-[hsl(var(--primary))]"
                                     )}>
                                         {m.nombre_completo?.charAt(0) ?? ''}
                                     </div>
                                     <div>
                                         <p className="font-bold uppercase tracking-tight text-sm leading-none mb-1">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</p>
-                                        <p className={clsx("text-[10px] font-bold uppercase tracking-wide", selectedMemberId === m.id ? "text-blue-100" : "text-slate-400")}>{m.church_role} · {m.spiritual_status}</p>
+                                        <p className={clsx("text-[10px] font-bold uppercase tracking-wide", selectedPersonaId === m.id ? "text-blue-100" : "text-slate-400")}>{m.church_role} · {m.spiritual_status}</p>
                                     </div>
                                 </div>
                                 <div className={clsx(
                                     "size-8 rounded-md flex items-center justify-center transition-all",
-                                    selectedMemberId === m.id ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] rotate-90" : "bg-slate-200 dark:bg-white/10 text-slate-400 group-hover:bg-blue-100 group-hover:text-[hsl(var(--primary))]"
+                                    selectedPersonaId === m.id ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] rotate-90" : "bg-slate-200 dark:bg-white/10 text-slate-400 group-hover:bg-blue-100 group-hover:text-[hsl(var(--primary))]"
                                 )}>
                                     <Plus size={18} />
                                 </div>
@@ -225,7 +225,7 @@ export default function TaskAssignment() {
             {/* Right Column: Assignment Form */}
             <div className="lg:col-span-5">
                 <AnimatePresence mode="wait">
-                    {selectedMember ? (
+                    {selectedPersona ? (
                         <motion.div 
                             key="form"
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -239,7 +239,7 @@ export default function TaskAssignment() {
                                 </div>
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
                                     Seguimiento para <br/>
-                                    <span className="shimmer-text">{selectedMember.nombre_completo || `${selectedMember.first_name ?? ''} ${selectedMember.last_name ?? ''}`.trim()}</span>
+                                    <span className="shimmer-text">{selectedPersona.nombre_completo || `${selectedPersona.first_name ?? ''} ${selectedPersona.last_name ?? ''}`.trim()}</span>
                                 </h3>
                             </div>
 

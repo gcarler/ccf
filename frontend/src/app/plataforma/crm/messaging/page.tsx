@@ -44,7 +44,7 @@ function normalizeHistoryRow(row: any): MessagingHistoryRow {
     const failedCount = Number(row?.failed_count ?? (row?.status === 'failed' ? targetCount : 0));
     return {
         id: Number(row?.id ?? 0),
-        name: row?.name ?? row?.campaign_name ?? row?.member_name ?? `Mensaje #${row?.id ?? 0}`,
+        name: row?.name ?? row?.campaign_name ?? row?.persona_name ?? `Mensaje #${row?.id ?? 0}`,
         campaign_name: row?.campaign_name,
         channel: (String(row?.channel || 'whatsapp').toLowerCase() as Channel),
         status: String(row?.status || 'sent'),

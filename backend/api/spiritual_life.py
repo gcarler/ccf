@@ -13,7 +13,7 @@ router = APIRouter(prefix="/spiritual-life", tags=["Spiritual Life"])
 
 
 @router.get("/milestones/{person_id}", response_model=List[schemas.Milestone])
-def get_member_milestones(
+def get_persona_milestones(
     person_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),

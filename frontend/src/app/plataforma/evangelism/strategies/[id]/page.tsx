@@ -95,7 +95,7 @@ interface StrategyGroup {
  name: string;
  zone: string | null;
  leader_name: string | null;
- members_count: number;
+ personas_count: number;
 }
 
 type HabilitacionEstado = 'DESHABILITADO' | 'HABILITADO' | 'CERRADO' | 'CANCELADA';
@@ -111,7 +111,7 @@ interface SessionRow {
  report_notes?: string | null;
 }
 
-interface AttendanceMember {
+interface AttendancePersona {
  persona_id: string;
  name: string;
  role: string;
@@ -276,7 +276,7 @@ export default function StrategyDetailPage() {
  const { viewType, setViewType } = useViewType(`strategy_${id}`, 'dashboard');
  const [groups, setGroups] = useState<StrategyGroup[]>([]);
  const [metrics, setMetrics] = useState<any>(null);
- const [memberCache, setMemberCache] = useState<Record<string, any>>({});
+ const [personaCache, setPersonaCache] = useState<Record<string, any>>({});
  const [roleResults, setRoleResults] = useState<Record<string, any[]>>({});
  const [roleLoading, setRoleLoading] = useState<Record<string, boolean>>({});
 
@@ -291,27 +291,27 @@ export default function StrategyDetailPage() {
  const [roleSearch, setRoleSearch] = useState<Record<string, string>>({});
  const [roleDropdown, setRoleDropdown] = useState<string | null>(null);
 
- // Member management drawer
- const [isMemberDrawerOpen, setIsMemberDrawerOpen] = useState(false);
+ // Persona management drawer
+ const [isPersonaDrawerOpen, setIsPersonaDrawerOpen] = useState(false);
  const [selectedGroup, setSelectedGroup] = useState<StrategyGroup | null>(null);
- const [groupMembers, setGroupMembers] = useState<{ id: string; name: string; email: string; role: string; role_label?: string }[]>([]);
- const [allMembers, setAllMembers] = useState<any[]>([]);
- const [memberSearch, setMemberSearch] = useState('');
- const [memberSearchLoading, setMemberSearchLoading] = useState(false);
- const [memberSaving, setMemberSaving] = useState(false);
- const [memberSplitHeight, setMemberSplitHeight] = useState(200);
- const memberSplitRef = useRef<HTMLDivElement>(null);
+ const [groupPersonas, setGroupPersonas] = useState<{ id: string; name: string; email: string; role: string; role_label?: string }[]>([]);
+ const [allPersonas, setAllPersonas] = useState<any[]>([]);
+ const [personaSearch, setPersonaSearch] = useState('');
+ const [personaSearchLoading, setPersonaSearchLoading] = useState(false);
+ const [personaSaving, setPersonaSaving] = useState(false);
+ const [personaSplitHeight, setPersonaSplitHeight] = useState(200);
+ const personaSplitRef = useRef<HTMLDivElement>(null);
 
- const handleMemberSplitDrag = useCallback((e: React.MouseEvent) => {
+ const handlePersonaSplitDrag = useCallback((e: React.MouseEvent) => {
  e.preventDefault();
  const startY = e.clientY;
- const startHeight = memberSplitRef.current
- ? memberSplitRef.current.querySelector<HTMLDivElement>(':first-child')?.offsetHeight ?? 200
+ const startHeight = personaSplitRef.current
+ ? personaSplitRef.current.querySelector<HTMLDivElement>(':first-child')?.offsetHeight ?? 200
  : 200;
  const onMouseMove = (ev: MouseEvent) => {
- const containerH = memberSplitRef.current?.clientHeight ?? 600;
+ const containerH = personaSplitRef.current?.clientHeight ?? 600;
  const next = Math.max(80, Math.min(startHeight + ev.clientY - startY, containerH - 140));
- setMemberSplitHeight(next);
+ setPersonaSplitHeight(next);
  };
  const onMouseUp = () => {
  document.removeEventListener('mousemove', onMouseMove);
@@ -338,7 +338,7 @@ export default function StrategyDetailPage() {
 
  // Attendance drawer
  const [attendanceSession, setAttendanceSession] = useState<SessionRow | null>(null);
- const [attendanceMembers, setAttendanceMembers] = useState<AttendanceMember[]>([]);
+ const [attendancePersonas, setAttendancePersonas] = useState<AttendancePersona[]>([]);
  const [attendanceSaving, setAttendanceSaving] = useState(false);
  const [isAttendanceDrawerOpen, setIsAttendanceDrawerOpen] = useState(false);
 
@@ -371,7 +371,7 @@ export default function StrategyDetailPage() {
  return () => document.removeEventListener('click', close);
  }, [shareMenuId]);
 
- const memberRoleOptions = customRoles.length > 0
+ const personaRoleOptions = customRoles.length > 0
  ? [
  ...customRoles.map(role => ({ value: customRoleValue(role), label: role.nombre_rol })),
  { value: 'visitante', label: 'Visitante' },
@@ -379,11 +379,11 @@ export default function StrategyDetailPage() {
  : FALLBACK_MEMBER_ROLES;
 
  const selectedDefaultRole = customRoles.find(role => role.id === editDefaultRoleId) || null;
- const defaultMemberRoleValue = selectedDefaultRole
+ const defaultPersonaRoleLinkValue = selectedDefaultRole
  ? customRoleValue(selectedDefaultRole)
- : memberRoleOptions[0]?.value || 'persona';
- const defaultMemberRoleLabel = selectedDefaultRole?.nombre_rol
- || memberRoleOptions[0]?.label
+ : personaRoleOptions[0]?.value || 'persona';
+ const defaultPersonaRoleLinkLabel = selectedDefaultRole?.nombre_rol
+ || personaRoleOptions[0]?.label
  || 'Persona';
 
  const getRoleLabel = (value: string, fallback?: string) => {
@@ -391,7 +391,7 @@ export default function StrategyDetailPage() {
  if (customId) {
  return customRoles.find(role => role.id === customId)?.nombre_rol || fallback || value;
  }
- return memberRoleOptions.find(role => role.value === value)?.label || fallback || value;
+ return personaRoleOptions.find(role => role.value === value)?.label || fallback || value;
  };
 
  const getRoleColor = (value: string) => {
@@ -575,7 +575,7 @@ export default function StrategyDetailPage() {
  assistant_id: roleDrivenAssignments.fixed.assistant_id,
  host_id: roleDrivenAssignments.fixed.host_id,
  estrategia_id: id,
- members_count: 0, capacity: groupForm.capacity,
+ personas_count: 0, capacity: groupForm.capacity,
  status: 'Activo',
  day_of_week: groupForm.day_of_week || null,
  start_time: groupForm.start_time || null,
@@ -609,43 +609,43 @@ export default function StrategyDetailPage() {
  });
  };
 
- // ── Member management ──
- const openMemberDrawer = async (group: StrategyGroup) => {
+ // ── Persona management ──
+ const openPersonaDrawer = async (group: StrategyGroup) => {
  setSelectedGroup(group);
- setIsMemberDrawerOpen(true);
- setMemberSearch('');
- setAllMembers([]);
- setMemberSplitHeight(200);
+ setIsPersonaDrawerOpen(true);
+ setPersonaSearch('');
+ setAllPersonas([]);
+ setPersonaSplitHeight(200);
  try {
  const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${group.id}`, { token });
- setGroupMembers(house?.base_attendees?.map((a: any) => ({
+ setGroupPersonas(house?.base_attendees?.map((a: any) => ({
  id: a.persona_id,
- name: a.name || a.member?.nombre_completo || '',
- email: a.member?.email || '',
+ name: a.name || a.persona?.nombre_completo || '',
+ email: a.persona?.email || '',
  role: a.role || 'persona',
  role_label: a.role_label,
  })) || []);
- } catch { setGroupMembers([]); }
+ } catch { setGroupPersonas([]); }
  };
 
  // Carga todas las personas al abrir el drawer — el filtro es client-side por nombre
  useEffect(() => {
- if (!isMemberDrawerOpen) return;
- setMemberSearchLoading(true);
+ if (!isPersonaDrawerOpen) return;
+ setPersonaSearchLoading(true);
  apiFetch<any[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } })
- .then(res => setAllMembers(res || []))
+ .then(res => setAllPersonas(res || []))
  .catch(() => {})
- .finally(() => setMemberSearchLoading(false));
- }, [isMemberDrawerOpen, token]); // eslint-disable-line react-hooks/exhaustive-deps
+ .finally(() => setPersonaSearchLoading(false));
+ }, [isPersonaDrawerOpen, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
- const handleSaveMembers = async () => {
+ const handleSavePersonas = async () => {
  if (!selectedGroup) return;
- setMemberSaving(true);
+ setPersonaSaving(true);
  try {
  await apiFetch(`/evangelism/grupos/${selectedGroup.id}`, {
  method: 'PUT', token,
  body: {
- base_attendees_with_roles: groupMembers.map(m => ({
+ base_attendees_with_roles: groupPersonas.map(m => ({
  persona_id: m.id,
  role: m.role,
  rol_personalizado_id: m.role.startsWith('custom:') ? Number(m.role.split(':')[1]) : null,
@@ -653,30 +653,30 @@ export default function StrategyDetailPage() {
  },
  });
  toast.success('Personas actualizados');
- setIsMemberDrawerOpen(false);
+ setIsPersonaDrawerOpen(false);
  fetchGroups();
  } catch (e: any) {
  toast.error('Error al guardar: ' + (e.message || 'Intente de nuevo'));
- } finally { setMemberSaving(false); }
+ } finally { setPersonaSaving(false); }
  };
 
- const addMemberToGroup = (member: any) => {
- if (groupMembers.find(m => m.id === member.id)) return;
- setGroupMembers(prev => [...prev, {
- id: member.id,
- name: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(),
- email: member.email || '',
- role: defaultMemberRoleValue,
- role_label: defaultMemberRoleLabel,
+ const addPersonaToGroup = (persona: any) => {
+ if (groupPersonas.find(m => m.id === persona.id)) return;
+ setGroupPersonas(prev => [...prev, {
+ id: persona.id,
+ name: persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim(),
+ email: persona.email || '',
+ role: defaultPersonaRoleLinkValue,
+ role_label: defaultPersonaRoleLinkLabel,
  }]);
  };
 
- const updateMemberRole = (memberId: string, role: string) => {
- setGroupMembers(prev => prev.map(m => m.id === memberId ? { ...m, role, role_label: getRoleLabel(role) } : m));
+ const updateGroupPersonaRole = (personaId: string, role: string) => {
+ setGroupPersonas(prev => prev.map(m => m.id === personaId ? { ...m, role, role_label: getRoleLabel(role) } : m));
  };
 
- const removeMemberFromGroup = (memberId: string) => {
- setGroupMembers(prev => prev.filter(m => m.id !== memberId));
+ const removePersonaFromGroup = (personaId: string) => {
+ setGroupPersonas(prev => prev.filter(m => m.id !== personaId));
  };
 
  // ── Sessions ──
@@ -728,14 +728,14 @@ export default function StrategyDetailPage() {
  setVisitorSearch('');
  setShowNewVisitorForm(false);
  setNewVisitorForm({ first_name: '', last_name: '', phone: '', whatsapp: '', email: '', address: '' });
- // Pre-load all members for visitor search if not already loaded
- if (allMembers.length === 0) {
+ // Pre-load all personas for visitor search if not already loaded
+ if (allPersonas.length === 0) {
  apiFetch<any[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(res => {
- if (Array.isArray(res)) setAllMembers(res);
+ if (Array.isArray(res)) setAllPersonas(res);
  }).catch(() => { toast.error('Error al cargar personas'); });
  }
  try {
- // Get house members to build attendance list
+ // Get house personas to build attendance list
  const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${session.grupo_id}`, { token });
  const existing = await apiFetch<SessionDetailResponse>(`/evangelism/sessions/${session.id}`, { token }).catch(() => null);
  const existingMap: Record<string, { status: string; notes: string }> = {};
@@ -744,16 +744,16 @@ export default function StrategyDetailPage() {
  existingMap[a.persona_id] = { status: a.status, notes: a.notes || '' };
  }
  }
- const memberList = house?.base_attendees?.map((a: any) => ({
+ const personaList = house?.base_attendees?.map((a: any) => ({
  persona_id: a.persona_id,
- name: a.name || a.member?.nombre_completo || '',
+ name: a.name || a.persona?.nombre_completo || '',
  role: a.role || 'persona',
  role_label: a.role_label,
  status: (existingMap[a.persona_id]?.status as any) || 'present',
  notes: existingMap[a.persona_id]?.notes || '',
  })) || [];
- setAttendanceMembers(memberList);
- } catch { setAttendanceMembers([]); }
+ setAttendancePersonas(personaList);
+ } catch { setAttendancePersonas([]); }
  };
 
  const handleSaveAttendance = async () => {
@@ -762,7 +762,7 @@ export default function StrategyDetailPage() {
  try {
  await apiFetch(`/evangelism/sessions/${attendanceSession.id}/attendance`, {
  method: 'POST', token,
- body: attendanceMembers.map(m => ({
+ body: attendancePersonas.map(m => ({
  session_id: attendanceSession.id,
  persona_id: m.persona_id,
  status: m.status,
@@ -800,8 +800,8 @@ export default function StrategyDetailPage() {
  } else {
  toast.success(`Visitante "${realName}" registrado`);
  }
- setAttendanceMembers(prev => {
- const nextMember = {
+ setAttendancePersonas(prev => {
+ const nextPersona = {
  persona_id: res.persona_id,
  name: realName,
  role: 'visitante',
@@ -809,13 +809,13 @@ export default function StrategyDetailPage() {
  status: 'first_time' as const,
  notes: '',
  };
- if (prev.some(member => member.persona_id === res.persona_id)) {
- return prev.map(member => member.persona_id === res.persona_id ? { ...member, ...nextMember } : member);
+ if (prev.some(persona => persona.persona_id === res.persona_id)) {
+ return prev.map(persona => persona.persona_id === res.persona_id ? { ...persona, ...nextPersona } : persona);
  }
- return [...prev, nextMember];
+ return [...prev, nextPersona];
  });
- setAllMembers(prev => {
- if (prev.some(member => member.id === res.persona_id)) return prev;
+ setAllPersonas(prev => {
+ if (prev.some(persona => persona.id === res.persona_id)) return prev;
  return [
  ...prev,
  {
@@ -1119,8 +1119,8 @@ export default function StrategyDetailPage() {
  ...groups.map(g => ({
  id: String(g.id), name: g.name, title: g.name,
  start_date: new Date().toISOString(), end_date: new Date(Date.now() + 30 * 86400000).toISOString(),
- progress: Math.min(g.members_count * 20, 100),
- color: 'blue' as const, subtitle: `${g.members_count} personas`,
+ progress: Math.min(g.personas_count * 20, 100),
+ color: 'blue' as const, subtitle: `${g.personas_count} personas`,
  })),
  ...sessions.map(s => ({
  id: `s-${s.id}`, title: s.topic || `Sesión #${s.id}`,
@@ -1226,7 +1226,7 @@ export default function StrategyDetailPage() {
  editable: true,
  },
  {
- key: 'members_count',
+ key: 'personas_count',
  label: 'Personas',
  type: 'number',
  width: '95',
@@ -1275,7 +1275,7 @@ export default function StrategyDetailPage() {
  render: (_: any, item: any) => (
  <div className="flex items-center gap-1">
  <button
- onClick={(e) => { e.stopPropagation(); openMemberDrawer(item); }}
+ onClick={(e) => { e.stopPropagation(); openPersonaDrawer(item); }}
  className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
  >
  <Users size={10} /> Personas
@@ -1424,7 +1424,7 @@ export default function StrategyDetailPage() {
  <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Users size={14} className="text-[hsl(var(--primary))] dark:text-blue-400" /></div>
  <div className="flex-1 min-w-0">
  <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{g.name}</p>
- <p className="text-xs text-[hsl(var(--text-secondary))]">{g.members_count} personas{g.zone ? ` · ${g.zone}` : ''}</p>
+ <p className="text-xs text-[hsl(var(--text-secondary))]">{g.personas_count} personas{g.zone ? ` · ${g.zone}` : ''}</p>
  </div>
  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-green-300">Grupo</span>
  </div>
@@ -1453,7 +1453,7 @@ export default function StrategyDetailPage() {
  </div>
  <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">{g.name}</h3>
  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{g.zone || 'Sin zona'}</p>
- <span className="text-xs font-medium text-[hsl(var(--text-secondary))] mt-3 block">{g.members_count} personas</span>
+ <span className="text-xs font-medium text-[hsl(var(--text-secondary))] mt-3 block">{g.personas_count} personas</span>
  </div>
  ))}
  {(activeTab === 'sessions' || activeTab === 'overview') && sessions.map(s => (
@@ -1602,7 +1602,7 @@ export default function StrategyDetailPage() {
  {groups.map(g => (
  <div key={g.id}
  className="group bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer relative"
- onClick={() => openMemberDrawer(g)}>
+ onClick={() => openPersonaDrawer(g)}>
  <button onClick={e => { e.stopPropagation(); requestDeleteGroup(g.id, g.name); }}
  className="absolute top-2 right-2 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
  <Trash2 size={14} />
@@ -1649,7 +1649,7 @@ export default function StrategyDetailPage() {
  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{g.zone || 'Sin zona'}</p>
  <div className="flex items-center gap-3 mt-3 text-xs text-[hsl(var(--text-secondary))]">
  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--bg-muted))]">
- <Users size={12} />{g.members_count} personas
+ <Users size={12} />{g.personas_count} personas
  </span>
  {g.leader_name && <span>Líder: {g.leader_name}</span>}
  </div>
@@ -1903,7 +1903,7 @@ export default function StrategyDetailPage() {
           </div>
           <div className="flex items-center gap-3 mt-0.5 text-[11px] text-[hsl(var(--text-secondary))]">
            {grp.leader_name && <span>{grp.leader_name}</span>}
-           <span>{grp.members_count} personas</span>
+           <span>{grp.personas_count} personas</span>
           </div>
          </div>
          {latest && (
@@ -2209,9 +2209,9 @@ export default function StrategyDetailPage() {
  const field = customRoleValue(role);
  const label = role.nombre_rol;
  const selectedId = groupRoleAssignments[field] || null;
- const selectedMember = selectedId ? memberCache[selectedId] : null;
- const selectedName = selectedMember
- ? (selectedMember.nombre_completo || `${selectedMember.first_name ?? ''} ${selectedMember.last_name ?? ''}`.trim())
+ const selectedPersona = selectedId ? personaCache[selectedId] : null;
+ const selectedName = selectedPersona
+ ? (selectedPersona.nombre_completo || `${selectedPersona.first_name ?? ''} ${selectedPersona.last_name ?? ''}`.trim())
  : '';
  const query = roleSearch[field] || '';
  const results = roleResults[field] || [];
@@ -2263,7 +2263,7 @@ export default function StrategyDetailPage() {
  key={m.id}
  type="button"
  onMouseDown={() => {
- setMemberCache(c => ({ ...c, [m.id]: m }));
+ setPersonaCache(c => ({ ...c, [m.id]: m }));
  setGroupRoleAssignments(f => ({ ...f, [field]: m.id }));
  setRoleDropdown(null);
  setRoleSearch(s => ({ ...s, [field]: '' }));
@@ -2283,39 +2283,39 @@ export default function StrategyDetailPage() {
  </div>
  </WorkspaceDrawer>
 
- {/* ── Member Management Drawer ── */}
- <WorkspaceDrawer isOpen={isMemberDrawerOpen} onClose={() => setIsMemberDrawerOpen(false)}
+ {/* ── Persona Management Drawer ── */}
+ <WorkspaceDrawer isOpen={isPersonaDrawerOpen} onClose={() => setIsPersonaDrawerOpen(false)}
  title="Gestionar Personas" subtitle={selectedGroup?.name || ''}
  actions={<>
- <button onClick={() => setIsMemberDrawerOpen(false)}
+ <button onClick={() => setIsPersonaDrawerOpen(false)}
  className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
- <button onClick={handleSaveMembers} disabled={memberSaving}
+ <button onClick={handleSavePersonas} disabled={personaSaving}
  className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
- {memberSaving ? <><Loader2 size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar ({groupMembers.length})</>}
+ {personaSaving ? <><Loader2 size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar ({groupPersonas.length})</>}
  </button>
  </>}>
- <div ref={memberSplitRef} className="flex flex-col" style={{ height: 'calc(100vh - 16rem)' }}>
+ <div ref={personaSplitRef} className="flex flex-col" style={{ height: 'calc(100vh - 16rem)' }}>
  {/* Panel superior: personas asignadas */}
- <div className="overflow-y-auto shrink-0 pb-2" style={{ height: memberSplitHeight }}>
+ <div className="overflow-y-auto shrink-0 pb-2" style={{ height: personaSplitHeight }}>
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-2">
- Personas ({groupMembers.length})
+ Personas ({groupPersonas.length})
  </label>
- {groupMembers.length === 0 ? (
+ {groupPersonas.length === 0 ? (
  <p className="text-xs text-[hsl(var(--text-secondary))] italic py-2">Sin personas asignados</p>
  ) : (
  <div className="space-y-1.5">
- {groupMembers.map(m => (
+ {groupPersonas.map(m => (
  <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 bg-[hsl(var(--bg-muted))] rounded-md">
  <div className="flex-1 min-w-0">
  <span className="text-xs font-medium text-[hsl(var(--text-primary))] truncate block">{m.name}</span>
  </div>
  <RoleSelect
  value={m.role}
- options={memberRoleOptions}
+ options={personaRoleOptions}
  colorClass={getRoleColor(m.role)}
- onChange={v => updateMemberRole(m.id, v)}
+ onChange={v => updateGroupPersonaRole(m.id, v)}
  />
- <button onClick={() => removeMemberFromGroup(m.id)}
+ <button onClick={() => removePersonaFromGroup(m.id)}
  className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
  <UserMinus size={13} />
  </button>
@@ -2327,7 +2327,7 @@ export default function StrategyDetailPage() {
 
  {/* Divisor arrastrable */}
  <div
- onMouseDown={handleMemberSplitDrag}
+ onMouseDown={handlePersonaSplitDrag}
  className="shrink-0 h-4 flex items-center justify-center cursor-row-resize group select-none border-y border-[hsl(var(--border-primary))] hover:border-blue-300 dark:hover:border-blue-500/40 transition-colors"
  title="Arrastra para ajustar el espacio"
  >
@@ -2338,22 +2338,22 @@ export default function StrategyDetailPage() {
  <div className="flex-1 min-h-0 flex flex-col pt-3">
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block shrink-0">Agregar personas</label>
  <div className="relative mb-2 shrink-0">
- {memberSearchLoading
+ {personaSearchLoading
  ? <Loader2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 animate-spin" />
  : <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />}
- <input value={memberSearch}
- onChange={e => setMemberSearch(e.target.value)}
+ <input value={personaSearch}
+ onChange={e => setPersonaSearch(e.target.value)}
  placeholder="Filtrar por nombre..."
  className="w-full pl-9 pr-3 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]" />
  </div>
  <div className="flex-1 min-h-0 overflow-y-auto space-y-1">
  {(() => {
- if (memberSearchLoading) return (
+ if (personaSearchLoading) return (
  <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Cargando personas...</p>
  );
  const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
- const q = norm(memberSearch.trim());
- const notInGroup = allMembers.filter(m => !groupMembers.find(gm => String(gm.id) === String(m.id)));
+ const q = norm(personaSearch.trim());
+ const notInGroup = allPersonas.filter(m => !groupPersonas.find(gm => String(gm.id) === String(m.id)));
  const available = q
  ? notInGroup
  .filter(m => {
@@ -2369,7 +2369,7 @@ export default function StrategyDetailPage() {
  return aName.localeCompare(bName, 'es');
  })
  : notInGroup;
- if (allMembers.length === 0) return (
+ if (allPersonas.length === 0) return (
  <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Sin personas en el sistema</p>
  );
  if (available.length === 0) return (
@@ -2378,7 +2378,7 @@ export default function StrategyDetailPage() {
  </p>
  );
  return available.map(m => (
- <button key={m.id} onClick={() => addMemberToGroup(m)}
+ <button key={m.id} onClick={() => addPersonaToGroup(m)}
  className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 rounded-md text-xs text-left transition-colors group/add">
  <span className="font-medium text-[hsl(var(--text-primary))]">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}
  {m.email && <span className="text-[hsl(var(--text-secondary))] ml-2">{m.email}</span>}
@@ -2451,7 +2451,7 @@ export default function StrategyDetailPage() {
  </button>
  </>}>
  <div className="space-y-3">
- {attendanceMembers.length === 0 && !showVisitorSearch ? (
+ {attendancePersonas.length === 0 && !showVisitorSearch ? (
  <div className="text-center py-8">
  <Users size={32} className="text-[hsl(var(--text-secondary))] mx-auto mb-2" />
  <p className="text-xs text-[hsl(var(--text-secondary))]">Este grupo no tiene personas asignados</p>
@@ -2459,17 +2459,17 @@ export default function StrategyDetailPage() {
  </div>
  ) : (
  <>
- {attendanceMembers.length > 0 && (
+ {attendancePersonas.length > 0 && (
  <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--text-secondary))] mb-1">
- <span>{attendanceMembers.filter(m => m.status === 'present').length} presentes</span>
+ <span>{attendancePersonas.filter(m => m.status === 'present').length} presentes</span>
  <span>·</span>
- <span>{attendanceMembers.filter(m => m.status === 'absent').length} ausentes</span>
+ <span>{attendancePersonas.filter(m => m.status === 'absent').length} ausentes</span>
  <span>·</span>
- <span className="text-[hsl(var(--primary))]">{attendanceMembers.filter(m => m.status === 'first_time').length} primera vez</span>
+ <span className="text-[hsl(var(--primary))]">{attendancePersonas.filter(m => m.status === 'first_time').length} primera vez</span>
  </div>
  )}
  <div className="space-y-2">
- {attendanceMembers.map((m, i) => (
+ {attendancePersonas.map((m, i) => (
  <div key={m.persona_id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${m.status === 'first_time' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' : 'bg-[hsl(var(--bg-muted))]'}`}>
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-1.5">
@@ -2487,13 +2487,13 @@ export default function StrategyDetailPage() {
  { status: 'first_time', label: '1°', cls: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-[hsl(var(--primary))]', activeCls: 'ring-2 ring-blue-500' },
  ].map(opt => (
  <button key={opt.status}
- onClick={() => setAttendanceMembers(prev => prev.map((x, j) => j === i ? { ...x, status: opt.status as any } : x))}
+ onClick={() => setAttendancePersonas(prev => prev.map((x, j) => j === i ? { ...x, status: opt.status as any } : x))}
  className={`w-8 h-8 rounded-lg text-[11px] font-bold transition-all ${opt.cls} ${m.status === opt.status ? opt.activeCls : 'opacity-50 hover:opacity-100'}`}>
  {opt.label}
  </button>
  ))}
  {m.role === 'visitante' && (
- <button onClick={() => setAttendanceMembers(prev => prev.filter((_, j) => j !== i))}
+ <button onClick={() => setAttendancePersonas(prev => prev.filter((_, j) => j !== i))}
  className="w-7 h-7 ml-1 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-red-50 hover:text-[hsl(var(--destructive))] dark:hover:bg-red-900/20 transition-colors">
  <X size={12} />
  </button>
@@ -2538,17 +2538,17 @@ export default function StrategyDetailPage() {
  </div>
  {visitorSearch.trim().length >= 2 && (
  <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] p-1">
- {allMembers
+ {allPersonas
  .filter(m => {
  const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
  return name.includes(visitorSearch.toLowerCase()) &&
- !attendanceMembers.find(a => a.persona_id === m.id);
+ !attendancePersonas.find(a => a.persona_id === m.id);
  })
  .slice(0, 8)
  .map(m => (
  <button key={m.id}
  onClick={() => {
- setAttendanceMembers(prev => [...prev, {
+ setAttendancePersonas(prev => [...prev, {
  persona_id: m.id,
  name: m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim(),
  role: 'visitante',
@@ -2565,9 +2565,9 @@ export default function StrategyDetailPage() {
  {m.church_role && <span className="text-[hsl(var(--text-secondary))] text-[10px]">({m.church_role})</span>}
  </button>
  ))}
- {allMembers.filter(m => {
+ {allPersonas.filter(m => {
  const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
- return name.includes(visitorSearch.toLowerCase()) && !attendanceMembers.find(a => a.persona_id === m.id);
+ return name.includes(visitorSearch.toLowerCase()) && !attendancePersonas.find(a => a.persona_id === m.id);
  }).length === 0 && (
  <p className="text-center py-3 text-xs text-[hsl(var(--text-secondary))]">No se encontraron personas</p>
  )}

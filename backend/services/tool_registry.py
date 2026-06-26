@@ -157,15 +157,15 @@ tool_registry = ToolRegistry()
 # HERRAMIENTAS CRM
 # ──────────────────────────────────────────────
 
-class CRMSearchMember(AgentTool):
+class CRMSearchPersona(AgentTool):
     """Busca miembros por nombre, email o teléfono."""
 
     @property
-    def name(self): return "crm_search_member"
+    def name(self): return "crm_search_persona"
 
     @property
     def description(self):
-        return "Search church members by name, email, or phone"
+        return "Search church personas by name, email, or phone"
 
     @property
     def module(self): return "crm"
@@ -186,15 +186,15 @@ class CRMSearchMember(AgentTool):
         db = SessionLocal()
         try:
             term = f"%{query}%"
-            members = db.query(models.Persona).filter(
+            personas = db.query(models.Persona).filter(
                 models.Persona.first_name.ilike(term)
                 | models.Persona.last_name.ilike(term)
                 | models.Persona.email.ilike(term)
                 | (models.Persona.phone == query),
             ).limit(10).all()
             return {
-                "count": len(members),
-                "members": [
+                "count": len(personas),
+                "personas": [
                     {
                         "id": m.id,
                         "name": f"{m.first_name} {m.last_name}",
@@ -202,22 +202,22 @@ class CRMSearchMember(AgentTool):
                         "phone": m.phone,
                         "church_role": m.church_role,
                     }
-                    for m in members
+                    for m in personas
                 ],
             }
         finally:
             db.close()
 
 
-class CRMGetMemberProfile(AgentTool):
+class CRMGetPersonaProfile(AgentTool):
     """Obtiene el perfil completo de un miembro."""
 
     @property
-    def name(self): return "crm_get_member_profile"
+    def name(self): return "crm_get_persona_profile"
 
     @property
     def description(self):
-        return "Get full profile of a church member by ID"
+        return "Get full profile of a church persona by ID"
 
     @property
     def module(self): return "crm"
@@ -456,7 +456,7 @@ class AnalyticsGetRadar(AgentTool):
 
     @property
     def description(self):
-        return "Get Pastor's Radar KPIs (members, baptisms, students, revenue)"
+        return "Get Pastor's Radar KPIs (personas, baptisms, students, revenue)"
 
     @property
     def module(self): return "analytics"
@@ -468,7 +468,7 @@ class AnalyticsGetRadar(AgentTool):
         db = SessionLocal()
         try:
             return {
-                "members": db.query(models.Persona).count(),
+                "personas": db.query(models.Persona).count(),
                 "active_projects": db.query(models.Project).filter(
                     models.Project.status == "active",
                 ).count(),
@@ -512,8 +512,8 @@ class AnalyticsProactive(AgentTool):
 def register_all_tools():
     """Registra todas las herramientas en el registry global."""
     tools = [
-        CRMSearchMember(),
-        CRMGetMemberProfile(),
+        CRMSearchPersona(),
+        CRMGetPersonaProfile(),
         AcademySearchCourse(),
         AcademyGetStats(),
         ProjectsSearchTask(),

@@ -103,11 +103,11 @@ class TestCRMSearch:
         results = search_personas(db_session, search="Searchable")
         assert isinstance(results, list)
 
-    def test_search_members(self, db_session):
-        from backend.crud.crm import create_persona, search_members
+    def test_search_personas(self, db_session):
+        from backend.crud.crm import create_persona, search_personas
         from backend.schemas.crm import PersonaCreate
-        create_persona(db_session, PersonaCreate(first_name="Member", last_name="Search", email=f"m_{uuid.uuid4().hex[:6]}@e.com"))
-        results = search_members(db_session, "Member", sede_id=None)
+        create_persona(db_session, PersonaCreate(first_name="Persona", last_name="Search", email=f"m_{uuid.uuid4().hex[:6]}@e.com"))
+        results = search_personas(db_session, "Persona", sede_id=None)
         assert isinstance(results, list)
 
 
@@ -245,11 +245,11 @@ class TestCRMCommunity:
 
 
 class TestCRMMinistries:
-    def test_get_member_ministries(self, db_session):
+    def test_get_persona_ministry_assignments(self, db_session):
         import pytest
         pytest.skip("Function name differs from expected")
 
-    def test_get_member_positions(self, db_session):
+    def test_get_persona_positions(self, db_session):
         import pytest
         pytest.skip("Function name differs from expected")
 
@@ -264,10 +264,10 @@ class TestCRMMinistries:
         assert family is not None
 
 
-class TestCRMCellGroups:
-    def test_get_cell_groups(self, db_session):
-        from backend.crud.crm import get_cell_groups
-        result = get_cell_groups(db_session)
+class TestCRMGrupos:
+    def test_get_grupos(self, db_session):
+        from backend.crud.crm import get_grupos
+        result = get_grupos(db_session)
         assert isinstance(result, list)
 
 

@@ -78,7 +78,7 @@ def _can_manage_grupo(db: Session, user, house) -> bool:
 
 
 def _check_absence_trigger(db: Session, session_id: int, sede_id):
-    """If a member has 3 consecutive absences, create N2 task in Consolidation."""
+    """If a persona has 3 consecutive absences, create N2 task in Consolidation."""
     from backend.models import (
         Asistencia,
         SesionGrupo,
@@ -125,7 +125,7 @@ def _check_absence_trigger(db: Session, session_id: int, sede_id):
     if len(recent_sessions) < 3:
         return  # Not enough data
 
-    expected_members = (
+    expected_personas = (
         db.query(ParticipanteGrupo.persona_id)
         .filter(
             ParticipanteGrupo.grupo_id == house.id,
@@ -134,14 +134,14 @@ def _check_absence_trigger(db: Session, session_id: int, sede_id):
         )
         .all()
     )
-    for (member_id,) in expected_members:
+    for (persona_id,) in expected_personas:
         absent_count = 0
         for s in recent_sessions:
             att = (
                 db.query(Asistencia)
                 .filter(
                     Asistencia.sesion_id == s.id,
-                    Asistencia.persona_id == member_id,
+                    Asistencia.persona_id == persona_id,
                     Asistencia.deleted_at.is_(None),
                     Asistencia.estado == EstadoAsistenciaEnum.FALTO.value,
                 )
@@ -152,13 +152,13 @@ def _check_absence_trigger(db: Session, session_id: int, sede_id):
 
         if absent_count >= 3:
             # Create N2 task in Consolidation
-            p = db.query(Persona).filter(Persona.id == member_id).first()
+            p = db.query(Persona).filter(Persona.id == persona_id).first()
             if not p:
                 continue
             from backend.models_crm import SupportTicket
 
             ticket = SupportTicket(
-                persona_id=member_id,
+                persona_id=persona_id,
                 ticket_type="consolidation",
                 title=f"Inasistencia recurrente: {p.nombre_completo}",
                 description=f"{p.nombre_completo} ha faltado 3 sesiones consecutivas en {house.name}. Requiere contacto pastoral.",
@@ -281,7 +281,7 @@ def resolve_target_role_ids(event: models.CrmEvent) -> list[UUID]:
     return list(dict.fromkeys(role_ids))
 
 
-def get_expected_members_for_event(
+def get_expected_personas_for_event(
     db: Session, event: models.CrmEvent, sede_id=None
 ) -> list[models.Persona]:
     event_sede_id = sede_id or getattr(event, "sede_id", None)
@@ -366,7 +366,7 @@ def _channel_label(channel: str) -> str:
     return "SMS"
 
 
-def _member_matches_segment(
+def _persona_matches_segment(
     persona: models.Persona, segment: str, donation_persona_ids: set[str]
 ) -> bool:
     value = str(segment or "").strip().lower()
@@ -401,7 +401,7 @@ def _member_matches_segment(
     return False
 
 
-def _resolve_campaign_members(db: Session, segments: list[str], sede_id=None) -> list[models.Persona]:
+def _resolve_campaign_personas(db: Session, segments: list[str], sede_id=None) -> list[models.Persona]:
     normalized_segments = [
         segment for segment in (s.strip().lower() for s in segments) if segment
     ]
@@ -422,7 +422,7 @@ def _resolve_campaign_members(db: Session, segments: list[str], sede_id=None) ->
         if persona.id in seen_ids:
             continue
         if any(
-            _member_matches_segment(persona, segment, donation_persona_ids)
+            _persona_matches_segment(persona, segment, donation_persona_ids)
             for segment in normalized_segments
         ):
             selected.append(persona)
@@ -502,7 +502,7 @@ def _serialize_crm_task(
     }
 
 
-def member_payload(
+def persona_payload(
     persona: models.Persona,
     attended: bool,
     scanned_at=None,

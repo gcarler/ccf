@@ -67,7 +67,7 @@ class MultiplicationCheckItem(BaseModel):
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _count_members(db: Session, grupo_id: UUID) -> int:
+def _count_personas(db: Session, grupo_id: UUID) -> int:
     return (
         db.query(models.ParticipanteGrupo)
         .filter(
@@ -79,7 +79,7 @@ def _count_members(db: Session, grupo_id: UUID) -> int:
 
 
 def _serialize_grupo(grupo: models.GrupoEvangelismo, db: Session) -> dict:
-    miembros_total = _count_members(db, grupo.id)
+    miembros_total = _count_personas(db, grupo.id)
     return {
         "id": grupo.id,
         "codigo": grupo.codigo,
@@ -115,7 +115,7 @@ def check_multiplication(
 
     resultados: list[dict] = []
     for grupo in grupos:
-        total = _count_members(db, grupo.id)
+        total = _count_personas(db, grupo.id)
         excede = total > umbral
         lider_nombre = (
             f"{grupo.lider.first_name} {grupo.lider.last_name}"
@@ -285,7 +285,7 @@ def multiplication_history(
             "parent_group_nombre": grupo.parent_group.nombre if grupo.parent_group else None,
             "notes_historial": grupo.notes_historial,
             "created_at": grupo.created_at.isoformat() if grupo.created_at else None,
-            "miembros_actuales": _count_members(db, grupo.id),
+            "miembros_actuales": _count_personas(db, grupo.id),
             "lider_nombre": (
                 f"{grupo.lider.first_name} {grupo.lider.last_name}"
                 if grupo.lider

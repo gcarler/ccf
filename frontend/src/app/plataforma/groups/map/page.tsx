@@ -16,7 +16,7 @@ type GroupRecord = {
     latitude?: number | null;
     longitude?: number | null;
     leader_name?: string | null;
-    members_count?: number;
+    personas_count?: number;
     capacity?: number;
     status?: string | null;
     created_at?: string | null;

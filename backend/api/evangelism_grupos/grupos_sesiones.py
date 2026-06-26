@@ -33,7 +33,7 @@ router = APIRouter()
 @router.get("/faro/sessions")
 def list_faro_sessions(
     season_id: Optional[int] = None,
-    cell_group_id: Optional[UUID] = None,
+    grupo_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -43,8 +43,8 @@ def list_faro_sessions(
     ).join(models.GrupoEvangelismo)
     if season_id:
         query = query.filter(models.SesionGrupo.season_id == season_id)
-    if cell_group_id:
-        query = query.filter(models.SesionGrupo.grupo_id == cell_group_id)
+    if grupo_id:
+        query = query.filter(models.SesionGrupo.grupo_id == grupo_id)
     query = query.filter(models.GrupoEvangelismo.sede_id == user_sede)
     sessions = query.order_by(models.SesionGrupo.fecha_sesion.desc()).all()
 
@@ -68,8 +68,8 @@ def list_faro_sessions(
     return [
         {
             "id": session.id,
-            "cell_group_id": session.grupo_id,
-            "cell_group_name": (session.cell_group.name if session.cell_group else None),
+            "grupo_id": session.grupo_id,
+            "grupo_name": (session.grupo.name if session.grupo else None),
             "season_id": session.season_id,
             "season_name": session.season.name if session.season else None,
             "session_date": session.session_date.isoformat(),
@@ -155,8 +155,8 @@ def list_my_pending_faro_sessions(
         items.append(
             {
                 "session_id": session.id,
-                "cell_group_id": session.grupo_id,
-                "cell_group_name": (session.cell_group.name if session.cell_group else None),
+                "grupo_id": session.grupo_id,
+                "grupo_name": (session.grupo.name if session.grupo else None),
                 "season_name": session.season.name if session.season else None,
                 "session_date": (session.session_date.isoformat() if session.session_date else None),
                 "status": session.status,
@@ -183,11 +183,11 @@ def create_faro_session(
         raise HTTPException(status_code=400, detail="Fecha de sesión requerida en formato YYYY-MM-DD")
 
     season_id = payload.get("season_id")
-    cell_group_id = payload.get("cell_group_id") or payload.get("grupo_id")
+    grupo_id = payload.get("grupo_id")
     topic = payload.get("topic")
     report_deadline_str = payload.get("report_deadline")
 
-    if not season_id or not cell_group_id:
+    if not season_id or not grupo_id:
         raise HTTPException(status_code=400, detail="Faltan datos: temporada y grupo son requeridos")
     user_sede = require_user_sede_id(db, current_user)
 
@@ -213,7 +213,7 @@ def create_faro_session(
 
     # Gather houses
     houses_to_process = []
-    if str(cell_group_id).lower() == "all":
+    if str(grupo_id).lower() == "all":
         houses = db.query(GrupoEvangelismo).filter(
             models.GrupoEvangelismo.activo.is_(True),
             models.GrupoEvangelismo.sede_id == user_sede,
@@ -222,7 +222,7 @@ def create_faro_session(
         houses_to_process = [h.id for h in houses]
     else:
         try:
-            parsed_uuid = UUID(str(cell_group_id))
+            parsed_uuid = UUID(str(grupo_id))
         except ValueError:
             raise HTTPException(status_code=400, detail="Identificador de grupo inválido")
         house = db.query(GrupoEvangelismo).filter(
@@ -248,7 +248,7 @@ def create_faro_session(
             .first()
         )
         if existing:
-            if str(cell_group_id).lower() != "all":
+            if str(grupo_id).lower() != "all":
                 raise HTTPException(
                     status_code=400,
                     detail="Ya existe una sesion registrada para ese Faro en esa fecha",
@@ -256,7 +256,7 @@ def create_faro_session(
             continue  # In batch mode, we just skip existing
 
         session = models.SesionGrupo(
-            cell_group_id=h_id,
+            grupo_id=h_id,
             season_id=season_id,
             session_date=session_date,
             status="Realizada",
@@ -311,7 +311,7 @@ def list_sessions(
     return [
         {
             "id": s.id,
-            "grupo_id": s.cell_group_id,
+            "grupo_id": s.grupo_id,
             "session_date": s.session_date.isoformat() if s.session_date else None,
             "status": s.status or "Realizada",
             "estado_habilitacion": getattr(s, "estado_habilitacion", "DESHABILITADO"),
@@ -331,14 +331,14 @@ def create_session(
 ):
     """Create a new session."""
 
-    cell_group_id = data.grupo_id
-    if not cell_group_id:
+    grupo_id = data.grupo_id
+    if not grupo_id:
         raise HTTPException(status_code=400, detail="grupo_id es requerido")
     user_sede = require_user_sede_id(db, current_user)
     group = (
         db.query(GrupoEvangelismo)
         .filter(
-            GrupoEvangelismo.id == cell_group_id,
+            GrupoEvangelismo.id == grupo_id,
             GrupoEvangelismo.sede_id == user_sede,
             GrupoEvangelismo.deleted_at.is_(None),
         )
@@ -347,7 +347,7 @@ def create_session(
     if not group:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     db_session = SessionModel(
-        cell_group_id=cell_group_id,
+        grupo_id=grupo_id,
         season_id=data.season_id,
         session_date=data.session_date,
         topic=data.topic,
@@ -380,7 +380,7 @@ def get_session_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Get session with attendance records including member names."""
+    """Get session with attendance records including persona names."""
     from backend.models_crm import Persona
 
     session = (
@@ -397,10 +397,10 @@ def get_session_detail(
 
     attendance_rows = db.query(Asistencia).filter(models.Asistencia.sesion_id == session_id).all()
 
-    # Build persona name lookup for this session's cell_group
+    # Build persona name lookup for this session's grupo
     persona_map: dict[str, str] = {}
-    house_members = db.query(ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == session.grupo_id).all()
-    for hm in house_members:
+    house_personas = db.query(ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == session.grupo_id).all()
+    for hm in house_personas:
         p = db.query(Persona).filter(Persona.id == hm.persona_id).first()
         if p:
             persona_map[hm.persona_id] = p.nombre_completo
@@ -420,11 +420,11 @@ def get_session_detail(
             }
         )
 
-    gh = session.cell_group
+    gh = session.grupo
     return {
         "session": {
             "id": session.id,
-            "cell_group_id": session.grupo_id,
+            "grupo_id": session.grupo_id,
             "session_date": session.session_date.isoformat() if session.session_date else None,
             "topic": session.topic,
             "offering_amount": float(session.offering_amount) if session.offering_amount else None,
@@ -432,7 +432,7 @@ def get_session_detail(
             "report_notes": session.report_notes,
         },
         "attendance": attendance_list,
-        "cell_group": {
+        "grupo": {
             "id": gh.id,
             "name": gh.name,
             "leader_name": gh.leader_name,

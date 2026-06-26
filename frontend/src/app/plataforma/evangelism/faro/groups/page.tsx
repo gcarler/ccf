@@ -54,7 +54,7 @@ interface Grupo {
  status: string;
 }
 
-interface Member {
+interface Persona {
  id: string;
  nombre_completo: string;
  church_role?: string;
@@ -68,10 +68,10 @@ interface AssignmentSummary {
  houses_without_assistant: number;
  houses_with_host: number;
  houses_without_host: number;
- houses_with_members: number;
- houses_without_members: number;
- members_total: number;
- members_unassigned: number;
+ houses_with_personas: number;
+ houses_without_personas: number;
+ personas_total: number;
+ personas_unassigned: number;
  houses_needing_leader: Array<{
  id: number;
  name: string;
@@ -93,10 +93,10 @@ interface AssignmentSummary {
  zone?: string;
  address?: string;
  }>;
- unassigned_members: Array<{ id: string; name: string; church_role?: string }>;
+ unassigned_personas: Array<{ id: string; name: string; church_role?: string }>;
 }
 
-type Mode = 'create' | 'leader' | 'assistant' | 'host' | 'members' | 'monitor';
+type Mode = 'create' | 'leader' | 'assistant' | 'host' | 'personas' | 'monitor';
 
 const MODE_CONFIG: Record<
  Mode,
@@ -122,7 +122,7 @@ const MODE_CONFIG: Record<
  description: 'Cambios de casa, dirección y anfitrión',
  icon: Home,
  },
- members: {
+ personas: {
  title: 'Asignar personas',
  description: 'Personas sin casa y personas por casa',
  icon: UserPlus,
@@ -140,7 +140,7 @@ function FaroGroupsContent() {
  const router = useRouter();
  const { pushSidebarPanel, resetSidebarStack } = useSidebarLayers();
  const [houses, setHouses] = useState<Grupo[]>([]);
- const [members, setMembers] = useState<Member[]>([]);
+ const [personas, setPersonas] = useState<Persona[]>([]);
  const [summary, setSummary] = useState<AssignmentSummary | null>(null);
  const [loading, setLoading] = useState(true);
  const [searchQuery, setSearchQuery] = useState('');
@@ -149,17 +149,17 @@ function FaroGroupsContent() {
 
  const [selectedHouse, setSelectedHouse] = useState<Grupo | null>(null);
  const [isCreating, setIsCreating] = useState(false);
- const [isAddingMembers, setIsAddingMembers] = useState(false);
+ const [isAddingPersonas, setIsAddingPersonas] = useState(false);
  const [formData, setFormData] = useState<Partial<Grupo>>({
  capacity: 15,
  status: 'Activo',
  });
- const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(
+ const [selectedPersonaIds, setSelectedPersonaIds] = useState<Set<string>>(
  new Set()
  );
- const [memberSearchQuery, setMemberSearchQuery] = useState('');
- const [memberRoleFilter, setMemberRoleFilter] = useState('');
- const [memberAssignmentFilter, setMemberAssignmentFilter] = useState('all');
+ const [personaSearchQuery, setPersonaSearchQuery] = useState('');
+ const [personaRoleFilter, setPersonaRoleLinkFilter] = useState('');
+ const [personaAssignmentFilter, setPersonaAssignmentFilter] = useState('all');
  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
  const [quickAssignmentTargets, setQuickAssignmentTargets] = useState<
  Record<string, number>
@@ -172,7 +172,7 @@ function FaroGroupsContent() {
  raw === 'leader' ||
  raw === 'assistant' ||
  raw === 'host' ||
- raw === 'members' ||
+ raw === 'personas' ||
  raw === 'monitor' ||
  raw === 'create'
  ) {
@@ -188,10 +188,10 @@ function FaroGroupsContent() {
 
  let cancelled = false;
 
- const loadMembers = async () => {
+ const loadPersonas = async () => {
  const pageSize = 250;
  let skip = 0;
- const allMembers: Member[] = [];
+ const allPersonas: Persona[] = [];
 
  while (true) {
  const data = await apiFetch<unknown>('/crm/personas', {
@@ -206,30 +206,30 @@ function FaroGroupsContent() {
 
  const page = Array.isArray(data)
  ? data
- : Array.isArray((data as { items?: Member[] })?.items)
- ? (data as { items: Member[] }).items
+ : Array.isArray((data as { items?: Persona[] })?.items)
+ ? (data as { items: Persona[] }).items
  : [];
 
- allMembers.push(...page);
+ allPersonas.push(...page);
 
  if (page.length < pageSize) break;
  skip += pageSize;
  }
 
- return allMembers;
+ return allPersonas;
  };
 
  Promise.all([
  apiFetch<Grupo[]>('/evangelism/grupos', { token }),
- loadMembers(),
+ loadPersonas(),
  apiFetch<AssignmentSummary>('/evangelism/faro/assignment-summary', {
  token,
  }).catch(() => null),
  ])
- .then(([housesData, membersData, summaryData]) => {
+ .then(([housesData, personasData, summaryData]) => {
  if (cancelled) return;
  setHouses(housesData);
- setMembers(membersData);
+ setPersonas(personasData);
  setSummary(summaryData);
  })
  .catch(() => {
@@ -284,7 +284,7 @@ function FaroGroupsContent() {
  ...formData,
  start_time: start_time || null,
  end_time: end_time || null,
- base_attendee_ids: Array.from(selectedMemberIds),
+ base_attendee_ids: Array.from(selectedPersonaIds),
  };
  if (isCreating) {
  const res = await apiFetch<Grupo>('/evangelism/grupos', {
@@ -299,7 +299,7 @@ function FaroGroupsContent() {
  );
  setSelectedHouse(detail);
  setFormData(detail);
- setSelectedMemberIds(
+ setSelectedPersonaIds(
  new Set(
  detail.base_attendee_ids ||
  detail.base_attendees?.map(m => m.persona_id) ||
@@ -324,7 +324,7 @@ function FaroGroupsContent() {
  );
  setSelectedHouse(detail);
  setFormData(detail);
- setSelectedMemberIds(
+ setSelectedPersonaIds(
  new Set(
  detail.base_attendee_ids ||
  detail.base_attendees?.map(m => m.persona_id) ||
@@ -369,7 +369,7 @@ function FaroGroupsContent() {
  });
  };
 
- const handleQuickAssignMember = async (personaId: string) => {
+ const handleQuickAssignPersona = async (personaId: string) => {
  const houseId = quickAssignmentTargets[personaId];
  if (!houseId) {
  toast.error('Selecciona una casa');
@@ -434,49 +434,49 @@ function FaroGroupsContent() {
  if (mode === 'leader') items = items.filter(h => !h.leader_id);
  if (mode === 'assistant') items = items.filter(h => !h.assistant_id);
  if (mode === 'host') items = items.filter(h => !h.host_id);
- if (mode === 'members')
+ if (mode === 'personas')
  items = items.filter(h => (h.capacity ?? 0) > 0 || h.status === 'Activo');
  return items;
  }, [houses, mode, searchQuery]);
 
- const getMemberName = useCallback((id?: string) => {
+ const getPersonaName = useCallback((id?: string) => {
  if (!id) return 'No asignado';
- const m = members.find(m => m.id === id);
+ const m = personas.find(m => m.id === id);
  return m ? m.nombre_completo : 'Desconocido';
- }, [members]);
+ }, [personas]);
 
  const uniqueRoles = useMemo(() => {
- return Array.from(new Set(members.map(m => m.church_role).filter(Boolean))).sort();
- }, [members]);
+ return Array.from(new Set(personas.map(m => m.church_role).filter(Boolean))).sort();
+ }, [personas]);
 
- const filteredMembersList = useMemo(() => {
- const base = [...members].sort((a, b) =>
+ const filteredPersonasList = useMemo(() => {
+ const base = [...personas].sort((a, b) =>
  (a.nombre_completo || '').localeCompare(b.nombre_completo || '', 'es')
  );
 
  return base.filter(m => {
- if (memberSearchQuery && !(m.nombre_completo || '').toLowerCase().includes(memberSearchQuery.toLowerCase())) {
+ if (personaSearchQuery && !(m.nombre_completo || '').toLowerCase().includes(personaSearchQuery.toLowerCase())) {
  return false;
  }
- if (memberRoleFilter && m.church_role !== memberRoleFilter) {
+ if (personaRoleFilter && m.church_role !== personaRoleFilter) {
  return false;
  }
- if (memberAssignmentFilter !== 'all') {
- const isAssignedToThis = selectedMemberIds.has(m.id);
- const isUnassigned = summary?.unassigned_members.some(u => u.id === m.id);
- 
- if (memberAssignmentFilter === 'this_house' && !isAssignedToThis) return false;
- if (memberAssignmentFilter === 'unassigned' && !isUnassigned) return false;
- if (memberAssignmentFilter === 'other_house' && (isAssignedToThis || isUnassigned)) return false;
+ if (personaAssignmentFilter !== 'all') {
+ const isAssignedToThis = selectedPersonaIds.has(m.id);
+ const isUnassigned = summary?.unassigned_personas.some(u => u.id === m.id);
+
+ if (personaAssignmentFilter === 'this_house' && !isAssignedToThis) return false;
+ if (personaAssignmentFilter === 'unassigned' && !isUnassigned) return false;
+ if (personaAssignmentFilter === 'other_house' && (isAssignedToThis || isUnassigned)) return false;
  }
  return true;
  });
- }, [members, memberSearchQuery, memberRoleFilter, memberAssignmentFilter, selectedMemberIds, summary]);
+ }, [personas, personaSearchQuery, personaRoleFilter, personaAssignmentFilter, selectedPersonaIds, summary]);
 
  const inputCls =
  'w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-4 py-1.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-[hsl(var(--text-secondary))]';
 
- const showPanel = selectedHouse !== null || isCreating || mode === 'members';
+ const showPanel = selectedHouse !== null || isCreating || mode === 'personas';
 
  // ── View Components ────────────────────────────────────────────────
 
@@ -499,9 +499,9 @@ function FaroGroupsContent() {
  const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
  setSelectedHouse(detail);
  setFormData(detail);
- setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
+ setSelectedPersonaIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
  } catch {
- setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
+ setSelectedHouse(h); setFormData(h); setSelectedPersonaIds(new Set());
  }
  }}
  className="w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-blue-300 dark:hover:border-blue-600 transition-all group"
@@ -514,7 +514,7 @@ function FaroGroupsContent() {
  <div className="flex items-center gap-3 mt-1 text-xs text-[hsl(var(--text-secondary))]">
  {h.zone && <span><MapPin size={11} className="inline mr-1" />{h.zone}</span>}
  {h.leader_id ? (
- <span><Users size={11} className="inline mr-1" />{getMemberName(h.leader_id)}</span>
+ <span><Users size={11} className="inline mr-1" />{getPersonaName(h.leader_id)}</span>
  ) : (
  <span className="text-amber-500 font-semibold">Sin líder</span>
  )}
@@ -550,9 +550,9 @@ function FaroGroupsContent() {
  try {
  const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
  setSelectedHouse(detail); setFormData(detail);
- setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
+ setSelectedPersonaIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
  } catch {
- setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
+ setSelectedHouse(h); setFormData(h); setSelectedPersonaIds(new Set());
  }
  }}
  className="text-left w-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-4 hover:border-blue-300 dark:hover:border-blue-600 transition-all hover:shadow-md space-y-3"
@@ -568,7 +568,7 @@ function FaroGroupsContent() {
  </div>
  <div className="space-y-1.5 text-xs text-[hsl(var(--text-secondary))]">
  {h.zone && <p><MapPin size={12} className="inline mr-1.5" />{h.zone}</p>}
- <p><Users size={12} className="inline mr-1.5" />{h.leader_id ? getMemberName(h.leader_id) : <span className="text-amber-500 font-semibold">Sin líder</span>}</p>
+ <p><Users size={12} className="inline mr-1.5" />{h.leader_id ? getPersonaName(h.leader_id) : <span className="text-amber-500 font-semibold">Sin líder</span>}</p>
  {h.address && <p className="truncate opacity-60">{h.address}</p>}
  </div>
  <div className="flex items-center gap-2 pt-2 border-t border-[hsl(var(--border-primary))]">
@@ -619,9 +619,9 @@ function FaroGroupsContent() {
  try {
  const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
  setSelectedHouse(detail); setFormData(detail);
- setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
+ setSelectedPersonaIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
  } catch {
- setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
+ setSelectedHouse(h); setFormData(h); setSelectedPersonaIds(new Set());
  }
  }}
  className="text-left w-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-3 hover:border-blue-300 dark:hover:border-blue-500 transition-all space-y-2"
@@ -633,7 +633,7 @@ function FaroGroupsContent() {
  </span>
  </div>
  <div className="text-[10px] text-[hsl(var(--text-secondary))] space-y-1">
- <p><Users size={10} className="inline mr-1" />{h.leader_id ? getMemberName(h.leader_id) : <span className="text-amber-500">Sin líder</span>}</p>
+ <p><Users size={10} className="inline mr-1" />{h.leader_id ? getPersonaName(h.leader_id) : <span className="text-amber-500">Sin líder</span>}</p>
  {h.address && <p className="truncate opacity-60">{h.address}</p>}
  </div>
  <div className="flex items-center gap-2 text-[9px] text-[hsl(var(--text-secondary))]">
@@ -684,9 +684,9 @@ function FaroGroupsContent() {
  try {
  const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
  setSelectedHouse(detail); setFormData(detail);
- setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
+ setSelectedPersonaIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
  } catch {
- setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
+ setSelectedHouse(h); setFormData(h); setSelectedPersonaIds(new Set());
  }
  }}
  className="border-b border-[hsl(var(--border-primary))] hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors cursor-pointer"
@@ -694,7 +694,7 @@ function FaroGroupsContent() {
  <td className="px-4 py-2.5 font-medium text-[hsl(var(--text-primary))] whitespace-nowrap">{h.name}</td>
  <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))] font-mono">{h.code || '—'}</td>
  <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))]">{h.zone || '—'}</td>
- <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))]">{h.leader_id ? getMemberName(h.leader_id) : <span className="text-amber-500 font-semibold">Sin líder</span>}</td>
+ <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))]">{h.leader_id ? getPersonaName(h.leader_id) : <span className="text-amber-500 font-semibold">Sin líder</span>}</td>
  <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))] max-w-[200px] truncate">{h.address || '—'}</td>
  <td className="px-4 py-2.5 text-center text-[hsl(var(--text-secondary))]">{h.capacity || '—'}</td>
  <td className="px-4 py-2.5 text-center text-[hsl(var(--text-secondary))]">{h.day_of_week || '—'}</td>
@@ -739,7 +739,7 @@ function FaroGroupsContent() {
  onClick={() => {
  setIsCreating(true);
  setSelectedHouse(null);
- setSelectedMemberIds(new Set());
+ setSelectedPersonaIds(new Set());
  setFormData({ capacity: 15, status: 'Activo' });
  }}
  className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg size-7 flex items-center justify-center transition-all shadow-sm active:scale-95"
@@ -794,7 +794,7 @@ function FaroGroupsContent() {
  );
  setSelectedHouse(detail);
  setFormData(detail);
- setSelectedMemberIds(
+ setSelectedPersonaIds(
  new Set(
  detail.base_attendee_ids ||
  detail.base_attendees?.map(m => m.persona_id) ||
@@ -804,7 +804,7 @@ function FaroGroupsContent() {
  } catch {
  setSelectedHouse(h);
  setFormData(h);
- setSelectedMemberIds(new Set());
+ setSelectedPersonaIds(new Set());
  }
  }}
  className="flex-1 text-left min-w-0"
@@ -820,7 +820,7 @@ function FaroGroupsContent() {
  </p>
  {h.leader_id && (
  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100/50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] shrink-0">
- {getMemberName(h.leader_id).split(' ')[0]}
+ {getPersonaName(h.leader_id).split(' ')[0]}
  </span>
  )}
  </div>
@@ -849,7 +849,7 @@ function FaroGroupsContent() {
  isCreating,
  mode,
  token,
- getMemberName,
+ getPersonaName,
  ]);
 
  // Clean up sidebar when unmounting
@@ -1022,7 +1022,7 @@ function FaroGroupsContent() {
  className={inputCls}
  >
  <option value="">Seleccionar...</option>
- {members.map(m => (
+ {personas.map(m => (
  <option key={m.id} value={m.id}>
  {m.nombre_completo}
  </option>
@@ -1122,7 +1122,7 @@ function FaroGroupsContent() {
  <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 border-t border-[hsl(var(--border-primary))] pt-8 mt-4">
  <div>
  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1 flex items-center gap-2">
- <Users size={12} className="text-[hsl(var(--primary))]" /> Personas actuales ({selectedMemberIds.size})
+ <Users size={12} className="text-[hsl(var(--primary))]" /> Personas actuales ({selectedPersonaIds.size})
  </h3>
  <p className="text-xs text-[hsl(var(--text-secondary))]">
  Estos son los personas actualmente asignados al grupo.
@@ -1130,35 +1130,35 @@ function FaroGroupsContent() {
  </div>
  <button
  type="button"
- onClick={() => setIsAddingMembers(!isAddingMembers)}
+ onClick={() => setIsAddingPersonas(!isAddingPersonas)}
  className={`px-4 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-colors flex items-center gap-2 ${
- isAddingMembers 
- ? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/20' 
+ isAddingPersonas
+ ? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/20'
  : 'bg-blue-50 text-[hsl(var(--primary))] hover:bg-blue-100 dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]'
  }`}
  >
- <UserPlus size={14} /> {isAddingMembers ? 'Ocultar catálogo' : 'Añadir personas'}
+ <UserPlus size={14} /> {isAddingPersonas ? 'Ocultar catálogo' : 'Añadir personas'}
  </button>
  </div>
 
  {/* CURRENT MEMBERS LIST */}
- {selectedMemberIds.size > 0 ? (
+ {selectedPersonaIds.size > 0 ? (
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
- {members.filter(m => selectedMemberIds.has(m.id)).map(member => (
- <div key={member.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10 px-4 py-1.5">
+ {personas.filter(m => selectedPersonaIds.has(m.id)).map(persona => (
+ <div key={persona.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10 px-4 py-1.5">
  <div className="min-w-0">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
- {member.nombre_completo}
+ {persona.nombre_completo}
  </p>
  <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">
- {member.church_role || 'Sin rol'}
+ {persona.church_role || 'Sin rol'}
  </p>
  </div>
  <button
  type="button"
- onClick={() => setSelectedMemberIds(prev => {
+ onClick={() => setSelectedPersonaIds(prev => {
  const next = new Set(prev);
- next.delete(member.id);
+ next.delete(persona.id);
  return next;
  })}
  className="text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors shrink-0"
@@ -1192,21 +1192,21 @@ function FaroGroupsContent() {
  </div>
 
  {/* ADD MEMBERS CATALOG */}
- {isAddingMembers && (
+ {isAddingPersonas && (
  <div className="mt-3 pt-6 border-t border-[hsl(var(--border-primary))] space-y-4">
  <div className="flex flex-col md:flex-row items-center gap-2 w-full">
  <div className="relative w-full md:flex-1">
  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={14} />
  <input
- value={memberSearchQuery}
- onChange={e => setMemberSearchQuery(e.target.value)}
+ value={personaSearchQuery}
+ onChange={e => setPersonaSearchQuery(e.target.value)}
  placeholder="Buscar persona..."
  className={inputCls + " pl-9 py-2"}
  />
  </div>
  <select
- value={memberRoleFilter}
- onChange={e => setMemberRoleFilter(e.target.value)}
+ value={personaRoleFilter}
+ onChange={e => setPersonaRoleLinkFilter(e.target.value)}
  className={inputCls + " py-2 w-full md:w-36 text-xs"}
  >
  <option value="">Todos los roles</option>
@@ -1215,8 +1215,8 @@ function FaroGroupsContent() {
  ))}
  </select>
  <select
- value={memberAssignmentFilter}
- onChange={e => setMemberAssignmentFilter(e.target.value)}
+ value={personaAssignmentFilter}
+ onChange={e => setPersonaAssignmentFilter(e.target.value)}
  className={inputCls + " py-2 w-full md:w-48 text-xs"}
  >
  <option value="all">Cualquier estado</option>
@@ -1225,25 +1225,25 @@ function FaroGroupsContent() {
  </select>
  </div>
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[24rem] overflow-y-auto pr-1 scrollbar-thin">
- {filteredMembersList.map(member => {
- const checked = selectedMemberIds.has(member.id);
- // Hide already selected members from the add list to prevent confusion
+ {filteredPersonasList.map(persona => {
+ const checked = selectedPersonaIds.has(persona.id);
+ // Hide already selected personas from the add list to prevent confusion
  if (checked) return null;
- 
+
  return (
  <label
- key={member.id}
+ key={persona.id}
  className="flex items-start gap-3 rounded-lg border px-4 py-1.5 cursor-pointer transition-all bg-[hsl(var(--bg-primary))] border-[hsl(var(--border-primary))] hover:border-blue-300/40"
  >
  <input
  type="checkbox"
  checked={checked}
  onChange={() =>
- setSelectedMemberIds(prev => {
+ setSelectedPersonaIds(prev => {
  const next = new Set(prev);
- if (next.has(member.id))
- next.delete(member.id);
- else next.add(member.id);
+ if (next.has(persona.id))
+ next.delete(persona.id);
+ else next.add(persona.id);
  return next;
  })
  }
@@ -1251,16 +1251,16 @@ function FaroGroupsContent() {
  />
  <div className="min-w-0">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
- {member.nombre_completo}
+ {persona.nombre_completo}
  </p>
  <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">
- {member.church_role || 'Sin rol'}
+ {persona.church_role || 'Sin rol'}
  </p>
  </div>
  </label>
  );
  })}
- {filteredMembersList.filter(m => !selectedMemberIds.has(m.id)).length === 0 && (
+ {filteredPersonasList.filter(m => !selectedPersonaIds.has(m.id)).length === 0 && (
  <div className="col-span-full py-1.5 text-center text-[hsl(var(--text-secondary))] text-sm">
  No se encontraron personas disponibles con estos filtros.
  </div>
@@ -1300,7 +1300,7 @@ function FaroGroupsContent() {
  </>
  ) : (
  <div className="flex-1 overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
- {mode === 'members' && summary ? (
+ {mode === 'personas' && summary ? (
  <div className="p-4 space-y-3">
  <div className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5">
  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -1313,32 +1313,32 @@ function FaroGroupsContent() {
  </div>
 
  <div className="space-y-3">
- {summary.unassigned_members.length === 0 ? (
+ {summary.unassigned_personas.length === 0 ? (
  <div className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-1.5 text-center text-[hsl(var(--text-secondary))]">
  No hay personas sin grupo asignado.
  </div>
  ) : (
- summary.unassigned_members.map(member => (
+ summary.unassigned_personas.map(persona => (
  <div
- key={member.id}
+ key={persona.id}
  className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4"
  >
  <div className="flex flex-col md:flex-row md:items-center gap-3">
  <div className="min-w-0 flex-1">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
- {member.name}
+ {persona.name}
  </p>
  <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-1">
- {member.church_role || 'Sin rol'} · Sin grupo
+ {persona.church_role || 'Sin rol'} · Sin grupo
  asignado
  </p>
  </div>
  <select
- value={quickAssignmentTargets[member.id] || ''}
+ value={quickAssignmentTargets[persona.id] || ''}
  onChange={e =>
  setQuickAssignmentTargets(prev => ({
  ...prev,
- [member.id]: Number(e.target.value),
+ [persona.id]: Number(e.target.value),
  }))
  }
  className="w-full md:w-72 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/30"
@@ -1351,7 +1351,7 @@ function FaroGroupsContent() {
  ))}
  </select>
  <button
- onClick={() => handleQuickAssignMember(member.id)}
+ onClick={() => handleQuickAssignPersona(persona.id)}
  disabled={saving}
  className="px-4 py-2.5 rounded-md bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-[11px] font-semibold uppercase tracking-wide disabled:opacity-50"
  >

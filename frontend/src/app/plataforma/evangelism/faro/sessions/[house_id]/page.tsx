@@ -22,7 +22,7 @@ interface Grupo {
  leader_id: string | null;
  assistant_id: string | null;
  host_id: string | null;
- members_count: number;
+ personas_count: number;
  status: string;
  evangelism_strategy_id: string | null;
  base_attendees?: {
@@ -32,7 +32,7 @@ interface Grupo {
  role_label?: string;
  rol_personalizado_id?: number | null;
  phone?: string;
- member?: { nombre_completo: string; telefono?: string };
+ persona?: { nombre_completo: string; telefono?: string };
  }[];
 }
 
@@ -73,7 +73,7 @@ export default function SessionReportPage() {
  const data = await apiFetch<Grupo>(`/evangelism/grupos/${houseId}`, { token: token || '' });
  setHouse(data);
 
- const baseMembers = data.base_attendees || [];
+ const basePersonas = data.base_attendees || [];
  const peopleById = new Map<string, SessionPerson>();
  const addPerson = (
  personaId: string | null | undefined,
@@ -82,20 +82,20 @@ export default function SessionReportPage() {
  status: SessionPerson['status'] = 'absent',
  ) => {
  if (!personaId || peopleById.has(personaId)) return;
- const m = baseMembers.find(x => x.persona_id === personaId);
+ const m = basePersonas.find(x => x.persona_id === personaId);
  peopleById.set(personaId, {
  persona_id: personaId,
- name: m?.name || m?.member?.nombre_completo || fallbackName,
+ name: m?.name || m?.persona?.nombre_completo || fallbackName,
  role: m?.role_label || m?.role || fallbackRole,
- phone: m?.phone || m?.member?.telefono,
+ phone: m?.phone || m?.persona?.telefono,
  status,
  });
  };
 
- for (const m of baseMembers) {
+ for (const m of basePersonas) {
  addPerson(
  m.persona_id,
- m.name || m.member?.nombre_completo || `Persona #${m.persona_id}`,
+ m.name || m.persona?.nombre_completo || `Persona #${m.persona_id}`,
  m.role_label || m.role || 'Participante',
  );
  }
@@ -164,7 +164,7 @@ export default function SessionReportPage() {
  method: 'POST', token: token, body: attPayload,
  });
 
- // Register new guests as Members
+ // Register new guests as Personas
  for (const guest of newGuests) {
  if (guest.firstName.trim() || guest.lastName.trim()) {
  await apiFetch('/evangelism/faro/visitors', {

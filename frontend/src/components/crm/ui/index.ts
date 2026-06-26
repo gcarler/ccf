@@ -1,6 +1,6 @@
 export { default as FormSection } from './FormSection';
 export { default as SelectField } from './SelectField';
-export { default as MemberField } from './MemberField';
+export { default as PersonaField } from './PersonaField';
 export { default as EditField } from './EditField';
 export { default as QuickStat } from './QuickStat';
 export { default as HealthIndicator } from './HealthIndicator';

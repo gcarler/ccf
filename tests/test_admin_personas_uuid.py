@@ -5,8 +5,8 @@ def test_admin_personas_lists_entire_person_registry(client, db_session):
     admin, _, _ = seed_admin_v2(db_session, email="admin-personas@test.com")
     user, _, _ = seed_user_with_role_v2(
         db_session,
-        role_name="member",
-        email="member-personas@test.com",
+        role_name="persona",
+        email="persona-personas@test.com",
         password="secret123",
     )
     headers = auth_headers_v2(client, email=admin.email, password="testpass123")

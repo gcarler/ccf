@@ -46,7 +46,7 @@ def analytics_summary(
         # Enrollments join through persona or course sede
         enrollment_q = enrollment_q.join(models.Persona, models.Enrollment.persona_id == models.Persona.id).filter(models.Persona.sede_id == user_sede)
     
-    total_members = persona_q.count()
+    total_personas = persona_q.count()
     total_projects = project_q.count()
     total_enrollments = enrollment_q.count()
     total_certificates = db.query(models.Certificate).count()
@@ -64,7 +64,7 @@ def analytics_summary(
     )
 
     return {
-        "total_members": total_members,
+        "total_personas": total_personas,
         "total_projects": total_projects,
         "total_enrollments": total_enrollments,
         "total_certificates": total_certificates,
@@ -408,7 +408,7 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
 
 
 # ── Dual Write Hooks (Phase 2) ──
-# These are called from existing registration/member creation endpoints
+# These are called from existing registration/persona creation endpoints
 # to ensure a canonical Agent is created alongside User/Persona records.
 
 from backend.models_agents import AgentAuth as AgentModelAuth  # noqa: E402

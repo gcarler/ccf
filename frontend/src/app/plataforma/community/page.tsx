@@ -469,7 +469,7 @@ export default function CommunityHubPage() {
 
     const handleTeamToggle = (team: string) => {
         setSharedTeams((prev) =>
-            prev.includes(team) ? prev.filter((member) => member !== team) : [...prev, team]
+            prev.includes(team) ? prev.filter((persona) => persona !== team) : [...prev, team]
         );
     };
 

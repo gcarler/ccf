@@ -63,9 +63,9 @@ class TestCRMPastoralCoverage:
         c, h, s, p = ac
         c.get("/api/crm/events", headers=h)
 
-    def test_crm_memberships(self, ac):
+    def test_crm_participations(self, ac):
         c, h, s, p = ac
-        c.get("/api/crm/memberships", headers=h)
+        c.get("/api/crm/participations", headers=h)
 
     def test_crm_positions_list(self, ac):
         c, h, s, p = ac

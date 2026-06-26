@@ -210,7 +210,7 @@ def test_faro_temporada_crea_sesion_habilitada_para_reporte(client, db_session):
         "/api/evangelism/faro/sessions",
         json={
             "season_id": season["id"],
-            "cell_group_id": group["id"],
+            "grupo_id": group["id"],
             "session_date": "2026-06-08",
             "topic": "S1",
         },

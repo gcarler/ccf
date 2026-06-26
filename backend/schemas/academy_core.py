@@ -27,7 +27,7 @@ class CursoCreate(BaseModel):
     duration_hours: int
     xp_per_lesson: int = 10
     image_url: Optional[str] = None
-    access_level: Literal["open", "member", "advanced"] = "member"
+    access_level: Literal["open", "persona", "advanced"] = "persona"
 
 
 class CursoUpdate(BaseModel):
@@ -42,7 +42,7 @@ class CursoUpdate(BaseModel):
     duration_hours: Optional[int] = None
     xp_per_lesson: Optional[int] = None
     image_url: Optional[str] = None
-    access_level: Optional[Literal["open", "member", "advanced"]] = None
+    access_level: Optional[Literal["open", "persona", "advanced"]] = None
 
 
 class CursoResponse(BaseModel):
@@ -58,7 +58,7 @@ class CursoResponse(BaseModel):
     duration_hours: int
     xp_per_lesson: int = 10
     image_url: Optional[str] = None
-    access_level: str = "member"
+    access_level: str = "persona"
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     lecciones: list[LeccionResponse] = Field(default_factory=list)

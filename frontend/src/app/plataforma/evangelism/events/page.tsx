@@ -7,7 +7,7 @@ BulkAttendanceSyncResult,
 EventAudience,
 EventDashboardStat,
 EventSessionAttendanceData,
-Member,
+Persona,
 MinistryEvent,
 RoleDefinition,
 ScanValidationResult,
@@ -69,7 +69,7 @@ export default function EventsPage() {
  const [viewType, setViewType] = useState<ViewType>(() => getStoredView('evangelism_events_view', 'grid'));
  const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
  const [events, setEvents] = useState<MinistryEvent[]>([]);
- const [members, setMembers] = useState<Member[]>([]);
+ const [personas, setPersonas] = useState<Persona[]>([]);
  const [stats, setStats] = useState<EventDashboardStat[]>([]);
  const [loading, setLoading] = useState(true);
  const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('evangelism_events_wiki_notes', {
@@ -121,7 +121,7 @@ export default function EventsPage() {
 
  // Attendance State
  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
- const [attendedMemberIds, setAttendedMemberIds] = useState<string[]>([]);
+ const [attendedPersonaIds, setAttendedPersonaIds] = useState<string[]>([]);
  const [attendanceSearch, setAttendanceSearch] = useState('');
  const [attendanceLoading, setAttendanceLoading] = useState(false);
  const [attendanceRoleFilter, setAttendanceRoleFilter] = useState('ALL');
@@ -140,11 +140,11 @@ export default function EventsPage() {
  });
  if (result.valid) {
  const pid = result.persona_id;
- if (!attendedMemberIds.includes(pid)) {
- setAttendedMemberIds(prev => [...prev, pid]);
- addToast(`¡Bienvenido ${result.member_name}!`, "success");
+ if (!attendedPersonaIds.includes(pid)) {
+ setAttendedPersonaIds(prev => [...prev, pid]);
+ addToast(`¡Bienvenido ${result.persona_name}!`, "success");
  } else {
- addToast(`${result.member_name} ya está marcado`, "info");
+ addToast(`${result.persona_name} ya está marcado`, "info");
  }
  setScannerToken('');
  }
@@ -159,13 +159,13 @@ export default function EventsPage() {
  if (!token) return;
  setLoading(true);
  try {
- const [eventsRes, membersRes, statsRes] = await Promise.all([
+ const [eventsRes, personasRes, statsRes] = await Promise.all([
  apiFetch<MinistryEvent[]>('/evangelism/events/', { token, cache: 'no-store' }),
- apiFetch<Member[]>('/crm/personas', { token, query: { limit: 200 }, cache: 'no-store' }),
+ apiFetch<Persona[]>('/crm/personas', { token, query: { limit: 200 }, cache: 'no-store' }),
  apiFetch<EventDashboardStat[]>('/evangelism/events/dashboard-stats', { token, cache: 'no-store' })
  ]);
  setEvents(Array.isArray(eventsRes) ? eventsRes : []);
- setMembers(Array.isArray(membersRes) ? membersRes : []);
+ setPersonas(Array.isArray(personasRes) ? personasRes : []);
  setStats(Array.isArray(statsRes) ? statsRes : []);
  } catch {
  addToast("Error al cargar datos", "error");
@@ -223,22 +223,22 @@ export default function EventsPage() {
  return `${roleNames.length} roles`;
  };
 
- const sortedMembers = [...members].sort((a, b) =>
+ const sortedPersonas = [...personas].sort((a, b) =>
  (a.nombre_completo || '').localeCompare(b.nombre_completo || '')
  );
 
- const filterMembersByQuery = (query: string) => {
+ const filterPersonasByQuery = (query: string) => {
  const normalized = query.trim().toLowerCase();
- if (!normalized) return sortedMembers;
- return sortedMembers.filter((member) =>
- (member.nombre_completo || '').toLowerCase().includes(normalized) ||
- member.email.toLowerCase().includes(normalized) ||
- (member.church_role || '').toLowerCase().includes(normalized)
+ if (!normalized) return sortedPersonas;
+ return sortedPersonas.filter((persona) =>
+ (persona.nombre_completo || '').toLowerCase().includes(normalized) ||
+ persona.email.toLowerCase().includes(normalized) ||
+ (persona.church_role || '').toLowerCase().includes(normalized)
  );
  };
 
- const createManualMembers = filterMembersByQuery(createManualSearch);
- const editManualMembers = filterMembersByQuery(editManualSearch);
+ const createManualPersonas = filterPersonasByQuery(createManualSearch);
+ const editManualPersonas = filterPersonasByQuery(editManualSearch);
 
  const applyPresetToCreateEvent = (presetId: string) => {
  const preset = audiencePresets.find((item) => item.id === presetId);
@@ -446,12 +446,12 @@ export default function EventsPage() {
  .map((roleId) => roles.find((role) => role.id === roleId)?.name)
  .filter(Boolean) as string[];
  if (roleNames.length === 0) return 0;
- return members.filter((member) => roleNames.includes((member.church_role || '').trim())).length;
+ return personas.filter((persona) => roleNames.includes((persona.church_role || '').trim())).length;
  }
  if (event.target_audience === 'MANUAL') {
  return Array.isArray(event.target_persona_ids) ? event.target_persona_ids.length : 0;
  }
- return members.length;
+ return personas.length;
  };
 
  const getEventAttendanceStat = (event: MinistryEvent) => {
@@ -502,7 +502,7 @@ export default function EventsPage() {
  setSelectedEvent(ev);
  setIsAttendanceDrawerOpen(true);
  setAttendanceDate(new Date().toISOString().split('T')[0]);
- setAttendedMemberIds([]);
+ setAttendedPersonaIds([]);
  setShowScanner(false);
  setAttendanceSearch('');
  setAttendanceRoleFilter('ALL');
@@ -516,9 +516,9 @@ export default function EventsPage() {
  setAttendanceLoading(true);
  try {
  const data = await apiFetch<EventSessionAttendanceData>(`/evangelism/events/${selectedEvent.id}/sessions/${attendanceDate}`, { token });
- setAttendedMemberIds(Array.isArray(data?.attendees) ? data.attendees.map((item) => item.persona_id) : []);
+ setAttendedPersonaIds(Array.isArray(data?.attendees) ? data.attendees.map((item) => item.persona_id) : []);
  } catch {
- setAttendedMemberIds([]);
+ setAttendedPersonaIds([]);
  addToast("No se pudo cargar la asistencia guardada para esa fecha", "error");
  } finally {
  setAttendanceLoading(false);
@@ -535,7 +535,7 @@ export default function EventsPage() {
  addToast("No se puede registrar asistencia en eventos cancelados", "error");
  return;
  }
- if (!forceEmpty && expectedUniverseMembers.length > 0 && attendedMemberIds.length === 0) {
+ if (!forceEmpty && expectedUniversePersonas.length > 0 && attendedPersonaIds.length === 0) {
  setConfirmAction({
  title: 'Guardar asistencia en cero',
  description: 'Vas a guardar 0 presentes y marcar pendientes como ausentes para esta fecha.',
@@ -552,7 +552,7 @@ export default function EventsPage() {
  token,
  body: {
  event_id: selectedEvent.id,
- persona_ids: attendedMemberIds,
+ persona_ids: attendedPersonaIds,
  attendance_date: attendanceDate
  }
  });
@@ -570,17 +570,17 @@ export default function EventsPage() {
  };
 
  const toggleAttendance = (id: string) => {
- setAttendedMemberIds(prev =>
+ setAttendedPersonaIds(prev =>
  prev.includes(id) ? prev.filter(mId => mId !== id) : [...prev, id]
  );
  };
 
- const expectedUniverseMembers = members.filter((member) => {
+ const expectedUniversePersonas = personas.filter((persona) => {
  if (!selectedEvent) {
  return true;
  }
  if (selectedEvent.target_audience === 'MANUAL') {
- return Array.isArray(selectedEvent.target_persona_ids) && selectedEvent.target_persona_ids.includes(member.id);
+ return Array.isArray(selectedEvent.target_persona_ids) && selectedEvent.target_persona_ids.includes(persona.id);
  }
  if (selectedEvent.target_audience !== 'ROLE') {
  return true;
@@ -588,22 +588,22 @@ export default function EventsPage() {
  const roleNames = getTargetRoleIds(selectedEvent)
  .map((roleId) => roles.find((role) => role.id === roleId)?.name)
  .filter(Boolean) as string[];
- return roleNames.length > 0 && roleNames.includes((member.church_role || '').trim());
+ return roleNames.length > 0 && roleNames.includes((persona.church_role || '').trim());
  });
 
  const attendanceRoleOptions = Array.from(
  new Set(
- expectedUniverseMembers
- .map((member) => member.church_role?.trim())
+ expectedUniversePersonas
+ .map((persona) => persona.church_role?.trim())
  .filter((role): role is string => Boolean(role))
  )
  ).sort((a, b) => a.localeCompare(b));
 
- const filteredMembers = expectedUniverseMembers.filter((member) => {
+ const filteredPersonas = expectedUniversePersonas.filter((persona) => {
  const query = attendanceSearch.trim().toLowerCase();
- const matchesSearch = !query || (member.nombre_completo || '').toLowerCase().includes(query) || member.email.toLowerCase().includes(query);
- const matchesRole = attendanceRoleFilter === 'ALL' || (member.church_role || 'Sin rol') === attendanceRoleFilter;
- const isPresent = attendedMemberIds.includes(member.id);
+ const matchesSearch = !query || (persona.nombre_completo || '').toLowerCase().includes(query) || persona.email.toLowerCase().includes(query);
+ const matchesRole = attendanceRoleFilter === 'ALL' || (persona.church_role || 'Sin rol') === attendanceRoleFilter;
+ const isPresent = attendedPersonaIds.includes(persona.id);
  const matchesStatus =
  attendanceStatusFilter === 'ALL' ||
  (attendanceStatusFilter === 'PRESENT' && isPresent) ||
@@ -612,17 +612,17 @@ export default function EventsPage() {
  return matchesSearch && matchesRole && matchesStatus;
  });
 
- const markFilteredMembers = () => {
- setAttendedMemberIds((prev) => {
+ const markFilteredPersonas = () => {
+ setAttendedPersonaIds((prev) => {
  const next = new Set(prev);
- filteredMembers.forEach((member) => next.add(member.id));
+ filteredPersonas.forEach((persona) => next.add(persona.id));
  return Array.from(next);
  });
  };
 
- const clearFilteredMembers = () => {
- const filteredIds = new Set(filteredMembers.map((member) => member.id));
- setAttendedMemberIds((prev) => prev.filter((memberId) => !filteredIds.has(memberId)));
+ const clearFilteredPersonas = () => {
+ const filteredIds = new Set(filteredPersonas.map((persona) => persona.id));
+ setAttendedPersonaIds((prev) => prev.filter((personaId) => !filteredIds.has(personaId)));
  };
 
  const getVisualDate = (event: MinistryEvent) => {
@@ -1166,17 +1166,17 @@ export default function EventsPage() {
  className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20"
  />
  <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-3">
- {createManualMembers.map((member) => {
- const isSelected = newEvent.target_persona_ids.includes(member.id);
+ {createManualPersonas.map((persona) => {
+ const isSelected = newEvent.target_persona_ids.includes(persona.id);
  return (
  <button
- key={member.id}
+ key={persona.id}
  type="button"
  onClick={() => setNewEvent({
  ...newEvent,
  target_persona_ids: isSelected
- ? newEvent.target_persona_ids.filter((value) => value !== member.id)
- : [...newEvent.target_persona_ids, member.id],
+ ? newEvent.target_persona_ids.filter((value) => value !== persona.id)
+ : [...newEvent.target_persona_ids, persona.id],
  })}
  className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${
  isSelected
@@ -1185,8 +1185,8 @@ export default function EventsPage() {
  }`}
  >
  <div>
- <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{member.nombre_completo}</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{member.church_role || 'Sin rol'}</p>
+ <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{persona.nombre_completo}</p>
+ <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{persona.church_role || 'Sin rol'}</p>
  </div>
  <span className={`text-[10px] font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] dark:text-blue-300' : 'text-[hsl(var(--text-secondary))]'}`}>
  {isSelected ? 'Incluida' : 'Agregar'}
@@ -1194,7 +1194,7 @@ export default function EventsPage() {
  </button>
  );
  })}
- {createManualMembers.length === 0 && (
+ {createManualPersonas.length === 0 && (
  <div className="py-2 text-center text-sm text-[hsl(var(--text-secondary))]">No hay personas para este filtro</div>
  )}
  </div>
@@ -1366,15 +1366,15 @@ export default function EventsPage() {
  <option value="PRESENT">Presentes</option>
  </select>
  <button
- onClick={markFilteredMembers}
- disabled={filteredMembers.length === 0}
+ onClick={markFilteredPersonas}
+ disabled={filteredPersonas.length === 0}
  className="px-4 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-900/10 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300 transition-all hover:bg-emerald-100 disabled:opacity-50"
  >
  Marcar filtrados
  </button>
  <button
- onClick={clearFilteredMembers}
- disabled={filteredMembers.length === 0}
+ onClick={clearFilteredPersonas}
+ disabled={filteredPersonas.length === 0}
  className="px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))] disabled:opacity-50"
  >
  Limpiar filtrados
@@ -1386,10 +1386,10 @@ export default function EventsPage() {
  <div>
  <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">Presentes</p>
  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
- {attendanceLoading ? 'Cargando sesión...' : `${filteredMembers.length} visibles en esta búsqueda`}
+ {attendanceLoading ? 'Cargando sesión...' : `${filteredPersonas.length} visibles en esta búsqueda`}
  </p>
  </div>
- <p className="text-base font-bold text-emerald-600">{attendedMemberIds.length} <span className="text-sm font-bold text-[hsl(var(--text-secondary))]">/ {expectedUniverseMembers.length}</span></p>
+ <p className="text-base font-bold text-emerald-600">{attendedPersonaIds.length} <span className="text-sm font-bold text-[hsl(var(--text-secondary))]">/ {expectedUniversePersonas.length}</span></p>
  </div>
 
  {!attendanceLoading && (
@@ -1408,38 +1408,38 @@ export default function EventsPage() {
  </div>
  )}
 
- {/* Member list */}
+ {/* Persona list */}
  <div className="grid grid-cols-1 gap-3">
  {attendanceLoading ? (
  <div className="py-1.5 text-center text-[hsl(var(--text-secondary))] text-sm">Cargando asistencia registrada...</div>
- ) : filteredMembers.map(member => (
+ ) : filteredPersonas.map(persona => (
  <div
- key={member.id}
- onClick={() => toggleAttendance(member.id)}
- className={`flex items-center p-4 rounded-lg cursor-pointer transition-all border ${attendedMemberIds.includes(member.id)
+ key={persona.id}
+ onClick={() => toggleAttendance(persona.id)}
+ className={`flex items-center p-4 rounded-lg cursor-pointer transition-all border ${attendedPersonaIds.includes(persona.id)
  ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700/30 shadow-sm'
  : 'bg-[hsl(var(--bg-muted))] border-[hsl(var(--border-primary))] hover:border-[hsl(var(--border-primary))] dark:hover:border-white/10'
  }`}
  >
- <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors shrink-0 ${attendedMemberIds.includes(member.id)
+ <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors shrink-0 ${attendedPersonaIds.includes(persona.id)
  ? 'bg-emerald-500 border-emerald-500 text-white'
  : 'border-[hsl(var(--border-primary))] dark:border-white/20 bg-[hsl(var(--bg-primary))] dark:bg-black/20'
  }`}>
- {attendedMemberIds.includes(member.id) && <Check size={12} strokeWidth={4} />}
+ {attendedPersonaIds.includes(persona.id) && <Check size={12} strokeWidth={4} />}
  </div>
  <div>
- <p className={`font-bold text-sm ${attendedMemberIds.includes(member.id) ? 'text-emerald-900 dark:text-emerald-200' : 'text-[hsl(var(--text-primary))]'}`}>
- {member.nombre_completo}
+ <p className={`font-bold text-sm ${attendedPersonaIds.includes(persona.id) ? 'text-emerald-900 dark:text-emerald-200' : 'text-[hsl(var(--text-primary))]'}`}>
+ {persona.nombre_completo}
  </p>
  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
- {member.church_role || 'Sin rol'}
+ {persona.church_role || 'Sin rol'}
  </p>
  </div>
  </div>
  ))}
- {!attendanceLoading && filteredMembers.length === 0 && (
+ {!attendanceLoading && filteredPersonas.length === 0 && (
  <div className="py-1.5 text-center text-[hsl(var(--text-secondary))] text-sm">
- {expectedUniverseMembers.length === 0 ? 'Este evento no tiene universo esperado configurado con personas disponibles' : 'No hay personas para este filtro'}
+ {expectedUniversePersonas.length === 0 ? 'Este evento no tiene universo esperado configurado con personas disponibles' : 'No hay personas para este filtro'}
  </div>
  )}
  </div>
@@ -1615,19 +1615,19 @@ export default function EventsPage() {
  </div>
  <input value={editManualSearch} onChange={e => setEditManualSearch(e.target.value)} placeholder="Buscar por nombre, correo o rol..." className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
  <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-3">
- {editManualMembers.map((member) => {
- const isSelected = (editingEvent.target_persona_ids || []).includes(member.id);
+ {editManualPersonas.map((persona) => {
+ const isSelected = (editingEvent.target_persona_ids || []).includes(persona.id);
  return (
- <button key={member.id} type="button" onClick={() => setEditingEvent({ ...editingEvent, target_persona_ids: isSelected ? (editingEvent.target_persona_ids || []).filter((value) => value !== member.id) : [...(editingEvent.target_persona_ids || []), member.id], })} className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${isSelected ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20' : 'border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] '}`}>
+ <button key={persona.id} type="button" onClick={() => setEditingEvent({ ...editingEvent, target_persona_ids: isSelected ? (editingEvent.target_persona_ids || []).filter((value) => value !== persona.id) : [...(editingEvent.target_persona_ids || []), persona.id], })} className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${isSelected ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20' : 'border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] '}`}>
  <div>
- <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{member.nombre_completo}</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{member.church_role || 'Sin rol'}</p>
+ <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{persona.nombre_completo}</p>
+ <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{persona.church_role || 'Sin rol'}</p>
  </div>
  <span className={`text-[10px] font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] dark:text-blue-300' : 'text-[hsl(var(--text-secondary))]'}`}>{isSelected ? 'Incluida' : 'Agregar'}</span>
  </button>
  );
  })}
- {editManualMembers.length === 0 && <div className="py-2 text-center text-sm text-[hsl(var(--text-secondary))]">No hay personas para este filtro</div>}
+ {editManualPersonas.length === 0 && <div className="py-2 text-center text-sm text-[hsl(var(--text-secondary))]">No hay personas para este filtro</div>}
  </div>
  </div>
  )}

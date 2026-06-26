@@ -267,22 +267,22 @@ class TestConcreteToolClasses:
         return db
 
     @patch("backend.core.database.SessionLocal")
-    def test_crm_search_member(self, mock_sl):
-        from backend.services.tool_registry import CRMSearchMember
+    def test_crm_search_persona(self, mock_sl):
+        from backend.services.tool_registry import CRMSearchPersona
         mock_sl.return_value = self._make_db_mock()
-        tool = CRMSearchMember()
-        assert tool.name == "crm_search_member"
+        tool = CRMSearchPersona()
+        assert tool.name == "crm_search_persona"
         assert tool.module == "crm"
         result = tool.execute(query="test")
         assert result["count"] == 0
 
     @patch("backend.core.database.SessionLocal")
-    def test_crm_get_member_profile_not_found(self, mock_sl):
-        from backend.services.tool_registry import CRMGetMemberProfile
+    def test_crm_get_persona_profile_not_found(self, mock_sl):
+        from backend.services.tool_registry import CRMGetPersonaProfile
         db = MagicMock()
         db.query.return_value.filter.return_value.first.return_value = None
         mock_sl.return_value = db
-        tool = CRMGetMemberProfile()
+        tool = CRMGetPersonaProfile()
         result = tool.execute(persona_id=str(uuid.uuid4()))
         assert "error" in result
 
@@ -333,7 +333,7 @@ class TestConcreteToolClasses:
         mock_sl.return_value = self._make_db_mock()
         tool = AnalyticsGetRadar()
         result = tool.execute()
-        assert "members" in result
+        assert "personas" in result
 
     @patch("backend.core.database.SessionLocal")
     def test_analytics_proactive(self, mock_sl):

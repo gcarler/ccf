@@ -27,10 +27,10 @@ from backend.models_crm import (
     CommunicationLog, CommunityBoardCard,
     Conversation, ConversationParticipant,
     CounselingTicket, CrmTask, Donation, DonationCategory, EventAssignment,
-    EventAttendance, Fund, MemberMinistry,
-    MemberPosition, MemberRole, Ministry, PastoralCallLog, Position,
+    EventAttendance, Fund, PersonaMinistryAssignment,
+    PersonaPosition, PersonaRoleLink, Ministry, PastoralCallLog, Position,
     Persona, PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
-    VolunteerShift, VolunteerSkill, member_volunteer_skills)
+    VolunteerShift, VolunteerSkill, persona_volunteer_skills)
 
 # Projects (canonical)
 from backend.models_projects import (

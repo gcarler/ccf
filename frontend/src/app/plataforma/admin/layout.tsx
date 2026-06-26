@@ -29,7 +29,7 @@ const SIDEBAR_SECTIONS = [
             { id: 'users', label: 'Usuarios & Permisos', href: '/plataforma/admin/users', icon: Shield },
             { id: 'personas', label: 'Personas', href: '/plataforma/admin/personas', icon: Users },
             { id: 'radar', label: 'Radar del Pastor', href: '/plataforma/admin/dashboard/radar', icon: BarChart3 },
-            { id: 'comunidad', label: 'Comunidad', href: '/plataforma/admin/members', icon: Users },
+            { id: 'comunidad', label: 'Comunidad', href: '/plataforma/admin/personas', icon: Users },
             { id: 'crm', label: 'CRM Pastoral', href: '/plataforma/crm', icon: Heart },
         ]
     },
@@ -68,7 +68,7 @@ export default function AdminLayout({
     const pathname = usePathname() ?? '';
 
     // If a route manages its own deep layer, avoid double-rendering
-    const isDeepLayer = pathname.includes('/settings/system') || pathname.includes('/settings/roles') || pathname.includes('/members/');
+    const isDeepLayer = pathname.includes('/settings/system') || pathname.includes('/settings/roles') || pathname.includes('/personas/');
     if (isDeepLayer) {
         return <div className="h-full w-full">{children}</div>;
     }

@@ -2,7 +2,7 @@ from backend import crud, schemas
 from tests.conftest import seed_admin_v2
 
 
-def test_member_filtering_and_update(db_session):
+def test_persona_filtering_and_update(db_session):
     seed_admin_v2(db_session)
     persona1 = crud.create_persona(
         db_session,

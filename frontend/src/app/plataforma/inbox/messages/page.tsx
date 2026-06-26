@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 
-type Member = { id: string; nombre_completo?: string; first_name?: string; last_name?: string };
+type Persona = { id: string; nombre_completo?: string; first_name?: string; last_name?: string };
 type CommunicationLog = {
   id: number;
   persona_id: string;
@@ -35,7 +35,7 @@ type Chat = {
 export default function InboxMessagesPage() {
   const { token } = useAuth();
   const [logs, setLogs] = useState<CommunicationLog[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
+  const [personas, setPersonas] = useState<Persona[]>([]);
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
   const [inputText, setInputText] = useState('');
   const [search, setSearch] = useState('');
@@ -50,24 +50,24 @@ export default function InboxMessagesPage() {
         token,
         cache: 'no-store',
       }).catch(() => []),
-      apiFetch<Member[]>('/crm/personas/', { token, cache: 'no-store' }).catch(
+      apiFetch<Persona[]>('/crm/personas/', { token, cache: 'no-store' }).catch(
         () => []
       ),
     ]).then(([history, people]) => {
       setLogs(Array.isArray(history) ? history : []);
-      setMembers(Array.isArray(people) ? people : []);
+      setPersonas(Array.isArray(people) ? people : []);
     });
   }, [token]);
 
-  const memberNames = useMemo(
+  const personaNames = useMemo(
     () =>
       new Map(
-        members.map(member => [
-          member.id,
-          member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(),
+        personas.map(persona => [
+          persona.id,
+          persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim(),
         ])
       ),
-    [members]
+    [personas]
   );
   
   const chats = useMemo<Chat[]>(() => {
@@ -81,12 +81,12 @@ export default function InboxMessagesPage() {
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
       .map(log => ({
         id: log.persona_id,
-        name: memberNames.get(log.persona_id) || `Persona ${log.persona_id}`,
+        name: personaNames.get(log.persona_id) || `Persona ${log.persona_id}`,
         lastMessage: log.content,
         time: new Date(log.created_at).toLocaleString('es-CO'),
         channel: log.channel,
       }));
-  }, [logs, memberNames]);
+  }, [logs, personaNames]);
   
   const visibleChats = chats.filter(
     chat =>
@@ -94,9 +94,9 @@ export default function InboxMessagesPage() {
       chat.lastMessage.toLowerCase().includes(search.toLowerCase())
   );
   
-  const visibleMembers = members.filter(
-    member =>
-        (member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()).toLowerCase().includes(search.toLowerCase())
+  const visiblePersonas = personas.filter(
+    persona =>
+        (persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()).toLowerCase().includes(search.toLowerCase())
   );
 
   const messages = logs
@@ -108,14 +108,14 @@ export default function InboxMessagesPage() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  const handleStartNewChat = (member: Member) => {
-    const existingChat = chats.find(c => c.id === member.id);
+  const handleStartNewChat = (persona: Persona) => {
+    const existingChat = chats.find(c => c.id === persona.id);
     if (existingChat) {
       setActiveChat(existingChat);
     } else {
       setActiveChat({
-        id: member.id,
-        name: member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim(),
+        id: persona.id,
+        name: persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim(),
         lastMessage: '',
         time: new Date().toLocaleString('es-CO'),
         channel: 'internal'
@@ -193,25 +193,25 @@ export default function InboxMessagesPage() {
                     exit={{ opacity: 0, x: -5 }}
                     className="space-y-1"
                     >
-                        <p className="px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-slate-400">Contactos ({visibleMembers.length})</p>
-                        {visibleMembers.map(member => (
+                        <p className="px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-slate-400">Contactos ({visiblePersonas.length})</p>
+                        {visiblePersonas.map(persona => (
                         <button
-                            key={member.id}
-                            onClick={() => handleStartNewChat(member)}
+                            key={persona.id}
+                            onClick={() => handleStartNewChat(persona)}
                             className="flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors group"
                         >
                             <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-[10px] font-semibold uppercase text-slate-600 dark:bg-white/10 dark:text-white group-hover:bg-blue-200 group-hover:text-[hsl(var(--primary))] transition-colors">
-                            {member.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? member.first_name?.charAt(0) ?? ''}{member.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? member.last_name?.charAt(0) ?? ''}
+                            {persona.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? persona.first_name?.charAt(0) ?? ''}{persona.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? persona.last_name?.charAt(0) ?? ''}
                             </div>
                             <div className="min-w-0 flex-1">
                             <h4 className="truncate font-semibold text-slate-800 dark:text-slate-100">
-                                {member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}
+                                {persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}
                             </h4>
                             </div>
                             <UserPlus size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors" />
                         </button>
                         ))}
-                        {visibleMembers.length === 0 && (
+                        {visiblePersonas.length === 0 && (
                             <div className="p-4 text-center">
                                 <p className="text-xs font-bold text-slate-500">Ningún persona encontrado</p>
                             </div>

@@ -34,8 +34,6 @@ export interface Persona {
  church_role?: string;
 }
 
-export type Member = Persona;
-
 export interface EventDashboardStat {
  event_id: string;
  latest_session: string | null;
@@ -51,7 +49,7 @@ export interface EventSessionAttendanceData {
 export interface ScanValidationResult {
  valid: boolean;
  persona_id: string;
- member_name: string;
+ persona_name: string;
  role?: string;
 }
 
@@ -105,7 +103,7 @@ export interface StrategyGroup {
  leader_id?: string | null;
  assistant_id?: string | null;
  host_id?: string | null;
- members_count: number;
+ personas_count: number;
  capacity?: number;
  day_of_week?: string | null;
  start_time?: string | null;
@@ -173,7 +171,7 @@ export interface GenerateSessionsResponse {
 export interface SessionDetailResponse {
  session: {
  id: number;
- cell_group_id: number;
+ grupo_id: number;
  session_date: string | null;
  topic: string | null;
  offering_amount: number | null;
@@ -189,7 +187,7 @@ export interface SessionDetailResponse {
  notes: string | null;
  attended: boolean;
  }>;
- cell_group: {
+ grupo: {
  id: number;
  name: string;
  leader_name: string;
@@ -206,7 +204,7 @@ export interface GroupDetailResponse {
  leader_id?: string | null;
  assistant_id?: string | null;
  host_id?: string | null;
- members_count: number;
+ personas_count: number;
  capacity?: number;
  day_of_week?: string | null;
  start_time?: string | null;
@@ -227,7 +225,7 @@ export interface GroupDetailResponse {
  total_sessions?: number;
  total_attendance?: number;
  monitoring: {
- expected_members: number;
+ expected_personas: number;
  average_attendance: number;
  average_attendance_rate: number;
  attendance_trend: Array<{

@@ -42,12 +42,12 @@ class IntelligenceConsumer(EventConsumer):
     @property
     def subscribed_events(self) -> List[str]:
         return [
-            "member_registered",
+            "persona_registered",
             "enrollment_created",
             "task_overdue",
         ]
 
-    def handle_member_registered(self, payload: Dict[str, Any]) -> None:
+    def handle_persona_registered(self, payload: Dict[str, Any]) -> None:
         """Cuando se registra un miembro → genera insight de bienvenida."""
         from backend import schemas
         from backend.core.database import SessionLocal
@@ -61,7 +61,7 @@ class IntelligenceConsumer(EventConsumer):
                 db,
                 schemas.AgentInsightCreate(
                     title=f"Nuevo miembro registrado: {name}",
-                    insight_type="member_event",
+                    insight_type="persona_event",
                     description=f"{name} se registró como {role}",
                     confidence=1.0,
                     source_agent="system",
@@ -128,14 +128,14 @@ class GraphUpdateConsumer(EventConsumer):
     @property
     def subscribed_events(self) -> List[str]:
         return [
-            "member_status_changed",
+            "persona_status_changed",
             "spiritual_stage_transition",
         ]
 
-    def handle_member_status_changed(self, payload: Dict[str, Any]) -> None:
+    def handle_persona_status_changed(self, payload: Dict[str, Any]) -> None:
         """Miembro cambió de estado → log."""
         log.info(
-            "Graph update: member status changed for %s",
+            "Graph update: persona status changed for %s",
             payload.get("persona_id"),
         )
 

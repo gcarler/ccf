@@ -15,7 +15,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import RightPanel from '@/components/ui/RightPanel';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 
-interface TeamMember {
+interface TeamPersona {
     persona_id: string;
     name: string;
     load_status: string;
@@ -27,25 +27,25 @@ interface TeamMember {
 export default function TeamPage() {
     const { token } = useAuth();
     const { openLayer, closeLayer, setRightMode, layers } = useSidebarLayers();
-    const [team, setTeam] = useState<TeamMember[]>([]);
+    const [team, setTeam] = useState<TeamPersona[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+    const [selectedPersona, setSelectedPersona] = useState<TeamPersona | null>(null);
 
     useEffect(() => {
-        if (!layers.RIGHT && selectedMember) setSelectedMember(null);
+        if (!layers.RIGHT && selectedPersona) setSelectedPersona(null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [layers.RIGHT]);
 
     useEffect(() => {
         if (!token) return;
-        apiFetch<TeamMember[]>('/system/workload', { token })
+        apiFetch<TeamPersona[]>('/system/workload', { token })
             .then(data => setTeam(Array.isArray(data) ? data : []))
             .catch(() => setTeam([]))
             .finally(() => setLoading(false));
     }, [token]);
 
-    const handleSelect = (member: TeamMember) => {
-        setSelectedMember(member);
+    const handleSelect = (persona: TeamPersona) => {
+        setSelectedPersona(persona);
         setRightMode('overlay');
         openLayer('RIGHT');
     };
@@ -99,35 +99,35 @@ export default function TeamPage() {
                         />
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {team.map((member, idx) => {
-                                const isOverloaded = member.load_status === 'sobrecargado';
+                            {team.map((persona, idx) => {
+                                const isOverloaded = persona.load_status === 'sobrecargado';
                                 return (
                                     <motion.div
-                                        key={member.persona_id}
+                                        key={persona.persona_id}
                                         initial={{ opacity: 0, scale: 0.97 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: idx * 0.05 }}
-                                        onClick={() => handleSelect(member)}
+                                        onClick={() => handleSelect(persona)}
                                         className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-lg border border-slate-200/70 dark:border-white/[0.06] p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all cursor-pointer overflow-hidden active:scale-[0.99]"
                                     >
                                         {/* Status bar */}
                                         <div className={clsx(
                                             "absolute top-0 left-0 right-0 h-[3px]",
                                             isOverloaded ? "bg-rose-500" :
-                                            member.load_status === 'en_capacidad' ? "bg-amber-500" : "bg-emerald-500"
+                                            persona.load_status === 'en_capacidad' ? "bg-amber-500" : "bg-emerald-500"
                                         )} />
 
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex items-center gap-3">
                                                 <div className="size-8 rounded-md bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all shadow-sm font-bold text-xs">
-                                                    {member.name.substring(0, 2).toUpperCase()}
+                                                    {persona.name.substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-[13px] font-medium text-slate-900 dark:text-white leading-none">{member.name}</p>
+                                                    <p className="text-[13px] font-medium text-slate-900 dark:text-white leading-none">{persona.name}</p>
                                                     <span className={clsx(
                                                         "text-[9px] font-semibold uppercase tracking-wide mt-0.5 block",
                                                         isOverloaded ? "text-rose-500" : "text-slate-400"
-                                                    )}>{member.load_status}</span>
+                                                    )}>{persona.load_status}</span>
                                                 </div>
                                             </div>
                                             {isOverloaded && <AlertTriangle className="text-rose-500 shrink-0" size={16} />}
@@ -136,12 +136,12 @@ export default function TeamPage() {
                                         <div className="grid grid-cols-2 gap-2 mb-3">
                                             <div className="p-2 bg-slate-50 dark:bg-black/20 rounded-md">
                                                 <p className="text-[9px] font-bold uppercase text-slate-400 mb-0.5">Activas</p>
-                                                <p className="text-lg font-bold text-slate-900 dark:text-white">{member.open}</p>
+                                                <p className="text-lg font-bold text-slate-900 dark:text-white">{persona.open}</p>
                                             </div>
                                             <div className="p-2 bg-slate-50 dark:bg-black/20 rounded-md">
                                                 <p className="text-[9px] font-bold uppercase text-slate-400 mb-0.5">Criticas</p>
-                                                <p className={clsx("text-lg font-bold", member.critical > 0 ? "text-rose-500" : "text-slate-900 dark:text-white")}>
-                                                    {member.critical}
+                                                <p className={clsx("text-lg font-bold", persona.critical > 0 ? "text-rose-500" : "text-slate-900 dark:text-white")}>
+                                                    {persona.critical}
                                                 </p>
                                             </div>
                                         </div>
@@ -149,12 +149,12 @@ export default function TeamPage() {
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide">
                                                 <span className="text-slate-400">Saturación</span>
-                                                <span className={isOverloaded ? "text-rose-500" : "text-[hsl(var(--primary))]"}>{member.capacity_percent}%</span>
+                                                <span className={isOverloaded ? "text-rose-500" : "text-[hsl(var(--primary))]"}>{persona.capacity_percent}%</span>
                                             </div>
                                             <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                                                 <motion.div
                                                     initial={{ width: 0 }}
-                                                    animate={{ width: `${member.capacity_percent}%` }}
+                                                    animate={{ width: `${persona.capacity_percent}%` }}
                                                     transition={{ duration: 0.8, delay: idx * 0.05 + 0.3 }}
                                                     className={clsx("h-full rounded-full", isOverloaded ? "bg-rose-500" : "bg-[hsl(var(--primary))]")}
                                                 />
@@ -172,29 +172,29 @@ export default function TeamPage() {
                 </div>
             </div>
 
-            {/* Right Panel — Member Detail (no modal) */}
-            {selectedMember && (
+            {/* Right Panel — Persona Detail (no modal) */}
+            {selectedPersona && (
                 <RightPanel title="Perfil de Carga" width={360}>
                     <div className="p-3 space-y-3">
                         <div className="flex items-center gap-3">
                             <div className="size-10 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20">
-                                {selectedMember.name.substring(0, 2).toUpperCase()}
+                                {selectedPersona.name.substring(0, 2).toUpperCase()}
                             </div>
                             <div>
-                                <h3 className="text-sm font-medium text-slate-900 dark:text-white">{selectedMember.name}</h3>
+                                <h3 className="text-sm font-medium text-slate-900 dark:text-white">{selectedPersona.name}</h3>
                                 <span className={clsx(
                                     "text-[9px] font-semibold uppercase tracking-wide",
-                                    selectedMember.load_status === 'sobrecargado' ? "text-rose-500" : "text-emerald-500"
-                                )}>{selectedMember.load_status}</span>
+                                    selectedPersona.load_status === 'sobrecargado' ? "text-rose-500" : "text-emerald-500"
+                                )}>{selectedPersona.load_status}</span>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
                             {[
-                                { label: 'Tareas Activas', value: selectedMember.open, color: 'text-[hsl(var(--primary))]' },
-                                { label: 'Criticas Hoy', value: selectedMember.critical, color: 'text-rose-500' },
-                                { label: 'Saturacion', value: `${selectedMember.capacity_percent}%`, color: selectedMember.capacity_percent > 80 ? 'text-rose-500' : 'text-[hsl(var(--primary))]' },
-                                { label: 'Estado', value: selectedMember.load_status === 'disponible' ? 'Disponible' : 'Ocupado', color: 'text-emerald-500' },
+                                { label: 'Tareas Activas', value: selectedPersona.open, color: 'text-[hsl(var(--primary))]' },
+                                { label: 'Criticas Hoy', value: selectedPersona.critical, color: 'text-rose-500' },
+                                { label: 'Saturacion', value: `${selectedPersona.capacity_percent}%`, color: selectedPersona.capacity_percent > 80 ? 'text-rose-500' : 'text-[hsl(var(--primary))]' },
+                                { label: 'Estado', value: selectedPersona.load_status === 'disponible' ? 'Disponible' : 'Ocupado', color: 'text-emerald-500' },
                             ].map(item => (
                                 <div key={item.label} className="bg-slate-50 dark:bg-white/5 rounded-md p-2 border border-slate-100 dark:border-white/5">
                                     <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">{item.label}</p>

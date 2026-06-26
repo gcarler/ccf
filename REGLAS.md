@@ -100,7 +100,7 @@ No se acepta confiar en un `sede_id` enviado por el cliente cuando el usuario au
 ## 11. Verificacion Recomendada
 
 ```bash
-rg -n "ForeignKey\\(\"users\\.id\"\\)|Member\\s*=" backend docs scripts REGLAS.md
+rg -n "ForeignKey\\(\"users\\.id\"\\)|personas\\.user_id|models\\.Persona|models_personas|backend\\.auth" backend docs scripts REGLAS.md
 
 source venv/bin/activate
 python -m pytest -q -o addopts='' tests/test_structural_contracts.py tests/test_smoke.py

@@ -837,7 +837,7 @@ class TestUUIDEdgeCases:
     def test_staff_only_endpoints(self, client, db_session):
         """DELETE project requires staff/admin."""
         from tests.conftest import seed_user_with_role_v2
-        user, _, _ = seed_user_with_role_v2(db_session, role_name="member", email="user@test.com")
+        user, _, _ = seed_user_with_role_v2(db_session, role_name="persona", email="user@test.com")
         _, _, sede = seed_admin_v2(db_session)
         proj = create_project_factory(db_session)
 

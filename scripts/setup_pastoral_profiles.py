@@ -104,7 +104,7 @@ def main():
                 church_role='Pastora Fundadora',
                 photo_url=MARTINA_PHOTO,
                 estado_vital='ACTIVO',
-                membership_type='Activo',
+                participation_type='Activo',
                 is_pastoral_leader=True,
                 is_main_pastor=True,
                 bio_short=(

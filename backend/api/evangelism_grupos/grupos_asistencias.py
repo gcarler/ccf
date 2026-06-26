@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 from backend import models, schemas
 from backend.models import SesionGrupo, GrupoEvangelismo, Asistencia
 from backend.api.evangelism_shared import (
-    member_payload,
+    persona_payload,
     expected_group_rows,
     utc_now,
     _can_manage_grupo,
@@ -56,9 +56,9 @@ def get_faro_session_attendance(
     attendance_map = {attendance.persona_id: attendance for attendance in attendances}
     present = []
     absent = []
-    expected_members = []
-    for _, member in expected_rows:
-        attendance = attendance_map.get(member.id)
+    expected_personas = []
+    for _, persona in expected_rows:
+        attendance = attendance_map.get(persona.id)
         attended = (
             bool(
                 attendance.attended
@@ -68,8 +68,8 @@ def get_faro_session_attendance(
             if attendance
             else False
         )
-        payload = member_payload(
-            member,
+        payload = persona_payload(
+            persona,
             attended=attended,
             scanned_at=getattr(attendance, "scanned_at", None) if attendance else None,
             absence_reason=getattr(attendance, "absence_reason", None) if attendance else None,
@@ -81,7 +81,7 @@ def get_faro_session_attendance(
             estado=attendance.estado if attendance else None,
             es_primera_vez=attendance.es_primera_vez if attendance else False,
         )
-        expected_members.append(payload)
+        expected_personas.append(payload)
         if attended:
             present.append(payload)
         else:
@@ -90,7 +90,7 @@ def get_faro_session_attendance(
     return {
         "session_id": session_id,
         "session_date": session.session_date.isoformat(),
-        "cell_group_id": session.grupo_id,
+        "grupo_id": session.grupo_id,
         "status": session.status,
         "topic": session.topic,
         "offering_amount": (float(session.offering_amount) if session.offering_amount is not None else None),
@@ -104,7 +104,7 @@ def get_faro_session_attendance(
         "absent_count": len(absent),
         "attendees": present,
         "absentees": absent,
-        "expected_members": expected_members,
+        "expected_personas": expected_personas,
     }
 
 
@@ -116,7 +116,7 @@ def add_faro_attendance(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    member_ids = payload.get("persona_ids") or payload.get("member_ids", [])
+    persona_ids = payload.get("persona_ids") or payload.get("persona_ids", [])
     attendees = payload.get("attendees")
 
     session = db.query(SesionGrupo).filter(
@@ -159,14 +159,14 @@ def add_faro_attendance(
     if attendees:
         processed = 0
         for item in attendees:
-            member_id = item.get("persona_id") or item.get("member_id")
-            if not member_id:
+            persona_id = item.get("persona_id") or item.get("persona_id")
+            if not persona_id:
                 continue
-            if isinstance(member_id, str):
+            if isinstance(persona_id, str):
                 try:
-                    member_id = uuid.UUID(member_id)
+                    persona_id = uuid.UUID(persona_id)
                 except ValueError:
-                    raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {member_id}")
+                    raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {persona_id}")
             attended = bool(item.get("attended", True))
             absence_reason = item.get("absence_reason")
             absence_reason_detail = item.get("absence_reason_detail")
@@ -174,14 +174,14 @@ def add_faro_attendance(
             if not attended and not absence_reason:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Razón de ausencia requerida para el miembro {member_id}.",
+                    detail=f"Razón de ausencia requerida para el miembro {persona_id}.",
                 )
 
             row = (
                 db.query(Asistencia)
                 .filter(
                     models.Asistencia.sesion_id == session_id,
-                    models.Asistencia.persona_id == member_id,
+                    models.Asistencia.persona_id == persona_id,
                 )
                 .first()
             )
@@ -193,7 +193,7 @@ def add_faro_attendance(
                 db.add(
                     Asistencia(
                         session_id=session_id,
-                        persona_id=member_id,
+                        persona_id=persona_id,
                         attended=attended,
                         absence_reason=absence_reason,
                         absence_reason_detail=absence_reason_detail,
@@ -201,25 +201,25 @@ def add_faro_attendance(
                 )
             processed += 1
     else:
-        if not member_ids:
+        if not persona_ids:
             raise HTTPException(status_code=400, detail="Se requiere lista de miembros o asistentes")
         processed = 0
-        for member_id in member_ids:
-            if isinstance(member_id, str):
+        for persona_id in persona_ids:
+            if isinstance(persona_id, str):
                 try:
-                    member_id = uuid.UUID(member_id)
+                    persona_id = uuid.UUID(persona_id)
                 except ValueError:
-                    raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {member_id}")
+                    raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {persona_id}")
             exists = (
                 db.query(Asistencia)
                 .filter(
                     models.Asistencia.sesion_id == session_id,
-                    models.Asistencia.persona_id == member_id,
+                    models.Asistencia.persona_id == persona_id,
                 )
                 .first()
             )
             if not exists:
-                db.add(Asistencia(session_id=session_id, persona_id=member_id, attended=True))
+                db.add(Asistencia(session_id=session_id, persona_id=persona_id, attended=True))
                 processed += 1
 
     new_status = payload.get("status", session.status)

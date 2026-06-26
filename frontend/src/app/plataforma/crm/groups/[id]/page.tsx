@@ -99,7 +99,7 @@ export default function GroupDetailPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
                                     <Users size={20} className="text-[hsl(var(--primary))] mb-2" />
-                                    <p className="text-lg font-bold">{group.members_count ?? 0}</p>
+                                    <p className="text-lg font-bold">{group.personas_count ?? 0}</p>
                                     <p className="text-[9px] font-bold text-slate-400 uppercase">Personas Frecuentes</p>
                                 </div>
                                 <div className="p-4 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">

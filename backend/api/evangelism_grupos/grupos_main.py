@@ -111,7 +111,7 @@ def _validate_strategy_group_roles(db: Session, strategy_id: str | None, body: d
 
 @router.get("/grupos", response_model=List[dict])
 @router.get("/faro", response_model=List[dict])
-def list_cell_groups(
+def list_grupos(
     estrategia_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -134,7 +134,7 @@ def list_cell_groups(
             "leader_id": str(g.lider_persona_id) if g.lider_persona_id else None,
             "assistant_id": str(g.asistente_persona_id) if g.asistente_persona_id else None,
             "host_id": str(g.anfitrion_persona_id) if g.anfitrion_persona_id else None,
-            "members_count": sum(1 for p in (g.participantes or []) if p.activo and p.deleted_at is None),
+            "personas_count": sum(1 for p in (g.participantes or []) if p.activo and p.deleted_at is None),
             "capacity": g.capacidad,
             "day_of_week": g.dia_reunion,
             "start_time": g.hora_reunion,
@@ -147,13 +147,13 @@ def list_cell_groups(
 
 @router.get("/grupos/mine", response_model=List[dict])
 @router.get("/faro/mine", response_model=List[dict])
-def list_my_cell_groups(
+def list_my_grupos(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
     user_sede = require_user_sede_id(db, current_user)
     if _is_crm_admin_or_pastor(current_user):
-        return crud.get_cell_groups(db, sede_id=user_sede)
+        return crud.get_grupos(db, sede_id=user_sede)
     persona = _get_persona_for_user(db, current_user.id)
     if not persona:
         return []
@@ -211,8 +211,8 @@ def get_faro_assignment_summary(
     houses_without_assistant = [house for house in houses if not house.assistant_persona_id]
     houses_with_host = [house for house in houses if house.host_persona_id]
     houses_without_host = [house for house in houses if not house.host_persona_id]
-    houses_with_members = [house for house in houses if (house.members_count or 0) > 0]
-    houses_without_members = [house for house in houses if (house.members_count or 0) == 0]
+    houses_with_personas = [house for house in houses if (house.personas_count or 0) > 0]
+    houses_without_personas = [house for house in houses if (house.personas_count or 0) == 0]
 
     unassigned_personas = [
         {
@@ -232,8 +232,8 @@ def get_faro_assignment_summary(
         "houses_without_assistant": len(houses_without_assistant),
         "houses_with_host": len(houses_with_host),
         "houses_without_host": len(houses_without_host),
-        "houses_with_members": len(houses_with_members),
-        "houses_without_members": len(houses_without_members),
+        "houses_with_personas": len(houses_with_personas),
+        "houses_without_personas": len(houses_without_personas),
         "personas_total": len(personas),
         "personas_unassigned": len(unassigned_personas),
         "houses_needing_leader": [
@@ -273,7 +273,7 @@ def get_faro_assignment_summary(
 @router.get("/grupos/{grupo_id}", response_model=dict)
 @router.get("/faro/{grupo_id}", response_model=dict)
 @router.get("/micro/{grupo_id}", response_model=dict)
-def get_cell_group(
+def get_grupo(
     grupo_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -460,7 +460,7 @@ def get_cell_group(
         "host_id": house.host_persona_id,
         "base_attendee_ids": base_attendee_ids,
         "base_attendees": base_attendees,
-        "members_count": house.members_count,
+        "personas_count": house.personas_count,
         "capacity": house.capacity,
         "day_of_week": house.day_of_week,
         "start_time": house.start_time,
@@ -471,7 +471,7 @@ def get_cell_group(
         "total_sessions": len(sessions_data),
         "total_attendance": sum(session["attendance_count"] for session in sessions_data),
         "monitoring": {
-            "expected_members": expected_count,
+            "expected_personas": expected_count,
             "average_attendance": monitoring_average_presence,
             "average_attendance_rate": monitoring_average_rate,
             "attendance_trend": attendance_trend,
@@ -497,7 +497,7 @@ def get_cell_group(
 
 @router.post("/grupos", response_model=dict)
 @router.post("/faro", response_model=dict)
-async def create_cell_group(
+async def create_grupo(
     request: Request,
     payload: schemas.GrupoEvangelismoCreate,
     db: Session = Depends(get_db),
@@ -515,7 +515,7 @@ async def create_cell_group(
     if not user_sede:
         primera_sede = db.query(models.Sede).order_by("nombre").first()
         user_sede = str(primera_sede.id) if primera_sede else None
-    obj = crud.create_cell_group(db, payload, sede_id=user_sede)
+    obj = crud.create_grupo(db, payload, sede_id=user_sede)
     return {
         "id": obj.id,
         "code": obj.codigo,
@@ -529,14 +529,14 @@ async def create_cell_group(
         "assistant_id": str(obj.asistente_persona_id) if obj.asistente_persona_id else None,
         "host_id": str(obj.anfitrion_persona_id) if obj.anfitrion_persona_id else None,
         "status": "Activo" if obj.activo else "Inactivo",
-        "members_count": sum(1 for p in (obj.participantes or []) if p.activo and p.deleted_at is None),
+        "personas_count": sum(1 for p in (obj.participantes or []) if p.activo and p.deleted_at is None),
         "evangelism_strategy_id": str(obj.estrategia_id) if obj.estrategia_id else None,
     }
 
 
 @router.put("/grupos/{grupo_id}", response_model=dict)
 @router.put("/faro/{grupo_id}", response_model=dict)
-def update_cell_group(
+def update_grupo(
     grupo_id: UUID,
     payload: schemas.GrupoEvangelismoUpdate,
     db: Session = Depends(get_db),
@@ -562,15 +562,15 @@ def update_cell_group(
                 status_code=403,
                 detail="Lideres y colideres solo pueden gestionar asistentes del grupo",
             )
-    house = crud.update_cell_group(db, grupo_id, payload)
+    house = crud.update_grupo(db, grupo_id, payload)
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
-    return {"id": house.id, "name": house.name, "members_count": house.members_count}
+    return {"id": house.id, "name": house.name, "personas_count": house.personas_count}
 
 
 @router.delete("/grupos/{grupo_id}", status_code=204)
 @router.delete("/faro/{grupo_id}", status_code=204)
-def delete_cell_group(
+def delete_grupo(
     grupo_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -701,7 +701,7 @@ def get_faro_analytics(
         "avg_per_session": (round(total_attendance / total_sessions) if total_sessions > 0 else 0),
         "per_faro": [
             {
-                "cell_group_id": row.grupo_id,
+                "grupo_id": row.grupo_id,
                 "total_attendance": row.total_attendance or 0,
                 "total_sessions": row.total_sessions or 0,
                 "avg": (round((row.total_attendance or 0) / row.total_sessions) if row.total_sessions else 0),
@@ -757,7 +757,7 @@ def get_macro_despliegue(
     # Group sessions by house
     sessions_by_house = collections.defaultdict(list)
     for s in sessions:
-        sessions_by_house[s.cell_group_id].append(s)
+        sessions_by_house[s.grupo_id].append(s)
 
     # Get attendance counts per session
     attendance_counts = (

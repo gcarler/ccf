@@ -61,15 +61,15 @@ export default function FamilyNucleusPage() {
                                     { name: 'Maria Sanchez', role: 'Madre', status: 'Activo', icon: Heart, color: 'text-rose-400' },
                                     { name: 'Samuel Gomez', role: 'Hijo', status: 'Estudiante', icon: Baby, color: 'text-amber-400' },
                                     { name: 'Lucia Gomez', role: 'Hija', status: 'Estudiante', icon: Star, color: 'text-sky-400' },
-                                ].map((member, i) => (
+                                ].map((persona, i) => (
                                     <div key={i} className="bg-white/5 border border-white/5 p-3 rounded-md hover:border-white/10 transition-all flex items-center justify-between group/item">
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-8 bg-white/5 rounded-lg flex items-center justify-center ${member.color}`}>
-                                                <member.icon size={20} />
+                                            <div className={`w-12 h-8 bg-white/5 rounded-lg flex items-center justify-center ${persona.color}`}>
+                                                <persona.icon size={20} />
                                             </div>
                                             <div>
-                                                <div className="text-sm font-bold text-white group-hover/item:text-rose-400 transition-colors">{member.name}</div>
-                                                <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">{member.role}</div>
+                                                <div className="text-sm font-bold text-white group-hover/item:text-rose-400 transition-colors">{persona.name}</div>
+                                                <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">{persona.role}</div>
                                             </div>
                                         </div>
                                         <button className="p-2 text-muted-foreground hover:text-white transition-colors">

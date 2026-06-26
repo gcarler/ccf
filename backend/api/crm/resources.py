@@ -46,7 +46,7 @@ from backend.schemas.crm_resources import (
     CampaignFromPlantillaPayload,
     CampaignResultOut,
 )
-from backend.api.crm._shared import _resolve_campaign_members
+from backend.api.crm._shared import _resolve_campaign_personas
 from backend.crud.crm_extended import (
     create_crm_automation,
     delete_crm_automation,
@@ -330,7 +330,7 @@ async def send_plantilla_campaign(
     sede_id = get_user_sede_id(db, str(user.id))
     sender_persona_id = resolve_persona_id_from_identity(db, str(user.id))
 
-    personas = _resolve_campaign_members(db, payload.target_segments, sede_id=sede_id)
+    personas = _resolve_campaign_personas(db, payload.target_segments, sede_id=sede_id)
     if not personas:
         raise HTTPException(404, detail="No se encontraron destinatarios para los segmentos seleccionados")
 

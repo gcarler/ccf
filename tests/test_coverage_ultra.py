@@ -184,7 +184,7 @@ class TestCRMCRUDExecution:
 
     def test_search_personas_paginated(self, db, test_personas):
         from backend.crud import crm
-        results = crm.search_members_paginated(db, search="TP", limit=5)
+        results = crm.search_personas_paginated(db, search="TP", limit=5)
         assert isinstance(results, (list, tuple, dict))
 
     def test_update_persona_fields(self, db, test_personas):
@@ -253,24 +253,24 @@ class TestCRMCRUDExecution:
         ))
         assert pr.id is not None
 
-    def test_create_cell_group_full(self, db, admin_info):
+    def test_create_grupo_full(self, db, admin_info):
         from backend.crud import crm
-        from backend.schemas import CellGroupCreate
+        from backend.schemas import GrupoEvangelismoCreate
         admin, admin_persona, sede = admin_info
-        group = crm.create_cell_group(db, CellGroupCreate(
+        group = crm.create_grupo(db, GrupoEvangelismoCreate(
             nombre="Full Group", ubicacion="Test Place",
             capacidad=25,
         ), sede_id=str(sede.id))
         assert group.id is not None
 
-    def test_update_cell_group(self, db, admin_info, test_personas):
+    def test_update_grupo(self, db, admin_info, test_personas):
         from backend.crud import crm
-        from backend.schemas import CellGroupCreate, CellGroupUpdate
+        from backend.schemas import GrupoEvangelismoCreate, GrupoEvangelismoUpdate
         admin, admin_persona, sede = admin_info
-        group = crm.create_cell_group(db, CellGroupCreate(
+        group = crm.create_grupo(db, GrupoEvangelismoCreate(
             nombre="To Update", ubicacion="Place",
         ), sede_id=str(sede.id))
-        updated = crm.update_cell_group(db, group.id, CellGroupUpdate(
+        updated = crm.update_grupo(db, group.id, GrupoEvangelismoUpdate(
             nombre="Updated Group",
         ))
         assert updated is not None
@@ -330,17 +330,17 @@ class TestCRMCRUDExecution:
         skills = crm.get_volunteer_shifts(db)
         assert isinstance(skills, list)
 
-    def test_get_member_positions(self, db):
+    def test_get_persona_positions(self, db):
         from backend.crud import crm
         positions = crm.get_personas(db)
         assert isinstance(positions, list)
 
-    def test_get_member_ministries(self, db):
+    def test_get_persona_ministry_assignments(self, db):
         from backend.crud import crm
         ministries = crm.get_personas(db)
         assert isinstance(ministries, list)
 
-    def test_get_member_roles(self, db):
+    def test_get_persona_role_links(self, db):
         from backend.crud import crm
         roles = crm.get_personas(db)
         assert isinstance(roles, list)

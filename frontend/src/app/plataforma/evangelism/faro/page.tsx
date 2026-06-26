@@ -108,9 +108,9 @@ export default function FaroPage() {
  try {
  const bodyPayload: any = { ...sessionForm, season_id: activeSeason.id };
  if (sessionForm.grupo_id !== 'all') {
- bodyPayload.cell_group_id = sessionForm.grupo_id;
+ bodyPayload.grupo_id = sessionForm.grupo_id;
  } else {
- bodyPayload.cell_group_id = 'all';
+ bodyPayload.grupo_id = 'all';
  }
  delete bodyPayload.grupo_id;
  if (sessionForm.report_deadline) {

@@ -117,7 +117,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                             {session.topic || 'Sin tema <br/> asignado'}
                         </h2>
                         <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wide opacity-70">
-                            <span className="p-1.5 bg-sky-500/10 rounded-lg text-sky-600"><User size={12} /></span> {session.member_name || 'Persona CCF'}
+                            <span className="p-1.5 bg-sky-500/10 rounded-lg text-sky-600"><User size={12} /></span> {session.persona_name || 'Persona CCF'}
                         </p>
                     </div>
                 </div>

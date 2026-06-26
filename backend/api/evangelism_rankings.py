@@ -161,8 +161,8 @@ def _rank_by_growth(db: Session, groups, this_start, this_end, last_start, last_
                 "group_id": g.id,
                 "group_name": g.nombre,
                 "growth": growth,
-                "current_members": this_count or 0,
-                "previous_members": last_count or 0,
+                "current_personas": this_count or 0,
+                "previous_personas": last_count or 0,
             }
         )
     rows.sort(key=lambda r: r["growth"], reverse=True)
@@ -347,7 +347,7 @@ def rankings_leaders(
         expected_by_group[group_id] = expected_by_group.get(group_id, 0) + 1
         if estado in ATTENDED_STATES:
             present_by_group[group_id] = present_by_group.get(group_id, 0) + 1
-    members_by_group = dict(
+    personas_by_group = dict(
         db.query(models.ParticipanteGrupo.grupo_id, _func.count(models.ParticipanteGrupo.id))
         .filter(models.ParticipanteGrupo.grupo_id.in_(group_ids) if group_ids else False)
         .filter(models.ParticipanteGrupo.activo)
@@ -380,8 +380,8 @@ def rankings_leaders(
         expected = expected_by_group.get(g.id, 0)
         attendance_pct = round((present / expected) * 100, 1) if expected else 0.0
 
-        # total members
-        members = members_by_group.get(g.id, 0)
+        # total personas
+        personas = personas_by_group.get(g.id, 0)
 
         # visitors this month
         visitors = visitors_by_group.get(g.id, 0)
@@ -393,7 +393,7 @@ def rankings_leaders(
                 "group_id": g.id,
                 "group_name": g.nombre,
                 "attendance_pct": attendance_pct,
-                "members": members,
+                "personas": personas,
                 "visitors_this_month": visitors,
             }
         )

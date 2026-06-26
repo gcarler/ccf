@@ -74,7 +74,7 @@ class KnowledgeIndexer:
             "courses": self._index_courses(indexed_by_agent_id),
             "strategies": self._index_evangelism(indexed_by_agent_id),
             "projects": self._index_projects(indexed_by_agent_id),
-            "members_stats": self._index_member_stats(indexed_by_agent_id),
+            "personas_stats": self._index_persona_stats(indexed_by_agent_id),
             "system_vars": self._index_system_vars(indexed_by_agent_id),
         }
         return stats
@@ -163,8 +163,8 @@ class KnowledgeIndexer:
         self.db.commit()
         return count
 
-    def _index_member_stats(self, agent_id: int) -> int:
-        """Indexa estadísticas de miembros (no datos personales)."""
+    def _index_persona_stats(self, agent_id: int) -> int:
+        """Indexa estadísticas de personas (sin datos personales)."""
         from backend import models
 
         total = self.db.query(models.Persona).count()
@@ -187,12 +187,12 @@ class KnowledgeIndexer:
             by_role[role] = cnt
 
         self._upsert_kb(
-            title="Estadísticas de miembros",
+            title="Estadísticas de personas",
             content=(
-                f"Total de miembros: {total}\n"
+                f"Total de personas: {total}\n"
                 f"Distribución por rol: {by_role}"
             ),
-            summary=f"{total} miembros registrados",
+            summary=f"{total} personas registradas",
                 category="crm_stats",
                 source_module="crm",
                 source_id=None,

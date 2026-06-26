@@ -22,7 +22,7 @@ interface Ministry {
     description?: string;
     leader_id?: number;
     leader_name?: string;
-    members_count?: number;
+    personas_count?: number;
 }
 
 const EMPTY_FORM = { name: '', description: '', leader_id: '' };
@@ -139,7 +139,7 @@ export default function MinisteriosPage() {
                     {[
                         { label: 'Total Ministerios', value: ministries.length, icon: Church, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                         { label: 'Con Líder Asignado', value: ministries.filter(m => m.leader_id).length, icon: Target, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-                        { label: 'Total Personas', value: ministries.reduce((acc, m) => acc + (m.members_count ?? 0), 0), icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+                        { label: 'Total Personas', value: ministries.reduce((acc, m) => acc + (m.personas_count ?? 0), 0), icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                     ].map(stat => {
                         const Icon = stat.icon;
                         return (
@@ -225,7 +225,7 @@ export default function MinisteriosPage() {
                                                 )}
                                             </td>
                                             <td className="py-3 px-4">
-                                                <span className="text-xs font-semibold text-slate-500">{m.members_count ?? 0}</span>
+                                                <span className="text-xs font-semibold text-slate-500">{m.personas_count ?? 0}</span>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -275,7 +275,7 @@ export default function MinisteriosPage() {
                                 <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{m.description || 'Sin descripción registrada.'}</p>
                                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
                                     <div className="flex items-center gap-1.5 font-semibold text-slate-400 uppercase tracking-wider">
-                                        <Users size={12} /> {m.members_count ?? 0} personas
+                                        <Users size={12} /> {m.personas_count ?? 0} personas
                                     </div>
                                     {m.leader_name && (
                                         <div className="flex items-center gap-1.5 font-semibold text-[hsl(var(--primary))] uppercase tracking-wider">

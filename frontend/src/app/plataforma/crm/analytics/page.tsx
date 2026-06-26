@@ -63,8 +63,8 @@ export default function CrmAnalyticsPage() {
         };
     }, [token]);
 
-    const activeRate = analytics?.total_members
-        ? Math.round((analytics.active_members / analytics.total_members) * 100)
+    const activeRate = analytics?.total_personas
+        ? Math.round((analytics.active_personas / analytics.total_personas) * 100)
         : 0;
 
     const kpiRows = useMemo<KpiRow[]>(() => {
@@ -73,13 +73,13 @@ export default function CrmAnalyticsPage() {
         return [
             {
                 label: 'Personas Totales',
-                value: formatCount(analytics.total_members),
+                value: formatCount(analytics.total_personas),
                 context: `${formatCount(analytics.total_families)} familias registradas`,
                 tone: 'neutral',
             },
             {
                 label: 'Personas Activos',
-                value: formatCount(analytics.active_members),
+                value: formatCount(analytics.active_personas),
                 context: `${activeRate}% de la membresia`,
                 tone: activeRate >= 70 ? 'positive' : 'warning',
             },

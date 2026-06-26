@@ -43,7 +43,7 @@ def delete_community_card(
 
 
 @router.get("/grupos", response_model=List[dict])
-def list_community_cell_groups(db: Session = Depends(get_db)):
+def list_community_grupos(db: Session = Depends(get_db)):
     """Lista grupos para la vista comunitaria."""
     grupos = (
         db.query(models.GrupoEvangelismo)
@@ -67,7 +67,7 @@ def list_community_cell_groups(db: Session = Depends(get_db)):
 
 
 @router.post("/grupos", response_model=dict)
-def create_community_cell_group(
+def create_community_grupo(
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("community", "edit")),

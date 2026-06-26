@@ -240,9 +240,9 @@ class TestAdminOtherFull:
         resp = client.get("/api/admin/provision-accounts", headers=headers)
         assert resp.status_code == 200
 
-    def test_list_members(self, client_auth):
+    def test_list_personas(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/admin/members", headers=headers)
+        resp = client.get("/api/admin/personas", headers=headers)
         assert resp.status_code == 200
 
     def test_create_location(self, client_auth):

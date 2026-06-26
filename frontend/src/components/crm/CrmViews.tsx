@@ -16,7 +16,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 const _lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 44, headerHeight: 36, backgroundColor: '#ffffff', foregroundColor: '#1e293b', borderColor: '#e2e8f0', oddRowBackgroundColor: '#f8fafc', headerBackgroundColor: '#f1f5f9', headerTextColor: '#475569', selectedRowBackgroundColor: '#eef2ff', accentColor: '#6366f1', cellHorizontalPaddingScale: 1 });
 const _darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 44, headerHeight: 36, backgroundColor: 'rgb(15 23 42)', foregroundColor: '#e2e8f0', borderColor: 'rgba(255,255,255,0.08)', oddRowBackgroundColor: 'rgba(255,255,255,0.02)', headerBackgroundColor: 'rgba(255,255,255,0.04)', headerTextColor: '#94a3b8', selectedRowBackgroundColor: 'rgba(99,102,241,0.15)', accentColor: '#6366f1', cellHorizontalPaddingScale: 1 });
 
-interface Member {
+interface Persona {
     id: string;
     nombre_completo: string;
     email: string;
@@ -29,33 +29,33 @@ interface Member {
 }
 
 interface CrmViewProps {
-    members: Member[];
-    onSelect?: (member: Member) => void;
+    personas: Persona[];
+    onSelect?: (persona: Persona) => void;
 }
 
 // ----------------------------------------------------------------------
 // 1. GRID VIEW (Classic Cards)
 // ----------------------------------------------------------------------
 
-export function CrmGridView({ members, onSelect }: CrmViewProps) {
+export function CrmGridView({ personas, onSelect }: CrmViewProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {members.map((member, idx) => (
-                <MemberCard 
-                    key={member.id} 
-                    member={member} 
+            {personas.map((persona, idx) => (
+                <PersonaCard
+                    key={persona.id}
+                    persona={persona}
                     index={idx}
-                    onClick={() => onSelect?.(member)}
+                    onClick={() => onSelect?.(persona)}
                 />
             ))}
         </div>
     );
 }
 
-// Re-using the MemberCard layout for Grid View
-function MemberCard({ member, index, onClick }: { member: Member, index: number, onClick: () => void }) {
+// Re-using the PersonaCard layout for Grid View
+function PersonaCard({ persona, index, onClick }: { persona: Persona, index: number, onClick: () => void }) {
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.02 }}
@@ -65,31 +65,31 @@ function MemberCard({ member, index, onClick }: { member: Member, index: number,
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-4">
                     <div className="size-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/10 dark:to-white/5 flex items-center justify-center text-slate-400 group-hover:from-blue-600 group-hover:to-blue-700 group-hover:text-white transition-all shadow-sm">
-                        <span className="text-base font-bold">{member.nombre_completo?.charAt(0) ?? ''}</span>
+                        <span className="text-base font-bold">{persona.nombre_completo?.charAt(0) ?? ''}</span>
                     </div>
                     <div>
                         <h4 className="text-base font-bold text-slate-900 dark:text-white leading-none mb-1 truncate max-w-[150px]">
-                            {member.nombre_completo}
+                            {persona.nombre_completo}
                         </h4>
                         <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 text-[9px] font-bold uppercase tracking-wide text-slate-500">
-                            {member.church_role || 'Persona'}
+                            {persona.church_role || 'Persona'}
                         </span>
                     </div>
                 </div>
                 <div className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-md">
                     <Heart size={12} className="text-[hsl(var(--primary))]" fill="currentColor" />
-                    <span className="text-[10px] font-bold text-[hsl(var(--primary))]">{Math.round((member.spiritual_health || 0.8) * 100)}%</span>
+                    <span className="text-[10px] font-bold text-[hsl(var(--primary))]">{Math.round((persona.spiritual_health || 0.8) * 100)}%</span>
                 </div>
             </div>
 
             <div className="space-y-3 mb-3">
                 <div className="flex items-center gap-3 text-slate-400">
                     <Mail size={14} />
-                    <span className="text-xs font-bold truncate">{member.email || 'Sin correo'}</span>
+                    <span className="text-xs font-bold truncate">{persona.email || 'Sin correo'}</span>
                 </div>
                 <div className="flex items-center gap-3 text-slate-400">
                     <Phone size={14} />
-                    <span className="text-xs font-bold">{member.phone || 'Sin teléfono'}</span>
+                    <span className="text-xs font-bold">{persona.phone || 'Sin teléfono'}</span>
                 </div>
             </div>
 
@@ -112,7 +112,7 @@ interface TableProps extends CrmViewProps {
     isList?: boolean;
 }
 
-export function CrmTableView({ members, onSelect, isList = false }: TableProps) {
+export function CrmTableView({ personas, onSelect, isList = false }: TableProps) {
     const gridRef = useRef<AgGridReact>(null);
     const [isDark, setIsDark] = useState(false);
 
@@ -189,7 +189,7 @@ export function CrmTableView({ members, onSelect, isList = false }: TableProps) 
             <AgGridReact
                 ref={gridRef}
                 theme={isDark ? _darkTheme : _lightTheme}
-                rowData={members}
+                rowData={personas}
                 columnDefs={colDefs}
                 defaultColDef={{ resizable: true, sortable: true, filter: true }}
                 getRowId={(p) => String(p.data.id)}
@@ -205,22 +205,22 @@ export function CrmTableView({ members, onSelect, isList = false }: TableProps) 
 // ----------------------------------------------------------------------
 // 3. KANBAN / BOARD VIEW
 // ----------------------------------------------------------------------
-export function CrmKanbanView({ members, onSelect }: CrmViewProps) {
+export function CrmKanbanView({ personas, onSelect }: CrmViewProps) {
     const columns = useMemo(() => {
         const statuses = ['Nuevo', 'Consolidado', 'Activo', 'Líder', 'Inactivo'];
         const grouped = statuses.map(status => ({
             id: status,
             title: status,
-            items: members.filter(m => (m.spiritual_status || 'Nuevo') === status)
+            items: personas.filter(m => (m.spiritual_status || 'Nuevo') === status)
         }));
-        
+
         // Add "Otros" for statuses not in the list
-        const others = members.filter(m => !statuses.includes(m.spiritual_status || 'Nuevo'));
+        const others = personas.filter(m => !statuses.includes(m.spiritual_status || 'Nuevo'));
         if (others.length > 0) {
             grouped.push({ id: 'Otros', title: 'Otros', items: others });
         }
         return grouped;
-    }, [members]);
+    }, [personas]);
 
     return (
         <div className="flex gap-4 overflow-x-auto pb-8 snap-x snap-mandatory animate-fade-in" style={{ minHeight: '60vh' }}>
@@ -234,11 +234,11 @@ export function CrmKanbanView({ members, onSelect }: CrmViewProps) {
                             {col.items.length}
                         </span>
                     </div>
-                    
+
                     <div className="flex-1 p-3 space-y-3 overflow-y-auto">
                         {col.items.map(m => (
-                            <div 
-                                key={m.id} 
+                            <div
+                                key={m.id}
                                 onClick={() => onSelect?.(m)}
                                 className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-sm hover:shadow-md hover:border-blue-500/50 cursor-pointer transition-all group"
                             >
@@ -277,10 +277,10 @@ export function CrmKanbanView({ members, onSelect }: CrmViewProps) {
 // ----------------------------------------------------------------------
 // 4. CALENDAR VIEW
 // ----------------------------------------------------------------------
-export function CrmCalendarView({ members, onSelect }: CrmViewProps) {
+export function CrmCalendarView({ personas, onSelect }: CrmViewProps) {
     // Generar un calendario mensual estático para la demo
     const days = Array.from({ length: 35 }, (_, i) => i + 1);
-    
+
     return (
         <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md overflow-hidden animate-fade-in shadow-sm">
             <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
@@ -295,7 +295,7 @@ export function CrmCalendarView({ members, onSelect }: CrmViewProps) {
             </div>
             <div className="grid grid-cols-7 gap-px bg-slate-200 dark:bg-white/10">
                 {days.map(d => {
-                    const dayMembers = members.filter(m => {
+                    const dayPersonas = personas.filter(m => {
                         const date = new Date(m.created_at);
                         return date.getDate() === (d > 31 ? d - 31 : d);
                     });
@@ -304,9 +304,9 @@ export function CrmCalendarView({ members, onSelect }: CrmViewProps) {
                         <div key={d} className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] min-h-12 p-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                             <span className="text-xs font-bold text-slate-400 mb-2 block">{d > 31 ? d - 31 : d}</span>
                             <div className="space-y-1">
-                                {dayMembers.map(m => (
-                                    <div 
-                                        key={m.id} 
+                                {dayPersonas.map(m => (
+                                    <div
+                                        key={m.id}
                                         onClick={() => onSelect?.(m)}
                                         className="text-[10px] font-bold px-2 py-1 bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/30 rounded truncate cursor-pointer hover:bg-blue-100"
                                     >
@@ -325,9 +325,9 @@ export function CrmCalendarView({ members, onSelect }: CrmViewProps) {
 // ----------------------------------------------------------------------
 // 5. GANTT VIEW
 // ----------------------------------------------------------------------
-export function CrmGanttView({ members }: CrmViewProps) {
+export function CrmGanttView({ personas }: CrmViewProps) {
     // Un timeline hiper simple de registros
-    const sorted = [...members].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).slice(0, 15);
+    const sorted = [...personas].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).slice(0, 15);
 
     return (
         <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-sm rounded-md border border-slate-200 dark:border-white/10 overflow-hidden animate-fade-in py-1.5 px-3">
@@ -350,5 +350,5 @@ export function CrmGanttView({ members }: CrmViewProps) {
     );
 }
 
-// Ensure MemberCard inside CRMClient.tsx is either removed or we keep it. 
+// Ensure PersonaCard inside CRMClient.tsx is either removed or we keep it.
 // I'll export everything.

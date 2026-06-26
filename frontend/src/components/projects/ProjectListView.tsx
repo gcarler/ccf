@@ -113,7 +113,7 @@ function InlineUserPicker({
         if (!token || users.length > 0) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/admin/members/', { token });
+            const data = await apiFetch<any[]>('/admin/users/', { token });
             if (Array.isArray(data)) {
                 setUsers(data.map((u: any) => ({
                     id: u.id,

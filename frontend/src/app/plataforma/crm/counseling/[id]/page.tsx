@@ -13,7 +13,7 @@ import { toast } from "sonner";
 type CounselingDetail = {
     id: number;
     persona_id: string;
-    member_name: string;
+    persona_name: string;
     pastor_id: number | null;
     topic: string;
     summary: string | null;
@@ -72,7 +72,7 @@ export default function CounselingDetailPage() {
             breadcrumbs={[
                 { label: "CRM", icon: LayoutDashboard, href: "/plataforma/crm" },
                 { label: "Consejeria", icon: Heart, href: "/plataforma/crm/counseling" },
-                { label: session.member_name, icon: User },
+                { label: session.persona_name, icon: User },
             ]}
         >
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
@@ -87,7 +87,7 @@ export default function CounselingDetailPage() {
                                 {session.topic}
                             </h1>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Persona: {session.member_name}
+                                Persona: {session.persona_name}
                             </p>
                         </div>
                         <button className="px-4 py-2 bg-[hsl(var(--secondary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--secondary))/20] hover:scale-105 transition-all">
@@ -122,7 +122,7 @@ export default function CounselingDetailPage() {
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-[9px] font-bold text-slate-400 uppercase">Persona</p>
-                                            <p className="text-xs font-bold">{session.member_name}</p>
+                                            <p className="text-xs font-bold">{session.persona_name}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">

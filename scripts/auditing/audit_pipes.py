@@ -71,7 +71,7 @@ def resolve_backend_routes():
             sub_pkg = m.group(1)
             sub_mod = m.group(2)
             includes.append(sub_pkg)
-        # Also look for: from backend.api.crm import members, pastoral
+        # Also look for split CRM imports that bypass the package router.
         for m in re.finditer(r"from\s+backend\.api\.([\w.]+)\s+import\s+(\w+)", text):
             sub_pkg = m.group(1).split(".")[0]
             if sub_pkg not in includes:

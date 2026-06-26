@@ -12,7 +12,7 @@ interface GroupRecord {
     zone?: string | null;
     leader_name?: string | null;
     address?: string | null;
-    members_count?: number;
+    personas_count?: number;
 }
 
 export default function DiscoverPage() {

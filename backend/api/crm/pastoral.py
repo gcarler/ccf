@@ -610,7 +610,7 @@ async def send_crm_message(
     user_sede = get_user_sede_id(db, current_user.id)
 
     if persona_id:
-        target_members = [{"id": persona_id}]
+        target_personas = [{"id": persona_id}]
     else:
         persona_map: dict[str, models.Persona] = {}
         for segment in target_segments:
@@ -637,17 +637,17 @@ async def send_crm_message(
                 rows = []
             for persona in rows:
                 persona_map[str(persona.id)] = persona
-        target_members = list(persona_map.values())
+        target_personas = list(persona_map.values())
 
-    if not target_members:
-        raise HTTPException(status_code=404, detail="No target members found")
+    if not target_personas:
+        raise HTTPException(status_code=404, detail="No target personas found")
 
-    external_id = f"CMP-{uuid.uuid4().hex[:12]}" if len(target_members) > 1 else None
+    external_id = f"CMP-{uuid.uuid4().hex[:12]}" if len(target_personas) > 1 else None
     delivered_count = 0
     failed_count = 0
     log_ids: list[int] = []
 
-    for persona in target_members:
+    for persona in target_personas:
         persona_id_value = persona["id"] if isinstance(persona, dict) else persona.id
         try:
             if channel == "whatsapp":
@@ -687,13 +687,13 @@ async def send_crm_message(
             raise
         except Exception:
             failed_count += 1
-            if len(target_members) == 1:
+            if len(target_personas) == 1:
                 logger.exception("Messaging gateway failure")
                 raise HTTPException(status_code=502, detail="No se pudo enviar el mensaje")
 
     return {
         "status": "success",
-        "target_count": len(target_members),
+        "target_count": len(target_personas),
         "delivered_count": delivered_count,
         "failed_count": failed_count,
         "log_ids": log_ids,
@@ -894,7 +894,7 @@ def get_counseling_detail(
     return {
         "id": ticket.id,
         "persona_id": ticket.persona_id,
-        "member_name": _persona_full_name(ticket.persona),
+        "persona_name": _persona_full_name(ticket.persona),
         "topic": ticket.subject,
         "summary": ticket.subject,
         "notes": ticket.notes,
@@ -1086,7 +1086,7 @@ def list_counseling_tickets(
         {
             "id": t.id,
             "persona_id": t.persona_id,
-            "member_name": _persona_full_name(t.persona) if t.persona else "",
+            "persona_name": _persona_full_name(t.persona) if t.persona else "",
             "topic": t.subject,
             "summary": t.subject,
             "notes": t.notes,
@@ -1108,7 +1108,7 @@ def create_counseling_ticket(
     return {
         "id": ticket.id,
         "persona_id": ticket.persona_id,
-        "member_name": _persona_full_name(ticket.persona) if ticket.persona else "",
+        "persona_name": _persona_full_name(ticket.persona) if ticket.persona else "",
         "topic": ticket.subject,
         "summary": ticket.subject,
         "notes": ticket.notes,
@@ -1134,7 +1134,7 @@ def get_counseling_by_lead(
         {
             "id": t.id,
             "persona_id": t.persona_id,
-            "member_name": _persona_full_name(t.persona) if t.persona else "",
+            "persona_name": _persona_full_name(t.persona) if t.persona else "",
             "topic": t.subject,
             "summary": t.subject,
             "notes": t.notes,
@@ -1169,7 +1169,7 @@ def update_counseling_ticket(
     return {
         "id": ticket.id,
         "persona_id": ticket.persona_id,
-        "member_name": _persona_full_name(ticket.persona) if ticket.persona else "",
+        "persona_name": _persona_full_name(ticket.persona) if ticket.persona else "",
         "topic": ticket.subject,
         "status": ticket.status,
         "notes": ticket.notes,
@@ -1342,8 +1342,8 @@ def get_crm_analytics_summary(
     if user_sede:
         persona_q = persona_q.filter(models.Persona.sede_id == user_sede)
 
-    total_members = persona_q.count()
-    active_members = persona_q.filter(
+    total_personas = persona_q.count()
+    active_personas = persona_q.filter(
         models.Persona.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
     ).count()
 
@@ -1372,8 +1372,8 @@ def get_crm_analytics_summary(
 
     total_families = db.query(models.Family).count()
     return {
-        "total_members": total_members,
-        "active_members": active_members,
+        "total_personas": total_personas,
+        "active_personas": active_personas,
         "open_counseling": open_counseling,
         "events_this_month": events_this_month,
         "total_groups": total_groups,
@@ -1414,7 +1414,7 @@ def create_public_prayer_request(
         ),
     )
 
-    # Create PrayerRequest linked to the member
+    # Create PrayerRequest linked to the persona
     prayer = models.PrayerRequest(
         requester_name=payload.requester_name,
         request_text=payload.request_text,
@@ -1644,10 +1644,10 @@ def get_volunteer_detail(
         for row in (
             db.query(models.VolunteerSkill)
             .join(
-                models.member_volunteer_skills,
-                models.member_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
+                models.persona_volunteer_skills,
+                models.persona_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
             )
-            .filter(models.member_volunteer_skills.c.persona_id == persona.id)
+            .filter(models.persona_volunteer_skills.c.persona_id == persona.id)
             .all()
         )
         if row.name
@@ -1720,7 +1720,7 @@ def list_crm_groups(
             "name": m.name,
             "description": m.description,
             "leader": None,
-            "members_count": len(m.personas) if m.personas else 0,
+            "personas_count": len(m.personas) if m.personas else 0,
         }
         for m in ministries
     ]
@@ -1734,10 +1734,10 @@ def get_crm_radar(
     """Datos del radar ministerial para dashboard."""
     user_sede = get_user_sede_id(db, current_user.id)
 
-    members_q = db.query(models.Persona)
+    personas_q = db.query(models.Persona)
     if user_sede:
-        members_q = members_q.filter(models.Persona.sede_id == user_sede)
-    total_members = members_q.count()
+        personas_q = personas_q.filter(models.Persona.sede_id == user_sede)
+    total_personas = personas_q.count()
 
     total_ministries = db.query(models.Ministry).count()
 
@@ -1757,7 +1757,7 @@ def get_crm_radar(
     pending_tasks = tasks_q.count()
 
     return {
-        "total_members": total_members,
+        "total_personas": total_personas,
         "total_ministries": total_ministries,
         "active_cases": active_cases,
         "pending_tasks": pending_tasks,

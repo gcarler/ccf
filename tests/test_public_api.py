@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from backend import models
 
 
-def test_public_registration_creates_member_and_attendance(client, db_session):
+def test_public_registration_creates_persona_and_attendance(client, db_session):
     event = models.CrmEvent(
         name="Evento Publico",
         description="Registro desde QR",
@@ -52,7 +52,7 @@ def test_public_registration_creates_member_and_attendance(client, db_session):
     assert attendance.session_date == event.event_date.date()
 
 
-def test_public_registration_reuses_existing_member(client, db_session):
+def test_public_registration_reuses_existing_persona(client, db_session):
     event = models.CrmEvent(
         name="Evento Recurrente",
         description="Registro repetido",

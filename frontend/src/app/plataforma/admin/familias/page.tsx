@@ -22,7 +22,7 @@ interface Family {
     address?: string;
     phone?: string;
     first_contact_date?: string;
-    members_count?: number;
+    personas_count?: number;
 }
 
 const EMPTY_FORM = { name: '', address: '', phone: '', first_contact_date: '' };
@@ -158,7 +158,7 @@ export default function FamiliasPage() {
                     {[
                         { label: 'Total Familias', value: families.length, icon: Home, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                         { label: 'Primer Contacto Este Mes', value: thisMonth, icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-                        { label: 'Total Integrantes', value: families.reduce((acc, f) => acc + (f.members_count ?? 0), 0), icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+                        { label: 'Total Integrantes', value: families.reduce((acc, f) => acc + (f.personas_count ?? 0), 0), icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                     ].map(stat => {
                         const Icon = stat.icon;
                         return (
@@ -244,7 +244,7 @@ export default function FamiliasPage() {
                                                 <span className="text-xs font-bold text-slate-500">{formatDate(fam.first_contact_date)}</span>
                                             </td>
                                             <td className="py-3 px-4">
-                                                <span className="text-xs font-semibold text-slate-500">{fam.members_count ?? 0}</span>
+                                                <span className="text-xs font-semibold text-slate-500">{fam.personas_count ?? 0}</span>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -300,7 +300,7 @@ export default function FamiliasPage() {
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-slate-100 dark:border-white/5 font-semibold text-slate-400 uppercase tracking-wider">
-                                    <Users size={12} /> {fam.members_count ?? 0} integrantes
+                                    <Users size={12} /> {fam.personas_count ?? 0} integrantes
                                 </div>
                             </motion.div>
                         ))}

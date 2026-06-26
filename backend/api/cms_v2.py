@@ -846,7 +846,7 @@ def _build_section_defaults(
     # If the section already has meaningful content, skip defaults
     if props and any(
         key in props
-        for key in ("title", "subtitle", "body", "content", "items", "members", "stats", "testimonials", "faqs", "embed_url", "map_url")
+        for key in ("title", "subtitle", "body", "content", "items", "personas", "stats", "testimonials", "faqs", "embed_url", "map_url")
     ):
         return props or {}
 
@@ -879,7 +879,7 @@ def _build_section_defaults(
         }
 
     if section_type == "stats":
-        active_members = (
+        active_personas = (
             db.query(models.Persona)
             .filter(models.Persona.estado_vital == "ACTIVO")
             .count()
@@ -887,7 +887,7 @@ def _build_section_defaults(
         group_count = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.status == "Activo").count()
         return {
             "stats": [
-                {"label": "Miembros Activos", "value": str(active_members or 0)},
+                {"label": "Miembros Activos", "value": str(active_personas or 0)},
                 {"label": "Grupos de Casa", "value": str(group_count or 0)},
                 {"label": "Años de Ministerio", "value": "25+"},
             ]
@@ -900,20 +900,20 @@ def _build_section_defaults(
             .order_by(models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc())
             .all()
         )
-        members = []
+        personas = []
         for p in leaders:
             name = p.nombre_completo
             slug = _slugify(name)
-            members.append({
+            personas.append({
                 "name": name,
                 "role": "Pastor Principal" if p.is_main_pastor else "Pastor",
                 "photo_url": p.photo_url or "",
                 "slug": slug,
                 "bio_short": p.bio_short or "",
             })
-        if not members:
-            members = [{"name": "Pastor", "role": "Pastor Principal", "photo_url": "", "slug": "pastor", "bio_short": ""}]
-        return {"members": members, "title": "Nuestro Equipo Pastoral"}
+        if not personas:
+            personas = [{"name": "Pastor", "role": "Pastor Principal", "photo_url": "", "slug": "pastor", "bio_short": ""}]
+        return {"personas": personas, "title": "Nuestro Equipo Pastoral"}
 
     if section_type == "testimonials":
         rows = (

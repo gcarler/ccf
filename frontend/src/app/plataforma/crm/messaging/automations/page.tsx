@@ -27,7 +27,7 @@ interface AutomationRule {
 
 // ─── Constants ───────────────────────────────────────────
 const TRIGGERS = [
-    { value: 'new_member', label: 'Nuevo Persona', icon: Users, color: 'blue' },
+    { value: 'new_persona', label: 'Nuevo Persona', icon: Users, color: 'blue' },
     { value: 'birthday', label: 'Cumpleaños', icon: Bell, color: 'amber' },
     { value: 'inactivity', label: 'Inactividad (30 días)', icon: Clock, color: 'rose' },
     { value: 'low_attendance', label: 'Baja Asistencia', icon: AlertTriangle, color: 'orange' },
@@ -43,7 +43,7 @@ const ACTIONS = [
 ];
 
 const TRIGGER_COLORS: Record<string, string> = {
-    new_member: 'bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20',
+    new_persona: 'bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20',
     birthday: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
     inactivity: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
     low_attendance: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
@@ -51,7 +51,7 @@ const TRIGGER_COLORS: Record<string, string> = {
     stage_change: 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20',
 };
 
-const EMPTY_FORM = { name: '', trigger: 'new_member', action: 'send_whatsapp', message: '', taskTitle: '' };
+const EMPTY_FORM = { name: '', trigger: 'new_persona', action: 'send_whatsapp', message: '', taskTitle: '' };
 
 export default function AutomationsPage() {
     const { token } = useAuth();

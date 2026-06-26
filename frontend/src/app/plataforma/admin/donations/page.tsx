@@ -39,7 +39,7 @@ type Donation = {
     type: string;
     date: string;
     status: string;
-    member_id?: number;
+    persona_id?: number;
     donor_name?: string;
 };
 
@@ -60,7 +60,7 @@ export default function DonationsManagementPage() {
     const [fAmount, setFAmount] = useState("");
     const [fType, setFType] = useState("Ofrenda");
     const [fDonor, setFDonor] = useState("");
-    const [fMemberId, setFMemberId] = useState("");
+    const [fPersonaId, setFPersonaId] = useState("");
     const [fFundId, setFFundId] = useState("1");
 
     const loadDonations = async () => {
@@ -89,7 +89,7 @@ export default function DonationsManagementPage() {
 
     const openCreate = () => {
         setSelected(null);
-        setFAmount(""); setFType("Ofrenda"); setFDonor(""); setFMemberId(""); setFFundId("1");
+        setFAmount(""); setFType("Ofrenda"); setFDonor(""); setFPersonaId(""); setFFundId("1");
         setDrawerMode("create");
     };
 
@@ -98,7 +98,7 @@ export default function DonationsManagementPage() {
         setFAmount(String(d.amount));
         setFType(d.type || "Ofrenda");
         setFDonor(d.donor || "");
-        setFMemberId(d.member_id ? String(d.member_id) : "");
+        setFPersonaId(d.persona_id ? String(d.persona_id) : "");
         setFFundId("1");
         setDrawerMode("edit");
     };
@@ -116,7 +116,7 @@ export default function DonationsManagementPage() {
                     amount: fAmount,
                     donation_type: fType,
                     ...(fDonor && { donor_name: fDonor }),
-                    ...(fMemberId && { member_id: fMemberId }),
+                    ...(fPersonaId && { persona_id: fPersonaId }),
                 });
                 await apiFetch(`/finance/donations?${params.toString()}`, { method: "POST", token });
                 toast.success("Donación registrada correctamente");
@@ -314,7 +314,7 @@ export default function DonationsManagementPage() {
                                 </div>
                                 <div>
                                     <label className={LABEL}>ID de Persona (opcional)</label>
-                                    <input type="number" value={fMemberId} onChange={(e) => setFMemberId(e.target.value)}
+                                    <input type="number" value={fPersonaId} onChange={(e) => setFPersonaId(e.target.value)}
                                         placeholder="ID numérico del persona" className={INPUT} />
                                 </div>
                                 <div>

@@ -6,7 +6,7 @@ Objetivo: dejar reglas de arquitectura, dominio, contratos de rutas y gates de c
 
 ## 1. Reglas duras
 
-1. La plataforma trabaja con contratos nativos. No se crean aliases, rutas espejo ni capas paralelas salvo instruccion explicita.
+1. La plataforma trabaja con contratos nativos. No se crean rutas espejo ni capas paralelas salvo instruccion explicita.
 2. El frontend consume APIs bajo `/api/...`.
 3. El backend expone un solo arbol canónico bajo `/api/...`.
 4. `next build` no debe ignorar errores de TypeScript ni ESLint.
@@ -68,7 +68,7 @@ Workspace no debe absorber reglas de otros dominios.
 
 ### Reglas
 - No usar rutas en raiz tipo `/agents`, `/messaging`, `/governance`, `/auth`.
-- Si una pantalla consume una ruta vieja, se corrige la pantalla o el test. No se reintroduce el alias.
+- Si una pantalla consume una ruta retirada, se corrige la pantalla o el test. No se reintroduce el contrato retirado.
 
 ## 4. Mapa estructural backend
 
@@ -134,19 +134,19 @@ Contrato:
 ## 6. Contrato de datos ya fijado
 
 ### Persona y consolidacion
-La persona base es `Member`.
+La identidad base es `Persona` sobre `personas.id`.
 
-Relaciones historicas ya introducidas:
+Relaciones de consolidacion:
 - `positions`
-- `member_positions`
+- `persona_positions`
 - `consolidation_cases`
 - `consolidation_assignments`
 - `consolidation_interactions`
-- `consolidation_follow_up_tasks`
+- `consolidation_tasks`
 
 Regla:
-- no crear una entidad `Persona` paralela.
-- la identidad base sigue siendo `Member`.
+- no crear una entidad paralela para seres humanos.
+- toda relacion humana apunta a `personas.id`.
 
 ### Persona y evento
 La relacion canonica es `event_attendances`.
@@ -165,7 +165,7 @@ El dominio Faro se apoya en:
 
 Regla:
 - un Faro puede existir con informacion parcial.
-- lider, colider, anfitrion y miembros pueden completarse despues.
+- lider, colider, anfitrion y participantes pueden completarse despues.
 
 ## 7. Contrato operativo de calidad
 
@@ -199,7 +199,7 @@ Archivo:
 
 Reglas:
 - `environment` es el nombre canónico.
-- `ENV` se acepta solo como alias de entrada.
+- `ENV` se acepta solo como variable de entrada por compatibilidad de entorno.
 - en `production`, `prod` o `staging`, `SECRET_KEY` debil debe fallar al iniciar.
 
 ### Docker compose
@@ -216,7 +216,7 @@ Reglas:
 1. Si un archivo de API supera de nuevo un umbral incomodo, extraer submodulo antes de seguir agregando endpoints.
 2. Si una decision cambia taxonomia de dominio, actualizar este documento y `moduleConfigs.ts` en la misma entrega.
 3. Si se crea una ruta nueva, debe entrar bajo `/api/<dominio>/...`.
-4. Si un test depende de una ruta vieja, se corrige el test; no se recrea el alias.
+4. Si un test depende de una ruta retirada, se corrige el test; no se recrea el contrato retirado.
 5. Si un cambio toca despliegue o DB, revisar tambien:
    - [backend/core/config.py](</D:/ccf/backend/core/config.py>)
    - [docker-compose.yml](</D:/ccf/docker-compose.yml>)

@@ -32,7 +32,7 @@ import { toast } from 'sonner';
 import {
   Department,
   City,
-  MemberFormData,
+  PersonaFormData,
   ID_TYPES,
   MARITAL_STATUSES,
   SEX_OPTIONS,
@@ -40,26 +40,26 @@ import {
   EDUCATION_STATUSES,
   BLOOD_TYPES,
   HOUSING_TYPES,
-  MEMBERSHIP_TYPES,
+  PARTICIPATION_TYPES,
   ATTENDANCE_TYPES,
-  INITIAL_MEMBER,
+  INITIAL_PERSONA,
 } from '@/types/crm';
-import { FormSection, SelectField, MemberField } from '@/components/crm/ui';
+import { FormSection, SelectField, PersonaField } from '@/components/crm/ui';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function MembersPage() {
+export default function PersonasPage() {
     const { token } = useAuth();
     const { canEditCrm } = useCrmAccess();
     const router = useRouter();
-    const { viewType, setViewType } = useViewType('crm_members', 'grid');
-    const [members, setMembers] = useState<any[]>([]);
+    const { viewType, setViewType } = useViewType('crm_personas', 'grid');
+    const [personas, setPersonas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [roles, setRoles] = useState<any[]>([]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [newMember, setNewMember] = useState<MemberFormData>({ ...INITIAL_MEMBER });
+    const [newPersona, setNewPersona] = useState<PersonaFormData>({ ...INITIAL_PERSONA });
     const [departments, setDepartments] = useState<Department[]>([]);
     const [cities, setCities] = useState<City[]>([]);
     const [loadingCities, setLoadingCities] = useState(false);
@@ -69,26 +69,26 @@ export default function MembersPage() {
     const [idTypeFilter, setIdTypeFilter] = useState('');
     const [sexFilter, setSexFilter] = useState('');
     const [groupFilter, setGroupFilter] = useState('');
-    const [membershipFilter, setMembershipFilter] = useState('');
+    const [participationFilter, setParticipationFilter] = useState('');
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [uniqueGroups, setUniqueGroups] = useState<string[]>([]);
     const [activeFilterCount, setActiveFilterCount] = useState(0);
 
     useEffect(() => {
         if (!token) return;
-        const loadMembers = async () => {
+        const loadPersonas = async () => {
             try {
                 setLoading(true);
-                const [membersData, rolesData, deptData] = await Promise.all([
+                const [personasData, rolesData, deptData] = await Promise.all([
                     apiFetch<any[]>('/crm/personas', { token }).catch(() => []),
                     apiFetch<any[]>('/crm/roles', { token }).catch(() => []),
                     apiFetch<Department[]>('/crm/colombian-departments', { token }).catch(() => []),
                 ]);
-                setMembers(membersData);
+                setPersonas(personasData);
                 setRoles(rolesData);
                 setDepartments(deptData);
                 // Extract unique group names for filter
-                const groups = [...new Set(membersData.map((m: any) => m.group_name).filter(Boolean))] as string[];
+                const groups = [...new Set(personasData.map((m: any) => m.group_name).filter(Boolean))] as string[];
                 groups.sort();
                 setUniqueGroups(groups);
             } catch {
@@ -97,28 +97,28 @@ export default function MembersPage() {
                 setLoading(false);
             }
         };
-        loadMembers();
+        loadPersonas();
     }, [token]);
 
     useEffect(() => {
-        if (!token || !newMember.colombian_department_id) {
+        if (!token || !newPersona.colombian_department_id) {
             setCities([]);
             return;
         }
         setLoadingCities(true);
-        apiFetch<City[]>(`/crm/colombian-departments/${newMember.colombian_department_id}/cities`, { token })
+        apiFetch<City[]>(`/crm/colombian-departments/${newPersona.colombian_department_id}/cities`, { token })
             .then(setCities)
             .catch(() => setCities([]))
             .finally(() => setLoadingCities(false));
-    }, [token, newMember.colombian_department_id]);
+    }, [token, newPersona.colombian_department_id]);
 
     const getRoleColor = (roleName: string) => {
         const r = roles.find(x => roleName?.toLowerCase().includes(x.name.toLowerCase()));
         return r ? r.color : 'text-slate-600 bg-slate-100 dark:bg-white/10 dark:text-slate-400';
     };
 
-    const filteredMembers = useMemo(() => {
-        let list = members;
+    const filteredPersonas = useMemo(() => {
+        let list = personas;
         if (query) {
             const q = query.toLowerCase();
             list = list.filter(m =>
@@ -142,25 +142,25 @@ export default function MembersPage() {
         if (groupFilter) {
             list = list.filter(m => m.group_name === groupFilter);
         }
-        if (membershipFilter) {
-            list = list.filter(m => m.membership_type === membershipFilter);
+        if (participationFilter) {
+            list = list.filter(m => m.participation_type === participationFilter);
         }
         // Count active filters
-        const count = [idTypeFilter, sexFilter, groupFilter, membershipFilter].filter(Boolean).length
+        const count = [idTypeFilter, sexFilter, groupFilter, participationFilter].filter(Boolean).length
             + (roleFilter !== 'Todos' ? 1 : 0);
         setActiveFilterCount(count);
         return list;
-    }, [members, query, roleFilter, idTypeFilter, sexFilter, groupFilter, membershipFilter]);
+    }, [personas, query, roleFilter, idTypeFilter, sexFilter, groupFilter, participationFilter]);
 
-    const um = (key: keyof MemberFormData) => (value: string) => setNewMember(prev => ({ ...prev, [key]: value }));
+    const um = (key: keyof PersonaFormData) => (value: string) => setNewPersona(prev => ({ ...prev, [key]: value }));
 
-    const handleCreateMember = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleCreatePersona = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (!token || !newMember.first_name.trim() || !newMember.last_name.trim()) return;
+        if (!token || !newPersona.first_name.trim() || !newPersona.last_name.trim()) return;
 
         setIsSaving(true);
         try {
-            const body: any = { ...newMember };
+            const body: any = { ...newPersona };
             if (!body.colombian_department_id) body.colombian_department_id = null;
             // Convert empty date strings to null
             ['birthday','church_join_date','baptism_date','registration_date','unregistration_date','last_group_attendance','last_meeting_attendance'].forEach(k => {
@@ -172,8 +172,8 @@ export default function MembersPage() {
                 token,
                 body,
             });
-            setMembers(prev => [created, ...prev]);
-            setNewMember({ ...INITIAL_MEMBER });
+            setPersonas(prev => [created, ...prev]);
+            setNewPersona({ ...INITIAL_PERSONA });
             setIsCreateOpen(false);
             toast.success('Persona registrada');
         } catch {
@@ -271,7 +271,7 @@ export default function MembersPage() {
                                                     setIdTypeFilter('');
                                                     setSexFilter('');
                                                     setGroupFilter('');
-                                                    setMembershipFilter('');
+                                                    setParticipationFilter('');
                                                     setRoleFilter('Todos');
                                                 }}
                                                 className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-red-400 hover:text-red-500 transition-colors"
@@ -339,8 +339,8 @@ export default function MembersPage() {
                                                     <BookOpen size={11} /> Participación
                                                 </label>
                                                 <select
-                                                    value={membershipFilter}
-                                                    onChange={e => setMembershipFilter(e.target.value)}
+                                                    value={participationFilter}
+                                                    onChange={e => setParticipationFilter(e.target.value)}
                                                     className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
                                                 >
                                                     <option value="">Todos</option>
@@ -358,12 +358,12 @@ export default function MembersPage() {
                         </AnimatePresence>
                     </div>
 
-                    {/* Members List */}
+                    {/* Personas List */}
                     {loading ? (
                         <div className="text-center py-1.5 animate-pulse font-bold uppercase tracking-wide text-slate-400">Sincronizando base de datos...</div>
                     ) : viewType === 'list' ? (
                         <div className="space-y-1">
-                            {filteredMembers.map(m => (
+                            {filteredPersonas.map(m => (
                                 <div key={m.id} onClick={() => router.push(`/plataforma/crm/personas/${m.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all">
                                     <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs">
                                         {(m.nombre_completo?.charAt(0) || '')}
@@ -379,13 +379,13 @@ export default function MembersPage() {
                         <TableView
                             data={[]}
                             idAccessor="id"
-                            storageKey="crm_members"
+                            storageKey="crm_personas"
                             columns={[
                                 { id: 'nombre_completo', name: 'Nombre Completo', type: 'text' },
                                 { id: 'church_role', name: 'Rol', type: 'select', options: roles.map(r => ({ label: r.name, value: r.name, color: r.color })) },
                                 { id: 'email', name: 'Email', type: 'email' },
                                 { id: 'phone', name: 'Teléfono', type: 'phone' },
-                                { id: 'membership_type', name: 'Participación', type: 'select', options: [{ label: 'Activo', value: 'Activo' }, { label: 'Inactivo', value: 'Inactivo' }] },
+                                { id: 'participation_type', name: 'Participación', type: 'select', options: [{ label: 'Activo', value: 'Activo' }, { label: 'Inactivo', value: 'Inactivo' }] },
                                 { id: 'spiritual_health', name: 'Salud Espiritual', type: 'progress' },
                             ]}
                             serverSide={{
@@ -414,28 +414,28 @@ export default function MembersPage() {
                                     { key: 'Transferido', label: 'Transferidos', desc: 'Personas transferidos a otra congregación', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800/30' },
                                 ];
 
-                                // Collect unique group_name values from filtered Visitante members
-                                const visitantes = filteredMembers.filter(m => (m.membership_type || '') === 'Visitante');
+                                // Collect unique group_name values from filtered Visitante personas
+                                const visitantes = filteredPersonas.filter(m => (m.participation_type || '') === 'Visitante');
                                 const visitantGroups = [...new Set(visitantes.map((m: any) => m.group_name).filter(Boolean))].sort();
                                 const visitantesSinGrupo = visitantes.filter(m => !m.group_name);
 
-                                const sinMembresia = filteredMembers.filter(m => !m.membership_type);
+                                const sinMembresia = filteredPersonas.filter(m => !m.participation_type);
 
-                                function renderMemberCard(member: any) {
+                                function renderPersonaCard(persona: any) {
                                     return (
-                                        <motion.div key={member.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
-                                            <div onClick={() => router.push(`/plataforma/crm/personas/${member.id}`)} className="group p-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
+                                        <motion.div key={persona.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
+                                            <div onClick={() => router.push(`/plataforma/crm/personas/${persona.id}`)} className="group p-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <div className="relative">
                                                         <div className="size-9 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-sm">
-                                                            {(member.nombre_completo?.charAt(0) || '')}
+                                                            {(persona.nombre_completo?.charAt(0) || '')}
                                                         </div>
-                                                        <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[#1e1f21]", member.spiritual_health > 0.7 ? "bg-emerald-500" : member.spiritual_health > 0.4 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]")} />
+                                                        <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[#1e1f21]", persona.spiritual_health > 0.7 ? "bg-emerald-500" : persona.spiritual_health > 0.4 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]")} />
                                                     </div>
                                                     <div>
-                                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase truncate max-w-[150px]">{member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}</h3>
+                                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase truncate max-w-[150px]">{persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}</h3>
                                                         <div className="mt-1 flex items-center gap-2">
-                                                            <span className={clsx("px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide", getRoleColor(member.church_role || ''))}>{member.church_role || 'Persona'}</span>
+                                                            <span className={clsx("px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide", getRoleColor(persona.church_role || ''))}>{persona.church_role || 'Persona'}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -447,11 +447,11 @@ export default function MembersPage() {
                                     );
                                 }
 
-                                function renderGroupMemberCards(members: any[]) {
+                                function renderGroupPersonaCards(personas: any[]) {
                                     return (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                             <AnimatePresence>
-                                                {members.map(renderMemberCard)}
+                                                {personas.map(renderPersonaCard)}
                                             </AnimatePresence>
                                         </div>
                                     );
@@ -483,14 +483,14 @@ export default function MembersPage() {
                                                         return (
                                                             <div key={g}>
                                                                 <h4 className="text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 mb-2">▸ {g} ({gm.length})</h4>
-                                                                {renderGroupMemberCards(gm)}
+                                                                {renderGroupPersonaCards(gm)}
                                                             </div>
                                                         );
                                                     })}
                                                     {visitantesSinGrupo.length > 0 && (
                                                         <div>
                                                             <h4 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-2">▸ Sin Grupo ({visitantesSinGrupo.length})</h4>
-                                                            {renderGroupMemberCards(visitantesSinGrupo)}
+                                                            {renderGroupPersonaCards(visitantesSinGrupo)}
                                                         </div>
                                                     )}
                                                 </div>
@@ -499,12 +499,12 @@ export default function MembersPage() {
 
                                         {/* Grupos fijos: Activo, Persona, Inactivo, Transferido */}
                                         {FIXED_GROUPS.map(group => {
-                                            const groupMembers = filteredMembers.filter(m => (m.membership_type || '') === group.key);
-                                            if (groupMembers.length === 0) return null;
+                                            const groupPersonas = filteredPersonas.filter(m => (m.participation_type || '') === group.key);
+                                            if (groupPersonas.length === 0) return null;
                                             return (
                                                 <div key={group.key}>
-                                                    {renderSectionHeader(group.label, group.desc, group.color, group.bg, groupMembers.length)}
-                                                    {renderGroupMemberCards(groupMembers)}
+                                                    {renderSectionHeader(group.label, group.desc, group.color, group.bg, groupPersonas.length)}
+                                                    {renderGroupPersonaCards(groupPersonas)}
                                                 </div>
                                             );
                                         })}
@@ -513,12 +513,12 @@ export default function MembersPage() {
                                         {sinMembresia.length > 0 && (
                                             <div>
                                                 {renderSectionHeader('Sin Participación', 'Sin tipo de participación asignado', 'text-slate-400', 'bg-slate-50 dark:bg-white/5', sinMembresia.length)}
-                                                {renderGroupMemberCards(sinMembresia)}
+                                                {renderGroupPersonaCards(sinMembresia)}
                                             </div>
                                         )}
 
                                         {/* Empty state */}
-                                        {filteredMembers.length === 0 && (
+                                        {filteredPersonas.length === 0 && (
                                             <div className="text-center py-6 font-bold text-slate-400">No se encontraron personas con esos filtros.</div>
                                         )}
                                     </>
@@ -537,32 +537,32 @@ export default function MembersPage() {
                 actions={
                     <>
                         <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700">Cancelar</button>
-                        <button form="create-member-form" type="submit" disabled={isSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
+                        <button form="create-persona-form" type="submit" disabled={isSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
                         </button>
                     </>
                 }
             >
-                <form id="create-member-form" onSubmit={handleCreateMember} className="space-y-2">
+                <form id="create-persona-form" onSubmit={handleCreatePersona} className="space-y-2">
                     {/* ── Información Básica (siempre visible) ── */}
                     <div className="rounded-lg overflow-hidden">
                         <div className="px-3 py-2 space-y-2">
                             <div className="grid grid-cols-2 gap-3">
-                                <MemberField label="Nombre *" value={newMember.first_name} onChange={um('first_name')} placeholder="Juan" required />
-                                <MemberField label="Apellido *" value={newMember.last_name} onChange={um('last_name')} placeholder="Pérez" required />
+                                <PersonaField label="Nombre *" value={newPersona.first_name} onChange={um('first_name')} placeholder="Juan" required />
+                                <PersonaField label="Apellido *" value={newPersona.last_name} onChange={um('last_name')} placeholder="Pérez" required />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <MemberField label="Segundo Nombre" value={newMember.second_name} onChange={um('second_name')} placeholder="José" />
-                                <MemberField label="Segundo Apellido" value={newMember.second_last_name} onChange={um('second_last_name')} placeholder="García" />
+                                <PersonaField label="Segundo Nombre" value={newPersona.second_name} onChange={um('second_name')} placeholder="José" />
+                                <PersonaField label="Segundo Apellido" value={newPersona.second_last_name} onChange={um('second_last_name')} placeholder="García" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <MemberField label="Correo" type="email" value={newMember.email} onChange={um('email')} placeholder="correo@ejemplo.com" />
-                                <MemberField label="Teléfono" value={newMember.phone} onChange={um('phone')} placeholder="+57 300 000 0000" />
+                                <PersonaField label="Correo" type="email" value={newPersona.email} onChange={um('email')} placeholder="correo@ejemplo.com" />
+                                <PersonaField label="Teléfono" value={newPersona.phone} onChange={um('phone')} placeholder="+57 300 000 0000" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <SelectField label="Rol" value={newMember.church_role} onChange={um('church_role')} options={roles.map(r => r.name)} placeholder="Persona" />
-                                <SelectField label="Tipo de Participación" value={newMember.membership_type} onChange={um('membership_type')} options={MEMBERSHIP_TYPES} placeholder="Seleccionar..." />
+                                <SelectField label="Rol" value={newPersona.church_role} onChange={um('church_role')} options={roles.map(r => r.name)} placeholder="Persona" />
+                                <SelectField label="Tipo de Participación" value={newPersona.participation_type} onChange={um('participation_type')} options={PARTICIPATION_TYPES} placeholder="Seleccionar..." />
                             </div>
                         </div>
                     </div>
@@ -570,45 +570,45 @@ export default function MembersPage() {
                     {/* ── Identificación ── */}
                     <FormSection title="Identificación">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Tipo de ID" value={newMember.id_type} onChange={um('id_type')} options={ID_TYPES} />
-                            <MemberField label="Número de ID" value={newMember.id_number} onChange={um('id_number')} placeholder="1234567890" />
+                            <SelectField label="Tipo de ID" value={newPersona.id_type} onChange={um('id_type')} options={ID_TYPES} />
+                            <PersonaField label="Número de ID" value={newPersona.id_number} onChange={um('id_number')} placeholder="1234567890" />
                         </div>
                     </FormSection>
 
                     {/* ── Información Personal ── */}
                     <FormSection title="Información Personal">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Sexo" value={newMember.sex} onChange={um('sex')} options={SEX_OPTIONS} />
-                            <SelectField label="Estado Civil" value={newMember.marital_status} onChange={um('marital_status')} options={MARITAL_STATUSES} />
+                            <SelectField label="Sexo" value={newPersona.sex} onChange={um('sex')} options={SEX_OPTIONS} />
+                            <SelectField label="Estado Civil" value={newPersona.marital_status} onChange={um('marital_status')} options={MARITAL_STATUSES} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <MemberField label="País de Nacimiento" value={newMember.birth_country} onChange={um('birth_country')} placeholder="Colombia" />
-                            <MemberField label="Fecha de Nacimiento" type="date" value={newMember.birthday} onChange={um('birthday')} placeholder="" />
+                            <PersonaField label="País de Nacimiento" value={newPersona.birth_country} onChange={um('birth_country')} placeholder="Colombia" />
+                            <PersonaField label="Fecha de Nacimiento" type="date" value={newPersona.birthday} onChange={um('birthday')} placeholder="" />
                         </div>
                     </FormSection>
 
                     {/* ── Contacto y Ubicación ── */}
                     <FormSection title="Contacto y Ubicación">
                         <div className="grid grid-cols-2 gap-3">
-                            <MemberField label="Teléfono Fijo" value={newMember.landline_phone} onChange={um('landline_phone')} placeholder="+57 1 000 0000" />
-                            <MemberField label="Otro Teléfono" value={newMember.other_phone} onChange={um('other_phone')} placeholder="+57 300 000 0000" />
+                            <PersonaField label="Teléfono Fijo" value={newPersona.landline_phone} onChange={um('landline_phone')} placeholder="+57 1 000 0000" />
+                            <PersonaField label="Otro Teléfono" value={newPersona.other_phone} onChange={um('other_phone')} placeholder="+57 300 000 0000" />
                         </div>
-                        <MemberField label="Dirección" value={newMember.address} onChange={um('address')} placeholder="Cra 1 # 2-3, Barrio..." />
+                        <PersonaField label="Dirección" value={newPersona.address} onChange={um('address')} placeholder="Cra 1 # 2-3, Barrio..." />
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Tipo de Vivienda" value={newMember.housing_type} onChange={um('housing_type')} options={HOUSING_TYPES} />
-                            <MemberField label="Celular" value={newMember.mobile_phone} onChange={um('mobile_phone')} placeholder="+57 300 000 0000" />
+                            <SelectField label="Tipo de Vivienda" value={newPersona.housing_type} onChange={um('housing_type')} options={HOUSING_TYPES} />
+                            <PersonaField label="Celular" value={newPersona.mobile_phone} onChange={um('mobile_phone')} placeholder="+57 300 000 0000" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Departamento</label>
-                                <select value={newMember.colombian_department_id ?? ''} onChange={e => setNewMember(prev => ({ ...prev, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <select value={newPersona.colombian_department_id ?? ''} onChange={e => setNewPersona(prev => ({ ...prev, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">Seleccionar departamento</option>
                                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Ciudad</label>
-                                <select value={newMember.city} onChange={e => setNewMember(prev => ({ ...prev, city: e.target.value }))} disabled={!newMember.colombian_department_id || loadingCities} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <select value={newPersona.city} onChange={e => setNewPersona(prev => ({ ...prev, city: e.target.value }))} disabled={!newPersona.colombian_department_id || loadingCities} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">{loadingCities ? 'Cargando ciudades...' : 'Seleccionar ciudad'}</option>
                                     {cities.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                 </select>
@@ -619,69 +619,69 @@ export default function MembersPage() {
                     {/* ── Educación y Profesión ── */}
                     <FormSection title="Educación y Profesión">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Nivel Educativo" value={newMember.education_level} onChange={um('education_level')} options={EDUCATION_LEVELS} />
-                            <SelectField label="Estado Educativo" value={newMember.education_status} onChange={um('education_status')} options={EDUCATION_STATUSES} />
+                            <SelectField label="Nivel Educativo" value={newPersona.education_level} onChange={um('education_level')} options={EDUCATION_LEVELS} />
+                            <SelectField label="Estado Educativo" value={newPersona.education_status} onChange={um('education_status')} options={EDUCATION_STATUSES} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <MemberField label="Profesión" value={newMember.profession} onChange={um('profession')} placeholder="Ingeniero, Abogado..." />
-                            <MemberField label="Sector Económico" value={newMember.economic_sector} onChange={um('economic_sector')} placeholder="Salud, Educación..." />
+                            <PersonaField label="Profesión" value={newPersona.profession} onChange={um('profession')} placeholder="Ingeniero, Abogado..." />
+                            <PersonaField label="Sector Económico" value={newPersona.economic_sector} onChange={um('economic_sector')} placeholder="Salud, Educación..." />
                         </div>
                     </FormSection>
 
                     {/* ── Información Médica ── */}
                     <FormSection title="Información Médica">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Tipo de Sangre" value={newMember.blood_type} onChange={um('blood_type')} options={BLOOD_TYPES} />
+                            <SelectField label="Tipo de Sangre" value={newPersona.blood_type} onChange={um('blood_type')} options={BLOOD_TYPES} />
                             <input type="hidden" />
                         </div>
-                        <MemberField label="Notas Médicas" value={newMember.medical_notes} onChange={um('medical_notes')} placeholder="Alergias, condiciones..." />
+                        <PersonaField label="Notas Médicas" value={newPersona.medical_notes} onChange={um('medical_notes')} placeholder="Alergias, condiciones..." />
                     </FormSection>
 
                     {/* ── Iglesia ── */}
                     <FormSection title="Información de Iglesia">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Tipo de Asistencia" value={newMember.attendance_type} onChange={um('attendance_type')} options={ATTENDANCE_TYPES} />
-                            <MemberField label="Grupo" value={newMember.group_name} onChange={um('group_name')} placeholder="Grupo 1, Casa de Paz..." />
+                            <SelectField label="Tipo de Asistencia" value={newPersona.attendance_type} onChange={um('attendance_type')} options={ATTENDANCE_TYPES} />
+                            <PersonaField label="Grupo" value={newPersona.group_name} onChange={um('group_name')} placeholder="Grupo 1, Casa de Paz..." />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <MemberField label="Campus / Sede" value={newMember.campus} onChange={um('campus')} placeholder="Principal, Norte..." />
-                            <MemberField label="Fecha de Ingreso" type="date" value={newMember.church_join_date} onChange={um('church_join_date')} placeholder="" />
+                            <PersonaField label="Campus / Sede" value={newPersona.campus} onChange={um('campus')} placeholder="Principal, Norte..." />
+                            <PersonaField label="Fecha de Ingreso" type="date" value={newPersona.church_join_date} onChange={um('church_join_date')} placeholder="" />
                         </div>
-                        <MemberField label="Fecha de Bautismo" type="date" value={newMember.baptism_date} onChange={um('baptism_date')} placeholder="" />
+                        <PersonaField label="Fecha de Bautismo" type="date" value={newPersona.baptism_date} onChange={um('baptism_date')} placeholder="" />
                     </FormSection>
 
                     {/* ── Familiar ── */}
                     <FormSection title="Información Familiar">
                         <div className="grid grid-cols-2 gap-3">
-                            <MemberField label="Nombre del Responsable" value={newMember.responsible_adult_name} onChange={um('responsible_adult_name')} placeholder="Nombre completo" />
-                            <MemberField label="Contacto del Responsable" value={newMember.responsible_adult_contact} onChange={um('responsible_adult_contact')} placeholder="Teléfono" />
+                            <PersonaField label="Nombre del Responsable" value={newPersona.responsible_adult_name} onChange={um('responsible_adult_name')} placeholder="Nombre completo" />
+                            <PersonaField label="Contacto del Responsable" value={newPersona.responsible_adult_contact} onChange={um('responsible_adult_contact')} placeholder="Teléfono" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <MemberField label="Nombre del Acudiente" value={newMember.guardian_name} onChange={um('guardian_name')} placeholder="Nombre completo" />
-                            <MemberField label="Contacto del Acudiente" value={newMember.guardian_contact} onChange={um('guardian_contact')} placeholder="Teléfono" />
+                            <PersonaField label="Nombre del Acudiente" value={newPersona.guardian_name} onChange={um('guardian_name')} placeholder="Nombre completo" />
+                            <PersonaField label="Contacto del Acudiente" value={newPersona.guardian_contact} onChange={um('guardian_contact')} placeholder="Teléfono" />
                         </div>
                     </FormSection>
 
                     {/* ── Espiritual ── */}
                     <FormSection title="Información Espiritual">
-                        <MemberField label="Talentos y Habilidades" value={newMember.talents} onChange={um('talents')} placeholder="Canto, enseñanza, liderazgo..." />
-                        <MemberField label="Dones Espirituales" value={newMember.spiritual_gifts} onChange={um('spiritual_gifts')} placeholder="Profecía, enseñanza, servicio..." />
-                        <MemberField label="Notas Pastorales" value={newMember.pastoral_notes} onChange={um('pastoral_notes')} placeholder="Observaciones pastorales..." />
+                        <PersonaField label="Talentos y Habilidades" value={newPersona.talents} onChange={um('talents')} placeholder="Canto, enseñanza, liderazgo..." />
+                        <PersonaField label="Dones Espirituales" value={newPersona.spiritual_gifts} onChange={um('spiritual_gifts')} placeholder="Profecía, enseñanza, servicio..." />
+                        <PersonaField label="Notas Pastorales" value={newPersona.pastoral_notes} onChange={um('pastoral_notes')} placeholder="Observaciones pastorales..." />
                         <div className="grid grid-cols-2 gap-3">
-                            <MemberField label="Última Asistencia a Grupo" type="date" value={newMember.last_group_attendance} onChange={um('last_group_attendance')} placeholder="" />
-                            <MemberField label="Última Asistencia a Reunión" type="date" value={newMember.last_meeting_attendance} onChange={um('last_meeting_attendance')} placeholder="" />
+                            <PersonaField label="Última Asistencia a Grupo" type="date" value={newPersona.last_group_attendance} onChange={um('last_group_attendance')} placeholder="" />
+                            <PersonaField label="Última Asistencia a Reunión" type="date" value={newPersona.last_meeting_attendance} onChange={um('last_meeting_attendance')} placeholder="" />
                         </div>
                     </FormSection>
 
                     {/* ── Registro ── */}
                     <FormSection title="Información de Registro">
-                        <MemberField label="Motivo de Registro" value={newMember.registration_reason} onChange={um('registration_reason')} placeholder="Conversión, transferencia..." />
-                        <MemberField label="Motivo de Baja" value={newMember.unregistration_reason} onChange={um('unregistration_reason')} placeholder="Si aplica..." />
+                        <PersonaField label="Motivo de Registro" value={newPersona.registration_reason} onChange={um('registration_reason')} placeholder="Conversión, transferencia..." />
+                        <PersonaField label="Motivo de Baja" value={newPersona.unregistration_reason} onChange={um('unregistration_reason')} placeholder="Si aplica..." />
                         <div className="grid grid-cols-2 gap-3">
-                            <MemberField label="Fecha de Registro" type="date" value={newMember.registration_date} onChange={um('registration_date')} placeholder="" />
-                            <MemberField label="Fecha de Baja" type="date" value={newMember.unregistration_date} onChange={um('unregistration_date')} placeholder="" />
+                            <PersonaField label="Fecha de Registro" type="date" value={newPersona.registration_date} onChange={um('registration_date')} placeholder="" />
+                            <PersonaField label="Fecha de Baja" type="date" value={newPersona.unregistration_date} onChange={um('unregistration_date')} placeholder="" />
                         </div>
-                        <MemberField label="Información Opcional" value={newMember.optional_info} onChange={um('optional_info')} placeholder="Notas adicionales..." />
+                        <PersonaField label="Información Opcional" value={newPersona.optional_info} onChange={um('optional_info')} placeholder="Notas adicionales..." />
                     </FormSection>
                 </form>
             </WorkspaceDrawer>

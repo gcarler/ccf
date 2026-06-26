@@ -33,7 +33,7 @@ function getZoneColor(id: string) {
     return ZONE_COLORS[n % ZONE_COLORS.length];
 }
 
-interface Member {
+interface Persona {
     id: string;
     nombre_completo?: string;
     first_name?: string;
@@ -48,10 +48,10 @@ export default function CrmGroupsPage() {
     const [groups, setGroups] = useState<Grupo[]>([]);
     const [loading, setLoading] = useState(true);
     const [query, setQuery] = useState('');
-    const [members, setMembers] = useState<Member[]>([]);
+    const [personas, setPersonas] = useState<Persona[]>([]);
     const [inviteGroup, setInviteGroup] = useState<Grupo | null>(null);
-    const [memberQuery, setMemberQuery] = useState('');
-    const [assigningMemberId, setAssigningMemberId] = useState<string | null>(null);
+    const [personaQuery, setPersonaQuery] = useState('');
+    const [assigningPersonaId, setAssigningPersonaId] = useState<string | null>(null);
 
     const loadGroups = useCallback(async () => {
         if (!token) return;
@@ -74,11 +74,11 @@ export default function CrmGroupsPage() {
 
         let cancelled = false;
 
-        const loadMembers = async () => {
+        const loadPersonas = async () => {
             try {
                 const pageSize = 250;
                 let skip = 0;
-                const allMembers: Member[] = [];
+                const allPersonas: Persona[] = [];
 
                 while (true) {
                     const data = await apiFetch<unknown>('/crm/personas/', {
@@ -93,18 +93,18 @@ export default function CrmGroupsPage() {
 
                     const page = Array.isArray(data)
                         ? data
-                        : Array.isArray((data as { items?: Member[] })?.items)
-                            ? (data as { items: Member[] }).items
+                        : Array.isArray((data as { items?: Persona[] })?.items)
+                            ? (data as { items: Persona[] }).items
                             : [];
 
-                    allMembers.push(...page);
+                    allPersonas.push(...page);
 
                     if (page.length < pageSize) break;
                     skip += pageSize;
                 }
 
                 if (!cancelled) {
-                    setMembers(allMembers);
+                    setPersonas(allPersonas);
                 }
             } catch {
                 if (!cancelled) {
@@ -113,8 +113,8 @@ export default function CrmGroupsPage() {
             }
         };
 
-        setMembers([]);
-        loadMembers();
+        setPersonas([]);
+        loadPersonas();
 
         return () => {
             cancelled = true;
@@ -133,37 +133,37 @@ export default function CrmGroupsPage() {
 
     const stats = useMemo(() => {
         const total = groups.length;
-        const totalMembers = groups.reduce((acc, g) => acc + (g.members_count || 0), 0);
+        const totalPersonas = groups.reduce((acc, g) => acc + (g.personas_count || 0), 0);
         const active = groups.filter(g => g.status === 'Activo' || !g.status).length;
-        const avgCapacity = total > 0 ? Math.round(groups.reduce((acc, g) => acc + ((g.members_count || 0) / (g.capacity || 20) * 100), 0) / total) : 0;
-        return { total, totalMembers, active, avgCapacity };
+        const avgCapacity = total > 0 ? Math.round(groups.reduce((acc, g) => acc + ((g.personas_count || 0) / (g.capacity || 20) * 100), 0) / total) : 0;
+        return { total, totalPersonas, active, avgCapacity };
     }, [groups]);
 
-    const filteredMembers = useMemo(() => {
-        const term = memberQuery.trim().toLowerCase();
-        const base = [...members].sort((a, b) => {
+    const filteredPersonas = useMemo(() => {
+        const term = personaQuery.trim().toLowerCase();
+        const base = [...personas].sort((a, b) => {
             const nameA = (a.nombre_completo || `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim()).toLowerCase();
             const nameB = (b.nombre_completo || `${b.first_name ?? ''} ${b.last_name ?? ''}`.trim()).toLowerCase();
             return nameA.localeCompare(nameB, 'es');
         });
 
         if (!term) return base;
-        return base.filter(member =>
-            (member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()).toLowerCase().includes(term) ||
-            member.church_role?.toLowerCase().includes(term)
+        return base.filter(persona =>
+            (persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()).toLowerCase().includes(term) ||
+            persona.church_role?.toLowerCase().includes(term)
         );
-    }, [memberQuery, members]);
+    }, [personaQuery, personas]);
 
-    const handleInviteMember = async (memberId: string) => {
+    const handleInvitePersona = async (personaId: string) => {
         if (!token || !inviteGroup) return;
-        setAssigningMemberId(memberId);
+        setAssigningPersonaId(personaId);
         try {
             const detail = await apiFetch<Grupo>(`/crm/grupos/${inviteGroup.id}`, { token });
             const current = new Set(
-                (detail.base_attendee_ids || detail.base_attendees?.map(member => member.persona_id) || [])
+                (detail.base_attendee_ids || detail.base_attendees?.map(persona => persona.persona_id) || [])
                     .map(String)
             );
-            current.add(memberId);
+            current.add(personaId);
             const updated = await apiFetch<Grupo>(`/crm/grupos/${inviteGroup.id}`, {
                 method: 'PUT',
                 token,
@@ -189,7 +189,7 @@ export default function CrmGroupsPage() {
         } catch {
             toast.error('No se pudo agregar el persona');
         } finally {
-            setAssigningMemberId(null);
+            setAssigningPersonaId(null);
         }
     };
 
@@ -220,7 +220,7 @@ export default function CrmGroupsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-3 -mt-3 mb-3 relative z-10">
                     {[
                         { label: 'Total Casas', value: stats.total, icon: Home, bg: 'bg-emerald-500' },
-                        { label: 'Integrantes Activos', value: stats.totalMembers, icon: Users, bg: 'bg-[hsl(var(--primary))]' },
+                        { label: 'Integrantes Activos', value: stats.totalPersonas, icon: Users, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Casas Activas', value: stats.active, icon: Activity, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Ocup. Promedio', value: `${stats.avgCapacity}%`, icon: TrendingUp, bg: 'bg-amber-500' },
                     ].map(s => (
@@ -272,7 +272,7 @@ export default function CrmGroupsPage() {
                     {!loading && filtered.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {filtered.map((group, idx) => {
-                                const occupancy = group.capacity ? Math.round((group.members_count || 0) / group.capacity * 100) : 0;
+                                const occupancy = group.capacity ? Math.round((group.personas_count || 0) / group.capacity * 100) : 0;
                                 const isActive = !group.status || group.status === 'Activo';
                                 return (
                                     <motion.div
@@ -337,7 +337,7 @@ export default function CrmGroupsPage() {
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Ocupación</span>
                                                     <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                                                        {group.members_count || 0}/{group.capacity || '—'}
+                                                        {group.personas_count || 0}/{group.capacity || '—'}
                                                     </span>
                                                 </div>
                                                 <div className="h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
@@ -353,7 +353,7 @@ export default function CrmGroupsPage() {
                                             <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
                                                 <div className="flex items-center gap-1.5 text-slate-400">
                                                     <Users size={13} />
-                                                    <span className="text-[11px] font-bold">{group.members_count || 0} integrantes</span>
+                                                    <span className="text-[11px] font-bold">{group.personas_count || 0} integrantes</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-md transition-colors">
@@ -374,7 +374,7 @@ export default function CrmGroupsPage() {
                 isOpen={Boolean(inviteGroup)}
                 onClose={() => {
                     setInviteGroup(null);
-                    setMemberQuery('');
+                    setPersonaQuery('');
                 }}
                 title="Invitar persona"
                 subtitle={inviteGroup ? `Agregar persona a ${inviteGroup.name}` : undefined}
@@ -383,30 +383,30 @@ export default function CrmGroupsPage() {
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
-                            value={memberQuery}
-                            onChange={event => setMemberQuery(event.target.value)}
+                            value={personaQuery}
+                            onChange={event => setPersonaQuery(event.target.value)}
                             placeholder="Buscar persona..."
                             className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-11 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
-                        {filteredMembers.map(member => (
-                            <div key={member.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-4 dark:border-white/10">
+                        {filteredPersonas.map(persona => (
+                            <div key={persona.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-4 dark:border-white/10">
                                 <div>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim()}</p>
-                                    <p className="text-[11px] text-slate-400">{member.church_role || 'Persona'}</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}</p>
+                                    <p className="text-[11px] text-slate-400">{persona.church_role || 'Persona'}</p>
                                 </div>
                                 <button
-                                    onClick={() => handleInviteMember(member.id)}
-                                    disabled={assigningMemberId === member.id}
+                                    onClick={() => handleInvitePersona(persona.id)}
+                                    disabled={assigningPersonaId === persona.id}
                                     className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
                                 >
-                                    {assigningMemberId === member.id ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
+                                    {assigningPersonaId === persona.id ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
                                     Agregar
                                 </button>
                             </div>
                         ))}
-                        {filteredMembers.length === 0 && (
+                        {filteredPersonas.length === 0 && (
                             <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400 dark:border-white/10">
                                 No se encontraron personas.
                             </div>

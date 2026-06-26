@@ -33,7 +33,7 @@ Estado verificado en produccion:
 Antes de declarar una limpieza como terminada:
 
 ```bash
-rg -n "ForeignKey\\(\"users\\.id\"\\)|Member\\s*=" backend docs scripts REGLAS.md
+rg -n "ForeignKey\\(\"users\\.id\"\\)|personas\\.user_id|models\\.Persona|models_personas|backend\\.auth" backend docs scripts REGLAS.md
 source venv/bin/activate
 python -m pytest -q -o addopts='' tests/test_structural_contracts.py tests/test_smoke.py
 curl -f http://127.0.0.1:8000/healthz

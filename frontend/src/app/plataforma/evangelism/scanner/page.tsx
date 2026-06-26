@@ -137,7 +137,7 @@ export default function ScannerPage() {
  <ShieldCheck size={80} />
  </div>
  <div className="space-y-2">
- <h2 className="text-lg font-bold text-white">{scannedData?.member_name}</h2>
+ <h2 className="text-lg font-bold text-white">{scannedData?.persona_name}</h2>
  <p className="text-emerald-500 font-extrabold uppercase tracking-wide text-xs px-3 py-1 bg-emerald-500/10 rounded-full inline-block">
  {scannedData?.role} â€¢ VALIDADO
  </p>

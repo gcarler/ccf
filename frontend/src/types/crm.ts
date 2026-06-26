@@ -13,7 +13,7 @@ export interface City {
   name: string;
 }
 
-export interface MemberFormData {
+export interface PersonaFormData {
   first_name: string;
   last_name: string;
   email: string;
@@ -40,7 +40,7 @@ export interface MemberFormData {
   economic_sector: string;
   blood_type: string;
   medical_notes: string;
-  membership_type: string;
+  participation_type: string;
   attendance_type: string;
   group_name: string;
   campus: string;
@@ -69,17 +69,17 @@ export const EDUCATION_LEVELS = ['Primaria', 'Secundaria', 'Técnico', 'Tecnólo
 export const EDUCATION_STATUSES = ['Cursando', 'Completado', 'Incompleto'];
 export const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 export const HOUSING_TYPES = ['Propia', 'Arriendo', 'Familiar', 'Otro'];
-export const MEMBERSHIP_TYPES = ['Activo', 'Inactivo', 'Transferido', 'Fallecido'];
+export const PARTICIPATION_TYPES = ['Activo', 'Inactivo', 'Transferido', 'Fallecido'];
 export const ATTENDANCE_TYPES = ['Regular', 'Constante', 'Irregular', 'Ausente'];
 
-export const INITIAL_MEMBER: MemberFormData = {
+export const INITIAL_PERSONA: PersonaFormData = {
   first_name: '', last_name: '', email: '', phone: '', church_role: 'Persona',
   second_name: '', second_last_name: '', id_type: '', id_number: '',
   birth_country: '', sex: '', marital_status: '', birthday: '',
   landline_phone: '', other_phone: '', mobile_phone: '', address: '', housing_type: '',
   colombian_department_id: null, city: '',
   education_level: '', education_status: '', profession: '', economic_sector: '',
-  blood_type: '', medical_notes: '', membership_type: '', attendance_type: '',
+  blood_type: '', medical_notes: '', participation_type: '', attendance_type: '',
   group_name: '', campus: '', church_join_date: '', baptism_date: '',
   responsible_adult_name: '', responsible_adult_contact: '',
   guardian_name: '', guardian_contact: '', talents: '', spiritual_gifts: '',
@@ -112,7 +112,7 @@ export interface Grupo {
   zone?: string;
   address?: string;
   leader_name?: string;
-  members_count?: number;
+  personas_count?: number;
   capacity?: number;
   schedule?: string;
   status?: string;
@@ -135,12 +135,12 @@ export interface GrupoDetail extends Grupo {
   total_personas?: number;
 }
 
-export interface GrupoMember {
+export interface GrupoPersona {
   id: string;
   nombre_completo?: string;
 }
 
-export type GrupoApi = Grupo & { members_count?: number };
+export type GrupoApi = Grupo & { personas_count?: number };
 export type Season = { id: number; name: string; status: string };
 export type Attendee = { persona_id: string; name: string };
 
@@ -152,7 +152,7 @@ export interface ConsolidationTask {
   status: 'pending' | 'in_progress' | 'done' | 'urgent';
   priority: 'low' | 'medium' | 'high';
   assigned_to?: string;
-  member_name?: string;
+  persona_name?: string;
   due_date?: string;
   category: string;
   created_at: string;
@@ -172,7 +172,7 @@ export interface CrmTask {
 // ── Volunteers ────────────────────────────────────────────────────────────
 export interface Volunteer {
   id: number;
-  member_id?: string;
+  persona_id?: string;
   name?: string;
   role?: string;
   team?: string;
@@ -296,8 +296,8 @@ export interface CrmPersona {
 }
 
 export interface CrmAnalyticsSummary {
-  total_members: number;
-  active_members: number;
+  total_personas: number;
+  active_personas: number;
   total_cases: number;
   cases_by_stage: Record<string, number>;
   open_counseling: number;
@@ -306,7 +306,7 @@ export interface CrmAnalyticsSummary {
   total_families: number;
 }
 
-export function normalizeMembers(payload: any[]): CrmPersona[] {
+export function normalizePersonas(payload: any[]): CrmPersona[] {
   if (!Array.isArray(payload)) return [];
   return payload.map((m) => ({
     id: m.id,

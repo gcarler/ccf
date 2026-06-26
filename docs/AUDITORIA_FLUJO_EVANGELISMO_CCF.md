@@ -30,7 +30,7 @@ Auditoria de continuidad de datos del componente Evangelismo, desde base de dato
 - Listado, detalle, update, delete y asistencia de sesiones filtran por `sede_id` y excluyen registros `deleted_at`.
 - Creacion de sesiones valida que el grupo exista, pertenezca a la sede del usuario y no este eliminado.
 - Habilitar/deshabilitar todas las sesiones de una estrategia queda limitado a la sede del usuario.
-- El alias FARO `/evangelism/faro/sessions/{id}/attendance` ahora respeta la misma regla de habilitacion que `/evangelism/sessions/{id}/attendance`.
+- La ruta FARO `/evangelism/faro/sessions/{id}/attendance` respeta la misma regla de habilitacion que `/evangelism/sessions/{id}/attendance`.
 - El resumen de asignaciones FARO ya no calcula participantes asignados globalmente; filtra por grupos de la sede actual.
 - Navegaciones frontend que salian a `/evangelism/...` fueron corregidas a `/plataforma/evangelism/...`.
 - La creacion de casos CRM desde eventos y FARO ya no usa `pipeline_id=1` ni `etapa_actual_id=1`; reutiliza el resolvedor canonico de pipeline de nuevos visitantes.
@@ -83,7 +83,7 @@ La busqueda estatica no encuentra `window.confirm` ni `confirm(` bajo `frontend/
 
 ## Riesgo Residual
 
-- La normalizacion canonica de escritura podria reforzarse mas adelante con un enum unico en esquemas para impedir nuevos aliases desde clientes futuros.
+- La normalizacion canonica de escritura podria reforzarse mas adelante con un enum unico en esquemas para impedir variantes de clientes futuros.
 - La busqueda de personas en asistencia sigue siendo local sobre la primera pagina; para volumen alto conviene evolucionarla a busqueda remota por texto con debounce.
 - Las sesiones generadas por frecuencia nacen `DESHABILITADO`; el flujo correcto exige habilitarlas antes de reportar asistencia. La prueba valida que el bloqueo ocurra y que luego la asistencia se pueda guardar al habilitar.
 

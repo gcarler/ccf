@@ -365,7 +365,7 @@ def set_variable(
 
 
 @router.get("/personas", response_model=List[Dict[str, Any]])
-def list_admin_members(
+def list_admin_personas(
     db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
 ):
     """Lista todas las personas para administracion."""
@@ -826,7 +826,7 @@ def award_milestone_bulk(
 ):
     """Asigna un hito a una lista de miembros de forma masiva."""
     badge_id = payload["badge_id"]
-    persona_ids = payload.get("persona_ids", payload.get("member_ids", []))
+    persona_ids = payload.get("persona_ids", payload.get("persona_ids", []))
 
     import uuid as _uuid
     awarded_count = 0

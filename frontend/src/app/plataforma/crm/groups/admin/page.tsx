@@ -31,9 +31,9 @@ export default function GrupoAdmin() {
             const data = await apiFetch<GrupoApi[]>("/community/grupos", { token });
             setGrupos(
                 Array.isArray(data)
-                    ? data.map(({ members_count, ...grupo }) => ({
+                    ? data.map(({ personas_count, ...grupo }) => ({
                         ...grupo,
-                        total_personas: grupo.total_personas ?? members_count ?? 0,
+                        total_personas: grupo.total_personas ?? personas_count ?? 0,
                     }))
                     : []
             );
@@ -64,7 +64,7 @@ export default function GrupoAdmin() {
             setSeasons(nextSeasons);
             setSeasonId((nextSeasons.find((season) => season.status === "Activa") || nextSeasons[0])?.id || "");
             setAttendees(baseAttendees);
-            setSelectedIds(baseAttendees.map((member: Attendee) => member.persona_id));
+            setSelectedIds(baseAttendees.map((persona: Attendee) => persona.persona_id));
         } catch {
             addToast("No se pudo preparar el reporte", "error");
         }

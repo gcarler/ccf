@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 
 interface HouseDetail {
  id: string; name: string; zone?: string; address?: string;
- code?: string; leader_name?: string; members_count?: number; capacity?: number;
+ code?: string; leader_name?: string; personas_count?: number; capacity?: number;
  day_of_week?: string; time?: string; status?: string;
  sessions: SessionRow[]; total_sessions: number; total_attendance: number;
  monitoring?: HouseMonitoring;
@@ -42,7 +42,7 @@ interface MonitoringAlert {
  session_id?: number;
 }
 interface HouseMonitoring {
- expected_members: number;
+ expected_personas: number;
  average_attendance: number;
  average_attendance_rate: number;
  attendance_trend: MonitoringTrendRow[];
@@ -68,10 +68,10 @@ interface AttendanceData {
  absent_count?: number;
  attendees: AttendeeRow[];
  absentees: AttendeeRow[];
- expected_members: AttendeeRow[];
+ expected_personas: AttendeeRow[];
 }
 interface AttendeeRow { persona_id: string; name: string; role?: string; attended?: boolean; absence_reason?: AttendanceReason | null; absence_reason_detail?: string | null; scanned_at?: string; }
-interface Member { id: string; nombre_completo: string; church_role?: string; }
+interface Persona { id: string; nombre_completo: string; church_role?: string; }
 
 export default function FaroDetailPage() {
  const params = useParams();
@@ -89,10 +89,10 @@ export default function FaroDetailPage() {
  const [loadingAtt, setLoadingAtt] = useState(false);
  const [savingReport, setSavingReport] = useState(false);
 
- // Member selector
- const [members, setMembers] = useState<Member[]>([]);
+ // Persona selector
+ const [personas, setPersonas] = useState<Persona[]>([]);
  const [showAddAttendee, setShowAddAttendee] = useState(false);
- const [memberQuery, setMemberQuery] = useState('');
+ const [personaQuery, setPersonaQuery] = useState('');
  const [saving, setSaving] = useState(false);
  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
  const [reportTopic, setReportTopic] = useState('');
@@ -102,13 +102,13 @@ export default function FaroDetailPage() {
  const [reportNoveltyDetail, setReportNoveltyDetail] = useState('');
  const [reportCancellationReason, setReportCancellationReason] = useState('');
  const [reportStatus, setReportStatus] = useState<'Realizada' | 'Cancelada' | 'No realizada'>('Realizada');
- const [reportMembers, setReportMembers] = useState<AttendeeRow[]>([]);
+ const [reportPersonas, setReportPersonas] = useState<AttendeeRow[]>([]);
 
  // Se eliminÃ³ la dependencia de layers.RIGHT para showAddAttendee porque ahora usamos WorkspaceDrawer
 
- const [isCreatingMember, setIsCreatingMember] = useState(false);
- const [newMemberForm, setNewMemberForm] = useState({ first_name: '', last_name: '', phone: '', email: '' });
- const [creatingMember, setCreatingMember] = useState(false);
+ const [isCreatingPersona, setIsCreatingPersona] = useState(false);
+ const [newPersonaForm, setNewPersonaForm] = useState({ first_name: '', last_name: '', phone: '', email: '' });
+ const [creatingPersona, setCreatingPersona] = useState(false);
  const role = String(user?.role || '').toLowerCase();
  const isPrivileged = ['admin', 'administrador', 'pastor'].includes(role);
  const activeSessionEnabled = activeSession?.estado_habilitacion === 'HABILITADO';
@@ -223,11 +223,11 @@ export default function FaroDetailPage() {
  .then(data => {
  setAttendance(data);
  
- // Merge expected members and attendees perfectly
+ // Merge expected personas and attendees perfectly
  const mergedMap = new Map<string, AttendeeRow>();
 
- // First add all expected members
- (data.expected_members || []).forEach(row => {
+ // First add all expected personas
+ (data.expected_personas || []).forEach(row => {
  mergedMap.set(row.persona_id, {
  ...row,
  // By default, if there is no attendance data yet, mark them as 'attended: false' initially? 
@@ -251,7 +251,7 @@ export default function FaroDetailPage() {
  }
  });
  
- setReportMembers(Array.from(mergedMap.values()));
+ setReportPersonas(Array.from(mergedMap.values()));
  setReportTopic(data.topic || '');
  setReportOfferingAmount(data.offering_amount != null ? String(data.offering_amount) : '');
  setReportNotes(data.report_notes || '');
@@ -268,20 +268,20 @@ export default function FaroDetailPage() {
  .finally(() => setLoadingAtt(false));
  }, [activeSession, token]);
 
- // Load members for selector
+ // Load personas for selector
  useEffect(() => {
  if (!token || !showAddAttendee) return;
- apiFetch<Member[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(setMembers).catch(() => { toast.error('Error al cargar personas'); });
+ apiFetch<Persona[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(setPersonas).catch(() => { toast.error('Error al cargar personas'); });
  }, [showAddAttendee, token]);
 
- const filteredMembers = useMemo(() => {
- const q = memberQuery.toLowerCase();
+ const filteredPersonas = useMemo(() => {
+ const q = personaQuery.toLowerCase();
  const attendedIds = new Set(attendance?.attendees.map(a => a.persona_id) || []);
- return members
+ return personas
  .filter(m => !attendedIds.has(m.id))
  .filter(m => !q || (m.nombre_completo || '').toLowerCase().includes(q))
  .slice(0, 30);
- }, [members, memberQuery, attendance]);
+ }, [personas, personaQuery, attendance]);
 
  const handleSaveAttendance = async () => {
  if (!activeSession || selectedIds.size === 0) return;
@@ -297,7 +297,7 @@ export default function FaroDetailPage() {
  toast.success(`${res.processed} asistente(s) registrados`);
  setShowAddAttendee(false);
  setSelectedIds(new Set());
- setMemberQuery('');
+ setPersonaQuery('');
  // Reload attendance
  const updated = await apiFetch<AttendanceData>(`/evangelism/faro/sessions/${activeSession.id}/attendance`, { token });
  setAttendance(updated);
@@ -312,26 +312,26 @@ export default function FaroDetailPage() {
  finally { setSaving(false); }
  };
 
- const handleCreateMember = async () => {
- if (!newMemberForm.first_name || !newMemberForm.last_name) {
+ const handleCreatePersona = async () => {
+ if (!newPersonaForm.first_name || !newPersonaForm.last_name) {
  return toast.error('El nombre y apellido son obligatorios');
  }
- setCreatingMember(true);
+ setCreatingPersona(true);
  try {
- const res = await apiFetch<Member>('/crm/personas', {
+ const res = await apiFetch<Persona>('/crm/personas', {
  method: 'POST',
  token,
- body: { ...newMemberForm, church_role: 'Visitante' }
+ body: { ...newPersonaForm, church_role: 'Visitante' }
  });
  toast.success('Invitado creado con Ã©xito');
- setMembers(prev => [res, ...prev]);
+ setPersonas(prev => [res, ...prev]);
  setSelectedIds(prev => new Set(prev).add(res.id));
- setNewMemberForm({ first_name: '', last_name: '', phone: '', email: '' });
- setIsCreatingMember(false);
+ setNewPersonaForm({ first_name: '', last_name: '', phone: '', email: '' });
+ setIsCreatingPersona(false);
  } catch {
  toast.error('Error al crear el invitado');
  } finally {
- setCreatingMember(false);
+ setCreatingPersona(false);
  }
  };
 
@@ -343,7 +343,7 @@ export default function FaroDetailPage() {
  }
  setSavingReport(true);
  try {
- const attendees = reportMembers.map((row) => ({
+ const attendees = reportPersonas.map((row) => ({
  persona_id: row.persona_id,
  attended: row.attended ?? true,
  absence_reason: row.attended ? null : row.absence_reason,
@@ -495,7 +495,7 @@ export default function FaroDetailPage() {
  <BarChart3 className="text-[hsl(var(--primary))]" size={18} /> Monitoreo de la casa
  </h3>
  <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
- {monitoring?.expected_members ?? 0} esperados
+ {monitoring?.expected_personas ?? 0} esperados
  </span>
  </div>
 
@@ -572,7 +572,7 @@ export default function FaroDetailPage() {
  <Activity className="text-[hsl(var(--primary))]" size={18} /> Reporte semanal
  </h3>
  <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
- {reportMembers.length} personas
+ {reportPersonas.length} personas
  </span>
  </div>
 
@@ -670,7 +670,7 @@ export default function FaroDetailPage() {
  <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Presente / Ausente</span>
  </div>
  <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
- {reportMembers.map((row) => {
+ {reportPersonas.map((row) => {
  const attended = row.attended !== false;
  return (
  <div key={row.persona_id} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-4 space-y-3">
@@ -685,7 +685,7 @@ export default function FaroDetailPage() {
  checked={attended}
  onChange={(e) => {
  const checked = e.target.checked;
- setReportMembers(prev => prev.map(item => item.persona_id === row.persona_id ? {
+ setReportPersonas(prev => prev.map(item => item.persona_id === row.persona_id ? {
  ...item,
  attended: checked,
  absence_reason: checked ? null : item.absence_reason || 'other',
@@ -704,7 +704,7 @@ export default function FaroDetailPage() {
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">RazÃ³n</label>
  <select
  value={row.absence_reason || 'other'}
- onChange={(e) => setReportMembers(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason: e.target.value as AttendanceReason } : item))}
+ onChange={(e) => setReportPersonas(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason: e.target.value as AttendanceReason } : item))}
  className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
  >
  {reasonOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -714,7 +714,7 @@ export default function FaroDetailPage() {
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Detalle</label>
  <input
  value={row.absence_reason_detail || ''}
- onChange={(e) => setReportMembers(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason_detail: e.target.value } : item))}
+ onChange={(e) => setReportPersonas(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason_detail: e.target.value } : item))}
  className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
  placeholder="Especifica el motivo"
  />
@@ -798,13 +798,13 @@ export default function FaroDetailPage() {
  onClick={() => {
  setShowAddAttendee(false);
  setSelectedIds(new Set());
- setIsCreatingMember(false);
+ setIsCreatingPersona(false);
  }}
  className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors"
  >
  Cancelar
  </button>
- {!isCreatingMember && (
+ {!isCreatingPersona && (
  <button
  onClick={handleSaveAttendance}
  disabled={saving || selectedIds.size === 0 || !activeSessionEnabled}
@@ -817,21 +817,21 @@ export default function FaroDetailPage() {
  </div>
  </div>
  <div className="flex flex-col h-full">
- {!isCreatingMember && (
+ {!isCreatingPersona && (
  <div className="pb-6 shrink-0">
  <div className="flex gap-2 mb-2">
  <div className="relative flex-1">
  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={14} />
  <input
  autoFocus
- value={memberQuery}
- onChange={e => setMemberQuery(e.target.value)}
+ value={personaQuery}
+ onChange={e => setPersonaQuery(e.target.value)}
  placeholder="Buscar por nombre..."
  className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 pl-10 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
  />
  </div>
  <button
- onClick={() => setIsCreatingMember(true)}
+ onClick={() => setIsCreatingPersona(true)}
  className="px-4 py-1.5 bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] transition-colors shrink-0 flex items-center gap-2"
  >
  <Plus size={14} /> Nuevo
@@ -845,36 +845,36 @@ export default function FaroDetailPage() {
  </div>
  )}
 
- {isCreatingMember ? (
+ {isCreatingPersona ? (
  <div className="flex-1 overflow-y-auto pb-6 space-y-4 pt-2">
  <div>
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Nombres *</label>
- <input value={newMemberForm.first_name} onChange={e => setNewMemberForm(p => ({ ...p, first_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. Juan" />
+ <input value={newPersonaForm.first_name} onChange={e => setNewPersonaForm(p => ({ ...p, first_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. Juan" />
  </div>
  <div>
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Apellidos *</label>
- <input value={newMemberForm.last_name} onChange={e => setNewMemberForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. PÃ©rez" />
+ <input value={newPersonaForm.last_name} onChange={e => setNewPersonaForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. PÃ©rez" />
  </div>
  <div>
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">TelÃ©fono</label>
- <input value={newMemberForm.phone} onChange={e => setNewMemberForm(p => ({ ...p, phone: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
+ <input value={newPersonaForm.phone} onChange={e => setNewPersonaForm(p => ({ ...p, phone: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
  </div>
  <div>
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Correo ElectrÃ³nico</label>
- <input type="email" value={newMemberForm.email} onChange={e => setNewMemberForm(p => ({ ...p, email: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
+ <input type="email" value={newPersonaForm.email} onChange={e => setNewPersonaForm(p => ({ ...p, email: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
  </div>
  <div className="flex gap-3 pt-4">
- <button onClick={() => setIsCreatingMember(false)} className="flex-1 py-1.5 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] rounded-lg text-sm font-bold hover:bg-[hsl(var(--bg-muted))] transition-all">Cancelar</button>
- <button onClick={handleCreateMember} disabled={creatingMember || !newMemberForm.first_name || !newMemberForm.last_name} className="flex-1 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50">
- {creatingMember ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Crear
+ <button onClick={() => setIsCreatingPersona(false)} className="flex-1 py-1.5 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] rounded-lg text-sm font-bold hover:bg-[hsl(var(--bg-muted))] transition-all">Cancelar</button>
+ <button onClick={handleCreatePersona} disabled={creatingPersona || !newPersonaForm.first_name || !newPersonaForm.last_name} className="flex-1 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+ {creatingPersona ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Crear
  </button>
  </div>
  </div>
  ) : (
  <div className="flex-1 overflow-y-auto pb-6 space-y-1 border-t border-[hsl(var(--border-primary))] pt-4">
- {filteredMembers.length === 0 ? (
+ {filteredPersonas.length === 0 ? (
  <p className="text-center text-[hsl(var(--text-secondary))] text-sm py-1.5">No se encontraron personas</p>
- ) : filteredMembers.map(m => {
+ ) : filteredPersonas.map(m => {
  const isSelected = selectedIds.has(m.id);
  return (
  <button

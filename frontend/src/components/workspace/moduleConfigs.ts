@@ -135,7 +135,7 @@ export const MODULE_CONFIGS: Record<string, any> = {
         title: 'Directorio Pastoral',
         items: [
           {
-            id: 'crm-members',
+            id: 'crm-personas',
             label: 'Personas',
             href: '/plataforma/crm/personas',
             icon: Users,
@@ -274,9 +274,9 @@ export const MODULE_CONFIGS: Record<string, any> = {
             icon: Home,
           },
           {
-            id: 'faro-members',
+            id: 'faro-personas',
             label: 'Asignar Personas',
-            href: '/plataforma/evangelism/faro/groups?mode=members',
+            href: '/plataforma/evangelism/faro/groups?mode=personas',
             icon: Users,
           },
           {

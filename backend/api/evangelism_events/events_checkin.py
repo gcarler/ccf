@@ -75,7 +75,7 @@ def fast_checkin_visitor(
         db.refresh(new_visitor)
 
     if role:
-        db.add(models.MemberRole(persona_id=new_visitor.id, role_id=role.id))
+        db.add(models.PersonaRoleLink(persona_id=new_visitor.id, role_id=role.id))
 
     db.add(
         models.EventAttendance(

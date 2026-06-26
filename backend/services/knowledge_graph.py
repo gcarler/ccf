@@ -206,14 +206,14 @@ def build_graph_snapshot(
                 }
             )
 
-    # Family membership edges
-    family_members = (
+    # Family participation edges
+    family_personas = (
         db.query(models.Persona)
         .filter(models.Persona.family_id.isnot(None))
         .limit(limit)
         .all()
     )
-    for person in family_members:
+    for person in family_personas:
         pid = f"person-{person.id}"
         fid = f"family-{person.family_id}"
         if pid in seen and fid in seen:

@@ -188,10 +188,10 @@ def strategy_kpis(
     prev_att_pct = round((prev_present / prev_total) * 100, 1) if prev_total else 0.0
 
     # ── Participantes activos ──
-    active_members = 0
-    prev_active_members = 0
+    active_personas = 0
+    prev_active_personas = 0
     if group_ids:
-        active_members = (
+        active_personas = (
             db.query(_func.count(models.ParticipanteGrupo.id))
             .filter(
                 models.ParticipanteGrupo.grupo_id.in_(group_ids),
@@ -201,7 +201,7 @@ def strategy_kpis(
             )
             .scalar() or 0
         )
-        prev_active_members = (
+        prev_active_personas = (
             db.query(_func.count(models.ParticipanteGrupo.id))
             .filter(
                 models.ParticipanteGrupo.grupo_id.in_(group_ids),
@@ -259,15 +259,15 @@ def strategy_kpis(
 
     # ── Retención ──
     retention_pct = 0.0
-    if prev_active_members > 0:
-        retention_pct = round(min((active_members / prev_active_members) * 100, 100.0), 1)
+    if prev_active_personas > 0:
+        retention_pct = round(min((active_personas / prev_active_personas) * 100, 100.0), 1)
 
     return {
         "period": period,
         "kpis": {
-            "active_members": {
-                "value": active_members,
-                "delta": _delta(active_members, prev_active_members),
+            "active_personas": {
+                "value": active_personas,
+                "delta": _delta(active_personas, prev_active_personas),
             },
             "attendance_pct": {
                 "value": att_pct,
@@ -680,7 +680,7 @@ def strategy_alerts(
 
     # Alert type 3: Groups near capacity (ready to multiply)
     for g in groups:
-        member_count = (
+        persona_count = (
             db.query(_func.count(models.ParticipanteGrupo.id))
             .filter(
                 models.ParticipanteGrupo.grupo_id == g.id,
@@ -690,14 +690,14 @@ def strategy_alerts(
             .scalar() or 0
         )
         capacity = g.capacidad or 15
-        if member_count >= int(capacity * 0.85):
+        if persona_count >= int(capacity * 0.85):
             alerts.append({
                 "type": "ready_to_multiply",
                 "severity": "info",
                 "group_id": g.id,
                 "group_name": g.nombre,
-                "message": f"{member_count} personas — {round(member_count / capacity * 100)}% de capacidad ({capacity})",
-                "members": member_count,
+                "message": f"{persona_count} personas — {round(persona_count / capacity * 100)}% de capacidad ({capacity})",
+                "personas": persona_count,
                 "capacity": capacity,
             })
 
@@ -865,7 +865,7 @@ def strategy_groups_detail(
             for p in db.query(models.Persona).filter(models.Persona.id.in_(leader_ids)).all()
         }
 
-    member_counts = dict(
+    persona_counts = dict(
         db.query(models.ParticipanteGrupo.grupo_id, _func.count(models.ParticipanteGrupo.id))
         .filter(
             models.ParticipanteGrupo.grupo_id.in_(group_ids),
@@ -943,7 +943,7 @@ def strategy_groups_detail(
             "name": g.nombre,
             "code": g.codigo,
             "leader_name": leader_map.get(str(g.lider_persona_id), "Sin líder"),
-            "members": member_counts.get(g.id, 0),
+            "personas": persona_counts.get(g.id, 0),
             "attendance_pct": pct,
             "prev_attendance_pct": prev_pct,
             "attendance_delta": round(pct - prev_pct, 1),

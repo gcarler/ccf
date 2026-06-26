@@ -26,16 +26,16 @@ from backend.models_kernel import PlatformRoleDefinition, PlatformRole
 log = logging.getLogger(__name__)
 
 DEFAULT_PASSWORD = "1234567"
-MEMBER_ROLE_NAME = "MIEMBRO"
+DEFAULT_PERSONA_ROLE_NAME = "MIEMBRO"
 
 
-def _resolve_member_role(db: Session) -> RolPlataforma:
-    role = db.query(RolPlataforma).filter(RolPlataforma.nombre == MEMBER_ROLE_NAME).first()
+def _resolve_persona_default_role(db: Session) -> RolPlataforma:
+    role = db.query(RolPlataforma).filter(RolPlataforma.nombre == DEFAULT_PERSONA_ROLE_NAME).first()
     if role:
         return role
 
     role = RolPlataforma(
-        nombre=MEMBER_ROLE_NAME,
+        nombre=DEFAULT_PERSONA_ROLE_NAME,
         permisos={
             "academy:study": "allow",
             "profile:manage": "allow",
@@ -63,7 +63,7 @@ def provision_all(db: Session) -> int:
     if not lector:
         log.error("No LECTOR PlatformRoleDefinition found in DB. Run seed script first.")
         return 0
-    member_role = _resolve_member_role(db)
+    persona_default_role = _resolve_persona_default_role(db)
 
     # Find the first sede (required FK for Usuario)
     sede_id = db.execute(
@@ -74,21 +74,21 @@ def provision_all(db: Session) -> int:
         return 0
 
     # Normalize existing auth users: if they are persona-linked and still only
-    # carry the default LECTOR platform role, attach the member role override.
-    existing_member_users = (
+    # carry the default LECTOR platform role, attach the persona role override.
+    existing_persona_users = (
         db.query(Usuario)
         .filter(Usuario.rol_plataforma_id.is_(None))
         .filter(Usuario.platform_role_id == lector.id)
         .all()
     )
     normalized = 0
-    for user in existing_member_users:
-        user.rol_plataforma_id = member_role.id
+    for user in existing_persona_users:
+        user.rol_plataforma_id = persona_default_role.id
         normalized += 1
 
     if normalized:
         db.commit()
-        log.info("Normalized %d existing users to member role override", normalized)
+        log.info("Normalized %d existing users to persona role override", normalized)
 
     # Find personas with email that don't have an auth_user yet
     rows = db.execute(
@@ -146,7 +146,7 @@ def provision_all(db: Session) -> int:
             email=email,
             password_hash=hash_password(DEFAULT_PASSWORD),
             platform_role_id=lector.id,
-            rol_plataforma_id=member_role.id,
+            rol_plataforma_id=persona_default_role.id,
             is_active=True,
             is_email_verified=False,
         )

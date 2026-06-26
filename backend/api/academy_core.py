@@ -157,18 +157,18 @@ def enroll_persona(
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
-    access = curso.access_level or "member"
-    if access not in {"open", "member", "advanced"}:
-        access = "member"
+    access = curso.access_level or "persona"
+    if access not in {"open", "persona", "advanced"}:
+        access = "persona"
 
-    if access in {"member", "advanced"}:
+    if access in {"persona", "advanced"}:
         role = _nr(str(getattr(current_user, "role", "") or ""))
         if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
             role = _nr(current_user.rol_plataforma.nombre)
-        required_perm = "academy:study" if access == "member" else "academy:edit"
+        required_perm = "academy:study" if access == "persona" else "academy:edit"
         detail = (
             "Este curso requiere membresía activa (academy:study)."
-            if access == "member"
+            if access == "persona"
             else "Este curso es solo para formadores (academy:edit)."
         )
         eff = get_user_effective_permissions(db, current_user)

@@ -15,7 +15,7 @@ const mockUser = {
   xp: 1280,
 }
 
-const mockMembers = [
+const mockPersonas = [
   {
     id: 1,
     first_name: 'Ana',
@@ -179,7 +179,7 @@ const mockLessons = {
 }
 
 const responseMap = new Map<string, unknown>([
-  ['/crm/personas/', mockMembers],
+  ['/crm/personas/', mockPersonas],
   ['/projects', mockProjects],
   ['/courses/', mockCourses],
   ['/auth/me', mockUser],

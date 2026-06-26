@@ -18,7 +18,7 @@ def list_personas(
     estado_vital: Optional[str] = None,
     sex: Optional[str] = None,
     group_name: Optional[str] = None,
-    membership_type: Optional[str] = None,
+    participation_type: Optional[str] = None,
     id_type: Optional[str] = None,
     min_age: Optional[int] = Query(None, ge=0, le=120),
     max_age: Optional[int] = Query(None, ge=0, le=120),
@@ -33,7 +33,7 @@ def list_personas(
     sede_id = crud.get_user_sede_id(db, current_user.id)
     return crud.search_personas(
         db, search=search, role=role, estado_vital=estado_vital,
-        sex=sex, group_name=group_name, membership_type=membership_type,
+        sex=sex, group_name=group_name, participation_type=participation_type,
         id_type=id_type, min_age=min_age, max_age=max_age,
         sede_id=sede_id, skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir,
     )

@@ -56,9 +56,9 @@ export default function TaskCard({ task, onStatusChange, allowEditing = true }: 
           <p className={clsx("text-xs font-bold leading-tight", task.status === 'done' && "line-through text-slate-400")}>
             {task.title}
           </p>
-          {task.member_name && (
+          {task.persona_name && (
             <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold">
-              <UserCircle size={11} /> {task.member_name}
+              <UserCircle size={11} /> {task.persona_name}
             </div>
           )}
           <div className="flex items-center gap-2">

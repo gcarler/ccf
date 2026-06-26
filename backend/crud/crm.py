@@ -1,4 +1,4 @@
-"""CRM: Members, pipeline, events, tasks, counseling, prayer, grupos, etc."""
+"""CRM: Personas, pipeline, events, tasks, counseling, prayer, grupos, etc."""
 
 import datetime as dt
 import uuid
@@ -126,7 +126,7 @@ def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Person
     # Inter-módulos: notificar registro de nuevo miembro/persona
     try:
         from backend.services.event_consumers import dispatch_event
-        dispatch_event("member_registered", {
+        dispatch_event("persona_registered", {
             "persona_id": str(row.id),
             "name": f"{row.first_name} {row.last_name or ''}".strip(),
             "church_role": str(row.church_role) if row.church_role else "Visitante",
@@ -173,7 +173,7 @@ def search_personas(
     estado_vital: str | None = None,
     sex: str | None = None,
     group_name: str | None = None,
-    membership_type: str | None = None,
+    participation_type: str | None = None,
     id_type: str | None = None,
     min_age: int | None = None,
     max_age: int | None = None,
@@ -215,8 +215,8 @@ def search_personas(
         query = query.filter(models.Persona.id_type == id_type)
     if group_name:
         query = query.filter(models.Persona.group_name == group_name)
-    if membership_type:
-        query = query.filter(models.Persona.membership_type == membership_type)
+    if participation_type:
+        query = query.filter(models.Persona.participation_type == participation_type)
     if min_age is not None:
         cutoff = dt.date.today() - dt.timedelta(days=min_age * 365)
         query = query.filter(models.Persona.birthday <= cutoff)
@@ -269,7 +269,7 @@ def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate)
     try:
         from backend.services.event_consumers import dispatch_event
         if old_church_role != row.church_role:
-            dispatch_event("member_status_changed", {
+            dispatch_event("persona_status_changed", {
                 "persona_id": str(row.id),
                 "from_role": str(old_church_role) if old_church_role else None,
                 "to_role": str(row.church_role) if row.church_role else None,
@@ -368,7 +368,7 @@ def delete_persona(db: Session, persona_id: str) -> bool:
     return True
 
 
-# ── Members ────────────────────────────────────────────
+# ── Personas ────────────────────────────────────────────
 
 
 def get_persona_donations(db: Session, persona_id: str):
@@ -390,7 +390,7 @@ _MEMBER_SORT_FIELDS = {
 }
 
 
-def search_members(
+def search_personas(
     db: Session,
     search: str | None = None,
     role: str | None = None,
@@ -450,7 +450,7 @@ def search_members(
     return personas
 
 
-def search_members_paginated(
+def search_personas_paginated(
     db: Session,
     search: str | None = None,
     role: str | None = None,
@@ -510,7 +510,7 @@ def search_members_paginated(
 
 
 def get_personas(db: Session, search: str | None = None, role: str | None = None):
-    return search_members(db, search=search, role=role)
+    return search_personas(db, search=search, role=role)
 
 
 # ── CRM Events ─────────────────────────────────────────
@@ -708,11 +708,14 @@ def create_prayer_request(db: Session, payload: schemas.PrayerRequestCreate) -> 
 # ── Grupos ───────────────────────────────────────
 
 
-def get_cell_groups(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.GrupoEvangelismo).offset(skip).limit(limit).all()
+def get_grupos(db: Session, skip: int = 0, limit: int = 100, sede_id: str | None = None):
+    query = db.query(models.GrupoEvangelismo)
+    if sede_id:
+        query = query.filter(models.GrupoEvangelismo.sede_id == sede_id)
+    return query.offset(skip).limit(limit).all()
 
 
-def _group_member_role_values(item):
+def _group_participant_role_values(item):
     role = str(getattr(item, "role", "") or "participante").strip()
     custom_role_id = getattr(item, "rol_personalizado_id", None)
     if role.startswith("custom:"):
@@ -724,7 +727,7 @@ def _group_member_role_values(item):
     return role or "participante", custom_role_id
 
 
-def create_cell_group(db: Session, payload: schemas.GrupoEvangelismoCreate, sede_id: str | None = None):
+def create_grupo(db: Session, payload: schemas.GrupoEvangelismoCreate, sede_id: str | None = None):
     data = payload.model_dump(exclude={"base_attendee_ids", "base_attendees_with_roles"})
     # Map evangelism_strategy_id -> estrategia_id.
     if data.get("evangelism_strategy_id") and not data.get("estrategia_id"):
@@ -748,9 +751,9 @@ def create_cell_group(db: Session, payload: schemas.GrupoEvangelismoCreate, sede
     if base_attendees_with_roles is not None:
         db.flush()  # Get the ID without committing
         for item in base_attendees_with_roles:
-            role, custom_role_id = _group_member_role_values(item)
+            role, custom_role_id = _group_participant_role_values(item)
             attendee = models.ParticipanteGrupo(
-                cell_group_id=db_obj.id,
+                grupo_id=db_obj.id,
                 persona_id=uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id,
                 role=role,
                 rol_personalizado_id=custom_role_id,
@@ -759,7 +762,7 @@ def create_cell_group(db: Session, payload: schemas.GrupoEvangelismoCreate, sede
     elif payload.base_attendee_ids:
         db.flush()  # Get the ID without committing
         for persona_id in payload.base_attendee_ids:
-            attendee = models.ParticipanteGrupo(cell_group_id=db_obj.id, persona_id=persona_id, role="asistente")
+            attendee = models.ParticipanteGrupo(grupo_id=db_obj.id, persona_id=persona_id, role="asistente")
             db.add(attendee)
 
     db.commit()
@@ -767,7 +770,7 @@ def create_cell_group(db: Session, payload: schemas.GrupoEvangelismoCreate, sede
     return db_obj
 
 
-def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangelismoUpdate):
+def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangelismoUpdate):
     house = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == house_id).first()
     if not house:
         return None
@@ -782,15 +785,15 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEv
         setattr(house, key, value)
 
     if payload.base_attendees_with_roles is not None:
-        db.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.cell_group_id == house_id).update(
+        db.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == house_id).update(
             {models.ParticipanteGrupo.deleted_at: _utcnow(), models.ParticipanteGrupo.activo: False},
             synchronize_session=False,
         )
         for item in payload.base_attendees_with_roles:
-            role, custom_role_id = _group_member_role_values(item)
+            role, custom_role_id = _group_participant_role_values(item)
             p_id = uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id
             existing = db.query(models.ParticipanteGrupo).filter(
-                models.ParticipanteGrupo.cell_group_id == house_id,
+                models.ParticipanteGrupo.grupo_id == house_id,
                 models.ParticipanteGrupo.persona_id == p_id
             ).first()
             if existing:
@@ -801,15 +804,15 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEv
             else:
                 db.add(
                     models.ParticipanteGrupo(
-                        cell_group_id=house_id,
+                        grupo_id=house_id,
                         persona_id=p_id,
                         role=role,
                         rol_personalizado_id=custom_role_id,
                     )
                 )
-        # Sincronizar lider_persona_id, asistente_persona_id y anfitrion_persona_id desde los miembros
+        # Sincronizar lider_persona_id, asistente_persona_id y anfitrion_persona_id desde los participantes.
         _SUBORDINATE_TOKENS = {"co", "colider", "colíder", "asistente", "del"}
-        db.flush()  # para que los nuevos CellGroupMember tengan IDs asignados
+        db.flush()
         
         new_leader_id = None
         new_assistant_id = None
@@ -850,14 +853,14 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEv
         house.asistente_persona_id = new_assistant_id
         house.anfitrion_persona_id = new_host_id
     elif payload.base_attendee_ids is not None:
-        db.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.cell_group_id == house_id).update(
+        db.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == house_id).update(
             {models.ParticipanteGrupo.deleted_at: _utcnow(), models.ParticipanteGrupo.activo: False},
             synchronize_session=False,
         )
         for persona_id in payload.base_attendee_ids:
             p_id = uuid.UUID(str(persona_id)) if isinstance(persona_id, str) else persona_id
             existing = db.query(models.ParticipanteGrupo).filter(
-                models.ParticipanteGrupo.cell_group_id == house_id,
+                models.ParticipanteGrupo.grupo_id == house_id,
                 models.ParticipanteGrupo.persona_id == p_id
             ).first()
             if existing:
@@ -867,17 +870,17 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEv
             else:
                 db.add(
                     models.ParticipanteGrupo(
-                        cell_group_id=house_id,
+                        grupo_id=house_id,
                         persona_id=p_id,
                         role="miembro",
                     )
                 )
 
     db.flush()
-    house.members_count = (
+    house.personas_count = (
         db.query(models.ParticipanteGrupo)
         .filter(
-            models.ParticipanteGrupo.cell_group_id == house_id,
+            models.ParticipanteGrupo.grupo_id == house_id,
             models.ParticipanteGrupo.deleted_at.is_(None),
         )
         .count()
@@ -892,13 +895,13 @@ def update_cell_group(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEv
 
 
 def get_talents(db: Session, search: str | None = None):
-    return search_members(db, search=search)
+    return search_personas(db, search=search)
 
 
 def get_families(db: Session, skip: int = 0, limit: int = 100):
     families = db.query(models.Family).offset(skip).limit(limit).all()
     for f in families:
-        f.members_count = db.query(models.Persona).filter(models.Persona.family_id == f.id).count()
+        f.personas_count = db.query(models.Persona).filter(models.Persona.family_id == f.id).count()
     return families
 
 
@@ -922,7 +925,7 @@ def get_persona_timeline(db: Session, persona_id: str):
 
     timeline.append(
         {
-            "type": "membership",
+            "type": "participation",
             "title": "Ingreso a la Familia CCF",
             "description": f"Registro formal como {persona.church_role}.",
             "date": persona.created_at.isoformat(),
@@ -955,7 +958,7 @@ def get_persona_timeline(db: Session, persona_id: str):
                 }
             )
 
-    ministries = db.query(models.MemberMinistry).filter(models.MemberMinistry.persona_id == persona_id).all()
+    ministries = db.query(models.PersonaMinistryAssignment).filter(models.PersonaMinistryAssignment.persona_id == persona_id).all()
     for mm in ministries:
         timeline.append(
             {
@@ -1119,10 +1122,10 @@ def create_milestone(
     return row
 
 
-# ── Family Members ──────────────────────────────────────
+# ── Family Personas ──────────────────────────────────────
 
 
-def get_family_members(db: Session, family_id: int):
+def get_family_personas(db: Session, family_id: int):
     return (
         db.query(models.Persona)
         .filter(models.Persona.family_id == family_id)
@@ -1186,7 +1189,7 @@ def create_community_card(db: Session, card: schemas.CommunityBoardCardCreate) -
 
 # ── Missing CRUDs ──────────────────────────────────────
 
-# ── Members ─────────────────────────────────────────────
+# ── Personas ─────────────────────────────────────────────
 
 
 # ── CRM Events ─────────────────────────────────────────
@@ -1345,11 +1348,11 @@ def delete_prayer_request(db: Session, request_id: int) -> bool:
 # ── Grupos ───────────────────────────────────────
 
 
-def get_cell_group(db: Session, house_id: uuid.UUID) -> Optional[models.GrupoEvangelismo]:
+def get_grupo(db: Session, house_id: uuid.UUID) -> Optional[models.GrupoEvangelismo]:
     return db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == house_id).first()
 
 
-def delete_cell_group(db: Session, house_id: uuid.UUID) -> bool:
+def delete_grupo(db: Session, house_id: uuid.UUID) -> bool:
     row = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == house_id).first()
     if not row:
         return False

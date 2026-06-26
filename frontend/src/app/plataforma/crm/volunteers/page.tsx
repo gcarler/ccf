@@ -293,18 +293,18 @@ export default function VolunteersPage() {
                     {/* By Team Groups */}
                     {!loading && filtered.length > 0 && (
                         <div className="space-y-3">
-                            {Object.entries(byTeam).map(([team, members]) => (
+                            {Object.entries(byTeam).map(([team, personas]) => (
                                 <div key={team}>
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className={`size-8 rounded-md bg-gradient-to-br ${getTeamColor(team)} flex items-center justify-center text-white`}>
                                             <Users size={14} />
                                         </div>
                                         <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">{team}</h3>
-                                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 rounded-full">{members.length}</span>
+                                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 rounded-full">{personas.length}</span>
                                         <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {members.map((v, idx) => (
+                                        {personas.map((v, idx) => (
                                             <motion.div
                                                 key={v.id}
                                                 initial={{ opacity: 0, y: 12 }}

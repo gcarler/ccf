@@ -29,14 +29,14 @@ import Link from 'next/link';
 function MentorAssignmentDrawer({
     open,
     onClose,
-    memberName,
+    personaName,
     title = 'Asignar Mentoría',
 }: {
     open: boolean;
     onClose: () => void;
-    memberName: string;
+    personaName: string;
     token: string | null;
-    memberId: string;
+    personaId: string;
     title?: string;
 }) {
     return (
@@ -44,7 +44,7 @@ function MentorAssignmentDrawer({
             isOpen={open}
             onClose={onClose}
             title={title}
-            subtitle={`Para: ${memberName}`}
+            subtitle={`Para: ${personaName}`}
             actions={
                 <button onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
                     Cerrar
@@ -93,20 +93,20 @@ import {
   EDUCATION_STATUSES,
   BLOOD_TYPES,
   HOUSING_TYPES,
-  MEMBERSHIP_TYPES,
+  PARTICIPATION_TYPES,
   ATTENDANCE_TYPES,
 } from '@/types/crm';
 import { FormSection, SelectField, EditField, QuickStat, HealthIndicator, EmptyState, InfoGrid } from '@/components/crm/ui';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function MemberDetailPage() {
+export default function PersonaDetailPage() {
     const params = useParams();
     const id = Array.isArray(params?.id) ? params.id[0] : (params?.id ?? '');
     const router = useRouter();
     const { token } = useAuth();
     const { canEditCrm } = useCrmAccess();
-    const [member, setMember] = useState<any>(null);
+    const [persona, setPersona] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('overview');
     const [mentorDrawerOpen, setMentorDrawerOpen] = useState(false);
@@ -115,7 +115,7 @@ export default function MemberDetailPage() {
         subtitle: 'Selecciona el mentor que guiará el proceso espiritual de este persona.',
     });
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const [editMember, setEditMember] = useState<any>({});
+    const [editPersona, setEditPersona] = useState<any>({});
     const [isEditSaving, setIsEditSaving] = useState(false);
     const [departments, setDepartments] = useState<any[]>([]);
     const [editCities, setEditCities] = useState<any[]>([]);
@@ -129,7 +129,7 @@ export default function MemberDetailPage() {
 
     useEffect(() => {
         const abortCtrl = new AbortController();
-        const fetchMember = async () => {
+        const fetchPersona = async () => {
             try {
                 const data = await apiFetch<any>(`/crm/personas/${id}`, { token, signal: abortCtrl.signal });
                 const m = {
@@ -168,7 +168,7 @@ export default function MemberDetailPage() {
                     economic_sector: data.economic_sector ?? '',
                     blood_type: data.blood_type ?? '',
                     medical_notes: data.medical_notes ?? '',
-                    membership_type: data.membership_type ?? '',
+                    participation_type: data.participation_type ?? '',
                     attendance_type: data.attendance_type ?? '',
                     group_name: data.group_name ?? '',
                     campus: data.campus ?? '',
@@ -187,11 +187,11 @@ export default function MemberDetailPage() {
                     last_group_attendance: data.last_group_attendance ?? null,
                     last_meeting_attendance: data.last_meeting_attendance ?? null,
                 };
-                setMember(m);
-                setEditMember({ ...m });
+                setPersona(m);
+                setEditPersona({ ...m });
             } catch {
                 if (!abortCtrl.signal.aborted) {
-                    setMember(null);
+                    setPersona(null);
                 }
             } finally {
                 if (!abortCtrl.signal.aborted) {
@@ -199,7 +199,7 @@ export default function MemberDetailPage() {
                 }
             }
         };
-        fetchMember();
+        fetchPersona();
         // Load departments for display
         apiFetch<any[]>('/crm/colombian-departments', { token, signal: abortCtrl.signal })
             .then(setDepartments)
@@ -213,18 +213,18 @@ export default function MemberDetailPage() {
 
     // Load cities for edit drawer cascade
     useEffect(() => {
-        if (!token || !editMember.colombian_department_id) {
+        if (!token || !editPersona.colombian_department_id) {
             setEditCities([]);
             return;
         }
         setLoadingEditCities(true);
-        apiFetch<any[]>(`/crm/colombian-departments/${editMember.colombian_department_id}/cities`, { token })
+        apiFetch<any[]>(`/crm/colombian-departments/${editPersona.colombian_department_id}/cities`, { token })
             .then(setEditCities)
             .catch(() => setEditCities([]))
             .finally(() => setLoadingEditCities(false));
-    }, [token, editMember.colombian_department_id]);
+    }, [token, editPersona.colombian_department_id]);
 
-    const handleSaveMember = async () => {
+    const handleSavePersona = async () => {
         if (!token) return;
         setIsEditSaving(true);
         try {
@@ -234,7 +234,7 @@ export default function MemberDetailPage() {
                 'id_type','id_number','birth_country','sex','marital_status','birthday',
                 'landline_phone','other_phone','mobile_phone','address','housing_type',
                 'colombian_department_id','city','education_level','education_status','profession','economic_sector',
-                'blood_type','medical_notes','membership_type','attendance_type','group_name','campus',
+                'blood_type','medical_notes','participation_type','attendance_type','group_name','campus',
                 'church_join_date','baptism_date','responsible_adult_name','responsible_adult_contact',
                 'guardian_name','guardian_contact','talents','spiritual_gifts','pastoral_notes',
                 'registration_reason','unregistration_reason','registration_date','unregistration_date',
@@ -242,10 +242,10 @@ export default function MemberDetailPage() {
             ];
             const dateFields = ['birthday','church_join_date','baptism_date','registration_date','unregistration_date','last_group_attendance','last_meeting_attendance'];
             fields.forEach(k => {
-                let val = editMember[k];
+                let val = editPersona[k];
                 if (dateFields.includes(k) && !val) val = null;
                 // Only send changed values
-                if (String(val) !== String(member[k])) {
+                if (String(val) !== String(persona[k])) {
                     body[k] = val;
                 }
             });
@@ -255,8 +255,8 @@ export default function MemberDetailPage() {
             const updated = await apiFetch<any>(`/crm/personas/${id}`, {
                 method: 'PATCH', token, body,
             });
-            setMember((prev: any) => ({ ...prev, ...updated }));
-            setEditMember((prev: any) => ({ ...prev, ...updated }));
+            setPersona((prev: any) => ({ ...prev, ...updated }));
+            setEditPersona((prev: any) => ({ ...prev, ...updated }));
             setIsEditOpen(false);
             toast.success('Persona actualizada');
         } catch {
@@ -299,7 +299,7 @@ export default function MemberDetailPage() {
         </div>
     );
 
-    if (!member) return (
+    if (!persona) return (
         <div className="h-full flex flex-col items-center justify-center gap-4 text-center p-4">
             <AlertCircle size={48} className="text-slate-300" />
             <div>
@@ -312,8 +312,8 @@ export default function MemberDetailPage() {
         </div>
     );
 
-    const fullName = member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim();
-    const nameParts = (member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`).trim().split(/\s+/);
+    const fullName = persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim();
+    const nameParts = (persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`).trim().split(/\s+/);
     const initials = (nameParts[0]?.[0] ?? '') + (nameParts.length > 1 ? nameParts[nameParts.length - 1]?.[0] ?? '' : '');
 
     const TABS: { id: Tab; label: string; icon: any }[] = [
@@ -361,23 +361,23 @@ export default function MemberDetailPage() {
                     <div className="flex-1 space-y-2">
                         <div className="space-y-2">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 rounded-full text-[10px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide border border-blue-100 dark:border-blue-500/20">
-                                ID: #{member.id} <span className="text-slate-300">•</span> {member.status}
+                                ID: #{persona.id} <span className="text-slate-300">•</span> {persona.status}
                             </div>
                             <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter">{fullName}</h1>
-                            <p className="text-sm text-slate-500 font-semibold">{member.church_role}</p>
+                            <p className="text-sm text-slate-500 font-semibold">{persona.church_role}</p>
                         </div>
                         <div className="flex flex-wrap gap-3 items-center">
-                            {member.email !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Mail size={16} className="text-[hsl(var(--primary))]" /> {member.email}</span>}
-                            {member.phone !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Phone size={16} className="text-emerald-500" /> {member.phone}</span>}
-                            {member.address !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><MapPin size={16} className="text-rose-500" /> {member.address}</span>}
+                            {persona.email !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Mail size={16} className="text-[hsl(var(--primary))]" /> {persona.email}</span>}
+                            {persona.phone !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Phone size={16} className="text-emerald-500" /> {persona.phone}</span>}
+                            {persona.address !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><MapPin size={16} className="text-rose-500" /> {persona.address}</span>}
                         </div>
                     </div>
 
                     {/* Quick Stats */}
                     <div className="flex flex-row lg:flex-col gap-3 shrink-0">
-                        <QuickStat label="Puntos MESH" value={member.xp} icon={Star} color="text-amber-500" />
-                        <QuickStat label="Nivel" value={member.level} icon={Zap} color="text-[hsl(var(--primary))]" />
-                        <QuickStat label="Grupo" value={member.house} icon={Heart} color="text-rose-500" />
+                        <QuickStat label="Puntos MESH" value={persona.xp} icon={Star} color="text-amber-500" />
+                        <QuickStat label="Nivel" value={persona.level} icon={Zap} color="text-[hsl(var(--primary))]" />
+                        <QuickStat label="Grupo" value={persona.house} icon={Heart} color="text-rose-500" />
                     </div>
                 </div>
             </motion.section>
@@ -397,7 +397,7 @@ export default function MemberDetailPage() {
                         >
                             <Icon size={14} />
                             {label}
-                            {active && <motion.div layoutId="member-tab-indicator" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[hsl(var(--primary))] rounded-t-full shadow-[0_0_8px_rgba(37,99,235,0.5)]" />}
+                            {active && <motion.div layoutId="persona-tab-indicator" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[hsl(var(--primary))] rounded-t-full shadow-[0_0_8px_rgba(37,99,235,0.5)]" />}
                         </button>
                     );
                 })}
@@ -420,15 +420,15 @@ export default function MemberDetailPage() {
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Perfil de Consolidación</h3>
                                 <InfoGrid items={[
-                                    { label: 'Fecha de Ingreso', value: formatDate(member.joinedAt), icon: Calendar },
-                                    { label: 'Fecha de Nacimiento', value: formatDate(member.birthday), icon: Calendar },
-                                    { label: 'Grupo', value: member.house, icon: Heart },
-                                    { label: 'Rol en Ministerio', value: member.church_role, icon: ShieldCheck },
+                                    { label: 'Fecha de Ingreso', value: formatDate(persona.joinedAt), icon: Calendar },
+                                    { label: 'Fecha de Nacimiento', value: formatDate(persona.birthday), icon: Calendar },
+                                    { label: 'Grupo', value: persona.house, icon: Heart },
+                                    { label: 'Rol en Ministerio', value: persona.church_role, icon: ShieldCheck },
                                 ]} />
-                                {member.pastoral_notes && (
+                                {persona.pastoral_notes && (
                                     <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5">
                                         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">Notas Pastorales</p>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic">&ldquo;{member.pastoral_notes}&rdquo;</p>
+                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic">&ldquo;{persona.pastoral_notes}&rdquo;</p>
                                     </div>
                                 )}
                             </div>
@@ -437,53 +437,53 @@ export default function MemberDetailPage() {
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Datos Personales</h3>
                                 <InfoGrid items={[
-                                    { label: 'Tipo de ID', value: member.id_type },
-                                    { label: 'Número de ID', value: member.id_number },
-                                    { label: 'Segundo Nombre', value: member.second_name },
-                                    { label: 'Segundo Apellido', value: member.second_last_name },
-                                    { label: 'Estado Civil', value: member.marital_status },
-                                    { label: 'País de Nacimiento', value: member.birth_country },
-                                    { label: 'Sexo', value: member.sex },
-                                    { label: 'Tipo de Participación', value: member.membership_type },
+                                    { label: 'Tipo de ID', value: persona.id_type },
+                                    { label: 'Número de ID', value: persona.id_number },
+                                    { label: 'Segundo Nombre', value: persona.second_name },
+                                    { label: 'Segundo Apellido', value: persona.second_last_name },
+                                    { label: 'Estado Civil', value: persona.marital_status },
+                                    { label: 'País de Nacimiento', value: persona.birth_country },
+                                    { label: 'Sexo', value: persona.sex },
+                                    { label: 'Tipo de Participación', value: persona.participation_type },
                                 ]} />
                             </div>
 
                             {/* Contacto y Ubicación */}
-                            {(member.landline_phone || member.address || member.city) && (
+                            {(persona.landline_phone || persona.address || persona.city) && (
                                 <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Contacto y Ubicación</h3>
                                     <InfoGrid items={[
-                                        { label: 'Teléfono Fijo', value: member.landline_phone },
-                                        { label: 'Celular', value: member.mobile_phone },
-                                        { label: 'Otro Teléfono', value: member.other_phone },
-                                        { label: 'Dirección', value: member.address },
-                                        { label: 'Tipo de Vivienda', value: member.housing_type },
-                                        { label: 'Departamento', value: getDeptName(departments, member.colombian_department_id) },
-                                        { label: 'Ciudad', value: member.city },
+                                        { label: 'Teléfono Fijo', value: persona.landline_phone },
+                                        { label: 'Celular', value: persona.mobile_phone },
+                                        { label: 'Otro Teléfono', value: persona.other_phone },
+                                        { label: 'Dirección', value: persona.address },
+                                        { label: 'Tipo de Vivienda', value: persona.housing_type },
+                                        { label: 'Departamento', value: getDeptName(departments, persona.colombian_department_id) },
+                                        { label: 'Ciudad', value: persona.city },
                                     ]} />
                                 </div>
                             )}
 
                             {/* Educación y Profesión */}
-                            {(member.profession || member.education_level) && (
+                            {(persona.profession || persona.education_level) && (
                                 <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Educación y Profesión</h3>
                                     <InfoGrid items={[
-                                        { label: 'Nivel Educativo', value: member.education_level },
-                                        { label: 'Estado Educativo', value: member.education_status },
-                                        { label: 'Profesión', value: member.profession },
-                                        { label: 'Sector Económico', value: member.economic_sector },
+                                        { label: 'Nivel Educativo', value: persona.education_level },
+                                        { label: 'Estado Educativo', value: persona.education_status },
+                                        { label: 'Profesión', value: persona.profession },
+                                        { label: 'Sector Económico', value: persona.economic_sector },
                                     ]} />
                                 </div>
                             )}
 
                             {/* Médico */}
-                            {(member.blood_type || member.medical_notes) && (
+                            {(persona.blood_type || persona.medical_notes) && (
                                 <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Información Médica</h3>
                                     <InfoGrid items={[
-                                        { label: 'Tipo de Sangre', value: member.blood_type },
-                                        { label: 'Notas Médicas', value: member.medical_notes },
+                                        { label: 'Tipo de Sangre', value: persona.blood_type },
+                                        { label: 'Notas Médicas', value: persona.medical_notes },
                                     ]} />
                                 </div>
                             )}
@@ -496,9 +496,9 @@ export default function MemberDetailPage() {
                                         <Plus size={12} /> Añadir
                                     </button>
                                 </div>
-                                {member.family.length > 0 ? (
+                                {persona.family.length > 0 ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {member.family.map((f: any) => (
+                                        {persona.family.map((f: any) => (
                                             <div key={f.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all cursor-pointer">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-9 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/10">
@@ -566,16 +566,16 @@ export default function MemberDetailPage() {
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Datos Espirituales</h3>
                                 <InfoGrid items={[
-                                    { label: 'Fecha de Bautismo', value: formatDate(member.baptism_date), icon: CheckCircle2 },
-                                    { label: 'Grupo', value: member.house, icon: Heart },
-                                    { label: 'Estado Espiritual', value: member.status, icon: ShieldCheck },
-                                    { label: 'Rol en la Iglesia', value: member.church_role, icon: Star },
+                                    { label: 'Fecha de Bautismo', value: formatDate(persona.baptism_date), icon: CheckCircle2 },
+                                    { label: 'Grupo', value: persona.house, icon: Heart },
+                                    { label: 'Estado Espiritual', value: persona.status, icon: ShieldCheck },
+                                    { label: 'Rol en la Iglesia', value: persona.church_role, icon: Star },
                                 ]} />
-                                {member.spiritual_gifts ? (
+                                {persona.spiritual_gifts ? (
                                     <div className="space-y-3">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dones Espirituales</p>
                                         <div className="flex flex-wrap gap-2">
-                                            {member.spiritual_gifts.split(',').map((gift: string, i: number) => (
+                                            {persona.spiritual_gifts.split(',').map((gift: string, i: number) => (
                                                 <span key={i} className="px-3 py-1.5 bg-blue-50 dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-blue-300 text-[11px] font-bold rounded-md border border-blue-100 dark:border-[hsl(var(--primary))]/20 uppercase tracking-wide">
                                                     {gift.trim()}
                                                 </span>
@@ -587,10 +587,10 @@ export default function MemberDetailPage() {
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dones espirituales no registrados</p>
                                     </div>
                                 )}
-                                {member.talents ? (
+                                {persona.talents ? (
                                     <div className="space-y-3">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Talentos y Habilidades</p>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{member.talents}</p>
+                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{persona.talents}</p>
                                     </div>
                                 ) : null}
                             </div>
@@ -743,13 +743,13 @@ export default function MemberDetailPage() {
             <MentorAssignmentDrawer
                 open={mentorDrawerOpen}
                 onClose={() => setMentorDrawerOpen(false)}
-                memberName={fullName}
+                personaName={fullName}
                 token={token}
-                memberId={id}
+                personaId={id}
                 title={mentorDrawerConfig.title}
             />
 
-            {/* Edit Member Drawer */}
+            {/* Edit Persona Drawer */}
             <WorkspaceDrawer
                 isOpen={isEditOpen}
                 onClose={() => setIsEditOpen(false)}
@@ -758,7 +758,7 @@ export default function MemberDetailPage() {
                 actions={
                     <>
                         <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700">Cancelar</button>
-                        <button type="button" onClick={handleSaveMember} disabled={isEditSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
+                        <button type="button" onClick={handleSavePersona} disabled={isEditSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
                             {isEditSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Guardar
                         </button>
@@ -770,63 +770,63 @@ export default function MemberDetailPage() {
                     <div className="rounded-lg overflow-hidden">
                         <div className="px-3 py-2 space-y-2">
                             <div className="grid grid-cols-2 gap-3">
-                                <EditField label="Nombre" value={editMember.first_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, first_name: v}))} placeholder="Juan" />
-                                <EditField label="Apellido" value={editMember.last_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, last_name: v}))} placeholder="Pérez" />
+                                <EditField label="Nombre" value={editPersona.first_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, first_name: v}))} placeholder="Juan" />
+                                <EditField label="Apellido" value={editPersona.last_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, last_name: v}))} placeholder="Pérez" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <EditField label="Segundo Nombre" value={editMember.second_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, second_name: v}))} placeholder="José" />
-                                <EditField label="Segundo Apellido" value={editMember.second_last_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, second_last_name: v}))} placeholder="García" />
+                                <EditField label="Segundo Nombre" value={editPersona.second_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, second_name: v}))} placeholder="José" />
+                                <EditField label="Segundo Apellido" value={editPersona.second_last_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, second_last_name: v}))} placeholder="García" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <EditField label="Correo" type="email" value={editMember.email ?? ''} onChange={v => setEditMember((p: any) => ({...p, email: v}))} placeholder="correo@ejemplo.com" />
-                                <EditField label="Teléfono" value={editMember.phone ?? ''} onChange={v => setEditMember((p: any) => ({...p, phone: v}))} placeholder="+57 300 000 0000" />
+                                <EditField label="Correo" type="email" value={editPersona.email ?? ''} onChange={v => setEditPersona((p: any) => ({...p, email: v}))} placeholder="correo@ejemplo.com" />
+                                <EditField label="Teléfono" value={editPersona.phone ?? ''} onChange={v => setEditPersona((p: any) => ({...p, phone: v}))} placeholder="+57 300 000 0000" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <SelectField label="Rol" value={editMember.church_role ?? ''} onChange={v => setEditMember((p: any) => ({...p, church_role: v}))} options={['Persona','Pastor','Líder','Diácono','Ministro de Culto','Apóstol','Profeta','Evangelista','Maestro','Administrador']} />
-                                <SelectField label="Tipo de Participación" value={editMember.membership_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, membership_type: v}))} options={MEMBERSHIP_TYPES} />
+                                <SelectField label="Rol" value={editPersona.church_role ?? ''} onChange={v => setEditPersona((p: any) => ({...p, church_role: v}))} options={['Persona','Pastor','Líder','Diácono','Ministro de Culto','Apóstol','Profeta','Evangelista','Maestro','Administrador']} />
+                                <SelectField label="Tipo de Participación" value={editPersona.participation_type ?? ''} onChange={v => setEditPersona((p: any) => ({...p, participation_type: v}))} options={PARTICIPATION_TYPES} />
                             </div>
                         </div>
                     </div>
 
                     <FormSection title="Identificación">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Tipo de ID" value={editMember.id_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, id_type: v}))} options={ID_TYPES} />
-                            <EditField label="Número de ID" value={editMember.id_number ?? ''} onChange={v => setEditMember((p: any) => ({...p, id_number: v}))} placeholder="1234567890" />
+                            <SelectField label="Tipo de ID" value={editPersona.id_type ?? ''} onChange={v => setEditPersona((p: any) => ({...p, id_type: v}))} options={ID_TYPES} />
+                            <EditField label="Número de ID" value={editPersona.id_number ?? ''} onChange={v => setEditPersona((p: any) => ({...p, id_number: v}))} placeholder="1234567890" />
                         </div>
                     </FormSection>
 
                     <FormSection title="Información Personal">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Sexo" value={editMember.sex ?? ''} onChange={v => setEditMember((p: any) => ({...p, sex: v}))} options={SEX_OPTIONS} />
-                            <SelectField label="Estado Civil" value={editMember.marital_status ?? ''} onChange={v => setEditMember((p: any) => ({...p, marital_status: v}))} options={MARITAL_STATUSES} />
+                            <SelectField label="Sexo" value={editPersona.sex ?? ''} onChange={v => setEditPersona((p: any) => ({...p, sex: v}))} options={SEX_OPTIONS} />
+                            <SelectField label="Estado Civil" value={editPersona.marital_status ?? ''} onChange={v => setEditPersona((p: any) => ({...p, marital_status: v}))} options={MARITAL_STATUSES} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="País de Nacimiento" value={editMember.birth_country ?? ''} onChange={v => setEditMember((p: any) => ({...p, birth_country: v}))} placeholder="Colombia" />
-                            <EditField label="Fecha de Nacimiento" type="date" value={editMember.birthday ? editMember.birthday.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, birthday: v}))} placeholder="" />
+                            <EditField label="País de Nacimiento" value={editPersona.birth_country ?? ''} onChange={v => setEditPersona((p: any) => ({...p, birth_country: v}))} placeholder="Colombia" />
+                            <EditField label="Fecha de Nacimiento" type="date" value={editPersona.birthday ? editPersona.birthday.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, birthday: v}))} placeholder="" />
                         </div>
                     </FormSection>
 
                     <FormSection title="Contacto y Ubicación">
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Teléfono Fijo" value={editMember.landline_phone ?? ''} onChange={v => setEditMember((p: any) => ({...p, landline_phone: v}))} placeholder="+57 1 000 0000" />
-                            <EditField label="Otro Teléfono" value={editMember.other_phone ?? ''} onChange={v => setEditMember((p: any) => ({...p, other_phone: v}))} placeholder="+57 300 000 0000" />
+                            <EditField label="Teléfono Fijo" value={editPersona.landline_phone ?? ''} onChange={v => setEditPersona((p: any) => ({...p, landline_phone: v}))} placeholder="+57 1 000 0000" />
+                            <EditField label="Otro Teléfono" value={editPersona.other_phone ?? ''} onChange={v => setEditPersona((p: any) => ({...p, other_phone: v}))} placeholder="+57 300 000 0000" />
                         </div>
-                        <EditField label="Dirección" value={editMember.address ?? ''} onChange={v => setEditMember((p: any) => ({...p, address: v}))} placeholder="Cra 1 # 2-3, Barrio..." />
+                        <EditField label="Dirección" value={editPersona.address ?? ''} onChange={v => setEditPersona((p: any) => ({...p, address: v}))} placeholder="Cra 1 # 2-3, Barrio..." />
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Tipo de Vivienda" value={editMember.housing_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, housing_type: v}))} options={HOUSING_TYPES} />
-                            <EditField label="Celular" value={editMember.mobile_phone ?? ''} onChange={v => setEditMember((p: any) => ({...p, mobile_phone: v}))} placeholder="+57 300 000 0000" />
+                            <SelectField label="Tipo de Vivienda" value={editPersona.housing_type ?? ''} onChange={v => setEditPersona((p: any) => ({...p, housing_type: v}))} options={HOUSING_TYPES} />
+                            <EditField label="Celular" value={editPersona.mobile_phone ?? ''} onChange={v => setEditPersona((p: any) => ({...p, mobile_phone: v}))} placeholder="+57 300 000 0000" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Departamento</label>
-                                <select value={editMember.colombian_department_id ?? ''} onChange={e => setEditMember((p: any) => ({ ...p, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <select value={editPersona.colombian_department_id ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">Seleccionar departamento</option>
                                     {departments.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Ciudad</label>
-                                <select value={editMember.city ?? ''} onChange={e => setEditMember((p: any) => ({ ...p, city: e.target.value }))} disabled={!editMember.colombian_department_id || loadingEditCities} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <select value={editPersona.city ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, city: e.target.value }))} disabled={!editPersona.colombian_department_id || loadingEditCities} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">{loadingEditCities ? 'Cargando ciudades...' : 'Seleccionar ciudad'}</option>
                                     {editCities.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                                 </select>
@@ -836,61 +836,61 @@ export default function MemberDetailPage() {
 
                     <FormSection title="Educación y Profesión">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Nivel Educativo" value={editMember.education_level ?? ''} onChange={v => setEditMember((p: any) => ({...p, education_level: v}))} options={EDUCATION_LEVELS} />
-                            <SelectField label="Estado Educativo" value={editMember.education_status ?? ''} onChange={v => setEditMember((p: any) => ({...p, education_status: v}))} options={EDUCATION_STATUSES} />
+                            <SelectField label="Nivel Educativo" value={editPersona.education_level ?? ''} onChange={v => setEditPersona((p: any) => ({...p, education_level: v}))} options={EDUCATION_LEVELS} />
+                            <SelectField label="Estado Educativo" value={editPersona.education_status ?? ''} onChange={v => setEditPersona((p: any) => ({...p, education_status: v}))} options={EDUCATION_STATUSES} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Profesión" value={editMember.profession ?? ''} onChange={v => setEditMember((p: any) => ({...p, profession: v}))} placeholder="Ingeniero, Abogado..." />
-                            <EditField label="Sector Económico" value={editMember.economic_sector ?? ''} onChange={v => setEditMember((p: any) => ({...p, economic_sector: v}))} placeholder="Salud, Educación..." />
+                            <EditField label="Profesión" value={editPersona.profession ?? ''} onChange={v => setEditPersona((p: any) => ({...p, profession: v}))} placeholder="Ingeniero, Abogado..." />
+                            <EditField label="Sector Económico" value={editPersona.economic_sector ?? ''} onChange={v => setEditPersona((p: any) => ({...p, economic_sector: v}))} placeholder="Salud, Educación..." />
                         </div>
                     </FormSection>
 
                     <FormSection title="Información Médica">
-                        <SelectField label="Tipo de Sangre" value={editMember.blood_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, blood_type: v}))} options={BLOOD_TYPES} />
-                        <EditField label="Notas Médicas" value={editMember.medical_notes ?? ''} onChange={v => setEditMember((p: any) => ({...p, medical_notes: v}))} placeholder="Alergias, condiciones..." />
+                        <SelectField label="Tipo de Sangre" value={editPersona.blood_type ?? ''} onChange={v => setEditPersona((p: any) => ({...p, blood_type: v}))} options={BLOOD_TYPES} />
+                        <EditField label="Notas Médicas" value={editPersona.medical_notes ?? ''} onChange={v => setEditPersona((p: any) => ({...p, medical_notes: v}))} placeholder="Alergias, condiciones..." />
                     </FormSection>
 
                     <FormSection title="Información de Iglesia">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Tipo de Asistencia" value={editMember.attendance_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, attendance_type: v}))} options={ATTENDANCE_TYPES} />
-                            <EditField label="Grupo" value={editMember.group_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, group_name: v}))} placeholder="Grupo 1, Casa de Paz..." />
+                            <SelectField label="Tipo de Asistencia" value={editPersona.attendance_type ?? ''} onChange={v => setEditPersona((p: any) => ({...p, attendance_type: v}))} options={ATTENDANCE_TYPES} />
+                            <EditField label="Grupo" value={editPersona.group_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, group_name: v}))} placeholder="Grupo 1, Casa de Paz..." />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Campus / Sede" value={editMember.campus ?? ''} onChange={v => setEditMember((p: any) => ({...p, campus: v}))} placeholder="Principal, Norte..." />
-                            <EditField label="Fecha de Ingreso" type="date" value={editMember.church_join_date ? editMember.church_join_date.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, church_join_date: v}))} placeholder="" />
+                            <EditField label="Campus / Sede" value={editPersona.campus ?? ''} onChange={v => setEditPersona((p: any) => ({...p, campus: v}))} placeholder="Principal, Norte..." />
+                            <EditField label="Fecha de Ingreso" type="date" value={editPersona.church_join_date ? editPersona.church_join_date.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, church_join_date: v}))} placeholder="" />
                         </div>
-                        <EditField label="Fecha de Bautismo" type="date" value={editMember.baptism_date ? editMember.baptism_date.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, baptism_date: v}))} placeholder="" />
+                        <EditField label="Fecha de Bautismo" type="date" value={editPersona.baptism_date ? editPersona.baptism_date.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, baptism_date: v}))} placeholder="" />
                     </FormSection>
 
                     <FormSection title="Información Familiar">
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Nombre del Responsable" value={editMember.responsible_adult_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, responsible_adult_name: v}))} placeholder="Nombre completo" />
-                            <EditField label="Contacto del Responsable" value={editMember.responsible_adult_contact ?? ''} onChange={v => setEditMember((p: any) => ({...p, responsible_adult_contact: v}))} placeholder="Teléfono" />
+                            <EditField label="Nombre del Responsable" value={editPersona.responsible_adult_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, responsible_adult_name: v}))} placeholder="Nombre completo" />
+                            <EditField label="Contacto del Responsable" value={editPersona.responsible_adult_contact ?? ''} onChange={v => setEditPersona((p: any) => ({...p, responsible_adult_contact: v}))} placeholder="Teléfono" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Nombre del Acudiente" value={editMember.guardian_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, guardian_name: v}))} placeholder="Nombre completo" />
-                            <EditField label="Contacto del Acudiente" value={editMember.guardian_contact ?? ''} onChange={v => setEditMember((p: any) => ({...p, guardian_contact: v}))} placeholder="Teléfono" />
+                            <EditField label="Nombre del Acudiente" value={editPersona.guardian_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, guardian_name: v}))} placeholder="Nombre completo" />
+                            <EditField label="Contacto del Acudiente" value={editPersona.guardian_contact ?? ''} onChange={v => setEditPersona((p: any) => ({...p, guardian_contact: v}))} placeholder="Teléfono" />
                         </div>
                     </FormSection>
 
                     <FormSection title="Información Espiritual">
-                        <EditField label="Talentos y Habilidades" value={editMember.talents ?? ''} onChange={v => setEditMember((p: any) => ({...p, talents: v}))} placeholder="Canto, enseñanza, liderazgo..." />
-                        <EditField label="Dones Espirituales" value={editMember.spiritual_gifts ?? ''} onChange={v => setEditMember((p: any) => ({...p, spiritual_gifts: v}))} placeholder="Profecía, enseñanza, servicio..." />
-                        <EditField label="Notas Pastorales" value={editMember.pastoral_notes ?? ''} onChange={v => setEditMember((p: any) => ({...p, pastoral_notes: v}))} placeholder="Observaciones pastorales..." />
+                        <EditField label="Talentos y Habilidades" value={editPersona.talents ?? ''} onChange={v => setEditPersona((p: any) => ({...p, talents: v}))} placeholder="Canto, enseñanza, liderazgo..." />
+                        <EditField label="Dones Espirituales" value={editPersona.spiritual_gifts ?? ''} onChange={v => setEditPersona((p: any) => ({...p, spiritual_gifts: v}))} placeholder="Profecía, enseñanza, servicio..." />
+                        <EditField label="Notas Pastorales" value={editPersona.pastoral_notes ?? ''} onChange={v => setEditPersona((p: any) => ({...p, pastoral_notes: v}))} placeholder="Observaciones pastorales..." />
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Última Asistencia a Grupo" type="date" value={editMember.last_group_attendance ? editMember.last_group_attendance.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, last_group_attendance: v}))} placeholder="" />
-                            <EditField label="Última Asistencia a Reunión" type="date" value={editMember.last_meeting_attendance ? editMember.last_meeting_attendance.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, last_meeting_attendance: v}))} placeholder="" />
+                            <EditField label="Última Asistencia a Grupo" type="date" value={editPersona.last_group_attendance ? editPersona.last_group_attendance.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, last_group_attendance: v}))} placeholder="" />
+                            <EditField label="Última Asistencia a Reunión" type="date" value={editPersona.last_meeting_attendance ? editPersona.last_meeting_attendance.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, last_meeting_attendance: v}))} placeholder="" />
                         </div>
                     </FormSection>
 
                     <FormSection title="Información de Registro">
-                        <EditField label="Motivo de Registro" value={editMember.registration_reason ?? ''} onChange={v => setEditMember((p: any) => ({...p, registration_reason: v}))} placeholder="Conversión, transferencia..." />
-                        <EditField label="Motivo de Baja" value={editMember.unregistration_reason ?? ''} onChange={v => setEditMember((p: any) => ({...p, unregistration_reason: v}))} placeholder="Si aplica..." />
+                        <EditField label="Motivo de Registro" value={editPersona.registration_reason ?? ''} onChange={v => setEditPersona((p: any) => ({...p, registration_reason: v}))} placeholder="Conversión, transferencia..." />
+                        <EditField label="Motivo de Baja" value={editPersona.unregistration_reason ?? ''} onChange={v => setEditPersona((p: any) => ({...p, unregistration_reason: v}))} placeholder="Si aplica..." />
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Fecha de Registro" type="date" value={editMember.registration_date ? editMember.registration_date.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, registration_date: v}))} placeholder="" />
-                            <EditField label="Fecha de Baja" type="date" value={editMember.unregistration_date ? editMember.unregistration_date.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, unregistration_date: v}))} placeholder="" />
+                            <EditField label="Fecha de Registro" type="date" value={editPersona.registration_date ? editPersona.registration_date.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, registration_date: v}))} placeholder="" />
+                            <EditField label="Fecha de Baja" type="date" value={editPersona.unregistration_date ? editPersona.unregistration_date.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, unregistration_date: v}))} placeholder="" />
                         </div>
-                        <EditField label="Información Opcional" value={editMember.optional_info ?? ''} onChange={v => setEditMember((p: any) => ({...p, optional_info: v}))} placeholder="Notas adicionales..." />
+                        <EditField label="Información Opcional" value={editPersona.optional_info ?? ''} onChange={v => setEditPersona((p: any) => ({...p, optional_info: v}))} placeholder="Notas adicionales..." />
                     </FormSection>
                 </div>
             </WorkspaceDrawer>

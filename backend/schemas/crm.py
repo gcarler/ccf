@@ -329,7 +329,7 @@ class PersonaResponse(BaseModel):
     sex: Optional[str] = None
     last_group_attendance: Optional[date] = None
     last_meeting_attendance: Optional[date] = None
-    membership_type: Optional[str] = None
+    participation_type: Optional[str] = None
     attendance_type: Optional[str] = None
     group_name: Optional[str] = None
     campus: Optional[str] = None
@@ -383,7 +383,7 @@ class Persona(BaseModel):
     sex: Optional[str] = None
     last_group_attendance: Optional[date] = None
     last_meeting_attendance: Optional[date] = None
-    membership_type: Optional[str] = None
+    participation_type: Optional[str] = None
     attendance_type: Optional[str] = None
     group_name: Optional[str] = None
     campus: Optional[str] = None
@@ -450,7 +450,7 @@ class PersonaCreate(BaseModel):
     sex: Optional[str] = None
     last_group_attendance: Optional[date] = None
     last_meeting_attendance: Optional[date] = None
-    membership_type: Optional[str] = None
+    participation_type: Optional[str] = None
     attendance_type: Optional[str] = None
     group_name: Optional[str] = None
     campus: Optional[str] = None
@@ -503,7 +503,7 @@ class PersonaUpdate(BaseModel):
     sex: Optional[str] = None
     last_group_attendance: Optional[date] = None
     last_meeting_attendance: Optional[date] = None
-    membership_type: Optional[str] = None
+    participation_type: Optional[str] = None
     attendance_type: Optional[str] = None
     group_name: Optional[str] = None
     campus: Optional[str] = None
@@ -548,7 +548,7 @@ class Position(PositionBase):
     created_at: datetime
     model_config = orm_config
 
-# --- Ministry Membership (Persona <-> Ministerio con Rol) ---
+# --- Ministry Participation (Persona <-> Ministerio con Rol) ---
 
 MINISTRY_ROLES = [
     "Apóstol",
@@ -566,7 +566,7 @@ MINISTRY_ROLES = [
     "Visitante Online",
 ]
 
-class MemberMinistryBase(BaseModel):
+class PersonaMinistryAssignmentBase(BaseModel):
     persona_id: UUID
     ministry_id: UUID
     role: Optional[str] = None
@@ -575,20 +575,20 @@ class MemberMinistryBase(BaseModel):
     is_active: bool = True
     notes: Optional[str] = None
 
-class MemberMinistryCreate(MemberMinistryBase):
+class PersonaMinistryAssignmentCreate(PersonaMinistryAssignmentBase):
     pass
 
-class MemberMinistryUpdate(BaseModel):
+class PersonaMinistryAssignmentUpdate(BaseModel):
     role: Optional[str] = None
     end_date: Optional[datetime] = None
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
-class MemberMinistry(MemberMinistryBase):
+class PersonaMinistryAssignment(PersonaMinistryAssignmentBase):
     id: UUID
     model_config = orm_config
 
-class MemberPositionBase(BaseModel):
+class PersonaPositionBase(BaseModel):
     persona_id: UUID
     position_id: str
     start_date: Optional[datetime] = None
@@ -596,17 +596,17 @@ class MemberPositionBase(BaseModel):
     is_active: bool = True
     notes: Optional[str] = None
 
-class MemberPositionCreate(MemberPositionBase):
+class PersonaPositionCreate(PersonaPositionBase):
     pass
 
-class MemberPositionUpdate(BaseModel):
+class PersonaPositionUpdate(BaseModel):
     position_id: Optional[int] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
-class MemberPosition(MemberPositionBase):
+class PersonaPosition(PersonaPositionBase):
     id: UUID
     model_config = orm_config
 
@@ -630,7 +630,7 @@ class FormationLevel(FormationLevelBase):
     created_at: datetime
     model_config = orm_config
 
-class MemberFormationBase(BaseModel):
+class PersonaFormationBase(BaseModel):
     persona_id: UUID
     formation_level_id: str
     role_in_level: str = "student"
@@ -640,10 +640,10 @@ class MemberFormationBase(BaseModel):
     is_active: bool = True
     notes: Optional[str] = None
 
-class MemberFormationCreate(MemberFormationBase):
+class PersonaFormationCreate(PersonaFormationBase):
     pass
 
-class MemberFormationUpdate(BaseModel):
+class PersonaFormationUpdate(BaseModel):
     formation_level_id: Optional[int] = None
     role_in_level: Optional[str] = None
     cohort: Optional[str] = None
@@ -652,7 +652,7 @@ class MemberFormationUpdate(BaseModel):
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
-class MemberFormation(MemberFormationBase):
+class PersonaFormation(PersonaFormationBase):
     id: UUID
     model_config = orm_config
 
@@ -698,7 +698,7 @@ class EvangelismStrategy(EvangelismStrategyBase):
     fecha_creacion: Optional[datetime] = None
     model_config = orm_config
 
-class MemberEvangelismBase(BaseModel):
+class PersonaEvangelismBase(BaseModel):
     persona_id: UUID
     evangelism_strategy_id: str  # UUID string
     role: str = "assistant"
@@ -707,10 +707,10 @@ class MemberEvangelismBase(BaseModel):
     is_active: bool = True
     notes: Optional[str] = None
 
-class MemberEvangelismCreate(MemberEvangelismBase):
+class PersonaEvangelismCreate(PersonaEvangelismBase):
     pass
 
-class MemberEvangelismUpdate(BaseModel):
+class PersonaEvangelismUpdate(BaseModel):
     evangelism_strategy_id: Optional[UUID] = None  # UUID string
     role: Optional[str] = None
     start_date: Optional[datetime] = None
@@ -718,7 +718,7 @@ class MemberEvangelismUpdate(BaseModel):
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
-class MemberEvangelism(MemberEvangelismBase):
+class PersonaEvangelism(PersonaEvangelismBase):
     id: UUID
     model_config = orm_config
 
@@ -863,7 +863,7 @@ class Family(BaseModel):
     id: UUID
     name: str
     address: Optional[str] = None
-    members_count: int = 0
+    personas_count: int = 0
     created_at: datetime
     model_config = orm_config
 
@@ -901,7 +901,7 @@ class FaroSessionAttendanceItem(BaseModel):
 class FaroSessionAttendance(BaseModel):
     session_id: UUID
     session_date: date
-    cell_group_id: str
+    grupo_id: str
     status: str
     topic: Optional[str] = None
     offering_amount: Optional[float] = None

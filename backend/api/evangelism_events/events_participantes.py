@@ -12,7 +12,7 @@ from backend import crud, models, schemas
 from backend.api.evangelism_events._shared import require_event_access
 from backend.api.evangelism_shared import (
     ABSENTEES_PREVIEW_LIMIT,
-    get_expected_members_for_event,
+    get_expected_personas_for_event,
     parse_session_date,
     utc_now,
 )
@@ -77,7 +77,7 @@ def get_event_attendance_report(
         "counts": counts,
         "present": present,
         "absent": absent,
-        "expected_members": [],
+        "expected_personas": [],
         "expected_count": 0,
         "other": [],
     }
@@ -232,7 +232,7 @@ def get_event_session_detail(
         {
             "id": a.id,
             "persona_id": a.persona_id,
-            "member_id": a.persona_id,
+            "persona_id": a.persona_id,
             "role": a.role,
             "persona_name": (a.persona.nombre_completo if a.persona else "Unknown"),
         }
@@ -272,22 +272,22 @@ def get_event_session_detail(
         attendee_list.append(
             {
                 "persona_id": persona.id,
-                "member_id": persona.id,
+                "persona_id": persona.id,
                 "name": persona.nombre_completo,
                 "role": role_name,
                 "scanned_at": att.scanned_at.isoformat() if att.scanned_at else None,
             }
         )
 
-    expected_members = get_expected_members_for_event(db, event)
+    expected_personas = get_expected_personas_for_event(db, event)
     attended_ids = {attendee["persona_id"] for attendee in attendee_list}
     absentees_full = []
-    for persona in expected_members:
+    for persona in expected_personas:
         if persona.id not in attended_ids:
             absentees_full.append(
                 {
                     "persona_id": persona.id,
-                    "member_id": persona.id,
+                    "persona_id": persona.id,
                     "name": persona.nombre_completo,
                     "role": persona.church_role,
                     "phone": persona.phone,
@@ -307,8 +307,8 @@ def get_event_session_detail(
         "total_absentees": total_absentees,
         "absentees_truncated": total_absentees > ABSENTEES_PREVIEW_LIMIT,
         "total_attendance": len(attendee_list),
-        "total_expected": len(expected_members),
-        "attendance_rate": (round(len(attendee_list) / len(expected_members) * 100, 1) if expected_members else 0),
+        "total_expected": len(expected_personas),
+        "attendance_rate": (round(len(attendee_list) / len(expected_personas) * 100, 1) if expected_personas else 0),
     }
 
 

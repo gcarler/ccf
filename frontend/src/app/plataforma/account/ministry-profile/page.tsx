@@ -37,7 +37,7 @@ interface Badge {
     earned_at: string | null;
 }
 
-interface MemberInfo {
+interface PersonaInfo {
     id: string | null;
     nombre_completo?: string;
     first_name?: string;
@@ -56,7 +56,7 @@ interface LevelInfo {
 }
 
 interface ProfileData {
-    member: MemberInfo;
+    persona: PersonaInfo;
     positions: Position[];
     skills: string[];
     badges: Badge[];
@@ -127,12 +127,12 @@ export default function MinistryProfilePage() {
         );
     }
 
-    const { member, positions, skills, badges, xp, level } = profile;
-    const initials = (member.nombre_completo?.charAt(0) ?? member.first_name?.charAt(0) ?? '').toUpperCase();
-    const fullName = member.nombre_completo || `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim() || 'Persona';
-    const statusLabel = member.spiritual_status || member.church_role || 'Persona';
-    const sinceYear = member.registration_date
-        ? new Date(member.registration_date).getFullYear()
+    const { persona, positions, skills, badges, xp, level } = profile;
+    const initials = (persona.nombre_completo?.charAt(0) ?? persona.first_name?.charAt(0) ?? '').toUpperCase();
+    const fullName = persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim() || 'Persona';
+    const statusLabel = persona.spiritual_status || persona.church_role || 'Persona';
+    const sinceYear = persona.registration_date
+        ? new Date(persona.registration_date).getFullYear()
         : null;
 
     // XP progress

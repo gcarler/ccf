@@ -6,7 +6,7 @@ def test_admin_milestones_uuid_award_uses_auth_users(client, db_session):
     admin, _, _ = seed_admin_v2(db_session)
     target_user, target_persona, _ = seed_user_with_role_v2(
         db_session,
-        role_name="member",
+        role_name="persona",
         email="milestone-target@test.com",
         password="secret123",
     )

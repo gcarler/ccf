@@ -232,7 +232,7 @@ def delete_fund(
 @router.get("/impact")
 def get_mission_impact(db: Session = Depends(get_db)):
     """Impacto social calculado en tiempo real. Público."""
-    total_members = db.query(func.count(models.Persona.id)).scalar() or 0
+    total_personas = db.query(func.count(models.Persona.id)).scalar() or 0
     total_families = db.query(func.count(models.Family.id)).scalar() or 0
     total_donations = db.query(func.sum(models.Donation.amount)).scalar() or 0
     total_enrollments = db.query(func.count(models.Enrollment.id)).scalar() or 0
@@ -258,7 +258,7 @@ def get_mission_impact(db: Session = Depends(get_db)):
         ]
 
     return {
-        "total_miembros": total_members,
+        "total_miembros": total_personas,
         "total_familias": total_families,
         "total_donaciones_cop": round(total_donations),
         "total_matriculas": total_enrollments,

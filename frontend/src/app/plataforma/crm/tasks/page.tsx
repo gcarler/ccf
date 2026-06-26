@@ -274,7 +274,7 @@ export default function CrmTasksPage() {
                                 )}
                                 <div className="flex-1">
                                     <p className={clsx("text-sm font-bold", task.status === 'done' && "line-through text-slate-400")}>{task.title}</p>
-                                    {task.member_name && <p className="text-[10px] text-slate-400 font-bold">{task.member_name}</p>}
+                                    {task.persona_name && <p className="text-[10px] text-slate-400 font-bold">{task.persona_name}</p>}
                                 </div>
                                 <div className="flex items-center gap-2 text-[10px] shrink-0">
                                     <span className={clsx("px-2 py-0.5 rounded-full font-bold uppercase", PRIORITY_STYLES[task.priority])}>{task.priority}</span>
@@ -310,7 +310,7 @@ export default function CrmTasksPage() {
                                             className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                                         >
                                             <td className="py-1.5 px-3 text-xs font-bold text-slate-800 dark:text-white max-w-[250px] truncate">{task.title}</td>
-                                            <td className="py-1.5 px-3 text-[11px] text-slate-500">{task.member_name || '—'}</td>
+                                            <td className="py-1.5 px-3 text-[11px] text-slate-500">{task.persona_name || '—'}</td>
                                             <td className="py-1.5 px-3 text-[10px] font-bold text-slate-400 uppercase">{task.category}</td>
                                             <td className="py-1.5 px-3">
                                                 <span className={clsx("px-2 py-0.5 rounded text-[9px] font-bold uppercase", PRIORITY_STYLES[task.priority])}>{task.priority}</span>
@@ -344,7 +344,7 @@ export default function CrmTasksPage() {
                                     {bucket.map(task => (
                                         <button key={task.id} onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }} className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
                                             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{task.title}</p>
-                                            <p className="text-[10px] text-slate-400">{task.member_name || 'Sin persona asignado'}</p>
+                                            <p className="text-[10px] text-slate-400">{task.persona_name || 'Sin persona asignado'}</p>
                                         </button>
                                     ))}
                                 </div>
@@ -421,7 +421,7 @@ export default function CrmTasksPage() {
                         )}
                         <div className="grid grid-cols-2 gap-3">
                             {[
-                                { label: 'Persona', val: selectedTask.member_name || '—' },
+                                { label: 'Persona', val: selectedTask.persona_name || '—' },
                                 { label: 'Prioridad', val: selectedTask.priority.toUpperCase() },
                                 { label: 'Categoría', val: selectedTask.category },
                                 { label: 'Vence', val: selectedTask.due_date ? new Date(selectedTask.due_date).toLocaleDateString() : '—' },

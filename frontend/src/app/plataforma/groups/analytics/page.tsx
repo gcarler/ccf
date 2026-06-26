@@ -10,7 +10,7 @@ import { toast } from "sonner";
 type GroupRecord = {
     id: number;
     name: string;
-    members_count?: number;
+    personas_count?: number;
     capacity?: number;
     leader_name?: string | null;
     status?: string | null;
@@ -49,18 +49,18 @@ export default function GroupsAnalyticsPage() {
 
     const metrics = useMemo(() => {
         const total = groups.length;
-        const totalMembers = groups.reduce((acc, item) => acc + normalize(item.members_count), 0);
+        const totalPersonas = groups.reduce((acc, item) => acc + normalize(item.personas_count), 0);
         const totalCapacity = groups.reduce((acc, item) => acc + normalize(item.capacity), 0);
         const withoutLeader = groups.filter((item) => !item.leader_name).length;
         const active = groups.filter((item) => (item.status || "").toLowerCase().includes("activo") || (item.status || "").toLowerCase() === "active").length;
-        const occupancyPct = totalCapacity > 0 ? Math.round((totalMembers / totalCapacity) * 100) : 0;
+        const occupancyPct = totalCapacity > 0 ? Math.round((totalPersonas / totalCapacity) * 100) : 0;
         const topGroups = [...groups]
-            .sort((a, b) => normalize(b.members_count) - normalize(a.members_count))
+            .sort((a, b) => normalize(b.personas_count) - normalize(a.personas_count))
             .slice(0, 5);
 
         return {
             total,
-            totalMembers,
+            totalPersonas,
             totalCapacity,
             withoutLeader,
             active,
@@ -82,7 +82,7 @@ export default function GroupsAnalyticsPage() {
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
                     <MetricCard label="Total casas" value={String(metrics.total)} tone="blue" />
                     <MetricCard label="Casas activas" value={String(metrics.active)} tone="emerald" />
-                    <MetricCard label="Personas" value={String(metrics.totalMembers)} tone="sky" />
+                    <MetricCard label="Personas" value={String(metrics.totalPersonas)} tone="sky" />
                     <MetricCard label="Capacidad" value={String(metrics.totalCapacity)} tone="amber" />
                     <MetricCard label="Ocupacion" value={`${metrics.occupancyPct}%`} tone="rose" />
                 </section>
@@ -120,14 +120,14 @@ export default function GroupsAnalyticsPage() {
                             <div className="mt-5 space-y-3">
                                 {metrics.topGroups.map((group) => {
                                     const cap = Math.max(1, normalize(group.capacity));
-                                    const members = normalize(group.members_count);
-                                    const pct = Math.min(100, Math.round((members / cap) * 100));
+                                    const personas = normalize(group.personas_count);
+                                    const pct = Math.min(100, Math.round((personas / cap) * 100));
 
                                     return (
                                         <div key={group.id} className="rounded-lg border border-slate-200 p-4 dark:border-white/10">
                                             <div className="flex items-center justify-between gap-3">
                                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{group.name}</p>
-                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{members}/{cap}</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{personas}/{cap}</p>
                                             </div>
                                             <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                                                 <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${pct}%` }} />
@@ -148,7 +148,7 @@ export default function GroupsAnalyticsPage() {
                                 />
                                 <RiskRow
                                     label="Casas con capacidad al limite"
-                                    value={groups.filter((g) => normalize(g.members_count) >= normalize(g.capacity) && normalize(g.capacity) > 0).length}
+                                    value={groups.filter((g) => normalize(g.personas_count) >= normalize(g.capacity) && normalize(g.capacity) > 0).length}
                                     description="Evaluar apertura de nuevas casas en zonas saturadas."
                                 />
                                 <RiskRow

@@ -15,7 +15,7 @@ type MessagingHistoryDetail = {
     id: number;
     name: string;
     campaign_name?: string | null;
-    member_name?: string | null;
+    persona_name?: string | null;
     channel: string;
     status: string;
     sent_at: string | null;

@@ -288,14 +288,14 @@ class GrupoEvangelismo(Base):
         self._leader_name = val
 
     @hybrid_property
-    def members_count(self):
+    def personas_count(self):
         if self.participantes is None:
             return 0
         return sum(1 for p in self.participantes if p.activo and p.deleted_at is None)
 
-    @members_count.setter
-    def members_count(self, val):
-        self._members_count = val
+    @personas_count.setter
+    def personas_count(self, val):
+        self._personas_count = val
 
     @hybrid_property
     def end_time(self):
@@ -307,15 +307,15 @@ class GrupoEvangelismo(Base):
 
     def __init__(self, **kwargs):
         leader_name = kwargs.pop("leader_name", None)
-        members_count = kwargs.pop("members_count", None)
+        personas_count = kwargs.pop("personas_count", None)
         end_time = kwargs.pop("end_time", None)
         if "evangelism_strategy_id" in kwargs and "estrategia_id" not in kwargs:
             kwargs["estrategia_id"] = kwargs.pop("evangelism_strategy_id")
         super().__init__(**kwargs)
         if leader_name is not None:
             self._leader_name = leader_name
-        if members_count is not None:
-            self._members_count = members_count
+        if personas_count is not None:
+            self._personas_count = personas_count
         if end_time is not None:
             self._end_time = end_time
 
@@ -342,11 +342,7 @@ class ParticipanteGrupo(Base):
     persona = relationship("Persona", back_populates="participaciones_grupo")
     rol_personalizado = relationship("RolPersonalizadoEstrategia")
 
-    # English aliases
     role = synonym("rol_base")
-    cell_group_id = synonym("grupo_id")
-    cell_group = synonym("grupo")
-    member_id = synonym("persona_id")
 
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -371,8 +367,6 @@ class SesionGrupo(Base):
     grupo = relationship("GrupoEvangelismo", back_populates="sesiones")
     asistencias = relationship("Asistencia", back_populates="sesion", cascade="all, delete-orphan")
 
-    cell_group_id = synonym("grupo_id")
-    cell_group = synonym("grupo")
     session_date = synonym("fecha_sesion")
     status = synonym("estado")
     topic = synonym("tema_estudio")
@@ -452,7 +446,6 @@ class Asistencia(Base):
 
     # API field names
     session_id = synonym("sesion_id")
-    member_id = synonym("persona_id")
     absence_reason = synonym("motivo_excusa_id")
     absence_reason_detail = synonym("detalle_excusa")
     notes = synonym("detalle_excusa")

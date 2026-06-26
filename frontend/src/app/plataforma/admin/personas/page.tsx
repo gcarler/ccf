@@ -123,7 +123,7 @@ export default function AdminPersonasPage() {
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <button
-                                                        onClick={() => router.push(`/plataforma/admin/members/${persona.id}`)}
+                                                        onClick={() => router.push(`/plataforma/admin/personas/${persona.id}`)}
                                                         className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm hover:opacity-95"
                                                     >
                                                         Ver expediente <ArrowRight size={13} />

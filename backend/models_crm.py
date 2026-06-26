@@ -93,21 +93,18 @@ class CrmEvent(Base):
     target_audience = Column(String(50), default="ALL")
     target_role_id = Column(UUID(as_uuid=True), ForeignKey("role_definitions.id"), nullable=True)
     target_role_ids = Column(JSON, nullable=True)
-    target_member_ids = Column(JSON, nullable=True)
+    target_persona_ids = Column(JSON, nullable=True)
     fixed_date = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     from sqlalchemy.orm import validates
     import uuid
 
-    @validates("target_member_ids")
-    def validate_target_member_ids(self, key, value):
+    @validates("target_persona_ids")
+    def validate_target_persona_ids(self, key, value):
         if isinstance(value, list):
             return [str(v) if isinstance(v, uuid.UUID) else v for v in value]
         return value
-
-    from sqlalchemy.orm import synonym
-    target_persona_ids = synonym("target_member_ids")
 
     attendances = relationship("EventAttendance", back_populates="event")
     assignments = relationship("EventAssignment", back_populates="event")
@@ -134,9 +131,6 @@ class EventAssignment(Base):
 
     event = relationship("CrmEvent", back_populates="assignments")
     persona = relationship("Persona")
-
-    from sqlalchemy.orm import synonym
-    member_id = synonym("persona_id")
 
 
 
@@ -175,9 +169,6 @@ class EventAttendance(Base):
     event = relationship("CrmEvent", back_populates="attendances")
     persona = relationship("Persona")
 
-    from sqlalchemy.orm import synonym
-    member_id = synonym("persona_id")
-
 
 
 class CounselingTicket(Base):
@@ -201,9 +192,6 @@ class CounselingTicket(Base):
 
     persona = relationship("Persona", foreign_keys=[persona_id])
     pastor = relationship("Persona", foreign_keys=[pastor_id])
-
-    from sqlalchemy.orm import synonym
-    member_id = synonym("persona_id")
 
 
 
@@ -236,12 +224,12 @@ class Ministry(Base):
 
     personas = relationship(
         "Persona",
-        secondary="member_ministries",
-        primaryjoin="Ministry.id == MemberMinistry.ministry_id",
-        secondaryjoin="MemberMinistry.persona_id == Persona.id",
+        secondary="persona_ministry_assignments",
+        primaryjoin="Ministry.id == PersonaMinistryAssignment.ministry_id",
+        secondaryjoin="PersonaMinistryAssignment.persona_id == Persona.id",
         overlaps="persona,personas,ministries,ministry",
         viewonly=True,
-        foreign_keys="[MemberMinistry.ministry_id, MemberMinistry.persona_id]",
+        foreign_keys="[PersonaMinistryAssignment.ministry_id, PersonaMinistryAssignment.persona_id]",
     )
 
 
@@ -389,7 +377,7 @@ class Persona(Base):
     sex = Column(String(1), nullable=True)
     last_group_attendance = Column(Date, nullable=True)
     last_meeting_attendance = Column(Date, nullable=True)
-    membership_type = Column(String(50), nullable=True)
+    participation_type = Column(String(50), nullable=True)
     attendance_type = Column(String(50), nullable=True)
     group_name = Column(String(100), nullable=True)
     campus = Column(String(100), nullable=True)
@@ -454,12 +442,12 @@ class Persona(Base):
             return val.value if hasattr(val, 'value') else str(val)
         return self.church_role or "Miembro"
 
-    family = relationship("Family", overlaps="family,members,personas")
+    family = relationship("Family", overlaps="family,personas,personas")
     colombian_department = relationship("ColombianDepartment", foreign_keys=[colombian_department_id])
     origen_estrategia = relationship("EstrategiaEvangelismo", foreign_keys=[origen_estrategia_id])
     origen_grupo = relationship("GrupoEvangelismo", foreign_keys=[origen_grupo_id])
 
-    positions = relationship("MemberPosition", back_populates="persona")
+    positions = relationship("PersonaPosition", back_populates="persona")
     consolidation_cases = relationship("ConsolidationCase", foreign_keys="ConsolidationCase.persona_id", back_populates="persona")
     consolidated_cases_as_pastor = relationship("ConsolidationCase", foreign_keys="ConsolidationCase.assigned_pastor_id", back_populates="assigned_pastor")
     consolidated_cases_as_leader = relationship("ConsolidationCase", foreign_keys="ConsolidationCase.assigned_leader_id", back_populates="assigned_leader")
@@ -488,16 +476,16 @@ class Position(Base):
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
-    member_positions = relationship(
-        "MemberPosition", back_populates="position", cascade="all, delete-orphan"
+    persona_positions = relationship(
+        "PersonaPosition", back_populates="position", cascade="all, delete-orphan"
     )
 
 
-class MemberPosition(Base):
-    __tablename__ = "member_positions"
+class PersonaPosition(Base):
+    __tablename__ = "persona_positions"
     __table_args__ = (
         UniqueConstraint(
-            "persona_id", "position_id", "start_date", name="uq_member_position_history"
+            "persona_id", "position_id", "start_date", name="uq_persona_position_history"
         ),
     )
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -520,7 +508,7 @@ class MemberPosition(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     persona = relationship("Persona", back_populates="positions")
-    position = relationship("Position", back_populates="member_positions")
+    position = relationship("Position", back_populates="persona_positions")
 
 
 class ConsolidationCase(Base):
@@ -710,9 +698,6 @@ class Donation(Base):
     persona = relationship("Persona", back_populates="donations")
     fund = relationship("Fund")
 
-    from sqlalchemy.orm import synonym
-    member_id = synonym("persona_id")
-
 
 
 class DonationCategory(Base):
@@ -767,9 +752,6 @@ class VolunteerShift(Base):
 
     persona = relationship("Persona", back_populates="volunteer_shifts")
 
-    from sqlalchemy.orm import synonym
-    member_id = synonym("persona_id")
-
 
 class VolunteerSkill(Base):
     __tablename__ = "volunteer_skills"
@@ -778,8 +760,8 @@ class VolunteerSkill(Base):
     category = Column(String(100))
 
 
-member_volunteer_skills = Table(
-    "member_volunteer_skills",
+persona_volunteer_skills = Table(
+    "persona_volunteer_skills",
     Base.metadata,
     Column(
         "persona_id",
@@ -818,9 +800,6 @@ class CommunicationLog(Base):
     persona = relationship("Persona", foreign_keys=[persona_id], back_populates="communication_logs")
     leader = relationship("Persona", foreign_keys=[leader_id])
 
-    from sqlalchemy.orm import synonym
-    member_id = synonym("persona_id")
-
 
 
 class SpiritualMilestone(Base):
@@ -842,9 +821,6 @@ class SpiritualMilestone(Base):
 
     persona = relationship("Persona", foreign_keys=[persona_id])
     minister = relationship("Persona", foreign_keys=[minister_id])
-
-    from sqlalchemy.orm import synonym
-    member_id = synonym("persona_id")
 
 
 
@@ -869,10 +845,10 @@ class RoleDefinition(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
-class MemberRole(Base):
-    __tablename__ = "member_roles"
+class PersonaRoleLink(Base):
+    __tablename__ = "persona_role_links"
     __table_args__ = (
-        UniqueConstraint("persona_id", "role_id", name="uq_member_role"),
+        UniqueConstraint("persona_id", "role_id", name="uq_persona_role_link"),
     )
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
@@ -921,12 +897,12 @@ class PastoralCallLog(Base):
     pastor = relationship("Persona", foreign_keys=[pastor_id])
 
 
-class MemberMinistry(Base):
+class PersonaMinistryAssignment(Base):
     """Rich association between Persona and Ministry with role and dates."""
 
-    __tablename__ = "member_ministries"
+    __tablename__ = "persona_ministry_assignments"
     __table_args__ = (
-        UniqueConstraint("persona_id", "ministry_id", name="uq_member_ministry"),
+        UniqueConstraint("persona_id", "ministry_id", name="uq_persona_ministry_assignment"),
     )
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
