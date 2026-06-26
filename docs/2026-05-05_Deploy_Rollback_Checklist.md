@@ -10,7 +10,7 @@ Activar rollback si ocurre al menos una condicion:
 - error 5xx sostenido despues de deploy
 - `./startccf` no converge (backend o frontend no levantan)
 - degradacion critica de login, CRM, evangelismo o academy
-- incompatibilidad de migracion detectada en runtime
+- falla de migracion detectada en runtime
 
 ## 2. Preflight rapido (2-3 minutos)
 
@@ -51,7 +51,7 @@ Activar rollback si ocurre al menos una condicion:
 
 ## 4. Datos y migraciones
 
-- Si hubo migraciones incompatibles, detener nuevos writes antes de rollback.
+- Si hubo migraciones fallidas, detener nuevos writes antes de rollback.
 - Si el rollback de app depende de esquema previo, ejecutar `alembic downgrade -1`.
 - Nunca ejecutar rollback destructivo de BD sin respaldo validado (`pg_dump`).
 

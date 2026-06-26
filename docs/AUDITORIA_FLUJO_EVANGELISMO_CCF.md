@@ -26,7 +26,7 @@ Auditoria de continuidad de datos del componente Evangelismo, desde base de dato
 ## Correcciones Aplicadas
 
 - `DELETE /evangelism/sessions/{session_id}` ya usa `db.commit()` y soft-delete real (`deleted_at`) en vez de `db.session.commit()`.
-- `GET /evangelism/strategies/{strategy_id}/metrics` acepta `strategy_id: str`, compatible con UUID string de estrategias.
+- `GET /evangelism/strategies/{strategy_id}/metrics` acepta UUID string de estrategias.
 - Listado, detalle, update, delete y asistencia de sesiones filtran por `sede_id` y excluyen registros `deleted_at`.
 - Creacion de sesiones valida que el grupo exista, pertenezca a la sede del usuario y no este eliminado.
 - Habilitar/deshabilitar todas las sesiones de una estrategia queda limitado a la sede del usuario.
@@ -34,8 +34,8 @@ Auditoria de continuidad de datos del componente Evangelismo, desde base de dato
 - El resumen de asignaciones FARO ya no calcula participantes asignados globalmente; filtra por grupos de la sede actual.
 - Navegaciones frontend que salian a `/evangelism/...` fueron corregidas a `/plataforma/evangelism/...`.
 - La creacion de casos CRM desde eventos y FARO ya no usa `pipeline_id=1` ni `etapa_actual_id=1`; reutiliza el resolvedor canonico de pipeline de nuevos visitantes.
-- Los hilos compat de campanas, eventos y miembros esperados ahora filtran por `sede_id` cuando construyen audiencias o tableros.
-- Los estados de asistencia se normalizan desde un helper compartido y contemplan aliases compat (`ASISTIO`, `Presente`, `present`, `primera_vez`, `FALTO`, `Ausente`, etc.).
+- Los hilos de campanas, eventos y participantes esperados filtran por `sede_id` cuando construyen audiencias o tableros.
+- Los estados de asistencia se normalizan desde un helper compartido.
 - Reportes y rankings de evangelismo cargan asistencia, miembros y conteos con consultas por lotes o agregaciones, evitando N+1 en los caminos principales.
 - Las acciones destructivas del frontend usan `ConfirmActionDrawer` y no `window.confirm` / `confirm`.
 - La vista de detalle de estrategia redujo la precarga de personas para asistencia de `limit=1000` a consulta paginada de 200 registros ordenados.
@@ -44,7 +44,7 @@ Auditoria de continuidad de datos del componente Evangelismo, desde base de dato
 - La habilitacion manual de una sesion ahora valida `sede_id`, `deleted_at` de grupo y `deleted_at` de sesion.
 - El contador de miembros de grupo al reemplazar participantes ya excluye participantes soft-deleted.
 - El frontend de roles personalizados usa el contrato real `nombre_rol` y envia `estrategia_id` UUID, no el codigo de estrategia.
-- El frontend FARO crea sesiones con `cell_group_id` y no con el alias incorrecto `grupo_id`; el backend acepta ambos nombres para compatibilidad.
+- El frontend FARO crea sesiones con el identificador canonico de grupo.
 - Las sesiones FARO creadas desde temporada quedan habilitadas para reporte y retornan `session_ids`.
 - La vista FARO bloquea acciones de asistencia cuando la sesion no esta `HABILITADO`, evitando 403 esperables en runtime.
 - El detalle de grupo devuelve `estado_habilitacion` y excluye participantes/sesiones soft-deleted.
@@ -57,7 +57,7 @@ Estado: cerrado.
 
 El helper `crear_caso_nuevo_visitante` centraliza la creacion del caso y resuelve pipeline/etapa por sede. La busqueda estatica no encuentra `pipeline_id=1` ni `etapa_actual_id=1` en los hilos de evangelismo.
 
-### P1 - Consultas globales sin sede en hilos compat
+### P1 - Consultas globales sin sede
 
 Estado: cerrado en los caminos auditados.
 

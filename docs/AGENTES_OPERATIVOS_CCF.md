@@ -28,7 +28,7 @@ Lo que faltaba era una guía breve de uso por dominio. Esta capa divide el traba
 - Inspeccionar el estado real antes de editar.
 - Corregir solo lo necesario.
 - Validar el cambio en el nivel más pequeño posible.
-- Documentar cualquier deuda o compatibilidad que se conserve.
+- Documentar cualquier excepcion temporal que se conserve, con fecha de retiro.
 
 ## Orden de autoridad
 

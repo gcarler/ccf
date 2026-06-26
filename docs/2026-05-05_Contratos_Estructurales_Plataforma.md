@@ -6,7 +6,7 @@ Objetivo: dejar reglas de arquitectura, dominio, contratos de rutas y gates de c
 
 ## 1. Reglas duras
 
-1. La plataforma trabaja con contratos nativos. No se crean aliases, rutas espejo ni capas de compatibilidad salvo instruccion explicita.
+1. La plataforma trabaja con contratos nativos. No se crean aliases, rutas espejo ni capas paralelas salvo instruccion explicita.
 2. El frontend consume APIs bajo `/api/...`.
 3. El backend expone un solo arbol canónico bajo `/api/...`.
 4. `next build` no debe ignorar errores de TypeScript ni ESLint.
