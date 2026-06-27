@@ -24,8 +24,8 @@ import { toast } from 'sonner';
 
 export default function CRMClient() {
     const { token } = useAuth();
-    const { canEditCrm } = useCrmAccess();
-    const router = useRouter();
+    const { canEditCrm: _canEditCrm } = useCrmAccess();
+    const _router = useRouter();
     const [dashboard, setDashboard] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 

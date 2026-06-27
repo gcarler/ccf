@@ -40,7 +40,7 @@ const STATUS_CONFIG: Record<string, { icon: any; label: string; color: string; b
 };
 
 export default function SupportTicketsPage() {
-    const { token, user } = useAuth();
+    const { token, user: _user } = useAuth();
     const { addToast } = useToast();
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
     const [search, setSearch] = useState('');

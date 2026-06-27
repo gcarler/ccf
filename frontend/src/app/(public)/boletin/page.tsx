@@ -20,7 +20,7 @@ export default function BoletinPage() {
     const description = content?.description || "Cada semana te enviamos una reflexión bíblica, un versículo de ánimo y consejos prácticos para fortalecer tu fe.";
     const ctaText = content?.cta_text || "Suscribirme ahora";
     const successMessage = content?.success_message || "¡Gracias por suscribirte!";
-    const errorMessage = content?.error_message || "No se pudo suscribir. Intenta de nuevo.";
+    const _errorMessage = content?.error_message || "No se pudo suscribir. Intenta de nuevo.";
     const emailPlaceholder = content?.email_placeholder || "Tu correo electrónico";
     const sendingLabel = content?.sending_label || "Enviando...";
 

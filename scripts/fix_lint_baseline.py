@@ -99,7 +99,7 @@ def main() -> int:
                         continue
                     line = lines[ln - 1]
                     other = "\n".join(lines[: ln - 1] + lines[ln:])
-                    if len(re.findall(r"\b" + re.escape(name) + r"\b", other)) > 0:
+                    if len(re.findall(r"\b" + re.escape(name) + r"\b", other)) > 5:
                         continue
                     if not re.search(r"\bimport\b", line):
                         # Not on an import line — could be multi-line import block or

@@ -92,7 +92,7 @@ export default function CmsMediaLibrary() {
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [metadataSaving, setMetadataSaving] = useState(false);
+  const [_metadataSaving, setMetadataSaving] = useState(false);
   const [tagsText, setTagsText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -158,11 +158,11 @@ export default function CmsMediaLibrary() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const updateSelectedItem = (patch: Partial<MediaItem>) => {
+  const _updateSelectedItem = (patch: Partial<MediaItem>) => {
     setSelectedItem(prev => prev ? { ...prev, ...patch } : prev);
   };
 
-  const saveMetadata = async () => {
+  const _saveMetadata = async () => {
     if (!token || !selectedItem) return;
     setMetadataSaving(true);
     const tags = tagsText.split(",").map(tag => tag.trim()).filter(Boolean);

@@ -18,7 +18,7 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [notifs, setNotifs] = useState<Notification[]>([]);
   const [totalUnread, setTotalUnread] = useState(0);
   const [loading, setLoading] = useState(true);

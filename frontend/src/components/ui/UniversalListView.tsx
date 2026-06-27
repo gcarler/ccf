@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import {List, Search, Filter, ChevronDown, ChevronRight, User, Calendar, CheckCircle2, Clock, AlertCircle, X} from "lucide-react";
+import {List, Search, ChevronDown, ChevronRight, User, Calendar, CheckCircle2, Clock, AlertCircle, X} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
@@ -74,7 +74,7 @@ export default function UniversalListView({
     const [expandedId, setExpandedId] = useState<string | number | null>(null);
 
     // Persist search
-    const storageSearchKey = storageKey ? `${storageKey}_search` : undefined;
+    const _storageSearchKey = storageKey ? `${storageKey}_search` : undefined;
 
     // _Filter items
     const filteredItems = useMemo(() => {
@@ -93,7 +93,7 @@ export default function UniversalListView({
     };
 
     // Default columns if none provided
-    const displayColumns = columns || [
+    const _displayColumns = columns || [
         { key: "title", label: "Título" },
         { key: "status", label: "Estado" },
         { key: "priority", label: "Prioridad" },

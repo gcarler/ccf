@@ -119,7 +119,7 @@ function PlanificadorInner() {
   const [timeMode, setTimeMode] = useState<ViewMode>('semana');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalEvent[]>([]);
-  const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
+  const [_tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
   const [nowLine, setNowLine] = useState<number>(minutesToTop(new Date()));
   const [showViewDropdown, setShowViewDropdown] = useState(false);
   const [showCreateDropdown, setShowCreateDropdown] = useState(false);
@@ -164,8 +164,8 @@ function PlanificadorInner() {
   const fetchTasks = useCallback(async () => {
     if (!token || calendarView !== 'proyectos') return;
     try {
-      const data = await apiFetch<{ tasks: ProjectTaskRecord[] }>('/projects/tasks', { token }).catch(() => null);
-      if (data?.tasks) setTasks(data.tasks);
+      const data = await apiFetch<{ _tasks: ProjectTaskRecord[] }>('/projects/_tasks', { token }).catch(() => null);
+      if (data?._tasks) setTasks(data._tasks);
     } catch { /* ignore */ }
   }, [token, calendarView]);
 

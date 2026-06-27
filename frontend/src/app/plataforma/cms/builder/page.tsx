@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { SITE_KEY, SITE_URL } from "@/lib/site-config";
-import {Archive, ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, ExternalLink, FileImage, ImageIcon, LayoutPanelTop, Monitor, Plus, RotateCcw, Save, Send, Smartphone, Upload, Undo2, Settings, Sparkles, BarChart3, CheckCircle2, AlertTriangle, XCircle, Wand2, RefreshCw} from "lucide-react";
+import {Archive, ArrowDown, ArrowUp, Copy, Eye, EyeOff, ExternalLink, FileImage, ImageIcon, LayoutPanelTop, Monitor, Plus, RotateCcw, Save, Send, Smartphone, Upload, Undo2, Settings, Sparkles, BarChart3, CheckCircle2, AlertTriangle, XCircle, Wand2, RefreshCw} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   createCmsPage,

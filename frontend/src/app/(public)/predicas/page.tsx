@@ -102,7 +102,7 @@ function VideoCard({
     shareWhatsapp: string;
     copyLinkLabel: string;
 }) {
-    const [imgErr, setImgErr] = useState(false);
+    const [imgErr, _setImgErr] = useState(false);
     const desc = cleanDesc(video.description);
 
     return (
@@ -340,7 +340,7 @@ export default function PredicasPage() {
     const copyLinkLabel = feed?.copy_link || "Copiar";
     const copiedLabel = feed?.copied_label || "¡Copiado!";
     const viewOnYoutube = feed?.view_on_youtube || "Ver en YouTube";
-    const closeLabel = feed?.close || "Cerrar";
+    const _closeLabel = feed?.close || "Cerrar";
 
     /* Marcar visto + abrir reproductor */
     const openPlayer = useCallback((video: YTVideo) => {

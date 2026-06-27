@@ -33,7 +33,7 @@ import { useRouter } from 'next/navigation';
 const SUPPORT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function SupportPage() {
-    const { token, user } = useAuth();
+    const { token, user: _user } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
     const [viewType, setViewType] = useState<ViewType>('table');

@@ -34,7 +34,7 @@ const AVAILABLE_EVENTS = [
 ];
 
 export default function WebhooksPage() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [webhooks, setWebhooks] = useState<WebhookItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

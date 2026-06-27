@@ -21,7 +21,7 @@ interface CreatedTicket {
 }
 
 export default function SupportContactPage() {
-    const { token, user } = useAuth();
+    const { token, user: _user } = useAuth();
     const { addToast } = useToast();
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CalendarDays, Construction, GanttChartSquare, List, Sparkles } from "lucide-react";
+import {CalendarDays, Construction, GanttChartSquare, Sparkles} from "lucide-react";
 import { ViewType } from "@/components/ViewSwitcher";
 import UniversalGanttView from "@/components/ui/UniversalGanttView";
 import UniversalCalendarView from "@/components/ui/UniversalCalendarView";

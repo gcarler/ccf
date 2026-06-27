@@ -26,7 +26,7 @@ const SEVERITY_COLORS: Record<string, string> = {
 };
 
 export default function AuditPage() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ entity_type: "", action: "", severity: "", actor_email: "" });
