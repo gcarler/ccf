@@ -5,8 +5,7 @@ One-shot provisioning script:
     - same UUID as Persona
     - username derived from email prefix
     - default password: 1234567
-    - role: LECTOR (PlatformRole)
-    - rol_plataforma: MIEMBRO (profile + academy only)
+    - role: MIEMBRO (profile + academy only)
     - is_active: true
 
 Run:  python -m backend.management.provision_all_personas
@@ -14,14 +13,12 @@ Run:  python -m backend.management.provision_all_personas
 
 import logging
 
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 import backend.models  # noqa: F401
-from backend.core.config import get_settings
 from backend.core.permissions import hash_password
 from backend.models_auth import RolPlataforma, Usuario
-from backend.models_kernel import PlatformRoleDefinition, PlatformRole
 
 log = logging.getLogger(__name__)
 
@@ -51,18 +48,6 @@ def provision_all(db: Session) -> int:
     """Create auth_users for every Persona with email that lacks one.
     Returns the count of newly created users.
     """
-    settings = get_settings()
-    engine = create_engine(settings.database_url)
-    SessionLocal = sessionmaker(bind=engine)
-    db = SessionLocal()
-
-    # Resolve LECTOR platform role
-    lector = db.query(PlatformRoleDefinition).filter(
-        PlatformRoleDefinition.role == PlatformRole.LECTOR
-    ).first()
-    if not lector:
-        log.error("No LECTOR PlatformRoleDefinition found in DB. Run seed script first.")
-        return 0
     persona_default_role = _resolve_persona_default_role(db)
 
     # Find the first sede (required FK for Usuario)
@@ -73,12 +58,10 @@ def provision_all(db: Session) -> int:
         log.error("No sedes found in DB.")
         return 0
 
-    # Normalize existing auth users: if they are persona-linked and still only
-    # carry the default LECTOR platform role, attach the persona role override.
+    # Normalize any account that still lacks its canonical Auth role.
     existing_persona_users = (
         db.query(Usuario)
         .filter(Usuario.rol_plataforma_id.is_(None))
-        .filter(Usuario.platform_role_id == lector.id)
         .all()
     )
     normalized = 0
@@ -145,7 +128,6 @@ def provision_all(db: Session) -> int:
             username=username,
             email=email,
             password_hash=hash_password(DEFAULT_PASSWORD),
-            platform_role_id=lector.id,
             rol_plataforma_id=persona_default_role.id,
             is_active=True,
             is_email_verified=False,
@@ -164,7 +146,6 @@ def provision_all(db: Session) -> int:
 
     db.commit()
     log.info("Done. Created: %d  Skipped: %d", created, skipped)
-    db.close()
     return created
 
 

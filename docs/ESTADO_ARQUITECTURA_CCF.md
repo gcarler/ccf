@@ -1,41 +1,47 @@
 # Estado Arquitectonico CCF
 
-**Fecha:** 2026-06-26
+**Fecha:** 2026-06-27
 **Contrato vigente:** plataforma v3 con Kernel de Personas.
 
-## Contrato Principal
+## Contratos Activos
 
-- `personas.id` es el identificador canonico de toda persona.
-- `auth_users.id` usa el mismo UUID para acceso a plataforma.
-- Los roles de plataforma viven en Auth v3.
-- Los roles ministeriales y pastorales viven alrededor de `personas`.
-- Academy activa es `academy_core`.
-- Auth activa es `auth_v3`.
+- `personas.id` es el unico identificador de una persona.
+- `auth_users.id` comparte el UUID de `personas.id`.
+- Auth expone exclusivamente `/api/v3/auth`.
+- Academy expone exclusivamente `/api/academy` y persiste en tablas `academy_*`.
+- Los roles de plataforma viven en `auth_roles` y `auth_user_module_roles`.
+- Los datos administrativos y pastorales respetan `sede_id`.
 
-## Base de Datos
+## Estado De Datos
 
-Estado verificado en produccion:
+Verificado en produccion antes de la migracion final:
 
-- No existen columnas inversas entre personas y autenticacion.
-- Las personas importadas viven en `personas`.
-- Los accesos viven en `auth_users`.
-- El administrador `gscarlosernesto@gmail.com` existe con rol `ADMINISTRADOR`.
+- 769 personas y 769 usuarios Auth activos.
+- 0 personas sin usuario Auth.
+- 0 correos duplicados en personas.
+- `gscarlosernesto@gmail.com` tiene rol `ADMINISTRADOR`.
+- Las tablas Academy paralelas y las tablas Identity paralelas estan vacias; las migraciones abortan si esa precondicion cambia.
 
-## Reglas de Continuidad
+## Academy
 
-- No reintroducir tablas paralelas de personas.
-- No crear rutas nuevas con identidad entera para personas.
-- No sostener scripts manuales de migracion historica en el repo.
-- No mantener documentos que declaren pendientes ya retirados.
+- Catalogo, lecciones, matriculas, progreso, evaluaciones, certificados, tareas y foro usan UUID.
+- Un usuario `LECTOR` recibe `academy:study` y puede operar solo sobre su propia matricula y progreso.
+- Edicion y gestion requieren `academy:edit` o `academy:manage`.
+- Las consultas de curso y dashboard aplican el alcance de sede.
+- No existe una ruta `/api/v2/academy` ni un segundo modelo Academy.
 
-## Gate de Arquitectura
-
-Antes de declarar una limpieza como terminada:
+## Gate De Cierre
 
 ```bash
-rg -n "ForeignKey\\(\"users\\.id\"\\)|personas\\.user_id|models\\.Persona|models_personas|backend\\.auth" backend docs scripts REGLAS.md
+rg -n "/api/v2/academy|CCF-MBR|personas\.user_id|subject\.isdigit" backend frontend/src tests scripts docs REGLAS.md
+rg -n "FROM (courses|lessons|enrollments|assessments|certificates)" backend scripts
+
 source venv/bin/activate
-python -m pytest -q -o addopts='' tests/test_structural_contracts.py tests/test_smoke.py
-curl -f http://127.0.0.1:8000/healthz
-curl -f http://127.0.0.1:3000/plataforma
+python -m pytest -q -o addopts='' tests/test_structural_contracts.py tests/test_smoke.py tests/test_academy_api.py
+
+cd frontend
+npm run typecheck
+npm run build
 ```
+
+El cierre requiere ademas `alembic upgrade head`, health checks local/publicos y un flujo autenticado Academy con un administrador y un usuario `LECTOR`.

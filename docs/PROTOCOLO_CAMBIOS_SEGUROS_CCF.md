@@ -3,7 +3,7 @@
 **Actualizado:** 2026-06-26
 **Estado:** documento operativo vigente
 
-Este protocolo protege la plataforma mientras se mantiene una arquitectura canonica: personas por UUID, Auth v3, Academy Core y aislamiento por sede.
+Este protocolo protege la plataforma mientras se mantiene una arquitectura canonica: personas por UUID, Auth v3, Academy en tablas `academy_*` y aislamiento por sede.
 
 ## Autoridad
 

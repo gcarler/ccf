@@ -1,3 +1,19 @@
+import sys
+from pathlib import Path
+
+# Locate the project root by walking up until we find the `backend/`
+# package. This works whether the script lives in scripts/, scripts/seeding/
+# scripts/migrations/, scripts/auditing/ or any other nested folder.
+_HERE = Path(__file__).resolve()
+_PROJECT_ROOT = next(
+    (p for p in _HERE.parents if (p / "backend" / "__init__.py").is_file()),
+    None,
+)
+if _PROJECT_ROOT is None:
+    raise RuntimeError(f"backend package not found above {_HERE}")
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 #!/usr/bin/env python3
 """Crea un usuario admin permanente en la BD de CCF."""
 
@@ -94,32 +110,11 @@ def main():
             db.commit()
             print(f"✅ User creado: {user_id}")
 
-        # 4. PlatformRoleDefinition
-        r = db.execute(text("SELECT id FROM platform_role_definitions WHERE role = 'ADMINISTRADOR'")).fetchone()
-        if r:
-            plat_id = r[0]
-            print(f"ℹ️ PlatDef: {plat_id}")
-        else:
-            db.execute(text("INSERT INTO platform_role_definitions (role, permissions, description) VALUES ('ADMINISTRADOR', '{\"*\": [\"*\"]}', 'Super admin')"))
-            db.commit()
-            r = db.execute(text("SELECT id FROM platform_role_definitions WHERE role = 'ADMINISTRADOR'")).fetchone()
-            plat_id = r[0]
-            print(f"✅ PlatDef creado: {plat_id}")
-
-        # 5. PersonaPlatformRole
-        r = db.execute(text("SELECT id FROM persona_platform_roles WHERE persona_id = :pid AND role_id = :prid"), {"pid": persona_id, "prid": plat_id}).fetchone()
-        if not r:
-            db.execute(text("INSERT INTO persona_platform_roles (persona_id, role_id, assigned_at, is_active) VALUES (:pid, :prid, :now, true)"), {"pid": persona_id, "prid": plat_id, "now": now})
-            db.commit()
-            print("✅ PPR creado")
-        else:
-            print("ℹ️ PPR ya existe")
-
         print("\n🎉 ADMIN LISTO:")
         print(f"   Email:    {EMAIL}")
         print(f"   Password: {PASSWORD}")
-        print("   Login:    POST /api/auth/login")
-        print(f"   Body:     {{\"username\":\"{EMAIL}\",\"password\":\"{PASSWORD}\",\"grant_type\":\"password\"}}")
+        print("   Login:    POST /api/v3/auth/login")
+        print(f"   Body:     {{\"email\":\"{EMAIL}\",\"password\":\"{PASSWORD}\"}}")
 
     finally:
         db.close()

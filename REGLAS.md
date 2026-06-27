@@ -65,7 +65,7 @@ No se acepta confiar en un `sede_id` enviado por el cliente cuando el usuario au
 |---|---|
 | Personas | `personas` |
 | Auth | `auth_v3`, `auth_users` |
-| Academy | `academy_core` |
+| Academy | tablas `academy_*`, modelo `models_academy_core.py`, API `/api/academy` |
 | CRM | `crm_casos` y modelos actuales |
 | Evangelismo | `grupos_evangelismo`, `sesiones_grupo`, `asistencias` |
 | Proyectos | modelos UUID actuales |

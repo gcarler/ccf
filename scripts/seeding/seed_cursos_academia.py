@@ -1,3 +1,19 @@
+import sys
+from pathlib import Path
+
+# Locate the project root by walking up until we find the `backend/`
+# package. This works whether the script lives in scripts/, scripts/seeding/
+# scripts/migrations/, scripts/auditing/ or any other nested folder.
+_HERE = Path(__file__).resolve()
+_PROJECT_ROOT = next(
+    (p for p in _HERE.parents if (p / "backend" / "__init__.py").is_file()),
+    None,
+)
+if _PROJECT_ROOT is None:
+    raise RuntimeError(f"backend package not found above {_HERE}")
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 """
 Seed de cursos académicos disruptivos — Academia FARO.
 
@@ -14,7 +30,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import backend.models  # noqa: F401 — carga todos los modelos para resolver relaciones
-from backend.models_academy_core import Curso, Leccion
+from backend.models_academy_core import Course, Lesson
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db")
 engine = create_engine(DATABASE_URL)
@@ -324,13 +340,13 @@ def seed():
     db = Session()
     try:
         for data in CURSOS:
-            existing = db.query(Curso).filter(Curso.slug == data["slug"]).first()
+            existing = db.query(Course).filter(Course.slug == data["slug"]).first()
             if existing:
                 print(f"  ↻  Actualizando: {data['title']}")
                 curso = existing
             else:
                 print(f"  +  Creando: {data['title']}")
-                curso = Curso()
+                curso = Course()
 
             curso.code = data["code"]
             curso.slug = data["slug"]
@@ -355,10 +371,10 @@ def seed():
             db.flush()
 
             # Lecciones — borrar las existentes y recrear
-            db.query(Leccion).filter(Leccion.course_id == curso.id).delete()
+            db.query(Lesson).filter(Lesson.course_id == curso.id).delete()
 
             for idx, (titulo, tipo, duracion, contenido) in enumerate(data["lecciones"], start=1):
-                leccion = Leccion(
+                leccion = Lesson(
                     course_id=curso.id,
                     title=titulo,
                     content=contenido,
@@ -373,7 +389,7 @@ def seed():
 
         db.commit()
         print("\n✅ Seed completado exitosamente.")
-        total = db.query(Curso).filter(Curso.is_published == True).count()  # noqa: E712
+        total = db.query(Course).filter(Course.is_published == True).count()  # noqa: E712
         print(f"   Total cursos publicados: {total}")
     except Exception as e:
         db.rollback()
