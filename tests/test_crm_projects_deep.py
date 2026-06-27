@@ -25,7 +25,7 @@ def _create_baptism_persona(db_session, full):
     p = create_persona(db_session, PersonaCreate(
         first_name="Baptized", last_name="Person",
         email=f"bap_{uuid.uuid4().hex[:6]}@t.com",
-        baptism_date=datetime.now(timezone.utc),
+        baptism_date=datetime.now(timezone.utc).date(),
     ))
     assert p.id is not None
 
@@ -80,33 +80,66 @@ def full(client, db_session):
 
     for i, pr in enumerate(projects[:3]):
         for j in range(3):
-            db_session.add(models.ProjectTask(project_id=pr.id, title=f"T{i}_{j}",
-                status=["pending", "in_progress", "done"][j]))
-        db_session.add(models.ProjectMilestone(project_id=pr.id, title=f"MS_{i}",
-            target_date=datetime.now(timezone.utc) + timedelta(days=30)))
+            db_session.add(
+                models.ProjectTask(
+                    project_id=pr.id,
+                    title=f"T{i}_{j}",
+                    status=["pending", "in_progress", "done"][j],
+                ),
+            )
+        db_session.add(
+            models.ProjectMilestone(
+                project_id=pr.id,
+                title=f"MS_{i}",
+                target_date=datetime.now(timezone.utc) + timedelta(days=30),
+            ),
+        )
     db_session.commit()
 
     for i, pr in enumerate(projects[:2]):
-        db_session.add(models.ProjectComment(project_id=pr.id, author_id=str(personas[i].id),
-            content=f"Comment on {pr.title}", is_resolved=i == 0))
-        db_session.add(models.ProjectActivityLog(project_id=pr.id, persona_id=str(personas[i].id),
-            action_type="project_created", description=f"Created {pr.title}"))
+        db_session.add(
+            models.ProjectComment(
+                project_id=pr.id,
+                author_id=str(personas[i].id),
+                content=f"Comment on {pr.title}",
+                is_resolved=i == 0,
+            ),
+        )
+        db_session.add(
+            models.ProjectActivityLog(
+                project_id=pr.id,
+                persona_id=str(personas[i].id),
+                action_type="project_created",
+                description=f"Created {pr.title}",
+            ),
+        )
     db_session.commit()
 
     cat = CategoriaEstrategia(nombre="Cat")
     db_session.add(cat)
     db_session.flush()
-    strategy = EstrategiaEvangelismo(nombre="Strat", sede_id=sede.id, frecuencia="semanal",
-        categoria_id=cat.id, fecha_inicio=datetime.now(timezone.utc) - timedelta(days=90),
-        fecha_fin=datetime.now(timezone.utc) + timedelta(days=90))
+    strategy = EstrategiaEvangelismo(
+        nombre="Strat",
+        sede_id=sede.id,
+        frecuencia="semanal",
+        categoria_id=cat.id,
+        fecha_inicio=datetime.now(timezone.utc) - timedelta(days=90),
+        fecha_fin=datetime.now(timezone.utc) + timedelta(days=90),
+    )
     db_session.add(strategy)
     db_session.flush()
 
     groups = []
     for i in range(5):
-        g = GrupoEvangelismo(nombre=f"G{i}", ubicacion=f"U{i}", sede_id=sede.id,
-            lider_persona_id=personas[i].id, codigo=f"G{uuid.uuid4().hex[:6]}",
-            capacidad=20, estrategia_id=strategy.id)
+        g = GrupoEvangelismo(
+            nombre=f"G{i}",
+            ubicacion=f"U{i}",
+            sede_id=sede.id,
+            lider_persona_id=personas[i].id,
+            codigo=f"G{uuid.uuid4().hex[:6]}",
+            capacidad=20,
+            estrategia_id=strategy.id,
+        )
         db_session.add(g)
         groups.append(g)
     db_session.commit()
@@ -121,8 +154,11 @@ def full(client, db_session):
     sessions_list = []
     for g in groups:
         for j in range(3):
-            s = SesionGrupo(grupo_id=g.id, tema_estudio=f"S{j}",
-                fecha_sesion=datetime.now(timezone.utc) - timedelta(days=30 - j * 7))
+            s = SesionGrupo(
+                grupo_id=g.id,
+                tema_estudio=f"S{j}",
+                fecha_sesion=datetime.now(timezone.utc) - timedelta(days=30 - j * 7),
+            )
             db_session.add(s)
             sessions_list.append(s)
     db_session.commit()
@@ -141,11 +177,15 @@ def full(client, db_session):
         db_session.add(models.CounselingTicket(persona_id=personas[i].id, subject=f"CT_{i}", status="open"))
         db_session.add(models.PrayerRequest(requester_name=personas[i].first_name, request_text="P", sede_id=sede.id))
         db_session.add(models.CommunicationLog(persona_id=personas[i].id, channel="email", content=f"Msg_{i}"))
-        db_session.add(models.VolunteerShift(persona_id=personas[i].id,
-            role_name=["worship", "kids", "tech", "media", "sound"][i % 5],
-            team_name=["worship", "kids", "tech", "media", "sound"][i % 5],
-            shift_start=datetime.now(timezone.utc) - timedelta(hours=4),
-            shift_end=datetime.now(timezone.utc)))
+        db_session.add(
+            models.VolunteerShift(
+                persona_id=personas[i].id,
+                role_name=["worship", "kids", "tech", "media", "sound"][i % 5],
+                team_name=["worship", "kids", "tech", "media", "sound"][i % 5],
+                shift_start=datetime.now(timezone.utc) - timedelta(hours=4),
+                shift_end=datetime.now(timezone.utc),
+            ),
+        )
     db_session.commit()
 
     headers = _auth_headers(client, email=admin.email, password="testpass123")

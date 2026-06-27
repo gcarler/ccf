@@ -304,9 +304,17 @@ def create_location(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Crea una nueva sede o anexo."""
+    """Crea una nueva sede o anexo.
+
+    Acepta ``nombre`` (canónico) o ``name`` (alias backward-compat). El campo
+    del modelo es ``name``; el alias ``name`` se conserva para integraciones
+    externas ya construidas. Si ambos están vacíos/ausentes, devuelve 400.
+    """
+    name = payload.get("nombre") or payload.get("name")
+    if not name or not str(name).strip():
+        raise HTTPException(status_code=400, detail="nombre es requerido")
     loc = models.ChurchLocation(
-        name=payload["name"],
+        name=str(name).strip(),
         address=payload.get("address"),
         pastor_name=payload.get("pastor"),
         location_type=payload.get("type", "Sede"),
@@ -881,11 +889,21 @@ def create_donation_category(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Crea una nueva categoría de donación."""
+    """Crea una nueva categoría de donación.
+
+    Acepta alias canónicos en español (``nombre``/``descripcion``/``color``) o
+    en inglés (``name``/``description``/``color_code``) para integraciones
+    externas ya construidas. ``nombre`` es requerido (sin cadena vacía).
+    """
+    name = (payload.get("nombre") or payload.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="nombre es requerido")
+    description = payload.get("descripcion") or payload.get("description")
+    color = payload.get("color") or payload.get("color_code") or "blue"
     cat = models.DonationCategory(
-        name=payload["name"],
-        description=payload.get("description"),
-        color_code=payload.get("color", "blue"),
+        name=name,
+        description=description,
+        color_code=color,
     )
     db.add(cat)
     db.commit()
