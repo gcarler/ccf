@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from uuid import UUID
-from pydantic import BaseModel, model_validator, computed_field
+from pydantic import AliasChoices, BaseModel, Field, computed_field, model_validator
 
 from backend.schemas._common import orm_config
 
@@ -103,7 +103,7 @@ class EstrategiaEvangelismoUpdate(BaseModel):
     description: Optional[str] = None
     clase_raiz: Optional[str] = None  # string, no enum — el frontend envía minúsculas
     activa: Optional[bool] = None
-    default_role_id: Optional[int] = None
+    default_role_id: Optional[UUID] = None
 
     # Campos publicados por la API de estrategia
     typology: Optional[str] = None
@@ -122,7 +122,7 @@ class EstrategiaEvangelismoUpdate(BaseModel):
 class EstrategiaEvangelismoResponse(EstrategiaEvangelismoBase):
     id: UUID
     codigo: Optional[str] = None
-    default_role_id: Optional[int] = None
+    default_role_id: Optional[UUID] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = orm_config
@@ -138,12 +138,12 @@ class RolPersonalizadoEstrategiaBase(BaseModel):
 
 
 class RolPersonalizadoEstrategiaCreate(RolPersonalizadoEstrategiaBase):
-    estrategia_id: str
+    estrategia_id: UUID
 
 
 class RolPersonalizadoEstrategiaResponse(RolPersonalizadoEstrategiaBase):
     id: UUID
-    estrategia_id: str
+    estrategia_id: UUID
     created_at: datetime
     model_config = orm_config
 
@@ -154,7 +154,7 @@ class RolPersonalizadoEstrategiaResponse(RolPersonalizadoEstrategiaBase):
 
 class ParticipanteGrupoBase(BaseModel):
     role: str = "participante"
-    rol_personalizado_id: Optional[int] = None
+    rol_personalizado_id: Optional[UUID] = None
     activo: bool = True
 
 
@@ -165,7 +165,7 @@ class ParticipanteGrupoCreate(ParticipanteGrupoBase):
 
 class ParticipanteGrupoUpdate(BaseModel):
     role: Optional[str] = None
-    rol_personalizado_id: Optional[int] = None
+    rol_personalizado_id: Optional[UUID] = None
     activo: Optional[bool] = None
 
 
@@ -185,7 +185,7 @@ class AsistenciaSesionBase(BaseModel):
     estado: EstadoAsistenciaEnum = EstadoAsistenciaEnum.ASISTIO
     es_primera_vez: bool = False
     requiere_seguimiento: bool = False
-    motivo_excusa_id: Optional[int] = None
+    motivo_excusa_id: Optional[UUID] = None
     detalle_excusa: Optional[str] = None
     notas: Optional[str] = None
 
@@ -199,7 +199,7 @@ class AsistenciaSesionUpdate(BaseModel):
     estado: Optional[EstadoAsistenciaEnum] = None
     es_primera_vez: Optional[bool] = None
     requiere_seguimiento: Optional[bool] = None
-    motivo_excusa_id: Optional[int] = None
+    motivo_excusa_id: Optional[UUID] = None
     detalle_excusa: Optional[str] = None
     notas: Optional[str] = None
 
@@ -363,16 +363,19 @@ class GrupoEvangelismoCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
-    evangelism_strategy_id: Optional[UUID] = None
+    evangelism_strategy_id: Optional[UUID] = Field(
+        default=None,
+        validation_alias=AliasChoices("evangelism_strategy_id", "estrategia_id"),
+    )
     leader_id: Optional[UUID] = None
-    assistant_id: Optional[str] = None
-    host_id: Optional[str] = None
+    assistant_id: Optional[UUID] = None
+    host_id: Optional[UUID] = None
     capacity: int = 15
     status: Optional[str] = "Activo"
     day_of_week: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
-    base_attendee_ids: Optional[List[str]] = None
+    base_attendee_ids: Optional[List[UUID]] = None
     base_attendees_with_roles: Optional[List["ParticipanteGrupoConRol"]] = None
 
 
@@ -380,7 +383,7 @@ class GrupoEvangelismoCreate(BaseModel):
 class ParticipanteGrupoConRol(BaseModel):
     persona_id: UUID
     role: str = "participante"
-    rol_personalizado_id: Optional[int] = None
+    rol_personalizado_id: Optional[UUID] = None
 
 
 class GrupoEvangelismoUpdate(BaseModel):
@@ -389,20 +392,20 @@ class GrupoEvangelismoUpdate(BaseModel):
     zone: Optional[str] = None
     address: Optional[str] = None
     leader_id: Optional[UUID] = None
-    assistant_id: Optional[str] = None
-    host_id: Optional[str] = None
+    assistant_id: Optional[UUID] = None
+    host_id: Optional[UUID] = None
     capacity: Optional[int] = None
     status: Optional[str] = None
     day_of_week: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
-    base_attendee_ids: Optional[List[str]] = None
+    base_attendee_ids: Optional[List[UUID]] = None
     base_attendees_with_roles: Optional[List[ParticipanteGrupoConRol]] = None
 
 
 class SesionGrupoCreate(BaseModel):
     grupo_id: Optional[UUID] = None
-    season_id: Optional[int] = None
+    season_id: Optional[UUID] = None
     session_date: datetime
     topic: Optional[str] = None
     offering_amount: Optional[float] = None

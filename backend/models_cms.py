@@ -78,7 +78,7 @@ class CmsSite(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), unique=True, nullable=False, index=True)
     name = Column(String(120), nullable=False)
-    base_path = Column(String(120), unique=True, nullable=False, index=True)
+    base_path = Column(String(120), unique=True, nullable=False, index=True, default="/")
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)

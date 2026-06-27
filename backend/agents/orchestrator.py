@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 # Optional dependency
 try:  # pragma: no cover
@@ -60,7 +61,7 @@ class AgentOrchestrator:
         self,
         summary: str,
         metrics: Dict[str, Any],
-        conversation_id: Optional[int] = None,
+        conversation_id: Optional[UUID] = None,
         use_tools: bool = True,
     ) -> schemas.AgentInsightCreate:
         """Ejecuta diagnóstico con soporte de tool calling.
@@ -153,7 +154,7 @@ class AgentOrchestrator:
         self,
         summary: str,
         metrics: Dict[str, Any],
-        conversation_id: Optional[int] = None,
+        conversation_id: Optional[UUID] = None,
     ) -> List[Dict[str, str]]:
         """Construye mensajes para el LLM con historial si existe."""
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -181,7 +182,7 @@ class AgentOrchestrator:
         return messages
 
     def _get_conversation_history(
-        self, conversation_id: int, max_turns: int = 10,
+        self, conversation_id: UUID, max_turns: int = 10,
     ) -> List[Dict[str, str]]:
         """Obtiene historial de conversación."""
         try:
@@ -192,7 +193,7 @@ class AgentOrchestrator:
 
     def _save_conversation_turn(
         self,
-        conversation_id: int,
+        conversation_id: UUID,
         role: str,
         content: str,
         tools_used: list = None,
@@ -208,7 +209,7 @@ class AgentOrchestrator:
 
 
 def bootstrap_diagnostic_task(
-    summary: str, metrics: Dict[str, Any], conversation_id: int = None,
+    summary: str, metrics: Dict[str, Any], conversation_id: UUID = None,
 ) -> None:
     """Ejecuta diagnóstico y persiste insights/tareas."""
     orchestrator = AgentOrchestrator()

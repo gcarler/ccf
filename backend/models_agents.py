@@ -149,6 +149,7 @@ class AgentTask(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     completed_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
 
 class AgentInsight(Base):
@@ -165,3 +166,4 @@ class AgentInsight(Base):
     acknowledged_at = Column(DateTime(timezone=True), nullable=True)
     acknowledged_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)

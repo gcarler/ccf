@@ -1,304 +1,367 @@
-"""Academy 2.0 — Catálogo, Evaluaciones, Matrícula, Progreso, Certificaciones.
-
-Modelos para la Academia con Kernel UUID, motor de evaluaciones (quizzes),
-seguimiento de progreso por lección, foros, y certificaciones.
-"""
-from datetime import datetime, timezone
+"""Canonical Academy models backed exclusively by ``academy_*`` tables."""
 
 import uuid as _uuid
 
-from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey,
-                        Integer, JSON, Numeric, String, Text,
-                        UniqueConstraint)
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    JSON,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, synonym
 
 from backend.core.database import Base
+from backend.models_shared import _utcnow
 
 
-def _utcnow():
-    return datetime.now(timezone.utc)
-
-
-# ═══════════════════════════════════════════════════════════════════
-# CATÁLOGO ACADÉMICO
-# ═══════════════════════════════════════════════════════════════════
-
-class Curso(Base):
+class Course(Base):
     __tablename__ = "academy_courses"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
     code = Column(String(50), nullable=False, unique=True)
     slug = Column(String(200), nullable=True, unique=True, index=True)
-    title = Column(String(200), nullable=False)
-    description = Column(Text)
+    title = Column(String(200), nullable=False, index=True)
+    description = Column(Text, nullable=True)
     excerpt = Column(Text, nullable=True)
     tag = Column(String(100), nullable=True)
     cta_text = Column(String(100), nullable=True)
     syllabus = Column(JSON, nullable=True)
     instructor_name = Column(String(200), nullable=True)
-    modality = Column(String(50), nullable=False)
+    modality = Column(String(50), nullable=False, index=True)
     otorga_rol_iglesia = Column(String(50), nullable=True)
-    is_published = Column(Boolean, default=False)
-    is_self_paced = Column(Boolean, default=False)
-    duration_hours = Column(Integer, nullable=False)
-    xp_per_lesson = Column(Integer, default=10)
-    image_url = Column(String(255))
-    # open=cualquier registrado | persona=academy:study | advanced=academy:edit
+    is_published = Column(Boolean, default=False, nullable=False)
+    is_self_paced = Column(Boolean, default=False, nullable=False)
+    duration_hours = Column(Integer, nullable=False, default=0)
+    cohort_name = Column(String(100), nullable=True)
+    certificate_type = Column(String(50), nullable=True)
+    xp_per_lesson = Column(Integer, default=10, nullable=False)
+    image_url = Column(String(255), nullable=True)
     access_level = Column(String(20), nullable=False, default="persona", server_default="persona")
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
-    lecciones = relationship("Leccion", back_populates="curso",
-                             cascade="all, delete-orphan")
-    prerrequisitos = relationship("PrerrequisitoCurso",
-                                  foreign_keys="PrerrequisitoCurso.course_id")
+    lessons = relationship("Lesson", back_populates="course")
+    enrollments = relationship("Enrollment", back_populates="course")
+    prerequisites = relationship(
+        "CoursePrerequisite",
+        foreign_keys="CoursePrerequisite.course_id",
+        back_populates="course",
+    )
 
 
-class PrerrequisitoCurso(Base):
+class CoursePrerequisite(Base):
     __tablename__ = "academy_course_prerequisites"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
-    prerequisite_course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"),
-                                    nullable=False)
-
-    __table_args__ = (
-        UniqueConstraint("course_id", "prerequisite_course_id",
-                         name="uq_course_prerequisite"),
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False, index=True)
+    prerequisite_course_id = Column(
+        UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False, index=True
     )
 
+    __table_args__ = (
+        UniqueConstraint("course_id", "prerequisite_course_id", name="uq_course_prerequisite"),
+    )
 
-class Leccion(Base):
+    course = relationship("Course", foreign_keys=[course_id], back_populates="prerequisites")
+    prerequisite_course = relationship("Course", foreign_keys=[prerequisite_course_id])
+
+
+class Lesson(Base):
     __tablename__ = "academy_lessons"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False, index=True)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
-    content_type = Column(String(50), default="video")
-    media_url = Column(String(255))
-    order_index = Column(Integer, nullable=False)
-    duration_minutes = Column(Integer, nullable=False)
-    is_published = Column(Boolean, default=False)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    content_type = Column(String(50), default="video", nullable=False)
+    media_url = Column(String(255), nullable=True)
+    order_index = Column(Integer, nullable=False, default=0)
+    duration_minutes = Column(Integer, nullable=False, default=0)
+    is_published = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
-    curso = relationship("Curso", back_populates="lecciones")
-
-
-# ═══════════════════════════════════════════════════════════════════
-# EVALUACIONES
-# ═══════════════════════════════════════════════════════════════════
-
-class Evaluacion(Base):
-    __tablename__ = "academy_assessments"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
-    lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=True)
-    title = Column(String(200), nullable=False)
-    description = Column(Text)
-    max_score = Column(Float, nullable=False)
-    passing_score = Column(Float, nullable=False)
-    weight = Column(Numeric, default=1.0)
-    is_published = Column(Boolean, default=False)
-
-    preguntas = relationship("Pregunta", back_populates="evaluacion",
-                             cascade="all, delete-orphan")
+    course = relationship("Course", back_populates="lessons")
+    resources = relationship("Resource", back_populates="lesson")
+    assessments = relationship("Assessment", back_populates="lesson")
 
 
-class Pregunta(Base):
-    __tablename__ = "academy_assessment_questions"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    assessment_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessments.id"),
-                           nullable=False)
-    question_text = Column(Text, nullable=False)
-    question_type = Column(String(50))
-    points = Column(Integer, default=1)
-
-    evaluacion = relationship("Evaluacion", back_populates="preguntas")
-    opciones = relationship("Opcion", back_populates="pregunta",
-                            cascade="all, delete-orphan")
-
-
-class Opcion(Base):
-    __tablename__ = "academy_assessment_options"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    question_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessment_questions.id"),
-                         nullable=False)
-    option_text = Column(Text, nullable=False)
-    is_correct = Column(Boolean, default=False)
-
-    pregunta = relationship("Pregunta", back_populates="opciones")
-
-
-# ═══════════════════════════════════════════════════════════════════
-# MATRÍCULA Y PROGRESO
-# ═══════════════════════════════════════════════════════════════════
-
-class Matricula(Base):
-    __tablename__ = "academy_enrollments"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
-                        nullable=False)
-    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
-    cohort_name = Column(String(100))
-    status = Column(String(50), nullable=False, default="ACTIVO")
-    progress_percent = Column(Float, default=0.0)
-    final_grade = Column(Float, nullable=True)
-    attendance_percent = Column(Float, default=0.0)
-    approved = Column(Boolean, default=False)
-    acta_closed = Column(Boolean, default=False)
-    completed_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-
-    persona = relationship("Persona")
-    curso = relationship("Curso")
-
-    __table_args__ = (
-        UniqueConstraint("persona_id", "course_id",
-                         name="uq_enrollment_persona_course"),
-    )
-
-
-class ProgresoLeccion(Base):
+class LessonProgress(Base):
     __tablename__ = "academy_lesson_progress"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
-                        nullable=False)
-    lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=False)
-    progress_percent = Column(Numeric, default=0.0)
-    is_completed = Column(Boolean, default=False)
-    last_position_seconds = Column(Integer, default=0)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=False, index=True)
+    progress_percent = Column(Numeric(5, 2), default=0)
+    is_completed = Column(Boolean, default=False, nullable=False, index=True)
+    last_position_seconds = Column(Integer, default=0, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint("persona_id", "lesson_id",
-                         name="uq_lesson_progress_persona_lesson"),
+        UniqueConstraint("persona_id", "lesson_id", name="uq_lesson_progress_persona_lesson"),
     )
 
 
-class AsistenciaClase(Base):
-    __tablename__ = "academy_course_attendance"
+class Assessment(Base):
+    __tablename__ = "academy_assessments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    enrollment_id = Column(UUID(as_uuid=True),
-                           ForeignKey("academy_enrollments.id"), nullable=False)
-    session_date = Column(DateTime(timezone=True), nullable=False)
-    status = Column(String(50), nullable=False)
-    recorded_by_persona_id = Column(UUID(as_uuid=True),
-                                    ForeignKey("personas.id"), nullable=False)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False, index=True)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    max_score = Column(Float, nullable=False, default=100)
+    passing_score = Column(Float, nullable=False, default=70)
+    weight = Column(Numeric(5, 2), default=1.0)
+    is_published = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    min_score = synonym("passing_score")
+    lesson = relationship("Lesson", back_populates="assessments")
+    course = relationship("Course")
+    questions = relationship("AssessmentQuestion", back_populates="assessment")
 
 
-class IntentoEvaluacion(Base):
+class AssessmentQuestion(Base):
+    __tablename__ = "academy_assessment_questions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    assessment_id = Column(
+        UUID(as_uuid=True), ForeignKey("academy_assessments.id"), nullable=False, index=True
+    )
+    question_text = Column(Text, nullable=False)
+    question_type = Column(String(50), default="multiple_choice", nullable=False)
+    points = Column(Integer, default=1, nullable=False)
+    order_index = Column(Integer, default=0, nullable=False)
+
+    assessment = relationship("Assessment", back_populates="questions")
+    options = relationship("AssessmentOption", back_populates="question")
+
+
+class AssessmentOption(Base):
+    __tablename__ = "academy_assessment_options"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    question_id = Column(
+        UUID(as_uuid=True), ForeignKey("academy_assessment_questions.id"), nullable=False, index=True
+    )
+    option_text = Column(Text, nullable=False)
+    is_correct = Column(Boolean, default=False, nullable=False)
+
+    question = relationship("AssessmentQuestion", back_populates="options")
+
+
+class Enrollment(Base):
+    __tablename__ = "academy_enrollments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False, index=True)
+    cohort_name = Column(String(100), nullable=True)
+    status = Column(String(50), nullable=False, default="active", index=True)
+    progress_percent = Column(Float, default=0.0, nullable=False)
+    final_grade = Column(Float, nullable=True)
+    attendance_percent = Column(Float, default=0.0, nullable=False)
+    lessons_completed = Column(JSON, nullable=True, default=list)
+    approved = Column(Boolean, default=False, nullable=False)
+    acta_closed = Column(Boolean, default=False, nullable=False)
+    certificate_issued = Column(Boolean, default=False, nullable=False)
+    certificate_code = Column(String(64), nullable=True)
+    access_window_end = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    persona = relationship("Persona")
+    course = relationship("Course", back_populates="enrollments")
+
+    __table_args__ = (
+        UniqueConstraint("persona_id", "course_id", name="uq_enrollment_persona_course"),
+    )
+
+
+class AssessmentAttempt(Base):
     __tablename__ = "academy_assessment_attempts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    assessment_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessments.id"),
-                           nullable=False)
-    enrollment_id = Column(UUID(as_uuid=True),
-                           ForeignKey("academy_enrollments.id"), nullable=False)
+    assessment_id = Column(
+        UUID(as_uuid=True), ForeignKey("academy_assessments.id"), nullable=False, index=True
+    )
+    enrollment_id = Column(
+        UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False, index=True
+    )
     score = Column(Float, nullable=True)
-    passed = Column(Boolean, default=False)
-    submitted_at = Column(DateTime(timezone=True), default=_utcnow)
+    passed = Column(Boolean, default=False, nullable=False)
+    submitted_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
-    evaluacion = relationship("Evaluacion")
-    matricula = relationship("Matricula")
+    created_at = synonym("submitted_at")
+    assessment = relationship("Assessment")
+    enrollment = relationship("Enrollment")
+    answers = relationship("AssessmentAnswer", back_populates="attempt")
 
 
-class EntregaTarea(Base):
+class AssessmentAnswer(Base):
+    __tablename__ = "academy_assessment_answers"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    attempt_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("academy_assessment_attempts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    question_id = Column(
+        UUID(as_uuid=True), ForeignKey("academy_assessment_questions.id"), nullable=False
+    )
+    selected_option_id = Column(
+        UUID(as_uuid=True), ForeignKey("academy_assessment_options.id"), nullable=True
+    )
+    text_response = Column(Text, nullable=True)
+    is_correct = Column(Boolean, nullable=True)
+    points_awarded = Column(Numeric(5, 2), default=0)
+
+    attempt = relationship("AssessmentAttempt", back_populates="answers")
+    question = relationship("AssessmentQuestion")
+    selected_option = relationship("AssessmentOption")
+
+
+class CourseAttendance(Base):
+    __tablename__ = "academy_course_attendance"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    enrollment_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("academy_enrollments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    session_date = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
+    status = Column(String(50), nullable=False, default="present")
+    recorded_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+
+    enrollment = relationship("Enrollment")
+
+
+class AssignmentSubmission(Base):
     __tablename__ = "academy_assignment_submissions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    enrollment_id = Column(UUID(as_uuid=True),
-                           ForeignKey("academy_enrollments.id"), nullable=False)
-    lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=False)
-    seaweed_fid = Column(String(100), nullable=False)
+    enrollment_id = Column(
+        UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False, index=True
+    )
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=False, index=True)
+    file_url = Column("seaweed_fid", String(500), nullable=False)
+    comment = Column(Text, nullable=True)
     teacher_feedback = Column(Text, nullable=True)
     grade = Column(Float, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
 
-# ═══════════════════════════════════════════════════════════════════
-# CERTIFICACIONES
-# ═══════════════════════════════════════════════════════════════════
+class Resource(Base):
+    __tablename__ = "academy_resources"
 
-class Certificado(Base):
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=False, index=True)
+    title = Column(String(200), nullable=False)
+    file_url = Column(String(500), nullable=False)
+    resource_type = Column(String(50), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    lesson = relationship("Lesson", back_populates="resources")
+
+
+class Certificate(Base):
     __tablename__ = "academy_certificates"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    enrollment_id = Column(UUID(as_uuid=True),
-                           ForeignKey("academy_enrollments.id"), nullable=False)
-    certificate_code = Column(String(100), nullable=False, unique=True)
-    certificate_type = Column(String(50))
-    issued_at = Column(DateTime(timezone=True), default=_utcnow)
+    enrollment_id = Column(
+        UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False, index=True
+    )
+    certificate_code = Column(String(100), nullable=False, unique=True, index=True)
+    certificate_type = Column(String(50), nullable=True)
+    issued_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+
+    enrollment = relationship("Enrollment")
 
 
-class ActaFormal(Base):
+class FormalActa(Base):
     __tablename__ = "academy_formal_actas"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
-    cohort_name = Column(String(100), nullable=False)
-    closed_by_persona_id = Column(UUID(as_uuid=True),
-                                  ForeignKey("personas.id"), nullable=False)
-    min_grade = Column(Float, nullable=False)
-    min_attendance = Column(Float, nullable=False)
-    status = Column(String(50), default="BORRADOR")
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False, index=True)
+    cohort_name = Column(String(100), nullable=False, default="General")
+    closed_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
+    min_grade = Column(Float, nullable=False, default=70)
+    min_attendance = Column(Float, nullable=False, default=75)
+    status = Column(String(50), default="closed", nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
-    entradas = relationship("ActaEntrada", back_populates="acta",
-                            cascade="all, delete-orphan")
+    entries = relationship("FormalActaEntry", back_populates="acta")
 
 
-class ActaEntrada(Base):
-    """Notas individuales de cada alumno en un acta."""
+class FormalActaEntry(Base):
     __tablename__ = "academy_formal_acta_entries"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     acta_id = Column(UUID(as_uuid=True), ForeignKey("academy_formal_actas.id"), nullable=False)
-    enrollment_id = Column(UUID(as_uuid=True),
-                           ForeignKey("academy_enrollments.id"), nullable=False)
+    enrollment_id = Column(
+        UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False
+    )
     final_grade = Column(Float, nullable=True)
-    attendance_percent = Column(Float, default=0.0)
-    approved = Column(Boolean, default=False)
+    attendance_percent = Column(Float, default=0.0, nullable=False)
+    approved = Column(Boolean, default=False, nullable=False)
     notes = Column(Text, nullable=True)
 
-    acta = relationship("ActaFormal", back_populates="entradas")
+    acta = relationship("FormalActa", back_populates="entries")
 
 
-# ═══════════════════════════════════════════════════════════════════
-# FOROS
-# ═══════════════════════════════════════════════════════════════════
-
-class HiloForo(Base):
+class ForumThread(Base):
     __tablename__ = "academy_forum_threads"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False)
-    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
-                               nullable=False)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=True, index=True)
+    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     title = Column(String(200), nullable=False)
+    category = Column(String(50), nullable=False, default="general", index=True)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    is_resolved = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
 
 
-class ComentarioForo(Base):
+class ForumComment(Base):
     __tablename__ = "academy_forum_comments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    thread_id = Column(UUID(as_uuid=True), ForeignKey("academy_forum_threads.id"),
-                       nullable=False)
-    parent_id = Column(UUID(as_uuid=True), ForeignKey("academy_forum_comments.id"),
-                       nullable=True)
-    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"),
-                               nullable=False)
+    thread_id = Column(UUID(as_uuid=True), ForeignKey("academy_forum_threads.id"), nullable=False)
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("academy_forum_comments.id"), nullable=True)
+    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
-    respuestas = relationship("ComentarioForo", backref="parent",
-                              remote_side="ComentarioForo.id")
+
+class AcademyActivityLog(Base):
+    __tablename__ = "academy_activity_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    event_type = Column(String(50), nullable=False, index=True)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    modality = Column(String(20), nullable=True)
+    value = Column(Numeric(10, 2), default=1.0)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)

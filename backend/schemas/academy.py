@@ -26,6 +26,11 @@ class Course(BaseModel):
     description: Optional[str] = None
     modality: str
     is_published: bool = True
+    is_self_paced: bool = False
+    duration_hours: int = 0
+    xp_per_lesson: int = 10
+    cohort_name: Optional[str] = None
+    certificate_type: Optional[str] = None
     access_level: str = "persona"  # open | persona | advanced
     created_at: datetime | None = None
     prerequisites: List[CoursePrerequisite] = Field(default_factory=list)
@@ -119,6 +124,10 @@ class Enrollment(BaseModel):
     progress_percent: float = 0
     approved: bool = False
     certificate_issued: bool = False
+    final_grade: Optional[float] = None
+    attendance_percent: float = 0
+    acta_closed: bool = False
+    created_at: datetime | None = None
     model_config = orm_config
 
 
@@ -165,7 +174,7 @@ class CourseAttendance(BaseModel):
     enrollment_id: UUID
     session_date: datetime
     status: str = "present"
-    recorded_by_id: Optional[int] = None
+    recorded_by_persona_id: Optional[UUID] = None
     model_config = orm_config
 
 
@@ -242,14 +251,15 @@ class ForumThreadBase(BaseModel):
 
 
 class ForumThreadCreate(ForumThreadBase):
-    author_persona_id: str  # UUID de Persona
+    content: Optional[str] = None
+    course_id: Optional[UUID] = None
 
 
 class ForumThread(BaseModel):
     id: UUID
     title: str
     category: str
-    author_persona_id: str  # UUID de Persona
+    author_persona_id: UUID
     is_resolved: bool = False
     created_at: datetime
     model_config = orm_config

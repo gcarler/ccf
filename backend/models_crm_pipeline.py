@@ -13,7 +13,7 @@ from sqlalchemy import (Boolean, Column, DateTime, Enum as SAEnum, ForeignKey,
 from sqlalchemy import JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, synonym
 
 from backend.core.database import Base
 
@@ -80,6 +80,7 @@ class PipelineCRM(Base):
     tipo = Column(SAEnum(TipoPipelineEnum), nullable=False)
     descripcion = Column(Text)
     activo = Column(Boolean, default=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -100,6 +101,7 @@ class EtapaPipeline(Base):
     nombre = Column(String(100), nullable=False)
     orden = Column(Integer, nullable=False)
     requiere_accion = Column(Boolean, default=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     pipeline = relationship("PipelineCRM", back_populates="etapas")
@@ -127,7 +129,7 @@ class CasoCRM(Base):
     origen_detalle_id = Column(String(200), nullable=True, index=True)
     origen_sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
     origen_grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True)
-    origen_estrategia_id = Column(String(36), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True)
+    origen_estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True)
     payload_web = Column(JSON, nullable=True)
     asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, index=True)
@@ -183,15 +185,40 @@ class TareaCRM(Base):
     __tablename__ = "crm_tareas"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="CASCADE"), nullable=False, index=True)
-    asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="CASCADE"), nullable=True, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
+    asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
     titulo = Column(String(200), nullable=False)
     descripcion = Column(Text)
-    fecha_vencimiento = Column(DateTime(timezone=True), nullable=False, index=True)
-    completada = Column(Boolean, default=False, index=True)
+    categoria = Column(String(100), default="Pastoral", nullable=True, index=True)
+    fecha_vencimiento = Column(DateTime(timezone=True), nullable=True, index=True)
+    estado = Column(String(20), default="pending", nullable=False, index=True)
+    prioridad = Column(String(20), default="medium", nullable=False)
     fecha_completada = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     caso = relationship("CasoCRM", back_populates="tareas")
+    persona = relationship("Persona", foreign_keys=[persona_id], back_populates="tasks")
     asignado_a = relationship("Persona", foreign_keys=[asignado_a_id])
+    assignee = synonym("asignado_a")
+    assignee_id = synonym("asignado_a_id")
+    title = synonym("titulo")
+    description = synonym("descripcion")
+    category = synonym("categoria")
+    due_date = synonym("fecha_vencimiento")
+    status = synonym("estado")
+    priority = synonym("prioridad")
+    completed_at = synonym("fecha_completada")
+
+    @hybrid_property
+    def completada(self) -> bool:
+        return self.estado == "completed"
+
+    @completada.expression
+    def completada(cls):
+        return cls.estado == "completed"
+
+    @completada.setter
+    def completada(self, value: bool) -> None:
+        self.estado = "completed" if value else "pending"

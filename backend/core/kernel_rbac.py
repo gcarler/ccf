@@ -3,15 +3,16 @@
 Este motor calcula permisos efectivos combinando:
 1. Roles de plataforma del Kernel (ADMINISTRADOR, GESTOR, EDITOR, LECTOR)
 2. Permisos del modelo de roles y roles textuales
-3. Override por usuario (UserPermission)
+3. Roles de Auth v3
 
-Resolución: Kernel RBAC > Role model > UserPermission override
+Resolución: Kernel de Personas + Auth v3
 """
 
 from __future__ import annotations
 
 import logging
 from typing import Dict, Set
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -74,11 +75,11 @@ KERNEL_ROLE_PERMISSIONS: Dict[str, Set[str]] = {
 }
 
 
-def _resolve_kernel_permissions(db: Session, user_id: int) -> Set[str]:
+def _resolve_kernel_permissions(db: Session, user_id: UUID) -> Set[str]:
     """Resuelve permisos desde el Kernel (Dimensión C)."""
-    from backend.crud.kernel import get_user_effective_permissions
+    from backend.crud.kernel import get_persona_effective_permissions
 
-    perms_dict = get_user_effective_permissions(db, user_id)
+    perms_dict = get_persona_effective_permissions(db, str(user_id))
     result: Set[str] = set()
 
     for module, actions in perms_dict.items():
@@ -122,10 +123,9 @@ def resolve_effective_permissions(
     """Calcula los permisos efectivos de un usuario.
 
     Orden de resolución:
-    1. Kernel RBAC (Dimensión C — platform roles)
-    2. Role model
-    3. Role string
-    4. UserPermission override
+    1. Kernel de Personas (dimensión de plataforma)
+    2. Rol Auth v3
+    3. Nombre de rol canónico
 
     El resultado es la UNIÓN de todos los permisos resueltos.
     """
@@ -142,10 +142,8 @@ def has_permission(
 
     También verifica el estado vital — usuarios INACTIVOS no tienen permisos.
     """
-    # Regla de Inactividad: is_user_active verifica estado_vital en Persona
-    # y hace fallback a User.is_active si no hay Persona asociada.
-    from backend.crud.kernel import is_user_active
-    if not is_user_active(db, user.id):
+    from backend.crud.kernel import is_persona_active
+    if not is_persona_active(db, str(user.id)):
         return False
 
     effective = resolve_effective_permissions(db, user)
@@ -223,8 +221,8 @@ def require_active_for_assignment():
         current_user=Depends(get_current_active_user),
         db: Session = Depends(get_db),
     ):
-        from backend.crud.kernel import is_user_active
-        if is_user_active(db, current_user.id):
+        from backend.crud.kernel import is_persona_active
+        if is_persona_active(db, str(current_user.id)):
             return current_user
 
         raise HTTPException(

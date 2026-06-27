@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from backend.schemas._common import orm_config, PaginatedResponse
+from backend.schemas.agenda import AgendaEvent, AgendaEventCreate
 # ── Academy / LMS ────────────────────────────────────────────────────────────
 from backend.schemas.academy import (AcademyStudentProfile, Assessment,
                                      AssessmentAttempt,
@@ -65,23 +66,10 @@ from backend.schemas.evangelism import (AsistenciaBulkCreate, AsistenciaBulkItem
 )
 
 from backend.schemas.crm import (EVENT_TYPES, MINISTRY_ROLES,
-                                 AgendaEvent,
-                                 AgendaEventBase, AgendaEventCreate,
-                                 ConsolidationAssignment,
-                                 ConsolidationAssignmentBase,
-                                 ConsolidationAssignmentCreate,
-                                 ConsolidationAssignmentUpdate,
-                                 CasoCRM, CasoCRMBase, CasoCRMCreate, CasoCRMUpdate, ConsolidationCase, ConsolidationCaseBase,
-                                 ConsolidationCaseCreate,
-                                 ConsolidationCaseUpdate,
-                                 ConsolidationInteraction,
-                                 ConsolidationInteractionBase,
-                                 ConsolidationInteractionCreate,
-                                 ConsolidationInteractionUpdate,
-                                 ConsolidationTask,
-                                 ConsolidationTaskBase,
-                                 ConsolidationTaskCreate,
-                                 ConsolidationTaskUpdate,
+                                 CaseInteractionCreate,
+                                 CaseCall, CaseCallCreate, CaseUpdate,
+                                 CaseTaskCreate,
+                                 CaseTaskUpdate,
                                  CounselingTicket,
                                  CounselingTicketBase, CounselingTicketCreate,
                                  CounselingTicketUpdate, CrmEvent,
@@ -112,8 +100,7 @@ from backend.schemas.crm import (EVENT_TYPES, MINISTRY_ROLES,
                                  PersonaPositionBase, PersonaPositionCreate,
                                  PersonaPositionUpdate, PersonaResponse,
                                  PersonaSelfProfileUpdate, PersonaUpdate,
-                                 PastoralCallLog,
-                                 PastoralCallLogCreate, Position, PositionBase,
+                                 Position, PositionBase,
                                  PositionCreate, PositionUpdate, PrayerRequest,
                                  PrayerRequestBase, PrayerRequestCreate,
                                  PrayerRequestPublicCreate,
@@ -138,8 +125,8 @@ from backend.schemas.identity import (RefreshTokenRequest, Role, RoleBase,
                                       UserBase, UserCreate, UserSelfUpdate,
                                       UserUpdate)
 
-# ── Auth 2.0 ─────────────────────────────────────────────────────────────────
-from backend.schemas.auth_v2 import (
+# ── Auth v3 ──────────────────────────────────────────────────────────────────
+from backend.schemas.auth_v3 import (
     AuthStatsSummary, CambioPasswordRequest, ForgotPasswordRequest,
     LogSeguridadRead, MedallaCreate, MedallaRead, MedallaUsuarioRead,
     MfaRecoveryResponse, MfaSetupResponse, MfaVerifyRequest,

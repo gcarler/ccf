@@ -149,7 +149,7 @@ class BitacoraEnvioOut(BaseModel):
     estado: str
     payload_hidratado: Dict[str, Any]
     log_error: Optional[str] = None
-    communication_log_id: Optional[int] = None
+    communication_log_id: Optional[UUID] = None
     external_id: Optional[str] = None
     outcome: Optional[str] = None
 

@@ -350,12 +350,11 @@ def get_default_roles() -> List[Dict[str, Any]]:
 def get_user_effective_permissions(db: Session, user) -> dict:
     """Compute effective permissions for a user.
 
-    Resolution order: admin bypass → platform Role → Role model → UserPermission override.
+    Resolution order: admin bypass, Auth v3 platform role, then canonical defaults.
     Returns a dict of {permission_key: "allow"}.
     """
     role = normalize_role(getattr(user, "role", ""))
 
-    # Check v2 role name
     if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
         role = normalize_role(user.rol_plataforma.nombre)
 
@@ -368,29 +367,11 @@ def get_user_effective_permissions(db: Session, user) -> dict:
 
     user_perms: dict = {}
 
-    # 1. v2 Role-based permissions
     if hasattr(user, "rol_plataforma") and user.rol_plataforma:
         role_perms = user.rol_plataforma.permisos or {}
         if isinstance(role_perms, dict):
             for k in role_perms:
                 user_perms[k] = "allow"
-
-    # 2. Role-based permissions from Role model
-    if not user_perms and getattr(user, "user_role_obj", None):
-        role_perms = getattr(user.user_role_obj, "permissions", None) or {}
-        if isinstance(role_perms, dict):
-            for k in role_perms:
-                user_perms[k] = "allow"
-        elif isinstance(role_perms, (list, set)):
-            for k in role_perms:
-                user_perms[k] = "allow"
-
-    # 2. Per-user permission overrides
-    if getattr(user, "permissions_override", None):
-        override = getattr(user.permissions_override, "permissions", None) or {}
-        if isinstance(override, dict):
-            for k, v in override.items():
-                user_perms[k] = v if isinstance(v, str) else "allow"
 
     if not user_perms:
         for role_def in DEFAULT_ROLES:
@@ -435,48 +416,27 @@ def create_access_token(
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_refresh_token(db: Session, user_id: int | str, ip_address: str = None, user_agent: str = None) -> str:
+def create_refresh_token(db: Session, user_id: uuid.UUID | str, ip_address: str = None, user_agent: str = None) -> str:
     """Create a cryptographically random refresh token and persist it."""
-    from backend import crud  # avoid circular import
-    import uuid as _uuid
-
     token = secrets.token_urlsafe(48)
     expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
+    from backend.models_auth import TokenSesion
 
-    # Bridge: UUID ids use auth storage; numeric ids still use users.
-    if isinstance(user_id, (str, _uuid.UUID)) and not str(user_id).isdigit():
-        from backend.models_auth import TokenSesion
-
-        # Convert string to UUID object if needed (TokenSesion.user_id is UUID PK)
-        user_uuid = _uuid.UUID(user_id) if isinstance(user_id, str) else user_id
-        try:
-            db.add(
-                TokenSesion(
-                    user_id=user_uuid,
-                    token=token,
-                    expires_at=expires_at,
-                    ip_address=ip_address,
-                    user_agent=user_agent,
-                )
-            )
-            db.commit()
-            return token
-        except Exception as exc:
-            log.error("Failed to create v2 refresh token: %s", exc)
-            db.rollback()
-
-    crud.create_refresh_token(
-        db,
-        user_id=int(user_id),
-        token=token,
-        expires_at=expires_at,
-        ip_address=ip_address,
-        user_agent=user_agent,
+    user_uuid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
+    db.add(
+        TokenSesion(
+            user_id=user_uuid,
+            token=token,
+            expires_at=expires_at,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
     )
+    db.commit()
     return token
 
 
-def record_session(user_id: int | str, token: str) -> None:
+def record_session(user_id: uuid.UUID | str, token: str) -> None:
     """Record an active session in Redis."""
     redis_client = get_redis()
     ttl = settings.access_token_expire_minutes * 60
@@ -491,8 +451,6 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
 ):
     """Resolve the current user from a JWT bearer token."""
-    from backend import crud  # avoid circular import
-
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -506,19 +464,20 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = None
-    if subject.isdigit():
-        user = crud.get_user(db, int(subject))
-    else:
-        try:
-            # Try to resolve as UUID for auth storage
-            val = uuid.UUID(subject)
-            from sqlalchemy.orm import joinedload
-            from backend.models_auth import Usuario
+    try:
+        user_id = uuid.UUID(subject)
+    except ValueError:
+        raise credentials_exception
 
-            user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == val).first()
-        except (ValueError, ImportError):
-            user = crud.get_user_by_email(db, email=subject)
+    from sqlalchemy.orm import joinedload
+    from backend.models_auth import Usuario
+
+    user = (
+        db.query(Usuario)
+        .options(joinedload(Usuario.rol_plataforma))
+        .filter(Usuario.id == user_id)
+        .first()
+    )
 
     if user is None:
         raise credentials_exception
@@ -594,33 +553,13 @@ def require_permission(permission: str):
         current_user=Depends(get_current_active_user),
         db: Session = Depends(get_db),
     ):
-        from backend import crud  # avoid circular import
-
         role = normalize_role(str(getattr(current_user, "role", "")))
         if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
             role = normalize_role(current_user.rol_plataforma.nombre)
 
-        # Check row-level permissions from the Role model
-        db_user = crud.get_user(db, current_user.id) if str(getattr(current_user, "id", "")).isdigit() else None
         user_perms: set[str] = set()
 
-        # 1. Role-based permissions from the numeric-user model
-        if db_user and getattr(db_user, "user_role_obj", None):
-            perms = getattr(db_user.user_role_obj, "permissions", None) or {}
-            if isinstance(perms, dict):
-                user_perms.update(perms.keys() if perms else [])
-            elif isinstance(perms, (list, set)):
-                user_perms.update(perms)
-
-        # 2. Per-user permission overrides from the numeric-user model
-        if db_user and getattr(db_user, "permissions_override", None):
-            override = getattr(db_user.permissions_override, "permissions", None) or {}
-            if isinstance(override, dict):
-                user_perms.update(override.keys() if override else [])
-            elif isinstance(override, (list, set)):
-                user_perms.update(override)
-
-        # 3. Granular permissions from auth_roles (RolPlataforma) — auth v2 source of truth
+        # Granular permissions from Auth v3 roles.
         if hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
             rol_perms = current_user.rol_plataforma.permisos or {}
             if isinstance(rol_perms, dict):
@@ -634,12 +573,19 @@ def require_permission(permission: str):
             return current_user
         if permission.startswith("crm:") and role == "pastor":
             return current_user
-        if permission.startswith("academy:") and role in {
+        if permission in {"academy:read", "academy:study"} and role in {
             "coordinador",
             "docente",
             "pastor",
             "estudiante",
+            "lector",
+            "miembro",
+            "aspirante",
         }:
+            return current_user
+        if permission == "academy:edit" and role in {"coordinador", "docente", "pastor"}:
+            return current_user
+        if permission == "academy:manage" and role in {"coordinador", "pastor"}:
             return current_user
         if permission.startswith("projects:") and role in {
             "coordinador",
@@ -674,7 +620,7 @@ async def require_pastor_or_admin(
         role = normalize_role(current_user.rol_plataforma.nombre)
     if role in {"admin", "administrador", "pastor"}:
         return current_user
-    # Fallback: accept users whose role has system:config or crm:manage permission
+    # Permission-based access for custom role names.
     permisos = {}
     if hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
         permisos = current_user.rol_plataforma.permisos or {}

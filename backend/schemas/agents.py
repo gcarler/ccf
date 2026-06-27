@@ -42,7 +42,7 @@ class AgentResponse(AgentBase):
 class AgentRoleCreate(BaseModel):
     role_type: str
     role_value: str
-    context_id: Optional[int] = None
+    context_id: Optional[UUID] = None
     context_type: Optional[str] = None
     is_primary: bool = False
 
@@ -52,7 +52,7 @@ class AgentRoleResponse(BaseModel):
     agent_id: UUID
     role_type: str
     role_value: str
-    context_id: Optional[int] = None
+    context_id: Optional[UUID] = None
     context_type: Optional[str] = None
     started_at: datetime
     ended_at: Optional[datetime] = None
@@ -64,7 +64,7 @@ class AgentRoleResponse(BaseModel):
 class AgentActivityCreate(BaseModel):
     activity_type: str
     source_type: str
-    source_id: Optional[int] = None
+    source_id: Optional[UUID] = None
     status: Optional[str] = None
     notes: Optional[str] = None
     occurred_at: Optional[datetime] = None
@@ -75,7 +75,7 @@ class AgentActivityResponse(BaseModel):
     agent_id: UUID
     activity_type: str
     source_type: str
-    source_id: Optional[int] = None
+    source_id: Optional[UUID] = None
     status: Optional[str] = None
     notes: Optional[str] = None
     occurred_at: datetime
@@ -86,7 +86,7 @@ class AgentActivityResponse(BaseModel):
 class AgentTimelineItem(BaseModel):
     activity_type: str
     source_type: str
-    source_id: Optional[int]
+    source_id: Optional[UUID]
     status: Optional[str]
     notes: Optional[str]
     occurred_at: datetime

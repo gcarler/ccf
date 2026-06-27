@@ -13,7 +13,7 @@ class UserBase(BaseModel):
     username: str
     email: str  # EmailStr removed because imported records may lack @
     role: str = "estudiante"
-    role_id: Optional[int] = None
+    role_id: Optional[UUID] = None
 
 
 class UserCreate(UserBase):
@@ -32,7 +32,7 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
     role: Optional[str] = None
-    role_id: Optional[int] = None
+    role_id: Optional[UUID] = None
     is_active: Optional[bool] = None
     xp: Optional[int] = None
 

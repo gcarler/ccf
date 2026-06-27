@@ -31,6 +31,18 @@ class Project(Base):
     activity_logs = relationship("ProjectActivityLog", back_populates="project", cascade="all, delete-orphan")
     whiteboard = relationship("ProjectWhiteboard", back_populates="project", uselist=False, cascade="all, delete-orphan")
 
+    # ``name`` is a thin alias over ``title`` so callers that pass or read
+    # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
+    # work without renaming the canonical column. The setter keeps store/update
+    # paths single-source-of-truth on ``title``.
+    @property
+    def name(self) -> str | None:
+        return self.title
+
+    @name.setter
+    def name(self, value: str | None) -> None:
+        self.title = value
+
 
 class ProjectMilestone(Base):
     __tablename__ = "project_milestones"

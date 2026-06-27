@@ -15,6 +15,16 @@ from backend.models_shared import _utcnow
 
 
 # 3. CRM & CHAT
+class Family(Base):
+    __tablename__ = "families"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    name = Column(String(100), nullable=False)
+    address = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    personas = relationship("Persona", back_populates="family")
+
+
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -56,23 +66,6 @@ class ConversationParticipant(Base):
 
     conversation = relationship("Conversation", backref="participants")
     user = relationship("Usuario")
-
-
-class AgendaEvent(Base):
-    __tablename__ = "agenda_events"
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    title = Column(String(200), nullable=False, index=True)
-    description = Column(Text, nullable=True)
-    start_at = Column(DateTime(timezone=True), nullable=False, index=True)
-    end_at = Column(DateTime(timezone=True), nullable=True, index=True)
-    location = Column(String(200), nullable=True)
-    is_all_day = Column(Boolean, default=True, index=True)
-    created_by_persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True
-    )
-    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class CrmEvent(Base):
@@ -404,7 +397,7 @@ class Persona(Base):
     is_main_pastor = Column(Boolean, default=False)
 
     tags = Column(JSON, nullable=True, default=list)
-    origen_estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    origen_estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     origen_grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
     origen_sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
     origen_fecha = Column(DateTime(timezone=True), nullable=True)
@@ -448,14 +441,8 @@ class Persona(Base):
     origen_grupo = relationship("GrupoEvangelismo", foreign_keys=[origen_grupo_id])
 
     positions = relationship("PersonaPosition", back_populates="persona")
-    consolidation_cases = relationship("ConsolidationCase", foreign_keys="ConsolidationCase.persona_id", back_populates="persona")
-    consolidated_cases_as_pastor = relationship("ConsolidationCase", foreign_keys="ConsolidationCase.assigned_pastor_id", back_populates="assigned_pastor")
-    consolidated_cases_as_leader = relationship("ConsolidationCase", foreign_keys="ConsolidationCase.assigned_leader_id", back_populates="assigned_leader")
-    consolidation_assignments_sent = relationship("ConsolidationAssignment", foreign_keys="ConsolidationAssignment.assigned_by_id", back_populates="assigned_by")
-    consolidation_assignments_received = relationship("ConsolidationAssignment", foreign_keys="ConsolidationAssignment.assigned_to_id", back_populates="assigned_to")
-    consolidation_interactions = relationship("ConsolidationInteraction", foreign_keys="ConsolidationInteraction.performed_by_id", back_populates="performed_by")
     donations = relationship("Donation", foreign_keys="Donation.persona_id", back_populates="persona")
-    tasks = relationship("CrmTask", foreign_keys="CrmTask.persona_id", back_populates="persona")
+    tasks = relationship("TareaCRM", foreign_keys="TareaCRM.persona_id", back_populates="persona")
     volunteer_shifts = relationship("VolunteerShift", foreign_keys="VolunteerShift.persona_id", back_populates="persona")
     communication_logs = relationship("CommunicationLog", foreign_keys="CommunicationLog.persona_id", back_populates="persona")
     participaciones_grupo = relationship("ParticipanteGrupo", back_populates="persona")
@@ -464,7 +451,6 @@ class Persona(Base):
     historial_embudo = relationship("HistorialEmbudo", back_populates="persona")
     ministerios_kernel = relationship("PersonaMinistry", foreign_keys="PersonaMinistry.persona_id", back_populates="persona")
     rol_iglesia = relationship("PersonaRoleAssignment", foreign_keys="PersonaRoleAssignment.persona_id", back_populates="persona", uselist=False)
-    roles_plataforma = relationship("PersonaPlatformRole", foreign_keys="PersonaPlatformRole.persona_id", back_populates="persona")
 
 
 class Position(Base):
@@ -511,166 +497,6 @@ class PersonaPosition(Base):
     position = relationship("Position", back_populates="persona_positions")
 
 
-class ConsolidationCase(Base):
-    __tablename__ = "consolidation_cases"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    persona_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("personas.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    stage = Column(String(20), default="new", index=True)
-    status = Column(String(20), default="active", index=True)
-    source = Column(String(100), nullable=True)
-    source_campaign = Column(String(200), nullable=True)
-    last_contact_at = Column(DateTime(timezone=True), nullable=True, index=True)
-    next_contact_at = Column(DateTime(timezone=True), nullable=True, index=True)
-    assigned_pastor_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("personas.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    assigned_leader_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("personas.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    notes = Column(Text, nullable=True)
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, index=True)
-
-    persona = relationship(
-        "Persona", foreign_keys=[persona_id], back_populates="consolidation_cases"
-    )
-    assigned_pastor = relationship(
-        "Persona",
-        foreign_keys=[assigned_pastor_id],
-        back_populates="consolidated_cases_as_pastor",
-    )
-    assigned_leader = relationship(
-        "Persona",
-        foreign_keys=[assigned_leader_id],
-        back_populates="consolidated_cases_as_leader",
-    )
-    assignments = relationship(
-        "ConsolidationAssignment", back_populates="case", cascade="all, delete-orphan"
-    )
-    interactions = relationship(
-        "ConsolidationInteraction", back_populates="case", cascade="all, delete-orphan"
-    )
-    tasks = relationship(
-        "ConsolidationTask", back_populates="case", cascade="all, delete-orphan"
-    )
-
-
-class ConsolidationAssignment(Base):
-    __tablename__ = "consolidation_assignments"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    case_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("consolidation_cases.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    assigned_by_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("personas.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    assigned_to_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("personas.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    reason = Column(Text, nullable=True)
-    priority = Column(String(20), default="normal", index=True)
-    start_date = Column(DateTime(timezone=True), default=_utcnow, index=True)
-    end_date = Column(DateTime(timezone=True), nullable=True, index=True)
-    status = Column(String(20), default="active", index=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
-
-    case = relationship("ConsolidationCase", back_populates="assignments")
-    assigned_by = relationship(
-        "Persona",
-        foreign_keys=[assigned_by_id],
-        back_populates="consolidation_assignments_sent",
-    )
-    assigned_to = relationship(
-        "Persona",
-        foreign_keys=[assigned_to_id],
-        back_populates="consolidation_assignments_received",
-    )
-    tasks = relationship(
-        "ConsolidationTask",
-        back_populates="assignment",
-        cascade="all, delete-orphan",
-    )
-
-
-class ConsolidationInteraction(Base):
-    __tablename__ = "consolidation_interactions"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    case_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("consolidation_cases.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    performed_by_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("personas.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    interaction_type = Column(String(50), nullable=False, index=True)
-    interaction_date = Column(DateTime(timezone=True), default=_utcnow, index=True)
-    result = Column(String(100), nullable=True)
-    notes = Column(Text, nullable=True)
-    next_action_date = Column(DateTime(timezone=True), nullable=True, index=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
-
-    case = relationship("ConsolidationCase", back_populates="interactions")
-    performed_by = relationship(
-        "Persona",
-        foreign_keys=[performed_by_id],
-        back_populates="consolidation_interactions",
-    )
-
-
-class ConsolidationTask(Base):
-    __tablename__ = "consolidation_tasks"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    case_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("consolidation_cases.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    assignment_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("consolidation_assignments.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    title = Column(String(200), nullable=False)
-    description = Column(Text, nullable=True)
-    due_date = Column(DateTime(timezone=True), nullable=True, index=True)
-    status = Column(String(20), default="pending", index=True)
-    completed_at = Column(DateTime(timezone=True), nullable=True, index=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
-
-    case = relationship("ConsolidationCase", back_populates="tasks")
-    assignment = relationship(
-        "ConsolidationAssignment", back_populates="tasks"
-    )
-
 class Donation(Base):
     __tablename__ = "donations"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -707,29 +533,6 @@ class DonationCategory(Base):
     description = Column(String(255))
     color_code = Column(String(50), default="blue")
     is_active = Column(Boolean, default=True)
-
-
-class CrmTask(Base):
-    __tablename__ = "crm_tasks"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    title = Column(String(200), nullable=False)
-    description = Column(Text, nullable=True)
-    category = Column(String(100), default="Pastoral", nullable=True, index=True)
-    persona_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("personas.id"),
-        nullable=True,
-        index=True,
-    )
-    assignee_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
-    due_date = Column(DateTime(timezone=True), nullable=True)
-    status = Column(String(20), default="pending", index=True)
-    priority = Column(String(20), default="medium")
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
-
-    persona = relationship("Persona", foreign_keys=[persona_id], back_populates="tasks")
-    assignee = relationship("Persona", foreign_keys=[assignee_id])
 
 
 class VolunteerShift(Base):
@@ -867,34 +670,6 @@ class PersonaRoleLink(Base):
 
     persona = relationship("Persona")
     role = relationship("RoleDefinition")
-
-
-class PastoralCallLog(Base):
-    __tablename__ = "pastoral_call_logs"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    case_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("consolidation_cases.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    persona_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("personas.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    pastor_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
-    outcome = Column(String(120), nullable=False)
-    notes = Column(Text, nullable=True)
-    duration_seconds = Column(Integer, default=0)
-    prayer_requests = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
-
-    persona = relationship("Persona", foreign_keys=[persona_id])
-    case = relationship("ConsolidationCase")
-    pastor = relationship("Persona", foreign_keys=[pastor_id])
 
 
 class PersonaMinistryAssignment(Base):

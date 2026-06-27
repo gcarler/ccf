@@ -75,24 +75,6 @@ class CrmEvent(CrmEventBase):
     created_at: datetime
     model_config = orm_config
 
-class AgendaEventBase(BaseModel):
-    title: str
-    description: Optional[str] = None
-    start_at: datetime
-    end_at: Optional[datetime] = None
-    location: Optional[str] = None
-    is_all_day: bool = True
-
-class AgendaEventCreate(AgendaEventBase):
-    pass
-
-class AgendaEvent(AgendaEventBase):
-    id: UUID
-    created_by_persona_id: Optional[UUID] = None
-    created_at: datetime
-    updated_at: datetime
-    model_config = orm_config
-
 class EventAttendanceBase(BaseModel):
     event_id: UUID
     persona_id: UUID
@@ -188,7 +170,7 @@ class DonationBase(BaseModel):
     persona_id: Optional[UUID] = None
     amount: float
     donation_type: str = "Diezmo"
-    fund_id: Optional[int] = None
+    fund_id: Optional[UUID] = None
     donor_name: Optional[str] = None
 
 class DonationCreate(DonationBase):
@@ -296,7 +278,7 @@ class PersonaResponse(BaseModel):
     baptism_date: Optional[date] = Field(None, validation_alias="fecha_bautismo")
     birthday: Optional[date] = None
     created_at: Optional[datetime] = None
-    family_id: Optional[int] = None
+    family_id: Optional[UUID] = None
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
     pastoral_notes: Optional[str] = None
@@ -334,7 +316,7 @@ class PersonaResponse(BaseModel):
     group_name: Optional[str] = None
     campus: Optional[str] = None
     church_join_date: Optional[date] = None
-    colombian_department_id: Optional[int] = None
+    colombian_department_id: Optional[UUID] = None
     city: Optional[str] = None
 
 class Persona(BaseModel):
@@ -345,7 +327,7 @@ class Persona(BaseModel):
     phone: Optional[str] = None
     church_role: str = "Miembro"
     spiritual_status: str = "Nuevo"
-    family_id: Optional[int] = None
+    family_id: Optional[UUID] = None
     birthday: Optional[datetime] = None
     gender: Optional[str] = None
     spiritual_health: float = 0.8
@@ -388,7 +370,7 @@ class Persona(BaseModel):
     group_name: Optional[str] = None
     campus: Optional[str] = None
     church_join_date: Optional[date] = None
-    colombian_department_id: Optional[int] = None
+    colombian_department_id: Optional[UUID] = None
     city: Optional[str] = None
     created_at: datetime
     model_config = orm_config
@@ -410,7 +392,7 @@ class PersonaCreate(BaseModel):
     last_name: str = Field(..., min_length=2, max_length=100)
     email: Optional[str] = None
     phone: Optional[str] = None
-    family_id: Optional[int] = None
+    family_id: Optional[UUID] = None
     church_role: str = "Miembro"
     spiritual_status: Optional[str] = None
     estado_vital: Optional[str] = None
@@ -455,7 +437,7 @@ class PersonaCreate(BaseModel):
     group_name: Optional[str] = None
     campus: Optional[str] = None
     church_join_date: Optional[date] = None
-    colombian_department_id: Optional[int] = None
+    colombian_department_id: Optional[UUID] = None
     city: Optional[str] = None
 
 class PersonaUpdate(BaseModel):
@@ -469,7 +451,7 @@ class PersonaUpdate(BaseModel):
     is_baptized: Optional[bool] = None
     baptism_date: Optional[date] = None
     birthday: Optional[date] = None
-    family_id: Optional[int] = None
+    family_id: Optional[UUID] = None
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
     pastoral_notes: Optional[str] = None
@@ -508,7 +490,7 @@ class PersonaUpdate(BaseModel):
     group_name: Optional[str] = None
     campus: Optional[str] = None
     church_join_date: Optional[date] = None
-    colombian_department_id: Optional[int] = None
+    colombian_department_id: Optional[UUID] = None
     city: Optional[str] = None
 
 
@@ -600,7 +582,7 @@ class PersonaPositionCreate(PersonaPositionBase):
     pass
 
 class PersonaPositionUpdate(BaseModel):
-    position_id: Optional[int] = None
+    position_id: Optional[UUID] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     is_active: Optional[bool] = None
@@ -644,7 +626,7 @@ class PersonaFormationCreate(PersonaFormationBase):
     pass
 
 class PersonaFormationUpdate(BaseModel):
-    formation_level_id: Optional[int] = None
+    formation_level_id: Optional[UUID] = None
     role_in_level: Optional[str] = None
     cohort: Optional[str] = None
     start_date: Optional[datetime] = None
@@ -684,7 +666,7 @@ class EvangelismStrategyBase(BaseModel):
     phase_count: Optional[int] = None
     niche_objective: Optional[str] = None
     strategy_type: Optional[str] = None
-    default_role_id: Optional[int] = None
+    default_role_id: Optional[UUID] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: str = "active"
@@ -700,7 +682,7 @@ class EvangelismStrategy(EvangelismStrategyBase):
 
 class PersonaEvangelismBase(BaseModel):
     persona_id: UUID
-    evangelism_strategy_id: str  # UUID string
+    evangelism_strategy_id: UUID
     role: str = "assistant"
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -736,7 +718,7 @@ class TeachingAssignmentCreate(TeachingAssignmentBase):
     pass
 
 class TeachingAssignmentUpdate(BaseModel):
-    formation_level_id: Optional[int] = None
+    formation_level_id: Optional[UUID] = None
     subject: Optional[str] = None
     group_name: Optional[str] = None
     start_date: Optional[datetime] = None
@@ -748,24 +730,7 @@ class TeachingAssignment(TeachingAssignmentBase):
     id: UUID
     model_config = orm_config
 
-class CasoCRMBase(BaseModel):  # v2 — replaces ConsolidationCaseBase
-    persona_id: UUID
-    stage: str = "new"
-    status: str = "active"
-    source: Optional[str] = None
-    source_campaign: Optional[str] = None
-    last_contact_at: Optional[datetime] = None
-    next_contact_at: Optional[datetime] = None
-    assigned_pastor_id: Optional[str] = None
-    assigned_leader_id: Optional[str] = None
-    notes: Optional[str] = None
-
-class CasoCRMCreate(CasoCRMBase):  # v2
-
-    pass
-
-class CasoCRMUpdate(BaseModel):  # v2
-
+class CaseUpdate(BaseModel):
     stage: Optional[str] = None
     status: Optional[str] = None
     source: Optional[str] = None
@@ -776,88 +741,26 @@ class CasoCRMUpdate(BaseModel):  # v2
     assigned_leader_id: Optional[str] = None
     notes: Optional[str] = None
 
-class CasoCRM(CasoCRMBase):  # v2
-
-    id: UUID
-    created_at: datetime
-    updated_at: datetime
-    model_config = orm_config
-
-class ConsolidationAssignmentBase(BaseModel):
-    case_id: str
-    assigned_by_id: str
-    assigned_to_id: str
-    reason: Optional[str] = None
-    priority: str = "normal"
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    status: str = "active"
-
-class ConsolidationAssignmentCreate(ConsolidationAssignmentBase):
-    pass
-
-class ConsolidationAssignmentUpdate(BaseModel):
-    assigned_by_id: Optional[str] = None
-    assigned_to_id: Optional[str] = None
-    reason: Optional[str] = None
-    priority: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    status: Optional[str] = None
-
-class ConsolidationAssignment(ConsolidationAssignmentBase):
-    id: UUID
-    created_at: datetime
-    model_config = orm_config
-
-class ConsolidationInteractionBase(BaseModel):
-    case_id: str
-    performed_by_id: str
+class CaseInteractionCreate(BaseModel):
     interaction_type: str
     interaction_date: Optional[datetime] = None
     result: Optional[str] = None
     notes: Optional[str] = None
     next_action_date: Optional[datetime] = None
 
-class ConsolidationInteractionCreate(ConsolidationInteractionBase):
-    pass
-
-class ConsolidationInteractionUpdate(BaseModel):
-    interaction_type: Optional[str] = None
-    interaction_date: Optional[datetime] = None
-    result: Optional[str] = None
-    notes: Optional[str] = None
-    next_action_date: Optional[datetime] = None
-
-class ConsolidationInteraction(ConsolidationInteractionBase):
-    id: UUID
-    created_at: datetime
-    model_config = orm_config
-
-class ConsolidationTaskBase(BaseModel):
-    case_id: str
-    assignment_id: Optional[int] = None
+class CaseTaskCreate(BaseModel):
     title: str
     description: Optional[str] = None
     due_date: Optional[datetime] = None
     status: str = "pending"
     completed_at: Optional[datetime] = None
 
-class ConsolidationTaskCreate(ConsolidationTaskBase):
-    pass
-
-class ConsolidationTaskUpdate(BaseModel):
-    assignment_id: Optional[int] = None
+class CaseTaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     due_date: Optional[datetime] = None
     status: Optional[str] = None
     completed_at: Optional[datetime] = None
-
-class ConsolidationTask(ConsolidationTaskBase):
-    id: UUID
-    created_at: datetime
-    model_config = orm_config
 
 class Family(BaseModel):
     id: UUID
@@ -916,16 +819,14 @@ class FaroSessionAttendance(BaseModel):
     expected_participantes: List[FaroSessionAttendanceItem] = []
     model_config = orm_config
 
-class PastoralCallLogCreate(BaseModel):
-    case_id: str = ""
+class CaseCallCreate(BaseModel):
     persona_id: Optional[UUID] = None
-    pastor_id: Optional[str] = None  # UUID string; resolved from current_user if omitted
     outcome: str
     notes: Optional[str] = None
     prayer_requests: Optional[str] = None
     duration_seconds: int = 0
 
-class PastoralCallLog(BaseModel):
+class CaseCall(BaseModel):
     id: UUID
     case_id: Optional[str] = None
     persona_id: Optional[UUID] = None
@@ -936,9 +837,3 @@ class PastoralCallLog(BaseModel):
     duration_seconds: int = 0
     created_at: datetime
     model_config = orm_config
-
-# Public schema aliases
-ConsolidationCaseBase = CasoCRMBase
-ConsolidationCaseCreate = CasoCRMCreate
-ConsolidationCaseUpdate = CasoCRMUpdate
-ConsolidationCase = CasoCRM

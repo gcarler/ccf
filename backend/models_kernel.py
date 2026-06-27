@@ -14,7 +14,7 @@ import enum
 import uuid as _uuid
 
 from sqlalchemy import (Boolean, Column, DateTime, Enum as SAEnum, ForeignKey,
-                        Index, Integer, JSON, String, Text, UniqueConstraint)
+                        Index, String, Text, UniqueConstraint)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -53,13 +53,6 @@ class ChurchRole(str, enum.Enum):
     VISITANTE_EVANGELISMO = "VISITANTE_EVANGELISMO"
     VISITANTE_ONLINE = "VISITANTE_ONLINE"
 
-
-class PlatformRole(str, enum.Enum):
-    """Dimensión C — Roles de Plataforma (permisos RBAC)."""
-    ADMINISTRADOR = "ADMINISTRADOR"
-    GESTOR = "GESTOR"
-    EDITOR = "EDITOR"
-    LECTOR = "LECTOR"
 
 
 # ──────────────────────────────────────────────
@@ -151,79 +144,3 @@ class PersonaRoleHistory(Base):
         Index("ix_persona_role_history_lookup", "persona_id", "changed_at"),
     )
 
-
-# ──────────────────────────────────────────────
-# DIMENSIÓN C: ROLES DE PLATAFORMA (RBAC)
-# ──────────────────────────────────────────────
-
-class PlatformRoleDefinition(Base):
-    """Dimensión C — Definición de roles de plataforma con permisos predefinidos."""
-    __tablename__ = "platform_role_definitions"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    role = Column(SAEnum(PlatformRole), unique=True, nullable=False, index=True)
-    permissions = Column(
-        JSON, nullable=False, default={
-            "ADMINISTRADOR": {
-                "*": ["create", "read", "update", "delete", "admin"],
-            },
-            "GESTOR": {
-                "crm": ["create", "read", "update"],
-                "academy": ["create", "read", "update"],
-                "projects": ["create", "read", "update"],
-                "evangelism": ["create", "read", "update"],
-                "cms": ["read", "update"],
-                "community": ["create", "read", "update"],
-                "agenda": ["create", "read", "update"],
-                "finances": ["read"],
-            },
-            "EDITOR": {
-                "crm": ["read", "update"],
-                "academy": ["read"],
-                "projects": ["read", "update"],
-                "evangelism": ["read", "update"],
-                "cms": ["read", "update"],
-                "community": ["create", "read", "update"],
-                "agenda": ["read"],
-            },
-            "LECTOR": {
-                "crm": ["read"],
-                "academy": ["read"],
-                "projects": ["read"],
-                "evangelism": ["read"],
-                "cms": ["read"],
-                "community": ["read"],
-                "agenda": ["read"],
-            },
-        },
-        comment="Permisos por módulo: {module: [actions]}"
-    )
-    description = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-
-    persona_roles = relationship("PersonaPlatformRole", back_populates="role_definition")
-
-
-class PersonaPlatformRole(Base):
-    """Dimensión C — Asignación de rol de plataforma a una persona."""
-    __tablename__ = "persona_platform_roles"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    persona_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("personas.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    role_id = Column(Integer, ForeignKey("platform_role_definitions.id"), nullable=False, index=True
-    )
-    assigned_at = Column(DateTime(timezone=True), default=_utcnow)
-    is_active = Column(Boolean, default=True, index=True)
-    notes = Column(Text, nullable=True)
-
-    persona = relationship("Persona", foreign_keys=[persona_id], back_populates="roles_plataforma")
-    role_definition = relationship("PlatformRoleDefinition", back_populates="persona_roles")
-
-    __table_args__ = (
-        UniqueConstraint("persona_id", "role_id", name="uq_persona_platform_role"),
-    )

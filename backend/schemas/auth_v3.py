@@ -10,7 +10,7 @@ from backend.schemas._common import orm_config
 
 
 # ==========================================
-# Auth 2.0 — Schemas Pydantic
+# Auth v3 — Schemas Pydantic
 # ==========================================
 
 # ── Roles ─────────────────────────────────────────────────────────────────

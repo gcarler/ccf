@@ -2,17 +2,10 @@
 # Barrel re-export file — all imports intentionally unused here
 
 # Identity & auth
-# Academy / LMS
-from backend.models_academy import (
-    AcademyActivityLog, Assessment, AssessmentAttempt, AssessmentOption,
-    AssessmentQuestion, AssignmentSubmission, CampaignSeason,
-    Certificate, Course, CourseAttendance, CoursePrerequisite, Enrollment,
-    Family, FormalActa, ForumComment, ForumThread, Lesson, LessonProgress,
-    Resource)
 # CMS
 from backend.models_cms import CmsMediaItem  # noqa: F401
 from backend.models_cms import (  # noqa: F401
-    Announcement, CmsMenu, CmsMenuItem, CmsPage,
+    Announcement, CmsMenu, CmsMenuItem, CmsPage, CmsPageView,
     CmsPageVersion, CmsPublishLog, CmsSection,
     CmsSite, CmsTheme, ContentMetric,
     ContentPublication, MediaAsset,
@@ -20,15 +13,14 @@ from backend.models_cms import (  # noqa: F401
     PageContentVersion, SavedView, Testimonial)
 # CRM / Pastoral
 from backend.models_crm import (
-    AgendaEvent, ChatMessage, ConsolidationAssignment,
-    ConsolidationCase, ConsolidationInteraction, ConsolidationTask,
+    ChatMessage,
     CrmAutomation, CrmEvent,
     ColombianDepartment,
     CommunicationLog, CommunityBoardCard,
-    Conversation, ConversationParticipant,
-    CounselingTicket, CrmTask, Donation, DonationCategory, EventAssignment,
+    Conversation, ConversationParticipant, Family,
+    CounselingTicket, Donation, DonationCategory, EventAssignment,
     EventAttendance, Fund, PersonaMinistryAssignment,
-    PersonaPosition, PersonaRoleLink, Ministry, PastoralCallLog, Position,
+    PersonaPosition, PersonaRoleLink, Ministry, Position,
     Persona, PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
     VolunteerShift, VolunteerSkill, persona_volunteer_skills)
 
@@ -55,7 +47,7 @@ from backend.models_ops import ChurchLocation, SocialChannel, SystemVariable
 from backend.models_evangelism import (
     RolEnGrupoEnum, EstadoAsistenciaEnum, TipoSeguimientoEnum,
     FrecuenciaEnum, EstadoSesionEnum,
-    Sede, CategoriaEstrategia, LogAuditoria, MotivoExcusa,
+    Sede, CampaignSeason, CategoriaEstrategia, LogAuditoria, MotivoExcusa,
     EstrategiaEvangelismo, RolPersonalizadoEstrategia,
     GrupoEvangelismo, ParticipanteGrupo, SesionGrupo, Asistencia,
     RegistroSeguimiento, HistorialEmbudo,
@@ -63,11 +55,10 @@ from backend.models_evangelism import (
 
 # Kernel — Identity, Permissions & Multi-agent Contracts
 from backend.models_kernel import (  # noqa: F401
-    ActivityStatus, MinistryOffice, ChurchRole, PlatformRole,
-    PersonaMinistry, PersonaRoleAssignment, PersonaRoleHistory,
-    PlatformRoleDefinition, PersonaPlatformRole)
+    ActivityStatus, MinistryOffice, ChurchRole,
+    PersonaMinistry, PersonaRoleAssignment, PersonaRoleHistory)
 
-# Auth 2.0 — RBAC, MFA, Forensics, Gamification
+# Auth v3 — RBAC, MFA, forensics, and gamification
 from backend.models_auth import (
     HistorialContrasena, LogSeguridad, Medalla, MedallaUsuario,
     NivelGamificado, NotificacionUsuario, PreferenciaUI,
@@ -79,16 +70,16 @@ from backend.models_agenda import (
     EventoAgenda, ParticipanteEvento, RecursoFisico, ReservaRecurso,
 )
 
-# Academy 2.0 — Catálogo, Evaluaciones, Matrícula, Certificaciones
+# Academy — single canonical model tree
 from backend.models_academy_core import (
-    ActaEntrada, ActaFormal, AsistenciaClase, Certificado,
-    ComentarioForo, Curso as AcademyCurso, EntregaTarea, Evaluacion,
-    HiloForo, IntentoEvaluacion, Leccion as AcademyLeccion, Matricula,
-    Opcion, Pregunta, PrerrequisitoCurso, ProgresoLeccion,
+    AcademyActivityLog, Assessment, AssessmentAnswer, AssessmentAttempt,
+    AssessmentOption, AssessmentQuestion, AssignmentSubmission, Certificate,
+    Course, CourseAttendance, CoursePrerequisite, Enrollment, FormalActa,
+    FormalActaEntry, ForumComment, ForumThread, Lesson, LessonProgress, Resource,
 )
 
-# CRM Core 2.0 — Pipeline, Casos, Interacciones
-from backend.models_crm_core import (
+# CRM pipeline, cases, interactions and follow-up tasks
+from backend.models_crm_pipeline import (
     CasoCRM, EtapaPipeline, InteraccionCRM, PipelineCRM, TareaCRM,
 )
 

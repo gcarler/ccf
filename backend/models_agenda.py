@@ -32,6 +32,7 @@ class RecursoFisico(Base):
     tipo = Column(String(50), nullable=False)
     capacidad_maxima = Column(Integer, nullable=True)
     activo = Column(Boolean, default=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -52,7 +53,9 @@ class EventoAgenda(Base):
     todo_el_dia = Column(Boolean, default=False)
     regla_recurrencia = Column(String(255), nullable=True)
     fecha_limite_recurrencia = Column(DateTime(timezone=True), nullable=True)
-    excepciones_recurrencia = Column(ARRAY(String), default=list)
+    excepciones_recurrencia = Column(
+        JSON().with_variant(ARRAY(String), "postgresql"), default=list
+    )
     recordatorios_config = Column(JSON, default=list)
     color_hex = Column(String(10), nullable=True)
     ubicacion_texto = Column(String(255), nullable=True)
@@ -89,6 +92,7 @@ class ParticipanteEvento(Base):
     estado_confirmacion = Column(String(50), default="PENDIENTE")
     es_requerido = Column(Boolean, default=True)
     fecha_confirmacion = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     evento = relationship("EventoAgenda", back_populates="participantes")
 
@@ -109,6 +113,7 @@ class ReservaRecurso(Base):
                         nullable=False)
     bloqueo_inicio = Column(DateTime(timezone=True), nullable=False)
     bloqueo_fin = Column(DateTime(timezone=True), nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     evento = relationship("EventoAgenda", back_populates="reservas")
 
