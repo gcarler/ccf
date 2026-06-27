@@ -341,7 +341,7 @@ function FaroGroupsContent() {
  }
  };
 
- const handleDeleteHouse = async (house: Grupo) => {
+ const handleDeleteHouse = useCallback(async (house: Grupo) => {
  try {
  await apiFetch(`/evangelism/grupos/${house.id}`, {
  method: 'DELETE',
@@ -357,9 +357,9 @@ function FaroGroupsContent() {
  const msg = error?.message || 'Error al eliminar grupo';
  toast.error(msg);
  }
- };
+ }, [token, houses, selectedHouse]);
 
- const requestDeleteHouse = (house: Grupo) => {
+ const requestDeleteHouse = useCallback((house: Grupo) => {
  setConfirmAction({
  title: 'Eliminar grupo',
  description: `Se eliminará "${house.name}" y dejará de estar disponible para reportes nuevos.`,
@@ -367,7 +367,7 @@ function FaroGroupsContent() {
  destructive: true,
  onConfirm: () => handleDeleteHouse(house),
  });
- };
+ }, [handleDeleteHouse]);
 
  const handleQuickAssignPersona = async (personaId: string) => {
  const houseId = quickAssignmentTargets[personaId];

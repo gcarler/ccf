@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { AlertTriangle, CheckCircle, ExternalLink } from "lucide-react";
 
@@ -11,7 +11,7 @@ export default function BrokenLinksPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"broken" | "resolved" | "all">("broken");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const params = filter === "broken" ? "?resolved=false" : filter === "resolved" ? "?resolved=true" : "";
@@ -19,7 +19,7 @@ export default function BrokenLinksPage() {
       setLinks(Array.isArray(data) ? data : []);
     } catch { setLinks([]); }
     setLoading(false);
-  };
+  }, [filter]);
 
   useEffect(() => { load(); }, [filter, load]);
 

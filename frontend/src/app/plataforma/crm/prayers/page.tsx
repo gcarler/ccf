@@ -168,7 +168,7 @@ export default function PrayerSupportCenter() {
                 <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[9px] font-bold uppercase">Urgente</span>
             ) : null
         }
-    ], [updateRequestStatus]);
+    ], [updateRequestStatus, canEditCrm]);
 
     const handleOpenRequest = (req: any) => {
         router.push(`/plataforma/crm/prayers/${req.id}`);
@@ -207,6 +207,7 @@ export default function PrayerSupportCenter() {
             label: PRAYER_STATUS_OPTIONS.find(o => o.value === status)?.label ?? status.toUpperCase(),
             items: filtered.filter(r => r.status === status),
         }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filtered]);
 
     return (

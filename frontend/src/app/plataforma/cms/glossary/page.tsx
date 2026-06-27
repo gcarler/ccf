@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import {BookOpen, Plus, Search} from "lucide-react";
 
@@ -13,7 +13,7 @@ export default function GlossaryPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ term: "", definition: "", aliases: "", category: "" });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const params = search ? `?search=${encodeURIComponent(search)}` : "";
@@ -21,7 +21,7 @@ export default function GlossaryPage() {
       setTerms(Array.isArray(data) ? data : []);
     } catch { setTerms([]); }
     setLoading(false);
-  };
+  }, [search]);
 
   useEffect(() => { load(); }, [search, load]);
 

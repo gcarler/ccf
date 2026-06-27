@@ -65,51 +65,49 @@ export default function SessionReportPage() {
  const [reportNotes, setReportNotes] = useState('');
  const [people, setPeople] = useState<SessionPerson[]>([]);
  const [newGuests, setNewGuests] = useState<NewGuest[]>([]);
- const [searchQuery, setSearchQuery] = useState('');
+ const [searchQuery, setSearchQuery] = useState('');  const fetchHouse = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await apiFetch<Grupo>(`/evangelism/grupos/${houseId}`, { token: token || '' });
+      setHouse(data);
 
- const fetchHouse = useCallback(async () => {
- setLoading(true);
- try {
- const data = await apiFetch<Grupo>(`/evangelism/grupos/${houseId}`, { token: token || '' });
- setHouse(data);
+      const basePersonas = data.base_attendees || [];
+      const peopleById = new Map<string, SessionPerson>();
+      const addPerson = (
+        personaId: string | null | undefined,
+        fallbackName: string,
+        fallbackRole: string,
+        status: SessionPerson['status'] = 'absent',
+      ) => {
+        if (!personaId || peopleById.has(personaId)) return;
+        const m = basePersonas.find(x => x.persona_id === personaId);
+        peopleById.set(personaId, {
+          persona_id: personaId,
+          name: m?.name || m?.persona?.nombre_completo || fallbackName,
+          role: m?.role_label || m?.role || fallbackRole,
+          phone: m?.phone || m?.persona?.telefono,
+          status,
+        });
+      };
 
- const basePersonas = data.base_attendees || [];
- const peopleById = new Map<string, SessionPerson>();
- const addPerson = (
- personaId: string | null | undefined,
- fallbackName: string,
- fallbackRole: string,
- status: SessionPerson['status'] = 'absent',
- ) => {
- if (!personaId || peopleById.has(personaId)) return;
- const m = basePersonas.find(x => x.persona_id === personaId);
- peopleById.set(personaId, {
- persona_id: personaId,
- name: m?.name || m?.persona?.nombre_completo || fallbackName,
- role: m?.role_label || m?.role || fallbackRole,
- phone: m?.phone || m?.persona?.telefono,
- status,
- });
- };
+      for (const m of basePersonas) {
+        addPerson(
+          m.persona_id,
+          m.name || m.persona?.nombre_completo || `Persona #${m.persona_id}`,
+          m.role_label || m.role || 'Participante',
+        );
+      }
 
- for (const m of basePersonas) {
- addPerson(
- m.persona_id,
- m.name || m.persona?.nombre_completo || `Persona #${m.persona_id}`,
- m.role_label || m.role || 'Participante',
- );
- }
-
- addPerson(data.leader_id, data.leader_name || 'Persona asignada', 'Asignado', 'present');
- addPerson(data.assistant_id, 'Persona asignada', 'Asignado', 'present');
- addPerson(data.host_id, 'Persona asignada', 'Asignado', 'present');
- setPeople(Array.from(peopleById.values()));
- } catch {
- toast.error('Error al cargar el grupo');
- } finally {
- setLoading(false);
- }
- }, [houseId]);
+      addPerson(data.leader_id, data.leader_name || 'Persona asignada', 'Asignado', 'present');
+      addPerson(data.assistant_id, 'Persona asignada', 'Asignado', 'present');
+      addPerson(data.host_id, 'Persona asignada', 'Asignado', 'present');
+      setPeople(Array.from(peopleById.values()));
+    } catch {
+      toast.error('Error al cargar el grupo');
+    } finally {
+      setLoading(false);
+    }
+  }, [houseId, token]);
 
  useEffect(() => { fetchHouse(); }, [fetchHouse]);
 

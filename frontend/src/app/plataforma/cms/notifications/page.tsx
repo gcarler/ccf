@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { Bell, Check, CheckCheck } from "lucide-react";
@@ -24,7 +24,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const params = filter === "unread" ? "?unread_only=true" : "";
@@ -33,7 +33,7 @@ export default function NotificationsPage() {
       setTotalUnread(data?.total_unread || 0);
     } catch { setNotifs([]); }
     setLoading(false);
-  };
+  }, [filter]);
 
   useEffect(() => { load(); }, [filter, load]);
 
