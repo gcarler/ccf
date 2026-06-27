@@ -349,7 +349,7 @@ def get_academy_dashboard(db: Session) -> AcademyDashboard:
     )).scalar() or 0
     
     enrolled_users = db.execute(sqlt(
-        "SELECT COUNT(DISTINCT user_id) FROM enrollments"
+        "SELECT COUNT(DISTINCT persona_id) FROM enrollments"
     )).scalar() or 0
 
     # Tendencias de matrícula
