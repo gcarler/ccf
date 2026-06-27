@@ -19,7 +19,6 @@ def _as_uuid(value: Any) -> uuid.UUID | None:
 def get_user_sede_id(db: Session, user_or_id: Any) -> str | None:
     """Resolve the authenticated user's sede_id from canonical auth/persona links."""
     from backend.models_auth import Usuario
-    from backend.crud.crm import resolve_persona_id_for_user
     from backend.models_crm import Persona
 
     direct_sede = getattr(user_or_id, "sede_id", None)
@@ -41,16 +40,6 @@ def get_user_sede_id(db: Session, user_or_id: Any) -> str | None:
         persona_sede = (
             db.query(Persona.sede_id)
             .filter(Persona.id == user_uuid)
-            .scalar()
-        )
-        if persona_sede:
-            return str(persona_sede)
-
-    persona_id = resolve_persona_id_for_user(db, user_id)
-    if persona_id:
-        persona_sede = (
-            db.query(Persona.sede_id)
-            .filter(Persona.id == persona_id)
             .scalar()
         )
         if persona_sede:

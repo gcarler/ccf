@@ -73,10 +73,6 @@ class Settings(BaseSettings):
         description="Email exception for stub mode — only this address receives real email",
     )
 
-    run_startup_schema_fixes: bool = Field(
-        default=False
-    )  # DEPRECATED: use Alembic instead
-
     # Google OAuth
     google_client_id: str = Field(default="")
     google_client_secret: str = Field(default="")
