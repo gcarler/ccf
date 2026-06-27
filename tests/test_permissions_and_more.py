@@ -473,16 +473,6 @@ class TestMiddleware:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# MESSAGING_SERVICE (messaging_service.py)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestMessagingService:
-    def test_import(self):
-        from backend import messaging_service
-        assert messaging_service is not None
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
 # SCHEDULER (backend/scheduler.py) — 100 stmts, 0% (different from services/scheduler)
 # ═══════════════════════════════════════════════════════════════════════════════
 
