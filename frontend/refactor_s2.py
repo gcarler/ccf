@@ -1,27 +1,25 @@
 import re
 
-with open(
-    "d:/ccf/frontend/src/app/evangelism/faro/groups/page.tsx", "r", encoding="utf-8"
-) as f:
+with open('d:/ccf/frontend/src/app/evangelism/faro/groups/page.tsx', 'r', encoding='utf-8') as f:
     content = f.read()
 
 # 1. Add imports
-if "useSidebarLayers" not in content:
+if 'useSidebarLayers' not in content:
     content = content.replace(
         "import { apiFetch } from '@/lib/http';",
-        "import { apiFetch } from '@/lib/http';\nimport { useSidebarLayers } from '@/context/SidebarLayerContext';",
+        "import { apiFetch } from '@/lib/http';\nimport { useSidebarLayers } from '@/context/SidebarLayerContext';"
     )
 
 # 2. Add hook to component
-if "const { pushSidebarPanel" not in content:
+if 'const { pushSidebarPanel' not in content:
     content = content.replace(
         "const searchParams = useSearchParams();",
-        "const searchParams = useSearchParams();\n  const { pushSidebarPanel, resetSidebarStack } = useSidebarLayers();",
+        "const searchParams = useSearchParams();\n  const { pushSidebarPanel, resetSidebarStack } = useSidebarLayers();"
     )
 
 # 3. Extract the list HTML
-list_start = content.find("{/* List Side */}")
-list_end = content.find("{/* Detail/Edit Panel */}")
+list_start = content.find('{/* List Side */}')
+list_end = content.find('{/* Detail/Edit Panel */}')
 
 list_html = content[list_start:list_end]
 
@@ -79,7 +77,7 @@ use_effect_block = """
                     onClick={async () => {
                       setIsCreating(false);
                       try {
-                        const detail = await apiFetch<GrupoEvangelismo>(`/evangelism/grupos/${h.id}`, { token });
+                        const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
                         setSelectedHouse(detail);
                         setFormData(detail);
                         setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.member_id) || []));
@@ -126,20 +124,17 @@ use_effect_block = """
 """
 
 # Insert useEffect before return
-content = content.replace(
-    "  return (\n    <EvangelismShell",
-    use_effect_block + "\n  return (\n    <EvangelismShell",
-)
+content = content.replace('  return (\n    <EvangelismShell', use_effect_block + '\n  return (\n    <EvangelismShell')
 
 # Remove the old list HTML
-content = content.replace(list_html, "")
+content = content.replace(list_html, '')
 
 # Now simplify the main return area since it only renders the detail panel or an empty state
 # We replace: <div className="flex h-full gap-4 p-4 lg:p-6 bg-slate-50/50 dark:bg-[#1a1b1e]/50">
 # With a cleaner container that takes up the full width.
 content = content.replace(
     '<div className="flex h-full gap-4 p-4 lg:p-6 bg-slate-50/50 dark:bg-[#1a1b1e]/50">',
-    '<div className="flex h-full p-4 lg:p-6 bg-slate-50/50 dark:bg-[#1a1b1e]/50">',
+    '<div className="flex h-full p-4 lg:p-6 bg-slate-50/50 dark:bg-[#1a1b1e]/50">'
 )
 
 # And if `showPanel` is false, it renders the empty state. Right now, there is an else branch for showPanel.
@@ -147,9 +142,7 @@ content = content.replace(
 # Currently: {showPanel ? ( <div...> ... </div> ) : ( <div...> empty state </div> )}
 # This structure is fine and will automatically take 100% width since we removed the list.
 
-with open(
-    "d:/ccf/frontend/src/app/evangelism/faro/groups/page.tsx", "w", encoding="utf-8"
-) as f:
+with open('d:/ccf/frontend/src/app/evangelism/faro/groups/page.tsx', 'w', encoding='utf-8') as f:
     f.write(content)
 
 print("Refactor complete")
