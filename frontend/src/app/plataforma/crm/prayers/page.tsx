@@ -77,7 +77,7 @@ export default function PrayerSupportCenter() {
             addToast('Error al cargar peticiones', 'error');
         }
         finally { setLoading(false); }
-    }, [token]);
+    }, [token, addToast]);
 
     useEffect(() => { fetchRequests(); }, [fetchRequests]);
 

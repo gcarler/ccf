@@ -132,7 +132,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
     } finally {
       setLoading(false);
     }
-  }, [token, userId]);
+  }, [token]);
 
   useEffect(() => {
     if (initialEnrollments) return;

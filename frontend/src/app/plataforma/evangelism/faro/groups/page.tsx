@@ -850,7 +850,9 @@ function FaroGroupsContent() {
  mode,
  token,
  getPersonaName,
- ]);
+  requestDeleteHouse,
+])
+;
 
  // Clean up sidebar when unmounting
  useEffect(() => {

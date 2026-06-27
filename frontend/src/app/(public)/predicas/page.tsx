@@ -366,15 +366,15 @@ export default function PredicasPage() {
     }, []);
 
     /* Videos filtrados por búsqueda */
-    const videos = data?.videos ?? [];
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
-        if (!q) return videos;
-        return videos.filter(v =>
+        const vids = data?.videos ?? [];
+        if (!q) return vids;
+        return vids.filter(v =>
             v.title.toLowerCase().includes(q) ||
             v.description.toLowerCase().includes(q)
         );
-    }, [videos, search]);
+    }, [data?.videos, search]);
 
     /* Conteo mensual de prédicas vistas */
     const viewedThisMonth = useMemo(() => {

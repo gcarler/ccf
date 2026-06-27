@@ -49,7 +49,7 @@ export default function DonatePage() {
             setCompleted(true);
             setPaymentStatus('pending');
         }
-    }, []);
+    }, [addToast]);
 
     const handleManualDonation = async () => {
         setLoading(true);

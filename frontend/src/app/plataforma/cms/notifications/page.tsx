@@ -35,7 +35,7 @@ export default function NotificationsPage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [filter]);
+  useEffect(() => { load(); }, [filter, load]);
 
   const markRead = async (id: string) => {
     await apiFetch(`/cms/v2/notifications/${id}/read`, { method: "POST", silent: true });

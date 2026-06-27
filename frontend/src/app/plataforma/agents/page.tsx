@@ -105,6 +105,7 @@ export default function AgentsPage() {
 
     useEffect(() => {
         if (activeTab === 'tools') fetchTools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, token]);
 
     const sendChat = async () => {

@@ -39,7 +39,7 @@ function AuthCallbackContent() {
         }
         
         handleAuth();
-    }, []); // Run once on mount; avoid dependency on mutable objects
+    }, [login, router, searchParams]); // login/router/searchParams are stable
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--bg-muted))]">

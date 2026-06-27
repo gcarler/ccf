@@ -21,7 +21,7 @@ export default function BrokenLinksPage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [filter]);
+  useEffect(() => { load(); }, [filter, load]);
 
   const resolve = async (id: string) => {
     await apiFetch(`/cms/v2/broken-links/${id}/resolve`, { method: "POST", silent: true });

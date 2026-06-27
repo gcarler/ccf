@@ -23,7 +23,7 @@ export default function GlossaryPage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [search]);
+  useEffect(() => { load(); }, [search, load]);
 
   const create = async () => {
     if (!form.term || !form.definition) return;

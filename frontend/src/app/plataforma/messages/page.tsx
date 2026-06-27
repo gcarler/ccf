@@ -91,7 +91,8 @@ export default function MessagesPage() {
         .catch(() => {})
         .finally(() => setLoadingMessages(false));
         apiFetch(`/chat/conversations/${activeConv.id}/read`, { method: "POST", token }).catch(() => {});
-    }, [activeConv?.id, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConv?.id, token]);
 
     const handleSocketEvent = useCallback((payload: any) => {
         if (payload?.event === "direct_message" && payload?.conversation_id === activeConv?.id) {
