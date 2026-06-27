@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -15,8 +17,6 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 """Audit public-site image references against the CMS media library."""
-
-from __future__ import annotations
 
 import re
 import sys

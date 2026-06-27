@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -14,7 +17,6 @@ if _PROJECT_ROOT is None:
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-#!/usr/bin/env python3
 """
 Migrate existing images to WebP.
 
@@ -32,8 +34,6 @@ Usage
 The --delete-originals flag is DESTRUCTIVE — only use after verifying
 everything works with WebP.
 """
-
-from __future__ import annotations
 
 import argparse
 import os

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -19,8 +21,6 @@ if str(_PROJECT_ROOT) not in sys.path:
 The public React components keep local fallbacks for rollback safety, but these
 blocks make the current production copy and navigation editable through CMS.
 """
-
-from __future__ import annotations
 
 import json
 import sys

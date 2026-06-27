@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -19,8 +21,6 @@ if str(_PROJECT_ROOT) not in sys.path:
 This keeps existing public assets addressable by the CMS instead of leaving
 them as orphaned files or hardcoded-only URLs.
 """
-
-from __future__ import annotations
 
 import json
 import mimetypes

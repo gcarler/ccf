@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -20,8 +22,6 @@ These pages are intentionally created without sections. Public routes keep their
 current fallback rendering until editors publish real CMS sections, but the CMS
 public page contract returns 200 instead of producing browser 404 noise.
 """
-
-from __future__ import annotations
 
 import sys
 from pathlib import Path

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -13,8 +15,6 @@ if _PROJECT_ROOT is None:
     raise RuntimeError(f"backend package not found above {_HERE}")
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
-
-from __future__ import annotations
 
 import os
 import sys
