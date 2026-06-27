@@ -1,10 +1,12 @@
 import uuid
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
+from backend.api.crm._shared import _serialize_case
 from backend.core.permissions import normalize_role, require_module_access
 from backend.core.database import get_db
 
@@ -105,57 +107,15 @@ def get_persona_consolidation_profile(
     )
 
     cases = (
-        db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.persona_id == persona_uuid)
-        .order_by(models.ConsolidationCase.created_at.desc())
+        db.query(models.CasoCRM)
+        .filter(
+            models.CasoCRM.persona_id == persona_uuid,
+            models.CasoCRM.deleted_at.is_(None),
+        )
+        .order_by(models.CasoCRM.fecha_creacion.desc())
         .all()
     )
-
-    case_rows = []
-    for case in cases:
-        case_rows.append(
-            {
-                "id": case.id,
-                "persona_id": case.persona_id,
-                "stage": case.stage,
-                "status": case.status,
-                "source": case.source,
-                "last_contact_at": (
-                    case.last_contact_at.isoformat() if case.last_contact_at else None
-                ),
-                "next_contact_at": (
-                    case.next_contact_at.isoformat() if case.next_contact_at else None
-                ),
-                "assigned_pastor": (
-                    {
-                        "id": case.assigned_pastor.id,
-                        "first_name": case.assigned_pastor.first_name,
-                        "last_name": case.assigned_pastor.last_name,
-                    }
-                    if case.assigned_pastor
-                    else None
-                ),
-                "assigned_leader": (
-                    {
-                        "id": case.assigned_leader.id,
-                        "first_name": case.assigned_leader.first_name,
-                        "last_name": case.assigned_leader.last_name,
-                    }
-                    if case.assigned_leader
-                    else None
-                ),
-                "assignments_count": len(case.assignments or []),
-                "interactions_count": len(case.interactions or []),
-                "open_tasks_count": sum(
-                    1
-                    for task in (case.tasks or [])
-                    if task.status != "completed"
-                ),
-                "notes": case.notes,
-                "created_at": case.created_at.isoformat() if case.created_at else None,
-                "updated_at": case.updated_at.isoformat() if case.updated_at else None,
-            }
-        )
+    case_rows = [_serialize_case(case) for case in cases]
 
     position_rows = []
     for persona_position, position in positions:
@@ -226,7 +186,7 @@ def create_position(
 
 @router.patch("/positions/{position_id}", response_model=schemas.Position)
 def update_position(
-    position_id: int,
+    position_id: UUID,
     payload: schemas.PositionUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
@@ -294,7 +254,7 @@ def assign_persona_position(
 @router.patch("/personas/{persona_id}/positions/{persona_position_id}", response_model=dict)
 def update_persona_position(
     persona_id: str,
-    persona_position_id: int,
+    persona_position_id: UUID,
     payload: schemas.PersonaPositionUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
@@ -357,7 +317,7 @@ def assign_persona_ministry(
 @router.patch("/personas/{persona_id}/ministries/{mm_id}", response_model=dict)
 def update_persona_ministry(
     persona_id: str,
-    mm_id: int,
+    mm_id: UUID,
     payload: schemas.PersonaMinistryAssignmentUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
@@ -404,7 +364,7 @@ def list_colombian_departments(
 
 @router.get("/colombian-departments/{department_id}/cities", response_model=List[schemas.ColombianCity])
 def list_cities_by_department(
-    department_id: int,
+    department_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -452,7 +412,7 @@ def create_new_family(
 
 @router.get("/family/{family_id}", response_model=List[dict])
 def get_family(
-    family_id: int,
+    family_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):

@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 import uuid
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -35,7 +36,7 @@ class EventSessionSync(BaseModel):
 
 @router.get("/events/{event_id}/attendance", response_model=dict)
 def get_event_attendance_report(
-    event_id: int,
+    event_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
@@ -210,7 +211,7 @@ def register_bulk_attendance(
 
 @router.get("/events/{event_id}/sessions/{session_date}")
 def get_event_session_detail(
-    event_id: int,
+    event_id: UUID,
     session_date: datetime.date,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
@@ -314,7 +315,7 @@ def get_event_session_detail(
 
 @router.post("/events/{event_id}/assignments")
 def sync_event_assignments(
-    event_id: int,
+    event_id: UUID,
     payload: EventSessionSync,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),

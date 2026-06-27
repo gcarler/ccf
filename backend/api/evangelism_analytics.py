@@ -16,6 +16,7 @@ import datetime as _dt
 import math as _math
 import uuid as _uuid
 from collections import defaultdict
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func as _func
@@ -83,7 +84,7 @@ def _prev_range(days: int):
     return end - _dt.timedelta(days=days), end
 
 
-def _get_strategy_or_404(db: Session, strategy_id: str):
+def _get_strategy_or_404(db: Session, strategy_id: UUID):
     s = db.query(models.EstrategiaEvangelismo).filter(
         models.EstrategiaEvangelismo.id == strategy_id,
         models.EstrategiaEvangelismo.deleted_at.is_(None),
@@ -93,7 +94,7 @@ def _get_strategy_or_404(db: Session, strategy_id: str):
     return s
 
 
-def _group_ids_for_strategy(db: Session, strategy_id: str, sede_id) -> list[_uuid.UUID]:
+def _group_ids_for_strategy(db: Session, strategy_id: UUID, sede_id) -> list[_uuid.UUID]:
     q = db.query(models.GrupoEvangelismo.id).filter(
         models.GrupoEvangelismo.estrategia_id == strategy_id,
         models.GrupoEvangelismo.deleted_at.is_(None),
@@ -167,7 +168,7 @@ def _sessions_total_count(db: Session, group_ids: list[_uuid.UUID], start, end) 
 
 @router.get("/analytics/strategy/{strategy_id}")
 def strategy_kpis(
-    strategy_id: str,
+    strategy_id: UUID,
     period: str = Query("30d"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
@@ -301,7 +302,7 @@ def strategy_kpis(
 
 @router.get("/analytics/strategy/{strategy_id}/trend")
 def strategy_trend(
-    strategy_id: str,
+    strategy_id: UUID,
     period: str = Query("90d"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
@@ -402,7 +403,7 @@ def _bucket_label(key: str, use_weeks: bool) -> str:
 
 @router.get("/analytics/strategy/{strategy_id}/funnel")
 def strategy_funnel(
-    strategy_id: str,
+    strategy_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
@@ -519,7 +520,7 @@ def strategy_funnel(
 
 @router.get("/analytics/strategy/{strategy_id}/heatmap")
 def strategy_heatmap(
-    strategy_id: str,
+    strategy_id: UUID,
     period: str = Query("90d"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
@@ -590,7 +591,7 @@ def strategy_heatmap(
 
 @router.get("/analytics/strategy/{strategy_id}/alerts")
 def strategy_alerts(
-    strategy_id: str,
+    strategy_id: UUID,
     threshold_pct: int = Query(60),
     consecutive_sessions: int = Query(3),
     db: Session = Depends(get_db),
@@ -779,7 +780,7 @@ def strategy_alerts(
 
 @router.get("/analytics/strategy/{strategy_id}/velocity")
 def strategy_velocity(
-    strategy_id: str,
+    strategy_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
@@ -836,7 +837,7 @@ def strategy_velocity(
 
 @router.get("/analytics/strategy/{strategy_id}/groups")
 def strategy_groups_detail(
-    strategy_id: str,
+    strategy_id: UUID,
     period: str = Query("30d"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
@@ -1034,7 +1035,7 @@ def _is_primera_vez(a) -> bool:
 
 @router.get("/analytics/strategy/{strategy_id}/full", response_model=dict)
 def get_strategy_full_analytics(
-    strategy_id: str,
+    strategy_id: UUID,
     weeks: int = Query(default=12, ge=1, le=104),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),

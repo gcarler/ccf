@@ -60,7 +60,7 @@ def send_reminders(
         _valid_group_ids = {g.id for g in db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.sede_id == user_sede_id).all()}
         sessions_tomorrow = [s for s in sessions_tomorrow if s.grupo_id in _valid_group_ids]
 
-    group_ids_tomorrow: set[int] = {s.grupo_id for s in sessions_tomorrow}
+    group_ids_tomorrow = {s.grupo_id for s in sessions_tomorrow}
     groups_map: Dict[int, models.GrupoEvangelismo] = {}
 
     if group_ids_tomorrow:

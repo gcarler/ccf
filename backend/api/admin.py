@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -396,21 +397,16 @@ def list_admin_personas(
 
 def _serialize_auth_user_row(user):
     rol = user.rol_plataforma
-    platform_role = getattr(user, "platform_role", None)
-    platform_role_name = getattr(platform_role, "role", None)
-    if hasattr(platform_role_name, "value"):
-        platform_role_name = platform_role_name.value
-    display_role = rol.nombre if rol else (platform_role_name or "LECTOR")
+    display_role = rol.nombre if rol else "MIEMBRO"
     permisos = rol.permisos if rol else {}
     return {
         "id": str(user.id),
         "username": user.username,
         "email": user.email,
         "role": display_role,
-        "role_id": str(user.platform_role_id) if user.platform_role_id else None,
-        "role_name": platform_role_name,
+        "role_id": str(user.rol_plataforma_id) if user.rol_plataforma_id else None,
+        "role_name": display_role,
         "rol_plataforma_id": str(user.rol_plataforma_id) if user.rol_plataforma_id else None,
-        "platform_role_id": str(user.platform_role_id) if user.platform_role_id else None,
         "sede_id": str(user.sede_id) if user.sede_id else None,
         "xp": user.xp or 0,
         "is_active": user.is_active,
@@ -428,41 +424,32 @@ def _assign_auth_user_role(db: Session, user, role_name: str) -> None:
 
     from sqlalchemy import func
     from backend.models_auth import RolPlataforma
-    from backend.models_kernel import PlatformRole, PlatformRoleDefinition
-
+    role_aliases = {
+        "admin": "ADMINISTRADOR",
+        "administrador": "ADMINISTRADOR",
+        "staff": "GESTOR",
+        "pastor": "GESTOR",
+        "coordinador": "GESTOR",
+        "docente": "EDITOR",
+        "editor": "EDITOR",
+        "estudiante": "MIEMBRO",
+        "lector": "LECTOR",
+        "miembro": "MIEMBRO",
+    }
+    canonical_name = role_aliases.get(normalized.lower(), normalized)
     rol = (
         db.query(RolPlataforma)
-        .filter(func.lower(RolPlataforma.nombre) == normalized.lower())
+        .filter(func.lower(RolPlataforma.nombre) == canonical_name.lower())
         .first()
     )
-    if rol:
-        user.rol_plataforma_id = rol.id
-
-    platform_aliases = {
-        "admin": PlatformRole.ADMINISTRADOR,
-        "administrador": PlatformRole.ADMINISTRADOR,
-        "staff": PlatformRole.GESTOR,
-        "pastor": PlatformRole.GESTOR,
-        "coordinador": PlatformRole.GESTOR,
-        "docente": PlatformRole.EDITOR,
-        "editor": PlatformRole.EDITOR,
-        "estudiante": PlatformRole.LECTOR,
-        "lector": PlatformRole.LECTOR,
-    }
-    platform_role = platform_aliases.get(normalized.lower())
-    if platform_role:
-        definition = (
-            db.query(PlatformRoleDefinition)
-            .filter(PlatformRoleDefinition.role == platform_role)
-            .first()
-        )
-        if definition:
-            user.platform_role_id = definition.id
+    if not rol:
+        raise HTTPException(status_code=404, detail="Role not found")
+    user.rol_plataforma_id = rol.id
 
 
-def _parse_platform_role_id(value, field_name: str) -> int:
+def _parse_auth_role_id(value, field_name: str) -> uuid.UUID:
     try:
-        return int(str(value))
+        return uuid.UUID(str(value))
     except (TypeError, ValueError):
         raise HTTPException(status_code=400, detail=f"{field_name} invalido")
 
@@ -511,15 +498,14 @@ def create_admin_user(
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
 ):
-    """Crea un nuevo usuario en auth_users (v2) desde el panel de administración.
+    """Crea un nuevo usuario Auth v3 desde el panel de administración.
 
     Crea una Persona mínima vinculada a la sede principal, luego un Usuario
-    con las credenciales proporcionadas y rol LECTOR por defecto.
+    con las credenciales proporcionadas y rol MIEMBRO por defecto.
     """
     import uuid as _uuid
     from backend.core.permissions import hash_password
-    from backend.models_auth import Usuario
-    from backend.models_kernel import PlatformRoleDefinition, PlatformRole
+    from backend.models_auth import RolPlataforma, Usuario
     from backend.models_crm import Persona
 
     username = str(payload.get("username", "")).strip()
@@ -531,7 +517,7 @@ def create_admin_user(
     if not username or not email or not password:
         raise HTTPException(status_code=400, detail="username, email y password son requeridos")
 
-    # Verificar duplicados en auth_users (v2)
+    # Verificar duplicados en auth_users.
     existing = db.query(Usuario).filter(
         (Usuario.username == username) | (Usuario.email == email)
     ).first()
@@ -543,10 +529,11 @@ def create_admin_user(
     if not sede:
         raise HTTPException(status_code=500, detail="No hay sedes configuradas en el sistema")
 
-    # Resolver rol LECTOR de PlatformRoleDefinition
-    lector_role = db.query(PlatformRoleDefinition).filter(
-        PlatformRoleDefinition.role == PlatformRole.LECTOR
+    default_role = db.query(RolPlataforma).filter(
+        RolPlataforma.nombre == "MIEMBRO"
     ).first()
+    if not default_role:
+        raise HTTPException(status_code=500, detail="Rol MIEMBRO no configurado")
 
     # Crear Persona mínima (requerido como FK de Usuario)
     persona_id = _uuid.uuid4()
@@ -560,14 +547,14 @@ def create_admin_user(
     db.add(persona)
     db.flush()
 
-    # Crear Usuario en auth_users (v2)
+    # Crear Usuario en auth_users.
     new_user = Usuario(
         id=persona_id,
         sede_id=sede.id,
         username=username,
         email=email,
         password_hash=hash_password(password),
-        platform_role_id=lector_role.id if lector_role else None,
+        rol_plataforma_id=default_role.id,
         is_active=True,
         is_email_verified=False,
     )
@@ -632,18 +619,12 @@ def update_admin_user(
                 user.rol_plataforma_id = uuid.UUID(str(role_id))
             except ValueError:
                 raise HTTPException(status_code=400, detail="rol_plataforma_id invalido")
-    if "platform_role_id" in payload:
-        value = payload["platform_role_id"]
-        if value in (None, "", "null"):
-            user.platform_role_id = None
-        else:
-            user.platform_role_id = _parse_platform_role_id(value, "platform_role_id")
     if "role_id" in payload:
         value = payload["role_id"]
         if value in (None, "", "null"):
-            user.platform_role_id = None
+            user.rol_plataforma_id = None
         else:
-            user.platform_role_id = _parse_platform_role_id(value, "role_id")
+            user.rol_plataforma_id = _parse_auth_role_id(value, "role_id")
     if "role" in payload:
         _assign_auth_user_role(db, user, str(payload["role"]))
 
@@ -681,42 +662,39 @@ def delete_admin_user(
 @router.patch("/users/{user_id}/role")
 def change_user_role(
     user_id: str,
-    platform_role_id: str | None = None,
     role_id: str | None = None,
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
 ):
     """Asigna un rol de plataforma a un usuario auth por UUID."""
     import uuid as _uuid
-    from backend.models_auth import Usuario
-    from backend.models_kernel import PlatformRoleDefinition
+    from backend.models_auth import RolPlataforma, Usuario
 
     try:
         uid = _uuid.UUID(str(user_id))
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id invalido")
 
-    selected_role_id = platform_role_id if platform_role_id is not None else role_id
-    if selected_role_id is None:
-        raise HTTPException(status_code=400, detail="platform_role_id requerido")
+    if role_id is None:
+        raise HTTPException(status_code=400, detail="role_id requerido")
 
     user = db.query(Usuario).filter(Usuario.id == uid).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    role = db.query(PlatformRoleDefinition).filter(
-        PlatformRoleDefinition.id == _parse_platform_role_id(selected_role_id, "platform_role_id")
+    role = db.query(RolPlataforma).filter(
+        RolPlataforma.id == _parse_auth_role_id(role_id, "role_id")
     ).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
-    user.platform_role_id = role.id
+    user.rol_plataforma_id = role.id
     db.commit()
     db.refresh(user)
     return {
         "status": "success",
-        "new_role": role.role.value if hasattr(role.role, "value") else str(role.role),
-        "platform_role_id": str(role.id),
+        "new_role": role.nombre,
+        "role_id": str(role.id),
         "user": _serialize_auth_user_row(user),
     }
 
@@ -1227,15 +1205,16 @@ def provision_personas_sin_cuenta(
     """Crea cuentas de plataforma para todas las personas con email que aún no tienen auth_user.
     - username = prefijo del email
     - password por defecto = 1234567
-    - rol = LECTOR
+    - rol = MIEMBRO
     """
     from backend.core.permissions import hash_password
-    from backend.models_auth import Usuario
-    from backend.models_kernel import PlatformRoleDefinition, PlatformRole
+    from backend.models_auth import RolPlataforma, Usuario
 
-    lector = db.query(PlatformRoleDefinition).filter(
-        PlatformRoleDefinition.role == PlatformRole.LECTOR
+    default_role = db.query(RolPlataforma).filter(
+        RolPlataforma.nombre == "MIEMBRO"
     ).first()
+    if not default_role:
+        raise HTTPException(status_code=500, detail="Rol MIEMBRO no configurado")
 
     sede = db.query(models.Sede).order_by(models.Sede.nombre).first()
     if not sede:
@@ -1290,7 +1269,7 @@ def provision_personas_sin_cuenta(
                 username=username,
                 email=email,
                 password_hash=hash_password("1234567"),
-                platform_role_id=lector.id if lector else None,
+                rol_plataforma_id=default_role.id,
                 is_active=True,
                 is_email_verified=False,
             )

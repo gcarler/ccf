@@ -6,6 +6,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
@@ -61,7 +62,12 @@ CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
 def _assert_role(
     user: models.User, allowed_roles: set[str], detail: str = "Not enough permissions"
 ) -> None:
+    # Fallback to rol_plataforma.nombre mirrors the resolution already used by
+    # `get_current_user` / `require_permission` in backend/core/permissions.py,
+    # so Auth v3 users (who don't carry a legacy `role` attribute) aren't blocked.
     role = normalize_role(getattr(user, "role", ""))
+    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
+        role = normalize_role(user.rol_plataforma.nombre)
     if role not in allowed_roles:
         raise HTTPException(status_code=403, detail=detail)
 
@@ -87,14 +93,14 @@ def _get_public_site_or_404(db: Session, site_key: str) -> models.CmsSite:
     return row
 
 
-def _get_menu_or_404(db: Session, site_id: int, menu_key: str) -> models.CmsMenu:
+def _get_menu_or_404(db: Session, site_id: UUID, menu_key: str) -> models.CmsMenu:
     row = crud.get_cms_menu(db, site_id, menu_key.strip().lower())
     if not row:
         raise HTTPException(status_code=404, detail="menu not found")
     return row
 
 
-def _get_page_or_404(db: Session, site_id: int, slug: str) -> models.CmsPage:
+def _get_page_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsPage:
     row = crud.get_cms_page(db, site_id, _slugify(slug))
     if not row:
         raise HTTPException(status_code=404, detail="page not found")

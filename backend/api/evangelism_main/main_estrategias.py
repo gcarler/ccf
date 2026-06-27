@@ -2,6 +2,7 @@ from __future__ import annotations
 from datetime import timezone as _tz
 import logging
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -64,7 +65,7 @@ def read_evangelism_strategies(
         if obj.end_date is None and s.fecha_fin is not None:
             obj.end_date = s.fecha_fin
         obj.group_count = db.query(GrupoEvangelismo).filter(
-            GrupoEvangelismo.estrategia_id == str(s.id),
+            GrupoEvangelismo.estrategia_id == s.id,
             GrupoEvangelismo.deleted_at.is_(None),
         ).count()
         result.append(obj)
@@ -73,7 +74,7 @@ def read_evangelism_strategies(
 
 @estrategias_router.get("/strategies/{strategy_id}", response_model=EvangelismStrategy)
 def read_strategy(
-    strategy_id: str,
+    strategy_id: UUID,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -152,7 +153,7 @@ def create_strategy(
 
 @estrategias_router.put("/strategies/{strategy_id}", response_model=EvangelismStrategy)
 def update_strategy(
-    strategy_id: str,
+    strategy_id: UUID,
     strategy: EvangelismStrategyUpdate,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
@@ -197,7 +198,7 @@ def update_strategy(
 
 @estrategias_router.post("/strategies/{strategy_id}/generate-sessions", response_model=dict)
 def generate_strategy_sessions(
-    strategy_id: str,
+    strategy_id: UUID,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -285,7 +286,7 @@ def generate_strategy_sessions(
 
 @estrategias_router.delete("/strategies/{strategy_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_strategy(
-    strategy_id: str,
+    strategy_id: UUID,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -293,7 +294,7 @@ def delete_strategy(
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
 
 
-def _project_phases_as_tasks(db, strategy_id: str, strategy_name: str, phases: list[dict], start_date=None):
+def _project_phases_as_tasks(db, strategy_id: UUID, strategy_name: str, phases: list[dict], start_date=None):
     """Create N1 tasks in Projects module for each phase of a mass event."""
     from backend.models_projects import Project, ProjectTask
     from datetime import datetime as dt

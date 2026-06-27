@@ -5,7 +5,7 @@ from datetime import datetime as _datetime, timezone as _timezone
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -44,7 +44,7 @@ def _slug_role_name(value: str | None) -> str:
     return "".join(cleaned).strip("-")
 
 
-def _strategy_role_catalog(db: Session, strategy_id: str | None) -> tuple[set[int], set[str]]:
+def _strategy_role_catalog(db: Session, strategy_id: UUID | None) -> tuple[set[UUID], set[str]]:
     if not strategy_id:
         return set(), set()
     rows = (
@@ -76,7 +76,7 @@ def _role_slug_has(slug: str, keyword: str) -> bool:
     return keyword in _role_slug_tokens(slug)
 
 
-def _validate_strategy_group_roles(db: Session, strategy_id: str | None, body: dict) -> None:
+def _validate_strategy_group_roles(db: Session, strategy_id: UUID | None, body: dict) -> None:
     if not strategy_id:
         return
 
@@ -94,15 +94,15 @@ def _validate_strategy_group_roles(db: Session, strategy_id: str | None, body: d
         custom_id = item.get("rol_personalizado_id")
         if role.startswith("custom:"):
             try:
-                custom_id = int(role.split(":", 1)[1])
+                custom_id = UUID(role.split(":", 1)[1])
             except (TypeError, ValueError):
                 raise HTTPException(status_code=400, detail=f"Rol inválido para participante: {role}")
         if custom_id is not None:
             try:
-                custom_id_int = int(custom_id)
+                custom_role_id = UUID(str(custom_id))
             except (TypeError, ValueError):
                 raise HTTPException(status_code=400, detail="Rol personalizado inválido")
-            if custom_id_int not in allowed_custom_ids:
+            if custom_role_id not in allowed_custom_ids:
                 raise HTTPException(status_code=400, detail="El rol del participante no pertenece a esta estrategia")
             continue
         if _slug_role_name(role) not in base_roles:
@@ -112,7 +112,7 @@ def _validate_strategy_group_roles(db: Session, strategy_id: str | None, body: d
 @router.get("/grupos", response_model=List[dict])
 @router.get("/faro", response_model=List[dict])
 def list_grupos(
-    estrategia_id: Optional[str] = None,
+    estrategia_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -327,7 +327,7 @@ def get_grupo(
 
     expected_count = len(base_attendees)
     absence_counter = collections.Counter()
-    absence_details: dict[int, list[dict]] = collections.defaultdict(list)
+    absence_details: dict[UUID, list[dict]] = collections.defaultdict(list)
     attendance_by_session = collections.defaultdict(list)
 
     if sessions:
@@ -349,7 +349,7 @@ def get_grupo(
                 )
         attendance_counts = (
             db.query(
-                models.Asistencia.sesion_id,
+                models.Asistencia.sesion_id.label("session_id"),
                 sqlfunc.count(models.Asistencia.id).label("cnt"),
             )
             .filter(models.Asistencia.sesion_id.in_(session_ids))
@@ -498,17 +498,11 @@ def get_grupo(
 @router.post("/grupos", response_model=dict)
 @router.post("/faro", response_model=dict)
 async def create_grupo(
-    request: Request,
     payload: schemas.GrupoEvangelismoCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    # Frontend sends "estrategia_id" but the schema uses "evangelism_strategy_id".
-    # Read from raw JSON before Pydantic discards unknown fields, then patch.
-    import json as _json
-    body = _json.loads(await request.body())
-    if body.get("estrategia_id") and not payload.evangelism_strategy_id:
-        object.__setattr__(payload, "evangelism_strategy_id", body["estrategia_id"])
+    body = payload.model_dump(exclude_unset=True)
     _validate_strategy_group_roles(db, payload.evangelism_strategy_id, body)
     # Infer sede_id from user's profile, fallback to first sede
     user_sede = crud.get_user_sede_id(db, current_user.id)
@@ -647,7 +641,7 @@ def create_campaign_season(
 @router.patch("/grupos/seasons/{season_id}", response_model=dict)
 @router.patch("/faro/seasons/{season_id}", response_model=dict)
 def update_campaign_season(
-    season_id: int,
+    season_id: UUID,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -668,7 +662,7 @@ def update_campaign_season(
 @router.get("/grupos/analytics")
 @router.get("/faro/analytics")
 def get_faro_analytics(
-    season_id: Optional[int] = None,
+    season_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -716,7 +710,7 @@ def get_faro_analytics(
 
 @router.get("/macro/despliegue", response_model=dict)
 def get_macro_despliegue(
-    season_id: Optional[int] = None,
+    season_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -820,7 +814,7 @@ class FaroVisitorCreate(BaseModel):
     email: Optional[str] = None
     address: Optional[str] = None
     grupo_id: UUID
-    session_id: Optional[int] = None
+    session_id: Optional[UUID] = None
 
 
 class FaroVisitorResponse(BaseModel):
@@ -946,7 +940,7 @@ def register_faro_visitor(
 
 @router.get("/strategies/{strategy_id}/metrics", response_model=dict)
 def get_strategy_metrics(
-    strategy_id: str,
+    strategy_id: UUID,
     weeks: int = 12,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from inspect import signature
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from fastapi import HTTPException
@@ -55,7 +56,7 @@ MODULE_REGISTRY = {
 @router.get("/{module}")
 def get_module_dashboard(
     module: str,
-    estrategia_id: Optional[str] = Query(None, description="Filtrar por estrategia (evangelism)"),
+    estrategia_id: Optional[UUID] = Query(None, description="Filtrar por estrategia (evangelism)"),
     db: Session = Depends(get_db),
     current_user=Depends(require_active_user),
 ):

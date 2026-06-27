@@ -181,7 +181,7 @@ def get_global_calendar(
             .join(models.CasoCRM, models.TareaCRM.caso_id == models.CasoCRM.id)
             .filter(
                 models.TareaCRM.deleted_at.is_(None),
-                models.TareaCRM.completada.is_(False),
+                models.TareaCRM.estado != "completed",
                 models.CasoCRM.deleted_at.is_(None),
                 models.CasoCRM.sede_id == sede_id,
             )

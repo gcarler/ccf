@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -26,7 +27,7 @@ class VisitorCreate(BaseModel):
 
 @router.post("/events/{event_id}/sessions/{session_date}/visitors")
 def fast_checkin_visitor(
-    event_id: int,
+    event_id: UUID,
     session_date: str,
     visitor: VisitorCreate,
     db: Session = Depends(get_db),

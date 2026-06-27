@@ -1,20 +1,19 @@
 """API routers grouped by domain."""
 # flake8: noqa: F401, F822
 
-from backend.api import (academy_core, admin, agenda, agenda_core, agents,
+from backend.api import (academy, admin, agenda, agents,
                          analytics,
                          auth_v3, chat, cms, cms_v2, cms_content, community, crm,
-                         crm_core, dashboard, donations, enterprise_cms, evangelism, evangelism_multiplication,
+                         dashboard, donations, enterprise_cms, evangelism, evangelism_multiplication,
                          evangelism_notifications, evangelism_rankings, evangelism_reports,
                          finance, governance,
                          graph, kernel, messaging, prayer, projects,
                          public, spiritual_life, support, system, tables, workspace, youtube)
 
 __all__ = [
-    "academy_core",
+    "academy",
     "admin",
     "agenda",
-    "agenda_core",
     "agents",
     "analytics",
     "auth_v3",
@@ -24,7 +23,6 @@ __all__ = [
     "community",
     "cms_content",
     "crm",
-    "crm_core",
     "dashboard",
     "donations",
     "enterprise_cms",

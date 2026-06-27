@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 import uuid
 
@@ -470,7 +471,7 @@ def create_automation(
 
 @router.get("/automations/{automation_id}", response_model=CrmAutomationOut)
 def get_one_automation(
-    automation_id: int,
+    automation_id: UUID,
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
 ):
@@ -482,7 +483,7 @@ def get_one_automation(
 
 @router.patch("/automations/{automation_id}", response_model=CrmAutomationOut)
 def patch_automation(
-    automation_id: int,
+    automation_id: UUID,
     payload: CrmAutomationUpdate,
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
@@ -495,7 +496,7 @@ def patch_automation(
 
 @router.delete("/automations/{automation_id}", status_code=204)
 def del_automation(
-    automation_id: int,
+    automation_id: UUID,
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
 ):

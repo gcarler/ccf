@@ -16,9 +16,9 @@ from backend.core.security_headers import mount_security_headers
 from backend.middleware.module_isolation import register_module_isolation
 
 from backend.api import (
-    academy_core, admin, agenda, agenda_core, agents,
+    academy, admin, agenda, agents,
     auth_v3, analytics, chat, cms, cms_v2, community,
-    cms_content, crm, crm_core, dashboard, donations, enterprise_cms,
+    cms_content, crm, dashboard, donations, enterprise_cms,
     evangelism, finance, governance, graph, kernel, messaging,
     prayer, projects, public, spiritual_life, support, system,
     tables, workspace, youtube,
@@ -33,11 +33,9 @@ ROUTER_REGISTRY = [
     (auth_v3.router, "/api", ["Auth v3"]),
     (projects.router, "/api/projects", ["projects"]),
     (kernel.router, "/api", ["kernel"]),
-    (academy_core.router, "/api", ["Academy v2"]),
+    (academy.router, "/api", ["Academy"]),
     (crm.router, "/api/crm", ["crm"]),
-    (crm_core.router, "/api", ["CRM v2"]),
     (agenda.router, "/api", ["agenda"]),
-    (agenda_core.router, "/api", ["Agenda v2"]),
     (evangelism.router, "/api/evangelism", ["evangelism"]),
     (public.router, "/api/public", ["public"]),
     (workspace.router, "/api/workspace", ["workspace"]),
@@ -81,29 +79,7 @@ async def lifespan(_: FastAPI):
         logger.info("Skipping Alembic migrations during tests.")
         yield
         return
-    if settings.run_startup_schema_fixes:
-        # Run outstanding Alembic migrations (idempotent, fast when up-to-date)
-        # FAIL HARD: if migrations cannot run, the app must not start
-        from pathlib import Path
-
-        from alembic import command
-        from alembic.config import Config
-
-        alembic_ini = Path(__file__).resolve().parent.parent / "alembic.ini"
-        if alembic_ini.exists():
-            alembic_cfg = Config(str(alembic_ini))
-            alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url)
-            command.upgrade(alembic_cfg, "head")
-            logger.info("Alembic migrations verified/applied.")
-        else:
-            logger.error("alembic.ini not found — cannot verify schema. App will not start.")
-            raise RuntimeError("alembic.ini not found; database migrations cannot run")
-    else:
-        logger.info(
-            "Startup schema fixes disabled; skipping Alembic migration check on boot."
-        )
-
-    # Register all agent tools after the schema is migrated.
+    # Migrations are applied by the deployment gate before process startup.
     try:
         from backend.services.tool_registry import register_all_tools
 

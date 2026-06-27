@@ -151,7 +151,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
 
 
 def _serialize_crm_task(
-    task: models.CrmTask,
+    task: models.TareaCRM,
     contact_name: Optional[str] = None,
     assignee_name: Optional[str] = None,
 ) -> dict:

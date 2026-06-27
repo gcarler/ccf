@@ -5,6 +5,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any, List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import cast, func, Integer
@@ -136,7 +137,7 @@ def _ensure_task_in_project(db: Session, project_id: str, task_id: str) -> model
     return task
 
 
-def _ensure_supply_in_task(db: Session, project_id: str, task_id: str, supply_id: int) -> models.TaskSupply:
+def _ensure_supply_in_task(db: Session, project_id: str, task_id: str, supply_id: UUID) -> models.TaskSupply:
     _ensure_task_in_project(db, project_id, task_id)
     supply = (
         db.query(models.TaskSupply)

@@ -1,5 +1,6 @@
 """Permission helpers for evangelism events."""
 import uuid
+from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -32,7 +33,7 @@ def _get_persona_for_user(db: Session, user_id):
     return db.query(models.Persona).filter(models.Persona.id == user_uuid).first()
 
 
-def is_event_assignee(db: Session, user: models.User, event_id: int) -> bool:
+def is_event_assignee(db: Session, user: models.User, event_id: UUID) -> bool:
     """Check if user is assigned to this event (MC, preacher, offering, etc.)."""
     if is_event_admin_or_pastor(user):
         return True
@@ -50,7 +51,7 @@ def is_event_assignee(db: Session, user: models.User, event_id: int) -> bool:
     return assignment is not None
 
 
-def require_event_access(db: Session, user: models.User, event_id: int) -> None:
+def require_event_access(db: Session, user: models.User, event_id: UUID) -> None:
     """Raise 403 if user lacks access to the event (checks sede + role + assignment)."""
     event_sede = db.query(models.CrmEvent.sede_id).filter(models.CrmEvent.id == event_id).scalar()
     user_sede = require_user_sede_id(db, user)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
     response_model=List[schemas.RolPersonalizadoEstrategiaResponse],
 )
 def list_strategy_roles(
-    strategy_id: str,
+    strategy_id: UUID,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -42,7 +43,7 @@ def list_strategy_roles(
     response_model=schemas.RolPersonalizadoEstrategiaResponse,
 )
 def create_strategy_role(
-    strategy_id: str,
+    strategy_id: UUID,
     payload: schemas.RolPersonalizadoEstrategiaCreate,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
@@ -59,8 +60,8 @@ def create_strategy_role(
 
 @roles_router.delete("/strategies/{strategy_id}/roles/{role_id}")
 def delete_strategy_role(
-    strategy_id: str,
-    role_id: int,
+    strategy_id: UUID,
+    role_id: UUID,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -108,7 +109,7 @@ def create_motivo_excusa(
 
 @roles_router.patch("/excuses/{excusa_id}", response_model=schemas.MotivoExcusaResponse)
 def update_motivo_excusa(
-    excusa_id: int,
+    excusa_id: UUID,
     payload: schemas.MotivoExcusaUpdate,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
@@ -124,7 +125,7 @@ def update_motivo_excusa(
 
 @roles_router.delete("/excuses/{excusa_id}")
 def delete_motivo_excusa(
-    excusa_id: int,
+    excusa_id: UUID,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):

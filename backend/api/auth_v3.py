@@ -1,7 +1,5 @@
 """
-Auth v3 — Google SSO, Password Init, ABAC LECTOR.
-
-Usa platform_role_definitions como fuente única de roles (Dimensión C).
+Auth v3 — Google SSO, Password Init and canonical RBAC.
 Flujo:
   - Google SSO: /v3/auth/google → login directo para @gmail.com
   - Traditional: /v3/auth/login → email+password
@@ -34,7 +32,6 @@ from backend.models_auth import (
     TokenResetContrasena,
     Usuario,
 )
-from backend.models_kernel import PlatformRoleDefinition
 from backend.core.rate_limit import rate_limiter
 
 settings = get_settings()
@@ -298,12 +295,6 @@ def google_callback(
                 )
             )
 
-        from backend.models_kernel import PlatformRole as PlatformRoleEnum
-        lector_role = db.query(PlatformRoleDefinition).filter(
-            PlatformRoleDefinition.role == PlatformRoleEnum.LECTOR
-        ).first()
-        if not lector_role:
-            raise HTTPException(status_code=500, detail="Rol LECTOR no configurado. Contacta al administrador.")
         persona_default_role = _resolve_persona_default_role(db)
 
         # sede_id es NOT NULL en Usuario — usar la sede del sistema si la Persona no tiene
@@ -322,7 +313,6 @@ def google_callback(
             username=google_email.split("@")[0].replace(".", "_")[:50],
             email=google_email,
             password_hash=None,
-            platform_role_id=lector_role.id,
             rol_plataforma_id=persona_default_role.id,
             is_active=True,
             is_email_verified=True,
@@ -342,11 +332,9 @@ def google_callback(
         db.commit()
 
     # 6. Get platform role name
-    platform_role_name = "LECTOR"
-    if user.platform_role_id:
-        pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
-        if pr:
-            platform_role_name = pr.role
+    platform_role_name = (
+        user.rol_plataforma.nombre if user.rol_plataforma else "MIEMBRO"
+    )
 
     # 7. Get sede_id from user persona
     sede_id = ""
@@ -439,11 +427,9 @@ def login(
     db.commit()
 
     # Get platform role
-    platform_role_name = "LECTOR"
-    if user.platform_role_id:
-        pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
-        if pr:
-            platform_role_name = pr.role
+    platform_role_name = (
+        user.rol_plataforma.nombre if user.rol_plataforma else "MIEMBRO"
+    )
 
     # Resolve sede_id (from user record, fallback to persona)
     sede_id = str(user.sede_id) if user.sede_id else ""
@@ -589,51 +575,9 @@ def auth_me(request: Request, db: Session = Depends(get_db)):
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
 
-    # Resolve effective permissions: prefer auth_roles granular perms for persona access,
-    # and fall back to PlatformRoleDefinition only when no granular role exists.
-    permissions = {}
-    try:
-        from backend.models_kernel import PlatformRoleDefinition
-        from sqlalchemy.orm import joinedload
+    from backend.core.permissions import get_user_effective_permissions
 
-        user_with_rol = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == user_uuid).first()
-        if user_with_rol and user_with_rol.rol_plataforma:
-            rol_perms = user_with_rol.rol_plataforma.permisos or {}
-            if isinstance(rol_perms, dict):
-                for k, v in rol_perms.items():
-                    if v:  # cualquier valor truthy ("read", "edit", "manage", "allow", True)
-                        permissions[k] = "allow"
-        else:
-            # Base permissions from PlatformRoleDefinition for users without persona override
-            pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
-            if pr and pr.permissions:
-                if isinstance(pr.permissions, dict):
-                    if "*" in pr.permissions:
-                        from backend.core.permissions import PERMISSIONS
-                        for p_key in PERMISSIONS:
-                            permissions[p_key] = "allow"
-                    else:
-                        for module, levels in pr.permissions.items():
-                            if module == "profile":
-                                for level in levels or []:
-                                    if level == "manage":
-                                        permissions["profile:manage"] = "allow"
-                                continue
-                            if module == "academy":
-                                for level in levels or []:
-                                    if level in {"read", "study", "edit", "manage"}:
-                                        permissions[f"academy:{level}"] = "allow"
-                                continue
-                            if module == "messaging":
-                                for level in levels or []:
-                                    if level in {"read", "edit"}:
-                                        permissions[f"messaging:{level}"] = "allow"
-                                continue
-                else:
-                    for p in pr.permissions:
-                        permissions[p] = "allow"
-    except Exception:
-        pass
+    permissions = get_user_effective_permissions(db, user)
 
     return {
         "auth_user_id": str(user.id),
@@ -790,12 +734,10 @@ def refresh_token(
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
 
     # Get platform role
-    platform_role_name = "LECTOR"
+    platform_role_name = "MIEMBRO"
     sede_id = ""
-    if user.platform_role_id:
-        pr = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.id == user.platform_role_id).first()
-        if pr:
-            platform_role_name = pr.role
+    if user.rol_plataforma:
+        platform_role_name = user.rol_plataforma.nombre
 
     # Get sede_id
     try:
@@ -842,6 +784,30 @@ def _require_auth(request: Request, db: Session = Depends(get_db)):
         return payload.get("sub", "")
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+
+@router.post("/logout", response_model=dict)
+def logout(
+    response: Response,
+    user_id: str = Depends(_require_auth),
+    db: Session = Depends(get_db),
+):
+    """Revoke every active refresh session for the authenticated UUID."""
+    from backend.models_auth import TokenSesion
+
+    try:
+        auth_user_id = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Identidad de sesión inválida")
+
+    db.query(TokenSesion).filter(
+        TokenSesion.user_id == auth_user_id,
+        TokenSesion.revoked.is_(False),
+    ).update({TokenSesion.revoked: True}, synchronize_session=False)
+    db.commit()
+    response.delete_cookie(settings.access_token_cookie_name, path="/")
+    response.delete_cookie(settings.refresh_token_cookie_name, path="/")
+    return {"status": "success"}
 
 
 # ═══════════════════════════════════════════════════════════════════════

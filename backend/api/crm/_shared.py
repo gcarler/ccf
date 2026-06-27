@@ -88,8 +88,12 @@ def _serialize_case(case: models.CasoCRM) -> dict:
     payload = getattr(case, "payload_web", None) if isinstance(getattr(case, "payload_web", None), dict) else {}
     created_at = getattr(case, "created_at", None) or getattr(case, "fecha_creacion", None)
     updated_at = getattr(case, "updated_at", None) or getattr(case, "fecha_creacion", None)
-    last_contact_at = getattr(case, "last_contact_at", None)
-    next_contact_at = getattr(case, "next_contact_at", None) or getattr(case, "sla_vencimiento_contacto", None)
+    last_contact_at = getattr(case, "last_contact_at", None) or payload.get(_payload_key("last_contact_at"))
+    next_contact_at = (
+        getattr(case, "next_contact_at", None)
+        or payload.get(_payload_key("next_contact_at"))
+        or getattr(case, "sla_vencimiento_contacto", None)
+    )
     source = getattr(case, "source", None) or payload.get(_payload_key("source")) or _enum_value(getattr(case, "origen_canal", None))
     return {
         "id": str(case.id),
@@ -106,10 +110,10 @@ def _serialize_case(case: models.CasoCRM) -> dict:
         "status": _case_status(case),
         "source": source,
         "last_contact_at": (
-            last_contact_at.isoformat() if last_contact_at else None
+            last_contact_at.isoformat() if hasattr(last_contact_at, "isoformat") else last_contact_at
         ),
         "next_contact_at": (
-            next_contact_at.isoformat() if next_contact_at else None
+            next_contact_at.isoformat() if hasattr(next_contact_at, "isoformat") else next_contact_at
         ),
         "assigned_pastor": (
             {
@@ -136,7 +140,7 @@ def _serialize_case(case: models.CasoCRM) -> dict:
         "open_tasks_count": sum(
             1
             for task in (getattr(case, "tasks", None) or getattr(case, "tareas", []) or [])
-            if getattr(task, "status", None) != "completed"
+            if not getattr(task, "completada", False)
         ),
         "notes": getattr(case, "notes", None) or payload.get(_payload_key("notes")) or payload,
         "created_at": created_at.isoformat() if created_at else None,
@@ -150,7 +154,7 @@ def _persona_full_name(persona: models.Persona | None) -> str:
     return persona.nombre_completo
 
 
-def _serialize_task(task: models.CrmTask) -> dict:
+def _serialize_task(task: models.TareaCRM) -> dict:
     assignee = getattr(task, "assignee", None)
     persona = getattr(task, "persona", None)
     return {

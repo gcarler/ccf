@@ -32,7 +32,7 @@ router = APIRouter()
 @router.get("/grupos/sessions")
 @router.get("/faro/sessions")
 def list_faro_sessions(
-    season_id: Optional[int] = None,
+    season_id: Optional[UUID] = None,
     grupo_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -287,8 +287,8 @@ def create_faro_session(
 
 @router.get("/sessions", response_model=List[dict])
 def list_sessions(
-    strategy_id: Optional[str] = None,
-    house_id: Optional[int] = None,
+    strategy_id: Optional[UUID] = None,
+    house_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -376,7 +376,7 @@ def create_session(
 
 @router.get("/sessions/{session_id}", response_model=dict)
 def get_session_detail(
-    session_id: int,
+    session_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -444,7 +444,7 @@ def get_session_detail(
 
 @router.put("/sessions/{session_id}", response_model=dict)
 def update_session(
-    session_id: int,
+    session_id: UUID,
     update: schemas.SesionGrupoUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -474,7 +474,7 @@ def update_session(
 
 @router.delete("/sessions/{session_id}")
 def delete_session(
-    session_id: int,
+    session_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -504,7 +504,7 @@ def delete_session(
 
 @router.patch("/sessions/{session_id}/habilitacion", response_model=dict)
 def toggle_session_habilitacion(
-    session_id: int,
+    session_id: UUID,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -551,7 +551,7 @@ def toggle_session_habilitacion(
 
 @router.post("/strategies/{strategy_id}/habilitar-todas", response_model=dict)
 def habilitar_todas_sesiones(
-    strategy_id: str,
+    strategy_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -584,7 +584,7 @@ def habilitar_todas_sesiones(
 
 @router.post("/strategies/{strategy_id}/deshabilitar-todas", response_model=dict)
 def deshabilitar_todas_sesiones(
-    strategy_id: str,
+    strategy_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):

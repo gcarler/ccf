@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import datetime as _dt
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func as _func
@@ -52,7 +53,7 @@ def _last_month_range():
     return _month_range(now.year, now.month - 1)
 
 
-def _active_groups_query(db: Session, strategy_id: Optional[str] = None, sede_id: Optional[int] = None):
+def _active_groups_query(db: Session, strategy_id: Optional[UUID] = None, sede_id: Optional[UUID] = None):
     q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.activo)
     if strategy_id:
         q = q.filter(models.GrupoEvangelismo.estrategia_id == strategy_id)
@@ -68,7 +69,7 @@ def _active_groups_query(db: Session, strategy_id: Optional[str] = None, sede_id
 @router.get("/rankings/groups")
 def rankings_groups(
     by: str = Query("attendance", description="attendance | growth | visitors"),
-    strategy_id: Optional[str] = Query(None),
+    strategy_id: Optional[UUID] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
@@ -202,7 +203,7 @@ def _rank_by_visitors(db: Session, groups, start, end):
 
 @router.get("/rankings/monthly-comparison")
 def monthly_comparison(
-    strategy_id: Optional[str] = Query(None),
+    strategy_id: Optional[UUID] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
@@ -312,7 +313,7 @@ def monthly_comparison(
 
 @router.get("/rankings/leaders")
 def rankings_leaders(
-    strategy_id: Optional[str] = Query(None),
+    strategy_id: Optional[UUID] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):

@@ -1,4 +1,5 @@
 from typing import List, Optional
+from uuid import UUID
 
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
@@ -30,7 +31,7 @@ def create_community_card(
 
 @router.delete("/cards/{card_id}", status_code=204)
 def delete_community_card(
-    card_id: int,
+    card_id: UUID,
     db: Session = Depends(get_db),
 ):
     """Elimina una tarjeta del tablero comunitario."""

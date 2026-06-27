@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend.core.config import get_settings
 from backend.core.database import get_db
-from backend.models_academy_core import Curso, Leccion
+from backend.models_academy_core import Course, Lesson
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
 logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ class PublicCursoResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-def _curso_to_public(curso: Curso, lesson_count: int = 0) -> PublicCursoResponse:
+def _curso_to_public(curso: Course, lesson_count: int = 0) -> PublicCursoResponse:
     return PublicCursoResponse(
         id=curso.slug or str(curso.id),
         title=curso.title,
@@ -134,15 +134,15 @@ def _curso_to_public(curso: Curso, lesson_count: int = 0) -> PublicCursoResponse
 def public_list_courses(db: Session = Depends(get_db)):
     """Lista de cursos publicados para la landing page /cursos."""
     cursos = (
-        db.query(Curso)
-        .filter(Curso.is_published == True, Curso.deleted_at == None)  # noqa: E712
-        .order_by(Curso.id)
+        db.query(Course)
+        .filter(Course.is_published == True, Course.deleted_at == None)  # noqa: E712
+        .order_by(Course.id)
         .all()
     )
     result = []
     for c in cursos:
-        lecciones = db.query(Leccion).filter(
-            Leccion.course_id == c.id, Leccion.deleted_at == None  # noqa: E712
+        lecciones = db.query(Lesson).filter(
+            Lesson.course_id == c.id, Lesson.deleted_at == None  # noqa: E712
         ).count()
         result.append(_curso_to_public(c, lecciones))
     return result
@@ -152,14 +152,14 @@ def public_list_courses(db: Session = Depends(get_db)):
 def public_get_course(course_slug: str, db: Session = Depends(get_db)):
     """Detalle de un curso por slug."""
     curso = (
-        db.query(Curso)
-        .filter(Curso.slug == course_slug, Curso.is_published == True, Curso.deleted_at == None)  # noqa: E712
+        db.query(Course)
+        .filter(Course.slug == course_slug, Course.is_published == True, Course.deleted_at == None)  # noqa: E712
         .first()
     )
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
-    lecciones = db.query(Leccion).filter(
-        Leccion.course_id == curso.id, Leccion.deleted_at == None  # noqa: E712
+    lecciones = db.query(Lesson).filter(
+        Lesson.course_id == curso.id, Lesson.deleted_at == None  # noqa: E712
     ).count()
     return _curso_to_public(curso, lecciones)
 
@@ -181,8 +181,8 @@ def public_course_enroll(
 ):
     """Inscripcion publica a un curso por slug. Crea Persona en el kernel."""
     curso = (
-        db.query(Curso)
-        .filter(Curso.slug == course_slug, Curso.is_published == True, Curso.deleted_at == None)  # noqa: E712
+        db.query(Course)
+        .filter(Course.slug == course_slug, Course.is_published == True, Course.deleted_at == None)  # noqa: E712
         .first()
     )
     if not curso:
@@ -205,17 +205,6 @@ def public_course_enroll(
     ))
     persona = result.persona
     case = result.case
-
-    if persona and case:
-        followup_task = models.ConsolidationTask(
-            case_id=case.id,
-            title=f"Seguimiento: interés en curso '{curso.title}'",
-            description=f"Contactar a {persona.first_name} {persona.last_name} para darle la bienvenida y proveer acceso al curso '{curso.title}'.",
-            due_date=datetime.now(timezone.utc) + timedelta(days=2),
-            status="pending",
-        )
-        db.add(followup_task)
-        db.flush()
 
     db.commit()
 

@@ -1,3 +1,4 @@
+import uuid
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -15,13 +16,8 @@ router = APIRouter(prefix="/agents", tags=["agents"])
 analytics_router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
-def _resolve_numeric_user_id(user) -> int | None:
-    return user.id if isinstance(user.id, int) else None
-
-
 def _resolve_persona_id(user, db):
-    persona_id = resolve_persona_id_for_user(db, getattr(user, "id", None))
-    return str(persona_id) if persona_id else None
+    return resolve_persona_id_for_user(db, getattr(user, "id", None))
 
 
 @analytics_router.get("/summary")
@@ -103,7 +99,7 @@ def list_tasks(
 
 @router.patch("/tasks/{task_id}", response_model=schemas.AgentTask)
 def update_task(
-    task_id: int,
+    task_id: uuid.UUID,
     payload: schemas.AgentTaskUpdate,
     db=Depends(get_db),
     current_user: models.User = Depends(require_admin),
@@ -124,7 +120,7 @@ def update_task(
 
 @router.delete("/tasks/{task_id}", status_code=204)
 def delete_task(
-    task_id: int,
+    task_id: uuid.UUID,
     db=Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -166,7 +162,7 @@ def list_insights(
 
 @router.post("/insights/{insight_id}/ack")
 def acknowledge_insight(
-    insight_id: int,
+    insight_id: uuid.UUID,
     db=Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -185,7 +181,7 @@ def acknowledge_insight(
 
 @router.delete("/insights/{insight_id}", status_code=204)
 def delete_insight(
-    insight_id: int,
+    insight_id: uuid.UUID,
     db=Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -296,7 +292,7 @@ def search_agents(
 
 @router.get("/profile/{agent_id}", response_model=AgentProfileResponse)
 def get_agent_profile(
-    agent_id: int,
+    agent_id: uuid.UUID,
     limit: int = 50,
     db=Depends(get_db),
     _user: models.User = Depends(require_active_user),
@@ -315,13 +311,13 @@ def get_agent_profile(
 
 
 @router.get("/timeline/{agent_id}", response_model=TypingList[AgentTimelineItem])
-def get_agent_timeline(agent_id: int, limit: int = 100, db=Depends(get_db), _user: models.User = Depends(require_active_user)):
+def get_agent_timeline(agent_id: uuid.UUID, limit: int = 100, db=Depends(get_db), _user: models.User = Depends(require_active_user)):
     activities = db.query(AgentActivity).filter(AgentActivity.agent_id == agent_id).order_by(AgentActivity.occurred_at.desc()).limit(limit).all()
     return [AgentTimelineItem(activity_type=a.activity_type, source_type=a.source_type, source_id=a.source_id, status=a.status, notes=a.notes, occurred_at=a.occurred_at) for a in activities]
 
 
 @router.get("/roles/{agent_id}", response_model=TypingList[AgentRoleResponse])
-def get_agent_roles(agent_id: int, active_only: bool = True, db=Depends(get_db), _user: models.User = Depends(require_active_user)):
+def get_agent_roles(agent_id: uuid.UUID, active_only: bool = True, db=Depends(get_db), _user: models.User = Depends(require_active_user)):
     query = db.query(AgentRole).filter(AgentRole.agent_id == agent_id)
     if active_only:
         query = query.filter(AgentRole.ended_at.is_(None))
@@ -329,7 +325,7 @@ def get_agent_roles(agent_id: int, active_only: bool = True, db=Depends(get_db),
 
 
 @router.post("/roles/{agent_id}", response_model=AgentRoleResponse)
-def add_agent_role(agent_id: int, role: AgentRoleCreate, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
+def add_agent_role(agent_id: uuid.UUID, role: AgentRoleCreate, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
     agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
     if not agent:
         raise HTTPException(404, "Agent not found")
@@ -340,7 +336,6 @@ def add_agent_role(agent_id: int, role: AgentRoleCreate, db=Depends(get_db), cur
         context_id=role.context_id,
         context_type=role.context_type,
         is_primary=role.is_primary,
-        created_by=_resolve_numeric_user_id(current_user),
         created_by_persona_id=_resolve_persona_id(current_user, db),
     )
     db.add(new_role)
@@ -360,7 +355,6 @@ def create_agent(data: AgentCreate, db=Depends(get_db), current_user: models.Use
         phone=data.phone,
         avatar_url=data.avatar_url,
         spiritual_stage=data.spiritual_stage,
-        created_by=_resolve_numeric_user_id(current_user),
         created_by_persona_id=_resolve_persona_id(current_user, db),
     )
     db.add(agent)
@@ -370,13 +364,12 @@ def create_agent(data: AgentCreate, db=Depends(get_db), current_user: models.Use
 
 
 @router.put("/{agent_id}", response_model=AgentResponse)
-def update_agent(agent_id: int, data: AgentUpdate, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
+def update_agent(agent_id: uuid.UUID, data: AgentUpdate, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
     agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
     if not agent:
         raise HTTPException(404, "Agent not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(agent, field, value)
-    agent.updated_by = _resolve_numeric_user_id(current_user)
     agent.updated_by_persona_id = _resolve_persona_id(current_user, db)
     db.commit()
     db.refresh(agent)
@@ -384,13 +377,12 @@ def update_agent(agent_id: int, data: AgentUpdate, db=Depends(get_db), current_u
 
 
 @router.put("/{agent_id}/stage", response_model=dict)
-def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
+def transition_stage(agent_id: uuid.UUID, data: StageTransition, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
     agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
     if not agent:
         raise HTTPException(404, "Agent not found")
     from_stage = agent.spiritual_stage
     agent.spiritual_stage = data.to_stage
-    agent.updated_by = _resolve_numeric_user_id(current_user)
     actor_persona_id = _resolve_persona_id(current_user, db)
     agent.updated_by_persona_id = actor_persona_id
     journey = AgentJourney(
@@ -399,7 +391,6 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
         to_stage=data.to_stage,
         reason=data.reason,
         triggered_by="manual",
-        triggered_by_id=_resolve_numeric_user_id(current_user),
         triggered_by_persona_id=actor_persona_id,
     )
     db.add(journey)
@@ -633,7 +624,7 @@ from fastapi.responses import StreamingResponse  # noqa: E402
 import asyncio  # noqa: E402
 
 
-async def _event_generator(user_id: int):
+async def _event_generator(user_id: uuid.UUID):
     """Genera eventos SSE para el usuario."""
     while True:
         await asyncio.sleep(2)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime as _datetime, timezone as _timezone
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
@@ -29,7 +30,7 @@ router = APIRouter()
 @router.get("/grupos/sessions/{session_id}/attendance")
 @router.get("/faro/sessions/{session_id}/attendance")
 def get_faro_session_attendance(
-    session_id: int,
+    session_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -111,7 +112,7 @@ def get_faro_session_attendance(
 @router.post("/grupos/sessions/{session_id}/attendance", response_model=dict)
 @router.post("/faro/sessions/{session_id}/attendance", response_model=dict)
 def add_faro_attendance(
-    session_id: int,
+    session_id: UUID,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -258,7 +259,7 @@ def add_faro_attendance(
 
 @router.post("/sessions/{session_id}/attendance", response_model=dict)
 def submit_attendance(
-    session_id: int,
+    session_id: UUID,
     attendance_data: List[schemas.AsistenciaGrupoCreate],
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -419,7 +420,7 @@ def list_pending_follow_ups(
 
 @router.get("/follow-up/{asistencia_id}", response_model=List[schemas.RegistroSeguimientoResponse])
 def list_seguimientos_for_attendance(
-    asistencia_id: int,
+    asistencia_id: UUID,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -431,7 +432,7 @@ def list_seguimientos_for_attendance(
 
 @router.post("/follow-up/{asistencia_id}", response_model=schemas.RegistroSeguimientoResponse)
 def create_seguimiento(
-    asistencia_id: int,
+    asistencia_id: UUID,
     payload: schemas.RegistroSeguimientoCreate,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
@@ -449,7 +450,7 @@ def create_seguimiento(
 
 @router.patch("/follow-up/{seguimiento_id}", response_model=schemas.RegistroSeguimientoResponse)
 def update_seguimiento(
-    seguimiento_id: int,
+    seguimiento_id: UUID,
     payload: schemas.RegistroSeguimientoUpdate,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),

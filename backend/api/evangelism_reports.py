@@ -342,7 +342,7 @@ def attendance_excel(
 
 @router.get("/reports/strategy/{strategy_id}/summary")
 def strategy_summary(
-    strategy_id: str,
+    strategy_id: UUID,
     db: Session = Depends(get_db),
     current_user=Depends(require_active_user),
 ):

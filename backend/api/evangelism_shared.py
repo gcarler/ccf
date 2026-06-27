@@ -77,7 +77,7 @@ def _can_manage_grupo(db: Session, user, house) -> bool:
     return persona.id in {house.leader_persona_id, house.assistant_persona_id}
 
 
-def _check_absence_trigger(db: Session, session_id: int, sede_id):
+def _check_absence_trigger(db: Session, session_id: UUID, sede_id):
     """If a persona has 3 consecutive absences, create N2 task in Consolidation."""
     from backend.models import (
         Asistencia,
@@ -170,7 +170,7 @@ def _check_absence_trigger(db: Session, session_id: int, sede_id):
             db.commit()
 
 
-def _check_first_time_lead_trigger(db: Session, session_id: int):
+def _check_first_time_lead_trigger(db: Session, session_id: UUID):
     """If a first_time attendee is recorded, mark as LEAD_NUEVO in CRM."""
     from backend.models_crm import Persona
     from backend.models_evangelism import Asistencia
@@ -476,7 +476,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
 
 
 def _serialize_crm_task(
-    task: models.CrmTask,
+    task: models.TareaCRM,
     contact_name: Optional[str] = None,
     assignee_name: Optional[str] = None,
 ) -> dict:
