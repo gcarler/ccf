@@ -127,7 +127,7 @@ for dirpath, _, files in os.walk('/root/ccf/frontend/src'):
         if not f.endswith(('.tsx', '.ts')): continue
         path = os.path.join(dirpath, f)
         content = open(path).read()
-        for match in re.finditer(r"apiFetch[<(][^)]*['\"]([^'\"]+)['\"]", content):
+        for match in re.finditer(r"apiFetch(?:<[^>]+>)?\(\s*['\"\`](/[^'\"\`?#\s]+)", content):
             frontend_calls.add('/api' + match.group(1))
 
 # Extract backend routes
@@ -139,12 +139,12 @@ for route in app.routes:
 # Find frontend calls with no backend match
 unmatched = []
 for fc in sorted(frontend_calls):
-    # Normalize params
-    normalized = re.sub(r'\{[^}]+\}', '{}', fc)
+    # Normalize params (handle both FastAPI {param} and JS template ${param})
+    normalized = re.sub(r'\$\{[^}]+\}|\{[^}]+\}', '{}', fc).rstrip('/')
     # Check if any backend route matches
     found = False
     for br in backend_routes:
-        br_norm = re.sub(r'\{[^}]+\}', '{}', br)
+        br_norm = re.sub(r'\{[^}]+\}', '{}', br).rstrip('/')
         if br_norm == normalized:
             found = True
             break

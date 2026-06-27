@@ -642,24 +642,29 @@ def get_projects_dashboard(db: Session) -> ProjectsDashboard:
 # ═══════════════════════════════════════════════════════════════════
 
 def get_admin_dashboard(db: Session) -> AdminGlobalDashboard:
-    from sqlalchemy import text as sqlt
+    from sqlalchemy import func
 
-    users = db.execute(sqlt("SELECT COUNT(*) FROM users")).scalar() or 0
-    sessions = db.execute(sqlt(
-        "SELECT COUNT(*) FROM refresh_tokens WHERE revoked = false"
-    )).scalar() or 0
-    personas = db.execute(sqlt("SELECT COUNT(*) FROM personas")).scalar() or 0
+    users = db.query(func.count(models.Usuario.id)).scalar() or 0
+    sessions = db.query(func.count(models.TokenSesion.id)).filter(models.TokenSesion.revoked == False).scalar() or 0
+    personas = db.query(func.count(models.Persona.id)).scalar() or 0
     
-    # Roles
-    roles = db.execute(sqlt("SELECT role, COUNT(*) FROM users GROUP BY role")).all()
+    # Roles distribution using ORM
+    roles = (
+        db.query(models.Usuario.role, func.count(models.Usuario.id))
+        .group_by(models.Usuario.role)
+        .all()
+    )
     roles_chart = [ChartDataPoint(label=r[0] or "sin rol", value=float(r[1])) for r in roles]
 
-    # Church roles distribution
-    church_roles = db.execute(sqlt("""
-        SELECT church_role, COUNT(*) FROM personas 
-        WHERE church_role IS NOT NULL 
-        GROUP BY church_role ORDER BY COUNT(*) DESC LIMIT 5
-    """)).all()
+    # Church roles distribution using ORM
+    church_roles = (
+        db.query(models.Persona.church_role, func.count(models.Persona.id))
+        .filter(models.Persona.church_role.isnot(None))
+        .group_by(models.Persona.church_role)
+        .order_by(func.count(models.Persona.id).desc())
+        .limit(5)
+        .all()
+    )
     
     admin_combined_chart = roles_chart + [
         ChartDataPoint(label=f"👤 {r[0]}", value=float(r[1]))

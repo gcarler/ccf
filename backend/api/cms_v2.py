@@ -64,7 +64,7 @@ def _assert_role(
 ) -> None:
     # Fallback to rol_plataforma.nombre mirrors the resolution already used by
     # `get_current_user` / `require_permission` in backend/core/permissions.py,
-    # so Auth v3 users (who don't carry a legacy `role` attribute) aren't blocked.
+    # so Auth v3 personas (whose canonical role lives on `rol_plataforma`) aren't blocked.
     role = normalize_role(getattr(user, "role", ""))
     if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
         role = normalize_role(user.rol_plataforma.nombre)

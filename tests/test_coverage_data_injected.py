@@ -113,8 +113,9 @@ def seeded(db_session, client):
         db_session.refresh(e)
 
     for p in personas:
-        pp = models.PastoralCallLog(
-            persona_id=p.id, pastor_id=admin_persona.id,
+        pp = models.CommunicationLog(
+            persona_id=p.id, leader_id=admin_persona.id,
+            channel="phone", content="Call outcome: contacted",
             outcome="contacted",
         )
         db_session.add(pp)

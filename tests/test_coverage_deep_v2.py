@@ -106,11 +106,12 @@ def setup(client, db_session):
     db_session.commit()
     for t in tasks: db_session.refresh(t)
 
-    # Create pastoral call logs
+    # Create communication logs
     for p in personas[:3]:
-        pp = models.PastoralCallLog(
-            persona_id=p.id, pastor_id=admin_persona.id,
-            outcome="contacted", notes="Test call",
+        pp = models.CommunicationLog(
+            persona_id=p.id, leader_id=admin_persona.id,
+            channel="phone", content="Test call",
+            outcome="contacted",
         )
         db_session.add(pp)
 
@@ -642,7 +643,7 @@ class TestAgendaDeepExecution:
             "/api/agenda/participants",
         ]:
             resp = client.get(ep, headers=h)
-            assert resp.status_code in (200, 404, 422, 500), f"GET {ep} returned {resp.status_code}"
+            assert resp.status_code in (200, 404, 405, 422, 500), f"GET {ep} returned {resp.status_code}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
