@@ -117,7 +117,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     )
     sent_at_dt = ordered[0].created_at
     delivered_count = sum(
-        1 for log in ordered if str(log.outcome).lower() in {"sent", "delivered"}
+        1 for log in ordered if str(log.outcome).lower() in DELIVERED_OUTCOMES
     )
     failed_count = sum(1 for log in ordered if str(log.outcome).lower() == "failed")
     if failed_count and not delivered_count:
@@ -125,7 +125,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     elif failed_count:
         status = "partial"
     else:
-        status = str(representative.outcome or "sent").lower()
+        status = str(representative.outcome or CommunicationOutcome.INTERNAL_LOG.value).lower()
     display_name = campaign_name or (
         f"Mensaje a {persona_name}"
         if len(ordered) == 1

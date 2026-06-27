@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import AliasChoices, BaseModel, Field
 
+from backend.services.messaging_outcomes import CommunicationOutcome
 from backend.schemas._common import orm_config
 
 
@@ -24,7 +25,7 @@ class CommunicationLogCreate(BaseModel):
     channel: str
     content: str
     leader_id: Optional[UUID] = None
-    outcome: str = "sent"
+    outcome: str = CommunicationOutcome.INTERNAL_LOG.value
 
 
 class CommunicationLogUpdate(BaseModel):
@@ -39,6 +40,6 @@ class CommunicationLog(BaseModel):
     channel: str
     content: str
     leader_id: Optional[UUID] = None
-    outcome: str = "sent"
+    outcome: str = CommunicationOutcome.INTERNAL_LOG.value
     created_at: datetime
     model_config = orm_config

@@ -174,7 +174,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     logs = sorted(logs, key=lambda item: item.created_at or datetime.min, reverse=True)
     first = logs[0]
     delivered_count = sum(
-        1 for item in logs if (item.outcome or "").lower() in {"sent", "delivered"}
+        1 for item in logs if (item.outcome or "").lower() in DELIVERED_OUTCOMES
     )
     failed_count = sum(1 for item in logs if (item.outcome or "").lower() == "failed")
     target_count = len(logs)
@@ -188,7 +188,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
             campaign_name or f"Mensaje a {persona_name}" if persona_name else "Mensaje"
         ),
         "channel": (first.channel or "").lower(),
-        "status": (first.outcome or "sent").lower(),
+        "status": (first.outcome or CommunicationOutcome.INTERNAL_LOG.value).lower(),
         "target_count": target_count,
         "delivered_count": delivered_count,
         "failed_count": failed_count,

@@ -10,7 +10,11 @@ from sqlalchemy.orm import Session
 
 from backend.core.permissions import require_module_access
 from backend.core.database import get_db
-from backend.services.messaging import MessagingGateway, get_messaging_gateway
+from backend.services.messaging import (
+    CommunicationOutcome,
+    MessagingGateway,
+    get_messaging_gateway,
+)
 from backend.core.storage import storage_service
 from backend.core.uploads import ensure_allowed_extension, sanitize_filename
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_from_identity
@@ -281,13 +285,13 @@ async def enviar_plantilla(
             )
         comms_log_id = comms.id
         external_id = comms.external_id
-        outcome = str(comms.outcome) if comms.outcome else "sent"
+        outcome = str(comms.outcome) if comms.outcome else CommunicationOutcome.INTERNAL_LOG.value
         payload_log["comms_log_id"] = comms_log_id
         payload_log["external_id"] = external_id
         payload_log["outcome"] = outcome
     except ValueError as exc:
         log_error = str(exc)
-        outcome = "failed"
+        outcome = CommunicationOutcome.FAILED.value
         payload_log["error"] = log_error
 
     envio = create_envio(

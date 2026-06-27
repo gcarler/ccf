@@ -31,7 +31,12 @@ from backend.core.permissions import (
 )
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
-from backend.services.messaging import get_messaging_gateway, MessagingGateway
+from backend.services.messaging import (
+    DELIVERED_OUTCOMES,
+    CommunicationOutcome,
+    MessagingGateway,
+    get_messaging_gateway,
+)
 
 router = APIRouter()
 router.include_router(events_router)
@@ -305,7 +310,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     elif failed_count:
         status = "partial"
     else:
-        status = str(representative.outcome or "sent").lower()
+        status = str(representative.outcome or CommunicationOutcome.INTERNAL_LOG.value).lower()
     display_name = campaign_name or (
         f"Mensaje a {persona_name}" if len(ordered) == 1 else f"CampaÃ±a a {len(ordered)} contactos"
     )
@@ -469,7 +474,7 @@ async def send_crm_message(
                         recipient_phone=persona.phone,
                         content=content,
                         leader_id=_persona_id_for_user(db, current_user.id),
-                        outcome="failed",
+                        outcome=CommunicationOutcome.FAILED.value,
                         external_id=campaign_id,
                     )
                     db.add(fallback_log)

@@ -1,3 +1,62 @@
+"""Mensajería interna, notificaciones y broadcast en tiempo real.
+
+Este módulo expone el router ``/api/messaging/*`` agrupado bajo tres categorías
+funcionales, NO canónicas para outbound:
+
+1. **Real-time + presencia** — ``GET /messaging/ws/{client_id}`` (WebSocket),
+   ``GET /messaging/presence/{room}`` y ``POST /messaging/notifications``
+   (broadcast push al mesh). Auth: ``require_module_access("messaging","read")``.
+
+2. **Bandeja de notificaciones por usuario** — ``GET /messaging/notifications``,
+   ``PATCH /messaging/notifications/{id}`` y
+   ``POST /messaging/notifications/mark-all-read``. Modelo: ``Notification``
+   (alimentada por eventos del sistema, no por envíos ministeriales).
+   Auth: ``require_module_access("messaging","read")`` (scope per-user —
+   cada usuario ve sólo su propia bandeja).
+
+3. **Chat interno (inbox app)** — ``GET /messaging/history`` y
+   ``POST /messaging/send``. Modela un hilo conversacional dentro de la
+   plataforma con ``channel='internal'`` en ``CommunicationLog``. Soporta la
+   bandeja ``/plataforma/inbox/messages`` y el sidebar CRM de la persona.
+   Auth: ``require_staff_or_admin`` (scope cross-user — staff ve logs
+   completos de la plataforma).
+
+Notas operativas:
+
+- **Sin outbound**: este router no envía WhatsApp/SMS/Email. Esas
+  comunicaciones se canalizan vía
+  ``backend.services.messaging.MessagingGateway`` (real o stub según
+  ``settings.stub_comms``) en ``/api/crm/messaging/send`` (alias deprecado:
+  ``/api/evangelism/messaging/send``). ``POST /messaging/send`` sólo escribe una
+  entrada de ``CommunicationLog`` y **no** dispara gateway.
+
+- **Outcome ``"sent"`` es sentinela histórica**: en este log interno significa
+  "registrado en CommunicationLog", **no** "entregado al destinatario externo".
+  Reportes agregados por canal pueden sumar ambos tipos (outbound real +
+  inbound log interno) — NO usar ``outcome='sent'`` como evidencia de entrega
+  outbound. Para outbound real, consultar ``CommunicationLog`` con
+  ``outcome in OUTBOUND_OUTCOMES`` (exportado en ``backend.services.messaging``).
+
+- **``GET /messaging/history`` sin filtro por persona/sede**: retorna los
+  últimos ``limit`` registros globales. Es staff-only; cualquier staff puede
+  leer el log completo de la plataforma. Para historia filtrada por persona,
+  usar ``GET /api/crm/messaging/history`` (con JOIN sobre ``personas`` y
+  filtro por ``persona_id``/``sede_id``).
+
+- **Multi-Tenant (Axioma 3) no aplicado en este router**: ``POST /messaging/send``
+  y ``GET /messaging/history`` no filtran por ``sede_id`` del staff — staff de
+  una sede podrían escribir/leer logs de personas de otras sedes. Si Multi-Tenant
+  estricto es requerido, agregar ``.filter(Persona.sede_id == staff_sede_id)``
+  en ``crud.get_communication_logs`` y propagar ``sede_id`` al insert.
+
+- **Broadcast con auth mínima**: ``POST /messaging/notifications`` acepta
+  ``event``+``body``+``room`` arbitrarios y los reenvía al mesh WebSocket
+  con sólo ``require_module_access("messaging","read")``. La auth existe,
+  pero NO hay allowlist de tipos de evento, ni validación de room, ni
+  rate limit. Invocar sólo desde flujos internos del backend; exponer de
+  forma amplia requiere auth + validación adicionales.
+"""
+
 from typing import List, Optional
 
 from fastapi import (APIRouter, Depends, HTTPException, WebSocket,
@@ -10,6 +69,7 @@ from backend.core.permissions import require_module_access, require_staff_or_adm
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
 from backend.crud.crm import resolve_persona_id_for_user
+from backend.services.messaging import CommunicationOutcome
 
 
 class NotificationPayload(BaseModel):
@@ -106,6 +166,8 @@ def messaging_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
+    # Sin filtro por persona ni sede — retorna los últimos `limit` registros
+    # globales. Para historia filtrada por persona, usar /api/crm/messaging/history.
     return crud.get_communication_logs(db, limit=limit)
 
 
@@ -115,7 +177,10 @@ def messaging_send(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    # This now calls the updated CRUD which triggers the MessagingService
+    # Riesgo conocido: persona_id NO se valida contra permisos del staff —
+    # cualquier staff/admin puede postear como cualquier persona. Tampoco
+    # se filtra por sede_id del staff (Axioma 3). Ver module docstring para
+    # semántica de outcome, ausencia de gateway y referencia canónica.
     entry = crud.create_communication_log(
         db,
         schemas.CommunicationLogCreate(
@@ -124,7 +189,7 @@ def messaging_send(
             content=payload.content,
             leader_id=resolve_persona_id_for_user(db, getattr(current_user, "id", None))
             or getattr(current_user, "id", None),
-            outcome="sent",
+            outcome=CommunicationOutcome.INTERNAL_LOG.value,
         ),
     )
     return entry

@@ -19,6 +19,14 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
 
+# Re-export del Enum/constantes (definidos en módulo leaf para evitar ciclo con schemas)
+from backend.services.messaging_outcomes import (  # noqa: F401
+    CommunicationOutcome,
+    OUTBOUND_OUTCOMES,
+    DELIVERED_OUTCOMES,
+)
+
+
 from backend import models
 from backend.core.config import get_settings
 
@@ -28,6 +36,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+
 def _create_log(
     db: Session,
     *,
@@ -35,7 +44,7 @@ def _create_log(
     channel: str,
     content: str,
     leader_id: uuid.UUID | int | str | None,
-    outcome: str = "sent",
+    outcome: str = CommunicationOutcome.INTERNAL_LOG.value,
     recipient_phone: str | None = None,
     campaign_name: str | None = None,
     external_id: str | None = None,
@@ -69,7 +78,6 @@ def _create_log(
     db.commit()
     db.refresh(log)
     return log
-
 
 # ──────────────────────────────────────────────────────────────────────
 #  MessagingGateway  (real — intenta SMTP si configurado)
@@ -172,7 +180,7 @@ class MessagingGateway:
         smtp_port = getattr(self._settings, "smtp_port", 587)
         smtp_user = getattr(self._settings, "smtp_user", None)
         smtp_pass = getattr(self._settings, "smtp_password", None)
-        outcome = "sent"
+        outcome = CommunicationOutcome.INTERNAL_LOG.value
 
         if smtp_host and smtp_user and smtp_pass:
             try:
@@ -186,13 +194,13 @@ class MessagingGateway:
                     server.login(smtp_user, smtp_pass)
                     server.send_message(msg)
 
-                outcome = "sent_real"
+                outcome = CommunicationOutcome.SENT_REAL.value
                 logger.info("Email real enviado a %s", persona.email)
             except Exception as exc:
                 logger.warning("SMTP fallido, registrando como pending: %s", exc)
-                outcome = "smtp_failed"
+                outcome = CommunicationOutcome.SMTP_FAILED.value
         else:
-            outcome = "pending_smtp_config"
+            outcome = CommunicationOutcome.PENDING_SMTP_CONFIG.value
             logger.info("SMTP no configurado, registrando comunicacion")
 
         return _create_log(
@@ -221,7 +229,7 @@ class StubMessagingGateway(MessagingGateway):
       a las personas de la iglesia.
     """
 
-    STUB_OUTCOME = "stub"
+    STUB_OUTCOME = CommunicationOutcome.STUB.value  # alias para compatibilidad
 
     async def send_whatsapp(
         self,
