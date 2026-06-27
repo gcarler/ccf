@@ -2,6 +2,9 @@
 !test_artifacts/.gitkeep
 !test_artifacts/pytest_cache/.gitkeep
 !test_artifacts/pytest_runtime/.gitkeep
+# CCF: temporary artifacts and audit snapshots (2026-06-26 cleanup-baseline)
+coverage.json
+.gitignore.bak.*
 # Archive
 # IDE
 # Plans (local)
