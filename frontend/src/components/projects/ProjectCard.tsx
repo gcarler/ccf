@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { ProjectRecord } from '@/types/projects';
 
-function formatDate(dateStr: string) {
+function _formatDate(dateStr: string) {
     if (!dateStr) return '—';
     try {
         return new Date(dateStr).toLocaleDateString('es-PE', {

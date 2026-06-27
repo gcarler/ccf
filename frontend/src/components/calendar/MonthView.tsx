@@ -13,7 +13,6 @@ import {
   isSameMonth,
   isToday,
 } from 'date-fns';
-import { es } from 'date-fns/locale';
 import InlineEventPopover from '@/components/calendar/InlineEventPopover';
 import { CalEvent, EVENT_TYPE_META } from '@/types/calendar';
 

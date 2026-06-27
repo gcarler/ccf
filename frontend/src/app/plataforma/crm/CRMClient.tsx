@@ -2,7 +2,6 @@
 
 import DashboardEmbed from '@/components/DashboardEmbed';
 import DSSkeleton from '@/components/ui/Skeleton';
-import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import { useAuth } from '@/context/AuthContext';
 import { DSCard } from '@/design/components/DSCard';
 import { DSChart } from '@/design/components/DSChart';
@@ -12,16 +11,12 @@ import { useCrmAccess } from '@/hooks/useCrmAccess';
 import {
 ArrowUpRight,
 Calendar,
-Users as FamilyIcon,
+Users as _FamilyIcon,
 Heart,
 List,
-Mail,
 MessageCircle,
-Phone,
-User,
-UserPlus,
-Users
-} from 'lucide-react';
+Users,
+} from 'lucide-react'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect,useState } from 'react';

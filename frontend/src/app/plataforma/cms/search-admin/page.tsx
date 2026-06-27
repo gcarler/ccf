@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
-import { Search, Star, Trash2, Plus, TrendingUp } from "lucide-react";
+import {Search, Star, Plus, TrendingUp} from "lucide-react";
 
 interface SearchResult { entity_type: string; entity_id: string; entity_slug: string; title: string; category: string | null; boost_score: number; }
 interface Promotion { id: string; query_text: string; entity_type: string; entity_id: string; entity_slug: string | null; title: string | null; boost_score: number; is_active: boolean; }
@@ -62,7 +62,7 @@ export default function SearchAdminPage() {
 
       {results.length > 0 && (
         <div className="border rounded-xl overflow-hidden">
-          <div className="px-4 py-3 bg-slate-50 border-b text-xs font-medium text-slate-500">{results.length} resultados para "{query}"</div>
+          <div className="px-4 py-3 bg-slate-50 border-b text-xs font-medium text-slate-500">{results.length} resultados para &quot;{query}&quot;</div>
           <div className="divide-y">
             {results.map((r, i) => (
               <div key={i} className="px-4 py-3 flex items-center gap-3 hover:bg-slate-50/50">
@@ -106,7 +106,7 @@ export default function SearchAdminPage() {
             <TrendingUp size={14} className="text-amber-500" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">{p.title || p.entity_slug}</p>
-              <p className="text-xs text-slate-400">"{p.query_text}" → {p.entity_type}/{p.entity_id}</p>
+              <p className="text-xs text-slate-400">&quot;{p.query_text}&quot; → {p.entity_type}/{p.entity_id}</p>
             </div>
             <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">+{p.boost_score}</span>
           </div>

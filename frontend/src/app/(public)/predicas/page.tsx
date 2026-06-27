@@ -475,7 +475,7 @@ export default function PredicasPage() {
                         {!loading && !error && filtered.length === 0 && search && (
                             <div className="text-center py-16">
                                 <Search size={40} className="mx-auto mb-4 text-site-primary/30" />
-                                <h2 className="text-base font-bold text-site-on-surface mb-1">Sin resultados para "{search}"</h2>
+                                <h2 className="text-base font-bold text-site-on-surface mb-1">Sin resultados para &quot;{search}&quot;</h2>
                                 <p className="text-sm text-site-on-surface-variant">Intenta con otro término.</p>
                             </div>
                         )}

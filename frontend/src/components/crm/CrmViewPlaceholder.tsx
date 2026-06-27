@@ -71,7 +71,7 @@ export default function CrmViewPlaceholder({
         title={`${moduleName} — Lista`}
         emptyMessage={`No hay elementos en la lista de ${moduleName}`}
         onItemClick={(item) => {
-          console.log(`[List] Item clicked:`, item);
+          console.log(`[_List] Item clicked:`, item);
         }}
       />
     );

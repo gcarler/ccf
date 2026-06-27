@@ -4,9 +4,18 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import {
   Archive,
-  Copy, FileImage, FileText, Film, Loader2, Plus, Search,
-  RotateCcw, Upload, X, Check, Download, Headphones, Save
-} from "lucide-react";
+  Copy,
+  FileImage,
+  FileText,
+  Film,
+  Loader2,
+  Plus,
+  Search,
+  RotateCcw,
+  Upload,
+  Check,
+  Headphones,
+} from "lucide-react"
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { motion, AnimatePresence } from "framer-motion";

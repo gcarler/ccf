@@ -2,18 +2,39 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { 
-    User, Mail, Phone, MapPin, Calendar, 
-    ShieldCheck, Heart, Star, Activity, 
-    History, MessageSquare, ArrowLeft,
-    MoreHorizontal, Edit3, Share2, 
-    GraduationCap, Users, DollarSign,
-    Zap, Sparkles, ChevronRight, CheckCircle2,
-    BookOpen, Award, TrendingUp,
-    AlertCircle, Plus, ExternalLink, Flame,
-    Search, Check, Loader2,
-    ChevronDown, Send
-} from 'lucide-react';
+import {
+    User,
+    Mail,
+    Phone,
+    MapPin,
+    Calendar,
+    ShieldCheck,
+    Heart,
+    Star,
+    Activity,
+    History,
+    MessageSquare,
+    ArrowLeft,
+    MoreHorizontal,
+    Edit3,
+    Share2,
+    GraduationCap,
+    Users,
+    DollarSign,
+    Zap,
+    Sparkles,
+    ChevronRight,
+    CheckCircle2,
+    BookOpen,
+    Award,
+    TrendingUp,
+    AlertCircle,
+    Plus,
+    ExternalLink,
+    Flame,
+    Loader2,
+    Send,
+} from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -203,7 +224,7 @@ export default function PersonaDetailPage() {
         // Load departments for display
         apiFetch<any[]>('/crm/colombian-departments', { token, signal: abortCtrl.signal })
             .then(setDepartments)
-            .catch((err) => {
+            .catch((_err) => {
                 if (!abortCtrl.signal.aborted) {
                     toast.error('Error al cargar departamentos');
                 }

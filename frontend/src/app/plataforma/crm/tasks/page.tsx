@@ -6,16 +6,14 @@ import {
     CheckSquare,
     Circle,
     Clock,
-    UserCircle,
     Plus,
     Loader2,
     Send,
-    Calendar,
     Users,
     CheckCircle2,
     Flame,
-    Heart
-} from 'lucide-react';
+    Heart,
+} from 'lucide-react'
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';

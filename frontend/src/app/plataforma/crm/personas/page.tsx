@@ -12,7 +12,6 @@ import clsx from 'clsx';
 import { AnimatePresence,motion } from 'framer-motion';
 import {
 BookOpen,
-ChevronDown,
 ChevronRight,
 Fingerprint,
 LayoutDashboard,
@@ -24,8 +23,8 @@ Send,
 SlidersHorizontal,
 Users,
 VenetianMask,
-X
-} from 'lucide-react';
+X,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation';
 import React,{ useEffect,useMemo,useState } from 'react';
 import { toast } from 'sonner';

@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally { clearTimeout(timer); setLoading(false); }
     }, []);
 
-    useEffect(() => { fetchUser(); }, []); // only on mount
+    useEffect(() => { fetchUser(); }, [fetchUser]); // only on mount
 
     const login = useCallback(async (accessToken?: string, refreshToken?: string) => {
         if (accessToken && typeof window !== 'undefined') {

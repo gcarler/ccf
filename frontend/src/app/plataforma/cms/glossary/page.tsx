@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
-import { BookOpen, Plus, Trash2, Search } from "lucide-react";
+import {BookOpen, Plus, Search} from "lucide-react";
 
 interface GlossaryTerm { id: string; term: string; definition: string; aliases: string[]; category: string | null; language: string; }
 

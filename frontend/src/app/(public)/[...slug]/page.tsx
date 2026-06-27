@@ -4,7 +4,6 @@ import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer
 import { Metadata } from "next";
 import { getCmsPublicPage } from "@/lib/cms/v2";
 import { CmsPublicPage } from "@/types/cms-v2";
-import { FAROHeader, FAROFooter } from "@/components/public/FAROShared";
 import { SITE_KEY } from "@/lib/site-config";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string[] }> }): Promise<Metadata> {

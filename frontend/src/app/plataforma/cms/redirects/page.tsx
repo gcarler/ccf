@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
-import { RotateCcw, Plus, Trash2, ExternalLink } from "lucide-react";
+import {RotateCcw, Plus, Trash2} from "lucide-react";
 import SidePanel from "@/components/ui/SidePanel";
 
 interface Redirect { id: string; from_path: string; to_path: string; status_code: number; hit_count: number; }

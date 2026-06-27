@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { SITE_KEY, SITE_URL } from "@/lib/site-config";
-import { Archive, ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, ExternalLink, FileImage, ImageIcon, LayoutPanelTop, Monitor, Plus, RotateCcw, Save, Search, Send, Smartphone, Upload, Undo2, X, Settings, Sparkles, BarChart3, CheckCircle2, AlertTriangle, XCircle, Wand2, RefreshCw } from "lucide-react";
+import {Archive, ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, ExternalLink, FileImage, ImageIcon, LayoutPanelTop, Monitor, Plus, RotateCcw, Save, Send, Smartphone, Upload, Undo2, Settings, Sparkles, BarChart3, CheckCircle2, AlertTriangle, XCircle, Wand2, RefreshCw} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   createCmsPage,
@@ -24,11 +24,10 @@ import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
 import { apiFetch } from "@/lib/http";
 import {
   SECTION_TYPES,
-  SECTION_TYPE_COLORS,
   SECTION_TYPE_LABEL,
   PAGE_TEMPLATES,
   SECTION_TEMPLATES,
-} from "@/components/cms/builder/constants";
+} from "@/components/cms/builder/constants"
 import { safeString, asObject } from "@/components/cms/builder/utils";
 import {
   SectionPreview,
@@ -143,7 +142,7 @@ export default function CmsBuilderPage() {
     const checks: Array<{ id: string; label: string; passed: boolean; tip: string; type: "success" | "warning" | "error" }> = [];
     let score = 0;
 
-    // Check Title
+    // _Check Title
     const titleLen = seoTitleDraft?.length || 0;
     if (titleLen >= 30 && titleLen <= 60) {
       checks.push({ id: "title_len", label: "Longitud del título SEO", passed: true, tip: `Correcto (${titleLen} caracteres).`, type: "success" });
@@ -155,7 +154,7 @@ export default function CmsBuilderPage() {
       checks.push({ id: "title_len", label: "Título SEO vacío", passed: false, tip: "Por favor define un título SEO para indexación básica.", type: "error" });
     }
 
-    // Check Description
+    // _Check Description
     const descLen = seoDescriptionDraft?.length || 0;
     if (descLen >= 110 && descLen <= 160) {
       checks.push({ id: "desc_len", label: "Longitud de meta descripción", passed: true, tip: `Correcto (${descLen} caracteres).`, type: "success" });
@@ -167,7 +166,7 @@ export default function CmsBuilderPage() {
       checks.push({ id: "desc_len", label: "Meta descripción vacía", passed: false, tip: "La descripción es clave para convencer en los buscadores.", type: "error" });
     }
 
-    // Check Focus Keyword
+    // _Check Focus Keyword
     if (seoKeyword.trim()) {
       const kw = seoKeyword.toLowerCase().trim();
       
@@ -209,7 +208,7 @@ export default function CmsBuilderPage() {
       checks.push({ id: "kw_none", label: "Sin palabra clave definida", passed: false, tip: "Escribe una palabra clave arriba para analizar el SEO semántico.", type: "warning" });
     }
 
-    // Check Images Alt text
+    // _Check Images Alt text
     let totalImages = 0;
     let missingAlt = 0;
     sections.forEach(s => {
@@ -245,7 +244,7 @@ export default function CmsBuilderPage() {
       score += 15;
     }
 
-    // Check headings / hierarchy
+    // _Check headings / hierarchy
     const hasHero = sections.some(s => s.type === "hero" || s.type === "video_hero");
     if (hasHero) {
       checks.push({ id: "hierarchy", label: "Estructura de encabezados", passed: true, tip: "Se detectó sección Hero al inicio (encabezado principal H1).", type: "success" });

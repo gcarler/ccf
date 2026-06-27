@@ -3,7 +3,7 @@
 import Link from "next/link";
 import React from "react";
 import Image from "next/image";
-import { ArrowRight, Play, Calendar, MapPin, BookOpen } from "lucide-react";
+import {ArrowRight, Play} from "lucide-react";
 import { motion } from "framer-motion";
 import { useContentBlock } from "@/hooks/useContent";
 import { SITE_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";

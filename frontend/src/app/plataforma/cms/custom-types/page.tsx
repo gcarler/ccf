@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
-import { Puzzle, Plus, Edit3, Trash2, Eye, ChevronRight } from "lucide-react";
+import {Puzzle, Plus, Trash2, ChevronRight} from "lucide-react";
 import SidePanel from "@/components/ui/SidePanel";
 
 interface CustomType { id: string; type_key: string; label: string; label_plural: string | null; icon: string | null; supports: string[]; fields_schema: Record<string, unknown>; }

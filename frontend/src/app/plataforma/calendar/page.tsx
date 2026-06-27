@@ -4,11 +4,22 @@ import React, { Suspense, useEffect, useState, useRef, useMemo, useCallback } fr
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { ProjectTaskRecord } from '@/types/projects';
 import {
-  ChevronLeft, ChevronRight, Plus, Search, Settings2,
-  Flag, RefreshCw, StickyNote, ChevronDown, Workflow,
-  Circle, Loader2, CalendarDays, AlertTriangle, Megaphone,
-  Users, FolderKanban, User, LayoutGrid, Cake,
-} from 'lucide-react';
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Search,
+  Flag,
+  RefreshCw,
+  ChevronDown,
+  Loader2,
+  AlertTriangle,
+  Megaphone,
+  Users,
+  FolderKanban,
+  User,
+  LayoutGrid,
+  Cake,
+} from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   format, startOfWeek, endOfWeek, eachDayOfInterval,

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { List, Search, Filter, ChevronDown, ChevronRight, User, Calendar, Tag, MoreHorizontal, CheckCircle2, Clock, AlertCircle, X } from "lucide-react";
+import {List, Search, Filter, ChevronDown, ChevronRight, User, Calendar, CheckCircle2, Clock, AlertCircle, X} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
@@ -36,7 +36,7 @@ interface UniversalListViewProps {
     searchable?: boolean;
     emptyMessage?: string;
     storageKey?: string;
-    moduleName?: string;
+    _moduleName?: string;
 }
 
 // ─── Priority Colors ──────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ export default function UniversalListView({
     searchable = true,
     emptyMessage = "No hay elementos para mostrar",
     storageKey,
-    moduleName,
+    _moduleName,
 }: UniversalListViewProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [expandedId, setExpandedId] = useState<string | number | null>(null);
@@ -76,7 +76,7 @@ export default function UniversalListView({
     // Persist search
     const storageSearchKey = storageKey ? `${storageKey}_search` : undefined;
 
-    // Filter items
+    // _Filter items
     const filteredItems = useMemo(() => {
         if (!searchQuery) return items;
         const q = searchQuery.toLowerCase();

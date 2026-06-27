@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useContentBlock } from "@/hooks/useContent";
-import { SITE_KEY, SITE_NAME, SITE_URL } from "@/lib/site-config";
+import {SITE_KEY, SITE_NAME} from "@/lib/site-config";
 
 interface SeoMeta {
     title?: string;

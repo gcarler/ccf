@@ -374,7 +374,7 @@ export default function PrivacidadPage() {
                             <p>
                                 Cuando realicemos cambios materiales, te notificaremos por correo electrónico (si tienes una cuenta
                                 registrada) y publicaremos un aviso destacado en la plataforma con al menos <strong>15 días de anticipación</strong>.
-                                La fecha de "última actualización" al inicio de esta página siempre reflejará la versión vigente.
+                                La fecha de &quot;última actualización&quot; al inicio de esta página siempre reflejará la versión vigente.
                             </p>
                             <p>
                                 El uso continuado de la plataforma tras la entrada en vigencia de los cambios constituye tu aceptación
