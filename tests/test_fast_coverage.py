@@ -2,13 +2,13 @@
 Fast Endpoint Coverage — Hits the most impactful endpoints quickly.
 """
 import pytest
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 
 
 @pytest.fixture(scope="function")
 def ac(client, db_session):
-    user, persona, sede = seed_admin_v2(db_session)
-    h = auth_headers_v2(client)
+    user, persona, sede = seed_admin(db_session)
+    h = auth_headers(client)
     return client, h, sede, persona
 
 

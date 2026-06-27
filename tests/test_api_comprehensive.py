@@ -5,13 +5,13 @@ Goal: Maximize line coverage by exercising all API routes.
 Each test makes a single request to verify the endpoint exists and responds.
 """
 import pytest
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 
 
 @pytest.fixture(scope="function")
 def authed_client(client, db_session):
-    user, persona, sede = seed_admin_v2(db_session)
-    headers = auth_headers_v2(client)
+    user, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client)
     return client, headers, sede, persona
 
 
@@ -70,7 +70,7 @@ class TestCrmEndpoints:
 class TestAcademyCoreEndpoints:
     def test_core_courses(self, authed_client):
         client, headers, sede, persona = authed_client
-        resp = client.get("/api/v2/academy/courses", headers=headers)
+        resp = client.get("/api/academy/courses", headers=headers)
         assert resp.status_code in (200, 401, 404, 405, 422, 500, 501)
 
 

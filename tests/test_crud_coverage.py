@@ -5,13 +5,13 @@ Goal: Cover module-level code by importing and calling functions with minimal da
 """
 import pytest
 import uuid
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 
 
 @pytest.fixture(scope="function")
 def authed_client(client, db_session):
-    user, persona, sede = seed_admin_v2(db_session)
-    headers = auth_headers_v2(client)
+    user, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client)
     return client, headers, sede, persona, db_session
 
 
@@ -161,7 +161,7 @@ class TestProjectsCrudDirect:
 class TestAcademyCrudDirect:
     def test_create_course(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.models_academy import Course
+        from backend.models_academy_core import Course
         course = Course(code="TEST01", title="Test Course", description="A test course", modality="online")
         db.add(course)
         db.flush()
@@ -169,7 +169,7 @@ class TestAcademyCrudDirect:
 
     def test_list_courses(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.models_academy import Course
+        from backend.models_academy_core import Course
         result = db.query(Course).limit(10).all()
         assert isinstance(result, list)
 

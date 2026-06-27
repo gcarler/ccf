@@ -4,14 +4,14 @@ FINAL COVERAGE PUSH — Simple, reliable tests that exercise ALL major endpoints
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 @pytest.fixture
 def setup(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import PipelineCRM, EtapaPipeline, CasoCRM, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import PipelineCRM, EtapaPipeline, CasoCRM, TipoPipelineEnum, CanalOrigenEnum
 
     personas = []
     for i in range(10):
@@ -48,11 +48,10 @@ def setup(client, db_session):
             location=f"L{i}", sede_id=sede.id,
         ))
     for p in personas[:5]:
-        db_session.add(models.CrmTask(
+        db_session.add(models.TareaCRM(
             title=f"Task {p.first_name}", persona_id=p.id, status="pending",
         ))
     for p in personas[:3]:
-        db_session.add(models.PastoralCallLog(persona_id=p.id, pastor_id=admin_persona.id, outcome="contacted"))
         db_session.add(models.PrayerRequest(requester_name=p.first_name, request_text="Pray", sede_id=sede.id))
         db_session.add(models.CounselingTicket(persona_id=p.id, subject="Help"))
     db_session.commit()
@@ -185,7 +184,7 @@ class TestEnterpriseCMSFinal:
 class TestAgendaProjectsDonationsFinal:
     def test_all(self, setup):
         c, h = setup["c"], setup["h"]
-        for ep in ["/api/agenda/events","/api/agenda-core/events","/api/agenda-core/resources","/api/agenda-core/reservations","/api/agenda-core/participants","/api/projects","/api/projects/tasks","/api/projects/portfolio/summary","/api/projects/milestones","/api/projects/phases","/api/projects/whiteboards","/api/projects/inbox","/api/projects/supplies","/api/projects/messages","/api/projects/comments","/api/donations","/api/donations/funds","/api/donations/categories","/api/donations/summary","/api/finance/funds","/api/finance/transactions"]:
+        for ep in ["/api/agenda/events","/api/agenda/events","/api/agenda/resources","/api/agenda/reservations","/api/agenda/participants","/api/projects","/api/projects/tasks","/api/projects/portfolio/summary","/api/projects/milestones","/api/projects/phases","/api/projects/whiteboards","/api/projects/inbox","/api/projects/supplies","/api/projects/messages","/api/projects/comments","/api/donations","/api/donations/funds","/api/donations/categories","/api/donations/summary","/api/finance/funds","/api/finance/transactions"]:
             assert _ok(c.get(ep, headers=h).status_code)
 
 

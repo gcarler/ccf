@@ -5,7 +5,7 @@ This is the most efficient approach: create data ONCE, then call 200+ functions.
 import uuid
 import pytest
 from datetime import datetime, date, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(s):
@@ -35,7 +35,7 @@ def rich_data(client, db_session):
     """Create rich data ONCE for all tests in this module."""
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
         EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
         Asistencia, ParticipanteGrupo, CategoriaEstrategia,
@@ -123,7 +123,7 @@ def rich_data(client, db_session):
 
     # CRM entities
     for i in range(8):
-        db_session.add(models.CrmTask(title=f"Task{i}", persona_id=personas[i].id,
+        db_session.add(models.TareaCRM(title=f"Task{i}", persona_id=personas[i].id,
             status=["pending","completed","in_progress"][i%3]))
         db_session.add(models.CounselingTicket(persona_id=personas[i].id,
             subject=f"CT{i}", status=["open","resolved"][i%2], notes=f"N{i}"))

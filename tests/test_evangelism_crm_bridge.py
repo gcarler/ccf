@@ -5,12 +5,12 @@ import pytest
 
 from backend import models
 from backend.services.evangelism_projection import proyectar_sesiones, FRECUENCIAS
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 from backend.services.evangelism_crm_bridge import (
     crear_caso_desde_asistencia,
     _obtener_o_crear_pipeline_nuevos_visitantes,
 )
-from backend.models_crm_core import (
+from backend.models_crm_pipeline import (
     TipoPipelineEnum,
     EstadoCasoEnum,
     PrioridadCasoEnum,
@@ -257,7 +257,7 @@ def test_persona_tags_actualizados(db_session):
     assert "GRUPO_Grupo Tags" in persona.tags
     assert f"SESION_{sesion.fecha_sesion.date().isoformat()}" in persona.tags
     assert persona.spiritual_status == "VISITANTE_EVANGELISMO"
-    assert str(persona.origen_estrategia_id) == estrategia.id
+    assert persona.origen_estrategia_id == estrategia.id
     assert persona.origen_grupo_id == grupo.id
 
 
@@ -353,7 +353,7 @@ def test_pipeline_reutilizado_si_ya_existe(db_session):
 
 
 def test_respuesta_json_estructura_correcta(client, db_session):
-    admin, _admin_persona, sede = seed_admin_v2(db_session)
+    admin, _admin_persona, sede = seed_admin(db_session)
     cat = _seed_categoria(db_session)
 
     persona = models.Persona(first_name="Visitante", last_name="Nuevo", sede_id=sede.id)
@@ -389,7 +389,7 @@ def test_respuesta_json_estructura_correcta(client, db_session):
     db_session.add(sesion)
     db_session.commit()
 
-    headers = auth_headers_v2(client)
+    headers = auth_headers(client)
 
     response = client.post(
         f"/api/evangelism/sessions/{sesion.id}/attendance",

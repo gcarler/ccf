@@ -10,7 +10,7 @@ These tests exercise internal functions that API tests don't reach:
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture
@@ -784,10 +784,10 @@ class TestSchemaCoverage:
             assert s is not None
 
     def test_all_academy_schemas(self, db):
-        from backend.schemas import academy_core
+        from backend.schemas import academy
         schemas_list = [
-            academy_core.CursoCreate, academy_core.CursoResponse,
-            academy_core.CursoUpdate, academy_core.PrerrequisitoCursoCreate,
+            academy.Course, academy.Lesson, academy.EnrollmentCreate,
+            academy.Assessment, academy.ForumThreadCreate,
         ]
         for s in schemas_list:
             assert s is not None

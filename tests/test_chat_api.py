@@ -1,14 +1,14 @@
 import uuid
 
 from backend import models
-from tests.conftest import seed_admin_v2 as _seed_admin
-from tests.conftest import auth_headers_v2 as _auth_headers
-from tests.conftest import seed_user_with_role_v2
+from tests.conftest import seed_admin as _seed_admin
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_user_with_role
 
 
 def test_search_chat_users(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role_v2(
+    user2, persona2, _ = seed_user_with_role(
         db_session, "estudiante", "user2@example.com"
     )
     user2.sede_id = sede.id
@@ -27,7 +27,7 @@ def test_search_chat_users(client, db_session):
 
 def test_create_and_list_conversations(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role_v2(db_session, "estudiante", "user2@example.com")
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     db_session.add_all([user2, persona2])
@@ -51,7 +51,7 @@ def test_create_and_list_conversations(client, db_session):
 
 def test_send_and_list_messages(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role_v2(db_session, "estudiante", "user2@example.com")
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     db_session.add_all([user2, persona2])
@@ -85,7 +85,7 @@ def test_send_and_list_messages(client, db_session):
 
 def test_mark_conversation_read(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role_v2(db_session, "estudiante", "user2@example.com")
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     db_session.add_all([user2, persona2])

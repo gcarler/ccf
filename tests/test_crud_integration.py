@@ -5,13 +5,13 @@ Goal: Increase coverage by exercising CRUD functions directly.
 """
 import pytest
 import uuid
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 
 
 @pytest.fixture(scope="function")
 def authed_client(client, db_session):
-    user, persona, sede = seed_admin_v2(db_session)
-    headers = auth_headers_v2(client)
+    user, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client)
     return client, headers, sede, persona, db_session
 
 
@@ -159,6 +159,67 @@ class TestProjectsCrud:
         result = list_tasks(db, project_id=project.id)
         assert isinstance(result, list)
 
+    def test_update_project_name_title_conflict_warns(self, authed_client, caplog):
+        """``update_project`` should log a WARNING when both ``name`` and ``title``
+        arrive with different values, and ``name`` should win (mirrors
+        ``create_project`` precedence). Confirms the conflict-detection branch
+        added alongside the ``name → title`` alias.
+        """
+        import logging
+        from backend.crud.projects import create_project, update_project
+        _c, _h, sede, persona, db = authed_client
+        project = create_project(
+            db, sede_id=sede.id, name="Untitled Project", owner_id=persona.id
+        )
+        with caplog.at_level(logging.WARNING, logger="backend.crud.projects"):
+            update_project(
+                db,
+                project.id,
+                sede_id=sede.id,
+                name="Project Renamed",
+                title="Other Title",
+            )
+        warn_records = [
+            r for r in caplog.records if r.name == "backend.crud.projects"
+        ]
+        assert any(
+            "update_project: conflicting 'name'" in r.getMessage()
+            for r in warn_records
+        ), caplog.text
+        assert any(
+            "using 'name'" in r.getMessage()
+            for r in warn_records
+        ), caplog.text
+        db.refresh(project)
+        assert project.title == "Project Renamed"
+
+    def test_update_project_name_title_equal_silent(self, authed_client, caplog):
+        """Equal ``name``/``title`` values should not warn — the same values
+        crossing branch should be a no-op for the log surface.
+        """
+        import logging
+        from backend.crud.projects import create_project, update_project
+        _c, _h, sede, persona, db = authed_client
+        project = create_project(
+            db, sede_id=sede.id, name="Untitled Project", owner_id=persona.id
+        )
+        with caplog.at_level(logging.WARNING, logger="backend.crud.projects"):
+            update_project(
+                db,
+                project.id,
+                sede_id=sede.id,
+                name="Same Value",
+                title="Same Value",
+            )
+        warn_records = [
+            r for r in caplog.records if r.name == "backend.crud.projects"
+        ]
+        assert not any(
+            "conflicting 'name'" in r.getMessage() for r in warn_records
+        ), caplog.text
+        db.refresh(project)
+        assert project.title == "Same Value"
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 4. ACADEMY CRUD TESTS
@@ -168,14 +229,14 @@ class TestAcademyCrud:
     def test_create_course(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.academy import create_course
-        course = create_course(db, {"title": "Test Course", "description": "A test course"})
+        course = create_course(db, {"code": "TEST-CREATE", "title": "Test Course", "description": "A test course", "modality": "online"})
         assert course is not None
         assert course.title == "Test Course"
 
     def test_get_course(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.academy import create_course, get_course
-        course = create_course(db, {"title": "Get Course", "description": "Get test"})
+        course = create_course(db, {"code": "TEST-GET", "title": "Get Course", "description": "Get test", "modality": "online"})
         result = get_course(db, course.id)
         assert result is not None
 
@@ -189,8 +250,8 @@ class TestAcademyCrud:
         client, headers, sede, persona, db = authed_client
         from backend.crud.academy import create_course, create_enrollment
         from backend.schemas.academy import EnrollmentCreate
-        course = create_course(db, {"title": "Enroll Course", "description": "Enroll test"})
-        enrollment = create_enrollment(db, EnrollmentCreate(course_id=course.id, user_id=persona.id))
+        course = create_course(db, {"code": "TEST-ENROLL", "title": "Enroll Course", "description": "Enroll test", "modality": "online"})
+        enrollment = create_enrollment(db, EnrollmentCreate(course_id=course.id, persona_id=persona.id))
         assert enrollment is not None
 
     def test_list_enrollments(self, authed_client):
@@ -209,8 +270,22 @@ class TestEvangelismCrud:
         client, headers, sede, persona, db = authed_client
         from backend.crud.evangelism import create_estrategia
         from backend.schemas.evangelism import EstrategiaEvangelismoCreate
-        data = EstrategiaEvangelismoCreate(nombre="Test Strategy", descripcion="Test", fecha_inicio="2026-01-01", fecha_fin="2026-12-31")
-        strategy = create_estrategia(db, data, sede_id=str(sede.id))
+        from backend.models_evangelism import CategoriaEstrategia
+        # Schema fields are the canonical English shape (see ``EstrategiaEvangelismoBase``
+        # in ``backend/schemas/evangelism.py``); Spanish columns on the ORM are
+        # exposed via ``synonym`` and translated in ``create_estrategia``.
+        cat = CategoriaEstrategia(nombre="Test Category")
+        db.add(cat)
+        db.flush()
+        data = EstrategiaEvangelismoCreate(
+            name="Test Strategy",
+            description="Test",
+            start_date="2026-01-01",
+            end_date="2026-12-31",
+        )
+        strategy = create_estrategia(
+            db, data, sede_id=str(sede.id), categoria_id=str(cat.id)
+        )
         assert strategy is not None
 
     def test_list_strategies(self, authed_client):

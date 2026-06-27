@@ -1,112 +1,92 @@
-import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from backend import models
-from tests.conftest import seed_admin_v2 as _seed_admin
-from tests.conftest import auth_headers_v2 as _auth_headers
+from tests.conftest import auth_headers, seed_admin
 
 
-def _seed_sede(db_session):
-    sede = models.Sede(
-        id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True
-    )
-    db_session.add(sede)
-    db_session.commit()
-    db_session.refresh(sede)
-    return sede
-
-
-def test_list_agenda_events(client, db_session):
-    _seed_admin(db_session)
-    headers = _auth_headers(client)
-    resp = client.get("/api/agenda/events", headers=headers)
-    assert resp.status_code == 200
-
-
-def test_create_agenda_event(client, db_session):
-    _seed_admin(db_session)
-    headers = _auth_headers(client)
-    payload = {
-        "title": "Reunion de oracion",
+def _event_payload(title="Reunion de oracion"):
+    starts_at = datetime(2026, 6, 15, 19, 0, tzinfo=timezone.utc)
+    return {
+        "title": title,
         "description": "Oracion intercesora",
-        "start_at": datetime(2026, 6, 15, 19, 0, 0).isoformat(),
-        "end_at": datetime(2026, 6, 15, 20, 0, 0).isoformat(),
+        "start_at": starts_at.isoformat(),
+        "end_at": (starts_at + timedelta(hours=1)).isoformat(),
         "location": "Sala principal",
         "is_all_day": False,
     }
-    resp = client.post("/api/agenda/events", json=payload, headers=headers)
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["title"] == "Reunion de oracion"
-    assert data["location"] == "Sala principal"
-    assert data["is_all_day"] is False
 
 
-def test_get_agenda_event(client, db_session):
-    _seed_admin(db_session)
-    headers = _auth_headers(client)
-    event = models.AgendaEvent(
-        title="Culto dominical",
-        start_at=datetime(2026, 6, 15, 10, 0, 0, tzinfo=timezone.utc),
-        location="Templo",
-        is_all_day=False,
+def _create_event(client, headers, title="Reunion de oracion"):
+    response = client.post("/api/agenda/events", json=_event_payload(title), headers=headers)
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def test_agenda_event_lifecycle(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+
+    event = _create_event(client, headers)
+    assert event["title"] == "Reunion de oracion"
+
+    listed = client.get("/api/agenda/events", headers=headers)
+    assert listed.status_code == 200
+    assert [row["id"] for row in listed.json()] == [event["id"]]
+
+    detail = client.get(f"/api/agenda/events/{event['id']}", headers=headers)
+    assert detail.status_code == 200
+
+    updated_payload = _event_payload("Evento actualizado")
+    updated_payload["location"] = "Nueva locacion"
+    updated = client.put(
+        f"/api/agenda/events/{event['id']}",
+        json=updated_payload,
+        headers=headers,
     )
-    db_session.add(event)
-    db_session.commit()
-    db_session.refresh(event)
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["title"] == "Evento actualizado"
 
-    resp = client.get(f"/api/agenda/events/{event.id}", headers=headers)
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["id"] == str(event.id)
-    assert data["title"] == "Culto dominical"
+    archived = client.delete(f"/api/agenda/events/{event['id']}", headers=headers)
+    assert archived.status_code == 204
+    assert client.get(f"/api/agenda/events/{event['id']}", headers=headers).status_code == 404
 
 
-def test_update_agenda_event(client, db_session):
-    _seed_admin(db_session)
-    headers = _auth_headers(client)
-    event = models.AgendaEvent(
-        title="Evento original",
-        start_at=datetime(2026, 6, 15, 10, 0, 0, tzinfo=timezone.utc),
-        is_all_day=True,
+def test_agenda_resource_participant_and_reservation_flow(client, db_session):
+    admin, persona, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    event = _create_event(client, headers, "Evento con recursos")
+
+    resource = client.post(
+        "/api/agenda/resources",
+        headers=headers,
+        json={
+            "name": "Auditorio",
+            "resource_type": "ROOM",
+            "capacity": 100,
+            "is_active": True,
+        },
     )
-    db_session.add(event)
-    db_session.commit()
-    db_session.refresh(event)
+    assert resource.status_code == 201, resource.text
 
-    payload = {
-        "title": "Evento actualizado",
-        "description": "Nueva descripcion",
-        "start_at": datetime(2026, 6, 16, 10, 0, 0).isoformat(),
-        "end_at": None,
-        "location": "Nueva locacion",
-        "is_all_day": True,
+    participant = client.post(
+        "/api/agenda/participants",
+        headers=headers,
+        json={"event_id": event["id"], "persona_id": str(persona.id)},
+    )
+    assert participant.status_code == 201, participant.text
+
+    starts_at = datetime(2026, 6, 15, 19, 0, tzinfo=timezone.utc)
+    reservation_payload = {
+        "event_id": event["id"],
+        "resource_id": resource.json()["id"],
+        "starts_at": starts_at.isoformat(),
+        "ends_at": (starts_at + timedelta(hours=1)).isoformat(),
     }
-    resp = client.put(
-        f"/api/agenda/events/{event.id}", json=payload, headers=headers
+    reservation = client.post(
+        "/api/agenda/reservations", headers=headers, json=reservation_payload
     )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["title"] == "Evento actualizado"
-    assert data["location"] == "Nueva locacion"
+    assert reservation.status_code == 201, reservation.text
 
-
-def test_delete_agenda_event_soft(client, db_session):
-    _seed_admin(db_session)
-    headers = _auth_headers(client)
-    event = models.AgendaEvent(
-        title="Evento a eliminar",
-        start_at=datetime(2026, 6, 15, 10, 0, 0, tzinfo=timezone.utc),
-        is_all_day=True,
+    conflict = client.post(
+        "/api/agenda/reservations", headers=headers, json=reservation_payload
     )
-    db_session.add(event)
-    db_session.commit()
-    db_session.refresh(event)
-
-    resp = client.delete(f"/api/agenda/events/{event.id}", headers=headers)
-    assert resp.status_code == 200
-    assert resp.json()["status"] == "deleted"
-
-    # After soft delete, GET should 404
-    resp2 = client.get(f"/api/agenda/events/{event.id}", headers=headers)
-    assert resp2.status_code == 404
+    assert conflict.status_code == 409

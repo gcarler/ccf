@@ -1,11 +1,8 @@
-"""Tests para permisos granulares — auth_user_module_roles + PlatformRoleDefinition.
+"""Tests para permisos granulares sobre los modelos Auth v3.
 
 Cubre:
 1. RolPlataforma CRUD via /admin/auth-role-definitions
 2. UsuarioRolModulo CRUD via /admin/user-module-roles
-3. PlatformRoleDefinition CRUD via /kernel/admin/platform-role-definitions
-4. PersonaPlatformRole CRUD via /kernel/admin/persona-platform-roles
-5. Carga de permisos efectivos via /kernel/permissions/me y /kernel/permissions/{persona_id}
 """
 
 import uuid
@@ -23,8 +20,8 @@ from backend.core.security import get_password_hash
 
 def _login_as_admin(client: TestClient, db_session: Session) -> str:
     """Create admin user and return Bearer token."""
-    from tests.conftest import seed_admin_v2
-    admin, persona, sede = seed_admin_v2(db_session, email="permadmin@ccf.test", password="test123")
+    from tests.conftest import seed_admin
+    admin, persona, sede = seed_admin(db_session, email="permadmin@ccf.test", password="test123")
 
     resp = client.post(
         "/api/v3/auth/login",
@@ -45,7 +42,7 @@ def _create_persona(db_session: Session) -> str:
 
 
 def _create_auth_user(db_session: Session, persona_id: str) -> str:
-    """Create auth_v2 user linked to persona, return UUID."""
+    """Create an Auth v3 user linked to a persona and return its UUID."""
     from backend.models_auth import Usuario, RolPlataforma
     rol = db_session.query(RolPlataforma).first()
     if not rol:
@@ -242,120 +239,3 @@ class TestUserModuleRoles:
         )
         assert resp.status_code == 204
 
-
-def _seed_platform_role_defs(db_session: Session):
-    """Seed kernel PlatformRoleDefinition entries needed by tests."""
-    from backend.models_kernel import PlatformRoleDefinition, PlatformRole
-    for role, perms in [
-        (PlatformRole.ADMINISTRADOR, {"*": ["create", "read", "update", "delete", "admin"]}),
-        (PlatformRole.GESTOR, {"crm": ["create", "read", "update"]}),
-        (PlatformRole.EDITOR, {"cms": ["read", "update"]}),
-        (PlatformRole.LECTOR, {"crm": ["read"]}),
-    ]:
-        if not db_session.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.role == role).first():
-            db_session.add(PlatformRoleDefinition(role=role, permissions=perms))
-    db_session.commit()
-
-
-class TestPlatformRoleDefinitions:
-    """CRUD de PlatformRoleDefinition via /kernel/admin/platform-role-definitions."""
-
-    def test_list_platform_role_defs(self, client: TestClient, db_session: Session):
-        _seed_platform_role_defs(db_session)
-        token = _login_as_admin(client, db_session)
-        resp = client.get("/api/kernel/admin/platform-role-definitions", headers={"Authorization": f"Bearer {token}"})
-        assert resp.status_code == 200
-        data = resp.json()
-        assert isinstance(data, list)
-        roles = [r["role"] for r in data]
-        assert "ADMINISTRADOR" in roles or "LECTOR" in roles
-
-    def test_create_platform_role_def(self, client: TestClient, db_session: Session):
-        token = _login_as_admin(client, db_session)
-        resp = client.post(
-            "/api/kernel/admin/platform-role-definitions",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"role": "GESTOR", "permissions": {"crm": ["read"]}, "description": "Test role"},
-        )
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["role"] == "GESTOR"
-        assert data["permissions"] == {"crm": ["read"]}
-
-    def test_update_platform_role_def(self, client: TestClient, db_session: Session):
-        token = _login_as_admin(client, db_session)
-        create_resp = client.post(
-            "/api/kernel/admin/platform-role-definitions",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"role": "LECTOR", "permissions": {"crm": ["read"]}},
-        )
-        def_id = create_resp.json()["id"]
-
-        resp = client.patch(
-            f"/api/kernel/admin/platform-role-definitions/{def_id}",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"permissions": {"crm": ["read", "update"]}},
-        )
-        assert resp.status_code == 200
-        assert resp.json()["permissions"]["crm"] == ["read", "update"]
-
-
-class TestPersonaPlatformRoles:
-    """Asignación de roles de plataforma a personas via Kernel API."""
-
-    def test_assign_and_list_persona_platform_roles(self, client: TestClient, db_session: Session):
-        _seed_platform_role_defs(db_session)
-        token = _login_as_admin(client, db_session)
-        persona_id = _create_persona(db_session)
-        _create_auth_user(db_session, persona_id)
-
-        # Assign platform role to persona
-        resp = client.post(
-            f"/api/kernel/platform-roles/{persona_id}",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"platform_role": "EDITOR"},
-        )
-        assert resp.status_code == 200, f"assign failed: {resp.text}"
-
-        # List all persona assignments via admin endpoint
-        list_resp = client.get(
-            "/api/kernel/admin/persona-platform-roles",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert list_resp.status_code == 200
-        assignments = list_resp.json()
-        assert any(a["persona_id"] == persona_id for a in assignments)
-
-    def test_revoke_persona_platform_role(self, client: TestClient, db_session: Session):
-        _seed_platform_role_defs(db_session)
-        token = _login_as_admin(client, db_session)
-        persona_id = _create_persona(db_session)
-        _create_auth_user(db_session, persona_id)
-
-        # Assign
-        client.post(
-            f"/api/kernel/platform-roles/{persona_id}",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"platform_role": "EDITOR"},
-        )
-
-        # Find assignment ID
-        list_resp = client.get(
-            "/api/kernel/admin/persona-platform-roles",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assignment = next(a for a in list_resp.json() if a["persona_id"] == persona_id)
-
-        # Revoke
-        resp = client.delete(
-            f"/api/kernel/admin/persona-platform-roles/{assignment['id']}",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert resp.status_code in (200, 204)
-
-        # Verify revoked
-        list_resp2 = client.get(
-            "/api/kernel/admin/persona-platform-roles",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert not any(a["persona_id"] == persona_id for a in list_resp2.json())

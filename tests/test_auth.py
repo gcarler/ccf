@@ -1,11 +1,11 @@
 """Tests for auth v3 login/refresh flow."""
 from fastapi.testclient import TestClient
 
-from tests.conftest import seed_admin_v2
+from tests.conftest import seed_admin
 
 
 def test_login_and_refresh_flow(client: TestClient, db_session):
-    seed_admin_v2(db_session)
+    seed_admin(db_session)
     response = client.post(
         "/api/v3/auth/login",
         json={"email": "admin@example.com", "password": "testpass123"},
@@ -23,7 +23,7 @@ def test_login_and_refresh_flow(client: TestClient, db_session):
 
 
 def test_login_rejects_invalid_credentials(client: TestClient, db_session):
-    seed_admin_v2(db_session)
+    seed_admin(db_session)
     response = client.post(
         "/api/v3/auth/login",
         json={"email": "admin@example.com", "password": "wrong"},
@@ -37,7 +37,7 @@ def test_refresh_rejects_invalid_token(client: TestClient, db_session):
 
 
 def test_check_email(client: TestClient, db_session):
-    seed_admin_v2(db_session)
+    seed_admin(db_session)
     resp = client.get("/api/v3/auth/check-email?email=admin@example.com")
     assert resp.status_code == 200
     data = resp.json()
@@ -46,7 +46,7 @@ def test_check_email(client: TestClient, db_session):
 
 
 def test_auth_me(client: TestClient, db_session):
-    seed_admin_v2(db_session)
+    seed_admin(db_session)
     login_resp = client.post(
         "/api/v3/auth/login",
         json={"email": "admin@example.com", "password": "testpass123"},

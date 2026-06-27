@@ -4,13 +4,13 @@ Additional API Integration Tests — Admin, Academy, Auth, Projects.
 Focuses on endpoints with lowest coverage to push overall % up.
 """
 import pytest
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 
 
 @pytest.fixture(scope="function")
 def authed_client(client, db_session):
-    user, persona, sede = seed_admin_v2(db_session)
-    headers = auth_headers_v2(client)
+    user, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client)
     return client, headers, sede
 
 

@@ -8,7 +8,7 @@ events, pipelines, etc.) and then call API endpoints that process them.
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def setup(client, db_session):
     """Create comprehensive test data for all modules."""
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import PipelineCRM, EtapaPipeline, CasoCRM, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import PipelineCRM, EtapaPipeline, CasoCRM, TipoPipelineEnum, CanalOrigenEnum
 
     # Create personas
     personas = []
@@ -98,7 +98,7 @@ def setup(client, db_session):
     # Create tasks
     tasks = []
     for p in personas[:5]:
-        t = models.CrmTask(
+        t = models.TareaCRM(
             title=f"Task {p.first_name}", description="Test",
             persona_id=p.id, status="pending", priority="medium",
         )
@@ -636,10 +636,10 @@ class TestAgendaDeepExecution:
         h = setup["headers"]
         for ep in [
             "/api/agenda/events",
-            "/api/agenda-core/events",
-            "/api/agenda-core/resources",
-            "/api/agenda-core/reservations",
-            "/api/agenda-core/participants",
+            "/api/agenda/events",
+            "/api/agenda/resources",
+            "/api/agenda/reservations",
+            "/api/agenda/participants",
         ]:
             resp = client.get(ep, headers=h)
             assert resp.status_code in (200, 404, 422, 500), f"GET {ep} returned {resp.status_code}"

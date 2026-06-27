@@ -7,7 +7,7 @@ _get_system_var, public_menu visibility, helper functions.
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(s):

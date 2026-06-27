@@ -76,7 +76,7 @@ if os.getenv("CCF_TEST_INLINE_SYNC_HANDLERS", "1") != "0":
 
 from backend.app import app
 from backend.core.database import Base, get_db
-import backend.models  # noqa: F401 — register all models (incl. auth_v2) so create_all works
+import backend.models  # noqa: F401 — register all models (including Auth v3) so create_all works
 
 SQLALCHEMY_DATABASE_URL = (
     os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite://"
@@ -192,8 +192,8 @@ def client(db_session):
 # helpers instead of the numeric models.User pattern, because the
 # /api/auth/login endpoint queries Usuario (auth_users), not User (users).
 
-def seed_admin_v2(db_session, email="admin@example.com", password="testpass123"):
-    """Crea un admin funcional en auth_users + persona + RolPlataforma."""
+def seed_admin(db_session, email="admin@example.com", password="testpass123"):
+    """Crea un administrador funcional en Auth v3 y su Persona."""
     import uuid as _uuid
     from backend import models as _models
     from backend.models_auth import Usuario, RolPlataforma
@@ -227,6 +227,7 @@ def seed_admin_v2(db_session, email="admin@example.com", password="testpass123")
     )
     db_session.add(sede)
     db_session.flush()
+    persona.sede_id = sede.id
 
     user = Usuario(
         id=persona.id,
@@ -243,7 +244,7 @@ def seed_admin_v2(db_session, email="admin@example.com", password="testpass123")
     return user, persona, sede
 
 
-def auth_headers_v2(client, email="admin@example.com", password="testpass123"):
+def auth_headers(client, email="admin@example.com", password="testpass123"):
     """Obtiene headers de autorización usando el endpoint /api/v3/auth/login."""
     resp = client.post(
         "/api/v3/auth/login",
@@ -254,8 +255,8 @@ def auth_headers_v2(client, email="admin@example.com", password="testpass123"):
     return {"Authorization": f"Bearer {token}"}
 
 
-def seed_user_with_role_v2(db_session, role_name="persona", email="user@example.com", password="testpass123"):
-    """Crea un usuario v2 (auth_users) con rol específico en RolPlataforma.
+def seed_user_with_role(db_session, role_name="persona", email="user@example.com", password="testpass123"):
+    """Crea un usuario Auth v3 con un rol de plataforma.
 
     Retorna (user, persona, sede).
     Útil para tests que necesitan usuarios no-admin con roles personalizados.
@@ -292,6 +293,7 @@ def seed_user_with_role_v2(db_session, role_name="persona", email="user@example.
     )
     db_session.add(sede)
     db_session.flush()
+    persona.sede_id = sede.id
 
     user = Usuario(
         id=persona.id,

@@ -6,7 +6,7 @@ All requests are GET (read-only) — safe for production.
 """
 import pytest
 import uuid
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 
 # Dummy UUID for path params
 DUMMY = "00000000-0000-0000-0000-000000000000"
@@ -139,8 +139,8 @@ GET_ENDPOINTS = [
 
 @pytest.fixture(scope="function")
 def ac(client, db_session):
-    user, persona, sede = seed_admin_v2(db_session)
-    h = auth_headers_v2(client)
+    user, persona, sede = seed_admin(db_session)
+    h = auth_headers(client)
     return client, h, sede, persona
 
 

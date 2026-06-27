@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from backend import models
-from tests.conftest import auth_headers_v2, seed_admin_v2
+from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_personas(db_session, sede_id, count=40):
@@ -24,8 +24,8 @@ def _seed_personas(db_session, sede_id, count=40):
 
 
 def test_flujo_estrategia_triple7_geografica_relacional_semanal(client, db_session):
-    seed_admin_v2(db_session)
-    headers = auth_headers_v2(client)
+    seed_admin(db_session)
+    headers = auth_headers(client)
 
     admin = db_session.query(models.Usuario).filter(models.Usuario.email == "admin@example.com").one()
     personas = _seed_personas(db_session, admin.sede_id, count=40)
@@ -173,8 +173,8 @@ def test_flujo_estrategia_triple7_geografica_relacional_semanal(client, db_sessi
 
 
 def test_faro_temporada_crea_sesion_habilitada_para_reporte(client, db_session):
-    seed_admin_v2(db_session)
-    headers = auth_headers_v2(client)
+    seed_admin(db_session)
+    headers = auth_headers(client)
 
     admin = db_session.query(models.Usuario).filter(models.Usuario.email == "admin@example.com").one()
     persona = _seed_personas(db_session, admin.sede_id, count=1)[0]

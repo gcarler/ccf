@@ -6,7 +6,7 @@ Total: 378 functions. Each covers ~3-10 lines.
 import uuid
 import pytest
 from datetime import datetime, date, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _c(fn, *a, **kw):
@@ -18,7 +18,7 @@ def _c(fn, *a, **kw):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo, Asistencia, ParticipanteGrupo, CategoriaEstrategia)
     personas = []
     for i in range(20):
@@ -80,7 +80,7 @@ def full(client, db_session):
             db_session.add(Asistencia(sesion_id=s.id, persona_id=pg.persona_id, estado="ASISTIO"))
     db_session.commit()
     for i in range(8):
-        db_session.add(models.CrmTask(title=f"Task{i}", persona_id=personas[i].id, status=["pending","completed","in_progress"][i%3]))
+        db_session.add(models.TareaCRM(title=f"Task{i}", persona_id=personas[i].id, status=["pending","completed","in_progress"][i%3]))
         db_session.add(models.CounselingTicket(persona_id=personas[i].id, subject=f"CT{i}", status=["open","resolved"][i%2], notes=f"N{i}"))
         db_session.add(models.PrayerRequest(requester_name=personas[i].first_name, request_text=f"P{i}", sede_id=sede.id, source=["web","app"][i%2]))
         db_session.add(models.CommunicationLog(persona_id=personas[i].id, channel=["email","whatsapp","sms"][i%3], content=f"M{i}"))

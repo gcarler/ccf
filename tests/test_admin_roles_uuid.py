@@ -1,9 +1,9 @@
-from tests.conftest import auth_headers_v2, seed_admin_v2
+from tests.conftest import auth_headers, seed_admin
 
 
 def test_admin_roles_uuid_crud(client, db_session):
-    admin, _, _ = seed_admin_v2(db_session)
-    headers = auth_headers_v2(client, email=admin.email, password="testpass123")
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
 
     create_resp = client.post(
         "/api/admin/roles",

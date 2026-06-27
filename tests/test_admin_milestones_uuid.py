@@ -1,10 +1,10 @@
 from backend import models
-from tests.conftest import auth_headers_v2, seed_admin_v2, seed_user_with_role_v2
+from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 
 def test_admin_milestones_uuid_award_uses_auth_users(client, db_session):
-    admin, _, _ = seed_admin_v2(db_session)
-    target_user, target_persona, _ = seed_user_with_role_v2(
+    admin, _, _ = seed_admin(db_session)
+    target_user, target_persona, _ = seed_user_with_role(
         db_session,
         role_name="persona",
         email="milestone-target@test.com",
@@ -21,7 +21,7 @@ def test_admin_milestones_uuid_award_uses_auth_users(client, db_session):
     db_session.commit()
     db_session.refresh(badge)
 
-    headers = auth_headers_v2(client, email=admin.email, password="testpass123")
+    headers = auth_headers(client, email=admin.email, password="testpass123")
 
     resp = client.post(
         "/api/admin/milestones/award",

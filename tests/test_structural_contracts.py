@@ -203,8 +203,12 @@ def test_dashboard_routes_require_authenticated_user():
 def test_internal_routes_do_not_accept_client_sede_id_query():
     checked_modules = {
         "backend.api.dashboard",
-        "backend.api.agenda_core",
-        "backend.api.crm_core",
+        "backend.api.agenda",
+        "backend.api.crm.pastoral",
+        "backend.api.crm.pipelines",
+        "backend.api.crm.personas",
+        "backend.api.crm.persona_relations",
+        "backend.api.crm.resources",
         "backend.api.evangelism_grupos",
         "backend.api.evangelism_multiplication",
         "backend.api.evangelism_rankings",
@@ -314,6 +318,16 @@ def test_academy_persona_backfill_migration_exists():
 
     missing = [fragment for fragment in required_fragments if fragment not in content]
     assert missing == []
+
+
+def test_academy_dashboard_queries_canonical_enrollments_by_persona_id():
+    root = Path(__file__).resolve().parents[1]
+    dashboard = root / "backend" / "crud" / "dashboard.py"
+    content = dashboard.read_text(encoding="utf-8")
+
+    assert "COUNT(DISTINCT e.persona_id)" in content
+    assert "FROM academy_enrollments e" in content
+    assert "FROM enrollments" not in content
 
 
 def test_crm_persona_backfill_migration_exists():
@@ -537,20 +551,8 @@ def test_backend_no_hard_deletes_in_transactional_apis():
 
 
 def test_backend_new_models_use_uuid_not_integer_pk_for_persona_linked_tables():
-    """REGLAS §2.A — tablas con FK a personas.id deben usar UUID como PK, no Integer.
-
-    Deuda técnica conocida (pre-existente, no bloquea pero se monitorea):
-    Las clases listadas en KNOWN_VIOLATIONS tienen Integer PK con FK a personas.id.
-    Deben migrarse a UUID en el ciclo de deuda técnica Q3-2026.
-    NO AÑADIR nuevas clases a esta lista sin aprobación de arquitectura.
-    """
+    """REGLAS §2.A — tablas con FK a personas.id usan UUID como PK."""
     root = Path(__file__).resolve().parents[1]
-
-    # Deuda técnica existente — NO AMPLIAR esta lista
-    KNOWN_VIOLATIONS = {
-        "ProgresoLeccion", "AsistenciaClase", "ActaFormal",
-        "HiloForo", "ComentarioForo", "LogAuditoria",
-    }
 
     target_models = [
         root / "backend" / "models_academy_core.py",
@@ -568,8 +570,7 @@ def test_backend_new_models_use_uuid_not_integer_pk_for_persona_linked_tables():
             if line.strip().startswith("class ") and "(Base)" in line:
                 if in_class and has_persona_fk and has_integer_pk:
                     bare = class_name.split("(")[0].replace("class ", "").strip()
-                    if bare not in KNOWN_VIOLATIONS:
-                        new_violations.append(f"{path.name}::{bare}")
+                    new_violations.append(f"{path.name}::{bare}")
                 in_class = True
                 class_name = line.strip()
                 has_persona_fk = False
@@ -581,13 +582,180 @@ def test_backend_new_models_use_uuid_not_integer_pk_for_persona_linked_tables():
                     has_integer_pk = True
         if in_class and has_persona_fk and has_integer_pk:
             bare = class_name.split("(")[0].replace("class ", "").strip()
-            if bare not in KNOWN_VIOLATIONS:
-                new_violations.append(f"{path.name}::{bare}")
+            new_violations.append(f"{path.name}::{bare}")
 
     assert new_violations == [], (
-        "NUEVAS tablas vinculadas a personas.id con PK Integer detectadas. "
+        "Tablas vinculadas a personas.id con PK Integer detectadas. "
         "Usar UUID(as_uuid=True) como PK. Ver REGLAS §2.A"
     )
+
+
+def test_all_runtime_primary_keys_are_uuid():
+    from backend.core.database import Base
+
+    violations = []
+    for table in Base.metadata.tables.values():
+        for column in table.primary_key.columns:
+            if type(column.type).__name__ != "UUID":
+                violations.append(
+                    f"{table.name}.{column.name}: {type(column.type).__name__}"
+                )
+
+    assert violations == [], "Todas las entidades runtime deben usar UUID como PK"
+
+
+def test_internal_id_contracts_do_not_use_integer_annotations():
+    root = Path(__file__).resolve().parents[1]
+    scan_roots = [
+        root / "backend" / "api",
+        root / "backend" / "crud",
+        root / "backend" / "schemas",
+        root / "backend" / "services",
+        root / "backend" / "agents",
+    ]
+    allowed_files = {
+        "backend/services/payments.py",  # MercadoPago owns its numeric payment ID.
+    }
+    pattern = re.compile(
+        r"\b[A-Za-z_]+_id:\s*(?:Optional\[)?int\b|\bid:\s*(?:Optional\[)?int\b"
+    )
+    violations = []
+
+    for scan_root in scan_roots:
+        for path in scan_root.rglob("*.py"):
+            rel = path.relative_to(root).as_posix()
+            if rel in allowed_files:
+                continue
+            for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                if pattern.search(line):
+                    violations.append(f"{rel}:{line_no}: {line.strip()}")
+
+    assert violations == [], "Los IDs internos expuestos deben declararse como UUID"
+
+
+def test_academy_has_one_runtime_contract_and_model_tree():
+    root = Path(__file__).resolve().parents[1]
+    removed_files = [
+        root / "backend" / "api" / "academy_core.py",
+        root / "backend" / "crud" / "academy_core.py",
+        root / "backend" / "schemas" / "academy_core.py",
+        root / "backend" / "models_academy.py",
+    ]
+    assert [path.relative_to(root).as_posix() for path in removed_files if path.exists()] == []
+
+    academy_routes = {
+        route.path
+        for route in app.routes
+        if getattr(getattr(route, "endpoint", None), "__module__", "")
+        == "backend.api.academy"
+    }
+    assert academy_routes
+    assert all(path.startswith("/api/academy/") for path in academy_routes)
+    assert not any(path.startswith("/api/v2/academy") for path in academy_routes)
+
+
+def test_parallel_academy_and_identity_tables_are_not_in_runtime_metadata():
+    from backend.core.database import Base
+
+    forbidden_tables = {
+        "courses",
+        "course_prerequisites",
+        "lessons",
+        "lesson_progress",
+        "assessments",
+        "assessment_questions",
+        "assessment_options",
+        "enrollments",
+        "assessment_attempts",
+        "assessment_answers",
+        "course_attendance",
+        "assignment_submissions",
+        "resources",
+        "certificates",
+        "formal_actas",
+        "formal_acta_entries",
+        "forum_threads",
+        "forum_comments",
+        "levels",
+        "badges",
+        "user_badges",
+        "user_ui_preferences",
+        "user_permissions",
+        "notifications",
+        "user_reminders",
+        "agenda_events",
+        "consolidation_cases",
+        "consolidation_assignments",
+        "consolidation_interactions",
+        "consolidation_tasks",
+        "pastoral_call_logs",
+        "platform_role_definitions",
+        "persona_platform_roles",
+        "cell_groups",
+        "crm_tasks",
+    }
+    assert forbidden_tables.intersection(Base.metadata.tables) == set()
+
+
+def test_crm_and_agenda_have_one_runtime_contract_each():
+    root = Path(__file__).resolve().parents[1]
+    removed_files = [
+        root / "backend" / "api" / "crm_core.py",
+        root / "backend" / "crud" / "crm_core.py",
+        root / "backend" / "schemas" / "crm_core.py",
+        root / "backend" / "crud" / "consolidation.py",
+        root / "backend" / "api" / "agenda_core.py",
+        root / "backend" / "crud" / "agenda_core.py",
+        root / "backend" / "schemas" / "agenda_core.py",
+    ]
+    assert [path.relative_to(root).as_posix() for path in removed_files if path.exists()] == []
+
+    application_paths = {
+        route.path for route in app.routes if getattr(route, "path", None)
+    }
+    assert not any(path.startswith("/api/v2/") for path in application_paths)
+    assert any(path.startswith("/api/crm/") for path in application_paths)
+    assert any(path.startswith("/api/agenda/") for path in application_paths)
+
+
+def test_auth_has_one_role_owner_and_no_removed_runtime_modules():
+    root = Path(__file__).resolve().parents[1]
+    removed_files = [
+        root / "backend" / "core" / "abac.py",
+        root / "backend" / "schemas" / "auth_v2.py",
+        root / "backend" / "crud" / "async_.py",
+    ]
+    assert [path.relative_to(root).as_posix() for path in removed_files if path.exists()] == []
+
+    application_paths = {
+        route.path for route in app.routes if getattr(route, "path", None)
+    }
+    forbidden_kernel_role_mutations = {
+        path
+        for path in application_paths
+        if path.startswith("/api/kernel/admin/platform-role-definitions")
+        or path.startswith("/api/kernel/admin/persona-platform-roles")
+    }
+    assert forbidden_kernel_role_mutations == set()
+
+
+def test_auth_and_scanner_have_no_parallel_fallback_contracts():
+    root = Path(__file__).resolve().parents[1]
+    files = [
+        root / "backend" / "core" / "permissions.py",
+        root / "backend" / "api" / "evangelism.py",
+        root / "frontend" / "src" / "context" / "AuthContext.tsx",
+        root / "frontend" / "src" / "lib" / "http.ts",
+    ]
+    source = "\n".join(path.read_text(encoding="utf-8") for path in files)
+    forbidden = (
+        '"/auth/refresh"',
+        '"/auth/me"',
+        '"/auth/logout"',
+        "subject.isdigit",
+        "CCF-" + "MBR-",
+    )
+    assert [term for term in forbidden if term in source] == []
 
 
 def test_frontend_no_direct_fetch_calls():

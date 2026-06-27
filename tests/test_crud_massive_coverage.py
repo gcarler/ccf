@@ -5,14 +5,14 @@ Uses try/except to ensure all functions get called even if data is missing.
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
         EstrategiaEvangelismo, GrupoEvangelismo, CategoriaEstrategia,
         ParticipanteGrupo, SesionGrupo, Asistencia,
@@ -82,7 +82,7 @@ def full(client, db_session):
         db_session.refresh(ev)
 
     for i in range(4):
-        db_session.add(models.CrmTask(title=f"Task_{i}", persona_id=personas[i].id, status="pending"))
+        db_session.add(models.TareaCRM(title=f"Task_{i}", persona_id=personas[i].id, status="pending"))
         db_session.add(models.CounselingTicket(persona_id=personas[i].id, subject=f"C_{i}", status="open"))
         db_session.add(models.PrayerRequest(requester_name=personas[i].first_name, request_text="P", sede_id=sede.id))
         db_session.add(models.CommunicationLog(persona_id=personas[i].id, channel="email", content=f"Msg_{i}"))
@@ -185,7 +185,7 @@ class TestCRMCrudMassive:
         pid = str(full["personas"][0].id)
         _call(crm.get_crm_event, db, full["events"][0].id)
         _call(crm.update_crm_event, db, full["events"][0].id, {"name": "U"})
-        tid = db.execute(__import__("sqlalchemy").text("SELECT id FROM crm_tasks LIMIT 1")).scalar()
+        tid = db.execute(__import__("sqlalchemy").text("SELECT id FROM crm_tareas LIMIT 1")).scalar()
         if tid:
             _call(crm.update_crm_task, db, tid, {"status": "completed"})
             _call(crm.delete_crm_task, db, tid)
@@ -331,6 +331,6 @@ class TestKernelMassive:
         _call(kernel.is_user_active, db, uid)
         _call(kernel.get_kernel_profile, db, pid)
         _call(kernel.get_church_role_history, db, pid)
-        _call(kernel.set_primary_ministry_by_persona, db, pid, "Worship")
+        _call(kernel.set_primary_ministry, db, pid, "Worship")
         _call(kernel.get_church_role_history_by_user, db, uid)
         _call(kernel.get_users_by_church_role, db, "Miembro")

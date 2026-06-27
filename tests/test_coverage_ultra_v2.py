@@ -8,7 +8,7 @@ evangelism.py (382 lines, 20%), admin.py (413 lines, 32%), cms_v2.py (420 lines,
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(status):
@@ -19,7 +19,7 @@ def _ok(status):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import PipelineCRM, EtapaPipeline, CasoCRM, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import PipelineCRM, EtapaPipeline, CasoCRM, TipoPipelineEnum, CanalOrigenEnum
 
     personas = []
     for i in range(12):
@@ -45,9 +45,8 @@ def full(client, db_session):
         db_session.add(models.CrmEvent(name=f"E{i}", event_date=datetime.now(timezone.utc)+timedelta(days=i+1),
             location=f"L{i}", sede_id=sede.id))
     for p in personas[:5]:
-        db_session.add(models.CrmTask(title=f"Task {p.first_name}", persona_id=p.id, status="pending"))
+        db_session.add(models.TareaCRM(title=f"Task {p.first_name}", persona_id=p.id, status="pending"))
     for p in personas[:3]:
-        db_session.add(models.PastoralCallLog(persona_id=p.id, pastor_id=admin_persona.id, outcome="contacted"))
         db_session.add(models.PrayerRequest(requester_name=p.first_name, request_text="Pray", sede_id=sede.id))
         db_session.add(models.CounselingTicket(persona_id=p.id, subject="Help"))
     db_session.commit()
@@ -219,7 +218,7 @@ class TestEnterpriseCMSUltra:
 class TestAllEndpointsUltra:
     def test_agenda(self, full):
         c, h = full["c"], full["h"]
-        for ep in ["/api/agenda/events","/api/agenda-core/events","/api/agenda-core/resources","/api/agenda-core/reservations","/api/agenda-core/participants"]:
+        for ep in ["/api/agenda/events","/api/agenda/events","/api/agenda/resources","/api/agenda/reservations","/api/agenda/participants"]:
             assert _ok(c.get(ep, headers=h).status_code)
 
     def test_projects(self, full):

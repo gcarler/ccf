@@ -1,8 +1,8 @@
 """Tests for auth v3 /me profile update."""
 from fastapi.testclient import TestClient
 
-from tests.conftest import seed_admin_v2 as _seed_admin
-from tests.conftest import auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
+from tests.conftest import auth_headers as _auth_headers
 
 
 def test_update_username(client: TestClient, db_session):

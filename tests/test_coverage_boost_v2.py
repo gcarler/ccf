@@ -6,7 +6,7 @@ import uuid
 import json
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(s):
@@ -17,7 +17,7 @@ def _ok(s):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
         EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
         Asistencia, ParticipanteGrupo, CategoriaEstrategia,
@@ -111,7 +111,7 @@ def full(client, db_session):
     db_session.commit()
 
     for i, p in enumerate(personas[:6]):
-        db_session.add(models.CrmTask(title=f"Task {p.first_name}", persona_id=p.id, status=["pending", "completed", "in_progress"][i % 3]))
+        db_session.add(models.TareaCRM(title=f"Task {p.first_name}", persona_id=p.id, status=["pending", "completed", "in_progress"][i % 3]))
         db_session.add(models.CounselingTicket(persona_id=p.id, subject=f"Counseling {i}", status=["open", "resolved"][i % 2]))
         db_session.add(models.PrayerRequest(requester_name=p.first_name, request_text="P", sede_id=sede.id, source=["web", "app"][i % 2]))
 
@@ -450,14 +450,14 @@ class TestAdminDeepV2:
             "rol_plataforma_id": str(admin.rol_plataforma_id),
         }, headers=h)
         c.patch(f"/api/admin/users/{admin.id}", json={"rol_plataforma_id": ""}, headers=h)
-        c.patch(f"/api/admin/users/{admin.id}", json={"platform_role_id": None}, headers=h)
+        c.patch(f"/api/admin/users/{admin.id}", json={"rol_plataforma_id": None}, headers=h)
         c.patch(f"/api/admin/users/{admin.id}", json={"role_id": None}, headers=h)
         c.patch(f"/api/admin/users/{admin.id}", json={"role": "ADMIN"}, headers=h)
 
     def test_update_user_invalid_role_id(self, full):
         c, h, admin = full["c"], full["h"], full["admin"]
         c.patch(f"/api/admin/users/{admin.id}", json={"rol_plataforma_id": "not-a-uuid"}, headers=h)
-        c.patch(f"/api/admin/users/{admin.id}", json={"platform_role_id": "bad"}, headers=h)
+        c.patch(f"/api/admin/users/{admin.id}", json={"rol_plataforma_id": "bad"}, headers=h)
         c.patch(f"/api/admin/users/{admin.id}", json={"role_id": "bad"}, headers=h)
 
     def test_create_user_with_role(self, full):
@@ -518,10 +518,10 @@ class TestAdminDeepV2:
 
     def test_change_role_full(self, full):
         c, h, admin = full["c"], full["h"], full["admin"]
-        c.patch(f"/api/admin/users/{admin.id}/role", params={"platform_role_id": str(admin.rol_plataforma_id)}, headers=h)
+        c.patch(f"/api/admin/users/{admin.id}/role", params={"role_id": str(admin.rol_plataforma_id)}, headers=h)
         c.patch(f"/api/admin/users/{admin.id}/role", params={"role_id": str(admin.rol_plataforma_id)}, headers=h)
         c.patch(f"/api/admin/users/{admin.id}/role", params={}, headers=h)
-        c.patch(f"/api/admin/users/{admin.id}/role", params={"platform_role_id": "bad"}, headers=h)
+        c.patch(f"/api/admin/users/{admin.id}/role", params={"role_id": "bad"}, headers=h)
 
     def test_delete_user_full(self, full):
         c, h, admin = full["c"], full["h"], full["admin"]

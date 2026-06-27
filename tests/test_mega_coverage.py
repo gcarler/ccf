@@ -5,7 +5,7 @@ Strategy: Create real data via models, call API endpoints that process them.
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(s):
@@ -16,7 +16,7 @@ def _ok(s):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
         EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
         Asistencia, ParticipanteGrupo, CategoriaEstrategia, HistorialEmbudo,
@@ -98,7 +98,7 @@ def full(client, db_session):
 
     # Tasks, Counseling, Prayer, VolunteerShifts, CommunicationLog
     for p in personas[:5]:
-        db_session.add(models.CrmTask(title=f"Task {p.first_name}", persona_id=p.id, status="pending"))
+        db_session.add(models.TareaCRM(title=f"Task {p.first_name}", persona_id=p.id, status="pending"))
     for p in personas[:3]:
         db_session.add(models.CounselingTicket(persona_id=p.id, subject="Help", notes="Urgent"))
         db_session.add(models.PrayerRequest(requester_name=p.first_name, request_text="Pray", sede_id=sede.id))
@@ -322,7 +322,7 @@ class TestAdminAll:
         assert _ok(resp.status_code)
         assert _ok(c.get(f"/api/admin/users/{admin.id}", headers=h).status_code)
         assert _ok(c.patch(f"/api/admin/users/{admin.id}", json={"username": "U"}, headers=h).status_code)
-        assert _ok(c.patch(f"/api/admin/users/{admin.id}/role", params={"platform_role_id": str(admin.platform_role_id)}, headers=h).status_code)
+        assert _ok(c.patch(f"/api/admin/users/{admin.id}/role", params={"role_id": str(admin.rol_plataforma_id)}, headers=h).status_code)
 
     def test_roles_crud(self, full):
         c, h = full["c"], full["h"]
@@ -498,7 +498,7 @@ class TestAllRemaining:
 
     def test_agenda(self, full):
         c, h = full["c"], full["h"]
-        for ep in ["/api/agenda/events", "/api/agenda-core/events", "/api/agenda-core/resources", "/api/agenda-core/reservations", "/api/agenda-core/participants"]:
+        for ep in ["/api/agenda/events", "/api/agenda/events", "/api/agenda/resources", "/api/agenda/reservations", "/api/agenda/participants"]:
             assert _ok(c.get(ep, headers=h).status_code)
 
     def test_projects(self, full):

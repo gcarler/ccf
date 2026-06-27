@@ -3,7 +3,7 @@
 Each factory creates a single model instance and calls db.flush() so that the
 caller can build relational graphs without committing until ready.
 
-Pattern: plain functions, no factory_boy, following conftest.py:seed_admin_v2().
+Pattern: plain functions, no factory_boy, following conftest.py:seed_admin().
 """
 
 from __future__ import annotations

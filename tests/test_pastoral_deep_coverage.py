@@ -7,7 +7,7 @@ to maximize code execution. Focus on untested paths.
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(status):
@@ -19,7 +19,7 @@ def deep(client, db_session):
     """Create comprehensive test data for pastoral.py deep tests."""
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import GrupoEvangelismo
 
     personas = []
@@ -57,14 +57,13 @@ def deep(client, db_session):
 
     tasks = []
     for p in personas[:5]:
-        t = models.CrmTask(title=f"Task {p.first_name}", description="Test",
+        t = models.TareaCRM(title=f"Task {p.first_name}", description="Test",
             persona_id=p.id, status="pending", priority="medium")
         db_session.add(t); tasks.append(t)
     db_session.commit()
     for t in tasks: db_session.refresh(t)
 
     for p in personas[:3]:
-        db_session.add(models.PastoralCallLog(persona_id=p.id, pastor_id=admin_persona.id, outcome="contacted"))
         db_session.add(models.PrayerRequest(requester_name=p.first_name, request_text="Pray", sede_id=sede.id))
         db_session.add(models.CounselingTicket(persona_id=p.id, subject="Help"))
     db_session.commit()

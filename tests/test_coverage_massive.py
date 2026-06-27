@@ -8,7 +8,7 @@ Every test makes at least one API call or CRUD call. Tests accept any status cod
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 @pytest.fixture
@@ -91,23 +91,23 @@ class TestCRMPastoralCoverage:
 class TestAcademyCoverage:
     def test_academy_courses_list(self, ac):
         c, h, s, p = ac
-        c.get("/api/v2/academy/courses", headers=h)
+        c.get("/api/academy/courses", headers=h)
 
     def test_academy_enrollments_list(self, ac):
         c, h, s, p = ac
-        c.get("/api/v2/academy/enrollments", headers=h)
+        c.get("/api/academy/enrollments", headers=h)
 
     def test_academy_certificates_list(self, ac):
         c, h, s, p = ac
-        c.get("/api/v2/academy/certificates", headers=h)
+        c.get("/api/academy/me/certificates", headers=h)
 
     def test_academy_assessments_list(self, ac):
         c, h, s, p = ac
-        c.get("/api/v2/academy/assessments", headers=h)
+        c.get("/api/academy/courses/00000000-0000-0000-0000-000000000001/assessments", headers=h)
 
     def test_academy_forum_threads(self, ac):
         c, h, s, p = ac
-        c.get("/api/v2/academy/forum-threads", headers=h)
+        c.get("/api/academy/forum/threads", headers=h)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -5,7 +5,7 @@ crm.py (362), academy.py (360), cms.py (332), auth_v3.py (320), evangelism.py (2
 import uuid
 import pytest
 from datetime import datetime, date, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(s):
@@ -20,7 +20,7 @@ def _call(fn, *a, **kw):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
         EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
         Asistencia, ParticipanteGrupo, CategoriaEstrategia,
@@ -100,7 +100,7 @@ def full(client, db_session):
     db_session.commit()
 
     for i in range(6):
-        db_session.add(models.CrmTask(title=f"Task_{i}", persona_id=personas[i].id, status=["pending","completed","in_progress"][i%3]))
+        db_session.add(models.TareaCRM(title=f"Task_{i}", persona_id=personas[i].id, status=["pending","completed","in_progress"][i%3]))
         db_session.add(models.CounselingTicket(persona_id=personas[i].id, subject=f"CT_{i}", status="open"))
         db_session.add(models.PrayerRequest(requester_name=personas[i].first_name, request_text="P", sede_id=sede.id))
         db_session.add(models.CommunicationLog(persona_id=personas[i].id, channel="email", content=f"Msg_{i}"))

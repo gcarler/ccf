@@ -8,7 +8,7 @@ All tests run on the SQLite test database (not production).
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def seeded(db_session, client):
     admin, admin_persona, sede = _seed_admin(db_session)
 
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum
 
     pipeline = PipelineCRM(
         id=uuid.uuid4(), sede_id=sede.id, nombre="Default Pipeline",
@@ -63,7 +63,7 @@ def seeded(db_session, client):
 
     tasks = []
     for p in personas[:3]:
-        task = models.CrmTask(
+        task = models.TareaCRM(
             title=f"Task for {p.first_name}",
             description="Test task", priority="medium",
             status="pending", persona_id=p.id,
@@ -709,19 +709,19 @@ class TestAgendaWithData:
         resp = client.get("/api/agenda/events", headers=h)
         assert resp.status_code in (200, 404, 405, 422, 500)
 
-    def test_agenda_core_events(self, client, seeded):
+    def test_agenda_events(self, client, seeded):
         h = seeded["headers"]
-        resp = client.get("/api/agenda-core/events", headers=h)
+        resp = client.get("/api/agenda/events", headers=h)
         assert resp.status_code in (200, 404, 405, 422, 500)
 
-    def test_agenda_core_resources(self, client, seeded):
+    def test_agenda_resources(self, client, seeded):
         h = seeded["headers"]
-        resp = client.get("/api/agenda-core/resources", headers=h)
+        resp = client.get("/api/agenda/resources", headers=h)
         assert resp.status_code in (200, 404, 405, 422, 500)
 
-    def test_agenda_core_reservations(self, client, seeded):
+    def test_agenda_reservations(self, client, seeded):
         h = seeded["headers"]
-        resp = client.get("/api/agenda-core/reservations", headers=h)
+        resp = client.get("/api/agenda/reservations", headers=h)
         assert resp.status_code in (200, 404, 405, 422, 500)
 
 

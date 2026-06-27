@@ -176,7 +176,7 @@ class TestGetUserEffectivePermissions:
         result = get_user_effective_permissions(db_session, user)
         assert isinstance(result, dict)
 
-    def test_user_role_obj(self, db_session):
+    def test_parallel_user_role_object_is_ignored(self, db_session):
         from backend.core.permissions import get_user_effective_permissions
         user = MagicMock()
         user.role = ""
@@ -185,9 +185,9 @@ class TestGetUserEffectivePermissions:
         user.user_role_obj.permissions = {"crm:read": "allow"}
         user.permissions_override = None
         result = get_user_effective_permissions(db_session, user)
-        assert "crm:read" in result
+        assert result == {}
 
-    def test_permissions_override(self, db_session):
+    def test_parallel_permissions_override_is_ignored(self, db_session):
         from backend.core.permissions import get_user_effective_permissions
         user = MagicMock()
         user.role = ""
@@ -196,7 +196,7 @@ class TestGetUserEffectivePermissions:
         user.permissions_override = MagicMock()
         user.permissions_override.permissions = {"custom:perm": "allow"}
         result = get_user_effective_permissions(db_session, user)
-        assert "custom:perm" in result
+        assert result == {}
 
     def test_default_role_fallback(self, db_session):
         from backend.core.permissions import get_user_effective_permissions
@@ -229,15 +229,15 @@ class TestRequireModuleAccess:
 class TestAuthenticateUser:
     def test_authenticate_success(self, db_session):
         from backend.core.permissions import authenticate_user
-        from tests.conftest import seed_admin_v2
-        user, persona, sede = seed_admin_v2(db_session)
+        from tests.conftest import seed_admin
+        user, persona, sede = seed_admin(db_session)
         result = authenticate_user(db_session, "admin@example.com", "testpass123")
         assert result is not None
 
     def test_authenticate_wrong_password(self, db_session):
         from backend.core.permissions import authenticate_user
-        from tests.conftest import seed_admin_v2
-        user, persona, sede = seed_admin_v2(db_session)
+        from tests.conftest import seed_admin
+        user, persona, sede = seed_admin(db_session)
         result = authenticate_user(db_session, "admin@example.com", "wrong")
         assert result is False
 
@@ -276,9 +276,9 @@ class TestSchemasCoverage:
         from backend.schemas import projects
         assert projects is not None
 
-    def test_auth_v2_schemas(self):
-        from backend.schemas import auth_v2
-        assert auth_v2 is not None
+    def test_auth_v3_schemas(self):
+        from backend.schemas import auth_v3
+        assert auth_v3 is not None
 
     def test_cms_schemas(self):
         from backend.schemas import cms
@@ -312,10 +312,6 @@ class TestSchemasCoverage:
         from backend.schemas import _common
         assert _common is not None
 
-    def test_crm_core_schemas(self):
-        from backend.schemas import crm_core
-        assert crm_core is not None
-
     def test_crm_resources_schemas(self):
         from backend.schemas import crm_resources
         assert crm_resources is not None
@@ -324,13 +320,13 @@ class TestSchemasCoverage:
         from backend.schemas import crm_automation
         assert crm_automation is not None
 
-    def test_academy_core_schemas(self):
-        from backend.schemas import academy_core
-        assert academy_core is not None
+    def test_academy_schemas(self):
+        from backend.schemas import academy
+        assert academy is not None
 
-    def test_agenda_core_schemas(self):
-        from backend.schemas import agenda_core
-        assert agenda_core is not None
+    def test_agenda_schemas(self):
+        from backend.schemas import agenda
+        assert agenda is not None
 
     def test_cms_v2_sections_schemas(self):
         from backend.schemas import cms_v2_sections
@@ -369,8 +365,8 @@ class TestModelsCoverage:
         assert models_crm is not None
 
     def test_academy_models(self):
-        from backend import models_academy
-        assert models_academy is not None
+        from backend import models_academy_core
+        assert models_academy_core is not None
 
     def test_evangelism_models(self):
         from backend import models_evangelism
@@ -400,9 +396,9 @@ class TestModelsCoverage:
         from backend import models_governance
         assert models_governance is not None
 
-    def test_crm_core_models(self):
-        from backend import models_crm_core
-        assert models_crm_core is not None
+    def test_crm_pipeline_models(self):
+        from backend import models_crm_pipeline
+        assert models_crm_pipeline is not None
 
     def test_enterprise_models(self):
         from backend import models_enterprise
@@ -501,10 +497,6 @@ class TestAuthModule:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestCrudModules:
-    def test_crm_core(self):
-        from backend.crud import crm_core
-        assert crm_core is not None
-
     def test_crm_extended(self):
         from backend.crud import crm_extended
         assert crm_extended is not None
@@ -513,10 +505,6 @@ class TestCrudModules:
         from backend.crud import crm_resources
         assert crm_resources is not None
 
-    def test_consolidation(self):
-        from backend.crud import consolidation
-        assert consolidation is not None
-
     def test_ops(self):
         from backend.crud import ops
         assert ops is not None
@@ -524,11 +512,6 @@ class TestCrudModules:
     def test_identity(self):
         from backend.crud import identity
         assert identity is not None
-
-    def test_async_(self):
-        from backend.crud import async_
-        assert async_ is not None
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # SCHEMAS CMS_V2_SECTIONS (0% coverage)

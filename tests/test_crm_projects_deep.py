@@ -8,7 +8,7 @@ milestones, supplies, attachments, activities, inbox.
 import uuid
 import pytest
 from datetime import datetime, date, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(s):
@@ -34,7 +34,7 @@ def _create_baptism_persona(db_session, full):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
         EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
         Asistencia, ParticipanteGrupo, CategoriaEstrategia,
@@ -173,7 +173,7 @@ def full(client, db_session):
     db_session.commit()
 
     for i in range(6):
-        db_session.add(models.CrmTask(title=f"Task_{i}", persona_id=personas[i].id, status=["pending", "completed", "in_progress"][i % 3]))
+        db_session.add(models.TareaCRM(title=f"Task_{i}", persona_id=personas[i].id, status=["pending", "completed", "in_progress"][i % 3]))
         db_session.add(models.CounselingTicket(persona_id=personas[i].id, subject=f"CT_{i}", status="open"))
         db_session.add(models.PrayerRequest(requester_name=personas[i].first_name, request_text="P", sede_id=sede.id))
         db_session.add(models.CommunicationLog(persona_id=personas[i].id, channel="email", content=f"Msg_{i}"))
@@ -323,9 +323,14 @@ class TestCRMDeep:
         assert isinstance(tickets, list)
 
     def test_consolidation_deep(self, db_session, full):
-        from backend.crud.crm import get_consolidation_case
-        case = _call(get_consolidation_case, db_session, str(full["personas"][0].id))
-        # Just verify the function runs without error
+        from backend import models
+
+        cases = (
+            db_session.query(models.CasoCRM)
+            .filter(models.CasoCRM.persona_id == full["personas"][0].id)
+            .all()
+        )
+        assert isinstance(cases, list)
 
     def test_notifications_deep(self, db_session, full):
         from backend.crud.crm import get_user_notifications, mark_notification_as_read, mark_all_notifications_read

@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 
 import pytest
 from backend import models
-from tests.conftest import seed_admin_v2 as _seed_admin
-from tests.conftest import auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
+from tests.conftest import auth_headers as _auth_headers
 
 
 def _seed_sede(db_session):
@@ -61,9 +61,9 @@ def test_analytics_events_summary(client, db_session):
 
 
 def test_analytics_radar_rejects_non_pastor(client, db_session):
-    from tests.conftest import seed_user_with_role_v2
+    from tests.conftest import seed_user_with_role
 
-    user, persona, _ = seed_user_with_role_v2(db_session, "estudiante", "student@example.com")
+    user, persona, _ = seed_user_with_role(db_session, "estudiante", "student@example.com")
     headers = _auth_headers(client, email="student@example.com")
     resp = client.get("/api/analytics/radar", headers=headers)
     assert resp.status_code == 403

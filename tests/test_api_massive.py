@@ -9,18 +9,18 @@ Strategy: For each API module, test every endpoint's:
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 
 
 @pytest.fixture
 def admin_data(db_session):
-    user, persona, sede = seed_admin_v2(db_session)
+    user, persona, sede = seed_admin(db_session)
     return user, persona, sede
 
 
 @pytest.fixture
 def client_auth(client, db_session, admin_data):
-    headers = auth_headers_v2(client)
+    headers = auth_headers(client)
     return client, headers, admin_data
 
 
@@ -192,70 +192,70 @@ class TestAuthV3:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# CRM ENDPOINTS (/api/v2/crm/*)
+# CRM ENDPOINTS (/api/crm/*)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestCRM:
     def test_list_casos(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/v2/crm/casos", headers=headers)
+        resp = client.get("/api/crm/consolidation/cases", headers=headers)
         assert resp.status_code == 200
 
     def test_list_pipelines(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/v2/crm/pipelines", headers=headers)
+        resp = client.get("/api/crm/pipelines", headers=headers)
         assert resp.status_code == 200
 
     def test_list_plantillas(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/v2/crm/plantillas", headers=headers)
+        resp = client.get("/api/crm/resources/plantillas", headers=headers)
         assert resp.status_code == 200
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ACADEMY ENDPOINTS (/api/v2/academy/*)
+# ACADEMY ENDPOINTS (/api/academy/*)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestAcademy:
     def test_list_courses(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/v2/academy/courses", headers=headers)
+        resp = client.get("/api/academy/courses", headers=headers)
         assert resp.status_code == 200
 
     def test_list_enrollments(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/v2/academy/enrollments", headers=headers)
+        resp = client.get("/api/academy/enrollments", headers=headers)
         assert resp.status_code == 200
 
     def test_list_certificates(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/v2/academy/certificates", headers=headers)
+        resp = client.get("/api/academy/me/certificates", headers=headers)
         assert resp.status_code == 200
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# AGENDA ENDPOINTS (/api/v2/agenda/*)
+# AGENDA ENDPOINTS (/api/agenda/*)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestAgenda:
     def test_list_eventos(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/v2/agenda/eventos", headers=headers)
+        resp = client.get("/api/agenda/events", headers=headers)
         assert resp.status_code == 200
 
     def test_list_recursos(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/v2/agenda/recursos", headers=headers)
+        resp = client.get("/api/agenda/resources", headers=headers)
         assert resp.status_code == 200
 
     def test_list_reservas(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/v2/agenda/reservas", headers=headers)
+        resp = client.get("/api/agenda/reservations", headers=headers)
         assert resp.status_code == 200
 
     def test_list_participantes(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/v2/agenda/participantes", headers=headers)
+        resp = client.get("/api/agenda/participants", headers=headers)
         assert resp.status_code == 200
 
 

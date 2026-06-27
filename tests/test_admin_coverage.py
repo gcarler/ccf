@@ -10,7 +10,7 @@ process them to execute code paths.
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(status):
@@ -180,7 +180,7 @@ class TestUserManagement:
     def test_change_user_role(self, full):
         c, h = full["c"], full["h"]
         resp = c.patch(f"/api/admin/users/{full['admin'].id}/role", params={
-            "platform_role_id": str(full["admin"].platform_role_id),
+            "rol_plataforma_id": str(full["admin"].rol_plataforma_id),
         }, headers=h)
         assert _ok(resp.status_code)
 
@@ -348,7 +348,7 @@ class TestAllOtherEndpoints:
     def test_change_user_role(self, full):
         c, h = full["c"], full["h"]
         resp = c.patch(f"/api/admin/users/{full['admin'].id}/role", params={
-            "platform_role_id": str(full["admin"].platform_role_id),
+            "rol_plataforma_id": str(full["admin"].rol_plataforma_id),
         }, headers=h)
         assert _ok(resp.status_code)
 
@@ -415,7 +415,7 @@ class TestAllOtherEndpoints:
     def test_change_user_role(self, full):
         c, h = full["c"], full["h"]
         resp = c.patch(f"/api/admin/users/{full['admin'].id}/role", params={
-            "platform_role_id": str(full["admin"].platform_role_id),
+            "rol_plataforma_id": str(full["admin"].rol_plataforma_id),
         }, headers=h)
         assert _ok(resp.status_code)
 

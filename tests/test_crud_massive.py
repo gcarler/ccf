@@ -7,12 +7,12 @@ import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
-from tests.conftest import seed_admin_v2
+from tests.conftest import seed_admin
 
 
 @pytest.fixture
 def admin_data(db_session):
-    user, persona, sede = seed_admin_v2(db_session)
+    user, persona, sede = seed_admin(db_session)
     return user, persona, sede
 
 
@@ -395,15 +395,6 @@ class TestKernelCRUD:
         result = get_kernel_profile(db_session, str(persona.id))
         assert result is not None
 
-    def test_assign_platform_role(self, db_session, admin_data):
-        from backend.crud.kernel import assign_platform_role
-        _, persona, sede = admin_data
-        try:
-            result = assign_platform_role(db_session, str(persona.id), "LECTOR")
-            assert isinstance(result, bool)
-        except Exception:
-            pass  # May need specific role setup
-
     def test_get_church_role_history(self, db_session, admin_data):
         from backend.crud.kernel import get_church_role_history
         _, persona, _ = admin_data
@@ -564,13 +555,11 @@ class TestOpsCRUD:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# CONSOLIDATION CRUD (crud/consolidation.py)
+# CONSOLIDATION CRUD — consolidated into backend.crud.crm (CasoCRM avec UUID)
+# and backend.api.crm.pastoral. The old backend.crud.consolidation module was
+# retired; coverage for the consolidation flows lives in
+# tests/test_pastoral_coverage.py and tests/test_pastoral_deep.py.
 # ═══════════════════════════════════════════════════════════════════════════════
-
-class TestConsolidationCRUD:
-    def test_import(self):
-        from backend.crud import consolidation
-        assert consolidation is not None
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

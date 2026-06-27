@@ -2,8 +2,8 @@ from backend import crud, models, schemas
 
 
 def seed_user_and_persona(db_session):
-    from tests.conftest import seed_admin_v2
-    user, persona, sede = seed_admin_v2(db_session, email="cms-editor@example.com")
+    from tests.conftest import seed_admin
+    user, persona, sede = seed_admin(db_session, email="cms-editor@example.com")
     return user, persona
 
 

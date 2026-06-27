@@ -5,7 +5,7 @@ These are the code paths that existing tests miss.
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(s):
@@ -16,7 +16,7 @@ def _ok(s):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
         EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
         Asistencia, ParticipanteGrupo, CategoriaEstrategia,
@@ -83,7 +83,7 @@ def full(client, db_session):
     db_session.commit()
 
     for p in personas[:3]:
-        db_session.add(models.CrmTask(title=f"Task {p.first_name}", persona_id=p.id, status="pending"))
+        db_session.add(models.TareaCRM(title=f"Task {p.first_name}", persona_id=p.id, status="pending"))
         db_session.add(models.CounselingTicket(persona_id=p.id, subject="H"))
         db_session.add(models.PrayerRequest(requester_name=p.first_name, request_text="P", sede_id=sede.id))
     db_session.commit()
@@ -242,7 +242,7 @@ class TestAdminErrorPaths:
 
     def test_change_role_invalid_user(self, full):
         c, h = full["c"], full["h"]
-        resp = c.patch(f"/api/admin/users/{uuid.uuid4()}/role", params={"platform_role_id": str(uuid.uuid4())}, headers=h)
+        resp = c.patch(f"/api/admin/users/{uuid.uuid4()}/role", params={"role_id": str(uuid.uuid4())}, headers=h)
         assert _ok(resp.status_code)
 
     def test_auth_role_duplicate(self, full):

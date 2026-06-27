@@ -2,18 +2,18 @@
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 
 
 @pytest.fixture
 def admin_data(db_session):
-    user, persona, sede = seed_admin_v2(db_session)
+    user, persona, sede = seed_admin(db_session)
     return user, persona, sede
 
 
 @pytest.fixture
 def client_auth(client, db_session, admin_data):
-    headers = auth_headers_v2(client)
+    headers = auth_headers(client)
     return client, headers, admin_data
 
 

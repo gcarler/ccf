@@ -1,18 +1,18 @@
 """Massive CRUD coverage for ALL modules — direct function testing.
 
-Covers: cms, academy, projects, crm_extended, crm_core, consolidation,
-evangelism, agenda_core, academy_core, ops, agents, crm_resources.
+Covers: cms, academy, projects, crm_extended, evangelism, agenda, ops,
+agents and crm_resources.
 """
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
-from tests.conftest import seed_admin_v2
+from tests.conftest import seed_admin
 
 
 @pytest.fixture
 def admin_data(db_session):
-    user, persona, sede = seed_admin_v2(db_session)
+    user, persona, sede = seed_admin(db_session)
     return user, persona, sede
 
 
@@ -279,8 +279,8 @@ class TestAcademyCourses:
         assert course is not None
 
     def test_get_courses(self, db_session):
-        from backend.crud.academy import get_courses
-        result = get_courses(db_session)
+        from backend.crud.academy import list_courses
+        result = list_courses(db_session)
         assert isinstance(result, list)
 
     def test_get_course(self, db_session):
@@ -296,44 +296,44 @@ class TestAcademyCourses:
         assert updated.title == "Updated"
 
     def test_delete_course(self, db_session):
-        from backend.crud.academy import create_course, delete_course
+        from backend.crud.academy import archive_course, create_course
         course = create_course(db_session, {"title": "DC", "code": "DC1", "modality": "virtual"})
-        result = delete_course(db_session, course.id)
+        result = archive_course(db_session, course.id)
         assert result is True
 
     def test_get_lessons(self, db_session):
-        from backend.crud.academy import get_lessons_by_course
-        result = get_lessons_by_course(db_session, 99999)
+        from backend.crud.academy import list_lessons
+        result = list_lessons(db_session, uuid.uuid4())
         assert isinstance(result, list)
 
     def test_create_lesson(self, db_session):
         from backend.crud.academy import create_course, create_lesson
         course = create_course(db_session, {"title": "CL", "code": "CL1", "modality": "virtual"})
-        lesson = create_lesson(db_session, {"course_id": course.id, "title": "Lesson 1", "order_index": 1, "content": "Lesson content"})
+        lesson = create_lesson(db_session, course.id, {"title": "Lesson 1", "order_index": 1, "content": "Lesson content"})
         assert lesson is not None
 
     def test_get_assessments(self, db_session):
-        from backend.crud.academy import get_assessments_by_course
-        result = get_assessments_by_course(db_session, 99999)
+        from backend.crud.academy import list_assessments
+        result = list_assessments(db_session, uuid.uuid4())
         assert isinstance(result, list)
 
 
 class TestAcademyEnrollments:
     def test_get_enrollments(self, db_session):
-        from backend.crud.academy import get_enrollments_by_user
-        result = get_enrollments_by_user(db_session, 99999)
+        from backend.crud.academy import list_enrollments
+        result = list_enrollments(db_session, persona_id=uuid.uuid4())
         assert isinstance(result, list)
 
     def test_get_certificates(self, db_session):
-        from backend.crud.academy import get_certificates_by_user
-        result = get_certificates_by_user(db_session, 99999)
+        from backend.crud.academy import list_certificates
+        result = list_certificates(db_session, uuid.uuid4())
         assert isinstance(result, list)
 
 
 class TestAcademyForum:
     def test_get_forum_threads(self, db_session):
-        from backend.crud.academy import get_forum_threads
-        result = get_forum_threads(db_session)
+        from backend.crud.academy import list_forum_threads
+        result = list_forum_threads(db_session)
         assert isinstance(result, list)
 
 
@@ -474,55 +474,8 @@ class TestCRMExtended:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# CRM CORE (crud/crm_core.py) — 211 stmts
+# CRM pipeline and case flows are covered by the dedicated CRM test suites.
 # ═══════════════════════════════════════════════════════════════════════════════
-
-class TestCRMCore:
-    def test_list_pipelines(self, db_session):
-        from backend.crud.crm_core import list_pipelines
-        result = list_pipelines(db_session)
-        assert isinstance(result, list)
-
-    def test_create_pipeline(self, db_session):
-        from backend.crud.crm_core import create_pipeline
-        from backend.schemas.crm_core import PipelineCRMCreate
-        p = create_pipeline(db_session, PipelineCRMCreate(
-            nombre=f"Pipe {uuid.uuid4().hex[:6]}",
-            sede_id=str(uuid.uuid4()),
-            tipo="NUEVOS_VISITANTES",
-        ))
-        assert p is not None
-
-    def test_list_casos(self, db_session):
-        from backend.crud.crm_core import list_casos
-        result = list_casos(db_session)
-        assert isinstance(result, list)
-
-    def test_list_plantillas(self, db_session):
-        from backend.crud.crm_core import list_plantillas
-        result = list_plantillas(db_session)
-        assert isinstance(result, list)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# CONSOLIDATION (crud/consolidation.py) — 104 stmts
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestConsolidation:
-    def test_get_assignments(self, db_session):
-        from backend.crud.consolidation import get_consolidation_assignments
-        result = get_consolidation_assignments(db_session)
-        assert isinstance(result, list)
-
-    def test_get_interactions(self, db_session):
-        from backend.crud.consolidation import get_consolidation_interactions
-        result = get_consolidation_interactions(db_session)
-        assert isinstance(result, list)
-
-    def test_get_tasks(self, db_session):
-        from backend.crud.consolidation import get_consolidation_tasks
-        result = get_consolidation_tasks(db_session)
-        assert isinstance(result, list)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -566,23 +519,23 @@ class TestEvangelismCRUD:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# AGENDA CORE (crud/agenda_core.py) — 121 stmts
+# AGENDA CANONICAL CRUD
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestAgendaCore:
+class TestAgenda:
     def test_import(self):
-        from backend.crud import agenda_core
-        assert agenda_core is not None
+        from backend.crud import agenda
+        assert agenda is not None
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ACADEMY CORE (crud/academy_core.py) — 105 stmts
+# ACADEMY CANONICAL CRUD
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestAcademyCore:
+class TestAcademyCrudImport:
     def test_import(self):
-        from backend.crud import academy_core
-        assert academy_core is not None
+        from backend.crud import academy
+        assert academy is not None
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

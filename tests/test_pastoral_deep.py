@@ -7,18 +7,18 @@ import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 
 
 @pytest.fixture
 def admin_data(db_session):
-    user, persona, sede = seed_admin_v2(db_session)
+    user, persona, sede = seed_admin(db_session)
     return user, persona, sede
 
 
 @pytest.fixture
 def client_auth(client, db_session, admin_data):
-    headers = auth_headers_v2(client)
+    headers = auth_headers(client)
     return client, headers, admin_data
 
 
@@ -49,7 +49,7 @@ class TestPastoralHelpers:
 
     def test_stage_to_estado(self):
         from backend.api.crm.pastoral import _stage_to_estado
-        from backend.models_crm_core import EstadoCasoEnum
+        from backend.models_crm_pipeline import EstadoCasoEnum
         assert _stage_to_estado("consolidated") == EstadoCasoEnum.RESUELTO_EXITO
         assert _stage_to_estado("lost") == EstadoCasoEnum.CERRADO_PERDIDO
         assert _stage_to_estado("call") == EstadoCasoEnum.ESPERANDO_RESPUESTA

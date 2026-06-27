@@ -7,7 +7,7 @@ Tests the full CRUD cycle: Create → Read → Update → Delete for each featur
 Validates HTTP status codes, JSON contracts, and database state.
 """
 import pytest
-from tests.conftest import seed_admin_v2, auth_headers_v2
+from tests.conftest import seed_admin, auth_headers
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -23,8 +23,8 @@ def admin_setup():
 @pytest.fixture(scope="function")
 def authed_client(client, db_session):
     """Client with authenticated admin user."""
-    user, persona, sede = seed_admin_v2(db_session)
-    headers = auth_headers_v2(client)
+    user, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client)
     return client, headers, sede
 
 

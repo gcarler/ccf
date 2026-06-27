@@ -5,7 +5,7 @@ evangelism, evangelism_grupos, evangelism_events endpoints.
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 @pytest.fixture
@@ -508,27 +508,27 @@ class TestCRMCoreDeep:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestAgendaDeep:
-    def test_agenda_core_events(self, ac):
+    def test_agenda_events(self, ac):
         c, h, s, p, admin, persona = ac
-        c.get("/api/agenda-core/events", headers=h)
+        c.get("/api/agenda/events", headers=h)
 
-    def test_agenda_core_resources(self, ac):
+    def test_agenda_resources(self, ac):
         c, h, s, p, admin, persona = ac
-        c.get("/api/agenda-core/resources", headers=h)
+        c.get("/api/agenda/resources", headers=h)
 
-    def test_agenda_core_create_resource(self, ac):
+    def test_agenda_create_resource(self, ac):
         c, h, s, p, admin, persona = ac
-        c.post("/api/agenda-core/resources", json={
+        c.post("/api/agenda/resources", json={
             "nombre": "Test Resource", "tipo": "salon",
         }, headers=h)
 
-    def test_agenda_core_reservations(self, ac):
+    def test_agenda_reservations(self, ac):
         c, h, s, p, admin, persona = ac
-        c.get("/api/agenda-core/reservations", headers=h)
+        c.get("/api/agenda/reservations", headers=h)
 
-    def test_agenda_core_participants(self, ac):
+    def test_agenda_participants(self, ac):
         c, h, s, p, admin, persona = ac
-        c.get("/api/agenda-core/participants", headers=h)
+        c.get("/api/agenda/participants", headers=h)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

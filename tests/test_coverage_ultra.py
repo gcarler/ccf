@@ -8,7 +8,7 @@ crud/crm.py (421 lines), crud/cms.py (373 lines), crud/evangelism.py (179 lines)
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def test_personas(db, admin_info):
 @pytest.fixture
 def test_pipeline(db, admin_info):
     admin, admin_persona, sede = admin_info
-    from backend.models_crm_core import PipelineCRM, EtapaPipeline, TipoPipelineEnum
+    from backend.models_crm_pipeline import PipelineCRM, EtapaPipeline, TipoPipelineEnum
     pipe = PipelineCRM(sede_id=sede.id, nombre="Test Pipeline", tipo=TipoPipelineEnum.NUEVOS_VISITANTES)
     db.add(pipe); db.flush()
     e1 = EtapaPipeline(pipeline_id=pipe.id, nombre="Contacto", orden=1)
@@ -61,7 +61,7 @@ def test_pipeline(db, admin_info):
 def test_cases(db, admin_info, test_personas, test_pipeline):
     admin, admin_persona, sede = admin_info
     pipe, e1, e2, e3 = test_pipeline
-    from backend.models_crm_core import CasoCRM, CanalOrigenEnum, EstadoCasoEnum, PrioridadCasoEnum
+    from backend.models_crm_pipeline import CasoCRM, CanalOrigenEnum, EstadoCasoEnum, PrioridadCasoEnum
     cs = []
     for i, p in enumerate(test_personas[:5]):
         c = CasoCRM(
@@ -820,21 +820,15 @@ class TestServicesExecution:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestAgendaCRUDExecution:
-    def test_agenda_core_events(self, db):
-        from backend.crud import agenda_core
-        try:
-            events = agenda_core.get_events(db)
-            assert isinstance(events, list)
-        except Exception:
-            pass
+    def test_agenda_import(self, db):
+        from backend.crud import agenda
 
-    def test_agenda_core_resources(self, db):
-        from backend.crud import agenda_core
-        try:
-            resources = agenda_core.get_resources(db)
-            assert isinstance(resources, list)
-        except Exception:
-            pass
+        assert agenda is not None
+
+    def test_agenda_resource_api_exists(self, db):
+        from backend.crud.agenda import list_resources
+
+        assert callable(list_resources)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

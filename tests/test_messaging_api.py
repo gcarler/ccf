@@ -1,8 +1,8 @@
 import uuid
 
 from backend import models
-from tests.conftest import seed_admin_v2 as _seed_admin
-from tests.conftest import auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
+from tests.conftest import auth_headers as _auth_headers
 
 
 def _seed_sede(db_session):

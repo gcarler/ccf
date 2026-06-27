@@ -32,7 +32,6 @@ ALLOWED_UNFILTERED = {
     "evangelism_shared.py", # Helper functions scoped by event/group
     "finance.py",           # Fund is catalog, Donation scoped by sede_id
     "projects.py",          # Scoped by project/user
-    "academy_core.py",       # Ya tiene sede_id en sus queries
     "auth_v3.py",
     "cms_v2.py",           # Scoped por site_id
     "chat.py",             # Scoped por user_id / conversation_id

@@ -10,7 +10,7 @@ process them to execute code paths.
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin_v2 as _seed_admin, auth_headers_v2 as _auth_headers
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
 def _ok(status):
@@ -22,7 +22,7 @@ def full(client, db_session):
     """Create comprehensive test data for evangelism.py."""
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_core import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
         EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
         Asistencia, ParticipanteGrupo,
@@ -95,7 +95,7 @@ def full(client, db_session):
 
     # Create CrmTask
     for p in personas[:3]:
-        db_session.add(models.CrmTask(title=f"Task {p.first_name}", persona_id=p.id, status="pending"))
+        db_session.add(models.TareaCRM(title=f"Task {p.first_name}", persona_id=p.id, status="pending"))
 
     # Create CounselingTicket
     for p in personas[:3]:
