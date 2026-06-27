@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [router]);
 
     const logout = useCallback(() => {
-        apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
+        apiFetch('/v3/auth/logout', { method: 'POST' }).catch(() => {});
         if (typeof window !== 'undefined') {
             sessionStorage.removeItem('ccf_token');
             sessionStorage.removeItem('ccf_refresh_token');
@@ -45,34 +45,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const timer = setTimeout(() => { console.warn('[AUTH] timeout'); setLoading(false); }, 6000);
         try {
-            // Try canonical auth first, fallback to v1.
-            let data: any = null;
-            let v3Data: any = null;
-            try {
-                v3Data = await apiFetch<any>('/v3/auth/me', { cache: 'no-store', token: t });
-            } catch { /* fallback to v1 */ }
-            
-            if (v3Data && v3Data.auth_user_id) {
-                data = {
-                    id: v3Data.auth_user_id,
-                    username: v3Data.username || v3Data.email?.split('@')[0],
-                    email: v3Data.email,
-                    role: (v3Data.platform_role || 'LECTOR').toLowerCase(),
-                    is_active: true,
-                    is_email_verified: v3Data.is_verified || false,
-                    xp: 0,
-                    created_at: new Date().toISOString(),
-                    permissions: v3Data.permissions || {},
-                };
-            } else {
-                data = await apiFetch<any>('/auth/me', { cache: 'no-store', token: t });
-                if (!data.permissions) {
-                    try {
-                        const p = await apiFetch<any>('/auth/me/permissions', { cache: 'no-store', token: t });
-                        data.permissions = p.permissions || {};
-                    } catch { data.permissions = {}; }
-                }
-            }
+            const v3Data = await apiFetch<any>('/v3/auth/me', { cache: 'no-store', token: t });
+            const data = {
+                id: v3Data.auth_user_id,
+                username: v3Data.username || v3Data.email?.split('@')[0],
+                email: v3Data.email,
+                role: (v3Data.platform_role || 'LECTOR').toLowerCase(),
+                is_active: true,
+                is_email_verified: v3Data.is_verified || false,
+                xp: 0,
+                created_at: new Date().toISOString(),
+                permissions: v3Data.permissions || {},
+            };
             setUser(data);
             setToken(t);
             if (tokenValue && typeof window !== 'undefined') sessionStorage.setItem('ccf_token', tokenValue);
@@ -137,8 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!user?.permissions) return false;
         if (user.role === 'admin' || user.role === 'administrador') return true;
         const val = user.permissions[perm];
-        // Soporta formato v1 ("allow") y formato v3 (array como ["admin","read"])
-        return val === 'allow' || (Array.isArray(val) && val.length > 0);
+        return val === 'allow';
     };
 
     return (

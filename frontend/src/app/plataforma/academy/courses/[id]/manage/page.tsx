@@ -24,10 +24,10 @@ import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Student {
-    id: number;
+    id: string;
     username: string;
     email: string;
-    enrollment_id: number;
+    enrollment_id: string;
     progress: number;
     status: string;
     attendance_count: number;
@@ -35,7 +35,7 @@ interface Student {
 }
 
 interface CourseDetails {
-    id: number;
+    id: string;
     title: string;
     code: string;
     modality: string;

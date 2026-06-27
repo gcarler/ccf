@@ -32,22 +32,12 @@ async function _refreshSession(): Promise<string | null> {
       const nativeFetch: typeof fetch =
         (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
       
-      // Try v3 refresh first (UUID-based), fallback to v1
-      let res = await nativeFetch(apiUrl("/v3/auth/refresh"), {
+      const res = await nativeFetch(apiUrl("/v3/auth/refresh"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh_token: refreshToken }),
       });
-      
-      // Fallback to v1 if v3 returns 404
-      if (res.status === 404) {
-        res = await nativeFetch(apiUrl("/auth/refresh"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refresh_token: refreshToken }),
-        });
-      }
-      
+
       if (!res.ok) return null;
       const data = await res.json();
       if (data.access_token) {
@@ -160,7 +150,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-      // Silently treat timeouts as a network error â€” not a crash
+      // Silently treat timeouts as a network error, not a crash.
       throw new ApiError('Request timed out', 0, err);
     }
     console.error(`[API_NETWORK_ERROR] ${method} ${path}:`, err.message);
@@ -175,9 +165,9 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _
 
   if (response.status === 401) {
     const isAuthPath =
-      path.includes("/auth/login") ||
-      path.includes("/auth/refresh") ||
-      path.includes("/auth/logout");
+      path.includes("/v3/auth/login") ||
+      path.includes("/v3/auth/refresh") ||
+      path.includes("/v3/auth/logout");
 
     // Auto-refresh: if this is not an auth endpoint and not already a retry, try to renew the session.
     if (!isAuthPath && !_isRetry && typeof window !== "undefined") {

@@ -30,7 +30,7 @@ import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Lesson {
-    id: number;
+    id: string;
     title: string;
     content: string;
     content_type?: string;
@@ -41,7 +41,7 @@ interface Lesson {
 }
 
 interface Course {
-    id: number;
+    id: string;
     title: string;
     description: string;
     lessons: Lesson[];

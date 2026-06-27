@@ -25,7 +25,7 @@ const CONTENT_TYPE_META: Record<string, { label: string; icon: any; color: strin
 };
 
 interface Lesson {
-    id: number;
+    id: string;
     title: string;
     content?: string;
     content_type: string;
@@ -50,7 +50,7 @@ export default function LessonsPage() {
     const [editing, setEditing] = useState<Lesson | null>(null);
     const [form, setForm] = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     const load = useCallback(async () => {
         if (!token || !courseId) return;
@@ -110,7 +110,7 @@ export default function LessonsPage() {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!token) return;
         try {
             await apiFetch(`/academy/admin/lessons/${id}`, { method: 'DELETE', token });

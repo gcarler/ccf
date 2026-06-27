@@ -5,12 +5,12 @@ import { apiUrl } from "../lib/api";
 import { apiFetch } from "@/lib/http";
 
 interface Enrollment {
-  id: number;
+  id: string;
   status: string;
   progress_percent: number;
   approved: boolean;
   course: {
-    id: number;
+    id: string;
     title: string;
     modality: string;
     certificate_type?: string | null;
@@ -18,22 +18,22 @@ interface Enrollment {
 }
 
 interface Assessment {
-  id: number;
+  id: string;
   title: string;
   passing_score: number;
   max_score: number;
 }
 
 interface Certificate {
-  id: number;
-  enrollment_id: number;
+  id: string;
+  enrollment_id: string;
   certificate_code: string;
   certificate_type?: string | null;
   issued_at: string;
 }
 
 interface MyEnrollmentsProps {
-  userId: number;
+  userId: string;
   token: string;
   initialEnrollments?: Enrollment[];
 }
@@ -46,7 +46,7 @@ import AssessmentDrawer from "./academy/AssessmentDrawer";
 import EmptyState from "@/components/ui/EmptyState";
 
 interface Lesson {
-  id: number;
+  id: string;
   title: string;
   content: string;
   order_index: number;
@@ -57,10 +57,10 @@ interface Lesson {
 export default function MyEnrollments({ userId, token, initialEnrollments }: MyEnrollmentsProps) {
   const { addToast } = useToast();
   const [enrollments, setEnrollments] = useState<Enrollment[]>(initialEnrollments ?? []);
-  const [assessmentsByCourse, setAssessmentsByCourse] = useState<Record<number, Assessment[]>>({});
-  const [certificatesByEnrollment, setCertificatesByEnrollment] = useState<Record<number, Certificate>>({});
+  const [assessmentsByCourse, setAssessmentsByCourse] = useState<Record<string, Assessment[]>>({});
+  const [certificatesByEnrollment, setCertificatesByEnrollment] = useState<Record<string, Certificate>>({});
   const [loading, setLoading] = useState(!initialEnrollments);
-  const [activeAssessment, setActiveAssessment] = useState<{ id: number, enrollmentId: number } | null>(null);
+  const [activeAssessment, setActiveAssessment] = useState<{ id: string, enrollmentId: string } | null>(null);
 
   // Mesh WebSocket Integration
   const { lastEvent } = useMeshSocket(userId ? String(userId) : "");
@@ -118,7 +118,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
           token,
           cache: "no-store",
         });
-        const mapped: Record<number, Certificate> = {};
+        const mapped: Record<string, Certificate> = {};
         (Array.isArray(certificates) ? certificates : []).forEach((cert) => {
           mapped[cert.enrollment_id] = cert;
         });

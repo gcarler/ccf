@@ -21,8 +21,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 interface Enrollment {
-    id: number;
-    course: { id: number };
+    id: string;
+    course: { id: string };
 }
 
 export default function AssessmentPage() {
@@ -53,7 +53,7 @@ export default function AssessmentPage() {
         fetchAssessment();
     }, [id, token]);
 
-    const handleAnswer = (questionId: number, update: any) => {
+    const handleAnswer = (questionId: string, update: any) => {
         setAnswers(prev => {
             const filtered = prev.filter(a => a.question_id !== questionId);
             return [...filtered, { question_id: questionId, ...update }];

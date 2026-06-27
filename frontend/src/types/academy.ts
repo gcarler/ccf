@@ -1,5 +1,5 @@
 export interface CourseSummary {
-  id: number;
+  id: string;
   code: string;
   title: string;
   description?: string | null;
@@ -11,7 +11,7 @@ export interface CourseSummary {
 }
 
 export interface EnrollmentRecord {
-  id: number;
+  id: string;
   status: string;
   progress_percent: number;
   final_grade?: number | null;
@@ -23,8 +23,8 @@ export interface EnrollmentRecord {
 }
 
 export interface LessonRecord {
-  id: number;
-  course_id: number;
+  id: string;
+  course_id: string;
   title: string;
   content: string;
   order_index: number;
@@ -32,8 +32,8 @@ export interface LessonRecord {
 }
 
 export interface CertificateRecord {
-  id: number;
-  enrollment_id: number;
+  id: string;
+  enrollment_id: string;
   certificate_code: string;
   certificate_type?: string | null;
   course_title?: string | null;
@@ -41,9 +41,9 @@ export interface CertificateRecord {
 }
 
 export interface AssignmentSubmissionReview {
-  id: number;
-  enrollment_id: number;
-  lesson_id: number;
+  id: string;
+  enrollment_id: string;
+  lesson_id: string;
   student_name: string;
   lesson_title: string;
   file_url: string;

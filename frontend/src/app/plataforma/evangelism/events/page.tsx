@@ -1317,13 +1317,13 @@ export default function EventsPage() {
 
  {showScanner && (
  <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-black/40 rounded-lg space-y-4">
- <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-center">Ingresa el token del carnet (CCF-MBR-ID-TOKEN)</p>
+ <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-center">Ingresa el token del carnet (CCF-PER-ID-TOKEN)</p>
  <div className="flex gap-2">
  <input
  type="text"
  value={scannerToken}
  onChange={e => setScannerToken(e.target.value)}
- placeholder="CCF-MBR-1-XXXXXX"
+ placeholder="CCF-PER-ID-XXXXXX"
  className="flex-1 bg-[hsl(var(--bg-primary))] border border-white/10 rounded-md px-4 py-1.5 text-sm text-white focus:outline-none focus:border-[hsl(var(--primary))]"
  onKeyDown={e => e.key === 'Enter' && handleScanToken()}
  />

@@ -18,7 +18,7 @@ export default function StudentCertificates() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeCertificate, setActiveCertificate] = useState<CertificateRecord | null>(null);
-    const [sharingId, setSharingId] = useState<number | null>(null);
+    const [sharingId, setSharingId] = useState<string | null>(null);
     const [alertsEnabled, setAlertsEnabled] = useState(false);
 
     useEffect(() => {
@@ -195,4 +195,3 @@ export default function StudentCertificates() {
         </div>
     );
 }
-

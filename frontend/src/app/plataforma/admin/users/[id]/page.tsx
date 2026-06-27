@@ -39,7 +39,7 @@ export default function UserDetailPage() {
     
     // Roles
     const [roles, setRoles] = useState<any[]>([]);
-    const [editRoleId, setEditRoleId] = useState<number | null>(null);
+    const [editRoleId, setEditRoleId] = useState<string | null>(null);
     const [isEditingRole, setIsEditingRole] = useState(false);
 
     useEffect(() => {
@@ -48,15 +48,12 @@ export default function UserDetailPage() {
                 try {
                     const [userData, rolesData] = await Promise.all([
                         apiFetch<any>(`/admin/users/${id}`, { token }),
-                        apiFetch<any[]>('/kernel/admin/platform-role-definitions', { token })
+                        apiFetch<any[]>('/admin/roles', { token })
                     ]);
                     setUser(userData);
                     setEditEmail(userData.email);
-                    setRoles((rolesData || []).map((role) => ({
-                        platform_role_id: role.id,
-                        name: role.role || role.name,
-                    })));
-                    setEditRoleId(userData.platform_role_id || null);
+                    setRoles(rolesData || []);
+                    setEditRoleId(userData.rol_plataforma_id || null);
                 } catch (err) {
                     toast.error('Error al cargar perfil de usuario');
                 } finally {
@@ -114,7 +111,7 @@ export default function UserDetailPage() {
             const updated = await apiFetch<any>(`/admin/users/${id}`, {
                 method: 'PATCH',
                 token,
-                body: { platform_role_id: editRoleId }
+                body: { rol_plataforma_id: editRoleId }
             });
             setUser(updated);
             toast.success('Rol actualizado');
@@ -217,17 +214,17 @@ export default function UserDetailPage() {
                                             {isEditingRole ? (
                                                 <select 
                                                     value={editRoleId || ''} 
-                                                    onChange={e => setEditRoleId(e.target.value ? parseInt(e.target.value) : null)}
+                                                    onChange={e => setEditRoleId(e.target.value || null)}
                                                     className="bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-w-[200px]"
                                                 >
                                                     <option value="">Sin rol asignado</option>
                                                     {roles.map(r => (
-                                                        <option key={r.platform_role_id} value={r.platform_role_id}>{r.name}</option>
+                                                        <option key={r.id} value={r.id}>{r.name}</option>
                                                     ))}
                                                 </select>
                                             ) : (
                                                 <span className="text-sm font-bold text-slate-800 dark:text-white">
-                                                    {user.platform_role_id ? roles.find(r => r.platform_role_id === user.platform_role_id)?.name : (user.role_name || user.role || 'Sin rol')}
+                                                    {user.rol_plataforma_id ? roles.find(r => r.id === user.rol_plataforma_id)?.name : (user.role_name || user.role || 'Sin rol')}
                                                 </span>
                                             )}
                                         </div>

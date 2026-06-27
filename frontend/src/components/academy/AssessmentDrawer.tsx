@@ -17,12 +17,12 @@ Trophy
 import { useEffect,useState } from 'react';
 
 interface Option {
-    id: number;
+    id: string;
     option_text: string;
 }
 
 interface Question {
-    id: number;
+    id: string;
     question_text: string;
     question_type: string;
     points: number;
@@ -30,15 +30,15 @@ interface Question {
 }
 
 interface Assessment {
-    id: number;
+    id: string;
     title: string;
     min_score: number;
     questions: Question[];
 }
 
 interface AssessmentDrawerProps {
-    assessmentId: number;
-    enrollmentId: number;
+    assessmentId: string;
+    enrollmentId: string;
     token: string;
     onClose: () => void;
     onSuccess: (score: number) => void;
@@ -49,7 +49,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [currentStep, setCurrentStep] = useState(0); // 0: Welcome, 1..N: Questions, N+1: Result
-    const [answers, setAnswers] = useState<Record<number, number>>({});
+    const [answers, setAnswers] = useState<Record<string, string>>({});
     const [result, setResult] = useState<{ passed: boolean, score: number } | null>(null);
 
     useEffect(() => {
@@ -66,7 +66,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
         fetchAssessment();
     }, [assessmentId, token]);
 
-    const handleSelectOption = (questionId: number, optionId: number) => {
+    const handleSelectOption = (questionId: string, optionId: string) => {
         setAnswers(prev => ({ ...prev, [questionId]: optionId }));
     };
 
@@ -74,7 +74,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
         setSubmitting(true);
         try {
             const formattedAnswers = Object.entries(answers).map(([qId, oId]) => ({
-                question_id: parseInt(qId),
+                question_id: qId,
                 selected_option_id: oId
             }));
 

@@ -25,7 +25,7 @@ import clsx from 'clsx';
 import { motion } from 'framer-motion';
 
 interface CourseProgress {
-    id: number;
+    id: string;
     title: string;
     progress_percent: number;
     status: string;

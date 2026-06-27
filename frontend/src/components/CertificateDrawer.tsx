@@ -15,15 +15,15 @@ import {
 import { RightPanel } from '@/components/ui/RightPanel';
 
 interface Certificate {
-    id: number;
-    enrollment_id: number;
+    id: string;
+    enrollment_id: string;
     certificate_code: string;
     certificate_type?: string | null;
     issued_at: string;
 }
 
 interface Enrollment {
-    id: number;
+    id: string;
     course: {
         title: string;
         modality: string;

@@ -38,7 +38,7 @@ const CHURCH_ROLES = [
 
 const MINISTRIES = ['APOSTOL', 'PROFETA', 'EVANGELISTA', 'PASTOR', 'MAESTRO'];
 
-const PLATFORM_ROLES = ['admin', 'pastor', 'coordinador', 'docente', 'estudiante', 'aspirante'];
+const PLATFORM_ROLES = ['ADMINISTRADOR', 'GESTOR', 'EDITOR', 'LECTOR', 'MIEMBRO'];
 
 interface UserSummary {
     id: string;
@@ -76,13 +76,13 @@ export default function IdentityManagementPage() {
     const [churchRoleReason, setChurchRoleReason] = useState('');
     const [ministries, setMinistries] = useState<string[]>([]);
     const [primaryMinistry, setPrimaryMinistry] = useState('');
-    const [platformRoles, setPlatformRoles] = useState<string[]>([]);
+    const [platformRole, setPlatformRole] = useState('MIEMBRO');
 
     // New user form
     const [newUsername, setNewUsername] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [newPassword, setNewPassword] = useState('');
-    const [newRole, setNewRole] = useState('estudiante');
+    const [newRole, setNewRole] = useState('MIEMBRO');
 
     const fetchUsers = useCallback(async () => {
         setLoading(true);
@@ -107,7 +107,7 @@ export default function IdentityManagementPage() {
             setChurchRole(data.church_role || '');
             setMinistries((data.ministries || []).map((m: any) => m.ministry));
             setPrimaryMinistry((data.ministries || []).find((m: any) => m.is_primary)?.ministry || '');
-            setPlatformRoles((data.platform_roles || []).map((r: any) => r.role));
+            setPlatformRole(data.platform_roles?.[0]?.role || 'MIEMBRO');
         } catch {
             addToast('Error al cargar perfil kernel', 'error');
         } finally {
@@ -157,19 +157,12 @@ export default function IdentityManagementPage() {
                 await apiFetch(`/kernel/ministries/${selectedUser.id}/${primaryMinistry}/primary`, { method: 'PUT', token });
             }
 
-            // Update platform roles
-            const currentRoles = (profile?.platform_roles || []).map((r: any) => r.role);
-            const rolesToAdd = platformRoles.filter(r => !currentRoles.includes(r));
-            const rolesToRemove = currentRoles.filter(r => !platformRoles.includes(r));
-
-            for (const role of rolesToAdd) {
-                await apiFetch(`/kernel/platform-roles/${selectedUser.id}`, {
-                    method: 'POST', token,
-                    body: { platform_role: role },
+            const currentRole = profile?.platform_roles?.[0]?.role;
+            if (platformRole !== currentRole) {
+                await apiFetch(`/admin/users/${selectedUser.id}`, {
+                    method: 'PATCH', token,
+                    body: { role: platformRole },
                 });
-            }
-            for (const role of rolesToRemove) {
-                await apiFetch(`/kernel/platform-roles/${selectedUser.id}/${role}`, { method: 'DELETE', token });
             }
 
             addToast('Perfil de identidad actualizado', 'success');
@@ -198,7 +191,7 @@ export default function IdentityManagementPage() {
             setNewUsername('');
             setNewEmail('');
             setNewPassword('');
-            setNewRole('estudiante');
+            setNewRole('MIEMBRO');
             fetchUsers();
         } catch (e: any) {
             addToast('Error al crear: ' + (e.message || 'Intente de nuevo'), 'error');
@@ -230,10 +223,6 @@ export default function IdentityManagementPage() {
 
     const toggleMinistry = (ministry: string) => {
         setMinistries(prev => prev.includes(ministry) ? prev.filter(m => m !== ministry) : [...prev, ministry]);
-    };
-
-    const togglePlatformRole = (role: string) => {
-        setPlatformRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
     };
 
     const filteredUsers = users.filter(u =>
@@ -270,7 +259,7 @@ export default function IdentityManagementPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <StatCard icon={UserCheck} label="Usuarios Activos" value={users.filter(u => u.is_active).length} color="text-emerald-500" bg="bg-emerald-50 dark:bg-emerald-500/10" />
                         <StatCard icon={AlertTriangle} label="Usuarios Inactivos" value={users.filter(u => !u.is_active).length} color="text-slate-400" bg="bg-slate-50 dark:bg-white/5" />
-                        <StatCard icon={Crown} label="Con Rol de Iglesia" value={users.filter(u => u.role !== 'estudiante').length} color="text-amber-500" bg="bg-amber-50 dark:bg-amber-500/10" />
+                        <StatCard icon={Crown} label="Roles operativos" value={users.filter(u => u.role !== 'MIEMBRO').length} color="text-amber-500" bg="bg-amber-50 dark:bg-amber-500/10" />
                         <StatCard icon={Users} label="Total Usuarios" value={users.length} color="text-[hsl(var(--primary))]" bg="bg-blue-50 dark:bg-blue-500/10" />
                     </div>
 
@@ -493,16 +482,16 @@ export default function IdentityManagementPage() {
                                 {PLATFORM_ROLES.map(r => (
                                     <button
                                         key={r}
-                                        onClick={() => togglePlatformRole(r)}
+                                        onClick={() => setPlatformRole(r)}
                                         className={clsx(
                                             "flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all",
-                                            platformRoles.includes(r)
+                                            platformRole === r
                                                 ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
                                                 : "border-slate-100 dark:border-white/5 hover:border-slate-300"
                                         )}
                                     >
                                         <span className="text-[10px] font-semibold uppercase">{r}</span>
-                                        {platformRoles.includes(r) && <UserCheck size={12} className="text-[hsl(var(--primary))] ml-auto" />}
+                                        {platformRole === r && <UserCheck size={12} className="text-[hsl(var(--primary))] ml-auto" />}
                                     </button>
                                 ))}
                             </div>

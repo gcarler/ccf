@@ -5,13 +5,13 @@ import { apiFetch } from '@/lib/http';
 import type { LessonRecord } from '@/types/academy';
 
 interface LessonsState {
-  lessonsByCourse: Record<number, LessonRecord[]>;
+  lessonsByCourse: Record<string, LessonRecord[]>;
   loading: boolean;
   error: string | null;
 }
 
-export function useCourseLessons(courseIds: number[], token?: string | null): LessonsState {
-  const [lessonsByCourse, setLessonsByCourse] = useState<Record<number, LessonRecord[]>>({});
+export function useCourseLessons(courseIds: string[], token?: string | null): LessonsState {
+  const [lessonsByCourse, setLessonsByCourse] = useState<Record<string, LessonRecord[]>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const normalizedIds = useMemo(() => courseIds.filter(Boolean), [courseIds]);

@@ -8,7 +8,7 @@ import { apiFetch } from "@/lib/http";
 import { BookOpen, GraduationCap, Search, ShieldCheck, Users } from "lucide-react";
 
 type TeacherRow = {
-    id: number | string;
+    id: string;
     name?: string;
     full_name?: string;
     email?: string;

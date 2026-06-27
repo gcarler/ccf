@@ -73,7 +73,7 @@ export default function NewAssessmentPage() {
                 body: JSON.stringify({
                     title,
                     passing_score: passingScore,
-                    course_id: Number(courseId),
+                    course_id: courseId,
                     questions: questions.map(q => ({
                         text: q.text,
                         type: q.type,

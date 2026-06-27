@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect,useMemo,useState } from "react";
 
 type StudentRow = {
-    id: number | string;
+    id: string;
     name?: string;
     full_name?: string;
     email?: string;

@@ -33,7 +33,7 @@ export default function TeacherWorkspace() {
     const [submissions, setSubmissions] = useState<AssignmentSubmissionReview[]>([]);
     const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [gradingId, setGradingId] = useState<number | null>(null);
+    const [gradingId, setGradingId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'pending' | 'history' | 'courses'>('courses');
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('academy_teacher_view', 'grid'));
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('academy_teacher_wiki_notes', {
@@ -351,4 +351,3 @@ export default function TeacherWorkspace() {
         </WorkspaceLayout>
     );
 }
-
