@@ -229,7 +229,8 @@ def search_personas(
     sort_col = getattr(models.Persona, sort_by or "nombre_completo", models.Persona.nombre_completo)
     query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
 
-    return query.offset(skip).limit(limit).all()
+    personas = query.offset(skip).limit(limit).all()
+    return _enrich_personas_with_progress(db, personas)
 
 
 def get_persona(db: Session, persona_id: str) -> Optional[models.Persona]:
@@ -390,63 +391,30 @@ _MEMBER_SORT_FIELDS = {
 }
 
 
-def search_personas(
+def _enrich_personas_with_progress(
     db: Session,
-    search: str | None = None,
-    role: str | None = None,
-    spiritual_status: str | None = None,
-    family_id: int | None = None,
-    sede_id: int | None = None,
-    skip: int = 0,
-    limit: int = 1000,
-    sort_by: str | None = None,
-    sort_dir: str = "asc",
-):
-    query = db.query(models.Persona).options(
-        selectinload(models.Persona.family),
-        selectinload(models.Persona.positions),
-    )
-    # Axioma 3 — Multi-Tenant: filtrar por sede obligatoriamente
-    if sede_id is not None:
-        query = query.filter(models.Persona.sede_id == sede_id)
-    if search:
-        like = f"%{search}%"
-        query = query.filter(
-            or_(
-                models.Persona.first_name.ilike(like),
-                models.Persona.last_name.ilike(like),
-                models.Persona.email.ilike(like),
-                models.Persona.church_role.ilike(like),
-            )
-        )
-    if role:
-        query = query.filter(models.Persona.church_role == role)
-    if spiritual_status:
-        query = query.filter(models.Persona.spiritual_status == spiritual_status)
-    if family_id:
-        query = query.filter(models.Persona.family_id == family_id)
+    personas: List[models.Persona],
+) -> List[models.Persona]:
+    """Adjunta academy_progress (avg de Enrollment) a cada persona in-place.
 
-    # Sorting
-    sort_col = _MEMBER_SORT_FIELDS.get(sort_by or "last_name", models.Persona.last_name)
-    query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
-
-    personas = query.offset(skip).limit(limit).all()
-
+    spiritual_health se deja al default del schema (0.8) porque el valor
+    hash-based anterior era mock/placeholder, no dato real.
+    """
+    if not personas:
+        return personas
     persona_ids = [p.id for p in personas]
-    progress_map = {}
-    if persona_ids:
-        progress_data = (
-            db.query(models.Enrollment.persona_id, func.avg(models.Enrollment.progress_percent))
-            .filter(models.Enrollment.persona_id.in_(persona_ids))
-            .group_by(models.Enrollment.persona_id)
-            .all()
+    progress_data = (
+        db.query(
+            models.Enrollment.persona_id,
+            func.avg(models.Enrollment.progress_percent),
         )
-        progress_map = {persona_id: avg for persona_id, avg in progress_data}
-
+        .filter(models.Enrollment.persona_id.in_(persona_ids))
+        .group_by(models.Enrollment.persona_id)
+        .all()
+    )
+    progress_map = {pid: float(avg or 0.0) for pid, avg in progress_data}
     for p in personas:
-        p.spiritual_health = 0.5 + (abs(hash(p.first_name)) % 50) / 100.0
-        p.academy_progress = float(progress_map.get(p.id, 0.0))
-
+        p.academy_progress = progress_map.get(p.id, 0.0)
     return personas
 
 
@@ -490,23 +458,7 @@ def search_personas_paginated(
     query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
 
     personas = query.offset(offset).limit(limit).all()
-
-    persona_ids = [p.id for p in personas]
-    progress_map = {}
-    if persona_ids:
-        progress_data = (
-            db.query(models.Enrollment.persona_id, func.avg(models.Enrollment.progress_percent))
-            .filter(models.Enrollment.persona_id.in_(persona_ids))
-            .group_by(models.Enrollment.persona_id)
-            .all()
-        )
-        progress_map = {persona_id: avg for persona_id, avg in progress_data}
-
-    for p in personas:
-        p.spiritual_health = 0.5 + (abs(hash(p.first_name)) % 50) / 100.0
-        p.academy_progress = float(progress_map.get(p.id, 0.0))
-
-    return {"items": personas, "total": total}
+    return {"items": _enrich_personas_with_progress(db, personas), "total": total}
 
 
 def get_personas(db: Session, search: str | None = None, role: str | None = None):
