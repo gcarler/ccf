@@ -1,5 +1,7 @@
 """Operations CRUD: church_locations, social_channels, system_variables."""
 
+from uuid import UUID
+
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -57,7 +59,7 @@ def get_church_locations(db: Session, only_active: bool = False):
     return query.order_by(models.ChurchLocation.name).all()
 
 
-def get_church_location(db: Session, location_id: int):
+def get_church_location(db: Session, location_id: UUID):
     return (
         db.query(models.ChurchLocation)
         .filter(models.ChurchLocation.id == location_id)
@@ -74,7 +76,7 @@ def create_church_location(db: Session, payload: ChurchLocationCreate):
 
 
 def update_church_location(
-    db: Session, location_id: int, payload: ChurchLocationUpdate
+    db: Session, location_id: UUID, payload: ChurchLocationUpdate
 ):
     row = (
         db.query(models.ChurchLocation)
@@ -90,7 +92,7 @@ def update_church_location(
     return row
 
 
-def delete_church_location(db: Session, location_id: int) -> bool:
+def delete_church_location(db: Session, location_id: UUID) -> bool:
     row = (
         db.query(models.ChurchLocation)
         .filter(models.ChurchLocation.id == location_id)
@@ -113,7 +115,7 @@ def get_social_channels(db: Session, only_visible: bool = False):
     return query.all()
 
 
-def get_social_channel(db: Session, channel_id: int):
+def get_social_channel(db: Session, channel_id: UUID):
     return (
         db.query(models.SocialChannel)
         .filter(models.SocialChannel.id == channel_id)
@@ -129,7 +131,7 @@ def create_social_channel(db: Session, payload: SocialChannelCreate):
     return row
 
 
-def update_social_channel(db: Session, channel_id: int, payload: SocialChannelUpdate):
+def update_social_channel(db: Session, channel_id: UUID, payload: SocialChannelUpdate):
     row = (
         db.query(models.SocialChannel)
         .filter(models.SocialChannel.id == channel_id)
@@ -144,7 +146,7 @@ def update_social_channel(db: Session, channel_id: int, payload: SocialChannelUp
     return row
 
 
-def delete_social_channel(db: Session, channel_id: int) -> bool:
+def delete_social_channel(db: Session, channel_id: UUID) -> bool:
     row = (
         db.query(models.SocialChannel)
         .filter(models.SocialChannel.id == channel_id)

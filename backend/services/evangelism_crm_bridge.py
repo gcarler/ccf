@@ -4,13 +4,14 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 import uuid
+from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.models_crm import Persona
 from backend.models_evangelism import Asistencia, GrupoEvangelismo, SesionGrupo
-from backend.models_crm_core import (
+from backend.models_crm_pipeline import (
     CasoCRM,
     CanalOrigenEnum,
     EstadoCasoEnum,
@@ -137,8 +138,8 @@ def crear_caso_nuevo_visitante(
     sede_id: uuid.UUID,
     titulo_prefix: str = "Seguimiento",
     origen_grupo_id: Optional[uuid.UUID] = None,
-    origen_estrategia_id: Optional[str] = None,
-    origen_sesion_id: Optional[int] = None,
+    origen_estrategia_id: Optional[UUID] = None,
+    origen_sesion_id: Optional[UUID] = None,
 ) -> Optional[CasoCRM]:
     """Crea un caso CRM de nuevos visitantes usando el pipeline canonico por sede.
     Hace el db.commit() final — debe llamarse al final de la transacción del caller.

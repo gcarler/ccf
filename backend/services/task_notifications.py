@@ -58,7 +58,7 @@ def notify_task_assigned(
         if assigned_by_persona_id
         else None
     )
-    assignee_user_id = getattr(assignee, "user_id", None)
+    assignee_user_id = db.query(models.User.id).filter(models.User.id == assignee.id).scalar()
     task_url = f"/plataforma/tasks/{task.id}"
     project_title = getattr(project, "title", None)
     sender_name = _display_name(assigned_by)

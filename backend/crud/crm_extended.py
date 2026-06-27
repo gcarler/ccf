@@ -9,6 +9,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -34,7 +35,7 @@ class PositionUpdate(BaseModel):
 
 class PersonaPositionCreate(BaseModel):
     persona_id: str
-    position_id: int
+    position_id: UUID
     start_date: datetime | None = None
     end_date: datetime | None = None
     is_active: bool = True
@@ -48,7 +49,7 @@ class PersonaPositionUpdate(BaseModel):
 
 
 class EventAssignmentCreate(BaseModel):
-    event_id: int
+    event_id: UUID
     persona_id: str
     session_date: datetime
     role: str
@@ -61,18 +62,18 @@ class EventAssignmentUpdate(BaseModel):
 class MinistryCreate(BaseModel):
     name: str
     description: str | None = None
-    leader_id: int | None = None
+    leader_id: UUID | None = None
 
 
 class MinistryUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
-    leader_id: int | None = None
+    leader_id: UUID | None = None
 
 
 class PersonaMinistryAssignmentCreate(BaseModel):
     persona_id: str
-    ministry_id: int
+    ministry_id: UUID
     role: str | None = None
     start_date: datetime | None = None
     end_date: datetime | None = None
@@ -119,7 +120,7 @@ class RoleDefinitionUpdate(BaseModel):
 
 class PersonaRoleLinkCreate(BaseModel):
     persona_id: str
-    role_id: int
+    role_id: UUID
 
 
 class FundCreate(BaseModel):
@@ -149,7 +150,7 @@ class VolunteerSkillUpdate(BaseModel):
 
 
 class ChatMessageCreate(BaseModel):
-    sender_id: int
+    sender_id: UUID
     room_id: str | None = None
     content: str
 
@@ -170,7 +171,7 @@ def get_positions(
     return q.order_by(models.Position.name).all()
 
 
-def get_position(db: Session, position_id: int) -> Optional[models.Position]:
+def get_position(db: Session, position_id: UUID) -> Optional[models.Position]:
     return db.query(models.Position).filter(models.Position.id == position_id).first()
 
 
@@ -183,7 +184,7 @@ def create_position(db: Session, payload: PositionCreate) -> models.Position:
 
 
 def update_position(
-    db: Session, position_id: int, payload: PositionUpdate
+    db: Session, position_id: UUID, payload: PositionUpdate
 ) -> Optional[models.Position]:
     row = db.query(models.Position).filter(models.Position.id == position_id).first()
     if not row:
@@ -195,7 +196,7 @@ def update_position(
     return row
 
 
-def delete_position(db: Session, position_id: int) -> bool:
+def delete_position(db: Session, position_id: UUID) -> bool:
     row = db.query(models.Position).filter(models.Position.id == position_id).first()
     if not row:
         return False
@@ -220,7 +221,7 @@ def get_persona_positions(
     return q.order_by(models.PersonaPosition.created_at.desc()).all()
 
 
-def get_persona_position(db: Session, mp_id: int) -> Optional[models.PersonaPosition]:
+def get_persona_position(db: Session, mp_id: UUID) -> Optional[models.PersonaPosition]:
     return (
         db.query(models.PersonaPosition)
         .filter(models.PersonaPosition.id == mp_id)
@@ -239,7 +240,7 @@ def create_persona_position(
 
 
 def update_persona_position(
-    db: Session, mp_id: int, payload: PersonaPositionUpdate
+    db: Session, mp_id: UUID, payload: PersonaPositionUpdate
 ) -> Optional[models.PersonaPosition]:
     row = (
         db.query(models.PersonaPosition)
@@ -255,7 +256,7 @@ def update_persona_position(
     return row
 
 
-def delete_persona_position(db: Session, mp_id: int) -> bool:
+def delete_persona_position(db: Session, mp_id: UUID) -> bool:
     row = (
         db.query(models.PersonaPosition)
         .filter(models.PersonaPosition.id == mp_id)
@@ -273,7 +274,7 @@ def delete_persona_position(db: Session, mp_id: int) -> bool:
 
 def get_event_assignments(
     db: Session,
-    event_id: int | None = None,
+    event_id: UUID | None = None,
     persona_id: str | None = None,
     role: str | None = None,
 ) -> List[models.EventAssignment]:
@@ -287,7 +288,7 @@ def get_event_assignments(
     return q.order_by(models.EventAssignment.session_date.desc()).all()
 
 
-def get_event_assignment(db: Session, ea_id: int) -> Optional[models.EventAssignment]:
+def get_event_assignment(db: Session, ea_id: UUID) -> Optional[models.EventAssignment]:
     return (
         db.query(models.EventAssignment)
         .filter(models.EventAssignment.id == ea_id)
@@ -306,7 +307,7 @@ def create_event_assignment(
 
 
 def update_event_assignment(
-    db: Session, ea_id: int, payload: EventAssignmentUpdate
+    db: Session, ea_id: UUID, payload: EventAssignmentUpdate
 ) -> Optional[models.EventAssignment]:
     row = (
         db.query(models.EventAssignment)
@@ -322,7 +323,7 @@ def update_event_assignment(
     return row
 
 
-def delete_event_assignment(db: Session, ea_id: int) -> bool:
+def delete_event_assignment(db: Session, ea_id: UUID) -> bool:
     row = (
         db.query(models.EventAssignment)
         .filter(models.EventAssignment.id == ea_id)
@@ -342,7 +343,7 @@ def get_ministries(db: Session) -> List[models.Ministry]:
     return db.query(models.Ministry).order_by(models.Ministry.name).all()
 
 
-def get_ministry(db: Session, ministry_id: int) -> Optional[models.Ministry]:
+def get_ministry(db: Session, ministry_id: UUID) -> Optional[models.Ministry]:
     return db.query(models.Ministry).filter(models.Ministry.id == ministry_id).first()
 
 
@@ -355,7 +356,7 @@ def create_ministry(db: Session, payload: MinistryCreate) -> models.Ministry:
 
 
 def update_ministry(
-    db: Session, ministry_id: int, payload: MinistryUpdate
+    db: Session, ministry_id: UUID, payload: MinistryUpdate
 ) -> Optional[models.Ministry]:
     row = db.query(models.Ministry).filter(models.Ministry.id == ministry_id).first()
     if not row:
@@ -367,7 +368,7 @@ def update_ministry(
     return row
 
 
-def delete_ministry(db: Session, ministry_id: int) -> bool:
+def delete_ministry(db: Session, ministry_id: UUID) -> bool:
     row = db.query(models.Ministry).filter(models.Ministry.id == ministry_id).first()
     if not row:
         return False
@@ -382,7 +383,7 @@ def delete_ministry(db: Session, ministry_id: int) -> bool:
 def get_persona_ministry_assignments(
     db: Session,
     persona_id: str | None = None,
-    ministry_id: int | None = None,
+    ministry_id: UUID | None = None,
     only_active: bool = False,
 ) -> List[models.PersonaMinistryAssignment]:
     q = db.query(models.PersonaMinistryAssignment)
@@ -395,7 +396,7 @@ def get_persona_ministry_assignments(
     return q.all()
 
 
-def get_persona_ministry_assignment(db: Session, mm_id: int) -> Optional[models.PersonaMinistryAssignment]:
+def get_persona_ministry_assignment(db: Session, mm_id: UUID) -> Optional[models.PersonaMinistryAssignment]:
     return (
         db.query(models.PersonaMinistryAssignment)
         .filter(models.PersonaMinistryAssignment.id == mm_id)
@@ -414,7 +415,7 @@ def create_persona_ministry_assignment(
 
 
 def update_persona_ministry_assignment(
-    db: Session, mm_id: int, payload: PersonaMinistryAssignmentUpdate
+    db: Session, mm_id: UUID, payload: PersonaMinistryAssignmentUpdate
 ) -> Optional[models.PersonaMinistryAssignment]:
     row = (
         db.query(models.PersonaMinistryAssignment)
@@ -430,7 +431,7 @@ def update_persona_ministry_assignment(
     return row
 
 
-def delete_persona_ministry_assignment(db: Session, mm_id: int) -> bool:
+def delete_persona_ministry_assignment(db: Session, mm_id: UUID) -> bool:
     row = (
         db.query(models.PersonaMinistryAssignment)
         .filter(models.PersonaMinistryAssignment.id == mm_id)
@@ -460,7 +461,7 @@ def get_crm_automations(
 
 
 def get_crm_automation(
-    db: Session, automation_id: int
+    db: Session, automation_id: UUID
 ) -> Optional[models.CrmAutomation]:
     return (
         db.query(models.CrmAutomation)
@@ -481,7 +482,7 @@ def create_crm_automation(
 
 def update_crm_automation(
     db: Session,
-    automation_id: int,
+    automation_id: UUID,
     payload: CrmAutomationUpdate,
 ) -> Optional[models.CrmAutomation]:
     row = (
@@ -498,7 +499,7 @@ def update_crm_automation(
     return row
 
 
-def delete_crm_automation(db: Session, automation_id: int) -> bool:
+def delete_crm_automation(db: Session, automation_id: UUID) -> bool:
     row = (
         db.query(models.CrmAutomation)
         .filter(models.CrmAutomation.id == automation_id)
@@ -523,7 +524,7 @@ def get_role_definitions(
     return q.order_by(models.RoleDefinition.name).all()
 
 
-def get_role_definition(db: Session, role_id: int) -> Optional[models.RoleDefinition]:
+def get_role_definition(db: Session, role_id: UUID) -> Optional[models.RoleDefinition]:
     return (
         db.query(models.RoleDefinition)
         .filter(models.RoleDefinition.id == role_id)
@@ -542,7 +543,7 @@ def create_role_definition(
 
 
 def update_role_definition(
-    db: Session, role_id: int, payload: RoleDefinitionUpdate
+    db: Session, role_id: UUID, payload: RoleDefinitionUpdate
 ) -> Optional[models.RoleDefinition]:
     row = (
         db.query(models.RoleDefinition)
@@ -558,7 +559,7 @@ def update_role_definition(
     return row
 
 
-def delete_role_definition(db: Session, role_id: int) -> bool:
+def delete_role_definition(db: Session, role_id: UUID) -> bool:
     row = (
         db.query(models.RoleDefinition)
         .filter(models.RoleDefinition.id == role_id)
@@ -577,7 +578,7 @@ def delete_role_definition(db: Session, role_id: int) -> bool:
 def get_persona_role_links(
     db: Session,
     persona_id: str | None = None,
-    role_id: int | None = None,
+    role_id: UUID | None = None,
 ) -> List[models.PersonaRoleLink]:
     q = db.query(models.PersonaRoleLink)
     if persona_id is not None:
@@ -595,7 +596,7 @@ def create_persona_role_link(db: Session, payload: PersonaRoleLinkCreate) -> mod
     return row
 
 
-def delete_persona_role_link(db: Session, mr_id: int) -> bool:
+def delete_persona_role_link(db: Session, mr_id: UUID) -> bool:
     row = db.query(models.PersonaRoleLink).filter(models.PersonaRoleLink.id == mr_id).first()
     if not row:
         return False
@@ -614,7 +615,7 @@ def get_funds(db: Session, only_public: bool = False) -> List[models.Fund]:
     return q.order_by(models.Fund.name).all()
 
 
-def get_fund(db: Session, fund_id: int) -> Optional[models.Fund]:
+def get_fund(db: Session, fund_id: UUID) -> Optional[models.Fund]:
     return db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
 
 
@@ -627,7 +628,7 @@ def create_fund(db: Session, payload: FundCreate) -> models.Fund:
 
 
 def update_fund(
-    db: Session, fund_id: int, payload: FundUpdate
+    db: Session, fund_id: UUID, payload: FundUpdate
 ) -> Optional[models.Fund]:
     row = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
     if not row:
@@ -639,7 +640,7 @@ def update_fund(
     return row
 
 
-def delete_fund(db: Session, fund_id: int) -> bool:
+def delete_fund(db: Session, fund_id: UUID) -> bool:
     row = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
     if not row:
         return False
@@ -660,7 +661,7 @@ def get_volunteer_skills(
     return q.order_by(models.VolunteerSkill.name).all()
 
 
-def get_volunteer_skill(db: Session, skill_id: int) -> Optional[models.VolunteerSkill]:
+def get_volunteer_skill(db: Session, skill_id: UUID) -> Optional[models.VolunteerSkill]:
     return (
         db.query(models.VolunteerSkill)
         .filter(models.VolunteerSkill.id == skill_id)
@@ -679,7 +680,7 @@ def create_volunteer_skill(
 
 
 def update_volunteer_skill(
-    db: Session, skill_id: int, payload: VolunteerSkillUpdate
+    db: Session, skill_id: UUID, payload: VolunteerSkillUpdate
 ) -> Optional[models.VolunteerSkill]:
     row = (
         db.query(models.VolunteerSkill)
@@ -695,7 +696,7 @@ def update_volunteer_skill(
     return row
 
 
-def delete_volunteer_skill(db: Session, skill_id: int) -> bool:
+def delete_volunteer_skill(db: Session, skill_id: UUID) -> bool:
     row = (
         db.query(models.VolunteerSkill)
         .filter(models.VolunteerSkill.id == skill_id)
@@ -714,7 +715,7 @@ def delete_volunteer_skill(db: Session, skill_id: int) -> bool:
 def get_chat_messages(
     db: Session,
     room_id: str | None = None,
-    sender_id: int | None = None,
+    sender_id: UUID | None = None,
     limit: int = 50,
 ) -> List[models.ChatMessage]:
     q = db.query(models.ChatMessage)
@@ -725,7 +726,7 @@ def get_chat_messages(
     return q.order_by(models.ChatMessage.created_at.desc()).limit(limit).all()
 
 
-def get_chat_message(db: Session, message_id: int) -> Optional[models.ChatMessage]:
+def get_chat_message(db: Session, message_id: UUID) -> Optional[models.ChatMessage]:
     return (
         db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
     )
@@ -739,7 +740,7 @@ def create_chat_message(db: Session, payload: ChatMessageCreate) -> models.ChatM
     return row
 
 
-def delete_chat_message(db: Session, message_id: int) -> bool:
+def delete_chat_message(db: Session, message_id: UUID) -> bool:
     row = (
         db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
     )
@@ -788,7 +789,7 @@ def get_user_conversations_by_persona(db: Session, persona_id: uuid.UUID) -> lis
     return get_user_conversations(db, persona_id)
 
 
-def get_conversation(db: Session, conversation_id: int) -> Optional[models.Conversation]:
+def get_conversation(db: Session, conversation_id: UUID) -> Optional[models.Conversation]:
     return (
         db.query(models.Conversation)
         .filter(models.Conversation.id == conversation_id)
@@ -798,9 +799,9 @@ def get_conversation(db: Session, conversation_id: int) -> Optional[models.Conve
 
 def get_conversation_messages(
     db: Session,
-    conversation_id: int,
+    conversation_id: UUID,
     limit: int = 50,
-    before_id: Optional[int] = None,
+    before_id: Optional[UUID] = None,
 ) -> list[models.ChatMessage]:
     q = db.query(models.ChatMessage).filter(
         models.ChatMessage.room_id == f"dm_{conversation_id}",
@@ -812,7 +813,7 @@ def get_conversation_messages(
 
 
 def create_direct_message(
-    db: Session, conversation_id: int, sender_id: uuid.UUID, content: str
+    db: Session, conversation_id: UUID, sender_id: uuid.UUID, content: str
 ) -> models.ChatMessage:
     msg = models.ChatMessage(
         sender_id=sender_id,
@@ -831,14 +832,14 @@ def create_direct_message(
 
 
 def create_direct_message_by_persona(
-    db: Session, conversation_id: int, sender_id: uuid.UUID, content: str
+    db: Session, conversation_id: UUID, sender_id: uuid.UUID, content: str
 ) -> models.ChatMessage:
     """Versión de create_direct_message que acepta sender_id UUID (FK personas.id)."""
     return create_direct_message(db, conversation_id, sender_id, content)
 
 
 def mark_conversation_read(
-    db: Session, conversation_id: int, user_id: uuid.UUID
+    db: Session, conversation_id: UUID, user_id: uuid.UUID
 ) -> None:
     cp = (
         db.query(models.ConversationParticipant)
@@ -861,14 +862,14 @@ def mark_conversation_read(
 
 
 def mark_conversation_read_by_persona(
-    db: Session, conversation_id: int, persona_id: uuid.UUID
+    db: Session, conversation_id: UUID, persona_id: uuid.UUID
 ) -> None:
     """Versión de mark_conversation_read que acepta persona_id UUID (FK personas.id)."""
     return mark_conversation_read(db, conversation_id, persona_id)
 
 
 def get_unread_count_for_conversation(
-    db: Session, conversation_id: int, user_id: uuid.UUID
+    db: Session, conversation_id: UUID, user_id: uuid.UUID
 ) -> int:
     cp = (
         db.query(models.ConversationParticipant)
@@ -891,7 +892,7 @@ def get_unread_count_for_conversation(
 
 
 def get_unread_count_for_conversation_by_persona(
-    db: Session, conversation_id: int, persona_id: uuid.UUID
+    db: Session, conversation_id: UUID, persona_id: uuid.UUID
 ) -> int:
     """Versión de get_unread_count_for_conversation que acepta persona_id UUID (FK personas.id)."""
     return get_unread_count_for_conversation(db, conversation_id, persona_id)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from uuid import UUID
 
 from typing import List, Optional
 
@@ -74,7 +75,7 @@ def get_estrategias(
     return q.offset(skip).limit(limit).all()
 
 
-def get_estrategia(db: Session, strategy_id: str) -> Optional[EstrategiaEvangelismo]:
+def get_estrategia(db: Session, strategy_id: UUID) -> Optional[EstrategiaEvangelismo]:
     return (
         db.query(EstrategiaEvangelismo)
         .filter(
@@ -86,7 +87,7 @@ def get_estrategia(db: Session, strategy_id: str) -> Optional[EstrategiaEvangeli
 
 
 def create_estrategia(
-    db: Session, data: EstrategiaEvangelismoCreate, sede_id: str | None = None, categoria_id: int | None = None
+    db: Session, data: EstrategiaEvangelismoCreate, sede_id: str | None = None, categoria_id: UUID | None = None
 ) -> EstrategiaEvangelismo:
     valid_cols = {c.key for c in EstrategiaEvangelismo.__table__.columns}
     dump = data.model_dump()
@@ -124,7 +125,7 @@ def create_estrategia(
 
 
 def update_estrategia(
-    db: Session, strategy_id: str, data: EstrategiaEvangelismoUpdate
+    db: Session, strategy_id: UUID, data: EstrategiaEvangelismoUpdate
 ) -> Optional[EstrategiaEvangelismo]:
     db_obj = (
         db.query(EstrategiaEvangelismo)
@@ -166,7 +167,7 @@ def update_estrategia(
     return db_obj
 
 
-def delete_estrategia(db: Session, strategy_id: str) -> bool:
+def delete_estrategia(db: Session, strategy_id: UUID) -> bool:
     db_obj = (
         db.query(EstrategiaEvangelismo)
         .filter(EstrategiaEvangelismo.id == strategy_id)
@@ -184,7 +185,7 @@ def delete_estrategia(db: Session, strategy_id: str) -> bool:
 # ──────────────────────────────────────────────
 
 def get_roles_personalizados(
-    db: Session, estrategia_id: str
+    db: Session, estrategia_id: UUID
 ) -> List[RolPersonalizadoEstrategia]:
     return (
         db.query(RolPersonalizadoEstrategia)
@@ -207,7 +208,7 @@ def create_rol_personalizado(
     return db_obj
 
 
-def delete_rol_personalizado(db: Session, role_id: int) -> bool:
+def delete_rol_personalizado(db: Session, role_id: UUID) -> bool:
     db_obj = (
         db.query(RolPersonalizadoEstrategia)
         .filter(RolPersonalizadoEstrategia.id == role_id)
@@ -265,7 +266,7 @@ def agregar_participante(
 
 
 def actualizar_participante(
-    db: Session, participante_id: int, data: ParticipanteGrupoUpdate
+    db: Session, participante_id: UUID, data: ParticipanteGrupoUpdate
 ) -> Optional[ParticipanteGrupo]:
     db_obj = (
         db.query(ParticipanteGrupo)
@@ -282,7 +283,7 @@ def actualizar_participante(
     return db_obj
 
 
-def remover_participante(db: Session, participante_id: int) -> bool:
+def remover_participante(db: Session, participante_id: UUID) -> bool:
     """Soft-delete: marca como inactivo en lugar de borrar."""
     db_obj = (
         db.query(ParticipanteGrupo)
@@ -347,7 +348,7 @@ def submit_asistencia(
 # ──────────────────────────────────────────────
 
 def get_seguimientos(
-    db: Session, asistencia_id: int
+    db: Session, asistencia_id: UUID
 ) -> List[RegistroSeguimiento]:
     return (
         db.query(RegistroSeguimiento)
@@ -386,7 +387,7 @@ def create_seguimiento(
 
 
 def update_seguimiento(
-    db: Session, seguimiento_id: int, data: RegistroSeguimientoUpdate
+    db: Session, seguimiento_id: UUID, data: RegistroSeguimientoUpdate
 ) -> Optional[RegistroSeguimiento]:
     db_obj = (
         db.query(RegistroSeguimiento)
@@ -447,7 +448,7 @@ def create_motivo_excusa(
 
 
 def update_motivo_excusa(
-    db: Session, excusa_id: int, descripcion: str | None = None, activo: bool | None = None
+    db: Session, excusa_id: UUID, descripcion: str | None = None, activo: bool | None = None
 ) -> models.MotivoExcusa | None:
     db_obj = db.query(models.MotivoExcusa).filter(models.MotivoExcusa.id == excusa_id).first()
     if not db_obj:
@@ -463,7 +464,7 @@ def update_motivo_excusa(
     return db_obj
 
 
-def delete_motivo_excusa(db: Session, excusa_id: int) -> bool:
+def delete_motivo_excusa(db: Session, excusa_id: UUID) -> bool:
     db_obj = db.query(models.MotivoExcusa).filter(models.MotivoExcusa.id == excusa_id).first()
     if not db_obj or db_obj.es_del_sistema:
         return False

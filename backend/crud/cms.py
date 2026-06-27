@@ -13,7 +13,7 @@ from backend.crud._utils import _utcnow
 from backend.crud.crm import resolve_persona_id_for_user as resolve_persona_uuid_for_user
 
 
-def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
+def resolve_persona_id_for_user(db: Session, user_id: uuid.UUID | str | None):
     persona_id = resolve_persona_uuid_for_user(db, user_id)
     return persona_id
 
@@ -315,7 +315,7 @@ def delete_media_asset(db: Session, asset_id: uuid.UUID) -> bool:
 
 
 def increment_content_metric(
-    db: Session, metric_key: str, ref_id: int, amount: int = 1
+    db: Session, metric_key: str, ref_id: str, amount: int = 1
 ):
     row = (
         db.query(models.ContentMetric)
@@ -668,7 +668,7 @@ def get_cms_page(db: Session, site_id: uuid.UUID, slug: str):
 
 
 def create_cms_page(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsPageCreate, user_id: int | None
+    db: Session, site_id: uuid.UUID, payload: schemas.CmsPageCreate, user_id: uuid.UUID | None
 ):
     row = models.CmsPage(
         site_id=site_id,
@@ -689,7 +689,7 @@ def update_cms_page(
     db: Session,
     row: models.CmsPage,
     payload: schemas.CmsPageUpdate,
-    user_id: int | None,
+    user_id: uuid.UUID | None,
 ):
     data = payload.model_dump(exclude_unset=True)
     if "slug" in data and data["slug"] is not None:
@@ -835,7 +835,7 @@ def _build_page_snapshot(db: Session, page: models.CmsPage):
 
 
 def create_cms_page_version(
-    db: Session, page: models.CmsPage, user_id: int | None, notes: str | None = None
+    db: Session, page: models.CmsPage, user_id: uuid.UUID | None, notes: str | None = None
 ):
     max_version = (
         db.query(func.max(models.CmsPageVersion.version_number))
@@ -914,7 +914,7 @@ def restore_cms_page_version(
     db: Session,
     page: models.CmsPage,
     version: models.CmsPageVersion,
-    user_id: int | None,
+    user_id: uuid.UUID | None,
 ):
     snapshot = version.snapshot_json or {}
     page_data = snapshot.get("page") or {}
@@ -951,7 +951,7 @@ def transition_cms_page_status(
     db: Session,
     page: models.CmsPage,
     action: str,
-    user_id: int | None,
+    user_id: uuid.UUID | None,
     notes: str | None = None,
 ):
     action = action.strip().lower()
@@ -1173,6 +1173,63 @@ def get_persona_by_id(db: Session, persona_id: str) -> models.Persona | None:
     except ValueError:
         return None
     return db.query(models.Persona).filter(models.Persona.id == uid).first()
+
+
+# ── Test compatibility wrappers ───────────────────────────────────────
+# These expose the short names expected by ``tests/test_crud_integration.py``
+# without disturbing the production callers in ``backend/api/cms*.py`` that
+# import the longer ``create_cms_page`` / ``get_cms_page`` variants. They are
+# intentionally thin: they reuse the underlying implementations and do not add
+# audit/version machinery beyond what already exists.
+
+def create_page(db: Session, site_id, slug, title, **_):
+    return create_cms_page(
+        db,
+        site_id,
+        schemas.CmsPageCreate(slug=slug, title=title, status="draft"),
+        None,
+    )
+
+
+def get_page(db: Session, page_id):
+    return db.query(models.CmsPage).filter(models.CmsPage.id == page_id).first()
+
+
+def update_page(db: Session, page_id, **fields):
+    row = get_page(db, page_id)
+    if not row:
+        return None
+    for key, value in fields.items():
+        if value is not None:
+            setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def list_pages(db: Session, site_id, status=None, limit=100):
+    rows, _total = list_cms_pages(db, site_id, limit=limit, status=status)
+    return rows
+
+
+def create_section(db: Session, page_id, section_type, props_json=None, **_):
+    return create_cms_section(
+        db,
+        page_id,
+        schemas.CmsSectionCreate(type=section_type, props_json=props_json or {}),
+    )
+
+
+def update_section(db: Session, section_id, **fields):
+    row = db.query(models.CmsSection).filter(models.CmsSection.id == section_id).first()
+    if not row:
+        return None
+    for key, value in fields.items():
+        if value is not None:
+            setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
 
 
 def update_pastoral_profile(db: Session, persona: models.Persona, payload: schemas.PastoralProfileUpdate) -> models.Persona:

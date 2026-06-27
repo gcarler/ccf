@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Optional, Set, cast
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -8,7 +9,7 @@ from backend import models
 from backend.crud.crm import resolve_persona_id_for_user
 
 
-def _course_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+def _course_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
     q = db.query(models.Course).order_by(models.Course.created_at.desc())
     if sede_id is not None:
         q = q.filter(models.Course.sede_id == sede_id)
@@ -31,7 +32,7 @@ def _course_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> Lis
     return nodes
 
 
-def _person_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+def _person_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
     q = db.query(models.Persona).order_by(models.Persona.created_at.desc())
     if sede_id is not None:
         q = q.filter(models.Persona.sede_id == sede_id)
@@ -53,7 +54,7 @@ def _person_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> Lis
     return nodes
 
 
-def _asset_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+def _asset_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
     q = db.query(models.AssetItem)
     if sede_id is not None:
         q = q.filter(models.AssetItem.sede_id == sede_id)
@@ -75,7 +76,7 @@ def _asset_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List
     return nodes
 
 
-def _fund_nodes(db: Session, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+def _fund_nodes(db: Session, sede_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
     q = db.query(models.Fund)
     if sede_id is not None:
         q = q.filter(models.Fund.sede_id == sede_id)
@@ -98,7 +99,7 @@ def _fund_nodes(db: Session, sede_id: Optional[int] = None) -> List[Dict[str, An
     return nodes
 
 
-def _family_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+def _family_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
     q = db.query(models.Family)
     if sede_id is not None:
         q = q.join(models.Persona, models.Persona.family_id == models.Family.id).filter(models.Persona.sede_id == sede_id)
@@ -114,7 +115,7 @@ def _family_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> Lis
     ]
 
 
-def _project_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> List[Dict[str, Any]]:
+def _project_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
     q = db.query(models.Project).order_by(models.Project.created_at.desc())
     if sede_id is not None:
         q = q.filter(models.Project.sede_id == sede_id)
@@ -138,7 +139,7 @@ def _project_nodes(db: Session, limit: int, sede_id: Optional[int] = None) -> Li
 
 def build_graph_snapshot(
     db: Session, limit: int = 50, types: Optional[Iterable[str]] = None,
-    sede_id: Optional[int] = None,
+    sede_id: Optional[UUID] = None,
 ) -> Dict[str, Any]:
     nodes: List[Dict[str, Any]] = []
     edges: List[Dict[str, Any]] = []
@@ -166,16 +167,7 @@ def build_graph_snapshot(
     # Build enrollment edges person -> course
     enrollments = db.query(models.Enrollment).limit(limit).all()
     for enrollment in enrollments:
-        person_id = None
-        if enrollment.user_id is not None:
-            persona_id = resolve_persona_id_for_user(db, enrollment.user_id)
-            person = (
-                db.query(models.Persona)
-                .filter(models.Persona.id == persona_id)
-                .first()
-            ) if persona_id else None
-            if person:
-                person_id = f"person-{person.id}"
+        person_id = f"person-{enrollment.persona_id}" if enrollment.persona_id else None
         if person_id and f"course-{enrollment.course_id}" in seen:
             edges.append(
                 {

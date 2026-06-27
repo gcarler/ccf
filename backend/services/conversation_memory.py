@@ -83,22 +83,17 @@ class AgentMessage(Base):
 # ──────────────────────────────────────────────
 
 def create_conversation(
-    user_id: int | str,
+    user_id: _uuid.UUID | str,
     title: str = None,
     agent_name: str = "Optimus",
     db: Session | None = None,
-) -> str:
+) -> _uuid.UUID:
     """Crea una nueva conversación y retorna su ID."""
     db, should_close = _get_session(db)
     try:
         persona_id = resolve_persona_id_for_user(db, user_id)
         if not persona_id:
-            try:
-                import uuid
-                uuid.UUID(str(user_id))
-                persona_id = user_id
-            except ValueError:
-                raise ValueError("No se pudo resolver la persona para el usuario")
+            raise ValueError("No se pudo resolver la persona para el usuario")
         conv = AgentConversation(
             persona_id=persona_id,
             title=title or f"Conversación con {agent_name}",
@@ -114,7 +109,7 @@ def create_conversation(
 
 
 def get_user_conversations(
-    user_id: int | str,
+    user_id: _uuid.UUID | str,
     limit: int = 20,
     db: Session | None = None,
 ) -> List[Dict[str, Any]]:
@@ -123,12 +118,7 @@ def get_user_conversations(
     try:
         persona_id = resolve_persona_id_for_user(db, user_id)
         if not persona_id:
-            try:
-                import uuid
-                uuid.UUID(str(user_id))
-                persona_id = user_id
-            except ValueError:
-                return []
+            return []
         convs = db.query(AgentConversation).filter(
             AgentConversation.persona_id == persona_id,
             AgentConversation.is_active,
@@ -153,7 +143,7 @@ def get_user_conversations(
 
 
 def get_conversation_history(
-    conversation_id: str, max_turns: int = 10,
+    conversation_id: _uuid.UUID, max_turns: int = 10,
 ) -> List[Dict[str, str]]:
     """Obtiene historial de una conversación en formato LLM messages."""
     db = SessionLocal()
@@ -179,7 +169,7 @@ def get_conversation_history(
 
 
 def save_conversation_turn(
-    conversation_id: str,
+    conversation_id: _uuid.UUID,
     role: str,
     content: str,
     tools_used: list = None,
@@ -211,8 +201,8 @@ def save_conversation_turn(
 
 
 def delete_conversation(
-    conversation_id: str,
-    user_id: int | str,
+    conversation_id: _uuid.UUID,
+    user_id: _uuid.UUID | str,
     db: Session | None = None,
 ) -> bool:
     """Elimina una conversación (soft delete)."""
@@ -220,12 +210,7 @@ def delete_conversation(
     try:
         persona_id = resolve_persona_id_for_user(db, user_id)
         if not persona_id:
-            try:
-                import uuid
-                uuid.UUID(str(user_id))
-                persona_id = user_id
-            except ValueError:
-                return False
+            return False
         conv = db.query(AgentConversation).filter(
             AgentConversation.id == conversation_id,
             AgentConversation.persona_id == persona_id,
@@ -241,7 +226,7 @@ def delete_conversation(
 
 
 def get_conversation_messages(
-    conversation_id: str,
+    conversation_id: _uuid.UUID,
     limit: int = 50,
     db: Session | None = None,
 ) -> List[Dict[str, Any]]:

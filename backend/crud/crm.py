@@ -3,6 +3,7 @@
 import datetime as dt
 import uuid
 from typing import List, Optional
+from uuid import UUID
 
 from backend.crud._utils import _to_uuid
 
@@ -25,7 +26,7 @@ def _is_uuid_like(value) -> bool:
         return False
 
 
-def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
+def resolve_persona_id_for_user(db: Session, user_id: uuid.UUID | str | None):
     if user_id is None:
         return None
     try:
@@ -40,21 +41,10 @@ def resolve_persona_id_for_user(db: Session, user_id: int | str | None):
     return persona[0] if persona else None
 
 
-def resolve_persona_id_from_identity(db: Session, identity: int | str | None):
+def resolve_persona_id_from_identity(db: Session, identity: uuid.UUID | str | None):
     if identity is None:
         return None
-    if _is_uuid_like(identity):
-        return uuid.UUID(str(identity))
     return resolve_persona_id_for_user(db, identity)
-
-
-def numeric_user_id_from_identity(identity: int | str | None):
-    if identity is None or _is_uuid_like(identity):
-        return None
-    try:
-        return int(identity)
-    except (TypeError, ValueError):
-        return None
 
 
 def get_user_sede_id(db: Session, user_id: str) -> str | None:
@@ -171,13 +161,14 @@ def search_personas(
     search: str | None = None,
     role: str | None = None,
     estado_vital: str | None = None,
+    spiritual_status: str | None = None,
     sex: str | None = None,
     group_name: str | None = None,
     participation_type: str | None = None,
     id_type: str | None = None,
     min_age: int | None = None,
     max_age: int | None = None,
-    family_id: int | None = None,
+    family_id: UUID | None = None,
     sede_id: str | None = None,
     skip: int = 0,
     limit: int = 1000,
@@ -209,6 +200,8 @@ def search_personas(
         query = query.filter(models.Persona.church_role == role)
     if estado_vital:
         query = query.filter(models.Persona.estado_vital == estado_vital)
+    if spiritual_status:
+        query = query.filter(models.Persona.spiritual_status == spiritual_status)
     if sex:
         query = query.filter(models.Persona.sex == sex)
     if id_type:
@@ -423,7 +416,7 @@ def search_personas_paginated(
     search: str | None = None,
     role: str | None = None,
     spiritual_status: str | None = None,
-    sede_id: int | None = None,
+    sede_id: UUID | None = None,
     offset: int = 0,
     limit: int = 100,
     sort_by: str | None = None,
@@ -500,30 +493,32 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
 
 def get_crm_tasks(
     db: Session,
-    assignee_persona_id: Optional[str] = None,
-    persona_id: Optional[str] = None,
-) -> List[models.CrmTask]:
-    query = db.query(models.CrmTask)
+    assignee_persona_id: Optional[uuid.UUID] = None,
+    persona_id: Optional[uuid.UUID] = None,
+) -> List[models.TareaCRM]:
+    query = db.query(models.TareaCRM)
     if assignee_persona_id:
-        query = query.filter(models.CrmTask.assignee_id == assignee_persona_id)
+        query = query.filter(models.TareaCRM.assignee_id == assignee_persona_id)
     if persona_id:
-        query = query.filter(models.CrmTask.persona_id == persona_id)
-    return query.order_by(models.CrmTask.due_date.asc()).all()
+        query = query.filter(models.TareaCRM.persona_id == persona_id)
+    return query.order_by(models.TareaCRM.due_date.asc()).all()
 
 
-def create_crm_task(db: Session, payload: schemas.CrmTaskCreate) -> models.CrmTask:
+def create_crm_task(db: Session, payload: schemas.CrmTaskCreate) -> models.TareaCRM:
     data = payload.model_dump()
     assignee_identity = data.pop("assignee_id", None)
     data["assignee_id"] = resolve_persona_id_from_identity(db, assignee_identity)
-    row = models.CrmTask(**data)
+    row = models.TareaCRM(**data)
     db.add(row)
     db.commit()
     db.refresh(row)
     return row
 
 
-def update_crm_task(db: Session, task_id: int, payload: schemas.CrmTaskUpdate) -> models.CrmTask:
-    row = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
+def update_crm_task(
+    db: Session, task_id: uuid.UUID, payload: schemas.CrmTaskUpdate
+) -> models.TareaCRM:
+    row = db.query(models.TareaCRM).filter(models.TareaCRM.id == task_id).first()
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -533,8 +528,8 @@ def update_crm_task(db: Session, task_id: int, payload: schemas.CrmTaskUpdate) -
     return row
 
 
-def delete_crm_task(db: Session, task_id: int) -> bool:
-    row = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
+def delete_crm_task(db: Session, task_id: uuid.UUID) -> bool:
+    row = db.query(models.TareaCRM).filter(models.TareaCRM.id == task_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -582,7 +577,7 @@ def get_counseling_tickets(
     db: Session,
     status: str | None = None,
     persona_id: str | None = None,
-    sede_id: int | None = None,
+    sede_id: UUID | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> List[models.CounselingTicket]:
@@ -975,21 +970,20 @@ def get_communication_logs(db: Session, limit: int = 50):
 # ── Notifications ────────────────────────────────────────
 
 
-def get_user_notifications(db: Session, user_id: int | str, limit: int = 20) -> List[models.Notification]:
+def get_user_notifications(db: Session, user_id: uuid.UUID | str, limit: int = 20) -> List[models.Notification]:
     notification_user_id = resolve_persona_id_for_user(db, user_id)
     if notification_user_id is None:
         return []
-    notification_user_key = str(notification_user_id)
     return (
         db.query(models.Notification)
-        .filter(models.Notification.user_id == notification_user_key)
+        .filter(models.Notification.user_id == notification_user_id)
         .order_by(models.Notification.created_at.desc())
         .limit(limit)
         .all()
     )
 
 
-def mark_notification_as_read(db: Session, notification_id: str):
+def mark_notification_as_read(db: Session, notification_id: uuid.UUID):
     notification = db.query(models.Notification).filter(models.Notification.id == notification_id).first()
     if not notification:
         return None
@@ -999,13 +993,12 @@ def mark_notification_as_read(db: Session, notification_id: str):
     return notification
 
 
-def mark_all_notifications_read(db: Session, user_id: int | str):
+def mark_all_notifications_read(db: Session, user_id: uuid.UUID | str):
     notification_user_id = resolve_persona_id_for_user(db, user_id)
     if notification_user_id is None:
         return
-    notification_user_key = str(notification_user_id)
     db.query(models.Notification).filter(
-        models.Notification.user_id == notification_user_key,
+        models.Notification.user_id == notification_user_id,
         models.Notification.is_read.is_(False),
     ).update({models.Notification.is_read: True})
     db.commit()
@@ -1077,7 +1070,7 @@ def create_milestone(
 # ── Family Personas ──────────────────────────────────────
 
 
-def get_family_personas(db: Session, family_id: int):
+def get_family_personas(db: Session, family_id: UUID):
     return (
         db.query(models.Persona)
         .filter(models.Persona.family_id == family_id)
@@ -1147,22 +1140,43 @@ def create_community_card(db: Session, card: schemas.CommunityBoardCardCreate) -
 # ── CRM Events ─────────────────────────────────────────
 
 
-def get_crm_event(db: Session, event_id: int) -> Optional[models.CrmEvent]:
+# ── Test-compatible alias ─────────────────────────────────────────────
+def list_personas(db: Session, **kwargs) -> List[models.Persona]:
+    """Alias consumed by ````tests/test_crud_integration.py::TestCrmCrud.test_list_personas````.
+
+    Delegates to ````search_personas```` which already accepts ````limit````, ````sede_id````
+    and the full filter set; this thin wrapper just normalizes the public name.
+    """
+    return search_personas(db, **kwargs)
+
+
+def get_crm_event(db: Session, event_id: UUID) -> Optional[models.CrmEvent]:
     return db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
 
 
-def update_crm_event(db: Session, event_id: int, payload: CrmEventUpdate) -> Optional[models.CrmEvent]:
+def update_crm_event(db: Session, event_id: UUID, payload) -> Optional[models.CrmEvent]:
+    """Update a CRM event. Accepts Pydantic schema or plain dict.
+
+    The ````dict```` branch is for ````tests/test_remaining_gaps.py::test_events_crud```` which
+    passes a raw ````dict```` (callers from the API always pass a schema). Detect
+    via duck-typing so both shapes work without breaking the type contract.
+    """
     row = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not row:
         return None
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    changes = (
+        payload.model_dump(exclude_unset=True)
+        if hasattr(payload, "model_dump")
+        else dict(payload)
+    )
+    for key, value in changes.items():
         setattr(row, key, value)
     db.commit()
     db.refresh(row)
     return row
 
 
-def delete_crm_event(db: Session, event_id: int) -> bool:
+def delete_crm_event(db: Session, event_id: UUID) -> bool:
     row = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not row:
         return False
@@ -1171,11 +1185,11 @@ def delete_crm_event(db: Session, event_id: int) -> bool:
     return True
 
 
-def get_event_attendance(db: Session, event_id: int) -> List[models.EventAttendance]:
+def get_event_attendance(db: Session, event_id: UUID) -> List[models.EventAttendance]:
     return db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).all()
 
 
-def delete_event_attendance(db: Session, attendance_id: int) -> bool:
+def delete_event_attendance(db: Session, attendance_id: UUID) -> bool:
     row = db.query(models.EventAttendance).filter(models.EventAttendance.id == attendance_id).first()
     if not row:
         return False
@@ -1187,12 +1201,12 @@ def delete_event_attendance(db: Session, attendance_id: int) -> bool:
 # ── Volunteers ─────────────────────────────────────────
 
 
-def get_volunteer_shift(db: Session, shift_id: int) -> Optional[models.VolunteerShift]:
+def get_volunteer_shift(db: Session, shift_id: UUID) -> Optional[models.VolunteerShift]:
     return db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
 
 
 def update_volunteer_shift(
-    db: Session, shift_id: int, payload: schemas.VolunteerShiftUpdate
+    db: Session, shift_id: UUID, payload: schemas.VolunteerShiftUpdate
 ) -> Optional[models.VolunteerShift]:
     row = db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
     if not row:
@@ -1204,7 +1218,7 @@ def update_volunteer_shift(
     return row
 
 
-def delete_volunteer_shift(db: Session, shift_id: int) -> bool:
+def delete_volunteer_shift(db: Session, shift_id: UUID) -> bool:
     row = db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
     if not row:
         return False
@@ -1216,7 +1230,7 @@ def delete_volunteer_shift(db: Session, shift_id: int) -> bool:
 # ── Counseling ─────────────────────────────────────────
 
 
-def get_counseling_ticket(db: Session, ticket_id: int) -> Optional[models.CounselingTicket]:
+def get_counseling_ticket(db: Session, ticket_id: UUID) -> Optional[models.CounselingTicket]:
     row = (
         db.query(models.CounselingTicket)
         .filter(
@@ -1231,7 +1245,7 @@ def get_counseling_ticket(db: Session, ticket_id: int) -> Optional[models.Counse
 
 
 def update_counseling_ticket(
-    db: Session, ticket_id: int, payload: schemas.CounselingTicketUpdate
+    db: Session, ticket_id: UUID, payload: schemas.CounselingTicketUpdate
 ) -> Optional[models.CounselingTicket]:
     row = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
     if not row:
@@ -1252,7 +1266,7 @@ def update_counseling_ticket(
     return row
 
 
-def delete_counseling_ticket(db: Session, ticket_id: int) -> bool:
+def delete_counseling_ticket(db: Session, ticket_id: UUID) -> bool:
     row = (
         db.query(models.CounselingTicket)
         .filter(
@@ -1271,12 +1285,12 @@ def delete_counseling_ticket(db: Session, ticket_id: int) -> bool:
 # ── Prayer ─────────────────────────────────────────────
 
 
-def get_prayer_request(db: Session, request_id: int) -> Optional[models.PrayerRequest]:
+def get_prayer_request(db: Session, request_id: UUID) -> Optional[models.PrayerRequest]:
     return db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
 
 
 def update_prayer_request(
-    db: Session, request_id: int, payload: schemas.PrayerRequestUpdate
+    db: Session, request_id: UUID, payload: schemas.PrayerRequestUpdate
 ) -> Optional[models.PrayerRequest]:
     row = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
     if not row:
@@ -1288,7 +1302,7 @@ def update_prayer_request(
     return row
 
 
-def delete_prayer_request(db: Session, request_id: int) -> bool:
+def delete_prayer_request(db: Session, request_id: UUID) -> bool:
     row = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
     if not row:
         return False
@@ -1316,11 +1330,11 @@ def delete_grupo(db: Session, house_id: uuid.UUID) -> bool:
 # ── Families ───────────────────────────────────────────
 
 
-def get_family(db: Session, family_id: int) -> Optional[models.Family]:
+def get_family(db: Session, family_id: UUID) -> Optional[models.Family]:
     return db.query(models.Family).filter(models.Family.id == family_id).first()
 
 
-def update_family(db: Session, family_id: int, name: str) -> Optional[models.Family]:
+def update_family(db: Session, family_id: UUID, name: str) -> Optional[models.Family]:
     row = db.query(models.Family).filter(models.Family.id == family_id).first()
     if not row:
         return None
@@ -1330,7 +1344,7 @@ def update_family(db: Session, family_id: int, name: str) -> Optional[models.Fam
     return row
 
 
-def delete_family(db: Session, family_id: int) -> bool:
+def delete_family(db: Session, family_id: UUID) -> bool:
     row = db.query(models.Family).filter(models.Family.id == family_id).first()
     if not row:
         return False
@@ -1403,7 +1417,7 @@ def delete_communication_log(db: Session, log_id: str) -> bool:
 # ── Donations ───────────────────────────────────────────
 
 
-def get_donation(db: Session, donation_id: int) -> Optional[models.Donation]:
+def get_donation(db: Session, donation_id: UUID) -> Optional[models.Donation]:
     return (
         db.query(models.Donation)
         .filter(
@@ -1414,7 +1428,7 @@ def get_donation(db: Session, donation_id: int) -> Optional[models.Donation]:
     )
 
 
-def update_donation(db: Session, donation_id: int, payload: schemas.DonationUpdate) -> Optional[models.Donation]:
+def update_donation(db: Session, donation_id: UUID, payload: schemas.DonationUpdate) -> Optional[models.Donation]:
     row = db.query(models.Donation).filter(models.Donation.id == donation_id).first()
     if not row:
         return None
@@ -1425,7 +1439,7 @@ def update_donation(db: Session, donation_id: int, payload: schemas.DonationUpda
     return row
 
 
-def delete_donation(db: Session, donation_id: int) -> bool:
+def delete_donation(db: Session, donation_id: UUID) -> bool:
     row = (
         db.query(models.Donation)
         .filter(
@@ -1444,7 +1458,7 @@ def delete_donation(db: Session, donation_id: int) -> bool:
 # ── Spiritual Milestones ─────────────────────────────────
 
 
-def update_milestone(db: Session, milestone_id: int, **kwargs) -> Optional[models.SpiritualMilestone]:
+def update_milestone(db: Session, milestone_id: UUID, **kwargs) -> Optional[models.SpiritualMilestone]:
     row = db.query(models.SpiritualMilestone).filter(models.SpiritualMilestone.id == milestone_id).first()
     if not row:
         return None
@@ -1455,7 +1469,7 @@ def update_milestone(db: Session, milestone_id: int, **kwargs) -> Optional[model
     return row
 
 
-def delete_milestone(db: Session, milestone_id: int) -> bool:
+def delete_milestone(db: Session, milestone_id: UUID) -> bool:
     row = (
         db.query(models.SpiritualMilestone)
         .filter(
@@ -1490,12 +1504,12 @@ def delete_support_ticket(db: Session, ticket_id: str) -> bool:
 # ── Community Board ─────────────────────────────────────
 
 
-def get_community_card(db: Session, card_id: int) -> Optional[models.CommunityBoardCard]:
+def get_community_card(db: Session, card_id: UUID) -> Optional[models.CommunityBoardCard]:
     return db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
 
 
 def update_community_card(
-    db: Session, card_id: int, payload: CommunityBoardCardUpdate
+    db: Session, card_id: UUID, payload: CommunityBoardCardUpdate
 ) -> Optional[models.CommunityBoardCard]:
     row = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
     if not row:
@@ -1507,57 +1521,8 @@ def update_community_card(
     return row
 
 
-def delete_community_card(db: Session, card_id: int) -> bool:
+def delete_community_card(db: Session, card_id: UUID) -> bool:
     row = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
-    if not row:
-        return False
-    row.deleted_at = _utcnow()
-    db.commit()
-    return True
-
-
-# ── Consolidation Cases ─────────────────────────────────
-
-
-def get_consolidation_case(db: Session, case_id: str):
-    return db.query(models.CasoCRM).filter(models.CasoCRM.id == case_id).first()
-
-
-def create_consolidation_case(db: Session, payload: schemas.CasoCRMCreate) -> models.CasoCRM:
-    row = models.CasoCRM(**payload.model_dump())
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    _emit_mesh_event(
-        "consolidation.case.created",
-        str(row.id),
-        persona_id=str(row.persona_id) if row.persona_id else None,
-        extra={"status": row.status},
-    )
-    return row
-
-
-def update_consolidation_case(db: Session, case_id: str, payload: schemas.CasoCRMUpdate) -> Optional[models.CasoCRM]:
-    row = db.query(models.CasoCRM).filter(models.CasoCRM.id == case_id).first()
-    if not row:
-        return None
-    old_status = row.status
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        setattr(row, key, value)
-    db.commit()
-    db.refresh(row)
-    if old_status != row.status:
-        _emit_mesh_event(
-            "consolidation.case.updated",
-            str(row.id),
-            persona_id=str(row.persona_id) if row.persona_id else None,
-            extra={"old_status": old_status, "new_status": row.status},
-        )
-    return row
-
-
-def delete_consolidation_case(db: Session, case_id: str) -> bool:
-    row = db.query(models.CasoCRM).filter(models.CasoCRM.id == case_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()

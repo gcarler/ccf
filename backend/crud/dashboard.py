@@ -6,6 +6,7 @@ métricas, tendencias y distribuciones para alimentar los dashboards.
 
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -148,7 +149,7 @@ def get_crm_dashboard(db: Session, sede_id: Optional[str] = None) -> CrmDashboar
 # ═══════════════════════════════════════════════════════════════════
 
 def get_evangelism_dashboard(
-    db: Session, sede_id: Optional[str] = None, estrategia_id: Optional[str] = None
+    db: Session, sede_id: Optional[str] = None, estrategia_id: Optional[UUID] = None
 ) -> EvangelismDashboard:
     from sqlalchemy import text as sqlt
 
@@ -338,38 +339,58 @@ def get_evangelism_dashboard(
 # 3. ACADEMY DASHBOARD
 # ═══════════════════════════════════════════════════════════════════
 
-def get_academy_dashboard(db: Session) -> AcademyDashboard:
+def get_academy_dashboard(db: Session, sede_id=None) -> AcademyDashboard:
     from sqlalchemy import text as sqlt
 
-    total_courses = db.execute(sqlt("SELECT COUNT(*) FROM courses")).scalar() or 0
-    total_enrollments = db.execute(sqlt("SELECT COUNT(*) FROM enrollments")).scalar() or 0
-    db.execute(sqlt("SELECT COUNT(*) FROM lessons")).scalar() or 0
-    completed = db.execute(sqlt(
-        "SELECT COUNT(*) FROM enrollments WHERE status = 'completed'"
-    )).scalar() or 0
-    
-    enrolled_users = db.execute(sqlt(
-        "SELECT COUNT(DISTINCT persona_id) FROM enrollments"
-    )).scalar() or 0
+    params = {"sede_id": sede_id}
+    course_scope = "(:sede_id IS NULL OR c.sede_id = :sede_id OR c.sede_id IS NULL)"
+    total_courses = db.execute(sqlt(
+        f"SELECT COUNT(*) FROM academy_courses c WHERE c.deleted_at IS NULL AND {course_scope}"
+    ), params).scalar() or 0
+    total_enrollments = db.execute(sqlt(f"""
+        SELECT COUNT(*)
+        FROM academy_enrollments e
+        JOIN academy_courses c ON c.id = e.course_id
+        WHERE e.deleted_at IS NULL AND c.deleted_at IS NULL AND {course_scope}
+    """), params).scalar() or 0
+    completed = db.execute(sqlt(f"""
+        SELECT COUNT(*)
+        FROM academy_enrollments e
+        JOIN academy_courses c ON c.id = e.course_id
+        WHERE e.deleted_at IS NULL AND e.status = 'completed'
+          AND c.deleted_at IS NULL AND {course_scope}
+    """), params).scalar() or 0
+    enrolled_users = db.execute(sqlt(f"""
+        SELECT COUNT(DISTINCT e.persona_id)
+        FROM academy_enrollments e
+        JOIN academy_courses c ON c.id = e.course_id
+        WHERE e.deleted_at IS NULL AND c.deleted_at IS NULL AND {course_scope}
+    """), params).scalar() or 0
 
     # Tendencias de matrícula
     enrollment_trends = []
     for i in range(5, -1, -1):
         start, end = _month_range(i)
-        c = db.execute(sqlt(
-            "SELECT COUNT(*) FROM enrollments WHERE created_at BETWEEN :s AND :e"
-        ), {"s": start, "e": end}).scalar() or 0
-        enrollment_trends.append(ChartDataPoint(label=start.strftime("%b"), value=c))
+        count = db.execute(sqlt(f"""
+            SELECT COUNT(*)
+            FROM academy_enrollments e
+            JOIN academy_courses c ON c.id = e.course_id
+            WHERE e.deleted_at IS NULL AND e.created_at BETWEEN :start AND :end
+              AND c.deleted_at IS NULL AND {course_scope}
+        """), {**params, "start": start, "end": end}).scalar() or 0
+        enrollment_trends.append(ChartDataPoint(label=start.strftime("%b"), value=count))
 
     # Cursos populares
     top_courses_data = db.execute(sqlt("""
         SELECT c.title, COUNT(e.id) as cnt
-        FROM courses c
-        JOIN enrollments e ON e.course_id = c.id
+        FROM academy_courses c
+        JOIN academy_enrollments e ON e.course_id = c.id
+        WHERE e.deleted_at IS NULL AND c.deleted_at IS NULL
+          AND (:sede_id IS NULL OR c.sede_id = :sede_id OR c.sede_id IS NULL)
         GROUP BY c.id, c.title
         ORDER BY cnt DESC
         LIMIT 5
-    """)).all()
+    """), params).all()
 
     top_courses = [
         {"title": r[0], "count": r[1]}
@@ -386,11 +407,14 @@ def get_academy_dashboard(db: Session) -> AcademyDashboard:
                 ELSE '75-100%'
             END as bucket,
             COUNT(*) as cnt
-        FROM enrollments
-        WHERE progress_percent IS NOT NULL
+        FROM academy_enrollments e
+        JOIN academy_courses c ON c.id = e.course_id
+        WHERE e.progress_percent IS NOT NULL AND e.deleted_at IS NULL
+          AND c.deleted_at IS NULL
+          AND (:sede_id IS NULL OR c.sede_id = :sede_id OR c.sede_id IS NULL)
         GROUP BY bucket
         ORDER BY bucket
-    """)).all()
+    """), params).all()
 
     grade_distribution = [
         ChartDataPoint(label=r[0], value=float(r[1]))
@@ -398,9 +422,13 @@ def get_academy_dashboard(db: Session) -> AcademyDashboard:
     ]
 
     # Estudiantes en riesgo (progreso < 25%)
-    at_risk = db.execute(sqlt(
-        "SELECT COUNT(*) FROM enrollments WHERE progress_percent < 25 AND status = 'active'"
-    )).scalar() or 0
+    at_risk = db.execute(sqlt(f"""
+        SELECT COUNT(*)
+        FROM academy_enrollments e
+        JOIN academy_courses c ON c.id = e.course_id
+        WHERE e.progress_percent < 25 AND e.status = 'active' AND e.deleted_at IS NULL
+          AND c.deleted_at IS NULL AND {course_scope}
+    """), params).scalar() or 0
 
     return AcademyDashboard(
         cards=[

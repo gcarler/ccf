@@ -11,37 +11,6 @@ This package re-exports everything so that existing callers using
 from backend.crud._utils import _utcnow  # noqa: F401
 from backend.crud._utils import analyze_pastoral_priority, analyze_pastoral_sentiment
 
-# Academy exports used by current routes and tests
-from backend.crud.academy import (  # noqa: F401
-    get_courses,
-    get_course,
-    check_user_meets_prerequisites,
-    get_enrollment,
-    get_enrollments_by_user,
-    create_enrollment,
-    get_assessment,
-    get_assessment_with_questions,
-    create_or_update_assessment_attempt,
-    submit_assessment_attempt,
-    get_lesson_progress,
-    update_lesson_progress,
-    get_certificates_by_user,
-    get_certificate_by_code,
-    issue_certificate_for_enrollment,
-    issue_certificate,
-    issue_pending_certificates,
-    close_formal_acta,
-    get_latest_acta_by_course,
-    record_activity_attendance,
-    create_assignment_submission,
-    list_assignment_submissions_with_meta,
-    get_assignment_submission_with_meta,
-    grade_assignment_submission,
-    get_academy_candidates,
-    get_forum_threads,
-    create_forum_thread,
-)
-
 # Agents
 from backend.crud.agents import acknowledge_insight  # noqa: F401
 from backend.crud.agents import (
@@ -331,9 +300,8 @@ from backend.crud.identity import award_badge  # noqa: F401
 from backend.crud.identity import (
     create_refresh_token,
     create_reset_token,
-    create_user,
     create_verification_token,
-    delete_user,
+    deactivate_user,
     ensure_ui_preferences,
     get_ui_preferences,
     get_user,

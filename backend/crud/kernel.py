@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud._utils import _utcnow
-from backend.crud.crm import resolve_persona_id_for_user as resolve_persona_uuid_for_user
 
 
 def _enum_val(e):
@@ -259,291 +258,74 @@ def get_personas_by_church_role(db: Session, church_role: str, active_only: bool
 
 
 # ──────────────────────────────────────────────
-# DIMENSIÓN C: ROLES DE PLATAFORMA (RBAC)
+# ROLES DE PLATAFORMA (AUTH V3)
 # ──────────────────────────────────────────────
 
 
 def get_platform_role_definitions(db: Session) -> List[dict]:
-    from backend.models_kernel import PlatformRoleDefinition
+    from backend.models_auth import RolPlataforma
 
     return [
         {
-            "id": r.id,
-            "role": _enum_val(r.role),
-            "permissions": r.permissions,
-            "description": r.description,
+            "id": str(role.id),
+            "role": role.nombre,
+            "permissions": role.permisos or {},
         }
-        for r in db.query(PlatformRoleDefinition).all()
+        for role in db.query(RolPlataforma).order_by(RolPlataforma.nombre).all()
     ]
 
 
 def get_persona_platform_roles(db: Session, persona_id: str) -> List[dict]:
-    from backend.models_kernel import PersonaPlatformRole, PlatformRoleDefinition
+    from backend.models_auth import Usuario
 
-    rows = (
-        db.query(PersonaPlatformRole, PlatformRoleDefinition)
-        .join(
-            PlatformRoleDefinition,
-            PlatformRoleDefinition.id == PersonaPlatformRole.role_id,
-        )
-        .filter(
-            PersonaPlatformRole.persona_id == uuid.UUID(persona_id),
-            PersonaPlatformRole.is_active,
-        )
-        .all()
-    )
+    user = db.query(Usuario).filter(Usuario.id == uuid.UUID(str(persona_id))).first()
+    if not user or not user.rol_plataforma:
+        return []
+    role = user.rol_plataforma
     return [
         {
-            "id": upr.id,
-            "role": _enum_val(rd.role),
-            "permissions": rd.permissions,
-            "assigned_at": upr.assigned_at,
+            "id": str(user.id),
+            "role": role.nombre,
+            "permissions": role.permisos or {},
+            "assigned_at": user.updated_at or user.created_at,
             "expires_at": None,
-            "notes": upr.notes,
+            "notes": None,
         }
-        for upr, rd in rows
     ]
 
 
 def get_persona_effective_permissions(db: Session, persona_id: str) -> dict:
-    from backend.models_kernel import PersonaPlatformRole, PlatformRoleDefinition
+    from backend.models_auth import Usuario
+    from backend.core.permissions import get_user_effective_permissions
 
-    rows = (
-        db.query(PlatformRoleDefinition.permissions)
-        .join(
-            PersonaPlatformRole,
-            PersonaPlatformRole.role_id == PlatformRoleDefinition.id,
-        )
-        .filter(
-            PersonaPlatformRole.persona_id == uuid.UUID(persona_id),
-            PersonaPlatformRole.is_active,
-        )
-        .all()
-    )
-    effective: dict = {}
-    for (perms,) in rows:
-        for module, actions in perms.items():
-            if module not in effective:
-                effective[module] = set()
-            effective[module].update(actions)
-    return {module: list(actions) for module, actions in effective.items()}
+    user = db.query(Usuario).filter(Usuario.id == uuid.UUID(str(persona_id))).first()
+    return get_user_effective_permissions(db, user) if user else {}
 
 
 def persona_has_permission(db: Session, persona_id: str, module: str, action: str) -> bool:
-    perms = get_persona_effective_permissions(db, persona_id)
-    if "*" in perms and action in perms["*"]:
-        return True
-    return module in perms and action in perms[module]
-
-
-# ──────────────────────────────────────────────
-# PERFIL COMPLETO KERNEL
-# ──────────────────────────────────────────────
-
-
-# ──────────────────────────────────────────────
-# BACKWARD COMPAT (auth user id is the canonical persona id)
-# ──────────────────────────────────────────────
-
-
-def _persona_id_for_user(db: Session, user_id: int) -> Optional[str]:
-    persona_id = resolve_persona_uuid_for_user(db, user_id)
-    return str(persona_id) if persona_id else None
-
-
-def get_user_ministries(db: Session, user_id: int) -> List[dict]:
-    pid = _persona_id_for_user(db, user_id)
-    return get_persona_ministries(db, pid) if pid else []
-
-
-def add_user_ministry(db: Session, user_id: int, ministry: str, **kwargs) -> Optional[dict]:
-    pid = _persona_id_for_user(db, user_id)
+    permissions = get_persona_effective_permissions(db, persona_id)
     return (
-        add_persona_ministry(
-            db,
-            pid,
-            ministry,
-            **{k: v for k, v in kwargs.items() if k != "changed_by_id"},
-        )
-        if pid
-        else None
+        f"{module}:{action}" in permissions
+        or f"{module}:manage" in permissions
+        or "*" in permissions
     )
 
 
-def remove_user_ministry(db: Session, user_id: int, ministry: str) -> bool:
-    pid = _persona_id_for_user(db, user_id)
-    return remove_persona_ministry(db, pid, ministry) if pid else False
-
-
-def get_user_church_role(db: Session, user_id: int) -> Optional[dict]:
-    pid = _persona_id_for_user(db, user_id)
-    return get_persona_church_role(db, pid) if pid else None
-
-
-def set_user_church_role(db: Session, user_id: int, church_role: str, **kwargs) -> Optional[dict]:
-    pid = _persona_id_for_user(db, user_id)
-    return set_persona_church_role(db, pid, church_role, **kwargs) if pid else None
-
-
-def get_church_role_history_by_user(db: Session, user_id: int, limit: int = 50) -> List[dict]:
-    pid = _persona_id_for_user(db, user_id)
-    return get_church_role_history(db, pid, limit=limit) if pid else []
-
-
-def get_users_by_church_role(db: Session, church_role: str, active_only: bool = True) -> List[dict]:
-    return get_personas_by_church_role(db, church_role, active_only=active_only)
-
-
-def get_user_platform_roles(db: Session, user_id: int) -> List[dict]:
-    pid = _persona_id_for_user(db, user_id)
-    return get_persona_platform_roles(db, pid) if pid else []
-
-
-def get_user_effective_permissions(db: Session, user_id: int) -> dict:
-    pid = _persona_id_for_user(db, user_id)
-    return get_persona_effective_permissions(db, pid) if pid else {}
-
-
-def set_user_activity_status(db: Session, user_id: int, status: str, changed_by_persona_id: str | None = None):
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user:
-        return None
-    user.is_active = status == "ACTIVO"
-    pid = _persona_id_for_user(db, user_id)
-    if pid:
-        set_persona_activity_status(db, pid, status, changed_by_persona_id)
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-def get_user_activity_status(db: Session, user_id: int) -> Optional[str]:
-    pid = _persona_id_for_user(db, user_id)
-    return get_persona_activity_status(db, pid) if pid else None
-
-
-def is_user_active(db: Session, user_id: int) -> bool:
-    pid = _persona_id_for_user(db, user_id)
-    if pid:
-        return is_persona_active(db, pid)
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    return bool(user.is_active) if user else False
-
-
-def set_primary_ministry(db: Session, persona_id_or_user_id, ministry: str) -> bool:
-    if isinstance(persona_id_or_user_id, int):
-        pid = _persona_id_for_user(db, persona_id_or_user_id)
-        return False if not pid else set_primary_ministry_by_persona(db, pid, ministry)
-    return set_primary_ministry_by_persona(db, str(persona_id_or_user_id), ministry)
-
-
-def set_primary_ministry_by_persona(db: Session, persona_id: str, ministry: str) -> bool:
+def set_primary_ministry(db: Session, persona_id: str, ministry: str) -> bool:
     from backend.models_kernel import PersonaMinistry
 
-    pid = uuid.UUID(persona_id)
-    row = (
-        db.query(PersonaMinistry)
-        .filter(PersonaMinistry.persona_id == pid, PersonaMinistry.ministry == ministry)
-        .first()
-    )
+    pid = uuid.UUID(str(persona_id))
+    row = db.query(PersonaMinistry).filter(
+        PersonaMinistry.persona_id == pid,
+        PersonaMinistry.ministry == ministry,
+    ).first()
     if not row:
         return False
-    db.query(PersonaMinistry).filter(PersonaMinistry.persona_id == pid, PersonaMinistry.ministry != ministry).update(
-        {"is_primary": False}
-    )
+    db.query(PersonaMinistry).filter(
+        PersonaMinistry.persona_id == pid,
+        PersonaMinistry.ministry != ministry,
+    ).update({"is_primary": False})
     row.is_primary = True
-    db.commit()
-    return True
-
-
-def assign_platform_role(
-    db: Session,
-    persona_id_or_user_id,
-    platform_role: str,
-    assigned_by_persona_id: str | None = None,
-    expires_at=None,
-    notes: str = None,
-) -> Optional[dict]:
-    if isinstance(persona_id_or_user_id, int):
-        pid = _persona_id_for_user(db, persona_id_or_user_id)
-        if not pid:
-            return None
-        persona_id = pid
-    else:
-        persona_id = str(persona_id_or_user_id)
-    return _assign_platform_role_by_persona(db, persona_id, platform_role, assigned_by_persona_id, expires_at, notes)
-
-
-def _assign_platform_role_by_persona(
-    db: Session,
-    persona_id: str,
-    platform_role: str,
-    assigned_by_persona_id: str | None = None,
-    expires_at=None,
-    notes: str = None,
-) -> Optional[dict]:
-    from backend.models_kernel import PersonaPlatformRole, PlatformRoleDefinition
-
-    role_def = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.role == platform_role).first()
-    if not role_def:
-        return None
-    pid = uuid.UUID(persona_id)
-    existing = (
-        db.query(PersonaPlatformRole)
-        .filter(
-            PersonaPlatformRole.persona_id == pid,
-            PersonaPlatformRole.role_id == role_def.id,
-            PersonaPlatformRole.is_active,
-        )
-        .first()
-    )
-    if existing:
-        return None
-    row = PersonaPlatformRole(
-        persona_id=pid,
-        role_id=role_def.id,
-        notes=notes,
-    )
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    return {
-        "id": row.id,
-        "role": platform_role,
-        "assigned_at": row.assigned_at,
-        "expires_at": None,
-    }
-
-
-def revoke_platform_role(db: Session, persona_id_or_user_id, platform_role: str) -> bool:
-    if isinstance(persona_id_or_user_id, int):
-        pid = _persona_id_for_user(db, persona_id_or_user_id)
-        if not pid:
-            return False
-        persona_id = pid
-    else:
-        persona_id = str(persona_id_or_user_id)
-    return _revoke_platform_role_by_persona(db, persona_id, platform_role)
-
-
-def _revoke_platform_role_by_persona(db: Session, persona_id: str, platform_role: str) -> bool:
-    from backend.models_kernel import PersonaPlatformRole, PlatformRoleDefinition
-
-    role_def = db.query(PlatformRoleDefinition).filter(PlatformRoleDefinition.role == platform_role).first()
-    if not role_def:
-        return False
-    row = (
-        db.query(PersonaPlatformRole)
-        .filter(
-            PersonaPlatformRole.persona_id == uuid.UUID(persona_id),
-            PersonaPlatformRole.role_id == role_def.id,
-            PersonaPlatformRole.is_active,
-        )
-        .first()
-    )
-    if not row:
-        return False
-    row.is_active = False
     db.commit()
     return True
 

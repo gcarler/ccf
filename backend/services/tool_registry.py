@@ -182,6 +182,7 @@ class CRMSearchPersona(AgentTool):
     def execute(self, query: str, **kwargs) -> Dict[str, Any]:
         from backend import models
         from backend.core.database import SessionLocal
+        from sqlalchemy import func
 
         db = SessionLocal()
         try:
@@ -293,7 +294,7 @@ class AcademySearchCourse(AgentTool):
                 models.Course.is_published,
             ).filter(
                 models.Course.title.ilike(term)
-                | (models.Course.description or "").ilike(term),
+                | func.coalesce(models.Course.description, "").ilike(term),
             ).limit(10).all()
             return {
                 "count": len(courses),

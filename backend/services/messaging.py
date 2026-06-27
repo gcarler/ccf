@@ -43,7 +43,7 @@ def _create_log(
     persona_id: str,
     channel: str,
     content: str,
-    leader_id: uuid.UUID | int | str | None,
+    leader_id: uuid.UUID | str | None,
     outcome: str = CommunicationOutcome.INTERNAL_LOG.value,
     recipient_phone: str | None = None,
     campaign_name: str | None = None,
@@ -57,12 +57,7 @@ def _create_log(
             try:
                 leader_uuid = uuid.UUID(str(leader_id))
             except (ValueError, TypeError):
-                try:
-                    leader_int = int(leader_id)
-                    from backend.crud.crm import resolve_persona_id_for_user
-                    leader_uuid = resolve_persona_id_for_user(db, leader_int)
-                except (ValueError, TypeError):
-                    pass
+                pass
 
     log = models.CommunicationLog(
         persona_id=persona_id,
@@ -115,7 +110,7 @@ class MessagingGateway:
         db: Session,
         persona_id: str,
         content: str,
-        leader_id: uuid.UUID | int | str | None,
+        leader_id: uuid.UUID | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
@@ -140,7 +135,7 @@ class MessagingGateway:
         db: Session,
         persona_id: str,
         content: str,
-        leader_id: uuid.UUID | int | str | None,
+        leader_id: uuid.UUID | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
@@ -165,7 +160,7 @@ class MessagingGateway:
         db: Session,
         persona_id: str,
         content: str,
-        leader_id: uuid.UUID | int | str | None,
+        leader_id: uuid.UUID | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
@@ -236,7 +231,7 @@ class StubMessagingGateway(MessagingGateway):
         db: Session,
         persona_id: str,
         content: str,
-        leader_id: uuid.UUID | int | str | None,
+        leader_id: uuid.UUID | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
@@ -265,7 +260,7 @@ class StubMessagingGateway(MessagingGateway):
         db: Session,
         persona_id: str,
         content: str,
-        leader_id: uuid.UUID | int | str | None,
+        leader_id: uuid.UUID | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
@@ -294,7 +289,7 @@ class StubMessagingGateway(MessagingGateway):
         db: Session,
         persona_id: str,
         content: str,
-        leader_id: uuid.UUID | int | str | None,
+        leader_id: uuid.UUID | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):

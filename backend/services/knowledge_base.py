@@ -62,7 +62,7 @@ class KnowledgeIndexer:
         except Exception:
             return False
 
-    def rebuild_all(self, indexed_by_agent_id: int = None) -> dict:
+    def rebuild_all(self, indexed_by_agent_id: _uuid.UUID | None = None) -> dict:
         """Reconstruye toda la KB desde cero."""
         # Desactivar todo lo existente
         self.db.query(AgentKnowledgeBase).update(
@@ -79,7 +79,7 @@ class KnowledgeIndexer:
         }
         return stats
 
-    def _index_courses(self, agent_id: int) -> int:
+    def _index_courses(self, agent_id: _uuid.UUID | None) -> int:
         """Indexa cursos activos."""
         from backend import models
 
@@ -109,7 +109,7 @@ class KnowledgeIndexer:
         self.db.commit()
         return count
 
-    def _index_evangelism(self, agent_id: int) -> int:
+    def _index_evangelism(self, agent_id: _uuid.UUID | None) -> int:
         """Indexa estrategias de evangelismo."""
         from backend import models
 
@@ -136,7 +136,7 @@ class KnowledgeIndexer:
         self.db.commit()
         return count
 
-    def _index_projects(self, agent_id: int) -> int:
+    def _index_projects(self, agent_id: _uuid.UUID | None) -> int:
         """Indexa proyectos activos."""
         from backend import models
 
@@ -163,7 +163,7 @@ class KnowledgeIndexer:
         self.db.commit()
         return count
 
-    def _index_persona_stats(self, agent_id: int) -> int:
+    def _index_persona_stats(self, agent_id: _uuid.UUID | None) -> int:
         """Indexa estadísticas de personas (sin datos personales)."""
         from backend import models
 
@@ -201,7 +201,7 @@ class KnowledgeIndexer:
         self.db.commit()
         return 1
 
-    def _index_system_vars(self, agent_id: int) -> int:
+    def _index_system_vars(self, agent_id: _uuid.UUID | None) -> int:
         """Indexa variables del sistema como conocimiento."""
         from backend import models
 

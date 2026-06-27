@@ -23,6 +23,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Union
 import uuid
 import unicodedata
+from uuid import UUID
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy.orm import Session
@@ -157,7 +158,7 @@ def _generar_fechas(inicio: datetime, fin: datetime, provider: _IncProvider) -> 
 
 def calcular_sesiones(
     db: Session,
-    estrategia_id: str,
+    estrategia_id: UUID,
     sede_id: uuid.UUID,
     fecha_inicio: datetime,
     fecha_fin: datetime,
@@ -193,7 +194,7 @@ def calcular_sesiones(
             db.query(GrupoEvangelismo.id)
             .filter(
                 GrupoEvangelismo.id.in_(grupos_ids),
-                GrupoEvangelismo.estrategia_id == str(estrategia_id),
+                GrupoEvangelismo.estrategia_id == estrategia_id,
                 GrupoEvangelismo.sede_id == sede_id,
                 GrupoEvangelismo.deleted_at.is_(None),
             )

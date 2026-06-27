@@ -1,6 +1,7 @@
 """Governance CRUD: automation_rules (admin_audit_logs already in audit.py)."""
 
 from typing import Optional
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 from backend.models_shared import _utcnow
@@ -17,7 +18,7 @@ def get_automation_rules(db: Session, only_active: bool = False):
     return query.order_by(models.AutomationRule.name).all()
 
 
-def get_automation_rule(db: Session, rule_id: int) -> Optional[models.AutomationRule]:
+def get_automation_rule(db: Session, rule_id: UUID) -> Optional[models.AutomationRule]:
     return (
         db.query(models.AutomationRule)
         .filter(models.AutomationRule.id == rule_id)
@@ -36,7 +37,7 @@ def create_automation_rule(
 
 
 def update_automation_rule(
-    db: Session, rule_id: int, payload: AutomationRuleUpdate
+    db: Session, rule_id: UUID, payload: AutomationRuleUpdate
 ) -> Optional[models.AutomationRule]:
     row = (
         db.query(models.AutomationRule)
@@ -52,7 +53,7 @@ def update_automation_rule(
     return row
 
 
-def delete_automation_rule(db: Session, rule_id: int) -> bool:
+def delete_automation_rule(db: Session, rule_id: UUID) -> bool:
     row = (
         db.query(models.AutomationRule)
         .filter(models.AutomationRule.id == rule_id)
@@ -65,7 +66,7 @@ def delete_automation_rule(db: Session, rule_id: int) -> bool:
     return True
 
 
-def record_automation_run(db: Session, rule_id: int):
+def record_automation_run(db: Session, rule_id: UUID):
     """Update last_run timestamp for an automation rule."""
     row = (
         db.query(models.AutomationRule)
