@@ -1,7 +1,14 @@
 from datetime import datetime, timezone
 from typing import Optional
+from uuid import UUID
+
+import uuid as _uuid
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 from backend import models
+from backend.crud.crm import get_user_sede_id
 
 def _payload_key(name: str) -> str:
     return name
@@ -9,6 +16,281 @@ def _payload_key(name: str) -> str:
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+# ── Axioma 3 — Multi-Tenant scope helpers (Axioma 3 pattern) ──────────────
+# Mirrors backend/api/academy.py::_course_scope + _get_scoped_course. Raise
+# 404 (not 403) so we never leak the existence of cross-sede rows.
+
+
+def _scope_by_user_sede_via_persona(db: Session, user: models.User, query):
+    """Axioma 3 — Multi-Tenant: agrega el filtro `Persona.sede_id == user_sede`
+    a un query que YA tiene un JOIN con `models.Persona`. Si el usuario no
+    tiene sede asignada (superadmin), se retorna el query sin modificar.
+
+    Patrón DRY para endpoints que filtran via JOIN con Persona:
+      - list_messaging_history, get_messaging_history_item
+      - get_newsletter_leads, export_newsletter_leads_csv
+    y cualquier endpoint futuro que siga el mismo axioma.
+
+    El caller es responsable de haber aplicado el `.join(models.Persona, ...)`
+    apropiado (con la FK correcta al modelo raíz del query).
+    """
+    user_sede = get_user_sede_id(db, user.id)
+    if user_sede:
+        query = query.filter(models.Persona.sede_id == user_sede)
+    return query
+
+
+
+def _get_scoped_persona(db: Session, user: models.User, persona_id) -> models.Persona:
+    # Persona NO tiene columna deleted_at (usa estado_vital para soft-delete).
+    from backend.crud._utils import _to_uuid
+    try:
+        persona_uuid = _to_uuid(persona_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
+    user_sede = get_user_sede_id(db, user.id)
+    query = db.query(models.Persona)
+    if user_sede:
+        query = query.filter(models.Persona.sede_id == user_sede)
+    # estado_vital default = "ACTIVO"; soft-delete marca "INACTIVO"
+    query = query.filter(models.Persona.estado_vital != "INACTIVO")
+    query = query.filter(models.Persona.id == persona_uuid)
+    persona = query.first()
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
+    return persona
+
+
+def _get_scoped_family(db: Session, user: models.User, family_id: UUID) -> models.Family:
+    """Family no tiene sede_id propio; el scope se aplica indirectamente vía
+    las Personas que pertenecen a esa familia (Axioma 3). Una familia sin
+    ninguna persona en la sede del usuario se considera fuera de scope.
+    """
+    fam = db.query(models.Family).filter(models.Family.id == family_id).first()
+    if not fam:
+        raise HTTPException(status_code=404, detail="Familia no encontrada")
+    user_sede = get_user_sede_id(db, user.id)
+    if user_sede:
+        member_in_sede = (
+            db.query(models.Persona.id)
+            .filter(
+                models.Persona.family_id == family_id,
+                models.Persona.sede_id == user_sede,
+            )
+            .first()
+        )
+        if not member_in_sede:
+            raise HTTPException(status_code=404, detail="Familia no encontrada")
+    return fam
+
+
+def _get_scoped_grupo(db: Session, user: models.User, grupo_id) -> models.GrupoEvangelismo:
+    from backend.crud._utils import _to_uuid
+    try:
+        grupo_uuid = _to_uuid(grupo_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=404, detail="Grupo no encontrado")
+    user_sede = get_user_sede_id(db, user.id)
+    query = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_uuid)
+    if user_sede:
+        query = query.filter(models.GrupoEvangelismo.sede_id == user_sede)
+    grupo = query.first()
+    if not grupo:
+        raise HTTPException(status_code=404, detail="Grupo no encontrado")
+    return grupo
+
+
+def _get_scoped_counseling_ticket(db: Session, user: models.User, ticket_id) -> models.CounselingTicket:
+    from backend.crud._utils import _to_uuid
+    try:
+        ticket_uuid = _to_uuid(ticket_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=404, detail="Counseling ticket not found")
+    user_sede = get_user_sede_id(db, user.id)
+    query = db.query(models.CounselingTicket).filter(
+        models.CounselingTicket.id == ticket_uuid,
+        models.CounselingTicket.deleted_at.is_(None),
+    )
+    if user_sede:
+        query = query.join(
+            models.Persona, models.CounselingTicket.persona_id == models.Persona.id
+        ).filter(models.Persona.sede_id == user_sede)
+    ticket = query.first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Counseling ticket not found")
+    return ticket
+
+
+def _get_scoped_prayer_request(db: Session, user: models.User, request_id) -> models.PrayerRequest:
+    from backend.crud._utils import _to_uuid
+    try:
+        req_uuid = _to_uuid(request_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=404, detail="Prayer request not found")
+    user_sede = get_user_sede_id(db, user.id)
+    query = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == req_uuid)
+    if user_sede:
+        query = query.filter(models.PrayerRequest.sede_id == user_sede)
+    prayer = query.first()
+    if not prayer:
+        raise HTTPException(status_code=404, detail="Prayer request not found")
+    return prayer
+
+
+def _get_scoped_plantilla(db: Session, user: models.User, plantilla_id: str):
+    """Recurso PlantillaMensaje: sede_id propio. Devuelve 404 si no está en
+    el scope del usuario. Retorna el ORM object para los CRUD existentes.
+    """
+    from backend.crud.crm_resources import get_plantilla
+    obj = get_plantilla(db, plantilla_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+    user_sede = get_user_sede_id(db, user.id)
+    if user_sede and str(obj.sede_id) != str(user_sede):
+        raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+    return obj
+
+
+def _get_scoped_automation(db: Session, user: models.User, automation_id) -> models.CrmAutomation:
+    """CrmAutomation sin sede_id propio: el scope se aplica indirectamente
+    vía la plantilla referenciada en action_payload. Si la automatización
+    referencia una plantilla de otra sede, se considera fuera de scope.
+    """
+    from backend.crud.crm_extended import get_crm_automation
+    try:
+        auto_uuid = _to_uuid(automation_id) if not isinstance(automation_id, UUID) else automation_id
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=404, detail="Automatización no encontrada")
+    auto = get_crm_automation(db, auto_uuid)
+    if not auto:
+        raise HTTPException(status_code=404, detail="Automatización no encontrada")
+    user_sede = get_user_sede_id(db, user.id)
+    if user_sede:
+        from backend.crud.crm_resources import get_plantilla as _get_plantilla
+        ap = auto.action_payload or {}
+        plantilla_id = ap.get("plantilla_id")
+        if plantilla_id:
+            plantilla = _get_plantilla(db, plantilla_id)
+            if plantilla and str(plantilla.sede_id) != str(user_sede):
+                raise HTTPException(status_code=404, detail="Automatización no encontrada")
+    return auto
+
+
+def _get_scoped_task(db: Session, user: models.User, task_id) -> models.TareaCRM:
+    """Axioma 3 — Multi-Tenant: una tarea CRM está en scope si AL MENOS
+    UNA de sus anclas (CasoCRM.caso_id, Persona.persona_id, Persona.asignado_a_id)
+    pertenece a la sede del usuario.
+
+    Política OR-based (misma que `_get_scoped_family`): basta que CUALQUIER FK
+    esté en scope para autorizar el acceso. Esto evita over-scoping donde
+    una tarea legítimamente "tropical" (caso de sede_a asignado temporalmente
+    a un pastor de sede_b) quede falsamente fuera de scope.
+
+    TareaCRM NO tiene columna sede_id propia (backend/models_crm_pipeline.py);
+    el scope se aplica indirectamente por la unión de FKs. Patrón DRY para
+    retrieval usado por `get_crm_task_detail` y `update_crm_task`.
+
+    Retorna 404 (no 403) para evitar existence-leaks cross-sede.
+
+    Edge cases:
+      - Tarea sin ninguna FK (huérfana): sólo visible a superadmin sin sede.
+        create_crm_task siempre pre-assigna el editor como asignado_a_id,
+        por lo que la creación normal garantiza scope. Tasks huérfanas
+        creadas por scripts/no-API son out-of-scope para editores.
+      - Superadmin sin sede asignada: ve TODO lo no-borrado.
+    """
+    from backend.crud._utils import _to_uuid
+    try:
+        task_uuid = _to_uuid(task_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task = (
+        db.query(models.TareaCRM)
+        .filter(
+            models.TareaCRM.id == task_uuid,
+            models.TareaCRM.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    user_sede = get_user_sede_id(db, user.id)
+    if not user_sede:
+        # Superadmin sin sede: ve todo lo no borrado.
+        return task
+
+    # 1. Scope via caso_id → CasoCRM.sede_id
+    if task.caso_id is not None:
+        from backend.models_crm_pipeline import CasoCRM
+        caso = db.query(CasoCRM).filter(CasoCRM.id == task.caso_id).first()
+        if caso and str(caso.sede_id) == str(user_sede):
+            return task
+
+    # 2. Scope via persona_id (target persona)
+    if task.persona_id is not None:
+        persona = db.query(models.Persona).filter(
+            models.Persona.id == task.persona_id
+        ).first()
+        if persona and persona.sede_id and str(persona.sede_id) == str(user_sede):
+            return task
+
+    # 3. Scope via asignado_a_id (assignee)
+    if task.asignado_a_id is not None:
+        assignee = db.query(models.Persona).filter(
+            models.Persona.id == task.asignado_a_id
+        ).first()
+        if assignee and assignee.sede_id and str(assignee.sede_id) == str(user_sede):
+            return task
+
+    # Ningún FK ancló a la sede del caller → 404 (existence-leak-safe).
+    raise HTTPException(status_code=404, detail="Task not found")
+
+
+def _resolve_assignee_for_task(
+    db: Session, current_user: models.User, raw_assignee_id
+):
+    """Resolve `assignee_id` (UUID persona o Integer user_id) a un UUID de
+    persona y valida scope (Axioma 3). Preserva el contrato histórico de
+    aceptar user_id sin reintroducir el silent-bypass.
+
+    Raises 404 (no 403, para evitar existence-leaks) si:
+      - El input no es UUID ni Integer parseable.
+      - El Integer no corresponde a un User existente.
+      - El User no tiene persona vinculada.
+      - La persona resuelta es cross-sede o INACTIVA.
+
+    Retorna None si raw_assignee_id es None / string vacío (compatibilidad
+    con payloads que omiten assignee_id).
+    """
+    if not raw_assignee_id:
+        return None
+    raw_str = str(raw_assignee_id).strip()
+    if not raw_str:
+        return None
+    # 1. Intentar como UUID de persona
+    try:
+        persona_uuid = _uuid.UUID(raw_str)
+    except (TypeError, ValueError):
+        persona_uuid = None
+    if persona_uuid:
+        return _get_scoped_persona(db, current_user, persona_uuid).id
+    # 2. Intentar como Integer user_id
+    from backend.crud.crm import resolve_persona_id_for_user
+    try:
+        user_id_int = int(raw_str)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=404, detail="Assignee no encontrado")
+    user = db.query(models.User).filter(models.User.id == user_id_int).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Assignee no encontrado")
+    persona_id = resolve_persona_id_for_user(db, user.id)
+    if not persona_id:
+        raise HTTPException(status_code=404, detail="Assignee no encontrado")
+    return _get_scoped_persona(db, current_user, persona_id).id
 
 
 def _serialize_persona_position(persona_position: models.PersonaPosition) -> dict:
