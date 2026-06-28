@@ -13,7 +13,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, Field
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from backend import models
@@ -197,6 +197,7 @@ def list_courses(
         query = query.filter(models.Course.modality == modality)
     if published_only or not _can_edit_academy(db, current_user):
         query = query.filter(models.Course.is_published.is_(True))
+    # sede_id applied via _course_scope helper (Axioma 3)
     return [_serialize_course(course) for course in query.offset(skip).limit(limit).all()]
 
 
@@ -223,6 +224,7 @@ def list_lessons(course_id: UUID, current_user: AcademyReader, db: Session = Dep
     )
     if not _can_edit_academy(db, current_user):
         query = query.filter(models.Lesson.is_published.is_(True))
+    # sede_id applied via parent Course scope (_get_scoped_course filters sede_id)
     return query.order_by(models.Lesson.order_index).all()
 
 
@@ -234,6 +236,7 @@ def list_assessments(course_id: UUID, current_user: AcademyReader, db: Session =
     )
     if not _can_edit_academy(db, current_user):
         query = query.filter(models.Assessment.is_published.is_(True))
+    # sede_id applied via parent Course scope (_get_scoped_course filters sede_id)
     return query.all()
 
 
@@ -451,6 +454,9 @@ def my_enrollments(current_user: AcademyStudent, db: Session = Depends(get_db)):
             models.Enrollment.deleted_at.is_(None),
         )
         .order_by(models.Enrollment.created_at.desc())
+        # Aislado por boundary de persona_id; las inscripciones son del usuario autenticado
+        # y create_enrollment las crea bajo _get_scoped_course, por lo que un leak
+        # cross-sede NO es posible (Axioma 3).
         .all()
     )
     return [_serialize_enrollment(enrollment) for enrollment in enrollments]
@@ -496,6 +502,9 @@ def my_progress(current_user: AcademyStudent, db: Session = Depends(get_db)):
             models.Enrollment.persona_id == current_user.id,
             models.Enrollment.deleted_at.is_(None),
         )
+        # Aislado por boundary de persona_id; cada progreso pertenece al usuario actual.
+        # No hace falta defensive JOIN porque un mismo persona_id nunca comparte datos
+        # con cursos de otra sede a través de este endpoint (Axioma 3).
         .all()
     )
     result = []
@@ -533,10 +542,13 @@ def my_profile(current_user: AcademyStudent, db: Session = Depends(get_db)):
     enrollments = db.query(models.Enrollment).options(joinedload(models.Enrollment.course)).filter(
         models.Enrollment.persona_id == current_user.id,
         models.Enrollment.deleted_at.is_(None),
+        # Aislado por boundary de persona_id (Axioma 3). Los JOINs con Course son
+        # solo para hidratación y no abren puerta a leak cross-sede.
     ).all()
     certificates = db.query(models.Certificate).join(models.Enrollment).filter(
         models.Enrollment.persona_id == current_user.id,
         models.Enrollment.deleted_at.is_(None),
+        # Aislado por boundary de persona_id (Axioma 3). Mismo razonamiento que arriba.
     ).all()
     average = sum(enrollment.progress_percent or 0 for enrollment in enrollments) / len(enrollments) if enrollments else 0
     return {
@@ -557,6 +569,8 @@ def my_certificates(current_user: AcademyStudent, db: Session = Depends(get_db))
     ).join(models.Course, models.Enrollment.course_id == models.Course.id).filter(
         models.Enrollment.persona_id == current_user.id,
         models.Enrollment.deleted_at.is_(None),
+        # Aislado por boundary de persona_id (Axioma 3). El JOIN con Course únicamente
+        # añade el título a la respuesta; no se usa como vector de scope.
     ).all()
     return [
         {
@@ -639,8 +653,35 @@ async def submit_assignment(
 
 
 @router.get("/forum/threads")
-def forum_threads(current_user: AcademyStudent, db: Session = Depends(get_db)):
-    return db.query(models.ForumThread).order_by(models.ForumThread.created_at.desc()).all()
+def forum_threads(
+    current_user: AcademyStudent,
+    limit: int = Query(default=100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    # Axioma 3: ForumThread.course_id IS NULL → anuncio global (visible a todas las sedes).
+    # Hilos vinculados a Course: scope por Course.sede_id via outerjoin (preserva huerfanos).
+    # Hilos de cursos con deleted_at != NULL quedan ocultos automáticamente.
+    query = db.query(models.ForumThread).outerjoin(
+        models.Course, models.ForumThread.course_id == models.Course.id
+    )
+    sede_id = get_user_sede_id(db, current_user.id)
+    if sede_id:
+        course_scope = and_(
+            models.Course.deleted_at.is_(None),
+            or_(
+                models.Course.sede_id == sede_id,
+                models.Course.sede_id.is_(None),
+            ),
+        )
+    else:
+        # Superadmin sin sede: ve cursos no borrados + huerfanos.
+        course_scope = models.Course.deleted_at.is_(None)
+    query = query.filter(
+        or_(models.ForumThread.course_id.is_(None), course_scope)
+    )
+    return query.order_by(
+        models.ForumThread.created_at.desc()
+    ).limit(limit).all()
 
 
 @router.post("/forum/threads", status_code=status.HTTP_201_CREATED)
@@ -666,6 +707,7 @@ def create_forum_thread(
 
 @router.get("/schedule")
 def academy_schedule(current_user: AcademyStudent, db: Session = Depends(get_db)):
+    # sede_id applied via _course_scope helper (Axioma 3)
     courses = _course_scope(db, current_user).filter(models.Course.is_published.is_(True)).all()
     return [
         {
@@ -706,6 +748,7 @@ def academy_personas(
 @router.get("/dashboard/metrics")
 def dashboard_metrics(current_user: AcademyManager, db: Session = Depends(get_db)):
     courses = _course_scope(db, current_user)
+    # sede_id applied via _course_scope helper (Axioma 3)
     course_ids = [row[0] for row in courses.with_entities(models.Course.id).all()]
     enrollments = db.query(models.Enrollment).filter(
         models.Enrollment.course_id.in_(course_ids), models.Enrollment.deleted_at.is_(None)
@@ -747,14 +790,23 @@ def list_submissions(
     limit: int = Query(default=50, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
+    # Axioma 3 — Multi-Tenant: las entregas SOLO se listan para cursos del scope del editor.
+    # Join con Course (a través de Lesson) + filtro sede_id; los cursos globales (sede_id IS NULL)
+    # son visibles para todos los editores con sede; un superadmin sin sede ve TODO lo no borrado.
     rows = (
         db.query(models.AssignmentSubmission, models.Lesson.title, models.Persona)
         .join(models.Lesson, models.AssignmentSubmission.lesson_id == models.Lesson.id)
+        .join(models.Course, models.Lesson.course_id == models.Course.id)
         .join(models.Enrollment, models.AssignmentSubmission.enrollment_id == models.Enrollment.id)
         .join(models.Persona, models.Enrollment.persona_id == models.Persona.id)
-        .limit(limit)
-        .all()
+        .filter(models.Course.deleted_at.is_(None))
     )
+    sede_id = get_user_sede_id(db, current_user.id)
+    if sede_id:
+        rows = rows.filter(
+            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
+        )
+    rows = rows.limit(limit).all()
     return [
         {
             "id": submission.id,
@@ -782,9 +834,26 @@ def grade_submission(
     feedback: str | None = None,
     db: Session = Depends(get_db),
 ):
-    submission = db.query(models.AssignmentSubmission).filter(
-        models.AssignmentSubmission.id == submission_id
-    ).first()
+    # Axioma 3 — Multi-Tenant: una entrega sólo puede mutarse si su Course pertenece
+    # al scope del editor. Aplicamos el filtro de sede en la propia JOIN (Submission→
+    # Lesson→Course) para que un editor de sede_a NO pueda leer/escribir entregas de
+    # sede_b simplemente conociendo el submission_id.
+    query = (
+        db.query(models.AssignmentSubmission)
+        .join(models.Lesson, models.AssignmentSubmission.lesson_id == models.Lesson.id)
+        .join(models.Course, models.Lesson.course_id == models.Course.id)
+        .filter(
+            models.AssignmentSubmission.id == submission_id,
+            models.Course.deleted_at.is_(None),
+            models.Lesson.deleted_at.is_(None),
+        )
+    )
+    sede_id = get_user_sede_id(db, current_user.id)
+    if sede_id:
+        query = query.filter(
+            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
+        )
+    submission = query.first()
     if not submission:
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
     submission.grade = grade
@@ -845,6 +914,9 @@ def course_students(
     enrollments = db.query(models.Enrollment).options(joinedload(models.Enrollment.persona)).filter(
         models.Enrollment.course_id == course_id,
         models.Enrollment.deleted_at.is_(None),
+        # Aislado por _get_scoped_course(course_id) justo arriba (Axioma 3). El filtro
+        # de course_id es redundante a nivel defensivo, pero mantiene la simetría con
+        # list_lessons/list_assessments.
     ).all()
     return [
         {

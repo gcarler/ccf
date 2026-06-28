@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
+from backend.api.crm._shared import _get_scoped_persona
 from backend.core.permissions import require_module_access, require_permission
 from backend.core.database import get_db
 from backend.crud.crm import resolve_persona_id_for_user
@@ -75,11 +76,8 @@ def get_persona(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Obtiene una persona por UUID."""
-    persona = crud.get_persona(db, persona_id)
-    if not persona:
-        raise HTTPException(404, detail="Persona no encontrada")
-    return persona
+    """Obtiene una persona por UUID. Axioma 3: scope por sede_id del usuario."""
+    return _get_scoped_persona(db, current_user, persona_id)
 
 
 @router.post("/personas", response_model=schemas.PersonaResponse)
@@ -99,7 +97,8 @@ def update_persona(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Actualiza una persona existente."""
+    """Actualiza una persona existente. Axioma 3: 404 si la persona está fuera de la sede."""
+    _get_scoped_persona(db, current_user, persona_id)
     persona = crud.update_persona(db, persona_id, payload)
     if not persona:
         raise HTTPException(404, detail="Persona no encontrada")
@@ -113,7 +112,8 @@ def patch_persona(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Actualización parcial de una persona (PATCH)."""
+    """Actualización parcial de una persona (PATCH). Axioma 3: 404 cross-sede."""
+    _get_scoped_persona(db, current_user, persona_id)
     persona = crud.update_persona(db, persona_id, payload)
     if not persona:
         raise HTTPException(404, detail="Persona no encontrada")
@@ -126,7 +126,10 @@ def delete_persona(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Soft-delete: marca estado_vital = INACTIVO. Nunca eliminar físicamente."""
+    """Soft-delete: marca estado_vital = INACTIVO. Nunca eliminar físicamente.
+    Axioma 3: sede scope; retorna 404 si la persona es de otra sede.
+    """
+    _get_scoped_persona(db, current_user, persona_id)
     if not crud.delete_persona(db, persona_id):
         raise HTTPException(404, detail="Persona no encontrada")
     return {"ok": True}
@@ -138,7 +141,8 @@ def persona_timeline(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Obtiene la línea de tiempo de una persona."""
+    """Obtiene la línea de tiempo de una persona. Axioma 3: scope por sede."""
+    _get_scoped_persona(db, current_user, persona_id)
     timeline = crud.get_persona_timeline(db, persona_id)
     if not timeline:
         raise HTTPException(404, detail="Persona no encontrada o sin actividad")
@@ -151,5 +155,8 @@ def persona_donations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Obtiene las donaciones de una persona."""
+    """Obtiene las donaciones de una persona. Axioma 3: scope por sede de la
+    persona (los montos, fechas y propósito de donación NO deben cruzar sedes).
+    """
+    _get_scoped_persona(db, current_user, persona_id)
     return crud.get_persona_donations(db, persona_id)

@@ -5,7 +5,7 @@ from enum import Enum
 from uuid import UUID
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from backend.core.context import user_role_context
 from backend.schemas._common import orm_config
@@ -36,6 +36,39 @@ class EventAudienceType(str, Enum):
     ALL = "ALL"
     ROLE = "ROLE"
     MANUAL = "MANUAL"
+
+
+class CrmTaskStatus(str, Enum):
+    """Estado del Ciclo de Vida de una Tarea CRM (Axioma 1).
+
+    Catálogo cerrado y case-sensitive (Pydantic valida en la frontera).
+    Valores mapean 1:1 a la columna `TareaCRM.estado` (String(20)) del modelo.
+
+    Default: ``pending`` (alineado con ``server_default='pending'`` del DB).
+    Callers que envíen valores fuera del catálogo o case-insensitive
+    (e.g., ``"COMPLETED"``, ``"In Progress"``) reciben 422 estructurado.
+    """
+
+    todo = "todo"
+    pending = "pending"
+    in_progress = "in_progress"
+    completed = "completed"
+    cancelled = "cancelled"
+
+
+class CrmTaskPriority(str, Enum):
+    """Prioridad de una Tarea CRM (alineado con el default ``medium`` del DB).
+
+    Catálogo cerrado y case-sensitive. NO se aceptan alias legacy como
+    ``"normal"`` o ``"alta"``; los callers deben normalizar ANTES de enviar.
+
+    Default: ``medium`` (alineado con ``server_default='medium'`` del DB).
+    """
+
+    low = "low"
+    medium = "medium"
+    high = "high"
+    urgent = "urgent"
 
 class CrmEventBase(BaseModel):
     name: str
@@ -194,23 +227,76 @@ class Donation(DonationBase):
     model_config = orm_config
 
 class CrmTaskBase(BaseModel):
+    """Schema base para tareas CRM (uso persistencia + auditoría, Axioma 1).
+
+    `status` y `priority` son Pydantic ``str, Enum`` (case-sensitive) con
+    valores explícitos del catálogo (`CrmTaskStatus` / `CrmTaskPriority`).
+    `use_enum_values=True` garantiza que ``model_dump()`` y la serialización
+    JSON retornen strings planos (alineados con la columna
+    ``TareaCRM.estado``/``prioridad`` ``String(20)`` y JSONB-safe para la
+    tabla ``logs_auditoria``).
+
+    Defaults alineados con los ``server_default`` de las columnas:
+      * ``status = CrmTaskStatus.pending`` (DB default: ``'pending'``).
+      * ``priority = CrmTaskPriority.medium`` (DB default: ``'medium'``).
+    Antes (pre-Enums) el schema tenía ``status="todo"`` y ``priority="normal"``,
+    que NO están en el catálogo y NO coinciden con los DB defaults. El
+    cleanup alinea schema ↔ DB (single source of truth: enum value ==
+    DB-stored string == OpenAPI serialized value).
+    """
+
+    model_config = ConfigDict(use_enum_values=True)
+
     title: str
     description: Optional[str] = None
     persona_id: Optional[UUID] = None
     assignee_id: Optional[str] = None  # UUID string (personas.id)
     due_date: Optional[datetime] = None
-    status: str = "todo"
-    priority: str = "normal"
+    status: CrmTaskStatus = CrmTaskStatus.pending
+    priority: CrmTaskPriority = CrmTaskPriority.medium
+    completed_at: Optional[datetime] = None  # synonym en TareaCRM para fecha_completada
 
 class CrmTaskCreate(CrmTaskBase):
     pass
 
 class CrmTaskUpdate(BaseModel):
+    """Schema para PATCH `/tasks/{id}`.
+
+    `status` y `priority` son `Optional[CrmTaskStatus]` / `Optional[CrmTaskPriority]`
+    (case-sensitive). Migración desde ``Optional[str]`` con whitelist inline
+    en el endpoint — ahora la validación es declarativa en el schema y
+    cualquier caller fuera del catálogo recibe 422 estruturado en la
+    frontera.
+
+    `use_enum_values=True` garantiza ``model_dump()`` retorna strings planos,
+    alineados con la columna String(20) del modelo y JSONB-safe para el
+    audit log.
+    """
+
+    model_config = ConfigDict(use_enum_values=True)
+
     title: Optional[str] = None
     description: Optional[str] = None
-    status: Optional[str] = None
-    priority: Optional[str] = None
+    status: Optional[CrmTaskStatus] = None
+    priority: Optional[CrmTaskPriority] = None
     due_date: Optional[datetime] = None
+    completed_at: Optional[datetime] = None  # side-effect: se estampa/limpia según status
+    # FK fields (Axioma 3 Multi-Tenant):
+    #   * persona_id: target persona de la tarea. Cambio cross-sede debe
+    #     ser rechazado por el scope re-check del CRUD.
+    #   * assignee_id: persona responsable. Acepta UUID persona o Integer
+    #     user_id (contrato histórico preservado) como string. La
+    #     resolución + scope check ocurre en el endpoint API vía
+    #     `_resolve_assignee_for_task` antes de delegar al CRUD.
+    #   * caso_id: vincula/desvincula la tarea a un CasoCRM. Cambio
+    #     cross-sede debe ser rechazado.
+    # Estos campos eran ignorados silenciosamente por `extra='ignore'`
+    # default de Pydantic v2; ahora el schema los expone explícitamente
+    # para alinear el contrato Pydantic con el contrato real del
+    # endpoint API (que lee el body como dict JSON crudo).
+    persona_id: Optional[UUID] = None
+    assignee_id: Optional[str] = None  # UUID string (personas.id) o Integer user_id string
+    caso_id: Optional[UUID] = None
 
 class CrmTask(CrmTaskBase):
     id: UUID
