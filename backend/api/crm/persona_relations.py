@@ -6,9 +6,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.api.crm._shared import _serialize_case
+from backend.api.crm._shared import (
+    _get_scoped_family,
+    _get_scoped_persona,
+    _scope_by_user_sede_via_persona,
+    _serialize_case,
+)
 from backend.core.permissions import normalize_role, require_module_access
 from backend.core.database import get_db
+from backend.crud.crm import get_user_sede_id
 
 router = APIRouter(tags=["CRM"])
 
@@ -32,12 +38,15 @@ def get_persona_communications(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    persona_uuid = _parse_uuid(persona_id)
-    return (
+    """Axioma 3: Communications sólo se exponen para personas en la sede del usuario."""
+    persona = _get_scoped_persona(db, current_user, persona_id)
+    query = (
         db.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.persona_id == persona_uuid)
-        .all()
+        .join(models.Persona, models.CommunicationLog.persona_id == models.Persona.id)
+        .filter(models.CommunicationLog.persona_id == persona.id)
     )
+    query = _scope_by_user_sede_via_persona(db, current_user, query)
+    return query.all()
 
 
 @router.get("/personas/{persona_id}/ministries", response_model=List[dict])
@@ -46,8 +55,10 @@ def get_persona_ministries(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Devuelve todas las vinculaciones ministeriales de una persona con su rol."""
-    persona_uuid = _parse_uuid(persona_id)
+    """Devuelve todas las vinculaciones ministeriales de una persona con su rol.
+    Axioma 3: persona debe estar en la sede del usuario.
+    """
+    persona = _get_scoped_persona(db, current_user, persona_id)
     rows = (
         db.query(models.PersonaMinistryAssignment)
         .filter(models.PersonaMinistryAssignment.persona_id == persona_uuid)
@@ -89,11 +100,11 @@ def get_persona_consolidation_profile(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Devuelve el perfil de consolidación de una persona: roles, casos y seguimiento."""
-    persona_uuid = _parse_uuid(persona_id)
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
-    if not persona:
-        raise HTTPException(status_code=404, detail="Persona not found")
+    """Devuelve el perfil de consolidación de una persona: roles, casos y seguimiento.
+    Axioma 3: scope por sede via helper.
+    """
+    persona = _get_scoped_persona(db, current_user, persona_id)
+    persona_uuid = persona.id
 
     positions = (
         db.query(models.PersonaPosition, models.Position)
@@ -208,10 +219,9 @@ def assign_persona_position(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    persona_uuid = _parse_uuid(persona_id)
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
-    if not persona:
-        raise HTTPException(status_code=404, detail="Persona not found")
+    """Axioma 3: sólo se asignan posiciones a personas en la sede del usuario."""
+    persona = _get_scoped_persona(db, current_user, persona_id)
+    persona_uuid = persona.id
     position = (
         db.query(models.Position)
         .filter(models.Position.id == payload.position_id)
@@ -259,7 +269,8 @@ def update_persona_position(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    persona_uuid = _parse_uuid(persona_id)
+    """Axioma 3: sede scope via persona + check adicional sobre el assignment."""
+    _get_scoped_persona(db, current_user, persona_id)
     row = (
         db.query(models.PersonaPosition)
         .filter(
@@ -284,8 +295,11 @@ def assign_persona_ministry(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Vincula a un miembro a un ministerio con un rol especifico."""
-    persona_uuid = _parse_uuid(persona_id)
+    """Vincula a un miembro a un ministerio con un rol especifico.
+    Axioma 3: scope por sede via persona.
+    """
+    persona = _get_scoped_persona(db, current_user, persona_id)
+    persona_uuid = persona.id
     existing = (
         db.query(models.PersonaMinistryAssignment)
         .filter(
@@ -322,8 +336,10 @@ def update_persona_ministry(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Actualiza el rol o estado de una vinculacion ministerial."""
-    persona_uuid = _parse_uuid(persona_id)
+    """Actualiza el rol o estado de una vinculacion ministerial.
+    Axioma 3: scope por sede via persona.
+    """
+    _get_scoped_persona(db, current_user, persona_id)
     mm = (
         db.query(models.PersonaMinistryAssignment)
         .filter(
@@ -394,7 +410,25 @@ def list_families(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    return crud.get_families(db, skip=skip, limit=limit)
+    """Axioma 3: Family sin sede_id propio ⇒ filtramos por las Personas que la habitan."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    families = crud.get_families(db, skip=skip, limit=limit)
+    if not user_sede:
+        return families
+    family_ids = [f.id for f in families]
+    if not family_ids:
+        return []
+    scoped = (
+        db.query(models.Persona.family_id)
+        .filter(
+            models.Persona.family_id.in_(family_ids),
+            models.Persona.sede_id == user_sede,
+        )
+        .distinct()
+        .all()
+    )
+    allowed_ids = {row[0] for row in scoped}
+    return [fam for fam in families if fam.id in allowed_ids]
 
 
 @router.post("/families/", response_model=dict)
@@ -416,4 +450,6 @@ def get_family(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
+    """Axioma 3: 404 si la familia no tiene miembros en la sede del usuario."""
+    _get_scoped_family(db, current_user, family_id)
     return crud.get_family_personas(db, family_id=family_id)

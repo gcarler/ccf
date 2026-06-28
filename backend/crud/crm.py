@@ -1,6 +1,7 @@
 """CRM: Personas, pipeline, events, tasks, counseling, prayer, grupos, etc."""
 
 import datetime as dt
+import logging
 import uuid
 from typing import List, Optional
 from uuid import UUID
@@ -16,6 +17,9 @@ from backend.crud._utils import _utcnow
 from backend.schemas.crm import CrmEventUpdate
 from backend.schemas.notifications import CommunicationLogUpdate
 from backend.schemas.operational import CommunityBoardCardUpdate
+
+
+_logger = logging.getLogger(__name__)
 
 
 def _is_uuid_like(value) -> bool:
@@ -56,6 +60,187 @@ def get_user_sede_id(db: Session, user_id: str) -> str | None:
     from backend.core.tenant import get_user_sede_id as resolve_user_sede_id
 
     return resolve_user_sede_id(db, user_id)
+
+
+# ── Axioma 3 — Multi-Tenant: Defense-in-Depth scope re-check (CRUD layer) ───
+
+
+def _actor_sede_or_none(db: Session, actor_user_id) -> str | None:
+    """Resolve la sede del actor o None si es superadmin / actor ausente / legacy.
+
+    Disparadores de None (no se aplica scope-check):
+      - `actor_user_id is None`: callers legacy o scripts (workers async,
+        migraciones, seeds) que operan sin contexto de usuario.
+      - `get_user_sede_id` retorna None: usuario sin persona vinculada o
+        con persona sin sede asignada (típicamente superadmin).
+
+    En cualquier otro caso devuelve la sede del actor como string.
+
+    Manejo de excepciones: se capturan sólo errores de tipo/valor/atributo
+    (propios de inputs malformados). Errores de DB/programación no se
+    enmascaran — propagan para no bypassear el scope-check por bug oculto.
+    """
+    if actor_user_id is None:
+        return None
+    try:
+        return get_user_sede_id(db, str(actor_user_id))
+    except (TypeError, ValueError, AttributeError):
+        return None
+
+
+def _resolve_anchor_sede(
+    db: Session, anchor_name: str, anchor_value
+) -> str | None:
+    """Resuelve la sede_id del target de un anchor FK. Retorna None si el
+    target no existe o no tiene sede asignada.
+
+    Anchors soportados (multi-tenant TareaCRM):
+      - `caso_id`: FK a CasoCRM (sede_id propia).
+      - `persona_id`: FK a Persona (sede_id propia).
+      - `asignado_a_id`: alias semántico de TareaCRM.assignee_id (FK a Persona).
+
+    Función pura de resolución. NO decide si hay violation.
+    """
+    from backend.models_crm_pipeline import CasoCRM
+
+    if anchor_value is None:
+        return None
+
+    if anchor_name == "caso_id":
+        row = (
+            db.query(CasoCRM.sede_id)
+            .filter(CasoCRM.id == anchor_value)
+            .first()
+        )
+    elif anchor_name in ("persona_id", "asignado_a_id"):
+        row = (
+            db.query(models.Persona.sede_id)
+            .filter(models.Persona.id == anchor_value)
+            .first()
+        )
+    else:
+        return None
+
+    if not row or not row[0]:
+        return None
+    return str(row[0])
+
+
+def _crud_scope_re_check_task(
+    db: Session,
+    actor_user_id,
+    *,
+    incoming_anchors: dict | None = None,
+    current_row_anchors: dict | None = None,
+    operation: str = "WRITE",
+) -> None:
+    """Defense in depth — Multi-Tenant (Axioma 3) re-check al nivel del CRUD.
+
+    Cierra el TOCTOU gap donde otro admin puede mover una fila cross-sede
+    entre el API fetch (p.ej. `_get_scoped_task`) y el commit del CRUD.
+
+    Política: STRICT sobre el estado final combinado de anclas.
+    Combinamos incoming_anchors (FKs entrantes en CREATE/UPDATE) con
+    current_row_anchors (FKs ya persistidas en UPDATE) — los incoming
+    sobrescriben los current_row correspondientes. Para el estado final
+    resultante exigimos: TODAS las anclas con valor distinto de None deben
+    pertenecer a `user_sede`. Si alguna está en OTRA sede o es
+    irresoluble, raise `HTTPException(404, "Task not found")`.
+
+    Esta política es ESTRICTA vs la API (que es OR-based para lectura en
+    `_get_scoped_task`). La asimetría es deliberada:
+
+      - READ (API `_get_scoped_task` OR-based): si UNA ancla está en
+        scope, la tarea es legible. Esto permite "tropical cases" donde
+        un caso de sede_A se asigna temporalmente a un pastor de sede_B.
+      - WRITE (CRUD defense-in-depth STRICT): no se permite INTRODUCIR o
+        DEJAR anclas cross-sede en la fila mutada. Esto cierra el TOCTOU
+        y blinda la creación de filas con anclas mixtas (potencial leak).
+
+    Disparadores (skip cuando):
+      - `actor_user_id is None`: callers legacy o scripts que no tienen
+        contexto de usuario. NO rompe workers async, migraciones, seeds.
+      - Actor sin sede (superadmin): ve TODO, igual que en API layer.
+
+    Casos especiales:
+      - Orphan (todas las anclas None): se REJECT para editores en sede.
+        Consistente con API que rechaza orphans para no-superadmins.
+      - FK target Inexistente: la query retorna None → tratado como
+        violation (no podemos garantizar scope). REJECT por safe-default.
+
+    Pre-flush en CREATE: se ejecuta antes de `db.add(row)` para no
+    ensuciar la Identity Map de SQLAlchemy con objetos inválidos.
+    Pre-mutation en UPDATE: se ejecuta después del SELECT inicial pero
+    antes de cualquier `setattr`.
+
+    NOTA sobre DB-audit: NO se persiste un `LogAuditoria` pre-commit.
+    SQLAlchemy rollback descartaría cualquier entrada pendiente, y el
+    audit trail debe registrar mutaciones cristalizadas (no intentos
+    bloqueados). La anomalía se registra vía `logging.warning(...)` en
+    la capa de aplicación para triage operacional.
+
+    Args:
+        incoming_anchors: anclas FK que se quieren escribir.
+        current_row_anchors: anclas FK ya persistidas (UPDATE only).
+        operation: 'CREATE' o 'UPDATE' (sólo logging clarity).
+    """
+    user_sede = _actor_sede_or_none(db, actor_user_id)
+    if not user_sede:
+        return
+
+    # Combinar incoming sobre current_row (incoming gana → refleja el
+    # estado FINAL de la fila post-mutación).
+    combined: dict = {}
+    if current_row_anchors:
+        combined.update(current_row_anchors)
+    if incoming_anchors:
+        combined.update(incoming_anchors)
+
+    if not combined:
+        return  # defensivo: caller debe pasar al menos un slot
+
+    # Orphan guard: TODAS las anclas son None → fila huérfana. Para un
+    # editor en sede, esto viola el axioma (orphan visible sólo a
+    # superadmin en API). REJECT por consistencia.
+    if all(value is None for value in combined.values()):
+        _logger.warning(
+            "Axioma 3 scope violation blocked at CRUD layer "
+            "(op=%s actor_sede=%s actor_user_id=%s reason=orphan_all_anchors_none)",
+            operation,
+            user_sede,
+            actor_user_id,
+        )
+        from fastapi import HTTPException as _HTTPException
+        raise _HTTPException(status_code=404, detail="Task not found")
+
+    # STRICT: TODAS las anclas con valor deben estar en user_sede.
+    # None como valor de slot → "no se setea este anchor", v\u00e1lido.
+    # (Una ancla no escrita/no persistida NO se valida; sólo lo presente
+    # en el estado final combinado.)
+    for anchor_name, anchor_value in combined.items():
+        if anchor_value is None:
+            # Slot no seteado → nada que validar. Skip silenciosamente.
+            continue
+        anchor_sede = _resolve_anchor_sede(db, anchor_name, anchor_value)
+        if anchor_sede is None or anchor_sede != str(user_sede):
+            # Cross-sede o target inexistente → violation.
+            _logger.warning(
+                "Axioma 3 scope violation blocked at CRUD layer "
+                "(op=%s actor_sede=%s actor_user_id=%s anchor=%s "
+                "anchor_sede=%s reason=cross_sede_or_unresolvable)",
+                operation,
+                user_sede,
+                actor_user_id,
+                anchor_name,
+                anchor_sede,
+            )
+            from fastapi import HTTPException as _HTTPException
+            # Mensaje genérico (sin nombre del anchor) para no leakear
+            # información sobre qué vector fue cross-sede. El detalle
+            # diagnóstico queda en `logging.warning(...)`.
+            raise _HTTPException(status_code=404, detail="Task not found")
+
+
 
 
 def _audit_log(
@@ -504,28 +689,198 @@ def get_crm_tasks(
     return query.order_by(models.TareaCRM.due_date.asc()).all()
 
 
-def create_crm_task(db: Session, payload: schemas.CrmTaskCreate) -> models.TareaCRM:
+def create_crm_task(
+    db: Session,
+    payload: schemas.CrmTaskCreate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
+) -> models.TareaCRM:
+    """Crea una tarea CRM y registra audit log (Axioma 1 — Auditoría Estricta).
+
+    A partir de la refactorización, la generación del audit log vive aquí
+    (defense in depth): cualquier caller — API endurecida, script de
+    seeding, worker asíncrono — persiste la traza sin depender del caller
+    de tener la lógica duplicada.
+
+    Argumentos:
+        db: sesión SQLAlchemy.
+        payload: schema Pydantic `CrmTaskCreate`.
+        actor_user_id: identidad (UUID o string) del usuario que origina la
+            mutación. Si es `None` (e.g., bulk import desde script), la fila
+            de auditoría se persiste con `usuario_id=NULL`. Si tiene sede
+            asignada, se aplica defense-in-depth scope re-check (OR-based)
+            sobre las anclas entrantes.
+    """
     data = payload.model_dump()
     assignee_identity = data.pop("assignee_id", None)
     data["assignee_id"] = resolve_persona_id_from_identity(db, assignee_identity)
+
+    # Defense in depth — Axioma 3 (Multi-Tenant) scope re-check (CREATE, pre-flush).
+    # Cierra el TOCTOU gap donde un caller que no es la API endurecida (worker,
+    # script, seed) podría crear una tarea con anclas cross-sede. Si el actor
+    # está en sede y ALGUNA FK entrante está en OTRA sede → 404 pre-add.
+    _crud_scope_re_check_task(
+        db,
+        actor_user_id,
+        incoming_anchors={
+            "caso_id": data.get("caso_id"),
+            "persona_id": data.get("persona_id"),
+            "asignado_a_id": data.get("assignee_id"),
+        },
+        operation="CREATE",
+    )
+
     row = models.TareaCRM(**data)
     db.add(row)
+    db.flush()  # poblar row.id antes del audit log
+    _audit_log(
+        db,
+        "crm_tareas",
+        str(row.id),
+        "CREATE",
+        detalles={
+            "title": row.titulo,
+            "category": row.categoria,
+            "persona_id": str(row.persona_id) if row.persona_id else None,
+            "asignado_a_id": str(row.asignado_a_id) if row.asignado_a_id else None,
+            "priority": row.prioridad,
+            "status": row.estado,
+        },
+        usuario_id=str(actor_user_id) if actor_user_id else None,
+    )
     db.commit()
     db.refresh(row)
     return row
 
 
 def update_crm_task(
-    db: Session, task_id: uuid.UUID, payload: schemas.CrmTaskUpdate
+    db: Session,
+    task_id: uuid.UUID,
+    payload,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ) -> models.TareaCRM:
+    """Actualiza una tarea CRM y registra audit log sólo si hay cambios reales.
+
+    Axioma 1 — Auditoría Estricta: minimiza el ruido en `log_auditoria`
+    omitiendo updates idempotentes (mismo valor). Defense in depth: el
+    audit log persiste independientemente del caller (API endurecida,
+    script, worker).
+
+    Argumentos:
+        db: sesión SQLAlchemy.
+        task_id: UUID de la tarea a actualizar.
+        payload: `schemas.CrmTaskUpdate` (preferido) o un `dict` compatible
+            para callers legacy (algunos tests directos al CRUD usan dict).
+            El CRUD acepta ambos via duck typing sobre `model_dump`.
+        actor_user_id: identidad del usuario que origina la mutación; `None`
+            produce una fila con `usuario_id=NULL`.
+
+    Nota sobre scope (Axioma 3): el CRUD NO valida scope Multi-Tenant por
+    sí mismo (no conoce el usuario actual fuera del `actor_user_id` que se
+    le pasa explícito). Esa responsabilidad sigue siendo de la capa API.
+    La separación API↔CRUD permite que el CRUD sea reutilizable desde
+    callers no-API (workers, scripts) sin re-implementar la lógica de
+    scope.
+    """
     row = db.query(models.TareaCRM).filter(models.TareaCRM.id == task_id).first()
     if not row:
         return None
-    for key, value in payload.model_dump(exclude_unset=True).items():
+
+    # Duck typing: schema Pydantic (preferred) o dict (legacy callers).
+    changes_in = (
+        payload.model_dump(exclude_unset=True)
+        if hasattr(payload, "model_dump")
+        else dict(payload)
+    )
+
+    # Defense in depth — Axioma 3 (Multi-Tenant) scope re-check (UPDATE).
+    # Detecta DOS vectores:
+    #   1. TOCTOU: ancla actualmente persistida se movió cross-sede
+    #      entre el fetch inicial del API y este re-fetch del CRUD.
+    #   2. NEW_FK: el body del PATCH intenta escribir una FK nueva
+    #      (caso_id/persona_id/assignee_id) que pertenece a otra sede.
+    # Pre-mutation: se ejecuta antes de cualquier `setattr` para no
+    # dejar la Identity Map de SQLAlchemy en estado parcial.
+    _current_anchors = {
+        "caso_id": row.caso_id,
+        "persona_id": row.persona_id,
+        "asignado_a_id": row.assignee_id,
+    }
+    _incoming_anchors: dict = {}
+    _ANCHOR_PAYLOAD_KEYS = (
+        ("caso_id", "caso_id"),
+        ("persona_id", "persona_id"),
+        ("assignee_id", "asignado_a_id"),  # schema usa assignee_id, helper usa asignado_a_id
+    )
+    for payload_key, anchor_key in _ANCHOR_PAYLOAD_KEYS:
+        if payload_key in changes_in:
+            _incoming_anchors[anchor_key] = changes_in[payload_key]
+    _crud_scope_re_check_task(
+        db,
+        actor_user_id,
+        incoming_anchors=_incoming_anchors or None,
+        current_row_anchors=_current_anchors,
+        operation="UPDATE",
+    )
+
+    changes: dict = {}
+    for key, value in changes_in.items():
+        # SQLAlchemy resuelve los synonyms (title↔titulo, etc.) tanto en
+        # getattr como en setattr, así que podemos usar la key cruda.
+        old_val = getattr(row, key, None)
+        if _values_equivalent(old_val, value):
+            continue
+        changes[key] = {
+            "from": _value_for_audit(old_val),
+            "to": _value_for_audit(value),
+        }
         setattr(row, key, value)
+
+    if changes:
+        _audit_log(
+            db,
+            "crm_tareas",
+            str(row.id),
+            "UPDATE",
+            detalles=changes,
+            usuario_id=str(actor_user_id) if actor_user_id else None,
+        )
     db.commit()
     db.refresh(row)
     return row
+
+
+def _values_equivalent(a, b) -> bool:
+    """Compara valores manejando None en ambos lados y tipos datetime."""
+    if a is None and b is None:
+        return True
+    if a is None or b is None:
+        return False
+    if hasattr(a, "isoformat") and hasattr(b, "isoformat"):
+        return a.isoformat() == b.isoformat()
+    return a == b
+
+
+def _value_for_audit(value):
+    """Serializa un valor para el campo `detalles_cambio` JSON de la tabla
+    `logs_auditoria` (columna JSONB).
+
+    Reglas de serialización (todas JSONB-safe):
+      - `None` → `None`
+      - `datetime` / `date` → ISO 8601 string (`isoformat()`)
+      - `uuid.UUID` → `str(uuid)` (Postgres JSONB no acepta objetos UUID
+        nativos; necesitamos string para reconstruir el valor en queries
+        posteriores).
+      - resto → tal cual.
+    """
+    if value is None:
+        return None
+    if isinstance(value, uuid.UUID):
+        return str(value)
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return value
 
 
 def delete_crm_task(db: Session, task_id: uuid.UUID) -> bool:
