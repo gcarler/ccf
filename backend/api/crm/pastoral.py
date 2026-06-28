@@ -11,7 +11,14 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import (
+    _get_scoped_counseling_ticket,
+    _get_scoped_grupo,
+    _get_scoped_persona,
+    _get_scoped_prayer_request,
+    _get_scoped_task,
     _persona_full_name,
+    _resolve_assignee_for_task,
+    _scope_by_user_sede_via_persona,
     _serialize_case,
     _serialize_message_group,
     _serialize_task,
@@ -520,8 +527,7 @@ async def send_crm_message(
             normalized = str(segment).strip().lower()
             if normalized == "active":
                 q = db.query(models.Persona).filter(models.Persona.church_role == "Miembro")
-                if user_sede:
-                    q = q.filter(models.Persona.sede_id == user_sede)
+                q = _scope_by_user_sede_via_persona(db, current_user, q)
                 if channel in {"whatsapp", "sms"}:
                     q = q.filter(models.Persona.phone.isnot(None), models.Persona.phone != "")
                 elif channel == "email":
@@ -529,8 +535,7 @@ async def send_crm_message(
                 rows = q.all()
             elif normalized == "groups":
                 q = db.query(models.Persona).filter(models.Persona.family_id.isnot(None))
-                if user_sede:
-                    q = q.filter(models.Persona.sede_id == user_sede)
+                q = _scope_by_user_sede_via_persona(db, current_user, q)
                 if channel in {"whatsapp", "sms"}:
                     q = q.filter(models.Persona.phone.isnot(None), models.Persona.phone != "")
                 elif channel == "email":
@@ -608,10 +613,8 @@ def list_messaging_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    user_sede = get_user_sede_id(db, current_user.id)
     q = db.query(models.CommunicationLog).join(models.Persona, models.CommunicationLog.persona_id == models.Persona.id)
-    if user_sede:
-        q = q.filter(models.Persona.sede_id == user_sede)
+    q = _scope_by_user_sede_via_persona(db, current_user, q)
     logs = q.order_by(models.CommunicationLog.created_at.desc()).all()
     grouped: "collections.OrderedDict[str, list[models.CommunicationLog]]" = collections.OrderedDict()
     for log in logs:
@@ -626,7 +629,17 @@ def get_messaging_history_item(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    log = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+    """Axioma 3: el log de mensajería sólo se expone si su Persona está en la
+    sede del usuario. CommunicationLog no tiene sede_id propio; el scope se
+    aplica via JOIN con Persona (mismo patrón que list_messaging_history).
+    """
+    query = (
+        db.query(models.CommunicationLog)
+        .join(models.Persona, models.CommunicationLog.persona_id == models.Persona.id)
+        .filter(models.CommunicationLog.id == log_id)
+    )
+    query = _scope_by_user_sede_via_persona(db, current_user, query)
+    log = query.first()
     if not log:
         raise HTTPException(status_code=404, detail="Message not found")
     if log.external_id:
@@ -647,50 +660,106 @@ def list_crm_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Lista todas las tareas CRM con filtro opcional por usuario asignado."""
-    q = db.query(models.TareaCRM)
+    """Lista tareas CRM con scope Axioma 3 (JOIN Persona + validate assignee)."""
+    q = db.query(models.TareaCRM).join(
+        models.Persona, models.TareaCRM.persona_id == models.Persona.id
+    )
+    q = _scope_by_user_sede_via_persona(db, current_user, q)
     if assignee_user_id:
         assignee_persona_id = resolve_persona_id_for_user(db, assignee_user_id)
-        if assignee_persona_id:
-            q = q.filter(models.TareaCRM.assignee_id == assignee_persona_id)
-        else:
+        if not assignee_persona_id:
             return []
+        _get_scoped_persona(db, current_user, assignee_persona_id)
+        q = q.filter(models.TareaCRM.assignee_id == assignee_persona_id)
     tasks = q.order_by(models.TareaCRM.created_at.desc()).all()
     return [_serialize_task(t) for t in tasks]
 
 
 @router.post("/tasks/", response_model=dict)
 def create_crm_task(
-    payload: dict,
+    payload: schemas.CrmTaskCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    title = str(payload.get("title") or "").strip()
+    """Crea una tarea CRM con scope validation (Axioma 3) y Pydantic
+    auto-validation en la frontera (`schemas.CrmTaskCreate`).
+
+    Hardening:
+      - **Pydantic auto-validates** al nivel del request body (canonical
+        FastAPI pattern): `status`/`priority` son
+        `CrmTaskStatus`/`CrmTaskPriority` case-sensitive (cualquier
+        valor fuera del catálogo → 422 estructurado vía FastAPI antes
+        de entrar al handler). `persona_id`/`caso_id` son `UUID` (422
+        si malformados). `due_date`/`completed_at` se auto-parsean ISO
+        → datetime. Migración desde `payload: dict` con whitelist
+        inline — ahora la validación es 100% declarativa en schema.
+      - `title` queda validación manual 400 (vacío vs no-provisto:
+        auto-422 por Pydantic, presente-pero-vacío: 400 detecta
+        silenciosamente caller error).
+      - validate `persona_id` (target persona) — debe estar en scope
+        (404 cross-sede).
+      - resolve `assignee_id` con `_resolve_assignee_for_task` (acepta
+        UUID de persona o Integer user_id, valida scope, raise 404
+        cross-sede).
+
+    Audit log (Axioma 1) emitido por `crud.create_crm_task` (defense in
+    depth): el caller API no genera audit trail directamente; el CRUD es
+    garante único de la traza independientemente del caller (API,
+    script, worker).
+    """
+    # ── Title validation ──────────────────────────────────────────────────
+    # Pydantic en frontera rechaza missing (422) — aquí detectamos empty
+    # string (400) por si un caller construye un POST con title:"" que
+    # Pydantic por defecto acepta (no hay min_length en el schema).
+    title = str(payload.title or "").strip()
     if not title:
         raise HTTPException(status_code=400, detail="title is required")
 
-    due_date = None
-    raw_due_date = payload.get("due_date")
-    if raw_due_date:
-        try:
-            due_date = datetime.fromisoformat(str(raw_due_date).replace("Z", "+00:00"))
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Formato de fecha o identificador invalido")
+    # ── Axioma 3 — validate persona_id (target) is in scope ────────────
+    if payload.persona_id:
+        scoped_persona = _get_scoped_persona(db, current_user, payload.persona_id)
+        # In-place mutation: Pydantic v2 BaseModel es mutable por default.
+        payload.persona_id = scoped_persona.id
 
-    assignee_identity = payload.get("assignee_id") or current_user.id
-    task = models.TareaCRM(
-        title=title,
-        description=payload.get("description"),
-        category=payload.get("category") or "Pastoral",
-        persona_id=payload.get("persona_id"),
-        assignee_id=resolve_persona_id_from_identity(db, assignee_identity),
-        due_date=due_date,
-        status=payload.get("status") or "pending",
-        priority=payload.get("priority") or "medium",
+    # ── Axioma 3 — resolve assignee_id (UUID or user_id) with scope ─────
+    # Por defecto el editor se asigna la tarea (mantiene visibilidad dentro
+    # de su propia sede vía _scope_by_user_sede_via_persona).
+    if payload.assignee_id:
+        resolved_assignee_persona_id = _resolve_assignee_for_task(
+            db, current_user, payload.assignee_id
+        )
+        payload.assignee_id = str(resolved_assignee_persona_id)
+    else:
+        # Compat: current_user puede ser Integer user_id o UUID de persona.
+        resolved_assignee_persona_id = resolve_persona_id_for_user(
+            db, current_user.id
+        )
+        payload.assignee_id = (
+            str(resolved_assignee_persona_id) if resolved_assignee_persona_id else None
+        )
+
+    # ── Side-effect: status ↔ completed_at ─────────────────────────────
+    # Si la tarea nace en `completed`, estampar fecha_completada AHORA
+    # para que el audit log de CREATE capture el estado completo (evita
+    # un segundo commit post-CRUD sin audit: fuga silenciosa de
+    # trazabilidad — Axioma 1 defense in depth). override también
+    # cualquier `completed_at` enviado por el cliente (server-authoritative
+    # timestamp).
+    from backend.schemas.crm import CrmTaskStatus
+
+    payload.completed_at = (
+        utc_now() if payload.status == CrmTaskStatus.completed else None
     )
-    db.add(task)
-    db.commit()
-    db.refresh(task)
+
+    # Pydantic YA validó Enum membership en frontera (`payload.status` es
+    # instancia `CrmTaskStatus`). `use_enum_values=True` en
+    # `CrmTaskBase` garantiza `model_dump()` retorna strings planos
+    # alineados con `TareaCRM.estado` `String(20)` y JSONB-safe para
+    # `logs_auditoria`.
+
+    task = crud.create_crm_task(
+        db, payload, actor_user_id=str(current_user.id)
+    )
     return _serialize_task(task)
 
 
@@ -717,9 +786,15 @@ def get_crm_task_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    task = db.query(models.TareaCRM).filter(models.TareaCRM.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    """Axioma 3: una tarea sólo es visible si está anclada a la sede del
+    editor (cualquiera de sus FKs: caso_id, persona_id, asignado_a_id).
+    Implementado con `_get_scoped_task` (OR-based, 404 cross-sede —
+    mismo patrón que `update_crm_task`).
+
+    Luego aplica el control de visibilidad existente (staff vs owner-persona);
+    si la tarea es del editor pero no es staff y no es owner, retorna 403.
+    """
+    task = _get_scoped_task(db, current_user, task_id)
     is_staff = _get_user_role(current_user) in {"admin", "administrador", "pastor", "coordinador"}
     my_persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
     is_persona_owner = task.assignee_id is not None and task.assignee_id == my_persona_id
@@ -731,37 +806,105 @@ def get_crm_task_detail(
 @router.patch("/tasks/{task_id}", response_model=dict)
 def update_crm_task(
     task_id: uuid.UUID,
-    payload: dict,
+    payload: schemas.CrmTaskUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    task = db.query(models.TareaCRM).filter(models.TareaCRM.id == task_id).first()
-    if not task:
+    """Actualiza una tarea CRM con scope validation (Axioma 3) y
+    type validation via Pydantic en la frontera (`schemas.CrmTaskUpdate`).
+
+    Hardening:
+      - **Type + Enum validation** declarativa en `CrmTaskUpdate`:
+        `persona_id`/`caso_id` son `UUID` (422 si malformados); `status`/
+        `priority` son `Optional[CrmTaskStatus]`/`Optional[CrmTaskPriority]`
+        (case-sensitive, 422 si fuera del catálogo); `due_date`/
+        `completed_at` se auto-parsean ISO → datetime; `assignee_id`
+        conserva el contrato dual. NO hay whitelist inline — la
+        validación para `status`/`priority` vive en el schema
+        (canonical Pydantic Enum pattern).
+      - **Unknown-field guard**: campos ajenos al schema se descartan
+        (`extra='ignore'` default Pydantic v2), evitando crash en
+        `setattr` para atributos inexistentes en `TareaCRM`.
+      - retrieve task via `_get_scoped_task` (404 cross-sede en lectura).
+      - validar `persona_id` y `assignee_id` actualizados: rechazamos
+        IDs cross-sede con 404 (existence-leak safe).
+      - side-effect: si status cambia y entra/sale de "completed",
+        `fecha_completada` (synonym `completed_at`) se estampa o se
+        limpia en el payload normalizado antes de delegar al CRUD.
+        Si el cliente envía AMBOS `status=completed` +
+        `completed_at=<value>`, el side-effect OVERRIDE (determinístico).
+
+    Defense in depth (Axioma 3): `crud.update_crm_task` re-ejecuta
+    `_crud_scope_re_check_task` sobre el estado final combinado
+    (current_row_anchors + incoming_anchors).
+
+    Audit log (Axioma 1) emitido por `crud.update_crm_task`: sólo
+    cambios reales (cambio de `fecha_completada` por side-effect cuenta
+    como cambio y queda trazado).
+    """
+    # ── Axioma 3 — retrieve task within scope (404 cross-sede) ─────────
+    task = _get_scoped_task(db, current_user, task_id)
+
+    # ── Construir payload normalizado (side-effects coalescen aquí) ─────
+    # Pydantic YA validó tipo + Enum membership en frontera. Con
+    # `use_enum_values=True` en `CrmTaskUpdate`, `model_dump()` retorna
+    # strings planos — alineados con la columna `TareaCRM.estado`/
+    # `prioridad` `String(20)` y JSONB-safe para `logs_auditoria`.
+    # Trabajamos SOLO sobre los campos efectivamente incluidos en el PATCH.
+    changes_in = payload.model_dump(exclude_unset=True)
+
+    # ── Axioma 3 — IDs referenciales validados contra sede ────────────
+    if "assignee_id" in changes_in:
+        new_assignee = _resolve_assignee_for_task(
+            db, current_user, changes_in["assignee_id"]
+        )
+        # Siempre emitimos el campo (incluso si es None) para que el CRUD
+        # detecte el cambio contra el valor previo (auditoría honesta).
+        changes_in["assignee_id"] = str(new_assignee) if new_assignee else None
+
+    if "persona_id" in changes_in:
+        v = changes_in["persona_id"]
+        if v is None:
+            changes_in["persona_id"] = None  # cliente explícitamente limpia
+        else:
+            scoped = _get_scoped_persona(db, current_user, v)
+            # Normalizamos al UUID canónico vía SQLAlchemy (re-hidrata
+            # aunque el caller haya enviado un UUID equivalente).
+            changes_in["persona_id"] = scoped.id
+
+    # caso_id: Pydantic YA validó el formato UUID (422 si malformado).
+    # defense-in-depth en `crud.update_crm_task` (`_crud_scope_re_check_task`)
+    # detecta anclas cross-sede sobre el estado final: si caso_id pertenece
+    # a otra sede o el row tiene caso_id cross-sede entre el API fetch y
+    # el commit, raise 404. NO añadimos pre-validación acá para no
+    # duplicar round-trip al DB en el camino feliz; el CRUD es el garante
+    # único del scope check post-migración.
+
+    # ── Side-effect: status ↔ fecha_completada ──────────────────────────
+    # `nuevo_estado` es un string (post `model_dump` por `use_enum_values=True`).
+    # Comparación contra `task.estado` (también string desde SQLAlchemy) es
+    # trivial. El str `"completed"` matchea `CrmTaskStatus.completed.value`
+    # por igualdad de string — comparamos con literal aqui para evitar
+    # re-importar CrmTaskStatus en pastoral.py.
+    nuevo_estado = changes_in.get("status", task.estado)
+    if "status" in changes_in and nuevo_estado != task.estado:
+        if nuevo_estado == "completed" and task.fecha_completada is None:
+            changes_in["fecha_completada"] = utc_now()
+        elif nuevo_estado != "completed" and task.fecha_completada is not None:
+            # Reabrir: limpiar fecha_completada para que el audit detecte el cambio.
+            changes_in["fecha_completada"] = None
+
+    # ── Delegar al CRUD (atomic write + audit log + scope re-check) ────
+    # `crud.update_crm_task` usa duck typing (`payload.model_dump(...)` si
+    # tiene attr, sino `dict(payload)`) — pasamos `changes_in` (dict plano),
+    # que por construcción ya tiene sólo los campos del PATCH + side-effect.
+    updated_task = crud.update_crm_task(
+        db, task_id, changes_in, actor_user_id=str(current_user.id)
+    )
+    if updated_task is None:
+        # Race: la task fue borrada entre el GET scope-check y el UPDATE CRUD.
         raise HTTPException(status_code=404, detail="Task not found")
-    for field in (
-        "title",
-        "description",
-        "category",
-        "status",
-        "priority",
-        "due_date",
-        "assignee_id",
-        "persona_id",
-    ):
-        if field in payload:
-            val = payload[field]
-            if field == "due_date" and isinstance(val, str):
-                try:
-                    val = datetime.fromisoformat(val.replace("Z", "+00:00"))
-                except ValueError:
-                    raise HTTPException(status_code=400, detail="Formato de fecha inválido")
-            if field == "assignee_id":
-                task.assignee_id = resolve_persona_id_from_identity(db, val)
-            else:
-                setattr(task, field, val)
-    db.commit()
-    db.refresh(task)
-    return _serialize_task(task)
+    return _serialize_task(updated_task)
 
 
 @router.delete("/tasks/{task_id}", status_code=204)
@@ -770,10 +913,15 @@ def delete_crm_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Elimina una tarea del CRM."""
-    task = db.query(models.TareaCRM).filter(models.TareaCRM.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    """Axioma 3: el soft-delete de una tarea sólo aplica si la tarea está
+    en scope del editor (helper `_get_scoped_task` — 404 cross-sede).
+
+    Sin esta validación, una vez conocido un `task_id` cross-sede, un editor
+    de sede_a podría emitir DELETE y afectar la visibilidad de sede_b vía
+    el soft-delete (`deleted_at`). El helper garantiza que la mutación
+    siempre ocurre sobre filas del scope.
+    """
+    task = _get_scoped_task(db, current_user, task_id)
     task.deleted_at = utc_now()
     db.commit()
     return None
@@ -785,9 +933,10 @@ def get_counseling_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Counseling ticket not found")
+    """Axioma 3: el ticket de consejería sólo se expone si su persona (FK)
+    está en la sede del usuario. CounselingTicket NO tiene sede_id propio.
+    """
+    ticket = _get_scoped_counseling_ticket(db, current_user, ticket_id)
     history_rows = (
         db.query(models.CounselingTicket)
         .filter(models.CounselingTicket.persona_id == ticket.persona_id)
@@ -823,9 +972,8 @@ def get_grupo_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    grupo = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
-    if not grupo:
-        raise HTTPException(status_code=404, detail="Grupo no encontrado")
+    """Axioma 3: scope por sede via GrupoEvangelismo.sede_id."""
+    grupo = _get_scoped_grupo(db, current_user, grupo_id)
     return {
         "id": grupo.id,
         "code": grupo.codigo,
@@ -884,9 +1032,11 @@ def update_grupo(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    grupo = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
-    if not grupo:
-        raise HTTPException(status_code=404, detail="Grupo no encontrado")
+    """Axioma 3: mutación interdita cross-sede (404 si el grupo no pertenece
+    a la sede del usuario). Aplica también si los participante_ids objetivos
+    pertenecen a otra sede — follow-up recomendado.
+    """
+    grupo = _get_scoped_grupo(db, current_user, grupo_id)
 
     field_map = {
         "code": "codigo",
@@ -962,9 +1112,8 @@ def get_prayer_request_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    prayer = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
-    if not prayer:
-        raise HTTPException(status_code=404, detail="Prayer request not found")
+    """Axioma 3: PrayerRequest tiene sede_id propio ⇒ scope directo."""
+    prayer = _get_scoped_prayer_request(db, current_user, request_id)
     return {
         "id": prayer.id,
         "requester_name": prayer.requester_name,
@@ -1001,12 +1150,71 @@ def list_counseling_tickets(
     ]
 
 
+def _resolve_pastor_identity(
+    db: Session, current_user: models.User, raw_pastor_id: Optional[str]
+):
+    """Resolve `pastor_id` (UUID de persona o Integer user_id) a un UUID de
+    persona y valida scope (Axioma 3). Preserva el contrato histórico de
+    aceptar user_id sin reintroducir el silent-bypass.
+
+    Raises 404 (no 403, para evitar existence-leaks) si:
+      - El input no es UUID ni Integer parseable.
+      - El Integer no corresponde a un User existente.
+      - El User no tiene persona vinculada.
+      - La persona resuelta es cross-sede o INACTIVA.
+    """
+    if not raw_pastor_id:
+        return None
+    raw_str = str(raw_pastor_id).strip()
+    if not raw_str:
+        return None
+    # 1. Intentar como UUID de persona (camino más común)
+    try:
+        persona_uuid = uuid.UUID(raw_str)
+    except (TypeError, ValueError):
+        persona_uuid = None
+    if persona_uuid:
+        # _get_scoped_persona raise 404 si cross-sede o INACTIVO
+        return _get_scoped_persona(db, current_user, persona_uuid).id
+    # 2. Intentar como Integer user_id
+    try:
+        user_id_int = int(raw_str)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=404, detail="Pastor no encontrado")
+    user = db.query(models.User).filter(models.User.id == user_id_int).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Pastor no encontrado")
+    persona_id = resolve_persona_id_for_user(db, user.id)
+    if not persona_id:
+        raise HTTPException(status_code=404, detail="Pastor no encontrado")
+    # Validar scope sobre la persona resuelta
+    return _get_scoped_persona(db, current_user, persona_id).id
+
+
 @router.post("/counseling/", response_model=dict, status_code=201)
 def create_counseling_ticket(
     payload: schemas.CounselingTicketCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
+    """Axioma 3 — Multi-Tenant: el ticket sólo se crea si la persona objetivo
+    pertenece a la sede del editor. CounselingTicket NO tiene sede_id propio;
+    el scope se aplica validando la FK a Persona vía _get_scoped_persona
+    (404 cross-sede, no 403, para evitar existence-leaks).
+
+    `pastor_id` (opcional) se resuelve a un UUID de persona aceptando tanto
+    UUID como Integer user_id (contrato histórico preservado), y se valida
+    scope antes de delegar al CRUD. Sin validación, un editor de sede_a
+    podría usar un user_id de sede_b como pastor.
+    """
+    _get_scoped_persona(db, current_user, payload.persona_id)
+    if payload.pastor_id:
+        resolved_pastor_id = _resolve_pastor_identity(db, current_user, payload.pastor_id)
+        if resolved_pastor_id:
+            # Reemplazar en el payload para que el CRUD no intente resolver de
+            # nuevo (es idempotente pero evita trabajo redundante y deja el
+            # valor canónico UUID en la fila persistida).
+            payload.pastor_id = str(resolved_pastor_id)
     ticket = crud.create_counseling_ticket(db, payload)
     return {
         "id": ticket.id,
@@ -1027,12 +1235,15 @@ def get_counseling_by_lead(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    tickets = (
+    """Axioma 3: tickets de un lead solo se exponen si el lead esta en scope."""
+    lead = _get_scoped_persona(db, current_user, lead_id)
+    q = (
         db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.persona_id == lead_id)
-        .order_by(models.CounselingTicket.created_at.desc())
-        .all()
+        .join(models.Persona, models.CounselingTicket.persona_id == models.Persona.id)
+        .filter(models.CounselingTicket.persona_id == lead.id)
     )
+    q = _scope_by_user_sede_via_persona(db, current_user, q)
+    tickets = q.order_by(models.CounselingTicket.created_at.desc()).all()
     return [
         {
             "id": t.id,
@@ -1055,9 +1266,22 @@ def update_counseling_ticket(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Counseling ticket not found")
+    """Axioma 3 — Multi-Tenant: el ticket sólo se lee/modifica si su persona
+    (FK) pertenece a la sede del editor. CounselingTicket NO tiene sede_id
+    propio; el scope se aplica via _get_scoped_counseling_ticket (404 cross-sede,
+    no 403, para evitar existence-leaks).
+
+    `pastor_id` (opcional) se resuelve con _resolve_pastor_identity que acepta
+    UUID o Integer user_id y valida scope (mismo patrón que create_counseling_ticket).
+    """
+    ticket = _get_scoped_counseling_ticket(db, current_user, ticket_id)
+
+    if "pastor_id" in payload:
+        resolved_pastor_id = _resolve_pastor_identity(
+            db, current_user, payload["pastor_id"]
+        )
+        ticket.pastor_id = resolved_pastor_id
+
     for field in ("status", "notes", "priority_level"):
         if field in payload:
             setattr(
@@ -1242,22 +1466,22 @@ def get_crm_analytics_summary(
     user_sede = get_user_sede_id(db, current_user.id)
 
     persona_q = db.query(models.Persona)
-    if user_sede:
-        persona_q = persona_q.filter(models.Persona.sede_id == user_sede)
+    persona_q = _scope_by_user_sede_via_persona(db, current_user, persona_q)
 
     total_personas = persona_q.count()
     active_personas = persona_q.filter(
         models.Persona.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
     ).count()
 
-    counseling_q = db.query(models.CounselingTicket).filter(
-        models.CounselingTicket.status == "open",
-        models.CounselingTicket.deleted_at.is_(None),
+    counseling_q = (
+        db.query(models.CounselingTicket)
+        .join(models.Persona, models.CounselingTicket.persona_id == models.Persona.id)
+        .filter(
+            models.CounselingTicket.status == "open",
+            models.CounselingTicket.deleted_at.is_(None),
+        )
     )
-    if user_sede:
-        counseling_q = counseling_q.join(
-            models.Persona, models.CounselingTicket.persona_id == models.Persona.id
-        ).filter(models.Persona.sede_id == user_sede)
+    counseling_q = _scope_by_user_sede_via_persona(db, current_user, counseling_q)
     open_counseling = counseling_q.count()
 
     month_start = (
@@ -1348,8 +1572,11 @@ def list_prayer_requests(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Lista pedidos de oracion. Opcionalmente filtra por source (web, crm)."""
+    """Lista pedidos de oracion con scope Axioma 3 (PrayerRequest.sede_id)."""
+    user_sede = get_user_sede_id(db, current_user.id)
     q = db.query(models.PrayerRequest).order_by(models.PrayerRequest.created_at.desc())
+    if user_sede:
+        q = q.filter(models.PrayerRequest.sede_id == user_sede)
     if source:
         q = q.filter(models.PrayerRequest.source == source)
     prayers = q.all()
@@ -1374,7 +1601,10 @@ def create_prayer_request(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Crea un pedido de oracion desde el CRM (staff/pastor)."""
+    """Crea un pedido de oracion con scope Axioma 3 (sede_id auto-asignado)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    if not user_sede:
+        raise HTTPException(status_code=400, detail="El usuario no tiene sede asignada")
     prayer = models.PrayerRequest(
         requester_name=payload.get("requester_name", current_user.username),
         request_text=payload.get("request_text", ""),
@@ -1382,6 +1612,7 @@ def create_prayer_request(
         is_public=payload.get("is_public", False),
         source=payload.get("source", "crm"),
         status="active",
+        sede_id=user_sede,
     )
     db.add(prayer)
     db.commit()
@@ -1404,9 +1635,8 @@ def update_prayer_request(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    prayer = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
-    if not prayer:
-        raise HTTPException(status_code=404, detail="Prayer request not found")
+    """Axioma 3: PATCH solo aplica si el prayer esta en scope (404 cross-sede)."""
+    prayer = _get_scoped_prayer_request(db, current_user, request_id)
     for field in ("status", "category", "request_text", "requester_name", "source"):
         if field in payload:
             setattr(prayer, field, payload[field])
@@ -1494,8 +1724,7 @@ def list_volunteers(
 
     user_sede = get_user_sede_id(db, current_user.id)
     personas_q = db.query(models.Persona)
-    if user_sede:
-        personas_q = personas_q.filter(models.Persona.sede_id == user_sede)
+    personas_q = _scope_by_user_sede_via_persona(db, current_user, personas_q)
     personas = personas_q.all()
     if not personas:
         return []
@@ -1638,12 +1867,15 @@ def get_crm_radar(
     user_sede = get_user_sede_id(db, current_user.id)
 
     personas_q = db.query(models.Persona)
-    if user_sede:
-        personas_q = personas_q.filter(models.Persona.sede_id == user_sede)
+    personas_q = _scope_by_user_sede_via_persona(db, current_user, personas_q)
     total_personas = personas_q.count()
 
     total_ministries = db.query(models.Ministry).count()
 
+    # Nota: cases_q se filtra por CasoCRM.sede_id (no por Persona) — el helper
+    # _scope_by_user_sede_via_persona NO aplica aquí porque el modelo raíz no
+    # es Persona. Axioma 3 se preserva vía el filtro directo sobre la propia
+    # columna sede_id del modelo.
     cases_q = db.query(models.CasoCRM).filter(
         models.CasoCRM.estado != "CERRADO",
         models.CasoCRM.deleted_at.is_(None),
@@ -1652,11 +1884,12 @@ def get_crm_radar(
         cases_q = cases_q.filter(models.CasoCRM.sede_id == user_sede)
     active_cases = cases_q.count()
 
-    tasks_q = db.query(models.TareaCRM).filter(models.TareaCRM.status == "pending")
-    if user_sede:
-        tasks_q = tasks_q.join(models.Persona, models.TareaCRM.persona_id == models.Persona.id).filter(
-            models.Persona.sede_id == user_sede
-        )
+    tasks_q = (
+        db.query(models.TareaCRM)
+        .join(models.Persona, models.TareaCRM.persona_id == models.Persona.id)
+        .filter(models.TareaCRM.status == "pending")
+    )
+    tasks_q = _scope_by_user_sede_via_persona(db, current_user, tasks_q)
     pending_tasks = tasks_q.count()
 
     return {
@@ -1688,6 +1921,10 @@ def get_newsletter_leads(
     """
     CRM view para ver todos los leads originados desde suscripción al newsletter.
     Permite filtrar por source, stage, landing_page, campaign y rango de fechas.
+
+    Axioma 3 — Multi-Tenant: el JOIN con Persona ya estaba presente, sólo faltaba
+    aplicar el filtro de sede (mismo patrón que export_newsletter_leads_csv).
+    Un superadmin sin sede ve TODO lo no-borrado.
     """
     query = (
         db.query(models.CasoCRM)
@@ -1697,6 +1934,7 @@ def get_newsletter_leads(
             models.CasoCRM.estado != "CERRADO",
         )
     )
+    query = _scope_by_user_sede_via_persona(db, current_user, query)
 
     if source:
         query = query.filter(models.CasoCRM.origen_canal == source)
@@ -1750,6 +1988,8 @@ def export_newsletter_leads_csv(
 ):
     """
     Exporta leads de newsletter como lista de dicts (para generar CSV en frontend).
+    Axioma 3: el JOIN con Persona (ya presente) permite filtrar por sede_id;
+    por defecto trae TODO lo no-borrado si el superadmin no tiene sede.
     """
     query = (
         db.query(models.CasoCRM)
@@ -1759,6 +1999,7 @@ def export_newsletter_leads_csv(
             models.CasoCRM.estado != "CERRADO",
         )
     )
+    query = _scope_by_user_sede_via_persona(db, current_user, query)
 
     if source:
         query = query.filter(models.CasoCRM.origen_canal == source)
