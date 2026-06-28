@@ -21,8 +21,6 @@ EVENT_TYPES = [
 ]
 
 
-
-
 class EventType(str, Enum):
     PERMANENT = "PERMANENT"
     MONTHLY = "MONTHLY"
@@ -616,6 +614,7 @@ class Position(PositionBase):
     created_at: datetime
     model_config = orm_config
 
+
 # --- Ministry Participation (Persona <-> Ministerio con Rol) ---
 
 MINISTRY_ROLES = [
@@ -723,6 +722,7 @@ class PersonaFormationUpdate(BaseModel):
 class PersonaFormation(PersonaFormationBase):
     id: UUID
     model_config = orm_config
+
 
 # ── EvangelismStrategy schemas re-exported from canonical schemas/evangelism.py ──
 from backend.schemas.evangelism import (

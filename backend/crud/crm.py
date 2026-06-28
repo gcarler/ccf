@@ -241,8 +241,6 @@ def _crud_scope_re_check_task(
             raise _HTTPException(status_code=404, detail="Task not found")
 
 
-
-
 def _audit_log(
     db: Session, tabla: str, registro_id: str, accion: str, detalles: dict | None = None, usuario_id: str | None = None
 ) -> None:
