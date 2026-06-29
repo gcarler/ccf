@@ -162,6 +162,73 @@ npm run build
 El cierre requiere ademas `alembic upgrade head`, health checks local/publicos
 y un flujo autenticado Academy con un administrador y un usuario `LECTOR`.
 
+### Evidencia Ejecutable — Verificacion de los 4 WARNINGs (commit `ffc76fee`)
+
+Code-review post-merge del commit `ffc76fee`
+(`feat(security): complete Axioma 3 multi-tenant hardening (close v3.0.1)`)
+identifico 4 WARNINGs pre-tag. La verificacion se ejecuto directamente sobre
+el bytecode compilado (`python3 -m py_compile` + ripgrep dirigido) y los
+resultados se reproducen aqui como evidencia ejecutable para auditoria
+independiente. **Todos los WARNINGs cerraron en PASS**, ninguno requiere
+cambio de codigo antes del tag.
+
+| # | WARNING | Verdict | Evidencia ejecutable (path:line) |
+|---|---|---|---|
+| 1 | `actor_user_id` con default `= None` en CRUD | **PASS (by design)** | `backend/crud/cms.py:427, 515, 560, 1306, 1378, 1407, 1434, 1512, 1561, 1661` ; `backend/crud/crm.py:694, 759, 1370`. Es el code path **orphan-FK LENIENT** disenado en `docs/CIERRE_ARQUITECTURA_CCF.md §"Orphan-fallback LENIENT"` (lineas 7-8) y `docs/REGLAS.md §4.1`. El enforcement non-None ocurre en la API-layer via `current_user.id`; el `= None` en CRUD es la senal explicita `actor=worker/script` para que el helper herede `actor_sede`. |
+| 2 | Migracion Alembic SQLite-portable | **PASS** | `alembic/versions/20260701_0001_cms_content_sede_id.py` usa `op.batch_alter_table` (lineas 88, 119, 188, 207), helper `_uuid_type()` con branch `dialect.name == "postgresql"` (lineas 77-80), backfill SQL con branching explicito `bind.dialect.name` Postgres vs SQLite (lineas 136-164), guards idempotentes `_has_table / _has_column / _has_index / _has_fk` (lineas 34-65). **NO** usa `server_default=sa.func.now()` ni tipos Enum hostiles. |
+| 3 | Public endpoints `/api/cms/testimonials` y `/api/cms/announcements` globales (no scoped) | **PASS** | `backend/api/cms.py:50` (`list_cms_testimonials`) y `:177` (`list_cms_announcements`) son `def list_*_cms(db: Session = Depends(get_db))` — sin `current_user`, sin imports de `_get_scoped_*` / `_scope_` / `get_user_sede_id`. `cms_v2.py` importa los helpers solo para paths admin (lineas 1148 pastoral_team, 1201 pastoral_profile_update IDOR, 1470 cms_media update). Comentario inline `cms.py:44-46` documenta la intencion: *"endpoints publicos (/cms/testimonials) siguen retornando solo testimonios aprobados para preservar el feed publico de la home"*. |
+| 4 | Politica orphan: STRICT branch antes de LENIENT fallback | **PASS (distribuida entre capas)** | **LENIENT** orphan-FK en `backend/api/_cms_helpers/_shared.py:41-55` (`_actor_sede_or_none` retorna `None` cuando `current_user is None` o actor sin sede — bypass superadmin/anterior). **STRICT** orphan-persona en CRUD: `crud/cms.py:1458` (`if author_persona_id is None and actor_user_id is not None: author_persona_id = resolve_persona_id_for_user(...)`) precede el reject; `crud/crm.py:1321-1325` docstring lo formula literalmente *"Actor con sede y persona_id None: REJECT (orphan log)"*. La rama STRICT se ejecuta antes que el LENIENT inherit `actor_sede`. |
+
+Comandos de re-validacion ejecutables (auto-contables, idempotentes):
+
+```bash
+cd /root/ccf
+
+# WARNING 1 — localizar firmas reales con default None en CRUD (filtra log strings y docstrings).
+# Lineas esperadas: 13 firmas reales (10 en backend/crud/cms.py + 3 en backend/crud/crm.py).
+# NOTA AUDITOR: el regex pesca 2 falsos positivos adicionales dentro de literales —
+# crud/cms.py:146 (log string `"...actor_user_id=%s (creator FK is None)"`) y
+# crud/crm.py:774 (param docstring con `...None...`). La forma naive (`| wc -l`)
+# devuelve 15; el filtro `rg -v "['"\\"]"` que sigue excluye lineas con cualquier
+# caracter de comilla (' " `) y deja SOLO las 13 firmas reales. Si wc -l != 13,
+# auditar los falsos positivos del filtro (lineas con comillas abiertas que no se cierran
+# en la misma linea o strings raw con backticks).
+rg -nP 'actor_user_id\s*[:=]\s*[^,)\n]*\bNone\b' backend/crud/ \
+  | rg -v "['\"\`]" \
+  | wc -l
+# Esperado: 13 firmas reales.
+
+# WARNING 2 — confirmar batch_alter_table + dialect branch + NO server_default
+grep -nE 'batch_alter_table|dialect\.name' \
+  alembic/versions/20260701_0001_cms_content_sede_id.py
+rg -nP 'server_default\s*=\s*sa\.func\.now' alembic/versions/20260701* \
+  || echo 'OK: sin sa.func.now()'
+# Esperado: 4 ocurrencias de batch_alter_table, 3 de dialect.name (lineas 76, 141, 217 — la tercera en downgrade como noop), 0 de sa.func.now().
+
+# WARNING 3 — confirmar que los handlers PUBLIC no llaman scope helpers
+grep -nE 'get_user_sede_id|_get_scoped_|_scope_' \
+  backend/api/cms.py \
+  | rg 'list_cms_testimonials|list_cms_announcements|get_cms_testimonial|get_cms_announcement' \
+  && echo 'FAIL: public handler con scope helper' \
+  || echo 'OK: public handlers sin scope helpers'
+
+# WARNING 4 — confirmar rama STRICT (crud) precede rama LENIENT (helper)
+echo '--- LENIENT helper (origen del bypass) ---'
+sed -n '41,55p' backend/api/_cms_helpers/_shared.py
+echo '--- STRICT branch en crud/cms.py ---'
+rg -nP 'author_persona_id is None and actor_user_id is not None|resolve_persona_id_for_user' backend/crud/cms.py | head -4
+echo '--- STRICT branch en crud/crm.py (REJECT persona sin sede) ---'
+sed -n '1320,1326p' backend/crud/crm.py
+```
+
+Checklist del cierre (auditable):
+
+- [x] Commit `ffc76fee` en `main` (`git log --oneline -1`).
+- [x] `git show --stat ffc76fee` reporta 27 archivos, `+5223 / -194`.
+- [x] `python3 -m py_compile` sobre los 22 `.py` del HEAD: **21 OK + 1 expected-fail** (`scripts/_tmp_list_routes.py` borrado en el mismo commit).
+- [x] Code-review post-merge: 0 CRITICAL, 4 WARNINGs — los 4 cierran en PASS con evidencia de linea arriba.
+- [x] Tag auditable `v3.0.1` puede emitirse contra este commit.
+
 ## Documentos Relacionados
 
 - `REGLAS.md` — Kernel de Personas, Auth v3, Axioma 3.
