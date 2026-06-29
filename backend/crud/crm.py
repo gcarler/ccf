@@ -66,10 +66,10 @@ def get_user_sede_id(db: Session, user_id: str) -> str | None:
 
 
 def _actor_sede_or_none(db: Session, actor_user_id) -> str | None:
-    """Resolve la sede del actor o None si es superadmin / actor ausente / legacy.
+    """Resolve la sede del actor o None si es superadmin / actor ausente / anterior.
 
     Disparadores de None (no se aplica scope-check):
-      - `actor_user_id is None`: callers legacy o scripts (workers async,
+      - `actor_user_id is None`: callers anterior o scripts (workers async,
         migraciones, seeds) que operan sin contexto de usuario.
       - `get_user_sede_id` retorna None: usuario sin persona vinculada o
         con persona sin sede asignada (típicamente superadmin).
@@ -158,7 +158,7 @@ def _crud_scope_re_check_task(
         y blinda la creación de filas con anclas mixtas (potencial leak).
 
     Disparadores (skip cuando):
-      - `actor_user_id is None`: callers legacy o scripts que no tienen
+      - `actor_user_id is None`: callers anterior o scripts que no tienen
         contexto de usuario. NO rompe workers async, migraciones, seeds.
       - Actor sin sede (superadmin): ve TODO, igual que en API layer.
 
@@ -769,7 +769,7 @@ def update_crm_task(
         db: sesión SQLAlchemy.
         task_id: UUID de la tarea a actualizar.
         payload: `schemas.CrmTaskUpdate` (preferido) o un `dict` compatible
-            para callers legacy (algunos tests directos al CRUD usan dict).
+            para callers anterior (algunos tests directos al CRUD usan dict).
             El CRUD acepta ambos via duck typing sobre `model_dump`.
         actor_user_id: identidad del usuario que origina la mutación; `None`
             produce una fila con `usuario_id=NULL`.
@@ -785,7 +785,7 @@ def update_crm_task(
     if not row:
         return None
 
-    # Duck typing: schema Pydantic (preferred) o dict (legacy callers).
+    # Duck typing: schema Pydantic (preferred) o dict (anterior callers).
     changes_in = (
         payload.model_dump(exclude_unset=True)
         if hasattr(payload, "model_dump")
@@ -1304,10 +1304,101 @@ def get_persona_timeline(db: Session, persona_id: str):
 # ── Communication Logs ─────────────────────────────────
 
 
-def create_communication_log(db: Session, payload: schemas.CommunicationLogCreate):
+def _crud_scope_re_check_communication_log_create(
+    db: Session,
+    actor_user_id,
+    persona_id,
+) -> None:
+    """Axioma 3 — defense in depth para ``create_communication_log``.
+
+    Re-valida el anchor ``persona_id`` (única FK de CommunicationLog)
+    contra la sede del actor. Cierra el TOCTOU gap donde un caller que
+    NO es la API endurecida (worker async, script de seeding, llamada
+    directa al CRUD) podría crear un log sobre una persona de otra sede,
+    bypaseando ``_get_scoped_persona`` en el router.
+
+    Política (consistente con ``_crud_scope_re_check_task``):
+      - Actor sin sede (``_actor_sede_or_none`` retorna ``None``):
+        superadmin / anterior path — bypass sin check.
+      - Actor con sede y ``persona_id`` None: REJECT (orphan log para un
+        editor en sede viola el axioma — invisible para sí mismo,
+        visible sólo a ``get_communication_logs(sede_id=None)``).
+      - Actor con sede y ``persona_id`` en OTRA sede o irresoluble: REJECT.
+      - Match exacto de sede: OK.
+
+    Raises ``HTTPException(404)`` con mensaje neutro (sin leak del anchor)
+    para que el caller lo trate como existence-leak safe. La anomalía se
+    registra vía ``logging.warning(...)`` para triage operacional.
+    """
+    user_sede = _actor_sede_or_none(db, actor_user_id)
+    if not user_sede:
+        return  # superadmin / anterior path
+
+    from fastapi import HTTPException as _HTTPException
+
+    if persona_id is None:
+        _logger.warning(
+            "Axioma 3 scope violation: create_communication_log sin persona_id "
+            "(actor_sede=%s actor_user_id=%s)",
+            user_sede,
+            actor_user_id,
+        )
+        raise _HTTPException(
+            status_code=404, detail="CommunicationLog creation blocked"
+        )
+
+    target_sede = _resolve_anchor_sede(db, "persona_id", persona_id)
+    if target_sede is None or target_sede != str(user_sede):
+        _logger.warning(
+            "Axioma 3 scope violation: create_communication_log cross-sede "
+            "(actor_sede=%s actor_user_id=%s persona_id=%s target_sede=%s)",
+            user_sede,
+            actor_user_id,
+            persona_id,
+            target_sede,
+        )
+        # Mensaje genérico para no leakear info de la violation.
+        raise _HTTPException(
+            status_code=404, detail="CommunicationLog creation blocked"
+        )
+
+
+def create_communication_log(
+    db: Session,
+    payload: schemas.CommunicationLogCreate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
+) -> models.CommunicationLog:
+    """Crea un CommunicationLog con defense-in-depth (Axioma 3 — CRUD layer).
+
+    Parámetros:
+        db: sesión SQLAlchemy.
+        payload: schema Pydantic ``CommunicationLogCreate``. Incluye
+            ``persona_id`` (target, ∀-required?) y opcional ``leader_id``
+            (staff que origina el log).
+        actor_user_id: identidad (UUID o string) del usuario que origina
+            la mutación. Si es ``None`` (bulk import desde script /
+            worker async anterior), se salta el scope re-check. Si tiene
+            sede asignada, se valida que ``persona_id`` pertenezca a esa
+            sede antes del ``db.add``.
+
+    Defense-in-depth: el CRUD vuelve a verificar el anchor incluso si el
+    caller es la API endurecida. Esto cierra el TOCTOU gap donde otro
+    admin podría mover la ``Persona`` a otra sede entre el fetch del API
+    (``_get_scoped_persona``) y el commit (``create_communication_log``).
+    """
     data = payload.model_dump()
     leader_identity = data.pop("leader_id", None)
     data["leader_id"] = resolve_persona_id_from_identity(db, leader_identity)
+
+    # Defense in depth — Axioma 3 (Multi-Tenant) scope re-check (CREATE).
+    # Cierra el TOCTOU gap donde un caller no-API (worker, script, seed)
+    # podría crear un log con persona cross-sede. Si el actor está en
+    # sede_a e intenta loguear persona de sede_b → 404 pre-add.
+    _crud_scope_re_check_communication_log_create(
+        db, actor_user_id, data.get("persona_id")
+    )
+
     row = models.CommunicationLog(**{k: v for k, v in data.items()
                                      if hasattr(models.CommunicationLog, k)})
     db.add(row)
@@ -1316,8 +1407,28 @@ def create_communication_log(db: Session, payload: schemas.CommunicationLogCreat
     return row
 
 
-def get_communication_logs(db: Session, limit: int = 50):
-    return db.query(models.CommunicationLog).order_by(models.CommunicationLog.created_at.desc()).limit(limit).all()
+def get_communication_logs(
+    db: Session, limit: int = 50, sede_id: str | None = None
+):
+    """Lista los CommunicationLog más recientes, opcionalmente acotados a la sede indicada.
+
+    Axioma 3 — Multi-Tenant: si ``sede_id`` está presente, agrega un JOIN con
+    ``models.Persona`` y filtra ``Persona.sede_id == sede_id``. CommunicationLog
+    NO tiene columna ``sede_id`` propia; el scope se obtiene vía la FK
+    ``persona_id → personas.id``. Si ``sede_id`` es ``None`` (superadmin /
+    caller sin scope), retorna el log global sin filtrar.
+
+    Política READ-only: para hardening defensivo adicional, callers sensibles
+    (API) deben pasar explícitamente su ``user_sede`` recibido desde JWT vía
+    ``get_user_sede_id``.
+    """
+    query = db.query(models.CommunicationLog)
+    if sede_id:
+        query = query.join(
+            models.Persona,
+            models.CommunicationLog.persona_id == models.Persona.id,
+        ).filter(models.Persona.sede_id == sede_id)
+    return query.order_by(models.CommunicationLog.created_at.desc()).limit(limit).all()
 
 
 # ── Notifications ────────────────────────────────────────
@@ -1336,9 +1447,42 @@ def get_user_notifications(db: Session, user_id: uuid.UUID | str, limit: int = 2
     )
 
 
-def mark_notification_as_read(db: Session, notification_id: uuid.UUID):
+def mark_notification_as_read(
+    db: Session,
+    notification_id: uuid.UUID,
+    *,
+    owner_persona_id: uuid.UUID | str | None = None,
+):
+    """Marca una Notification como le\u00edda con ownership check (Axioma 3).
+
+    Parámetros:
+        db: sesi\u00f3n SQLAlchemy.
+        notification_id: UUID de la Notification a marcar.
+        owner_persona_id: persona_id del caller. Si est\u00e1 presente y
+            difiere de ``Notification.user_id`` (recipient), la Notification
+            se considera fuera de scope y el CRUD retorna ``None`` (el
+            API layer lo traduce a 404 / existence-leak safe). Si es
+            ``None`` (superadmin / caller sin contexto de persona), se
+            omite el ownership check — comportamiento anterior preservado
+            para scripts y bulk imports.
+
+    Axioma 3 — ownership: cada usuario ve y modifica SÓLO sus propias
+    notifications (BOLA-style leak prevention). Pattern consistente con
+    ``_get_scoped_persona`` del CRM: 404 (no 403) para evitar existence
+    leaks.
+
+    Returns:
+        La ``Notification`` actualizada (is_read=True) o ``None`` si no
+        existe o no pertenece al ``owner_persona_id`` (existence-leak
+        safe el caller no distingue entre ambos casos).
+    """
     notification = db.query(models.Notification).filter(models.Notification.id == notification_id).first()
     if not notification:
+        return None
+    # Ownership guard: notification.user_id == owner_persona_id
+    if owner_persona_id is not None and str(notification.user_id) != str(owner_persona_id):
+        # Existence-leak safe: NO se persiste mutaci\u00f3n y se retorna None
+        # para que el API layer responda 404 sin filtrar IDs existentes.
         return None
     notification.is_read = True
     db.commit()

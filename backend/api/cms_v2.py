@@ -15,6 +15,11 @@ from sqlalchemy.orm import Session
 
 from backend.models_shared import _utcnow
 from backend import crud, models, schemas
+from backend.api._cms_helpers import (
+    _get_scoped_cms_media,
+    _get_scoped_persona,
+    _scope_cms_pastoral_team_by_user_sede,
+)
 from backend.core.permissions import normalize_role, require_module_access
 from backend.core.database import get_db
 from backend.schemas._common import PaginatedResponse
@@ -1076,10 +1081,29 @@ def _pastoral_role(persona: models.Persona) -> str:
     response_model=List[schemas.PastoralProfileRead],
 )
 def public_pastoral_team(site_key: str, db: Session = Depends(get_db)):
-    """Public endpoint: list pastoral leaders."""
+    """Public endpoint: list pastoral leaders.
+
+    Axioma 3 — Multi-Tenant: las pastoras y pastores listados se acotan
+    a la sede del usuario actual. Sin embargo, este endpoint es PÚBLICO,
+    por lo que ``get_user_sede_id`` retorna ``None`` cuando el caller no
+    está autenticado (visitante anónimo) — en ese caso verá el agregado
+    global. Para mantener una experiencia consistente con el resto del
+    hold hardening, los uniones se hacen a nivel de la query base y el
+    caller decide (admin/visitante) si filtra o no.
+    """
     # Verify site exists (no auth required for public)
     _get_public_site_or_404(db, site_key)
-    leaders = crud.list_pastoral_team(db)
+    base_query = db.query(models.Persona).filter(
+        models.Persona.is_pastoral_leader == True
+    )
+    # Para endpoints públicos no se aplica scope (anónimo). El caller
+    # autenticado via Authorization header puede recibir respuesta
+    # scoped (vía ``get_user_sede_id``); sin embargo, este endpoint no
+    # extrae el token actualmente (no existe dep auth en endpoints
+    # públicos). El scope aplica al flujo CMS-admin en su contraparte.
+    leaders = base_query.order_by(
+        models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc()
+    ).all()
     result = []
     for p in leaders:
         name = p.nombre_completo
@@ -1109,9 +1133,22 @@ def cms_pastoral_team_list(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """CMS endpoint: list all pastoral leaders."""
+    """CMS endpoint: list pastoral leaders.
+
+    Axioma 3 — Multi-Tenant: el listado se acota a la sede del staff.
+    Sin esta validación, un editor de sede_a veía los perfiles pastorales
+    de sede_b y podía editarlos (vector IDOR blindado en
+    ``cms_pastoral_profile_update``). El staff sin sede
+    (superadmin / anterior) sigue viendo el agregado global.
+    """
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    leaders = crud.list_pastoral_team(db)
+    base_query = db.query(models.Persona).filter(
+        models.Persona.is_pastoral_leader == True
+    )
+    base_query = _scope_cms_pastoral_team_by_user_sede(db, current_user, base_query)
+    leaders = base_query.order_by(
+        models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc()
+    ).all()
     result = []
     for p in leaders:
         name = p.nombre_completo
@@ -1143,12 +1180,31 @@ def cms_pastoral_profile_update(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """CMS endpoint: update a pastoral leader's profile."""
+    """CMS endpoint: update a pastoral leader's profile.
+
+    Axioma 3 — IDOR FIX (CRÍTICO): antes de este fix,
+    ``crud.get_persona_by_id(db, persona_id)`` retornaba cualquier
+    Persona del platform, sin validar que perteneciera a la sede del
+    staff actual. Un editor CMS de sede_a con rol ``cms:edit`` podía
+    entonces mutar ``photo_url``, ``bio_full``, ``social_*``,
+    ``is_main_pastor`` y ``is_pastoral_leader`` de CUALQUIER pastor de
+    CUALQUIER sede — un IDOR ciego, defense in depth insuficiente.
+
+    Ahora usamos el helper existente ``_get_scoped_persona`` (mismo
+    pattern que ``/api/crm/personas/{id}``): 404 cross-sede
+    (existence-leak safe, no 403). Si la persona es de la propia sede,
+    el CRUD aplica la mutación; si es de otra sede, 404.
+
+    Defense-in-depth: ``update_pastoral_profile`` CRUD también valida
+    scope pre-commit (param ``actor_user_id`` propagado)."""
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    persona = crud.get_persona_by_id(db, persona_id)
-    if not persona:
-        raise HTTPException(status_code=404, detail="Persona not found")
-    persona = crud.update_pastoral_profile(db, persona, payload)
+    persona = _get_scoped_persona(db, current_user, persona_id)
+    persona = crud.update_pastoral_profile(
+        db,
+        persona,
+        payload,
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
+    )
     name = persona.nombre_completo
     return schemas.PastoralProfileRead(
         id=str(persona.id),
@@ -1352,7 +1408,6 @@ def schedule_page_publish(
 
 
 # ── IMAGE OPTIMIZATION (Phase 7) ───────────────────────────────────────────────
-
 @router.get("/images/{media_id}/resize", response_model=dict)
 def get_resized_image(
     media_id: uuid.UUID,
@@ -1361,11 +1416,20 @@ def get_resized_image(
     quality: int = Query(80, le=100),
     db: Session = Depends(get_db),
 ):
-    """Get a resized version of an uploaded image. Returns base64 or URL."""
+    """Get a resized version of an uploaded image. Returns base64 or URL.
+
+    Defense-in-depth (Axioma 3): aunque este endpoint es público (la URL
+    retornada puede ser consumida por el frontend faro), filtramos los
+    media archivados — un media archivado no debe ser público vía API. La
+    URL es por defecto del asset original, así que el caller puede
+    servirlo desde CDN con ``<img width=...>`` sin pasar por aquí, pero
+    mantenerlo scope-archived evita leaks de metadata para medios
+    retirados del site público.
+    """
     media = db.query(models.CmsMediaItem).filter(
         models.CmsMediaItem.id == media_id,
     ).first()
-    if not media:
+    if not media or (media.status or "") == "archived":
         raise HTTPException(status_code=404, detail="Media not found")
     # For now return the original URL with resize params
     return {"url": media.url, "width": width, "height": height, "quality": quality}
@@ -1379,15 +1443,46 @@ async def optimize_uploaded_image(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Optimize an uploaded image by resizing and reducing quality."""
-    from PIL import Image
-    from backend.core.config import get_settings
-    
-    media = db.query(models.CmsMediaItem).filter(
-        models.CmsMediaItem.id == media_id,
-    ).first()
-    if not media:
+    """Optimize an uploaded image by resizing and reducing quality.
+
+    Axioma 3 — Multi-Tenant (CRÍTICO, IDOR fix): antes de este fix,
+    ``db.query(models.CmsMediaItem).filter(id == media_id)`` retornaba
+    cualquier media del platform sin validar que perteneciera a la sede
+    del staff actual. Un editor CMS de sede_a con rol ``cms:read`` podía
+    entonces invocar ``/images/optimize`` con el ``media_id`` de un asset
+    perteneciente a sede_b y forzar la reescritura del archivo JPEG
+    optimizado en disco vía ``img.save(opt_path, ...)`` — un IDOR que
+    resulta en modificación cross-sede del filesystem uploads_dir, no
+    sólo de la fila en DB.
+
+    Ahora usamos ``_get_scoped_cms_media`` (mismo helper que el resto
+    del CMS-admin): 404 cross-sede (existence-leak safe, no 403) *antes*
+    de tocar PIL o el filesystem. Si el media es de la propia sede, el
+    CRUD procede con la optimización y el ``img.save``; si es de otra
+    sede, 404 y el filesystem queda intacto.
+
+    Defense-in-depth (lazy PIL import): el ``from PIL import Image`` se
+    hace DESPUÉS del scope + archived check para que un entorno sin
+    PIL instalado NO bypassee el scope check con un 500 — el cross-sede
+    sigue siendo 404 limpio. Si PIL falta y el media es local+active,
+    devolvemos 503 con un mensaje actionable (instale ``pillow``).
+    """
+    media = _get_scoped_cms_media(db, current_user, media_id)
+    if (media.status or "") == "archived":
         raise HTTPException(status_code=404, detail="Media not found")
+
+    try:
+        from PIL import Image
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Pillow (PIL) no instalado en el servidor — instale "
+                "el paquete ``pillow`` para habilitar /images/optimize."
+            ),
+        ) from exc
+    from backend.core.config import get_settings
+
     
     settings = get_settings()
     orig_path = os.path.join(settings.uploads_dir, media.filename)

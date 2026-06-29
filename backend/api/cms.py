@@ -9,12 +9,24 @@ from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
+from backend.api._cms_helpers import (
+    _get_scoped_cms_announcement,
+    _get_scoped_cms_media,
+    _get_scoped_cms_testimonial,
+    _scope_cms_announcements_by_user_sede,
+    _scope_cms_media_by_user_sede,
+    _scope_cms_testimonials_by_user_sede,
+)
 from backend.core.permissions import require_module_access
 from backend.schemas import PaginatedResponse
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.storage import storage_service
-from backend.core.uploads import sanitize_filename
+from backend.core.uploads import (
+    ensure_allowed_extension,
+    sanitize_filename,
+    validate_mime_extension_alignment,
+)
 
 router = APIRouter(tags=["cms"])
 
@@ -28,10 +40,20 @@ def _now_iso() -> str:
 
 
 # ── Testimonials (SQLAlchemy models) ────────────────────
+# Axioma 3 — Multi-Tenant: Testimonial tiene sede_id propio (migration
+# 2026-07-01). Endpoints admin filtran estrictamente por sede del staff;
+# endpoints públicos (/cms/testimonials) siguen retornando sólo
+# testimonios aprobados para preservar el feed público de la home.
 
 
 @router.get("/cms/testimonials", response_model=list[schemas.TestimonialRead])
 def list_cms_testimonials(db: Session = Depends(get_db)):
+    """Public feed: testimonios aprobados son contenido visible en la home
+    global de la plataforma (mismo tratamiento que announcements públicas).
+    El filtro de aprobación (approved_only=True) protege el feed público.
+    Los testimonios NO aprobados sólo aparecen en endpoints admin (filtrados
+    por sede).
+    """
     return crud.list_testimonials(db, approved_only=True)
 
 
@@ -43,24 +65,41 @@ def create_cms_testimonial(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
+    """Axioma 3 — Multi-Tenant: al crear un testimonial, derivamos su
+    ``sede_id`` desde la persona del autor (si está presente) o el
+    usuario actual. Esto permite que defense-in-depth en el CRUD layer
+    valide que el target persona permanece en scope. Si el autor es NULL
+    (testimonial anónimo creado por admin), se usa la sede del current_user.
+    """
+    # Derivar ``author_persona_id`` server-side cuando el payload no lo
+    # especifica. NO asignar ``author_id`` (anterior int FK) porque
+    # ``TestimonialCreate`` no expone ese campo: la única columna válida
+    # es ``author_persona_id`` (UUID FK a personas). Body con
+    # ``author_persona_id`` explícito del cliente pasa directo.
     if not payload.author_persona_id:
-        payload.author_persona_id = str(
-            crud.resolve_persona_id_for_user(db, getattr(current_user, "id", None))
-            or ""
-        ) or None
-    if not payload.author_id:
-        current_user_id = getattr(current_user, "id", None)
-        if isinstance(current_user_id, int) and current_user_id > 0:
-            payload.author_id = current_user_id
-    return crud.create_testimonial(db, payload)
+        resolved = crud.resolve_persona_id_for_user(
+            db, getattr(current_user, "id", None)
+        )
+        if resolved:
+            payload.author_persona_id = str(resolved)
+    return crud.create_testimonial(
+        db,
+        payload,
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
+    )
 
 
 @router.get("/admin/testimonials", response_model=list[schemas.TestimonialRead])
 def list_admin_testimonials(
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    return crud.list_testimonials(db)
+    """Axioma 3 — Multi-Tenant: filtro por sede del staff. Staff de sede_a
+    ve SÓLO los testimonios de sede_a; staff sin sede (superadmin) ve
+    todos (consistente con el resto del axioma)."""
+    query = db.query(models.Testimonial)
+    query = _scope_cms_testimonials_by_user_sede(db, current_user, query)
+    return query.order_by(models.Testimonial.created_at.desc()).all()
 
 
 @router.get(
@@ -70,6 +109,9 @@ def get_cms_testimonial(
     testimonial_id: uuid.UUID,
     db: Session = Depends(get_db),
 ):
+    """Public GET: mismo filtro dual que antes (approved_only +
+    no-archived). NO se aplica scope de sede porque el testimonial
+    aprobado es contenido público visible a cualquier visitante."""
     row = crud.get_testimonial(db, testimonial_id)
     if not row or not row.is_approved or row.status == "archived":
         raise HTTPException(status_code=404, detail="testimonial not found")
@@ -82,12 +124,11 @@ def get_cms_testimonial(
 def get_admin_testimonial(
     testimonial_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    row = crud.get_testimonial(db, testimonial_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="testimonial not found")
-    return row
+    """Axioma 3 — Multi-Tenant: helper existence-leak-safe devuelve 404
+    para cross-sede o inexistente."""
+    return _get_scoped_cms_testimonial(db, current_user, testimonial_id)
 
 
 @router.patch(
@@ -97,31 +138,47 @@ def patch_admin_testimonial(
     testimonial_id: uuid.UUID,
     payload: schemas.TestimonialUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    row = crud.get_testimonial(db, testimonial_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="testimonial not found")
-    return crud.update_testimonial(db, row, payload)
+    """Axioma 3 — Multi-Tenant: 404 cross-sede. Defense-in-depth CRUD
+    re-valida scope sobre `author_persona_id` entrante si el body lo
+    cambia."""
+    row = _get_scoped_cms_testimonial(db, current_user, testimonial_id)
+    return crud.update_testimonial(
+        db,
+        row,
+        payload,
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
+    )
 
 
 @router.delete("/admin/testimonials/{testimonial_id}", status_code=204)
 def delete_admin_testimonial(
     testimonial_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    row = crud.get_testimonial(db, testimonial_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="testimonial not found")
-    crud.delete_testimonial(db, row)
+    """Axioma 3 — Multi-Tenant: 404 cross-sede antes de soft-delete."""
+    row = _get_scoped_cms_testimonial(db, current_user, testimonial_id)
+    crud.delete_testimonial(
+        db,
+        row,
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
+    )
 
 
 # ── Announcements (SQLAlchemy models) ───────────────────
+# Axioma 3 — Multi-Tenant: Announcement tiene sede_id propio + FK a
+# ``created_by_persona_id`` (migration 2026-07-01). Public feed sigue
+# global para home; admin endpoints filtran estrictamente por sede.
 
 
 @router.get("/cms/announcements", response_model=list[schemas.AnnouncementRead])
 def list_cms_announcements(db: Session = Depends(get_db)):
+    """Public feed: anuncios publicados son contenido visible en la home
+    global de la plataforma, no se filtra por sede (un visitante de
+    cualquier sede debe ver anuncios publicados). El filtro ``public_only``
+    (status='published' AND published_at<=now) preserva el contrato."""
     return crud.list_announcements(db, public_only=True)
 
 
@@ -131,17 +188,27 @@ def list_cms_announcements(db: Session = Depends(get_db)):
 def create_cms_announcement(
     payload: schemas.AnnouncementCreate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    return crud.create_announcement(db, payload)
+    """Axioma 3 — Multi-Tenant: ``sede_id`` y ``created_by_persona_id``
+    se derivan server-side desde el current_user (no se aceptan del body
+    para evitar que un editor fuerce sede_id distinto al suyo)."""
+    return crud.create_announcement(
+        db,
+        payload,
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
+    )
 
 
 @router.get("/admin/announcements", response_model=list[schemas.AnnouncementRead])
 def list_admin_announcements(
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    return crud.list_announcements(db)
+    """Axioma 3 — Multi-Tenant: filtro por sede del staff."""
+    query = db.query(models.Announcement)
+    query = _scope_cms_announcements_by_user_sede(db, current_user, query)
+    return query.order_by(models.Announcement.created_at.desc()).all()
 
 
 @router.get(
@@ -151,6 +218,9 @@ def get_cms_announcement(
     announcement_id: uuid.UUID,
     db: Session = Depends(get_db),
 ):
+    """Public GET: contrato previo preservado (status='published' AND
+    published_at<=now). NO se aplica scope porque un anuncio publicado
+    es contenido público."""
     row = crud.get_announcement(db, announcement_id)
     now = datetime.now(timezone.utc)
     if (
@@ -168,12 +238,10 @@ def get_cms_announcement(
 def get_admin_announcement(
     announcement_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    row = crud.get_announcement(db, announcement_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="announcement not found")
-    return row
+    """Axioma 3 — Multi-Tenant: 404 cross-sede existence-leak safe."""
+    return _get_scoped_cms_announcement(db, current_user, announcement_id)
 
 
 @router.patch(
@@ -183,27 +251,37 @@ def patch_admin_announcement(
     announcement_id: uuid.UUID,
     payload: schemas.AnnouncementUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    row = crud.get_announcement(db, announcement_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="announcement not found")
-    return crud.update_announcement(db, row, payload)
+    """Axioma 3 — Multi-Tenant: 404 cross-sede antes de mutar."""
+    row = _get_scoped_cms_announcement(db, current_user, announcement_id)
+    return crud.update_announcement(
+        db,
+        row,
+        payload,
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
+    )
 
 
 @router.delete("/admin/announcements/{announcement_id}", status_code=204)
 def delete_admin_announcement(
     announcement_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    row = crud.get_announcement(db, announcement_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="announcement not found")
-    crud.delete_announcement(db, row)
+    """Axioma 3 — Multi-Tenant: 404 cross-sede antes de soft-delete."""
+    row = _get_scoped_cms_announcement(db, current_user, announcement_id)
+    crud.delete_announcement(
+        db,
+        row,
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
+    )
 
 
 # ── CMS Media ───────────────────────────────────────────
+# Axioma 3 — Multi-Tenant: CmsMediaItem tiene sede_id propio (migration
+# 2026-07-01). Endpoints admin filtran estrictamente por sede. CmsImage
+# upload deriva ``sede_id`` server-side desde el current_user.
 
 
 @router.get("/cms/media", response_model=PaginatedResponse[schemas.CmsMediaRead])
@@ -214,10 +292,34 @@ def list_cms_media(
     section: str | None = Query(default=None),
     include_archived: bool = Query(default=False),
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    items, total = crud.list_cms_media_items(
-        db, query=query, section=section, skip=skip, limit=limit, include_archived=include_archived
+    """Axioma 3 — Multi-Tenant: el listado admin filtra por sede del staff.
+    Staff de sede_a SÓLO ve imágenes de sede_a (incluso si la URL del
+    asset técnicamente sería pública)."""
+    base_query = db.query(models.CmsMediaItem)
+    base_query = _scope_cms_media_by_user_sede(db, current_user, base_query)
+    if not include_archived:
+        base_query = base_query.filter(models.CmsMediaItem.status != "archived")
+    if section:
+        base_query = base_query.filter(models.CmsMediaItem.section == section)
+    if query:
+        from sqlalchemy import or_ as _or
+
+        like = f"%{query.strip()}%"
+        base_query = base_query.filter(
+            _or(
+                models.CmsMediaItem.url.ilike(like),
+                models.CmsMediaItem.alt_text.ilike(like),
+                models.CmsMediaItem.filename.ilike(like),
+            )
+        )
+    total = base_query.count()
+    items = (
+        base_query.order_by(models.CmsMediaItem.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
     )
     return PaginatedResponse(
         items=[schemas.CmsMediaRead.model_validate(i) for i in items],
@@ -233,6 +335,8 @@ def create_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
+    """Axioma 3 — Multi-Tenant: ``sede_id`` se deriva server-side desde el
+    current_user. Defense-in-depth CRUD lo re-valida pre-add."""
     return crud.create_cms_media_item(
         db,
         url=payload.url,
@@ -244,6 +348,7 @@ def create_cms_media(
         mime_type=payload.mime_type,
         file_size=payload.file_size,
         status=payload.status,
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
     )
 
 
@@ -251,14 +356,10 @@ def create_cms_media(
 def get_cms_media(
     item_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    row = (
-        db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
-    )
-    if not row:
-        raise HTTPException(status_code=404, detail="media item not found")
-    return row
+    """Axioma 3 — Multi-Tenant: 404 cross-sede existence-leak safe."""
+    return _get_scoped_cms_media(db, current_user, item_id)
 
 
 @router.patch("/cms/media/{item_id}", response_model=schemas.CmsMediaRead)
@@ -266,11 +367,13 @@ def patch_cms_media(
     item_id: uuid.UUID,
     payload: schemas.CmsMediaUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    row = crud.update_cms_media_item(
+    """Axioma 3 — Multi-Tenant: 404 cross-sede antes de mutar."""
+    row = _get_scoped_cms_media(db, current_user, item_id)
+    return crud.update_cms_media_item(
         db,
-        item_id,
+        row.id,
         url=payload.url,
         alt_text=payload.alt_text,
         section=payload.section,
@@ -279,21 +382,23 @@ def patch_cms_media(
         mime_type=payload.mime_type,
         file_size=payload.file_size,
         status=payload.status,
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
     )
-    if not row:
-        raise HTTPException(status_code=404, detail="media item not found")
-    return row
 
 
 @router.delete("/cms/media/{item_id}", status_code=204)
 def delete_cms_media(
     item_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    ok = crud.delete_cms_media_item(db, item_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="media item not found")
+    """Axioma 3 — Multi-Tenant: 404 cross-sede antes de soft-delete."""
+    row = _get_scoped_cms_media(db, current_user, item_id)
+    crud.delete_cms_media_item(
+        db,
+        row.id,
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
+    )
 
 
 @router.post("/cms/media/upload", response_model=schemas.CmsMediaRead, status_code=201)
@@ -305,13 +410,45 @@ async def upload_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
+    """Hardened upload pipeline (Axioma 3 + Defense-in-Depth):
+
+    1. **Size guardrail** — rejects uploads larger than ``MAX_UPLOAD_SIZE``
+       (10 MiB). Evita OOM en storage_service con payloads arbitrarios.
+    2. **Extension allow-list** — ``ensure_allowed_extension`` bloquea
+       extensiones fuera de ``ALLOWED_EXTENSIONS`` (png/jpg/jpeg/gif/webp/
+       pdf/mp4/mp3/wav/zip). Cierra el vector donde un cliente sube un
+       ``.exe`` o ``.html`` que storage_service aceptaría sin filtro.
+    3. **MIME/extension alignment** — ``validate_mime_extension_alignment``
+       verifica que el ``Content-Type`` declarado por el cliente sea
+       coherente con la extensión del archivo. Defense-in-depth sobre el
+       allow-list: si el cliente sube ``malware.png`` con
+       ``Content-Type: application/x-msdownload``, el allow-list lo
+       aceptaría (extensión válida), pero el alignment check lo rechaza.
+    4. **Filename sanitization** — ``sanitize_filename`` remueve chars
+       no-seguros y previene path traversal antes de persistir.
+    5. **Axioma 3** — ``actor_user_id`` se propaga al CRUD layer, donde
+       ``create_cms_media_item`` resuelve ``sede_id`` server-side desde
+       el actor (no del body) y previene cross-sede injection.
+    """
     content = await file.read()
     original_name = sanitize_filename(file.filename or "asset.bin")
 
-    # Validate file size first
+    # 1) Size guardrail
     from backend.core.uploads import MAX_UPLOAD_SIZE
     if len(content) > MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=400, detail="File exceeds maximum size")
+
+    # 2) Extension allow-list (bloquea .exe, .html, .js, .sh, ...).
+    try:
+        ensure_allowed_extension(original_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    # 3) MIME/extension alignment (defense-in-depth sobre allow-list).
+    try:
+        validate_mime_extension_alignment(original_name, file.content_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     url = storage_service.save_file(content, original_name, subfolder="cms")
     parsed_tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
@@ -325,17 +462,28 @@ async def upload_cms_media(
         filename=file.filename,
         mime_type=file.content_type,
         file_size=len(content),
+        actor_user_id=str(getattr(current_user, "id", None) or ""),
     )
 
 
 # ── CMS Metrics ─────────────────────────────────────────
+# Axioma 3 — Multi-Tenant: las métricas admin se acotan por sede. Se
+# cuentan sólo testimonios / announcements / media de la sede del staff
+# para que un pastor de sede_b no vea volúmenes agregados de sede_a.
 
 
 @router.get("/cms/metrics", response_model=schemas.CmsMetrics)
 def get_cms_metrics(
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
+    """Axioma 3 — Multi-Tenant: pre-filtramos métricas por sede del staff.
+    Superadmin sin sede sigue viendo totales globales (compat anterior).
+
+    Se preservan las métricas estructurales (page contents y
+    publications) porque son del site "faro" (CmsSite) y son globales;
+    los counts User-Generated (testimonials/announcements/media) sí se
+    acotan por sede."""
     publications = crud.list_content_publications(db)
     status_counter = {
         "draft": 0,
@@ -347,9 +495,18 @@ def get_cms_metrics(
     for item in publications:
         status_counter[item.status] = status_counter.get(item.status, 0) + 1
 
-    testimonials = crud.list_testimonials(db)
-    announcements = crud.list_announcements(db)
-    media = crud.list_cms_media_items(db, limit=500)
+    # Scoped queries para User-Generated content:
+    t_query = db.query(models.Testimonial)
+    t_query = _scope_cms_testimonials_by_user_sede(db, current_user, t_query)
+    testimonials = t_query.all()
+
+    a_query = db.query(models.Announcement)
+    a_query = _scope_cms_announcements_by_user_sede(db, current_user, a_query)
+    announcements = a_query.all()
+
+    m_query = db.query(models.CmsMediaItem)
+    m_query = _scope_cms_media_by_user_sede(db, current_user, m_query)
+    media = m_query.all()
 
     return schemas.CmsMetrics(
         total_blocks=len(crud.list_page_contents(db, limit=500)),
@@ -378,6 +535,9 @@ def get_cms_metrics(
 
 
 # ── CMS Pages (PageContent CRUD) ────────────────────────
+# PageContent es parte del site "faro" (CmsSite, global) y NO recibe
+# scope de sede: los editors admin crean páginas de la home pública, no
+# contenido User-Generated (eso va a Testimonial/Announcement).
 
 
 @router.get("/cms/pages", response_model=list[schemas.PageContentRead])

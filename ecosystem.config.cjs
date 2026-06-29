@@ -15,7 +15,7 @@ module.exports = {
       name: "ccf-frontend-staging",
       cwd: "/root/ccf/frontend",
       script: "node_modules/next/dist/bin/next",
-      args: "start --port 3002",
+      args: "start --port 3000",
       interpreter: "none",
       exec_mode: "fork",
       autorestart: true,

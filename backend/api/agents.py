@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from backend.models_shared import _utcnow
 from backend import crud, models, schemas
 from backend.agents.orchestrator import AgentOrchestrator
+from backend.api._cms_helpers import _scope_cms_testimonials_by_user_sede
 from backend.core.permissions import require_active_user, require_admin
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
@@ -55,8 +56,15 @@ def analytics_summary(
         .count()
     )
 
+    # Axioma 3 — Multi-Tenant: el conteo de testimonios pendientes se
+    # acota por sede del staff al igual que el resto del endpoint.
+    # Sin este filtro, un admin de sede_a vería el backlog de testimonios
+    # pendientes de sede_b en su dashboard — leak cross-sede.
+    pending_t_query = _scope_cms_testimonials_by_user_sede(
+        db, current_user, db.query(models.Testimonial)
+    )
     pending_testimonials = sum(
-        1 for row in crud.list_testimonials(db) if not row.is_approved
+        1 for row in pending_t_query.all() if not row.is_approved
     )
 
     return {

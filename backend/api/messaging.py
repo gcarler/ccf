@@ -18,8 +18,16 @@ funcionales, NO canónicas para outbound:
    ``POST /messaging/send``. Modela un hilo conversacional dentro de la
    plataforma con ``channel='internal'`` en ``CommunicationLog``. Soporta la
    bandeja ``/plataforma/inbox/messages`` y el sidebar CRM de la persona.
-   Auth: ``require_staff_or_admin`` (scope cross-user — staff ve logs
-   completos de la plataforma).
+   Auth: ``require_staff_or_admin``. **Axioma 3 aplicado (Fase 3 — API
+   Layer + Fase 4 — CRUD Layer)**: ``GET /messaging/history`` filtra los
+   logs por ``Persona.sede_id == user_sede`` (vía
+   ``crud.get_communication_logs(sede_id=...)``); ``POST /messaging/send``
+   rechaza con 404 si el ``persona_id`` pertenece a otra sede (vía
+   ``_get_scoped_persona``) Y propaga ``actor_user_id`` al CRUD
+   ``create_communication_log``, que re-valida ``persona_id`` en el CRUD
+   layer (defense-in-depth, cierra TOCTOU). Staff-admins sin sede
+   asignada (superadmin/anterior) ven TODO y pueden postear a cualquier
+   persona, consistente con el resto de la plataforma.
 
 Notas operativas:
 
@@ -37,17 +45,35 @@ Notas operativas:
   outbound. Para outbound real, consultar ``CommunicationLog`` con
   ``outcome in OUTBOUND_OUTCOMES`` (exportado en ``backend.services.messaging``).
 
-- **``GET /messaging/history`` sin filtro por persona/sede**: retorna los
-  últimos ``limit`` registros globales. Es staff-only; cualquier staff puede
-  leer el log completo de la plataforma. Para historia filtrada por persona,
-  usar ``GET /api/crm/messaging/history`` (con JOIN sobre ``personas`` y
-  filtro por ``persona_id``/``sede_id``).
+- **Multi-Tenant (Axioma 3) — APLICADO en ``/messaging/history`` y
+  ``/messaging/send``**:
 
-- **Multi-Tenant (Axioma 3) no aplicado en este router**: ``POST /messaging/send``
-  y ``GET /messaging/history`` no filtran por ``sede_id`` del staff — staff de
-  una sede podrían escribir/leer logs de personas de otras sedes. Si Multi-Tenant
-  estricto es requerido, agregar ``.filter(Persona.sede_id == staff_sede_id)``
-  en ``crud.get_communication_logs`` y propagar ``sede_id`` al insert.
+  - ``GET /messaging/history`` filtraba los últimos ``limit`` registros
+    globales. Ahora acepta ``sede_id`` opcional y, cuando el caller tiene
+    sede asignada (``get_user_sede_id`` retorna string), restringe el
+    historial via JOIN con ``Persona.sede_id``. Staff sin sede siguen
+    viendo el log global (compat con superadmin).
+
+  - ``POST /messaging/send`` validaba el cuerpo pero no el target. Ahora
+    llama a ``_get_scoped_persona`` antes de crear el log: si el
+    ``persona_id`` pertenece a otra sede, devuelve ``404`` (existence-leak
+    safe, mismo patrón que el resto del CRM cross-sede). El ``leader_id``
+    interno del staff no expone la sede del autor. **Defense-in-depth**:
+    además del check API-layer, propaga ``actor_user_id`` al CRUD
+    ``create_communication_log``, que re-valida el ``persona_id`` antes
+    del ``db.add`` — cierra el TOCTOU gap donde un caller no-API (worker,
+    script, seed) podría bypassear el check API-layer. Superadmin /
+    anterior (``actor_user_id=None``) bypassea, consistente con el resto
+    de Axioma 3.
+
+  - ``PATCH /messaging/notifications/{id}`` validaba cualquier
+    ``notification_id``. Ahora requiere ownership: el caller sólo puede
+    marcar como leídas sus PROPIAS notifications. BOLA-style leak
+    prevention — 404 cross-user (existence-leak safe). Implementado via
+    ``owner_persona_id`` en ``crud.mark_notification_as_read``.
+
+  Para historia filtrada por persona, usar ``GET /api/crm/messaging/history``
+  (con JOIN sobre ``personas`` y filtro por ``persona_id``/``sede_id``).
 
 - **Broadcast con auth mínima**: ``POST /messaging/notifications`` acepta
   ``event``+``body``+``room`` arbitrarios y los reenvía al mesh WebSocket
@@ -68,7 +94,8 @@ from backend import crud, models, schemas
 from backend.core.permissions import require_module_access, require_staff_or_admin
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
-from backend.crud.crm import resolve_persona_id_for_user
+from backend.crud.crm import resolve_persona_id_for_user, get_user_sede_id
+from backend.api.crm._shared import _get_scoped_persona
 from backend.services.messaging import CommunicationOutcome
 
 
@@ -143,7 +170,20 @@ def update_notification(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
-    updated = crud.mark_notification_as_read(db, notification_id=notification_id)
+    # Axioma 3 — ownership (defense-in-depth): el caller SÓLO puede marcar
+    # como leídas SUS PROPIAS notifications. BOLA-style leak prevention:
+    # sin este check, cualquier usuario con ``require_module_access``
+    # podría PATCH notifications ajenas adivinando UUIDs. 404 (no 403,
+    # no 200) para evitar existence leaks. Notification.user_id == Persona.id
+    # (via Usuario), por eso resolvemos persona_id del current_user.
+    current_persona_id = resolve_persona_id_for_user(
+        db, getattr(current_user, "id", None)
+    )
+    updated = crud.mark_notification_as_read(
+        db,
+        notification_id=notification_id,
+        owner_persona_id=current_persona_id,
+    )
     if not updated:
         raise HTTPException(status_code=404, detail="Notification not found")
     return updated
@@ -166,9 +206,14 @@ def messaging_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    # Sin filtro por persona ni sede — retorna los últimos `limit` registros
-    # globales. Para historia filtrada por persona, usar /api/crm/messaging/history.
-    return crud.get_communication_logs(db, limit=limit)
+    # Axioma 3 — Multi-Tenant: el historial se filtra por sede del staff.
+    # CommunicationLog NO tiene sede_id propio; el scope se aplica vía JOIN
+    # con Persona (FK persona_id). Staff sin sede (superadmin) ven el log
+    # global. Defense-in-depth contra cross-sede leak: un staff de sede_a
+    # NO puede leer logs de comunicación de personas de sede_b. Para
+    # historia filtrada por persona, usar /api/crm/messaging/history.
+    user_sede = get_user_sede_id(db, getattr(current_user, "id", None))
+    return crud.get_communication_logs(db, limit=limit, sede_id=user_sede)
 
 
 @router.post("/messaging/send", response_model=schemas.CommunicationLog)
@@ -177,19 +222,23 @@ def messaging_send(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    # Riesgo conocido: persona_id NO se valida contra permisos del staff —
-    # cualquier staff/admin puede postear como cualquier persona. Tampoco
-    # se filtra por sede_id del staff (Axioma 3). Ver module docstring para
-    # semántica de outcome, ausencia de gateway y referencia canónica.
+    # Axioma 3 — Multi-Tenant: el target (persona_id) debe pertenecer a la
+    # sede del staff. Defense-in-depth contra escritura cross-sede:
+    # un staff de sede_a ya no puede postear logs en CommunicationLog de
+    # personas de sede_b. _get_scoped_persona retorna 404 (no 403) para
+    # evitar existence-leaks. Ver module docstring para semántica de
+    # outcome, ausencia de gateway y referencia canónica.
+    _get_scoped_persona(db, current_user, payload.persona_id)
+    actor_user_id = getattr(current_user, "id", None)
     entry = crud.create_communication_log(
         db,
         schemas.CommunicationLogCreate(
             persona_id=payload.persona_id,
             channel=payload.channel,
             content=payload.content,
-            leader_id=resolve_persona_id_for_user(db, getattr(current_user, "id", None))
-            or getattr(current_user, "id", None),
+            leader_id=resolve_persona_id_for_user(db, actor_user_id) or actor_user_id,
             outcome=CommunicationOutcome.INTERNAL_LOG.value,
         ),
+        actor_user_id=str(actor_user_id) if actor_user_id else None,
     )
     return entry
