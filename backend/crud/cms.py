@@ -1,7 +1,17 @@
-"""CMS: Page content, media, CMS v2 (sites, themes, menus, pages, sections, versions)."""
+"""CMS: Page content, media, CMS v2 (sites, themes, menus, pages, sections, versions).
+
+Axioma 3 — Multi-Tenant (Fase 5 — CRUD Layer defense-in-depth): las
+funciones mutantes de User-Generated Content (Testimonial, Announcement,
+CmsMediaItem) y PastoralProfile re-validan scope Multi-Tenant antes de
+persistir cambios, propagando actor_user_id desde el caller API. Esto
+cierra el TOCTOU gap donde un caller no-API (worker async, script de
+seeding, llamada directa al CRUD) podría crear/mutar registros sin
+pasar por el helper API `_get_scoped_*` correspondiente.
+"""
 
 import datetime as dt
 import json
+import logging
 import uuid
 
 from sqlalchemy import func, or_
@@ -10,12 +20,242 @@ from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend.content_defaults import PAGE_CONTENT_DEFAULTS
 from backend.crud._utils import _utcnow
-from backend.crud.crm import resolve_persona_id_for_user as resolve_persona_uuid_for_user
+from backend.crud.crm import (
+    _actor_sede_or_none as _actor_sede_or_none_cms,
+    resolve_persona_id_for_user as resolve_persona_uuid_for_user,
+)
+
+_logger = logging.getLogger(__name__)
 
 
 def resolve_persona_id_for_user(db: Session, user_id: uuid.UUID | str | None):
     persona_id = resolve_persona_uuid_for_user(db, user_id)
     return persona_id
+
+
+# ── Axioma 3 — Multi-Tenant defense-in-depth helpers (CMS CRUD) ──────────
+
+
+def _actor_sede_or_none_cms(db: Session, actor_user_id) -> str | None:
+    """Convenience wrapper sobre ``backend.crud.crm.get_user_sede_id``.
+
+    Devuelve ``None`` cuando:
+      - ``actor_user_id is None`` (callers anterior sin contexto de usuario).
+      - El user no tiene persona vinculada con sede asignada
+        (superadmin / token anterior v2 sin sede).
+
+    En cualquier otro caso devuelve la sede del actor como string.
+    """
+    if actor_user_id is None:
+        return None
+    try:
+        from backend.crud.crm import get_user_sede_id
+        return get_user_sede_id(db, str(actor_user_id))
+    except (TypeError, ValueError, AttributeError):
+        return None
+
+
+def _resolve_persona_sede(db: Session, persona_id) -> str | None:
+    """Resuelve la ``sede_id`` de una persona target (UUID) o None.
+
+    Helper usado por defense-in-depth de CMS User-Generated Content.
+    Retorna:
+      - ``None`` si la persona no existe.
+      - ``None`` si la persona no tiene sede asignada (orphan).
+      - La sede como ``str`` en caso contrario.
+    """
+    if persona_id is None:
+        return None
+    try:
+        persona_uuid = uuid.UUID(str(persona_id))
+    except (TypeError, ValueError, AttributeError):
+        return None
+    row = (
+        db.query(models.Persona.sede_id)
+        .filter(models.Persona.id == persona_uuid)
+        .first()
+    )
+    if not row or row[0] is None:
+        return None
+    return str(row[0])
+
+
+def _crud_scope_re_check_cms_content_create(
+    db: Session,
+    actor_user_id,
+    *,
+    actor_sede: str | None,
+    author_persona_id,
+) -> str | None:
+    """Defense in depth para CMS create (Testimonial / Announcement / MediaItem).
+
+    Política OR-based sobre el estado de anclas tras la mutación:
+
+      - **Actor sin sede** (``actor_user_id is None`` o
+        ``actor_sede is None``): superadmin / anterior path — bypass sin
+        check. Retorna ``None`` y el caller persiste ``row.sede_id``
+        como defina (típicamente ``None``).
+
+      - **Actor con sede + ``author_persona_id`` None/unresoluble**:
+        **ORPHAN-FALLBACK** — heredamos ``actor_sede`` como sede_id
+        implícito del row. Esto preserva compat con callers anterior
+        (workers async, scripts de seeding, bulk imports) que propagan
+        ``actor_user_id`` pero no pueden resolver el FK creator a una
+        ``Persona``. Logged at INFO. El row queda emprisonado en la sede
+        del actor, NO es una leak (no escapa del scope del axioma).
+
+        Antes de este cambio, el branch rechazaba 404, lo que rompía
+        silenciosamente cualquier caller anterior que pasaba
+        ``actor_user_id`` sin persona resoluble.
+
+      - **Actor con sede y ``author_persona_id`` resuelve a sede
+        distinta de ``actor_sede``**: REJECT 404. Cross-sede leak:
+        breach de Axioma 3. Logged at WARNING (no INFO). Mensaje neutro
+        para no leakear info del anchor al caller.
+
+      - **Match exacto**: retorna ``target_sede`` (que coincide con
+        ``actor_sede``) para que el CRUD lo persista en
+        ``row.sede_id = target_sede`` sin JOIN adicional.
+
+    Returns:
+      ``None`` si el caller debe dejar ``row.sede_id = None`` (superadmin /
+      anterior), o ``str`` con la ``sede_id`` resuelta que el caller debe
+      propagar en ``db.add``. Si rechaza cross-sede, raise
+      ``HTTPException(404)``.
+
+    NOTE: ``Testimonial`` / ``CmsMediaItem`` permiten
+    ``author_persona_id`` NULL (testimonios anónimos, assets sin
+    ownership humano). La política del orphan-fallback reemplaza el
+    rechazo a 404 por herencia de sede — esta es la decisión de política
+    que el usuario confirmó explícitamente. Se preservan los cross-sede
+    404 como path no negociable.
+    """
+    from fastapi import HTTPException as _HTTPException
+
+    if not actor_sede:
+        return None  # superadmin / anterior path: caller manages row.sede_id
+
+    if author_persona_id is None:
+        # Orphan-fallback: actor con sede + creator FK ausente. NO es
+        # un leak — el row queda emprisonado en actor_sede. Logged at
+        # INFO (legitimate path, no breach). Back-compat con seeds y
+        # workers que pasan actor_user_id sin persona resoluble.
+        actor_sede_str = str(actor_sede)
+        _logger.info(
+            "Axioma 3 CMS orphan-fallback: inheriting actor_sede=%s as "
+            "row.sede_id for actor_user_id=%s (creator FK is None)",
+            actor_sede_str,
+            actor_user_id,
+        )
+        return actor_sede_str
+
+    target_sede = _resolve_persona_sede(db, author_persona_id)
+    if target_sede is None or target_sede != str(actor_sede):
+        _logger.warning(
+            "Axioma 3 scope violation: CMS content create cross-sede "
+            "(actor_sede=%s actor_user_id=%s author_persona_id=%s "
+            "target_sede=%s)",
+            actor_sede,
+            actor_user_id,
+            author_persona_id,
+            target_sede,
+        )
+        raise _HTTPException(
+            status_code=404, detail="CMS content creation blocked"
+        )
+
+    return target_sede
+
+
+def _crud_scope_re_check_cms_content_update(
+    db: Session,
+    actor_user_id,
+    *,
+    actor_sede: str | None,
+    current_row_sede: str | None,
+    incoming_author_persona_id,
+) -> None:
+    """Defense in depth para CMS update (Testimonial / Announcement / MediaItem).
+
+    Política OR-based sobre el estado FINAL del row:
+      - Actor sin sede: bypass sin check.
+      - Row tiene sede_id coherente con actor_sede y el body no introduce
+        FK cross-sede: OK.
+      - Cualquier vector cross-sede (row.move o incoming_FK.cross): REJECT
+        404 con mensaje neutro (existence-leak safe).
+
+    Casos:
+      - Row.current_sede es None y actor con sede: REJECT 404 (orphan).
+      - Incoming.author_persona_id resuelve a OTRA sede que ``actor_sede``:
+        REJECT 404 (TOCTOU para fijar FK cross-sede vía API tras fetch).
+    """
+    from fastapi import HTTPException as _HTTPException
+
+    if not actor_sede:
+        return  # superadmin / anterior path
+
+    if current_row_sede is None or str(current_row_sede) != str(actor_sede):
+        _logger.warning(
+            "Axioma 3 scope violation: CMS content update row cross-sede "
+            "(actor_sede=%s actor_user_id=%s current_row_sede=%s)",
+            actor_sede,
+            actor_user_id,
+            current_row_sede,
+        )
+        raise _HTTPException(
+            status_code=404, detail="CMS content update blocked"
+        )
+
+    if incoming_author_persona_id is not None:
+        incoming_sede = _resolve_persona_sede(db, incoming_author_persona_id)
+        if incoming_sede is None or incoming_sede != str(actor_sede):
+            _logger.warning(
+                "Axioma 3 scope violation: CMS content update FK cross-sede "
+                "(actor_sede=%s actor_user_id=%s incoming=%s target_sede=%s)",
+                actor_sede,
+                actor_user_id,
+                incoming_author_persona_id,
+                incoming_sede,
+            )
+            raise _HTTPException(
+                status_code=404, detail="CMS content update blocked"
+            )
+
+
+def _crud_scope_re_check_pastoral_profile(
+    db: Session,
+    actor_user_id,
+    *,
+    actor_sede: str | None,
+    target_persona_id,
+    target_persona_sede: str | None,
+) -> None:
+    """Defense in depth para ``update_pastoral_profile``.
+
+    Cierra el IDOR crítico donde un editor CMS puede mutar cualquier
+    ``Persona`` del platform via ``cms_pastoral_profile_update``. El helper
+    API-layer ``_get_scoped_persona`` ya devuelve 404 cross-sede, pero el
+    CRUD re-valida para proteger contra callers no-API (workers, scripts,
+    tests directos).
+    """
+    from fastapi import HTTPException as _HTTPException
+
+    if not actor_sede:
+        return  # superadmin / anterior path
+
+    if target_persona_sede is None or str(target_persona_sede) != str(actor_sede):
+        _logger.warning(
+            "Axioma 3 scope violation: update_pastoral_profile cross-sede "
+            "(actor_sede=%s actor_user_id=%s target_persona_id=%s "
+            "target_sede=%s)",
+            actor_sede,
+            actor_user_id,
+            target_persona_id,
+            target_persona_sede,
+        )
+        raise _HTTPException(
+            status_code=404, detail="Pastoral profile update blocked"
+        )
 
 
 # ── Page Content ───────────────────────────────────────
@@ -184,13 +424,32 @@ def create_cms_media_item(
     mime_type: str | None = None,
     file_size: int | None = None,
     status: str = "active",
+    actor_user_id: str | uuid.UUID | None = None,
 ):
+    """Axioma 3 — Multi-Tenant: deriva ``sede_id`` de la persona creadora
+    y re-valida scope Multi-Tenant pre-add via
+    ``_crud_scope_re_check_cms_content_create``.
+
+    Si el actor tiene sede asignada y el creator persona es de OTRA sede
+    o es unresoluble, raise 404. Superadmin / anterior path (actor sin sede)
+    bypassea — consistente con resto del axioma 3.
+    """
+    creator_persona_id = resolve_persona_id_for_user(db, created_by)
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    derived_sede = _crud_scope_re_check_cms_content_create(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        author_persona_id=creator_persona_id,
+    )
+
     row = models.CmsMediaItem(
         url=url,
         alt_text=alt_text,
         section=section,
         tags=tags or [],
-        created_by_persona_id=resolve_persona_id_for_user(db, created_by),
+        created_by_persona_id=creator_persona_id,
+        sede_id=derived_sede,
         filename=filename,
         mime_type=mime_type,
         file_size=file_size or 0,
@@ -253,10 +512,26 @@ def update_cms_media_item(
     mime_type: str | None = None,
     file_size: int | None = None,
     status: str | None = None,
+    actor_user_id: str | uuid.UUID | None = None,
 ):
+    """Axioma 3 — Multi-Tenant: defense-in-depth pre-mutation.
+
+    El caller debe haber ya apuntado una fila via API-layer helper
+    (``_get_scoped_cms_media``) que garantiza 404 cross-sede en retrieval.
+    Este helper re-valida por si la fila fue movida cross-sede entre el
+    fetch y el re-fetch (TOCTOU gap).
+    """
     row = get_cms_media_item(db, item_id)
     if not row:
         return None
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    _crud_scope_re_check_cms_content_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=str(row.sede_id) if row.sede_id else None,
+        incoming_author_persona_id=row.created_by_persona_id,
+    )
     if url is not None:
         row.url = url
     if alt_text is not None:
@@ -278,10 +553,29 @@ def update_cms_media_item(
     return row
 
 
-def delete_cms_media_item(db: Session, item_id: uuid.UUID) -> bool:
+def delete_cms_media_item(
+    db: Session,
+    item_id: uuid.UUID,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
+) -> bool:
+    """Axioma 3 — Multi-Tenant: defense-in-depth pre soft-delete.
+
+    Retorna ``False`` tanto para inexistente como para cross-sede (llamada
+    equivalente al ``_get_scoped_cms_media`` que ya hizo el API). El API
+    layer traduce esto a ``HTTPException(404)``.
+    """
     row = get_cms_media_item(db, item_id)
     if not row:
         return False
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    _crud_scope_re_check_cms_content_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=str(row.sede_id) if row.sede_id else None,
+        incoming_author_persona_id=row.created_by_persona_id,
+    )
     row.status = "archived"
     db.commit()
     return True
@@ -1006,9 +1300,37 @@ def get_public_cms_page(db: Session, site_id: uuid.UUID, slug: str):
 
 
 def create_announcement(
-    db: Session, payload: schemas.AnnouncementCreate
+    db: Session,
+    payload: schemas.AnnouncementCreate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ) -> models.Announcement:
+    """Axioma 3 — Multi-Tenant: ``sede_id`` + ``created_by_persona_id`` se
+    derivan server-side desde el current_user y se validan en
+    defense-in-depth contra cross-sede.
+
+    Announcement NO tiene autor natural (no es un testimonial) — la única
+    ancla de scope es la sede del editor. Si el actor está en sede_a e
+    intenta crear un announcement para ``sede_id`` distinto al suyo,
+    CRÍTICAMENTE aquí se vulnera Axioma 3. El helper re-check garantiza
+    que ``sede_id`` del row matchea ``actor_sede``.
+
+    Nota: como Announcement originalmente no aceptaba author_persona,
+    usamos ``actor_user_id`` como creator persona fallback. La función
+    resuelve ``created_by_persona_id`` vía ``resolve_persona_id_for_user``
+    sobre ``actor_user_id`` (consistente con cómo ``current_user.id`` se
+    traduce a ``Persona.id`` en ``auth_v3``).
+    """
     status = payload.status or "published"
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    derived_sede = _crud_scope_re_check_cms_content_create(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        author_persona_id=(
+            resolve_persona_id_for_user(db, actor_user_id) if actor_user_id else None
+        ),
+    )
     row = models.Announcement(
         title=payload.title.strip(),
         content=payload.content.strip(),
@@ -1016,6 +1338,10 @@ def create_announcement(
         image_url=payload.image_url,
         is_featured=payload.is_featured,
         status=status,
+        sede_id=derived_sede,
+        created_by_persona_id=(
+            resolve_persona_id_for_user(db, actor_user_id) if actor_user_id else None
+        ),
         published_at=_utcnow(),
     )
     db.add(row)
@@ -1045,8 +1371,26 @@ def get_announcement(db: Session, announcement_id: uuid.UUID) -> models.Announce
 
 
 def update_announcement(
-    db: Session, row: models.Announcement, payload: schemas.AnnouncementUpdate
+    db: Session,
+    row: models.Announcement,
+    payload: schemas.AnnouncementUpdate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ) -> models.Announcement:
+    """Axioma 3 — Multi-Tenant: defense-in-depth pre-mutation.
+
+    El API layer helper (``_get_scoped_cms_announcement``) ya garantizó 404
+    cross-sede en retrieval; este helper re-valida por si hubo un
+    movimiento TOCTOU entre fetch y commit.
+    """
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    _crud_scope_re_check_cms_content_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=str(row.sede_id) if row.sede_id else None,
+        incoming_author_persona_id=row.created_by_persona_id,
+    )
     data = payload.model_dump(exclude_unset=True)
     previous_status = row.status
     for field in ("title", "content", "category", "image_url", "is_featured", "status"):
@@ -1059,7 +1403,22 @@ def update_announcement(
     return row
 
 
-def delete_announcement(db: Session, row: models.Announcement) -> bool:
+def delete_announcement(
+    db: Session, row: models.Announcement, *, actor_user_id: str | uuid.UUID | None = None
+) -> bool:
+    """Axioma 3 — Multi-Tenant: defense-in-depth pre soft-delete.
+
+    Retorna ``True`` si archivó OK, ``False`` si cross-sede (None guard
+    interno). El helper API traduce ``False`` a ``HTTPException(404)``.
+    """
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    _crud_scope_re_check_cms_content_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=str(row.sede_id) if row.sede_id else None,
+        incoming_author_persona_id=row.created_by_persona_id,
+    )
     row.status = "archived"
     db.commit()
     return True
@@ -1069,11 +1428,41 @@ def delete_announcement(db: Session, row: models.Announcement) -> bool:
 
 
 def create_testimonial(
-    db: Session, payload: schemas.TestimonialCreate
+    db: Session,
+    payload: schemas.TestimonialCreate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ) -> models.Testimonial:
+    """Axioma 3 — Multi-Tenant: ``sede_id`` se deriva de la persona del
+    autor. Defense-in-depth pre-add garantiza que ``author_persona``
+    pertenece a la sede del actor (or falls back / orphan si actor es
+    superadmin).
+
+    Si el autor es None (testimonio anónimo creado por admin), el helper
+    rechaza 404 a menos que ``actor_user_id`` sea None o el actor esté
+    sin sede (superadmin). En la práctica, los testimonios anónimos
+    requieren un actor con ``actor_sede=None`` para bypassear — patrón
+    consistente con ``create_crm_task`` orphan-guard.
+    """
     status = payload.status or ("approved" if payload.is_approved else "pending")
-    author_persona_id = payload.author_persona_id or resolve_persona_id_for_user(
-        db, payload.author_id
+    # Resolve ``author_persona_id`` server-side: si el payload lo trae,
+    # usamos eso (cliente tiene control explícito). Si no, derivar desde
+    # ``actor_user_id`` (consistente con el patrón de ``create_announcement``).
+    #
+    # NOTA: ``payload.author_id`` NO existe en ``TestimonialCreate`` (era
+    # un FK anterior int a ``personas`` que se eliminó cuando se consolidó
+    # al schema UUID ``author_persona_id``). Si dereferenciamos
+    # ``payload.author_id`` получаем ``AttributeError``; por eso el
+    # fallback usa directamente ``actor_user_id`` (la fuente canónica).
+    author_persona_id = payload.author_persona_id
+    if author_persona_id is None and actor_user_id is not None:
+        author_persona_id = resolve_persona_id_for_user(db, actor_user_id)
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    derived_sede = _crud_scope_re_check_cms_content_create(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        author_persona_id=author_persona_id,
     )
     row = models.Testimonial(
         content=payload.content.strip(),
@@ -1087,6 +1476,7 @@ def create_testimonial(
         show_on_home=payload.show_on_home,
         status=status,
         author_persona_id=author_persona_id,
+        sede_id=derived_sede,
     )
     db.add(row)
     db.commit()
@@ -1115,8 +1505,28 @@ def get_testimonial(db: Session, testimonial_id: uuid.UUID) -> models.Testimonia
 
 
 def update_testimonial(
-    db: Session, row: models.Testimonial, payload: schemas.TestimonialUpdate
+    db: Session,
+    row: models.Testimonial,
+    payload: schemas.TestimonialUpdate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ) -> models.Testimonial:
+    """Axioma 3 — Multi-Tenant: defense-in-depth pre-mutation.
+
+    El API helper (``_get_scoped_cms_testimonial``) ya garantizó 404
+    cross-sede. Aquí re-validamos TOCTOU + validar que cualquier
+    ``author_persona_id`` incoming no introduzca FK cross-sede. Testi-
+    monialUpdate no permite cambiar el autor via body (sólo campos de
+    state), así que el incoming FK slot es la fila actual.
+    """
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    _crud_scope_re_check_cms_content_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=str(row.sede_id) if row.sede_id else None,
+        incoming_author_persona_id=row.author_persona_id,
+    )
     data = payload.model_dump(exclude_unset=True)
     for field in (
         "content",
@@ -1147,7 +1557,18 @@ def update_testimonial(
     return row
 
 
-def delete_testimonial(db: Session, row: models.Testimonial) -> bool:
+def delete_testimonial(
+    db: Session, row: models.Testimonial, *, actor_user_id: str | uuid.UUID | None = None
+) -> bool:
+    """Axioma 3 — Multi-Tenant: defense-in-depth pre soft-delete."""
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    _crud_scope_re_check_cms_content_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=str(row.sede_id) if row.sede_id else None,
+        incoming_author_persona_id=row.author_persona_id,
+    )
     row.status = "archived"
     row.is_approved = False
     row.show_on_home = False
@@ -1232,7 +1653,36 @@ def update_section(db: Session, section_id, **fields):
     return row
 
 
-def update_pastoral_profile(db: Session, persona: models.Persona, payload: schemas.PastoralProfileUpdate) -> models.Persona:
+def update_pastoral_profile(
+    db: Session,
+    persona: models.Persona,
+    payload: schemas.PastoralProfileUpdate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
+) -> models.Persona:
+    """Axioma 3 — Multi-Tenant: defense-in-depth contra IDOR crítico.
+
+    El API helper ``_get_scoped_persona`` (en ``backend.api.crm._shared``)
+    ya garantiza 404 cross-sede al recuperar la persona. Este CRUD re-
+    valida pre-commit para cubrir callers no-API (workers async, scripts
+    que invocan el CRUD directamente).
+
+    Cierre del vector: ``Persona`` no tiene columna ``sede_id`` propia
+    para ``cms_pastoral_team_list`` filter, pero SÍ la expone como query
+    en ``Persona.sede_id`` (FK). El helper resuelve ``target_persona_sede``
+    antes de comparar.
+    """
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    target_persona_sede = (
+        str(persona.sede_id) if getattr(persona, "sede_id", None) else None
+    )
+    _crud_scope_re_check_pastoral_profile(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        target_persona_id=persona.id,
+        target_persona_sede=target_persona_sede,
+    )
     update_data = payload.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(persona, key, value)

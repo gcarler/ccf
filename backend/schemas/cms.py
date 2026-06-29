@@ -101,6 +101,10 @@ class CmsMediaRead(BaseModel):
     tags: List[str] = Field(default_factory=list)
     status: str = "active"
     created_by_persona_id: Optional[UUID] = None
+    # Axioma 3 — Multi-Tenant: ``sede_id`` read-only se expone para que
+    # el frontend pueda auditar a qué sede pertenece cada media sin un
+    # JOIN adicional. No editable vía Create/Update (server-side derivar).
+    sede_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
     model_config = orm_config
@@ -377,6 +381,10 @@ class AnnouncementRead(BaseModel):
     image_url: Optional[str] = None
     is_featured: bool
     status: AnnouncementStatus
+    # Axioma 3 — Multi-Tenant: expone ``sede_id`` y ``created_by_persona_id``
+    # read-only para audit. No editables vía Create/Update.
+    sede_id: Optional[UUID] = None
+    created_by_persona_id: Optional[UUID] = None
     published_at: datetime
     created_at: datetime
     model_config = orm_config
@@ -413,8 +421,19 @@ class TestimonialUpdate(BaseModel):
 
 
 class TestimonialAuthorRead(BaseModel):
+    """Schema representation of a ``Testimonial.author`` (``Persona``).
+
+    Nota: ``username`` es ``Optional`` porque el modelo ``Persona`` no
+    expone ese atributo. La intención original era un apodo legible,
+    pero como todavía no está en el modelo, retornamos ``None`` cuando
+    no exista (Pydantic ``from_attributes`` rellena con ``None`` vía
+    ``Optional``). Si en el futuro el modelo incluye ``username``,
+    basta cambiar el default a un str derivado. Mantener
+    ``id`` como obligatorio porque es la FK de la relación.
+    """
+
     id: UUID
-    username: str
+    username: Optional[str] = None
     model_config = orm_config
 
 
@@ -431,6 +450,10 @@ class TestimonialRead(BaseModel):
     show_on_home: bool
     status: TestimonialStatus = "pending"
     author_persona_id: Optional[UUID] = None
+    # Axioma 3 — Multi-Tenant: ``sede_id`` read-only. Backfilled desde
+    # ``author.sede_id`` en la migración; si author fue None queda NULL
+    # y el row sólo es visible a superadmins sin sede asignada.
+    sede_id: Optional[UUID] = None
     author: Optional[TestimonialAuthorRead] = None
     created_at: datetime
     model_config = orm_config

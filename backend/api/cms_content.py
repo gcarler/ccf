@@ -8,6 +8,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
+from backend.api._cms_helpers import (
+    _scope_cms_announcements_by_user_sede,
+    _scope_cms_media_by_user_sede,
+    _scope_cms_testimonials_by_user_sede,
+)
 from backend.core.permissions import require_module_access
 from backend.core.database import get_db
 
@@ -317,8 +322,15 @@ def patch_content_workflow(
 @router.get("/metrics/overview", response_model=schemas.CmsMetrics)
 def get_content_metrics(
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
+    """Axioma 3 — Multi-Tenant: las métricas User-Generated (testimonios,
+    anuncios, media) se acotan por sede del staff. Las métricas
+    estructurales del site faro (``publications``, ``page_contents``)
+    SÍ son globales por diseño — son el site público, no contenido
+    User-Generated. Superadmin sin sede sigue viendo totales globales
+    (compat anterior), consistente con el resto del axioma 3.
+    """
     publications = crud.list_content_publications(db)
     status_counter = {
         "draft": 0,
@@ -330,9 +342,19 @@ def get_content_metrics(
     for item in publications:
         status_counter[item.status] = status_counter.get(item.status, 0) + 1
 
-    testimonials = crud.list_testimonials(db)
-    announcements = crud.list_announcements(db)
-    media = crud.list_cms_media_items(db, limit=500)
+    # Scoped queries para User-Generated content (mismo patrón que
+    # ``/api/cms/metrics`` en cms.py):
+    t_query = db.query(models.Testimonial)
+    t_query = _scope_cms_testimonials_by_user_sede(db, current_user, t_query)
+    testimonials = t_query.all()
+
+    a_query = db.query(models.Announcement)
+    a_query = _scope_cms_announcements_by_user_sede(db, current_user, a_query)
+    announcements = a_query.all()
+
+    m_query = db.query(models.CmsMediaItem)
+    m_query = _scope_cms_media_by_user_sede(db, current_user, m_query)
+    media = m_query.limit(500).all()
 
     return schemas.CmsMetrics(
         total_blocks=len(crud.list_page_contents(db, limit=500)),

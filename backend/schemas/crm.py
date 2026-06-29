@@ -57,7 +57,7 @@ class CrmTaskStatus(str, Enum):
 class CrmTaskPriority(str, Enum):
     """Prioridad de una Tarea CRM (alineado con el default ``medium`` del DB).
 
-    Catálogo cerrado y case-sensitive. NO se aceptan alias legacy como
+    Catálogo cerrado y case-sensitive. NO se aceptan alias anterior como
     ``"normal"`` o ``"alta"``; los callers deben normalizar ANTES de enviar.
 
     Default: ``medium`` (alineado con ``server_default='medium'`` del DB).

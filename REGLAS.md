@@ -46,6 +46,34 @@ rows = db.query(Persona).filter(Persona.sede_id == sede_id).all()
 
 No se acepta confiar en un `sede_id` enviado por el cliente cuando el usuario autenticado ya define su sede.
 
+### 4.1 Politica Orphan — fallback y persona sin sede
+
+El CRUD-layer debe distinguir dos edge cases de "ausencia de sede" y aplicar
+politicas explicitas. Cualquier cambio a esta politica debe actualizar
+`docs/CIERRE_ARQUITECTURA_CCF.md` y `tests/test_cms_sede_isolation.py` (y
+suites equivalentes en messaging) sincronizados.
+
+| Caso | Definicion | Politica | Razon |
+|---|---|---|---|
+| **Orphan-fallback** (LENIENT) | `resolve_persona_id_for_user(actor) is None` Y `payload.author_persona_id is None` | Heredar `actor_sede` como `row.sede_id`. NO levanta error. | Back-compat con callers legacy (workers async, scripts de seeding, bulk imports) que propagan `actor_user_id` sin FK creator resoluble. |
+| **Orphan-persona** (STRICT) | `author_persona_id` resuelve a una `Persona` concreta con `Persona.sede_id is None` | `HTTPException(404)`. NO fallback. | Una `Persona` sin sede es una inconsistencia de datos, no un caso de uso legitimo. Fallback haria el contrato ambiguo entre "persona sin sede" y "actor en sede". |
+| **Doble orphan** | actor sin sede (`get_user_sede_id is None`) Y creator FK None | Crear con `row.sede_id = NULL`. Visible solo a superadmins sin sede. | Consistente con `TareaCRM` orphan-guard: sin actor con sede resoluble no hay forma de inferir la sede legitima. |
+
+**Test contractual:** `tests/test_cms_sede_isolation.py::test_crud_create_testimonial_blocks_when_fk_resolves_to_persona_without_sede`
+y `test_crud_create_announcement_inherits_actor_sede_for_orphan_fk`
+codifican las dos ramas; cualquier regresion aqui es un compromiso de
+seguridad multi-tenant.
+
+## 4.2 Cobertura de Sede por Modulo
+
+La columna `sede_id` debe existir toda entidad User-Generated Content (UGC)
+expuesta por API admin. Las entidades globales del site faro (CmsSite,
+CmsPage, CmsSection, CmsTheme, CmsMenu) son la unica excepcion legitima:
+son contenido editorial compartido cross-sede por diseno.
+
+Modulos cubiertos en el cierre v3.0.1: ver tabla en
+`docs/ESTADO_ARQUITECTURA_CCF.md` seccion "Cobertura Axioma 3 (Multi-Tenant)".
+
 ## 5. Identificadores
 
 - Entidades transaccionales expuestas por API: UUID.
@@ -86,6 +114,87 @@ No se acepta confiar en un `sede_id` enviado por el cliente cuando el usuario au
 - Ejecutar `alembic upgrade head` antes del despliegue.
 - Eliminar scripts manuales de migracion que ya no sean parte del flujo operativo.
 
+### 9.1 Inmutabilidad de Migraciones Cerradas
+
+Las migraciones ya mergeadas a `main` y desplegadas son **memoria historica
+inmutable**. NO se editan bajo ninguna circunstancia salvo descubrimiento
+de un bug critico con aprobacion explicita del arquitecto y un nuevo
+migration que corrija (sin tocar los archivos previos).
+
+### 9.1.1 Calout firmado del cierre v3.0.1
+
+**ESTA ES LA UNICA DEUDA LEGACY TOLERADA EN EL PROYECTO A PARTIR DEL
+CIERRE v3.0.1 (2026-07-01).** Las migraciones:
+
+- `alembic/versions/20260524_0024_prod_hardening3.py`
+- `alembic/versions/20260524_0025_prod_final.py`
+
+contienen la cadena `CCF-MBR-*` en tokens generados durante el backfill
+de mayo-2026. Esa cadena es **memoria del pasado**, no uso vivo del
+concepto. La regla REGLAS §1 (personas por UUID) SI se cumple en el
+sistema **activo**:
+
+- Ningun modelo, schema, CRUD, fixture, test o endpoint activo usa
+  `CCF-MBR-`. Auditado por `tests/test_arquitectura_100pct.py::test_no_legacy_ccf_mbr_in_live_code`.
+- Los identificadores `personas.id` son UUID puros en runtime (ver
+  `tests/test_structural_contracts.py`).
+- Los tokens `CCF-MBR-*` emitidos durante el backfill son columnas
+  legacy de **filas historicas no activas**; ya no alimentan endpoints
+  ni autenticacion. Auditarlas requeriria correr `alembic` historico
+  en una DB de archivo (no en produccion).
+
+**Justificacion de la tolerancia:** reescribir las dos migraciones para
+eliminar la cadena `CCF-MBR-` romperia la cadena de migrations que ya
+esta deployed en produccion. La alternativa correcta — una migration
+correctiva que remplace los tokens en filas activas — no es rentable:
+los tokens legacy no son semanticos, no se consultan, no aparecen en
+outputs de usuario, y reemplazarlos solo trasladaria la deuda de nombre.
+
+**Reglas derivadas:**
+
+- Cualquier NUEVO uso de `CCF-MBR-` en codigo vivo, tests, fixtures o
+  migraciones futuras es **violacion de REGLAS §1** (Kernel de Personas).
+  Auditado por `tests/test_arquitectura_100pct.py::test_no_legacy_ccf_mbr_in_live_code`.
+- El gate `rg -g '!alembic/versions/*.py'` debe ejecutarse en cada CI run.
+- El archivo `tests/test_arquitectura_100pct.py` codifica este check
+  como test pytest ejecutable.
+
+### 9.1.2 Procedencia de la quitacion
+
+Para cerrar la queja del usuario ("nada de legacy") en el futuro, si en
+algun momento el proyecto decide eliminar incluso este rastro historico,
+la ruta correcta es:
+
+1. Crear una nueva migration de **limpieza** (no edita las previas):
+   ```sql
+   -- 2099-12-31_0001_drop_legacy_member_token_columns
+   ALTER TABLE personas_legacy_tokens DROP COLUMN token_ccf_mbr;
+   -- (o un equivalente que aplique al modelo de tu epoca)
+   ```
+2. Crear un script de validacion bajo `tests/` (no bajo `scripts/` —
+   ver 9.2) que verifique la ausencia de columnas o datos huérfanos.
+3. Una vez deployed y verificado, eliminar las dos migraciones legacy
+   de `alembic/versions/` solo si la cadena de migrations no las usa
+   (análisis de impacto obligatorio antes).
+
+Esta es la **ruta para eliminar definitivamente** la deuda CCF-MBR. Por
+ahora queda firmada como excepcion explicita en el cierre v3.0.1.
+
+### 9.2 Scripts Manuales y Operacionales
+
+Prohibido mantener en `scripts/` archivos cuyo proposito sea validacion
+manual, debug one-shot, auditoria ad-hoc, validacion de backfill on
+Postgres scratch, etc. Prefijos vetados: `_tmp_`, `_scratch_`,
+`_validate_legacy_`. Si surge la necesidad se hace via test pytest o
+comando documentado en `docs/RUNBOOK_PRODUCCION.md`.
+
+Cleanup del cierre v3.0.1:
+- `scripts/_tmp_validate_backfill_pg.py` → borrado (validacion operacional one-shot).
+- `scripts/_tmp_list_routes.py` → borrado (mapeo de paths para test rotation).
+
+Si reaparece un `_tmp_*` el commit debe rechazarse (ver
+`tests/test_arquitectura_100pct.py`).
+
 ## 10. Checklist Antes de Commit
 
 - [ ] La identidad de personas usa `personas.id`.
@@ -100,10 +209,30 @@ No se acepta confiar en un `sede_id` enviado por el cliente cuando el usuario au
 ## 11. Verificacion Recomendada
 
 ```bash
-rg -n "ForeignKey\\(\"users\\.id\"\\)|personas\\.user_id|models\\.Persona|models_personas|backend\\.auth" backend docs scripts REGLAS.md
+# 1. Identidad canonica — personas por UUID.
+rg -n "ForeignKey\\(.users\\.id.\\)|personas\\.user_id" \
+  backend frontend/src tests scripts docs REGLAS.md \
+  -g '!alembic/versions/*.py'
 
+# 2. CCF-MBR fuera de migraciones legacy (vigilancia de regresion).
+rg -n "CCF-MBR" \
+  backend frontend/src tests scripts docs REGLAS.md \
+  -g '!alembic/versions/*.py'
+
+# 3. Sin scripts legacy _tmp_ en scripts/.
+find scripts -name '_tmp_*' -o -name '_scratch_*'
+
+# 4. Conteo de cobertura multi-tenant — debe ser >= 190 refs.
+rg -c 'get_user_sede_id|_scope_|_get_scoped_' backend 2>/dev/null \
+  | awk -F: '{s+=$2} END {print s}'
+
+# 5. Validacion funcional minima.
 source venv/bin/activate
-python -m pytest -q -o addopts='' tests/test_structural_contracts.py tests/test_smoke.py
+python -m pytest -q -o addopts='' \
+  tests/test_structural_contracts.py \
+  tests/test_smoke.py \
+  tests/test_cms_sede_isolation.py
+
 alembic upgrade head
 
 curl -f http://127.0.0.1:8000/healthz
