@@ -29,7 +29,6 @@ from backend.core.database import get_db
 from backend.crud.crm import (
     get_user_sede_id,
     resolve_persona_id_for_user,
-    resolve_persona_id_from_identity,
 )
 from backend.models_crm_pipeline import EstadoCasoEnum, TipoInteraccionEnum
 from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
@@ -476,7 +475,7 @@ def list_consolidation_interactions(
 ):
     """Lista las interacciones de un caso de consolidación."""
     user_sede = get_user_sede_id(db, current_user.id)
-    case = _get_case_or_404(db, case_id, user_sede)
+    _get_case_or_404(db, case_id, user_sede)
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
 
     interactions = (
@@ -516,8 +515,6 @@ async def send_crm_message(
     campaign_name = payload.get("campaign_name") or payload.get("name")
     persona_id = payload.get("persona_id")
     target_segments = payload.get("target_segments") or []
-
-    user_sede = get_user_sede_id(db, current_user.id)
 
     if persona_id:
         target_personas = [{"id": persona_id}]
@@ -1722,7 +1719,6 @@ def list_volunteers(
     """Lista todos los voluntarios con sus horas y ministerios."""
     from collections import defaultdict
 
-    user_sede = get_user_sede_id(db, current_user.id)
     personas_q = db.query(models.Persona)
     personas_q = _scope_by_user_sede_via_persona(db, current_user, personas_q)
     personas = personas_q.all()

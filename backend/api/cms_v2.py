@@ -9,8 +9,6 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-
-logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 
 from backend.models_shared import _utcnow
@@ -23,6 +21,8 @@ from backend.api._cms_helpers import (
 from backend.core.permissions import normalize_role, require_module_access
 from backend.core.database import get_db
 from backend.schemas._common import PaginatedResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
 
@@ -907,7 +907,7 @@ def _build_section_defaults(
     if section_type == "team":
         leaders = (
             db.query(models.Persona)
-            .filter(models.Persona.is_pastoral_leader == True)
+            .filter(models.Persona.is_pastoral_leader.is_(True))
             .order_by(models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc())
             .all()
         )
@@ -930,7 +930,7 @@ def _build_section_defaults(
         rows = (
             db.query(models.Testimonial)
             .filter(
-                models.Testimonial.is_approved == True,
+                models.Testimonial.is_approved.is_(True),
                 models.Testimonial.status == "published",
             )
             .order_by(models.Testimonial.created_at.desc())
@@ -1094,7 +1094,7 @@ def public_pastoral_team(site_key: str, db: Session = Depends(get_db)):
     # Verify site exists (no auth required for public)
     _get_public_site_or_404(db, site_key)
     base_query = db.query(models.Persona).filter(
-        models.Persona.is_pastoral_leader == True
+        models.Persona.is_pastoral_leader.is_(True)
     )
     # Para endpoints públicos no se aplica scope (anónimo). El caller
     # autenticado via Authorization header puede recibir respuesta
@@ -1143,7 +1143,7 @@ def cms_pastoral_team_list(
     """
     _assert_role(current_user, CMS_EDITOR_ROLES)
     base_query = db.query(models.Persona).filter(
-        models.Persona.is_pastoral_leader == True
+        models.Persona.is_pastoral_leader.is_(True)
     )
     base_query = _scope_cms_pastoral_team_by_user_sede(db, current_user, base_query)
     leaders = base_query.order_by(

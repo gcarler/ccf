@@ -1380,7 +1380,6 @@ def test_crud_create_crm_task_logs_audit_directly(db_session):
     sin necesidad de la API. Esto garantiza que mutaciones desde scripts
     de seeding, workers, o cualquier otro caller directo del CRUD queden
     trazadas."""
-    import uuid as _u
     from backend import crud, schemas
     from backend.models_evangelism import LogAuditoria
 
@@ -1665,10 +1664,10 @@ def test_crud_update_crm_task_blocks_toctou_when_actor_in_sede(db_session):
     """
     from fastapi import HTTPException
     from backend import crud, schemas
-    from backend.models_crm_pipeline import CasoCRM, TareaCRM
+    from backend.models_crm_pipeline import TareaCRM
 
     (admin_a, persona_a_admin, _sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
-    persona_a_local = _persona_in(db_session, sede_a.id if False else _sede_a.id, "crud-toctou-local-a")
+    persona_a_local = _persona_in(db_session, _sede_a.id, "crud-toctou-local-a")
 
     # Setup caso cross-sede para forzar el TOCTOU.
     pipeline_b = models.PipelineCRM(
@@ -1744,8 +1743,6 @@ def test_crud_create_crm_task_legacy_no_actor_back_compat(db_session):
     """Back-compat: CRUD sin actor_user_id (bypass intencional de workers,
     migraciones, seeds) debe proseguir sin check."""
     from backend import crud, schemas
-    from backend.models_crm_pipeline import TareaCRM
-
     (_, _, sede_b) = seed_admin(db_session, email="legacy-side@example.com")
     persona_b = _persona_in(db_session, sede_b.id, "crud-legacy-b")
 
@@ -1858,8 +1855,6 @@ def test_crud_update_crm_task_blocks_tropical_case_under_strict(db_session):
     nivel API (admin cross-sede con bypass explícito), NO en el CRUD."""
     from fastapi import HTTPException
     from backend import crud, schemas
-    from backend.models_crm_pipeline import CasoCRM
-
     (admin_a, persona_a_admin, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
     persona_a_local = _persona_in(db_session, sede_a.id, "crud-tropical-local-a")
 

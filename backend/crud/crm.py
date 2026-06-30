@@ -14,7 +14,6 @@ from sqlalchemy.orm import Session, selectinload
 from backend import models, schemas
 from backend.core.security import decrypt_data, encrypt_data
 from backend.crud._utils import _utcnow
-from backend.schemas.crm import CrmEventUpdate
 from backend.schemas.notifications import CommunicationLogUpdate
 from backend.schemas.operational import CommunityBoardCardUpdate
 
