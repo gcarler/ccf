@@ -246,11 +246,11 @@ def test_admin_testimonials_scoped_by_sede(client, db_session):
     """Axioma 3: GET /api/admin/testimonials filtra por sede del staff."""
     (admin_a, persona_a_local, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
 
-    t_a = _seed_testimonial_in_sede(
+    _seed_testimonial_in_sede(
         db_session, persona_a_local, sede_a.id, "Testimonio LEGITIMO sede_a"
     )
     persona_b = _persona_in(db_session, sede_b.id, "test-cross-b")
-    t_b = _seed_testimonial_in_sede(
+    _seed_testimonial_in_sede(
         db_session,
         persona_b,
         sede_b.id,
@@ -339,8 +339,6 @@ def test_create_testimonial_with_cross_sede_author_blocks_404(client, db_session
     debe ser 404 (defense-in-depth CRUD). El API-layer helper
     ``_get_scoped_persona`` no se aplica porque el body pasa el FK
     directamente; la rama es vía CRUD re-check."""
-    from backend import schemas
-
     (admin_a, _, _), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
 
     headers_a = auth_headers(client, email="cmsFase5A@example.com")

@@ -263,7 +263,7 @@ def test_no_legacy_operational_scripts():
         if any(prefix in path.name for prefix in _BAN_TMP_PREFIXES):
             offenders.append(str(path))
     assert not offenders, (
-        f"REGLAS §9.2 violada: scripts legacy operacionales:\n"
+        "REGLAS §9.2 violada: scripts legacy operacionales:\n"
         + "\n".join(offenders)
     )
 

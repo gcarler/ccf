@@ -21,7 +21,6 @@ from backend import models, schemas
 from backend.content_defaults import PAGE_CONTENT_DEFAULTS
 from backend.crud._utils import _utcnow
 from backend.crud.crm import (
-    _actor_sede_or_none as _actor_sede_or_none_cms,
     resolve_persona_id_for_user as resolve_persona_uuid_for_user,
 )
 
@@ -1582,7 +1581,7 @@ def delete_testimonial(
 def list_pastoral_team(db: Session) -> list[models.Persona]:
     return (
         db.query(models.Persona)
-        .filter(models.Persona.is_pastoral_leader == True)
+        .filter(models.Persona.is_pastoral_leader.is_(True))
         .order_by(models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc())
         .all()
     )

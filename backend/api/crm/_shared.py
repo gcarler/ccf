@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 from uuid import UUID
 
 import uuid as _uuid
@@ -8,7 +7,12 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.crud._utils import _to_uuid
 from backend.crud.crm import get_user_sede_id
+from backend.services.messaging_outcomes import (
+    DELIVERED_OUTCOMES,
+    CommunicationOutcome,
+)
 
 def _payload_key(name: str) -> str:
     return name

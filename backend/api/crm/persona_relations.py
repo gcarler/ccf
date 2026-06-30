@@ -61,7 +61,7 @@ def get_persona_ministries(
     persona = _get_scoped_persona(db, current_user, persona_id)
     rows = (
         db.query(models.PersonaMinistryAssignment)
-        .filter(models.PersonaMinistryAssignment.persona_id == persona_uuid)
+        .filter(models.PersonaMinistryAssignment.persona_id == persona.id)
         .order_by(
             models.PersonaMinistryAssignment.is_active.desc(),
             models.PersonaMinistryAssignment.start_date.desc(),
@@ -270,12 +270,12 @@ def update_persona_position(
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Axioma 3: sede scope via persona + check adicional sobre el assignment."""
-    _get_scoped_persona(db, current_user, persona_id)
+    persona = _get_scoped_persona(db, current_user, persona_id)
     row = (
         db.query(models.PersonaPosition)
         .filter(
             models.PersonaPosition.id == persona_position_id,
-            models.PersonaPosition.persona_id == persona_uuid,
+            models.PersonaPosition.persona_id == persona.id,
         )
         .first()
     )
@@ -339,12 +339,12 @@ def update_persona_ministry(
     """Actualiza el rol o estado de una vinculacion ministerial.
     Axioma 3: scope por sede via persona.
     """
-    _get_scoped_persona(db, current_user, persona_id)
+    persona = _get_scoped_persona(db, current_user, persona_id)
     mm = (
         db.query(models.PersonaMinistryAssignment)
         .filter(
             models.PersonaMinistryAssignment.id == mm_id,
-            models.PersonaMinistryAssignment.persona_id == persona_uuid,
+            models.PersonaMinistryAssignment.persona_id == persona.id,
         )
         .first()
     )

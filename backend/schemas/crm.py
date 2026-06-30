@@ -725,12 +725,12 @@ class PersonaFormation(PersonaFormationBase):
 
 
 # ── EvangelismStrategy schemas re-exported from canonical schemas/evangelism.py ──
-from backend.schemas.evangelism import (
+from backend.schemas.evangelism import (  # noqa: E402, F401
     EstrategiaEvangelismoCreate as EvangelismStrategyCreate,
     EstrategiaEvangelismoUpdate as EvangelismStrategyUpdate,
 )
 # Response schema: id as str (UUID)
-from backend.schemas.evangelism import EstrategiaEvangelismoResponse as _EstrategiaEvangelismoResponse
+from backend.schemas.evangelism import EstrategiaEvangelismoResponse as _EstrategiaEvangelismoResponse  # noqa: E402, F401
 
 class EvangelismStrategyBase(BaseModel):
     """Schema used by api/evangelism.py.
