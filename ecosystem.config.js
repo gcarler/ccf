@@ -37,6 +37,7 @@ module.exports = {
     {
       name: "fcc-server",
       script: "/root/.local/bin/fcc-server",
+      interpreter: "/root/.local/share/uv/tools/free-claude-code/bin/python",
       args: "--host 127.0.0.1",
       instances: 1,
       exec_mode: "fork",
