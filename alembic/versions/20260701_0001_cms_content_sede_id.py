@@ -1,6 +1,6 @@
 """add sede_id to cms media / testimonials / announcements (Axioma 3 Fase 5)
 
-Revision ID: 20260701_0001_cms_content_sede_id
+Revision ID: 20260701_0001_cms_sede
 Revises: 20260627_0011_canonical_crm_tasks
 Create Date: 2026-07-01 00:00:00
 
@@ -27,7 +27,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 
-revision: str = "20260701_0001_cms_content_sede_id"
+revision: str = "20260701_0001_cms_sede"
 down_revision: Union[str, None] = "20260627_0011_crm_tasks"
 # NOTE: el archivo del predecessor lleva sufijo ``_canonical_crm_tasks`` pero
 # la variable revision EXPORTADA es ``20260627_0011_crm_tasks`` (sin
@@ -150,19 +150,21 @@ def _backfill_sede_from_creator_fk(table: str, creator_col: str) -> None:
             )
         )
     else:
-        # SQLite-portable: subquery join (sintaxis distinta a Postgres).
+        # SQLite-portable: subquery join with explicit CAST expressions.
         bind.execute(
             sa.text(
                 f"UPDATE {table} "
                 f"SET sede_id = ("
                 f"  SELECT p.sede_id FROM personas p "
-                f"  WHERE p.id::text = {table}.{creator_col}::text"
+                f"  WHERE CAST(p.id AS TEXT) = "
+                f"CAST({table}.{creator_col} AS TEXT)"
                 f") "
                 f"WHERE sede_id IS NULL "
                 f"AND {creator_col} IS NOT NULL "
                 f"AND EXISTS ("
                 f"  SELECT 1 FROM personas p "
-                f"  WHERE p.id::text = {table}.{creator_col}::text "
+                f"  WHERE CAST(p.id AS TEXT) = "
+                f"CAST({table}.{creator_col} AS TEXT) "
                 f"  AND p.sede_id IS NOT NULL"
                 f")"
             )

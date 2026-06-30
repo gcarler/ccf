@@ -177,21 +177,13 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # Add FK to cms_page_versions as a deferred constraint (cms_pages is
-    # created before cms_page_versions, so we cannot inline the FK in the
-    # original ``create_table`` call). Wrapped in ``batch_alter_table`` to
-    # be SQLite-compatible: SQLite does not support ``ALTER TABLE ADD
-    # CONSTRAINT`` outside of the table-rebuild batch mode, so without
-    # this wrapper the migration raises ``NotImplementedError`` on
-    # SQLite (and on any Alembic run targeting a SQLite engine, e.g. the
-    # test suite).
-    with op.batch_alter_table("cms_pages") as batch_op:
-        batch_op.create_foreign_key(
-            "fk_cms_pages_published_version_id",
-            "cms_page_versions",
-            ["published_version_id"],
-            ["id"],
-        )
+    op.create_foreign_key(
+        "fk_cms_pages_published_version_id",
+        "cms_pages",
+        "cms_page_versions",
+        ["published_version_id"],
+        ["id"],
+    )
 
     op.create_table(
         "cms_sections",
@@ -297,15 +289,9 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_cms_sections_id"), table_name="cms_sections")
     op.drop_table("cms_sections")
 
-    # Mirror of the upgrade path: drop FK inside ``batch_alter_table`` so
-    # SQLite's batch-mode copy+rename can remove the constraint. Without
-    # this wrapper the downgrade would also raise ``NotImplementedError``
-    # on SQLite. Idempotent on Postgres (batch mode is the standard idiom
-    # on full-featured dialects and the cost is a minor extra copy).
-    with op.batch_alter_table("cms_pages") as batch_op:
-        batch_op.drop_constraint(
-            "fk_cms_pages_published_version_id", type_="foreignkey"
-        )
+    op.drop_constraint(
+        "fk_cms_pages_published_version_id", "cms_pages", type_="foreignkey"
+    )
     op.drop_index(op.f("ix_cms_page_versions_page_id"), table_name="cms_page_versions")
     op.drop_index(op.f("ix_cms_page_versions_id"), table_name="cms_page_versions")
     op.drop_table("cms_page_versions")
