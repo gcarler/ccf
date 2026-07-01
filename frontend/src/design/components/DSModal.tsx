@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { radii, shadows } from '../tokens';
@@ -20,6 +20,8 @@ const sizeClasses = {
     lg: 'max-w-lg',
 };
 
+let openModalsCount = 0;
+
 export function DSModal({
     open,
     onClose,
@@ -28,6 +30,8 @@ export function DSModal({
     size = 'md',
     showClose = true,
 }: DSModalProps) {
+    const modalRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -35,12 +39,20 @@ export function DSModal({
 
         if (open) {
             document.addEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'hidden';
+
+            if (openModalsCount === 0) {
+                document.body.style.overflow = 'hidden';
+            }
+            openModalsCount++;
         }
 
         return () => {
             document.removeEventListener('keydown', handleEscape);
-            document.body.style.overflow = '';
+            openModalsCount--;
+
+            if (openModalsCount === 0) {
+                document.body.style.overflow = '';
+            }
         };
     }, [open, onClose]);
 
@@ -57,6 +69,7 @@ export function DSModal({
 
             {/* Modal */}
             <div
+                ref={modalRef}
                 className={clsx(
                     'relative w-full mx-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e]',
                     'border border-[hsl(var(--border))] dark:border-white/10',
