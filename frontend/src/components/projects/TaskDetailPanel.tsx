@@ -416,7 +416,7 @@ export default function TaskDetailPanel({
         if (!task || !token) return;
         try {
             const created = await apiFetch<any>(`/projects/${task.project_id}/tasks/${task.id}/subtasks`, {
-                method: 'POST', token, body: { title: 'Nueva sub-actividad', status: 'todo', priority: 'normal', parent_id: parentId },
+                method: 'POST', token, body: { title: 'Nueva sub-actividad', status: 'todo', priority: 'medium', parent_id: parentId },
             });
             const item: Activity = { id: created.id || uid(), title: created.title || 'Nueva sub-actividad', completed: false };
             setActivities(prev => addChild(prev, parentId, item));
@@ -441,7 +441,7 @@ export default function TaskDetailPanel({
         if (!newActivityTitle.trim() || !task || !token) return;
         try {
             const created = await apiFetch<any>(`/projects/${task.project_id}/tasks/${task.id}/subtasks`, {
-                method: 'POST', token, body: { title: newActivityTitle.trim(), status: 'todo', priority: 'normal' },
+                method: 'POST', token, body: { title: newActivityTitle.trim(), status: 'todo', priority: 'medium' },
             });
             setActivities(prev => [...prev, { id: created.id || uid(), title: newActivityTitle.trim(), completed: false }]);
             onActivityCreated?.();

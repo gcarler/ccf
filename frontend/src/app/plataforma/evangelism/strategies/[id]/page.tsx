@@ -80,14 +80,13 @@ interface CustomRole {
 }
 
 interface FollowUpRecord {
- id: number;
- asistencia_id: number;
+ id: string;
+ asistencia_id: string;
  tipo: string;
- fecha_programada?: string;
- fecha_realizada?: string;
- notas?: string;
- completado: boolean;
- resultado?: string;
+ fecha_seguimiento?: string;
+ observaciones?: string;
+ estado_completado: boolean;
+ responsable_id?: string;
 }
 
 interface StrategyGroup {
@@ -485,7 +484,7 @@ export default function StrategyDetailPage() {
  const fetchGroups = useCallback(async () => {
  setGroupsLoading(true);
  try {
- const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token, query: { estrategia_id: id } });
+ const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token, query: { evangelism_strategy_id: id } });
  setGroups(all || []);
  } catch { toast.error('Error al cargar grupos'); } finally {
  setGroupsLoading(false);
@@ -574,7 +573,7 @@ export default function StrategyDetailPage() {
  leader_id: roleDrivenAssignments.fixed.leader_id,
  assistant_id: roleDrivenAssignments.fixed.assistant_id,
  host_id: roleDrivenAssignments.fixed.host_id,
- estrategia_id: id,
+ evangelism_strategy_id: id,
  personas_count: 0, capacity: groupForm.capacity,
  status: 'Activo',
  day_of_week: groupForm.day_of_week || null,
@@ -2108,28 +2107,28 @@ export default function StrategyDetailPage() {
  <div className="flex items-center justify-between mb-3">
  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Seguimiento Pendiente</h3>
  <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full">
- {followUps.filter(f => !f.completado).length}
+ {followUps.filter(f => !f.estado_completado).length}
  </span>
  </div>
  {loadingFollowUps ? (
  <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Cargando...</p>
- ) : followUps.filter(f => !f.completado).length === 0 ? (
+ ) : followUps.filter(f => !f.estado_completado).length === 0 ? (
  <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Sin seguimientos pendientes</p>
  ) : (
  <div className="space-y-1.5 max-h-48 overflow-y-auto">
- {followUps.filter(f => !f.completado).slice(0, 10).map(f => (
+ {followUps.filter(f => !f.estado_completado).slice(0, 10).map(f => (
  <div key={f.id} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))]">
  <div className="flex items-center gap-2">
  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.tipo === 'llamada' ? 'bg-blue-100 text-[hsl(var(--primary))]' : f.tipo === 'visita' ? 'bg-blue-100 text-[hsl(var(--primary))]' : f.tipo === 'oracion' ? 'bg-green-100 text-[hsl(var(--secondary))]' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
  {f.tipo}
  </span>
- <span className="text-[11px] text-[hsl(var(--text-secondary))]">{f.notas || '—'}</span>
+ <span className="text-[11px] text-[hsl(var(--text-secondary))]">{f.observaciones || '—'}</span>
  </div>
  <button onClick={async () => {
  try {
  await apiFetch(`/evangelism/follow-up/${f.id}`, {
  method: 'PATCH', token,
- body: { completado: true, fecha_realizada: new Date().toISOString() },
+ body: { estado_completado: true, fecha_seguimiento: new Date().toISOString() },
  });
  toast.success('Seguimiento completado');
  fetchFollowUps();

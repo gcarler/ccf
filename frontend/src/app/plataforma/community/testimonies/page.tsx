@@ -160,7 +160,7 @@ export default function TestimoniesWall() {
                                             </button>
                                             <button className="flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                                                 <Share2 size={18} />
-                                                <span className="text-[10px] font-semibold uppercase tracking-wide">Compatir</span>
+                                                <span className="text-[10px] font-semibold uppercase tracking-wide">Compartir</span>
                                             </button>
                                         </div>
                                     </div>
@@ -178,4 +178,3 @@ export default function TestimoniesWall() {
         </div>
     );
 }
-
