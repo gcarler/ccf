@@ -8,7 +8,7 @@ import uuid as _uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Index,
-                        Integer, String, Text, UUID, cast, func, inspect)
+                        String, Text, UUID, cast, func, inspect)
 from sqlalchemy.orm import Session
 
 from backend.core.database import Base

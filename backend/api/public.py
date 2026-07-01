@@ -1,8 +1,7 @@
 import logging
 import os
-import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
@@ -135,14 +134,14 @@ def public_list_courses(db: Session = Depends(get_db)):
     """Lista de cursos publicados para la landing page /cursos."""
     cursos = (
         db.query(Course)
-        .filter(Course.is_published == True, Course.deleted_at == None)  # noqa: E712
+        .filter(Course.is_published.is_(True), Course.deleted_at.is_(None))
         .order_by(Course.id)
         .all()
     )
     result = []
     for c in cursos:
         lecciones = db.query(Lesson).filter(
-            Lesson.course_id == c.id, Lesson.deleted_at == None  # noqa: E712
+            Lesson.course_id == c.id, Lesson.deleted_at.is_(None)
         ).count()
         result.append(_curso_to_public(c, lecciones))
     return result
@@ -153,13 +152,17 @@ def public_get_course(course_slug: str, db: Session = Depends(get_db)):
     """Detalle de un curso por slug."""
     curso = (
         db.query(Course)
-        .filter(Course.slug == course_slug, Course.is_published == True, Course.deleted_at == None)  # noqa: E712
+        .filter(
+            Course.slug == course_slug,
+            Course.is_published.is_(True),
+            Course.deleted_at.is_(None),
+        )
         .first()
     )
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
     lecciones = db.query(Lesson).filter(
-        Lesson.course_id == curso.id, Lesson.deleted_at == None  # noqa: E712
+        Lesson.course_id == curso.id, Lesson.deleted_at.is_(None)
     ).count()
     return _curso_to_public(curso, lecciones)
 
@@ -182,7 +185,11 @@ def public_course_enroll(
     """Inscripcion publica a un curso por slug. Crea Persona en el kernel."""
     curso = (
         db.query(Course)
-        .filter(Course.slug == course_slug, Course.is_published == True, Course.deleted_at == None)  # noqa: E712
+        .filter(
+            Course.slug == course_slug,
+            Course.is_published.is_(True),
+            Course.deleted_at.is_(None),
+        )
         .first()
     )
     if not curso:
@@ -204,8 +211,6 @@ def public_course_enroll(
         extra_notes=[f"Interesado en curso: {curso.title}"],
     ))
     persona = result.persona
-    case = result.case
-
     db.commit()
 
     return {
@@ -239,6 +244,7 @@ def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
 
     if payload.notes and payload.notes.strip():
         prayer = models.PrayerRequest(
+            sede_id=result.persona.sede_id,
             requester_name=payload.full_name,
             request_text=payload.notes,
             category="Evangelismo",

@@ -216,21 +216,21 @@ class TestCRMCRUDExecution:
             category="Pastoral", priority="high",
             persona_id=str(test_personas[0].id),
             due_date=datetime.now(timezone.utc) + timedelta(days=7),
-        ))
+        ), actor_user_id=test_personas[0].id)
         assert task.id is not None
         assert task.title == "Full Task"
 
-    def test_update_crm_task_status(self, db):
+    def test_update_crm_task_status(self, db, test_personas):
         from backend.crud import crm
         from backend.schemas import CrmTaskCreate, CrmTaskUpdate
-        task = crm.create_crm_task(db, CrmTaskCreate(title="Status Task"))
-        updated = crm.update_crm_task(db, task.id, CrmTaskUpdate(status="completed"))
+        task = crm.create_crm_task(db, CrmTaskCreate(title="Status Task", persona_id=test_personas[0].id), actor_user_id=test_personas[0].id)
+        updated = crm.update_crm_task(db, task.id, CrmTaskUpdate(status="completed"), actor_user_id=test_personas[0].id)
         assert updated.status == "completed"
 
-    def test_delete_crm_task(self, db):
+    def test_delete_crm_task(self, db, test_personas):
         from backend.crud import crm
         from backend.schemas import CrmTaskCreate
-        task = crm.create_crm_task(db, CrmTaskCreate(title="Delete Task"))
+        task = crm.create_crm_task(db, CrmTaskCreate(title="Delete Task", persona_id=test_personas[0].id), actor_user_id=test_personas[0].id)
         result = crm.delete_crm_task(db, task.id)
         assert result is True
 
@@ -292,8 +292,8 @@ class TestCRMCRUDExecution:
             persona_id=str(test_personas[0].id),
             channel="WhatsApp", content="Test message",
             leader_id=str(test_personas[0].id),
-            outcome="delivered",
-        ))
+            outcome="sent_real",
+        ), actor_user_id=test_personas[0].id)
         assert log is not None
 
     def test_create_donation_full(self, db, test_personas, admin_info):
@@ -680,21 +680,21 @@ class TestCMSCRUDExecution:
 class TestAcademyCRUDExecution:
     def test_get_courses(self, db):
         from backend.crud import academy
-        courses = academy.get_courses(db)
+        courses = academy.list_courses(db)
         assert isinstance(courses, list)
 
 
 
 
 
-    def test_get_forum_threads(self, db):
+    def test_list_forum_threads(self, db):
         from backend.crud import academy
-        threads = academy.get_forum_threads(db)
+        threads = academy.list_forum_threads(db)
         assert isinstance(threads, list)
 
     def test_get_forum_comments(self, db):
         from backend.crud import academy
-        comments = academy.get_forum_threads(db)
+        comments = academy.list_forum_threads(db)
         assert isinstance(comments, list)
 
 
@@ -918,22 +918,6 @@ class TestGovernanceCRUDExecution:
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONSOLIDATION CRUD — DEEP EXECUTION
 # ═══════════════════════════════════════════════════════════════════════════════
-
-class TestConsolidationCRUDExecution:
-    def test_consolidation_functions(self, db):
-        from backend.crud import consolidation
-        try:
-            funcs = [attr for attr in dir(consolidation) if not attr.startswith('_')]
-            for func_name in funcs:
-                func = getattr(consolidation, func_name)
-                if callable(func):
-                    try:
-                        func(db)
-                    except Exception:
-                        pass
-        except Exception:
-            pass
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # OPS CRUD — DEEP EXECUTION

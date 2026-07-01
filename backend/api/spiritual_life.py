@@ -12,9 +12,9 @@ from backend.core.database import get_db
 router = APIRouter(prefix="/spiritual-life", tags=["Spiritual Life"])
 
 
-@router.get("/milestones/{person_id}", response_model=List[schemas.Milestone])
+@router.get("/milestones/{persona_id}", response_model=List[schemas.Milestone])
 def get_persona_milestones(
-    person_id: str,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -22,9 +22,9 @@ def get_persona_milestones(
     # Axioma 3: verificar que la persona pertenece a la sede del usuario
     sede_id = get_user_sede_id(db, current_user.id)
     try:
-        persona_uuid = uuid.UUID(str(person_id))
+        persona_uuid = uuid.UUID(str(persona_id))
     except (TypeError, ValueError):
-        raise HTTPException(status_code=422, detail="person_id debe ser UUID") from None
+        raise HTTPException(status_code=422, detail="persona_id debe ser UUID") from None
     persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
     if persona and sede_id and persona.sede_id and str(persona.sede_id) != str(sede_id):
         raise HTTPException(status_code=403, detail="Persona no pertenece a tu sede")
@@ -40,7 +40,7 @@ def create_spiritual_milestone(
     """Solo administradores pueden registrar hitos oficiales."""
     return crud.create_milestone(
         db,
-        persona_id=payload.person_id,
+        persona_id=payload.persona_id,
         type=payload.type,
         event_date=payload.event_date.date(),
         minister_id=payload.minister_id,

@@ -14,7 +14,7 @@ from typing import Any, Dict, List
 
 from sqlalchemy import (
     Boolean, Column, DateTime, ForeignKey,
-    Index, Integer, String, Text, UUID,
+    Index, String, Text, UUID,
 )
 from sqlalchemy.orm import Session, relationship
 

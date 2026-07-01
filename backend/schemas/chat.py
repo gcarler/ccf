@@ -4,7 +4,7 @@ from datetime import datetime
 from uuid import UUID
 from typing import List, Optional
 
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import BaseModel
 
 from backend.schemas._common import orm_config
 
@@ -14,7 +14,7 @@ class ConversationCreate(BaseModel):
 
 
 class ConversationParticipantRead(BaseModel):
-    persona_id: UUID = Field(validation_alias=AliasChoices("persona_id", "user_id"), serialization_alias="persona_id")
+    persona_id: UUID
     username: str = ""
     last_read_at: Optional[datetime] = None
     model_config = orm_config

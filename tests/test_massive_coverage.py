@@ -340,30 +340,6 @@ class TestCRMAllFunctions:
         _c(mark_all_notifications_read, db, pid)
 
 
-class TestAcademyAllFunctions:
-    def test_all_list_functions(self, rich_data):
-        from backend.crud import academy as ac
-        db = rich_data["db"]
-        uid = str(rich_data["admin"].id)
-        _c(ac.get_courses, db)
-        _c(ac.get_courses, db, modality="online")
-        _c(ac.get_courses, db, published_only=True)
-        _c(ac.get_course, db, 1)
-        _c(ac.get_lessons_by_course, db, 1)
-        _c(ac.get_lesson, db, 1)
-        _c(ac.get_assessments_by_course, db, 1)
-        _c(ac.get_assessment, db, 1)
-        _c(ac.get_assessment_with_questions, db, 1)
-        _c(ac.get_enrollments_by_user, db, uid)
-        _c(ac.get_enrollment, db, 1)
-        _c(ac.get_certificates_by_user, db, uid)
-        _c(ac.get_certificate_by_code, db, "X")
-        _c(ac.get_course_students, db, 1)
-        _c(ac.get_latest_acta_by_course, db, 1)
-        _c(ac.get_forum_threads, db)
-        _c(ac.get_academy_candidates, db)
-
-
 class TestCMSAllFunctions:
     def test_all_list_functions(self, rich_data):
         from backend.crud import cms

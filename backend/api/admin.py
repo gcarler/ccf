@@ -307,11 +307,10 @@ def create_location(
 ):
     """Crea una nueva sede o anexo.
 
-    Acepta ``nombre`` (canónico) o ``name`` (alias backward-compat). El campo
-    del modelo es ``name``; el alias ``name`` se conserva para integraciones
-    externas ya construidas. Si ambos están vacíos/ausentes, devuelve 400.
+    El contrato público acepta únicamente ``nombre``. El nombre interno de la
+    columna no forma parte del contrato HTTP.
     """
-    name = payload.get("nombre") or payload.get("name")
+    name = payload.get("nombre")
     if not name or not str(name).strip():
         raise HTTPException(status_code=400, detail="nombre es requerido")
     loc = models.ChurchLocation(
@@ -533,7 +532,12 @@ def create_admin_user(
         RolPlataforma.nombre == "MIEMBRO"
     ).first()
     if not default_role:
-        raise HTTPException(status_code=500, detail="Rol MIEMBRO no configurado")
+        default_role = RolPlataforma(
+            nombre="MIEMBRO",
+            permisos={"academy:study": "allow", "profile:manage": "allow"},
+        )
+        db.add(default_role)
+        db.flush()
 
     # Crear Persona mínima (requerido como FK de Usuario)
     persona_id = _uuid.uuid4()
@@ -810,7 +814,7 @@ def award_milestone_bulk(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Asigna un hito a una lista de miembros de forma masiva."""
+    """Asigna un hito a una lista de personas de forma masiva."""
     badge_id = payload["badge_id"]
     persona_ids = payload.get("persona_ids", payload.get("persona_ids", []))
 
@@ -869,15 +873,14 @@ def create_donation_category(
 ):
     """Crea una nueva categoría de donación.
 
-    Acepta alias canónicos en español (``nombre``/``descripcion``/``color``) o
-    en inglés (``name``/``description``/``color_code``) para integraciones
-    externas ya construidas. ``nombre`` es requerido (sin cadena vacía).
+    El contrato público usa únicamente ``nombre``, ``descripcion`` y ``color``.
+    ``nombre`` es requerido (sin cadena vacía).
     """
-    name = (payload.get("nombre") or payload.get("name") or "").strip()
+    name = str(payload.get("nombre") or "").strip()
     if not name:
         raise HTTPException(status_code=400, detail="nombre es requerido")
-    description = payload.get("descripcion") or payload.get("description")
-    color = payload.get("color") or payload.get("color_code") or "blue"
+    description = payload.get("descripcion")
+    color = payload.get("color") or "blue"
     cat = models.DonationCategory(
         name=name,
         description=description,

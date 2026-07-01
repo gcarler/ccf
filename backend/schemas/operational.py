@@ -4,13 +4,13 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from backend.schemas._common import orm_config
 
 
 class MilestoneCreate(BaseModel):
-    person_id: UUID
+    persona_id: UUID
     type: str
     event_date: date
     minister_id: Optional[UUID] = None
@@ -18,7 +18,7 @@ class MilestoneCreate(BaseModel):
 
 class Milestone(BaseModel):
     id: UUID
-    person_id: UUID = Field(validation_alias="persona_id")
+    persona_id: UUID
     type: str
     event_date: date
     minister_id: Optional[UUID] = None

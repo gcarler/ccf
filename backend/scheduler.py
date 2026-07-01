@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,7 +57,6 @@ def _get_db_session(settings: Any):
 def _find_scheduled_pages(db_session) -> list[Any]:
     """Find all pages with status='scheduled' whose scheduled_at <= now."""
     from backend import models
-    from sqlalchemy import text
 
     now = datetime.now(timezone.utc).isoformat()
     rows = (

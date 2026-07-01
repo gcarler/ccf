@@ -1,7 +1,7 @@
 """CRM — Biblioteca de Recursos: categorías, plantillas, adjuntos y bitácora de envíos."""
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from uuid import UUID
 
 import uuid

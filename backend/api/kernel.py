@@ -9,14 +9,13 @@ Endpoints del Protocolo de Identidad y Roles, centrados en Persona (UUID).
 """
 
 import logging
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
-from backend.crud._utils import _utcnow
 from backend.crud.crm import resolve_persona_id_for_user
 from backend.core.kernel_rbac import (
     require_kernel_permission,

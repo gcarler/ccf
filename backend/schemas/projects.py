@@ -3,9 +3,9 @@ from uuid import UUID
 
 import uuid
 from datetime import datetime
-from typing import Any, List, Optional, Annotated
+from typing import Any, List, Literal, Optional, Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, BeforeValidator
+from pydantic import BaseModel, ConfigDict, Field, BeforeValidator
 
 from backend.schemas._common import orm_config
 
@@ -66,48 +66,19 @@ class ProjectAttachment(BaseModel):
     model_config = orm_config
 
 
-PRIORITY_MAP = {
-    "baja": "low", "bajo": "low",
-    "normal": "medium",
-    "alta": "high", "altas": "high", "alto": "high",
-    "urgente": "urgent",
-}
-PRIORITY_VALUES = {"low", "medium", "high", "urgent"}
+ProjectPriority = Literal["low", "medium", "high", "urgent"]
 
 
 class ProjectTaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     status: str = "todo"
-    priority: str = "medium"
-    assignee_id: Optional[UUIDStr] = None
+    priority: ProjectPriority = "medium"
+    assignee_id: Optional[UUID] = None
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     labels: List[str] = Field(default_factory=list)
     attachments: List[Any] = Field(default_factory=list)
-
-    @field_validator("priority", mode="before")
-    @classmethod
-    def _normalize_priority(cls, value: Any) -> str:
-        if isinstance(value, str):
-            v = value.lower().strip()
-            if v in PRIORITY_VALUES:
-                return v
-            return PRIORITY_MAP.get(v, "medium")
-        return "medium"
-
-    @field_validator("labels", mode="before")
-    @classmethod
-    def _coerce_labels(cls, value: Any) -> List[str]:
-        if value is None:
-            return []
-        if isinstance(value, str):
-            cleaned = value.strip()
-            return [cleaned] if cleaned else []
-        if isinstance(value, list):
-            return [str(item).strip() for item in value if str(item).strip()]
-        return []
-
 
 class ProjectTaskCreate(ProjectTaskBase):
     project_id: Optional[UUIDStr] = None
@@ -118,37 +89,12 @@ class ProjectTaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
-    priority: Optional[str] = None
-    assignee_id: Optional[str] = None
+    priority: Optional[ProjectPriority] = None
+    assignee_id: Optional[UUID] = None
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     labels: Optional[List[str]] = None
     attachments: Optional[List[dict]] = None
-
-    @field_validator("priority", mode="before")
-    @classmethod
-    def _normalize_priority(cls, value: Any) -> Optional[str]:
-        if value is None:
-            return None
-        if isinstance(value, str):
-            v = value.lower().strip()
-            if v in PRIORITY_VALUES:
-                return v
-            return PRIORITY_MAP.get(v, "medium")
-        return "medium"
-
-    @field_validator("labels", mode="before")
-    @classmethod
-    def _coerce_labels(cls, value: Any) -> Optional[List[str]]:
-        if value is None:
-            return None
-        if isinstance(value, str):
-            cleaned = value.strip()
-            return [cleaned] if cleaned else []
-        if isinstance(value, list):
-            return [str(item).strip() for item in value if str(item).strip()]
-        return []
-
 
 class ProjectTask(ProjectTaskBase):
     id: UUIDStr

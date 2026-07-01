@@ -64,27 +64,24 @@ def get_user_sede_id(db: Session, user_id: str) -> str | None:
 # ── Axioma 3 — Multi-Tenant: Defense-in-Depth scope re-check (CRUD layer) ───
 
 
-def _actor_sede_or_none(db: Session, actor_user_id) -> str | None:
-    """Resolve la sede del actor o None si es superadmin / actor ausente / anterior.
+def _actor_sede_or_none(
+    db: Session, actor_user_id: str | uuid.UUID
+) -> str | None:
+    """Resolve la sede de un actor canónico autenticado.
 
-    Disparadores de None (no se aplica scope-check):
-      - `actor_user_id is None`: callers anterior o scripts (workers async,
-        migraciones, seeds) que operan sin contexto de usuario.
-      - `get_user_sede_id` retorna None: usuario sin persona vinculada o
-        con persona sin sede asignada (típicamente superadmin).
-
-    En cualquier otro caso devuelve la sede del actor como string.
-
-    Manejo de excepciones: se capturan sólo errores de tipo/valor/atributo
-    (propios de inputs malformados). Errores de DB/programación no se
-    enmascaran — propagan para no bypassear el scope-check por bug oculto.
+    ``None`` sólo significa que una persona válida no tiene sede asignada
+    (superadministración). Un actor ausente, malformado o inexistente se
+    rechaza y nunca desactiva silenciosamente los controles de scope.
     """
-    if actor_user_id is None:
-        return None
+    from fastapi import HTTPException as _HTTPException
+
     try:
-        return get_user_sede_id(db, str(actor_user_id))
+        actor_uuid = uuid.UUID(str(actor_user_id))
     except (TypeError, ValueError, AttributeError):
-        return None
+        raise _HTTPException(status_code=401, detail="Authenticated actor required")
+    if resolve_persona_id_for_user(db, actor_uuid) is None:
+        raise _HTTPException(status_code=401, detail="Authenticated actor required")
+    return get_user_sede_id(db, str(actor_uuid))
 
 
 def _resolve_anchor_sede(
@@ -156,10 +153,8 @@ def _crud_scope_re_check_task(
         DEJAR anclas cross-sede en la fila mutada. Esto cierra el TOCTOU
         y blinda la creación de filas con anclas mixtas (potencial leak).
 
-    Disparadores (skip cuando):
-      - `actor_user_id is None`: callers anterior o scripts que no tienen
-        contexto de usuario. NO rompe workers async, migraciones, seeds.
-      - Actor sin sede (superadmin): ve TODO, igual que en API layer.
+    El actor es obligatorio. Un superadministrador canónico sin sede conserva
+    el alcance global de administración.
 
     Casos especiales:
       - Orphan (todas las anclas None): se REJECT para editores en sede.
@@ -275,8 +270,6 @@ def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Person
     import uuid as _uuid
 
     data = payload.model_dump(exclude_unset=True)
-    if "baptism_date" in data:
-        data["fecha_bautismo"] = data.pop("baptism_date")
     data.setdefault("qr_token", _uuid.uuid4().hex[:16].upper())
     row = models.Persona(**data)
     db.add(row)
@@ -420,16 +413,14 @@ def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate)
     # Capturar valores anteriores para el trigger de embudo
     old_church_role = row.church_role
     old_estado_vital = row.estado_vital
-    old_fecha_bautismo = row.fecha_bautismo
+    old_baptism_date = row.baptism_date
 
     updates = payload.model_dump(exclude_unset=True)
-    if "baptism_date" in updates:
-        updates["fecha_bautismo"] = updates.pop("baptism_date")
     for key, value in updates.items():
         setattr(row, key, value)
 
     # Axioma 1 — Integridad de Embudo: registrar cambios en historial_embudo
-    _track_funnel_changes(db, row, old_church_role, old_estado_vital, old_fecha_bautismo)
+    _track_funnel_changes(db, row, old_church_role, old_estado_vital, old_baptism_date)
 
     db.commit()
     db.refresh(row)
@@ -463,8 +454,8 @@ def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate)
     return row
 
 
-def _track_funnel_changes(db: Session, persona, old_church_role, old_estado_vital, old_fecha_bautismo):
-    """Registra en HistorialEmbudo los cambios en church_role, estado_vital, o fecha_bautismo."""
+def _track_funnel_changes(db: Session, persona, old_church_role, old_estado_vital, old_baptism_date):
+    """Registra cambios de rol, estado vital o fecha de bautismo."""
     from backend.models_evangelism import HistorialEmbudo
 
     now = _utcnow()
@@ -496,8 +487,8 @@ def _track_funnel_changes(db: Session, persona, old_church_role, old_estado_vita
             )
         )
 
-    # fecha_bautismo (nuevo bautismo)
-    if old_fecha_bautismo is None and persona.fecha_bautismo is not None:
+    # baptism_date (nuevo bautismo)
+    if old_baptism_date is None and persona.baptism_date is not None:
         db.add(
             HistorialEmbudo(
                 persona_id=pid,
@@ -690,7 +681,7 @@ def create_crm_task(
     db: Session,
     payload: schemas.CrmTaskCreate,
     *,
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ) -> models.TareaCRM:
     """Crea una tarea CRM y registra audit log (Axioma 1 — Auditoría Estricta).
 
@@ -702,11 +693,8 @@ def create_crm_task(
     Argumentos:
         db: sesión SQLAlchemy.
         payload: schema Pydantic `CrmTaskCreate`.
-        actor_user_id: identidad (UUID o string) del usuario que origina la
-            mutación. Si es `None` (e.g., bulk import desde script), la fila
-            de auditoría se persiste con `usuario_id=NULL`. Si tiene sede
-            asignada, se aplica defense-in-depth scope re-check (OR-based)
-            sobre las anclas entrantes.
+        actor_user_id: UUID canónico del actor que origina la mutación. Es
+            obligatorio también para scripts y workers.
     """
     data = payload.model_dump()
     assignee_identity = data.pop("assignee_id", None)
@@ -743,7 +731,7 @@ def create_crm_task(
             "priority": row.prioridad,
             "status": row.estado,
         },
-        usuario_id=str(actor_user_id) if actor_user_id else None,
+        usuario_id=str(actor_user_id),
     )
     db.commit()
     db.refresh(row)
@@ -753,9 +741,9 @@ def create_crm_task(
 def update_crm_task(
     db: Session,
     task_id: uuid.UUID,
-    payload,
+    payload: schemas.CrmTaskUpdate,
     *,
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ) -> models.TareaCRM:
     """Actualiza una tarea CRM y registra audit log sólo si hay cambios reales.
 
@@ -767,11 +755,8 @@ def update_crm_task(
     Argumentos:
         db: sesión SQLAlchemy.
         task_id: UUID de la tarea a actualizar.
-        payload: `schemas.CrmTaskUpdate` (preferido) o un `dict` compatible
-            para callers anterior (algunos tests directos al CRUD usan dict).
-            El CRUD acepta ambos via duck typing sobre `model_dump`.
-        actor_user_id: identidad del usuario que origina la mutación; `None`
-            produce una fila con `usuario_id=NULL`.
+        payload: contrato Pydantic `schemas.CrmTaskUpdate`.
+        actor_user_id: UUID canónico del usuario que origina la mutación.
 
     Nota sobre scope (Axioma 3): el CRUD NO valida scope Multi-Tenant por
     sí mismo (no conoce el usuario actual fuera del `actor_user_id` que se
@@ -784,12 +769,7 @@ def update_crm_task(
     if not row:
         return None
 
-    # Duck typing: schema Pydantic (preferred) o dict (anterior callers).
-    changes_in = (
-        payload.model_dump(exclude_unset=True)
-        if hasattr(payload, "model_dump")
-        else dict(payload)
-    )
+    changes_in = payload.model_dump(exclude_unset=True)
 
     # Defense in depth — Axioma 3 (Multi-Tenant) scope re-check (UPDATE).
     # Detecta DOS vectores:
@@ -841,7 +821,7 @@ def update_crm_task(
             str(row.id),
             "UPDATE",
             detalles=changes,
-            usuario_id=str(actor_user_id) if actor_user_id else None,
+            usuario_id=str(actor_user_id),
         )
     db.commit()
     db.refresh(row)
@@ -1366,7 +1346,7 @@ def create_communication_log(
     db: Session,
     payload: schemas.CommunicationLogCreate,
     *,
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ) -> models.CommunicationLog:
     """Crea un CommunicationLog con defense-in-depth (Axioma 3 — CRUD layer).
 
@@ -1450,20 +1430,16 @@ def mark_notification_as_read(
     db: Session,
     notification_id: uuid.UUID,
     *,
-    owner_persona_id: uuid.UUID | str | None = None,
+    owner_persona_id: uuid.UUID | str,
 ):
     """Marca una Notification como le\u00edda con ownership check (Axioma 3).
 
     Parámetros:
         db: sesi\u00f3n SQLAlchemy.
         notification_id: UUID de la Notification a marcar.
-        owner_persona_id: persona_id del caller. Si est\u00e1 presente y
-            difiere de ``Notification.user_id`` (recipient), la Notification
-            se considera fuera de scope y el CRUD retorna ``None`` (el
-            API layer lo traduce a 404 / existence-leak safe). Si es
-            ``None`` (superadmin / caller sin contexto de persona), se
-            omite el ownership check — comportamiento anterior preservado
-            para scripts y bulk imports.
+        owner_persona_id: persona_id obligatorio del caller. Si difiere de
+            ``Notification.user_id`` (recipient), la Notification se considera
+            fuera de scope y el CRUD retorna ``None``.
 
     Axioma 3 — ownership: cada usuario ve y modifica SÓLO sus propias
     notifications (BOLA-style leak prevention). Pattern consistente con
@@ -1479,7 +1455,7 @@ def mark_notification_as_read(
     if not notification:
         return None
     # Ownership guard: notification.user_id == owner_persona_id
-    if owner_persona_id is not None and str(notification.user_id) != str(owner_persona_id):
+    if str(notification.user_id) != str(owner_persona_id):
         # Existence-leak safe: NO se persiste mutaci\u00f3n y se retorna None
         # para que el API layer responda 404 sin filtrar IDs existentes.
         return None
@@ -1636,35 +1612,18 @@ def create_community_card(db: Session, card: schemas.CommunityBoardCardCreate) -
 # ── CRM Events ─────────────────────────────────────────
 
 
-# ── Test-compatible alias ─────────────────────────────────────────────
-def list_personas(db: Session, **kwargs) -> List[models.Persona]:
-    """Alias consumed by ````tests/test_crud_integration.py::TestCrmCrud.test_list_personas````.
-
-    Delegates to ````search_personas```` which already accepts ````limit````, ````sede_id````
-    and the full filter set; this thin wrapper just normalizes the public name.
-    """
-    return search_personas(db, **kwargs)
-
-
 def get_crm_event(db: Session, event_id: UUID) -> Optional[models.CrmEvent]:
     return db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
 
 
-def update_crm_event(db: Session, event_id: UUID, payload) -> Optional[models.CrmEvent]:
-    """Update a CRM event. Accepts Pydantic schema or plain dict.
-
-    The ````dict```` branch is for ````tests/test_remaining_gaps.py::test_events_crud```` which
-    passes a raw ````dict```` (callers from the API always pass a schema). Detect
-    via duck-typing so both shapes work without breaking the type contract.
-    """
+def update_crm_event(
+    db: Session, event_id: UUID, payload: schemas.CrmEventUpdate
+) -> Optional[models.CrmEvent]:
+    """Actualiza un evento mediante el contrato Pydantic canónico."""
     row = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not row:
         return None
-    changes = (
-        payload.model_dump(exclude_unset=True)
-        if hasattr(payload, "model_dump")
-        else dict(payload)
-    )
+    changes = payload.model_dump(exclude_unset=True)
     for key, value in changes.items():
         setattr(row, key, value)
     db.commit()

@@ -51,8 +51,8 @@ class TestCrmCrud:
 
     def test_list_personas(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.crud.crm import list_personas
-        result = list_personas(db, limit=10)
+        from backend.crud.crm import search_personas
+        result = search_personas(db, limit=10)
         assert isinstance(result, (list, tuple))
 
     def test_delete_persona(self, authed_client):
@@ -70,46 +70,68 @@ class TestCrmCrud:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestCmsCrud:
+    @staticmethod
+    def _create_page(db, persona, slug, title):
+        from backend.crud.cms import create_cms_page, create_cms_site
+        from backend.schemas.cms import CmsPageCreate, CmsSiteCreate
+
+        site = create_cms_site(
+            db,
+            CmsSiteCreate(
+                site_key=f"test-{uuid.uuid4().hex}",
+                name="Test Site",
+                base_path=f"/test-{uuid.uuid4().hex}",
+            ),
+        )
+        return create_cms_page(
+            db,
+            site.id,
+            CmsPageCreate(slug=slug, title=title, status="draft"),
+            persona.id,
+        )
+
     def test_create_page(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.crud.cms import create_page
-        page = create_page(db, site_id=uuid.uuid4(), slug="test-page", title="Test Page")
+        page = self._create_page(db, persona, "test-page", "Test Page")
         assert page is not None
         assert page.slug == "test-page"
 
     def test_get_page(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.crud.cms import create_page, get_page
-        page = create_page(db, site_id=uuid.uuid4(), slug="get-page", title="Get Page")
-        result = get_page(db, page.id)
+        from backend.crud.cms import get_cms_page
+        page = self._create_page(db, persona, "get-page", "Get Page")
+        result = get_cms_page(db, page.site_id, page.slug)
         assert result is not None
 
     def test_update_page(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.crud.cms import create_page, update_page
-        page = create_page(db, site_id=uuid.uuid4(), slug="update-page", title="Old Title")
-        update_page(db, page.id, title="New Title")
+        from backend.crud.cms import update_cms_page
+        from backend.schemas.cms import CmsPageUpdate
+        page = self._create_page(db, persona, "update-page", "Old Title")
+        update_cms_page(db, page, CmsPageUpdate(title="New Title"), persona.id)
         assert page.title == "New Title"
 
     def test_list_pages(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.crud.cms import list_pages
-        result = list_pages(db, site_id=uuid.uuid4())
+        from backend.crud.cms import list_cms_pages
+        result, _total = list_cms_pages(db, site_id=uuid.uuid4())
         assert isinstance(result, list)
 
     def test_create_section(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.crud.cms import create_page, create_section
-        page = create_page(db, site_id=uuid.uuid4(), slug="section-page", title="Section Page")
-        section = create_section(db, page_id=page.id, section_type="hero", props_json={"title": "Test"})
+        from backend.crud.cms import create_cms_section
+        from backend.schemas.cms import CmsSectionCreate
+        page = self._create_page(db, persona, "section-page", "Section Page")
+        section = create_cms_section(db, page.id, CmsSectionCreate(type="hero", props_json={"title": "Test"}))
         assert section is not None
 
     def test_update_section(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.crud.cms import create_page, create_section, update_section
-        page = create_page(db, site_id=uuid.uuid4(), slug="update-section", title="Update Section")
-        section = create_section(db, page_id=page.id, section_type="hero", props_json={})
-        update_section(db, section.id, props_json={"title": "Updated"})
+        from backend.crud.cms import create_cms_section, update_cms_section
+        from backend.schemas.cms import CmsSectionCreate, CmsSectionUpdate
+        page = self._create_page(db, persona, "update-section", "Update Section")
+        section = create_cms_section(db, page.id, CmsSectionCreate(type="hero", props_json={}))
+        update_cms_section(db, section, CmsSectionUpdate(props_json={"title": "Updated"}))
         assert section.props_json == {"title": "Updated"}
 
 
@@ -121,105 +143,48 @@ class TestProjectsCrud:
     def test_create_project(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.projects import create_project
-        project = create_project(db, sede_id=sede.id, name="Test Project", owner_id=persona.id)
+        from backend.schemas.projects import ProjectCreate
+        project = create_project(db, ProjectCreate(title="Test Project"), sede_id=sede.id, owner_persona_id=persona.id)
         assert project is not None
         assert project.name == "Test Project"
 
     def test_get_project(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.projects import create_project, get_project
-        project = create_project(db, sede_id=sede.id, name="Get Project", owner_id=persona.id)
+        from backend.schemas.projects import ProjectCreate
+        project = create_project(db, ProjectCreate(title="Get Project"), sede_id=sede.id, owner_persona_id=persona.id)
         result = get_project(db, project.id, sede_id=sede.id)
         assert result is not None
 
     def test_update_project(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.projects import create_project, update_project
-        project = create_project(db, sede_id=sede.id, name="Old Name", owner_id=persona.id)
-        update_project(db, project.id, sede_id=sede.id, name="New Name")
+        from backend.schemas.projects import ProjectCreate, ProjectUpdate
+        project = create_project(db, ProjectCreate(title="Old Name"), sede_id=sede.id, owner_persona_id=persona.id)
+        update_project(db, project.id, ProjectUpdate(title="New Name"), sede_id=sede.id)
         assert project.name == "New Name"
 
     def test_list_projects(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.crud.projects import list_projects
-        result = list_projects(db, sede_id=sede.id)
+        from backend.crud.projects import get_projects
+        result = get_projects(db, sede_id=sede.id)
         assert isinstance(result, list)
 
     def test_create_task(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.crud.projects import create_project, create_task
-        project = create_project(db, sede_id=sede.id, name="Task Project", owner_id=persona.id)
-        task = create_task(db, project_id=project.id, title="Test Task", assignee_id=persona.id)
+        from backend.crud.projects import create_project, create_project_task
+        from backend.schemas.projects import ProjectCreate, ProjectTaskCreate
+        project = create_project(db, ProjectCreate(title="Task Project"), sede_id=sede.id, owner_persona_id=persona.id)
+        task = create_project_task(db, ProjectTaskCreate(project_id=project.id, title="Test Task", assignee_id=persona.id))
         assert task is not None
 
     def test_list_tasks(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.crud.projects import create_project, list_tasks
-        project = create_project(db, sede_id=sede.id, name="List Tasks", owner_id=persona.id)
-        result = list_tasks(db, project_id=project.id)
+        from backend.crud.projects import create_project, get_project_tasks
+        from backend.schemas.projects import ProjectCreate
+        project = create_project(db, ProjectCreate(title="List Tasks"), sede_id=sede.id, owner_persona_id=persona.id)
+        result = get_project_tasks(db, project.id)
         assert isinstance(result, list)
-
-    def test_update_project_name_title_conflict_warns(self, authed_client, caplog):
-        """``update_project`` should log a WARNING when both ``name`` and ``title``
-        arrive with different values, and ``name`` should win (mirrors
-        ``create_project`` precedence). Confirms the conflict-detection branch
-        added alongside the ``name → title`` alias.
-        """
-        import logging
-        from backend.crud.projects import create_project, update_project
-        _c, _h, sede, persona, db = authed_client
-        project = create_project(
-            db, sede_id=sede.id, name="Untitled Project", owner_id=persona.id
-        )
-        with caplog.at_level(logging.WARNING, logger="backend.crud.projects"):
-            update_project(
-                db,
-                project.id,
-                sede_id=sede.id,
-                name="Project Renamed",
-                title="Other Title",
-            )
-        warn_records = [
-            r for r in caplog.records if r.name == "backend.crud.projects"
-        ]
-        assert any(
-            "update_project: conflicting 'name'" in r.getMessage()
-            for r in warn_records
-        ), caplog.text
-        assert any(
-            "using 'name'" in r.getMessage()
-            for r in warn_records
-        ), caplog.text
-        db.refresh(project)
-        assert project.title == "Project Renamed"
-
-    def test_update_project_name_title_equal_silent(self, authed_client, caplog):
-        """Equal ``name``/``title`` values should not warn — the same values
-        crossing branch should be a no-op for the log surface.
-        """
-        import logging
-        from backend.crud.projects import create_project, update_project
-        _c, _h, sede, persona, db = authed_client
-        project = create_project(
-            db, sede_id=sede.id, name="Untitled Project", owner_id=persona.id
-        )
-        with caplog.at_level(logging.WARNING, logger="backend.crud.projects"):
-            update_project(
-                db,
-                project.id,
-                sede_id=sede.id,
-                name="Same Value",
-                title="Same Value",
-            )
-        warn_records = [
-            r for r in caplog.records if r.name == "backend.crud.projects"
-        ]
-        assert not any(
-            "conflicting 'name'" in r.getMessage() for r in warn_records
-        ), caplog.text
-        db.refresh(project)
-        assert project.title == "Same Value"
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 4. ACADEMY CRUD TESTS

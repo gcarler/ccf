@@ -243,12 +243,6 @@ def list_projects(
             _normalize_dates(m)
         for t in p.tasks:
             _normalize_dates(t)
-            # Compatibility for rows where labels were stored as a scalar.
-            labels = getattr(t, "labels", None)
-            if isinstance(labels, str):
-                t.__dict__["labels"] = [labels] if labels.strip() else []
-            elif labels is None:
-                t.__dict__["labels"] = []
             # Normalize attachments from ORM objects to dicts for Pydantic serialization
             if hasattr(t, "attachments") and t.attachments:
                 t.__dict__["attachments"] = [

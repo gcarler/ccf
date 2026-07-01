@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, JSON,
                         String, Text)
 from sqlalchemy.dialects.postgresql import CITEXT, UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, synonym
 
 from backend.models_shared import Base
 
@@ -164,6 +164,7 @@ class NotificacionUsuario(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False)
+    persona_id = synonym("user_id")
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False, nullable=False)

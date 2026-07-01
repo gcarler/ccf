@@ -803,7 +803,7 @@ def strategy_velocity(
         "persona": "Visitante",
         "invitado": "Invitado", "INVITADO": "Invitado",
         "asistente": "Asistente", "ASISTENTE": "Asistente",
-        "miembro": "Asistente / Miembro",
+        "miembro": "Integrante",
         "anfitrion": "Anfitrión", "ANFITRION": "Anfitrión",
         "colider": "Colíder", "COLIDER": "Colíder",
         "lider": "Líder", "LIDER": "Líder",

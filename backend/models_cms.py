@@ -68,7 +68,7 @@ class CmsMediaItem(Base):
     section = Column(String(120), nullable=False, index=True, default="general")
     tags = Column(JSON, default=[])
     status = Column(String(20), default="active", index=True)
-    created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     # Axioma 3 — Multi-Tenant (added 2026-07-01 via alembic migration):
     # sede_id propio en cms_media_items para evitar el scope leak donde un
     # editor de sede_a podía listar/borrar imágenes de sede_b. Pre-migration
@@ -76,7 +76,7 @@ class CmsMediaItem(Base):
     # (``created_by_persona_id``), pero el listado admin los agregaba a
     # nivel plataforma sin JOIN. Con sede_id propio el CRUD/API pueden
     # filtrar de forma directa y consistente.
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -304,8 +304,8 @@ class Announcement(Base):
     # sede_a podía crear/editar anuncios que aparecían en la home pública
     # de sede_b. ``sede_id`` propio + ``created_by_persona_id`` permiten
     # scope tanto en API como en CRUD layer (defense-in-depth).
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
-    created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
+    created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     published_at = Column(DateTime(timezone=True), default=_utcnow)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -324,15 +324,14 @@ class Testimonial(Base):
     is_approved = Column(Boolean, default=False)
     show_on_home = Column(Boolean, default=False)
     status = Column(String(20), default="pending", index=True)
-    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
     # Axioma 3 — Multi-Tenant (added 2026-07-01 via alembic migration):
     # ``Testimonial`` solo tenía FK a ``author_persona_id``. Sin sede_id
     # propio, scope del CRUD/API requería JOIN con ``personas.sede_id``.
     # Columna directa acelera queries y permite backfill estable desde
-    # author.sede_id. Si author es None, queda NULL y se trata como
-    # "huérfano" — sólo visible a superadmins sin sede (legacy / bulk
-    # imports).
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
+    # author.sede_id. El contrato estricto exige autor y sede para impedir
+    # contenido sin ownership o aislamiento tenant verificable.
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     author = relationship("Persona", foreign_keys=[author_persona_id], lazy="joined")

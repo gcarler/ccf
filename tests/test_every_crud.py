@@ -6,6 +6,7 @@ Total: 378 functions. Each covers ~3-10 lines.
 import uuid
 import pytest
 from datetime import datetime, date, timedelta, timezone
+from backend import schemas
 from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
@@ -132,7 +133,7 @@ class TestCRMEveryFunction:
         _c(crm.get_crm_events, db, sede_id=sid)
         _c(crm.get_crm_events, db, sede_id=sid, skip=0, limit=3)
         _c(crm.get_crm_event, db, full["cases"][0].id)
-        _c(crm.update_crm_event, db, full["cases"][0].id, {"name": "U"})
+        _c(crm.update_crm_event, db, full["cases"][0].id, schemas.CrmEventUpdate(name="U"))
         # Tasks
         _c(crm.get_crm_tasks, db)
         _c(crm.get_crm_tasks, db, assignee_persona_id=pid)
@@ -186,19 +187,6 @@ class TestCRMEveryFunction:
         _c(crm.get_milestones, db, pid)
 
 
-class TestAcademyEveryFunction:
-    def test_every_function(self, full):
-        from backend.crud import academy as ac
-        db = full["db"]; uid = str(full["admin"].id)
-        _c(ac.get_courses, db); _c(ac.get_courses, db, modality="online"); _c(ac.get_courses, db, published_only=True)
-        _c(ac.get_course, db, 1); _c(ac.get_lessons_by_course, db, 1); _c(ac.get_lesson, db, 1)
-        _c(ac.get_assessments_by_course, db, 1); _c(ac.get_assessment, db, 1); _c(ac.get_assessment_with_questions, db, 1)
-        _c(ac.get_enrollments_by_user, db, uid); _c(ac.get_enrollment, db, 1)
-        _c(ac.get_certificates_by_user, db, uid); _c(ac.get_certificate_by_code, db, "X")
-        _c(ac.get_course_students, db, 1); _c(ac.get_latest_acta_by_course, db, 1)
-        _c(ac.get_forum_threads, db); _c(ac.get_academy_candidates, db)
-
-
 class TestCMSEveryFunction:
     def test_every_function(self, full):
         from backend.crud import cms
@@ -234,23 +222,6 @@ class TestProjectsEveryFunction:
         _c(projects.get_project_activities, db, 1); _c(projects.get_all_activities, db)
         _c(projects.get_all_activities, db, sede_id=str(full["sede"].id))
         _c(projects.get_portfolio_summary, db); _c(projects.get_workload_summary, db)
-
-
-class TestKernelEveryFunction:
-    def test_every_function(self, full):
-        from backend.crud import kernel
-        db = full["db"]; pid = str(full["personas"][0].id); uid = str(full["admin"].id)
-        _c(kernel.get_persona_activity_status, db, pid); _c(kernel.is_persona_active, db, pid)
-        _c(kernel.get_persona_ministries, db, pid); _c(kernel.get_persona_church_role, db, pid)
-        _c(kernel.get_personas_by_church_role, db, "Miembro")
-        _c(kernel.get_personas_by_church_role, db, "Miembro", active_only=True)
-        _c(kernel.get_platform_role_definitions, db); _c(kernel.get_persona_platform_roles, db, pid)
-        _c(kernel.get_persona_effective_permissions, db, pid)
-        _c(kernel.persona_has_permission, db, pid, "crm", "read")
-        _c(kernel.get_user_ministries, db, uid); _c(kernel.get_user_church_role, db, uid)
-        _c(kernel.get_user_platform_roles, db, uid); _c(kernel.get_user_effective_permissions, db, uid)
-        _c(kernel.get_user_activity_status, db, uid); _c(kernel.is_user_active, db, uid)
-        _c(kernel.get_kernel_profile, db, pid); _c(kernel.get_church_role_history, db, pid)
 
 
 class TestFlowEveryEndpoint:

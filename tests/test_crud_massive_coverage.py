@@ -5,6 +5,7 @@ Uses try/except to ensure all functions get called even if data is missing.
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
+from backend import schemas
 from tests.conftest import seed_admin as _seed_admin
 
 
@@ -184,22 +185,33 @@ class TestCRMCrudMassive:
         db = db_session
         pid = str(full["personas"][0].id)
         _call(crm.get_crm_event, db, full["events"][0].id)
-        _call(crm.update_crm_event, db, full["events"][0].id, {"name": "U"})
+        _call(
+            crm.update_crm_event,
+            db,
+            full["events"][0].id,
+            schemas.CrmEventUpdate(name="U"),
+        )
         tid = db.execute(__import__("sqlalchemy").text("SELECT id FROM crm_tareas LIMIT 1")).scalar()
         if tid:
-            _call(crm.update_crm_task, db, tid, {"status": "completed"})
+            _call(
+                crm.update_crm_task,
+                db,
+                tid,
+                schemas.CrmTaskUpdate(status="completed"),
+                actor_user_id=full["admin"].id,
+            )
             _call(crm.delete_crm_task, db, tid)
         _call(crm.update_support_ticket, db, 1, "resolved")
-        _call(crm.get_consolidation_case, db, str(full["cases"][0].id))
 
 
 class TestCMSCrudMassive:
     def test_cms_crud(self, db_session, full):
         from backend.crud import cms
+        from backend.schemas import PageContentUpdate
         db = db_session
         _call(cms.list_page_contents, db)
         _call(cms.get_page_content, db, "home")
-        _call(cms.update_page_content, db, "home", {"title": "U"})
+        _call(cms.update_page_content, db, "home", PageContentUpdate(title="U"))
         _call(cms.list_content_publications, db)
         _call(cms.get_or_create_content_publication, db, "home")
         _call(cms.list_cms_media_items, db)
@@ -234,23 +246,14 @@ class TestAcademyCrudMassive:
     def test_academy_crud(self, db_session, full):
         from backend.crud import academy
         db = db_session
-        _call(academy.get_courses, db)
-        _call(academy.get_courses, db, modality="online")
-        _call(academy.get_courses, db, published_only=True)
-        _call(academy.get_academy_candidates, db)
-        _call(academy.get_forum_threads, db)
-        _call(academy.get_lessons_by_course, db, 1)
-        _call(academy.get_assessments_by_course, db, 1)
-        _call(academy.get_assessment_questions, db, 1)
-        _call(academy.get_assessment_options, db, 1)
-        _call(academy.get_enrollments_by_user, db, str(full["admin"].id))
-        _call(academy.get_certificates_by_user, db, str(full["admin"].id))
-        _call(academy.get_lesson_progress, db, str(full["admin"].id), 1)
-        _call(academy.list_assignment_submissions_with_meta, db)
-        _call(academy.get_course_attendance, db, 1)
-        _call(academy.get_lesson_resources, db, 1)
-        _call(academy.get_course_students, db, 1)
-        _call(academy.get_latest_acta_by_course, db, 1)
+        _call(academy.list_courses, db)
+        _call(academy.list_courses, db, modality="online")
+        _call(academy.list_courses, db, published_only=True)
+        _call(academy.list_forum_threads, db)
+        _call(academy.list_lessons, db, 1)
+        _call(academy.list_assessments, db, 1)
+        _call(academy.list_enrollments, db, persona_id=full["admin_persona"].id)
+        _call(academy.list_certificates, db, full["admin_persona"].id)
         _call(academy.get_course, db, 1)
 
 
@@ -322,15 +325,6 @@ class TestKernelMassive:
         _call(kernel.get_persona_platform_roles, db, pid)
         _call(kernel.get_persona_effective_permissions, db, pid)
         _call(kernel.persona_has_permission, db, pid, "crm", "read")
-        _call(kernel.get_user_ministries, db, uid)
-        _call(kernel.get_user_church_role, db, uid)
-        _call(kernel.get_user_platform_roles, db, uid)
-        _call(kernel.get_user_effective_permissions, db, uid)
-        _call(kernel.set_user_activity_status, db, uid, "ACTIVO")
-        _call(kernel.get_user_activity_status, db, uid)
-        _call(kernel.is_user_active, db, uid)
         _call(kernel.get_kernel_profile, db, pid)
         _call(kernel.get_church_role_history, db, pid)
         _call(kernel.set_primary_ministry, db, pid, "Worship")
-        _call(kernel.get_church_role_history_by_user, db, uid)
-        _call(kernel.get_users_by_church_role, db, "Miembro")

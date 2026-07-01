@@ -205,59 +205,6 @@ class TestCRMFinalPush:
 # ACADEMY CRUD DIRECT (academy.py — 360 missed, 23%)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestAcademyFinalPush:
-    def test_crud_every_function(self, db_session, full):
-        from backend.crud import academy
-        db = db_session
-        uid = str(full["admin"].id)
-        # Courses
-        _call(academy.get_courses, db)
-        _call(academy.get_courses, db, modality="online")
-        _call(academy.get_courses, db, published_only=True)
-        _call(academy.get_course, db, 1)
-        # Lessons
-        _call(academy.get_lessons_by_course, db, 1)
-        _call(academy.get_lesson, db, 1)
-        # Assessments
-        _call(academy.get_assessments_by_course, db, 1)
-        _call(academy.get_assessment_by_id, db, 1)
-        _call(academy.get_assessment, db, 1)
-        _call(academy.get_assessment_with_questions, db, 1)
-        # Questions
-        _call(academy.get_assessment_questions, db, 1)
-        _call(academy.get_assessment_question, db, 1)
-        # Options
-        _call(academy.get_assessment_options, db, 1)
-        # Enrollments
-        _call(academy.get_enrollments_by_user, db, uid)
-        _call(academy.get_enrollment, db, 1)
-        # Certificates
-        _call(academy.get_certificates_by_user, db, uid)
-        _call(academy.get_certificate_by_code, db, "test")
-        # Progress
-        _call(academy.get_lesson_progress, db, uid, 1)
-        # Submissions
-        _call(academy.list_assignment_submissions_with_meta, db)
-        _call(academy.get_assignment_submission_with_meta, db, 1)
-        # Attendance
-        _call(academy.get_course_attendance, db, 1)
-        # Resources
-        _call(academy.get_lesson_resources, db, 1)
-        # Students
-        _call(academy.get_course_students, db, 1)
-        # Acta
-        _call(academy.get_latest_acta_by_course, db, 1)
-        # Forum
-        _call(academy.get_forum_threads, db)
-        _call(academy.get_forum_thread, db, 1)
-        # Candidates
-        _call(academy.get_academy_candidates, db)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# CMS CRUD DIRECT (cms.py — 332 missed, 36%)
-# ═══════════════════════════════════════════════════════════════════════════════
-
 class TestCMSFinalPush:
     def test_crud_every_function(self, db_session, full):
         from backend.crud import cms

@@ -85,7 +85,7 @@ def create_cms_testimonial(
     return crud.create_testimonial(
         db,
         payload,
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
 
 
@@ -148,7 +148,7 @@ def patch_admin_testimonial(
         db,
         row,
         payload,
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
 
 
@@ -163,7 +163,7 @@ def delete_admin_testimonial(
     crud.delete_testimonial(
         db,
         row,
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
 
 
@@ -196,7 +196,7 @@ def create_cms_announcement(
     return crud.create_announcement(
         db,
         payload,
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
 
 
@@ -259,7 +259,7 @@ def patch_admin_announcement(
         db,
         row,
         payload,
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
 
 
@@ -274,7 +274,7 @@ def delete_admin_announcement(
     crud.delete_announcement(
         db,
         row,
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
 
 
@@ -348,7 +348,7 @@ def create_cms_media(
         mime_type=payload.mime_type,
         file_size=payload.file_size,
         status=payload.status,
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
 
 
@@ -382,7 +382,7 @@ def patch_cms_media(
         mime_type=payload.mime_type,
         file_size=payload.file_size,
         status=payload.status,
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
 
 
@@ -397,7 +397,7 @@ def delete_cms_media(
     crud.delete_cms_media_item(
         db,
         row.id,
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
 
 
@@ -462,7 +462,7 @@ async def upload_cms_media(
         filename=file.filename,
         mime_type=file.content_type,
         file_size=len(content),
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
 
 
@@ -478,7 +478,7 @@ def get_cms_metrics(
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     """Axioma 3 — Multi-Tenant: pre-filtramos métricas por sede del staff.
-    Superadmin sin sede sigue viendo totales globales (compat anterior).
+    El superadmin canónico sin sede conserva totales globales.
 
     Se preservan las métricas estructurales (page contents y
     publications) porque son del site "faro" (CmsSite) y son globales;

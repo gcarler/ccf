@@ -6,7 +6,6 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.crud.crm import resolve_persona_id_for_user
 
 
 def _course_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
@@ -243,14 +242,14 @@ def build_graph_snapshot(
     for donation in donations:
         if donation.fund_id is not None:
             source = "fund-untracked"
-            if donation.person_id is not None:
-                source = f"person-{donation.person_id}"
+            if donation.persona_id is not None:
+                source = f"person-{donation.persona_id}"
                 if source not in seen:
                     nodes.append(
                         {
                             "id": source,
                             "type": "donor",
-                            "label": f"Donante {str(donation.person_id)[:6]}",
+                            "label": f"Donante {str(donation.persona_id)[:6]}",
                             "detail": "Donación registrada",
                         }
                     )

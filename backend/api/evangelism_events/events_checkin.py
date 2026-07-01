@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.api.evangelism_events._shared import require_event_access
-from backend.api.evangelism_shared import utc_now
 from backend.core.permissions import require_active_user
 from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id

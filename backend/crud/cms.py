@@ -35,23 +35,25 @@ def resolve_persona_id_for_user(db: Session, user_id: uuid.UUID | str | None):
 # ── Axioma 3 — Multi-Tenant defense-in-depth helpers (CMS CRUD) ──────────
 
 
-def _actor_sede_or_none_cms(db: Session, actor_user_id) -> str | None:
-    """Convenience wrapper sobre ``backend.crud.crm.get_user_sede_id``.
+def _actor_sede_or_none_cms(
+    db: Session, actor_user_id: str | uuid.UUID
+) -> str | None:
+    """Resolve la sede de un actor autenticado.
 
-    Devuelve ``None`` cuando:
-      - ``actor_user_id is None`` (callers anterior sin contexto de usuario).
-      - El user no tiene persona vinculada con sede asignada
-        (superadmin / token anterior v2 sin sede).
-
-    En cualquier otro caso devuelve la sede del actor como string.
+    ``None`` sólo representa un superadministrador canónico sin sede. La
+    ausencia o malformación del actor es un error y nunca omite silenciosamente
+    el control multi-tenant.
     """
-    if actor_user_id is None:
-        return None
+    from fastapi import HTTPException as _HTTPException
+    from backend.crud.crm import get_user_sede_id
+
     try:
-        from backend.crud.crm import get_user_sede_id
-        return get_user_sede_id(db, str(actor_user_id))
+        actor_uuid = uuid.UUID(str(actor_user_id))
     except (TypeError, ValueError, AttributeError):
-        return None
+        raise _HTTPException(status_code=401, detail="Authenticated actor required")
+    if resolve_persona_id_for_user(db, actor_uuid) is None:
+        raise _HTTPException(status_code=401, detail="Authenticated actor required")
+    return get_user_sede_id(db, str(actor_uuid))
 
 
 def _resolve_persona_sede(db: Session, persona_id) -> str | None:
@@ -88,24 +90,9 @@ def _crud_scope_re_check_cms_content_create(
 ) -> str | None:
     """Defense in depth para CMS create (Testimonial / Announcement / MediaItem).
 
-    Política OR-based sobre el estado de anclas tras la mutación:
+    Política estricta sobre el estado de anclas tras la mutación:
 
-      - **Actor sin sede** (``actor_user_id is None`` o
-        ``actor_sede is None``): superadmin / anterior path — bypass sin
-        check. Retorna ``None`` y el caller persiste ``row.sede_id``
-        como defina (típicamente ``None``).
-
-      - **Actor con sede + ``author_persona_id`` None/unresoluble**:
-        **ORPHAN-FALLBACK** — heredamos ``actor_sede`` como sede_id
-        implícito del row. Esto preserva compat con callers anterior
-        (workers async, scripts de seeding, bulk imports) que propagan
-        ``actor_user_id`` pero no pueden resolver el FK creator a una
-        ``Persona``. Logged at INFO. El row queda emprisonado en la sede
-        del actor, NO es una leak (no escapa del scope del axioma).
-
-        Antes de este cambio, el branch rechazaba 404, lo que rompía
-        silenciosamente cualquier caller anterior que pasaba
-        ``actor_user_id`` sin persona resoluble.
+      - Actor sin sede o persona autora no resoluble: REJECT 409.
 
       - **Actor con sede y ``author_persona_id`` resuelve a sede
         distinta de ``actor_sede``**: REJECT 404. Cross-sede leak:
@@ -116,37 +103,15 @@ def _crud_scope_re_check_cms_content_create(
         ``actor_sede``) para que el CRUD lo persista en
         ``row.sede_id = target_sede`` sin JOIN adicional.
 
-    Returns:
-      ``None`` si el caller debe dejar ``row.sede_id = None`` (superadmin /
-      anterior), o ``str`` con la ``sede_id`` resuelta que el caller debe
-      propagar en ``db.add``. Si rechaza cross-sede, raise
-      ``HTTPException(404)``.
-
-    NOTE: ``Testimonial`` / ``CmsMediaItem`` permiten
-    ``author_persona_id`` NULL (testimonios anónimos, assets sin
-    ownership humano). La política del orphan-fallback reemplaza el
-    rechazo a 404 por herencia de sede — esta es la decisión de política
-    que el usuario confirmó explícitamente. Se preservan los cross-sede
-    404 como path no negociable.
+    Retorna la sede validada. Ningún UGC puede persistirse sin owner+sede.
     """
     from fastapi import HTTPException as _HTTPException
 
-    if not actor_sede:
-        return None  # superadmin / anterior path: caller manages row.sede_id
-
-    if author_persona_id is None:
-        # Orphan-fallback: actor con sede + creator FK ausente. NO es
-        # un leak — el row queda emprisonado en actor_sede. Logged at
-        # INFO (legitimate path, no breach). Back-compat con seeds y
-        # workers que pasan actor_user_id sin persona resoluble.
-        actor_sede_str = str(actor_sede)
-        _logger.info(
-            "Axioma 3 CMS orphan-fallback: inheriting actor_sede=%s as "
-            "row.sede_id for actor_user_id=%s (creator FK is None)",
-            actor_sede_str,
-            actor_user_id,
+    if not actor_sede or author_persona_id is None:
+        raise _HTTPException(
+            status_code=409,
+            detail="CMS content requires an attributed persona and sede",
         )
-        return actor_sede_str
 
     target_sede = _resolve_persona_sede(db, author_persona_id)
     if target_sede is None or target_sede != str(actor_sede):
@@ -418,12 +383,12 @@ def create_cms_media_item(
     alt_text: str | None,
     section: str,
     tags: list[str] | None,
-    created_by: int | None,
+    created_by: str | uuid.UUID,
     filename: str | None = None,
     mime_type: str | None = None,
     file_size: int | None = None,
     status: str = "active",
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ):
     """Axioma 3 — Multi-Tenant: deriva ``sede_id`` de la persona creadora
     y re-valida scope Multi-Tenant pre-add via
@@ -511,7 +476,7 @@ def update_cms_media_item(
     mime_type: str | None = None,
     file_size: int | None = None,
     status: str | None = None,
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ):
     """Axioma 3 — Multi-Tenant: defense-in-depth pre-mutation.
 
@@ -556,7 +521,7 @@ def delete_cms_media_item(
     db: Session,
     item_id: uuid.UUID,
     *,
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ) -> bool:
     """Axioma 3 — Multi-Tenant: defense-in-depth pre soft-delete.
 
@@ -1302,7 +1267,7 @@ def create_announcement(
     db: Session,
     payload: schemas.AnnouncementCreate,
     *,
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ) -> models.Announcement:
     """Axioma 3 — Multi-Tenant: ``sede_id`` + ``created_by_persona_id`` se
     derivan server-side desde el current_user y se validan en
@@ -1326,9 +1291,7 @@ def create_announcement(
         db,
         actor_user_id,
         actor_sede=actor_sede,
-        author_persona_id=(
-            resolve_persona_id_for_user(db, actor_user_id) if actor_user_id else None
-        ),
+        author_persona_id=resolve_persona_id_for_user(db, actor_user_id),
     )
     row = models.Announcement(
         title=payload.title.strip(),
@@ -1338,9 +1301,7 @@ def create_announcement(
         is_featured=payload.is_featured,
         status=status,
         sede_id=derived_sede,
-        created_by_persona_id=(
-            resolve_persona_id_for_user(db, actor_user_id) if actor_user_id else None
-        ),
+        created_by_persona_id=resolve_persona_id_for_user(db, actor_user_id),
         published_at=_utcnow(),
     )
     db.add(row)
@@ -1374,7 +1335,7 @@ def update_announcement(
     row: models.Announcement,
     payload: schemas.AnnouncementUpdate,
     *,
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ) -> models.Announcement:
     """Axioma 3 — Multi-Tenant: defense-in-depth pre-mutation.
 
@@ -1403,7 +1364,7 @@ def update_announcement(
 
 
 def delete_announcement(
-    db: Session, row: models.Announcement, *, actor_user_id: str | uuid.UUID | None = None
+    db: Session, row: models.Announcement, *, actor_user_id: str | uuid.UUID
 ) -> bool:
     """Axioma 3 — Multi-Tenant: defense-in-depth pre soft-delete.
 
@@ -1430,18 +1391,12 @@ def create_testimonial(
     db: Session,
     payload: schemas.TestimonialCreate,
     *,
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ) -> models.Testimonial:
     """Axioma 3 — Multi-Tenant: ``sede_id`` se deriva de la persona del
     autor. Defense-in-depth pre-add garantiza que ``author_persona``
-    pertenece a la sede del actor (or falls back / orphan si actor es
-    superadmin).
-
-    Si el autor es None (testimonio anónimo creado por admin), el helper
-    rechaza 404 a menos que ``actor_user_id`` sea None o el actor esté
-    sin sede (superadmin). En la práctica, los testimonios anónimos
-    requieren un actor con ``actor_sede=None`` para bypassear — patrón
-    consistente con ``create_crm_task`` orphan-guard.
+    pertenece a la sede del actor. Si el body omite autor, se usa la persona
+    del actor; si no puede resolverse, la creación se rechaza.
     """
     status = payload.status or ("approved" if payload.is_approved else "pending")
     # Resolve ``author_persona_id`` server-side: si el payload lo trae,
@@ -1454,7 +1409,7 @@ def create_testimonial(
     # ``payload.author_id`` получаем ``AttributeError``; por eso el
     # fallback usa directamente ``actor_user_id`` (la fuente canónica).
     author_persona_id = payload.author_persona_id
-    if author_persona_id is None and actor_user_id is not None:
+    if author_persona_id is None:
         author_persona_id = resolve_persona_id_for_user(db, actor_user_id)
     actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
     derived_sede = _crud_scope_re_check_cms_content_create(
@@ -1508,7 +1463,7 @@ def update_testimonial(
     row: models.Testimonial,
     payload: schemas.TestimonialUpdate,
     *,
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ) -> models.Testimonial:
     """Axioma 3 — Multi-Tenant: defense-in-depth pre-mutation.
 
@@ -1557,7 +1512,7 @@ def update_testimonial(
 
 
 def delete_testimonial(
-    db: Session, row: models.Testimonial, *, actor_user_id: str | uuid.UUID | None = None
+    db: Session, row: models.Testimonial, *, actor_user_id: str | uuid.UUID
 ) -> bool:
     """Axioma 3 — Multi-Tenant: defense-in-depth pre soft-delete."""
     actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
@@ -1595,69 +1550,12 @@ def get_persona_by_id(db: Session, persona_id: str) -> models.Persona | None:
     return db.query(models.Persona).filter(models.Persona.id == uid).first()
 
 
-# ── Test compatibility wrappers ───────────────────────────────────────
-# These expose the short names expected by ``tests/test_crud_integration.py``
-# without disturbing the production callers in ``backend/api/cms*.py`` that
-# import the longer ``create_cms_page`` / ``get_cms_page`` variants. They are
-# intentionally thin: they reuse the underlying implementations and do not add
-# audit/version machinery beyond what already exists.
-
-def create_page(db: Session, site_id, slug, title, **_):
-    return create_cms_page(
-        db,
-        site_id,
-        schemas.CmsPageCreate(slug=slug, title=title, status="draft"),
-        None,
-    )
-
-
-def get_page(db: Session, page_id):
-    return db.query(models.CmsPage).filter(models.CmsPage.id == page_id).first()
-
-
-def update_page(db: Session, page_id, **fields):
-    row = get_page(db, page_id)
-    if not row:
-        return None
-    for key, value in fields.items():
-        if value is not None:
-            setattr(row, key, value)
-    db.commit()
-    db.refresh(row)
-    return row
-
-
-def list_pages(db: Session, site_id, status=None, limit=100):
-    rows, _total = list_cms_pages(db, site_id, limit=limit, status=status)
-    return rows
-
-
-def create_section(db: Session, page_id, section_type, props_json=None, **_):
-    return create_cms_section(
-        db,
-        page_id,
-        schemas.CmsSectionCreate(type=section_type, props_json=props_json or {}),
-    )
-
-
-def update_section(db: Session, section_id, **fields):
-    row = db.query(models.CmsSection).filter(models.CmsSection.id == section_id).first()
-    if not row:
-        return None
-    for key, value in fields.items():
-        if value is not None:
-            setattr(row, key, value)
-    db.commit()
-    db.refresh(row)
-    return row
-
-
 def update_pastoral_profile(
     db: Session,
     persona: models.Persona,
     payload: schemas.PastoralProfileUpdate,
     *,
-    actor_user_id: str | uuid.UUID | None = None,
+    actor_user_id: str | uuid.UUID,
 ) -> models.Persona:
     """Axioma 3 — Multi-Tenant: defense-in-depth contra IDOR crítico.
 

@@ -341,7 +341,7 @@ class Persona(Base):
     other_phone = Column(String(20), nullable=True)
     church_role = Column(String(50), default="Miembro", index=True)
     is_baptized = Column(Boolean, default=False, index=True)
-    fecha_bautismo = Column(Date, nullable=True)
+    baptism_date = Column(Date, nullable=True)
     spiritual_status = Column(String(50), default="Nuevo", index=True)
     estado_vital = Column(String(50), nullable=True, default="ACTIVO")
     ministerio = Column(String(100), nullable=True)

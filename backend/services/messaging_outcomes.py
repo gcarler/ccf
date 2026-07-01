@@ -10,10 +10,8 @@ separado de ``backend.services.messaging`` para evitar circular imports:
 re-evalúa la cadena cuando se importa el Enum desde el nivel de schemas
 al cargar la app.
 
-Los ``.value`` son los literales históricos para mantener compatibilidad
-con filas existentes en BD — no requiere migración Alembic. Cuando
-``messaging_outcomes`` cambie un valor, los reportes y filtros que lo
-referencien vía ``Enum.value`` se actualizan en una sola edición.
+Los ``.value`` son el catálogo canónico persistido. Reportes y filtros deben
+referenciarlos vía ``Enum.value`` para mantener una única fuente de verdad.
 """
 
 from __future__ import annotations
@@ -25,7 +23,7 @@ class CommunicationOutcome(str, Enum):
     """Valores canónicos para ``CommunicationLog.outcome``.
 
     - ``INTERNAL_LOG``: entrada de chat interno (``POST /messaging/send``).
-      Actúa como sentinela histórica (= "logged", no "delivered").
+      Actúa como sentinela de registro interno (= "logged", no entrega).
 
     - ``SENT_REAL``: envío real completado (SMTP OK, WhatsApp/SMS entregado).
     - ``PENDING_SMTP_CONFIG``: email registrado sin SMTP configurado.
@@ -55,16 +53,11 @@ OUTBOUND_OUTCOMES: frozenset[CommunicationOutcome] = frozenset(
     }
 )
 
-# Conjunto usado por heurísticas de "delivered count" (UX histórica).
-# Preserva semántica actual: incluye INTERNAL_LOG y "delivered" legacy.
-# ATENCIÓN: incluye INTERNAL_LOG (= "logged") — perpetúa un conteo
-# inflado en ``_serialize_message_group``. Reportes nuevos de "delivered
-# real" deberían usar ``OUTBOUND_OUTCOMES`` directamente.
+# Conjunto canónico para métricas de entrega real. Los logs internos no son
+# entregas outbound y los valores históricos se normalizan por migración.
 DELIVERED_OUTCOMES: frozenset[str] = frozenset(
     {
-        CommunicationOutcome.INTERNAL_LOG.value,
         CommunicationOutcome.SENT_REAL.value,
-        "delivered",  # legacy sentinel no migrado al Enum
     }
 )
 
