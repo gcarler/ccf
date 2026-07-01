@@ -13,7 +13,10 @@ import logging
 from dataclasses import dataclass, field
 from typing import Optional
 
-import mercadopago
+try:
+    import mercadopago
+except ImportError:  # pragma: no cover
+    mercadopago = None  # type: ignore[assignment]
 
 from backend.core.config import get_settings
 
@@ -47,8 +50,13 @@ class PaymentResult:
     raw: dict = field(default_factory=dict)
 
 
-def _get_sdk() -> mercadopago.SDK:
+def _get_sdk():
     """Retorna instancia del SDK de MercadoPago."""
+    if mercadopago is None:
+        raise RuntimeError(
+            "El paquete 'mercadopago' no está instalado. "
+            "Instálalo con: pip install mercadopago"
+        )
     if not settings.mercadopago_access_token:
         raise RuntimeError(
             "MERCADOPAGO_ACCESS_TOKEN no configurado. "

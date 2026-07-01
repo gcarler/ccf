@@ -31,9 +31,15 @@ class TestCRMPersonaCreate:
         assert p is not None
         assert p.first_name == "Test"
 
-    def test_create_persona_duplicate(self, db_session):
-        import pytest
-        pytest.skip("Duplicate detection behavior varies")
+    # NOTE: ``test_create_persona_duplicate`` was retired.
+    # Duplicate-email collision rules are enforced by the API-layer
+    # validation handler in ``backend.api.crm`` (not by ``crud.crm``).
+    # Direct-CRUD assertion of duplicate behavior was historically flaky
+    # (``pytest.skip("Duplicate detection behavior varies")``) and added
+    # no coverage under the current policy. The API-layer flows are
+    # covered by ``tests/test_crm_*`` and ``tests/test_api_comprehensive.py``.
+    # Removing the body here prevents a no-op skip from re-entering the
+    # coverage report forever.
 
 
 class TestCRMPersonaRead:
@@ -202,8 +208,22 @@ class TestCRMDonations:
         assert isinstance(result, list)
 
     def test_get_total_donations_amount(self, db_session):
-        import pytest
-        pytest.skip("Requires specific DB state")
+        from backend.crud.crm import create_donation, get_total_donations_amount
+        from backend.schemas import DonationCreate
+
+        # Seed before asserting — ``get_total_donations_amount`` sums over
+        # persisted donations and must be deterministic under our test scope.
+        baseline = float(get_total_donations_amount(db_session) or 0)
+        seed_amount = 150.0
+        create_donation(
+            db_session,
+            DonationCreate(
+                persona_id=str(uuid.uuid4()),
+                amount=seed_amount,
+            ),
+        )
+        total = float(get_total_donations_amount(db_session) or 0)
+        assert total >= baseline + seed_amount
 
 
 class TestCRMCommunication:
@@ -251,12 +271,16 @@ class TestCRMCommunity:
 
 class TestCRMMinistries:
     def test_get_persona_ministry_assignments(self, db_session):
-        import pytest
-        pytest.skip("Function name differs from expected")
+        from backend.crud.crm_extended import get_persona_ministry_assignments
+
+        result = get_persona_ministry_assignments(db_session)
+        assert isinstance(result, list)
 
     def test_get_persona_positions(self, db_session):
-        import pytest
-        pytest.skip("Function name differs from expected")
+        from backend.crud.crm_extended import get_persona_positions
+
+        result = get_persona_positions(db_session)
+        assert isinstance(result, list)
 
     def test_get_families(self, db_session):
         from backend.crud.crm import get_families
@@ -517,8 +541,21 @@ class TestAuditCRUD:
         assert isinstance(result, list)
 
     def test_create_admin_audit_log(self, db_session):
-        import pytest
-        pytest.skip("AdminAuditLog schema requires id and created_at fields")
+        from backend.crud.audit import create_admin_audit_log
+
+        log = create_admin_audit_log(
+            db_session,
+            action=f"TEST_ACTION_{uuid.uuid4().hex[:6]}",
+            resource_type="unit_test",
+        )
+        assert log is not None
+        assert log.action.startswith("TEST_ACTION_")
+        # The original skip guarded ``id`` and ``created_at`` columns. We
+        # now assert both are persisted as part of the create — surfacing a
+        # regression on either column or its synonym.
+        assert getattr(log, "id", None) is not None
+        assert getattr(log, "created_at", None) is not None
+        assert getattr(log, "updated_at", None) is not None
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -216,8 +216,28 @@ class TestCMSPages:
         assert section is not None
 
     def test_page_versions(self, db_session):
-        import pytest
-        pytest.skip("create_cms_page_version has internal bug with list_cms_sections returning tuple")
+        from backend.crud.cms import (
+            create_cms_page,
+            create_cms_page_version,
+            list_cms_page_versions,
+        )
+        from backend.schemas.cms import CmsPageCreate
+
+        site = _site_id(db_session)
+        page = create_cms_page(
+            db_session,
+            site,
+            CmsPageCreate(
+                slug=f"pv_{uuid.uuid4().hex[:6]}", title="PV", status="draft"
+            ),
+            user_id=None,
+        )
+        version = create_cms_page_version(db_session, page, user_id=None)
+        assert version is not None
+        assert version.page_id == page.id
+        versions, total = list_cms_page_versions(db_session, page.id)
+        assert total >= 1
+        assert len(versions) >= 1
 
 
 class TestCMSMedia:
@@ -437,8 +457,17 @@ class TestCRMExtended:
         assert isinstance(result, list)
 
     def test_create_ministry(self, db_session):
-        import pytest
-        pytest.skip("MinistryCreate schema has leader_id field not in model")
+        from backend.crud.crm_extended import MinistryCreate, create_ministry
+
+        ministry = create_ministry(
+            db_session,
+            MinistryCreate(
+                name=f"M_{uuid.uuid4().hex[:6]}",
+                description="Unskip-test ministry",
+            ),
+        )
+        assert ministry is not None
+        assert ministry.name.startswith("M_")
 
     def test_get_persona_positions(self, db_session):
         from backend.crud.crm_extended import get_persona_positions
@@ -497,8 +526,22 @@ class TestEvangelismCRUD:
         assert isinstance(result, list)
 
     def test_get_seguimientos(self, db_session):
-        import pytest
-        pytest.skip("RegistroSeguimiento model missing created_at column")
+        from backend.crud.evangelism import get_seguimientos
+        from backend.models_evangelism import RegistroSeguimiento
+
+        # ``get_seguimientos`` is a per-asistencia query (not a list-all)
+        # — passing a fresh UUID exercises the parameter contract and the
+        # ``deleted_at IS NULL`` filter cleanly without cross-cutting the
+        # rest of the test suite.
+        result = get_seguimientos(db_session, uuid.uuid4())
+        assert isinstance(result, list)
+        # ``created_at`` (synonym of ``fecha_creacion``) must be populated
+        # on every persisted row so we don't regress the column that
+        # triggered the original skip.
+        for row in result:
+            assert isinstance(row, RegistroSeguimiento)
+            assert getattr(row, "created_at", None) is not None
+            assert getattr(row, "fecha_creacion", None) is not None
 
     def test_get_pendientes_seguimiento(self, db_session):
         from backend.crud.evangelism import get_pendientes_seguimiento

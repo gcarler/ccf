@@ -62,13 +62,13 @@ class EventAssignmentUpdate(BaseModel):
 class MinistryCreate(BaseModel):
     name: str
     description: str | None = None
-    leader_id: UUID | None = None
+    leader_persona_id: UUID | None = None
 
 
 class MinistryUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
-    leader_id: UUID | None = None
+    leader_persona_id: UUID | None = None
 
 
 class PersonaMinistryAssignmentCreate(BaseModel):

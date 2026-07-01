@@ -129,6 +129,7 @@ from backend.crud.crm import (
     get_total_donations_amount,
     get_user_notifications,
     get_user_sede_id,
+    update_support_ticket,
     get_volunteer_shifts,
     mark_all_notifications_read,
     mark_notification_as_read,
