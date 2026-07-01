@@ -20,7 +20,7 @@ const PRIORITY_MAP: Record<string, { label: string; cls: string }> = {
     high:   { label: 'Alta',    cls: 'text-orange-500' },
     medium: { label: 'Media',   cls: 'text-amber-500' },
     normal: { label: 'Normal',  cls: 'text-[hsl(var(--primary))]' },
-    low:    { label: 'Baja',    cls: 'text-slate-400' },
+    low:    { label: 'Baja',    cls: 'text-[hsl(var(--text-secondary))]' },
 };
 
 function TitleRenderer({ value, data }: any) {
@@ -28,10 +28,10 @@ function TitleRenderer({ value, data }: any) {
     return (
         <div className="flex items-center gap-2.5">
             <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                st ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 dark:border-white/20')}>
+                st ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
                 {st && <span className="text-[8px] font-bold">✓</span>}
             </div>
-            <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200 truncate">{value}</span>
+            <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{value}</span>
         </div>
     );
 }
@@ -47,8 +47,8 @@ function PriorityRenderer({ value }: any) {
 }
 
 function DateRenderer({ value }: any) {
-    if (!value) return <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>;
-    return <span className="text-[11px] font-bold text-slate-400">{new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}</span>;
+    if (!value) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs">—</span>;
+    return <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">{new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}</span>;
 }
 
 const lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 36, headerHeight: 36, backgroundColor: '#ffffff', foregroundColor: '#1e293b', borderColor: '#e2e8f0', oddRowBackgroundColor: '#f8fafc', headerBackgroundColor: '#f1f5f9', headerTextColor: '#475569', selectedRowBackgroundColor: '#eef2ff', accentColor: '#6366f1', cellHorizontalPaddingScale: 0.8 });
@@ -75,7 +75,7 @@ export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[]
     ], []);
 
     return (
-        <div className="min-w-0 rounded-lg overflow-hidden border border-slate-100 dark:border-white/10 shadow-sm" style={{ height: Math.min(Math.max(tasks.length * 36 + 40, 200), 600) }}>
+        <div className="min-w-0 rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 shadow-sm" style={{ height: Math.min(Math.max(tasks.length * 36 + 40, 200), 600) }}>
             <AgGridReact
                 ref={gridRef}
                 theme={isDark ? darkTheme : lightTheme}

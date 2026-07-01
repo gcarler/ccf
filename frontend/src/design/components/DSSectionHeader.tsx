@@ -19,12 +19,12 @@ export function DSSectionHeader({ eyebrow, title, description, actions, align = 
         >
             <div className={clsx('flex-1 space-y-1', align === 'center' && 'md:items-center')}>
                 {eyebrow && (
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         {eyebrow}
                     </p>
                 )}
-                <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">{title}</h3>
-                {description && <p className="text-xs text-slate-500 dark:text-slate-300 max-w-2xl">{description}</p>}
+                <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{title}</h3>
+                {description && <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-2xl">{description}</p>}
             </div>
             {actions && (
                 <div className={clsx('mt-2 md:mt-0 flex items-center gap-2', align === 'center' && 'justify-center')}>

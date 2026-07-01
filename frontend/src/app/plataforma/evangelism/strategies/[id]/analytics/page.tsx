@@ -120,12 +120,12 @@ interface FullAnalytics {
 // ── Helpers ────────────────────────────────────────────────────────────
 
 const SEMAFORO_COLOR: Record<string, string> = {
-  ALTO: "text-emerald-600", MEDIO: "text-amber-500", CRITICO: "text-red-500",
-  SATURADO: "text-red-500", SALUDABLE: "text-emerald-600", BAJO: "text-amber-500",
-  OPTIMO: "text-emerald-600", INCONSTANTE: "text-amber-500", ABANDONO: "text-red-500",
-  EXCELENTE: "text-emerald-600", REGULAR: "text-amber-500", ALERTA_DESERCION: "text-red-500", INEFICIENTE: "text-red-500",
-  EXPONENCIAL: "text-emerald-600", ESTANCADO: "text-red-500",
-  EQUILIBRADO: "text-emerald-600", MODERADO: "text-amber-500", HOMOGENEO: "text-red-500",
+  ALTO: "text-emerald-600", MEDIO: "text-amber-500", CRITICO: "text-[hsl(var(--destructive))]",
+  SATURADO: "text-[hsl(var(--destructive))]", SALUDABLE: "text-emerald-600", BAJO: "text-amber-500",
+  OPTIMO: "text-emerald-600", INCONSTANTE: "text-amber-500", ABANDONO: "text-[hsl(var(--destructive))]",
+  EXCELENTE: "text-emerald-600", REGULAR: "text-amber-500", ALERTA_DESERCION: "text-[hsl(var(--destructive))]", INEFICIENTE: "text-[hsl(var(--destructive))]",
+  EXPONENCIAL: "text-emerald-600", ESTANCADO: "text-[hsl(var(--destructive))]",
+  EQUILIBRADO: "text-emerald-600", MODERADO: "text-amber-500", HOMOGENEO: "text-[hsl(var(--destructive))]",
 };
 
 const SEMAFORO_BG: Record<string, string> = {
@@ -369,7 +369,7 @@ export default function StrategyAnalyticsPage() {
           <SectionHeader icon={Users} title="2. Capacidad y Población (TOF)" sub="Tasa de Ocupación Física por grupo" />
           <div className="grid md:grid-cols-3 gap-3 mb-4">
             {[
-              { label: "Saturados (>85%)", count: dim2_capacidad.saturados, color: "text-red-500", bg: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800" },
+              { label: "Saturados (>85%)", count: dim2_capacidad.saturados, color: "text-[hsl(var(--destructive))]", bg: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800" },
               { label: "Saludables (60–85%)", count: dim2_capacidad.saludables, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800" },
               { label: "Bajos (<60%)", count: dim2_capacidad.bajos, color: "text-amber-500", bg: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800" },
             ].map(s => (
@@ -425,7 +425,7 @@ export default function StrategyAnalyticsPage() {
                       <span>TAN <strong className="text-[hsl(var(--text-primary))]">{g.tan_porcentaje}%</strong></span>
                     </div>
                     <div className="mt-2">
-                      <ProgressBar value={g.tan_porcentaje} color={g.tan_porcentaje > 20 ? "bg-emerald-500" : g.tan_porcentaje > 10 ? "bg-amber-400" : "bg-red-400"} />
+                      <ProgressBar value={g.tan_porcentaje} color={g.tan_porcentaje > 20 ? "bg-emerald-500" : g.tan_porcentaje > 10 ? "bg-amber-400" : "bg-[hsl(var(--destructive))]"} />
                     </div>
                   </div>
                 ))}
@@ -521,7 +521,7 @@ export default function StrategyAnalyticsPage() {
                         <p className="text-[11px] font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
                         <p className="text-[10px] text-[hsl(var(--text-secondary))]">{a.grupo}</p>
                       </div>
-                      <span className="text-[10px] font-black text-red-600 bg-red-100 dark:bg-red-900/40 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-black text-[hsl(var(--destructive))] bg-red-100 dark:bg-red-900/40 px-2 py-0.5 rounded-full">
                         {a.ausencias_consecutivas}× FALTO
                       </span>
                     </div>
@@ -585,7 +585,7 @@ export default function StrategyAnalyticsPage() {
                       <span>{g.sesiones_realizadas}/{g.sesiones_proyectadas} sesiones</span>
                       {g.ofrenda_total > 0 && <span className="text-emerald-600 font-bold">${g.ofrenda_total.toLocaleString()}</span>}
                     </div>
-                    <ProgressBar value={g.ics_porcentaje} color={g.ics_porcentaje >= 90 ? "bg-emerald-500" : g.ics_porcentaje >= 70 ? "bg-amber-400" : "bg-red-400"} />
+                    <ProgressBar value={g.ics_porcentaje} color={g.ics_porcentaje >= 90 ? "bg-emerald-500" : g.ics_porcentaje >= 70 ? "bg-amber-400" : "bg-[hsl(var(--destructive))]"} />
                   </div>
                 ))}
               </div>
@@ -647,7 +647,7 @@ export default function StrategyAnalyticsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               {[
                 { label: "Líderes asignados", value: dim8_liderazgo.total_lideres_asignados, color: "text-[hsl(var(--primary))]" },
-                { label: "TDS (Deserción)", value: `${dim8_liderazgo.tds_porcentaje}%`, color: dim8_liderazgo.tds_porcentaje > 20 ? "text-red-500" : "text-emerald-600" },
+                { label: "TDS (Deserción)", value: `${dim8_liderazgo.tds_porcentaje}%`, color: dim8_liderazgo.tds_porcentaje > 20 ? "text-[hsl(var(--destructive))]" : "text-emerald-600" },
                 { label: "Promovidos", value: dim8_liderazgo.promovidos_periodo, color: "text-emerald-600" },
                 { label: "IRL", value: `${dim8_liderazgo.irl_porcentaje}%`, color: "text-[hsl(var(--text-primary))]" },
               ].map(s => (
@@ -659,14 +659,14 @@ export default function StrategyAnalyticsPage() {
             </div>
             {dim8_liderazgo.alertas_burnout.length > 0 ? (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-red-500 mb-1">Alertas burnout</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--destructive))] mb-1">Alertas burnout</p>
                 {dim8_liderazgo.alertas_burnout.map((a) => (
                   <div key={`${a.nombre}-${a.grupo}`} className="flex justify-between items-center p-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
                     <div>
                       <p className="text-[11px] font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
                       <p className="text-[10px] text-[hsl(var(--text-secondary))]">{a.grupo}</p>
                     </div>
-                    <span className="text-[10px] text-red-600 font-bold">{a.estado_vital}</span>
+                    <span className="text-[10px] text-[hsl(var(--destructive))] font-bold">{a.estado_vital}</span>
                   </div>
                 ))}
               </div>

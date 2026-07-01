@@ -149,25 +149,25 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string; dot:
   todo:          { label: 'Pendiente',   bg: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-400',     dot: 'bg-amber-400'    },
   pending:       { label: 'Pendiente',   bg: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-400',     dot: 'bg-amber-400'    },
   pendiente:     { label: 'Pendiente',   bg: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-400',     dot: 'bg-amber-400'    },
-  in_progress:   { label: 'En Progreso', bg: 'bg-blue-50 dark:bg-blue-900/20',       text: 'text-blue-700 dark:text-blue-400',       dot: 'bg-blue-500'     },
-  review:        { label: 'En Revisión', bg: 'bg-blue-50 dark:bg-blue-900/20',       text: 'text-blue-700 dark:text-blue-400',       dot: 'bg-blue-500'     },
+  in_progress:   { label: 'En Progreso', bg: 'bg-blue-50 dark:bg-blue-900/20',       text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',       dot: 'bg-[hsl(var(--primary))]'     },
+  review:        { label: 'En Revisión', bg: 'bg-blue-50 dark:bg-blue-900/20',       text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',       dot: 'bg-[hsl(var(--primary))]'     },
   done:          { label: 'Terminado',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',       text: 'text-cyan-700 dark:text-cyan-400',       dot: 'bg-cyan-500'     },
   completed:     { label: 'Completado',  bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
   realizada:     { label: 'Realizada',   bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
   blocked:       { label: 'Bloqueado',   bg: 'bg-rose-50 dark:bg-rose-900/20',       text: 'text-rose-700 dark:text-rose-400',       dot: 'bg-rose-500'     },
   activo:        { label: 'Activo',      bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
-  inactivo:      { label: 'Inactivo',    bg: 'bg-slate-100 dark:bg-white/5',         text: 'text-slate-500 dark:text-slate-400',     dot: 'bg-slate-400'    },
+  inactivo:      { label: 'Inactivo',    bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',         text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',     dot: 'bg-[hsl(var(--surface-2))]'    },
   habilitado:    { label: 'Abierta',     bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
   deshabilitado: { label: 'Bloqueada',   bg: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-400',     dot: 'bg-amber-400'    },
-  cerrado:       { label: 'Cerrada',     bg: 'bg-slate-100 dark:bg-white/5',         text: 'text-slate-500 dark:text-slate-400',     dot: 'bg-slate-400'    },
+  cerrado:       { label: 'Cerrada',     bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',         text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',     dot: 'bg-[hsl(var(--surface-2))]'    },
   cancelada:     { label: 'Cancelada',   bg: 'bg-rose-50 dark:bg-rose-900/20',       text: 'text-rose-700 dark:text-rose-400',       dot: 'bg-rose-500'     },
 };
 function getStatus(v: string) {
   return STATUS_MAP[String(v ?? '').toLowerCase()] ?? {
     label: String(v ?? '—'),
-    bg: 'bg-slate-100 dark:bg-white/5',
-    text: 'text-slate-600 dark:text-slate-400',
-    dot: 'bg-slate-400',
+    bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',
+    text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',
+    dot: 'bg-[hsl(var(--surface-2))]',
   };
 }
 
@@ -175,8 +175,8 @@ const PRIORITY_MAP: Record<string, { label: string; color: string; bg: string }>
   urgent: { label: 'Urgente', color: 'text-rose-600 dark:text-rose-400',     bg: 'bg-rose-50 dark:bg-rose-900/20'     },
   high:   { label: 'Alta',    color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/20' },
   medium: { label: 'Media',   color: 'text-amber-600 dark:text-amber-400',   bg: 'bg-amber-50 dark:bg-amber-900/20'   },
-  normal: { label: 'Normal',  color: 'text-blue-600 dark:text-blue-400',     bg: 'bg-blue-50 dark:bg-blue-900/20'     },
-  low:    { label: 'Baja',    color: 'text-slate-500 dark:text-slate-400',   bg: 'bg-slate-50 dark:bg-slate-800'      },
+  normal: { label: 'Normal',  color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     bg: 'bg-blue-50 dark:bg-blue-900/20'     },
+  low:    { label: 'Baja',    color: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]'      },
 };
 
 // ─── Cell renderers ───────────────────────────────────────────────────────────
@@ -199,11 +199,11 @@ function PriorityCell({ value }: { value: unknown }) {
   );
 }
 function DateCell({ value }: { value: unknown }) {
-  if (!value) return <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>;
+  if (!value) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs">—</span>;
   const d = new Date(String(value));
-  if (isNaN(d.getTime())) return <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>;
+  if (isNaN(d.getTime())) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs">—</span>;
   return (
-    <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+    <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
       <Calendar size={11} className="shrink-0" />
       <span className="text-[12px] font-medium tabular-nums whitespace-nowrap">
         {d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })}
@@ -212,13 +212,13 @@ function DateCell({ value }: { value: unknown }) {
   );
 }
 function UserCell({ value }: { value: unknown }) {
-  if (!value) return <span className="text-slate-300 dark:text-slate-600 text-[12px]">—</span>;
+  if (!value) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-[12px]">—</span>;
   const words = String(value).split(/\s+/).filter(Boolean);
   const initials = words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
   return (
     <div className="flex items-center gap-2 h-full">
       <div className="size-6 rounded-full bg-[hsl(var(--primary)/0.12)] dark:bg-[hsl(var(--primary)/0.25)] flex items-center justify-center font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-[9px] shrink-0 leading-none">
-        {initials || <User size={10} className="text-slate-400" />}
+        {initials || <User size={10} className="text-[hsl(var(--text-secondary))]" />}
       </div>
       <span className="text-[12px] text-[hsl(var(--text-primary))] font-medium truncate">{String(value)}</span>
     </div>
@@ -226,7 +226,7 @@ function UserCell({ value }: { value: unknown }) {
 }
 function IdCell({ value }: { value: unknown }) {
   return (
-    <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-slate-300 dark:text-slate-600">
+    <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
       <Hash size={9} />{String(value ?? '').substring(0, 8)}
     </div>
   );
@@ -234,10 +234,10 @@ function IdCell({ value }: { value: unknown }) {
 function ProgressCell({ value }: { value: unknown }) {
   const raw = Number(value || 0);
   const pct = isNaN(raw) ? 0 : Math.round(raw <= 1 ? raw * 100 : raw);
-  const color = pct === 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-blue-500' : 'bg-amber-400';
+  const color = pct === 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-[hsl(var(--primary))]' : 'bg-amber-400';
   return (
     <div className="flex items-center gap-2.5 w-full pr-2">
-      <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
         <div className={clsx('h-full rounded-full transition-all', color)} style={{ width: `${pct}%` }} />
       </div>
       <span className="font-semibold text-[hsl(var(--text-secondary))] tabular-nums text-[11px] w-7 text-right shrink-0">{pct}%</span>
@@ -294,12 +294,12 @@ function FilterRow({
           value={filter.value}
           onChange={e => onChange({ ...filter, value: e.target.value })}
           placeholder="Valor…"
-          className="h-7 px-2.5 text-[11px] rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)] min-w-[100px] max-w-[160px]"
+          className="h-7 px-2.5 text-[11px] rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)] min-w-[100px] max-w-[160px]"
         />
       )}
       <button
         onClick={onRemove}
-        className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+        className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
       >
         <X size={12} />
       </button>
@@ -313,7 +313,7 @@ function SkeletonRow({ cols }: { cols: number }) {
   return (
     <div className="flex items-center gap-4 px-4 py-2.5 border-b border-[hsl(var(--border-primary))] last:border-0">
       {Array.from({ length: cols }).map((_, i) => (
-        <div key={i} className="h-4 rounded-md bg-slate-100 dark:bg-white/5 animate-pulse flex-1"
+        <div key={i} className="h-4 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse flex-1"
           style={{ maxWidth: i === 0 ? 200 : 100, opacity: Math.max(1 - i * 0.12, 0.2) }} />
       ))}
     </div>
@@ -562,10 +562,10 @@ export default function UniversalTableView<T extends { id: string | number }>({
     !!params.rowNode.data?.__isGroup, []);
 
   const fullWidthCellRenderer = useCallback(({ data: row }: { data: { __groupKey: string; __groupCount: number } }) => (
-    <div className="flex items-center gap-2.5 px-4 h-full border-b border-[hsl(var(--border-primary))] bg-slate-50/80 dark:bg-white/[0.02]">
+    <div className="flex items-center gap-2.5 px-4 h-full border-b border-[hsl(var(--border-primary))] bg-[hsl(var(--surface-1))]/80 dark:bg-white/[0.02]">
       <div className="w-1 h-4 rounded-full bg-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.06)]0 shrink-0" />
-      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">{row.__groupKey}</span>
-      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-white/10 rounded-full px-2 py-0.5 ml-0.5">
+      <span className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{row.__groupKey}</span>
+      <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full px-2 py-0.5 ml-0.5">
         {row.__groupCount}
       </span>
       {onAddItem && (
@@ -608,16 +608,16 @@ export default function UniversalTableView<T extends { id: string | number }>({
 
         {/* Search */}
         <div className="relative flex-1 min-w-[min(100%,180px)] max-w-[280px]">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] pointer-events-none" />
           <input
             value={quickFilter}
             onChange={e => setQuickFilter(e.target.value)}
             placeholder="Buscar…"
-            className="w-full h-8 pl-7 pr-7 text-[11px] border border-[hsl(var(--border-primary))] rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder-slate-400 outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)] transition-shadow"
+            className="w-full h-8 pl-7 pr-7 text-[11px] border border-[hsl(var(--border-primary))] rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)] transition-shadow"
           />
           {quickFilter && (
             <button onClick={() => setQuickFilter('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded">
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] p-0.5 rounded">
               <X size={11} />
             </button>
           )}
@@ -659,7 +659,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                   transition={{ duration: 0.12 }}
                   className="absolute top-full left-0 mt-1.5 z-50 w-48 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 py-1.5 overflow-hidden"
                 >
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 px-3 py-1.5">Agrupar por</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] px-3 py-1.5">Agrupar por</p>
                   {[{ key: null, label: 'Sin agrupar' }, ...groupableCols.map(c => ({ key: String(c.key), label: c.label }))].map(opt => (
                     <button
                       key={opt.key ?? '__none'}
@@ -679,7 +679,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
         {/* Right actions */}
         <div className="flex min-w-0 items-center gap-1.5 ml-0 sm:ml-auto overflow-x-auto">
           {!isLoading && hasData && (
-            <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 tabular-nums hidden sm:block pr-1">
+            <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] tabular-nums hidden sm:block pr-1">
               {isFiltered ? `${filteredData.length} / ${data.length}` : data.length}
             </span>
           )}
@@ -708,7 +708,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                   className="absolute top-full right-0 mt-1.5 z-50 w-52 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 p-2"
                 >
                   <div className="flex items-center justify-between px-1.5 pb-1.5">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Columnas visibles</p>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">Columnas visibles</p>
                     {hiddenCols.size > 0 && (
                       <button onClick={() => setHiddenCols(new Set())}
                         className="text-[9px] font-semibold text-[hsl(var(--primary))] hover:opacity-75 transition-opacity">
@@ -727,7 +727,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                       >
                         <span className="text-[12px] font-medium text-[hsl(var(--text-primary))]">{col.label || key}</span>
                         <div className={clsx('size-4 rounded-md border-2 flex items-center justify-center transition-colors',
-                          !isHidden ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]' : 'border-slate-300 dark:border-white/20')}>
+                          !isHidden ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]' : 'border-[hsl(var(--border))] dark:border-white/20')}>
                           {!isHidden && <span className="text-white text-[8px] font-bold leading-none">✓</span>}
                         </div>
                       </button>
@@ -813,7 +813,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
           <div className="bg-[hsl(var(--bg-primary))] h-full">
             <div className="flex items-center px-4 border-b border-[hsl(var(--border-primary))] h-10 gap-4">
               {[200, 120, 90, 110, 80].map((w, i) => (
-                <div key={i} className="h-3 rounded-md bg-slate-100 dark:bg-white/5 animate-pulse" style={{ width: w }} />
+                <div key={i} className="h-3 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse" style={{ width: w }} />
               ))}
             </div>
             {Array.from({ length: 8 }).map((_, i) => (
@@ -823,8 +823,8 @@ export default function UniversalTableView<T extends { id: string | number }>({
         ) : !hasData ? (
           /* Genuinely empty — no data at all */
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[hsl(var(--bg-primary))]">
-            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-              <TableIcon size={22} className="text-slate-300 dark:text-slate-600" />
+            <div className="w-12 h-12 rounded-xl bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
+              <TableIcon size={22} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{emptyMessage}</p>
@@ -842,7 +842,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
         ) : !hasResults ? (
           /* Has data but filters eliminated everything */
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[hsl(var(--bg-primary))]">
-            <Search size={20} className="text-slate-300 dark:text-slate-600" />
+            <Search size={20} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
             <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">Sin resultados</p>
             <p className="text-[11px] text-[hsl(var(--text-secondary))]">Prueba con otro término o limpia los filtros</p>
             <button onClick={() => { setQuickFilter(''); setActiveFilters([]); }}

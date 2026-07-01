@@ -11,7 +11,7 @@ interface DSSkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
 export function DSSkeleton({ rounded = 'md', className, style, ...props }: DSSkeletonProps) {
     return (
         <div
-            className={clsx('relative overflow-hidden bg-slate-200 dark:bg-white/10', className)}
+            className={clsx('relative overflow-hidden bg-[hsl(var(--surface-3))] dark:bg-white/10', className)}
             style={{
                 borderRadius: rounded === 'none' ? undefined : radii[rounded],
                 boxShadow: shadows.inner,

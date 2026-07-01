@@ -103,7 +103,7 @@ export function ProjectKanbanBoard({ project, tasks, phases, onTasksChange, onOp
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex h-full overflow-x-auto gap-3 p-3 pb-4 scrollbar-thin bg-slate-50/50 dark:bg-[#1a1b1d]">
+            <div className="flex h-full overflow-x-auto gap-3 p-3 pb-4 scrollbar-thin bg-[hsl(var(--surface-1))]/50 dark:bg-[#1a1b1d]">
                 <SortableContext
                     items={phases.map(s => s.slug)}
                     strategy={horizontalListSortingStrategy}

@@ -34,20 +34,20 @@ export default function PublicCertificatePage() {
     }, [code]);
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#1e1f21]">
+        <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21]">
             <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={40} />
         </div>
     );
 
     if (error || !certificate) return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#1e1f21] p-4">
-            <div className="max-w-md w-full text-center space-y-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/5 shadow-xl">
+        <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] p-4">
+            <div className="max-w-md w-full text-center space-y-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl">
                 <ShieldAlert size={64} className="text-rose-500 mx-auto" />
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Certificado No Valido</h2>
-                <p className="text-slate-500 dark:text-slate-400">El codigo de certificado proporcionado no existe en nuestros registros oficiales.</p>
+                <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Certificado No Valido</h2>
+                <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">El codigo de certificado proporcionado no existe en nuestros registros oficiales.</p>
                 <button
                     onClick={() => window.location.href = '/'}
-                    className="w-full py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide"
+                    className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide"
                 >
                     Volver al Inicio
                 </button>
@@ -56,18 +56,18 @@ export default function PublicCertificatePage() {
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-[#1e1f21] overflow-y-auto py-1.5 px-4">
+        <div className="min-h-screen bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] overflow-y-auto py-1.5 px-4">
  <div className="w-full space-y-3">
                 <div className="flex flex-col items-center text-center space-y-4">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-emerald-100 dark:border-emerald-900/40">
                         Certificado Verificado por CCF
                     </div>
-                    <h1 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Validacion Oficial de Logro</h1>
+                    <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Validacion Oficial de Logro</h1>
                 </div>
 
                 <CertificateView data={certificate} />
 
-                <p className="text-center text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                <p className="text-center text-[10px] text-[hsl(var(--text-secondary))] font-medium uppercase tracking-wide">
                     Este documento es una representacion digital del certificado original emitido por el Centro Cristiano Familiar.
                 </p>
             </div>

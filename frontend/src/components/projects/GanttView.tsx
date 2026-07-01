@@ -90,70 +90,70 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden select-none">
             {/* Gantt Header Control */}
-            <div className="h-10 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-3 bg-slate-50/50 dark:bg-white/5 shrink-0">
+            <div className="h-10 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between px-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 bg-[hsl(var(--bg-primary))] dark:bg-black/20 p-0.5 rounded-md border border-slate-200 dark:border-white/10 shadow-sm">
-                        <button onClick={() => setViewDate(subMonths(viewDate, 1))} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded text-slate-500 transition-all"><ChevronLeft size={14} /></button>
-                        <button onClick={() => setViewDate(new Date())} className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:text-[hsl(var(--primary))] transition-colors">Hoy</button>
-                        <button onClick={() => setViewDate(addMonths(viewDate, 1))} className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded text-slate-500 transition-all"><ChevronRight size={14} /></button>
+                    <div className="flex items-center gap-1 bg-[hsl(var(--bg-primary))] dark:bg-black/20 p-0.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 shadow-sm">
+                        <button onClick={() => setViewDate(subMonths(viewDate, 1))} className="p-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded text-[hsl(var(--text-secondary))] transition-all"><ChevronLeft size={14} /></button>
+                        <button onClick={() => setViewDate(new Date())} className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors">Hoy</button>
+                        <button onClick={() => setViewDate(addMonths(viewDate, 1))} className="p-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded text-[hsl(var(--text-secondary))] transition-all"><ChevronRight size={14} /></button>
                     </div>
-                    <span className="text-[11px] font-bold text-slate-800 dark:text-white uppercase tracking-wide">
+                    <span className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide">
                         {format(viewDate, 'MMMM yyyy', { locale: es })}
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1.5 px-2 py-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-slate-500 hover:text-[hsl(var(--primary))] transition-all shadow-sm">
+                    <button className="flex items-center gap-1.5 px-2 py-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm">
                         <CalendarIcon size={12} /> Día
                     </button>
-                    <button className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-slate-400">Semana</button>
+                    <button className="flex items-center gap-1.5 px-2 py-1 bg-[hsl(var(--surface-2))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Semana</button>
                 </div>
             </div>
 
             <div className="flex-1 flex overflow-hidden">
                 {/* Task Sidebar */}
-                <aside className="w-72 border-r border-slate-100 dark:border-white/5 flex flex-col shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] z-20 shadow-[10px_0_30px_rgba(0,0,0,0.02)]">
-                    <div className="h-10 border-b border-slate-100 dark:border-white/5 flex items-center px-3 bg-slate-50/30 dark:bg-white/5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre de Tarea</span>
+                <aside className="w-72 border-r border-[hsl(var(--border))] dark:border-white/5 flex flex-col shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] z-20 shadow-[10px_0_30px_rgba(0,0,0,0.02)]">
+                    <div className="h-10 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 bg-[hsl(var(--surface-1))]/30 dark:bg-white/5">
+                        <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre de Tarea</span>
                     </div>
                     <div className="flex-1 overflow-y-auto scrollbar-none">
                         {tasks.map((task) => (
                             <div
                                 key={task.id}
                                 onClick={() => onTaskClick(task)}
-                                className="h-8 flex items-center px-3 border-b border-slate-50 dark:border-white/5 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors cursor-pointer group"
+                                className="h-8 flex items-center px-3 border-b border-[hsl(var(--border))] dark:border-white/5 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors cursor-pointer group"
                             >
-                                <span className="text-[12px] font-medium text-slate-700 dark:text-slate-200 truncate group-hover:text-[hsl(var(--primary))] transition-colors">{task.title}</span>
+                                <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">{task.title}</span>
                             </div>
                         ))}
-                        <button className="w-full h-8 flex items-center gap-2 px-3 text-slate-400 hover:text-[hsl(var(--primary))] transition-colors text-[10px] font-bold uppercase tracking-wide">
+                        <button className="w-full h-8 flex items-center gap-2 px-3 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors text-[10px] font-bold uppercase tracking-wide">
                             <Plus size={14} /> Nuevo
                         </button>
                     </div>
                 </aside>
 
                 {/* Timeline Grid */}
-                <div className="flex-1 overflow-x-auto scrollbar-thin relative bg-slate-50/20 dark:bg-[#1a1b1d]" ref={timelineRef}>
+                <div className="flex-1 overflow-x-auto scrollbar-thin relative bg-[hsl(var(--surface-1))]/20 dark:bg-[#1a1b1d]" ref={timelineRef}>
                     {/* Month/Day Header */}
                     <div className="sticky top-0 z-10">
-                        <div className="h-10 flex border-b border-slate-100 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
+                        <div className="h-10 flex border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
                             {months.map((m, i) => (
                                 <div 
                                     key={i} 
                                     style={{ width: m.days.length * dayWidth }}
-                                    className="h-full flex items-center px-4 border-r border-slate-100 dark:border-white/5 font-semibold text-slate-400 uppercase tracking-wide"
+                                    className="h-full flex items-center px-4 border-r border-[hsl(var(--border))] dark:border-white/5 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide"
                                 >
                                     {format(m.date, 'MMMM yyyy', { locale: es })}
                                 </div>
                             ))}
                         </div>
-                        <div className="h-10 flex bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border-b border-slate-100 dark:border-white/5">
+                        <div className="h-10 flex bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border-b border-[hsl(var(--border))] dark:border-white/5">
                             {days.map((day) => (
                                 <div 
                                     key={day.toISOString()} 
                                     style={{ width: dayWidth }}
                                     className={clsx(
-                                        "h-full flex items-center justify-center shrink-0 border-r border-slate-50 dark:border-white/5 text-[10px] font-bold",
-                                        isSameDay(day, new Date()) ? "bg-blue-500/10 text-[hsl(var(--primary))]" : "text-slate-400"
+                                        "h-full flex items-center justify-center shrink-0 border-r border-[hsl(var(--border))] dark:border-white/5 text-[10px] font-bold",
+                                        isSameDay(day, new Date()) ? "bg-blue-500/10 text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"
                                     )}
                                 >
                                     {format(day, 'd')}
@@ -167,7 +167,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                         {/* Grid Lines Overlay */}
                         <div className="absolute inset-0 flex pointer-events-none">
                             {days.map((_, i) => (
-                                <div key={i} style={{ width: dayWidth }} className="h-full border-r border-slate-100/50 dark:border-white/5 shrink-0" />
+                                <div key={i} style={{ width: dayWidth }} className="h-full border-r border-[hsl(var(--border))]/50 dark:border-white/5 shrink-0" />
                             ))}
                         </div>
 
@@ -184,7 +184,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                             {tasks.map((task, idx) => {
                                 const { left, width, barClass } = getTaskStyles(task);
                                 return (
-                                    <div key={task.id} className="h-8 flex items-center relative border-b border-slate-50/50 dark:border-white/5">
+                                    <div key={task.id} className="h-8 flex items-center relative border-b border-[hsl(var(--border))]/50 dark:border-white/5">
                                         <motion.div
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}

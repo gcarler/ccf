@@ -12,7 +12,7 @@ const TUTORIALS = [
     { id: 3, title: 'Gestionar el pipeline de consolidación paso a paso', category: 'CRM', duration: '18 min', level: 'Intermedio', views: 289, rating: 4.7, free: false, thumbnail: 'from-emerald-500 to-teal-600' },
     { id: 4, title: 'Crear cursos y contenido en la Academia', category: 'Academia', duration: '22 min', level: 'Avanzado', views: 198, rating: 4.6, free: false, thumbnail: 'from-amber-500 to-orange-600' },
     { id: 5, title: 'Configurar finanzas y transparencia', category: 'Finanzas', duration: '15 min', level: 'Intermedio', views: 167, rating: 4.5, free: true, thumbnail: 'from-rose-500 to-red-600' },
-    { id: 6, title: 'Administrar permisos y roles de usuario', category: 'Admin', duration: '10 min', level: 'Avanzado', views: 134, rating: 4.4, free: false, thumbnail: 'from-slate-500 to-gray-600' },
+    { id: 6, title: 'Administrar permisos y roles de usuario', category: 'Admin', duration: '10 min', level: 'Avanzado', views: 134, rating: 4.4, free: false, thumbnail: 'from-[hsl(var(--surface-3))] to-gray-600' },
 ];
 
 const LEVEL_COLOR: Record<string, string> = {
@@ -31,29 +31,29 @@ export default function SupportTutorialsPage() {
     );
 
     return (
-        <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
-            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
+        <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
+            <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
                 <FileText size={16} className="text-sky-500" />
-                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex-1">Tutoriales de la Plataforma</h1>
+                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex-1">Tutoriales de la Plataforma</h1>
                 <div className="relative">
-                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                     <input value={search} onChange={e => setSearch(e.target.value)}
                         placeholder="Buscar tutorial..."
-                        className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-md text-[12px] focus:ring-2 focus:ring-sky-500/20 w-56 transition-all text-slate-700 dark:text-slate-200" />
+                        className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-md text-[12px] focus:ring-2 focus:ring-sky-500/20 w-56 transition-all text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" />
                 </div>
             </header>
 
             {/* Level filter */}
-            <div className="flex items-center gap-2 px-3 py-3 border-b border-slate-200/60 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] shrink-0">
-                <Filter size={12} className="text-slate-400" />
+            <div className="flex items-center gap-2 px-3 py-3 border-b border-[hsl(var(--border))]/60 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] shrink-0">
+                <Filter size={12} className="text-[hsl(var(--text-secondary))]" />
                 {['all', 'Básico', 'Intermedio', 'Avanzado'].map(level => (
                     <button key={level} onClick={() => setSelectedLevel(level)}
                         className={clsx("px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
-                            selectedLevel === level ? "bg-sky-50 dark:bg-sky-500/10 text-sky-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>
+                            selectedLevel === level ? "bg-sky-50 dark:bg-sky-500/10 text-sky-600" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]")}>
                         {level === 'all' ? 'Todos' : level}
                     </button>
                 ))}
-                <span className="ml-auto text-[10px] text-slate-400">{filtered.length} tutoriales</span>
+                <span className="ml-auto text-[10px] text-[hsl(var(--text-secondary))]">{filtered.length} tutoriales</span>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3">
@@ -64,7 +64,7 @@ export default function SupportTutorialsPage() {
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group"
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group"
                         >
                             {/* Thumbnail */}
                             <div className={`h-36 bg-gradient-to-br ${t.thumbnail} flex items-center justify-center relative`}>
@@ -86,18 +86,18 @@ export default function SupportTutorialsPage() {
                                     <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide", LEVEL_COLOR[t.level])}>
                                         {t.level}
                                     </span>
-                                    <span className="text-[9px] text-slate-400 font-bold">{t.category}</span>
+                                    <span className="text-[9px] text-[hsl(var(--text-secondary))] font-bold">{t.category}</span>
                                 </div>
-                                <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200 leading-snug group-hover:text-sky-600 transition-colors">
+                                <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug group-hover:text-sky-600 transition-colors">
                                     {t.title}
                                 </p>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-1">
                                         <Star size={11} className="text-amber-400 fill-amber-400" />
-                                        <span className="text-[11px] font-bold text-slate-500">{t.rating}</span>
-                                        <span className="text-[10px] text-slate-300 ml-1">{t.views} vistas</span>
+                                        <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">{t.rating}</span>
+                                        <span className="text-[10px] text-[hsl(var(--text-secondary))] ml-1">{t.views} vistas</span>
                                     </div>
-                                    <ChevronRight size={14} className="text-slate-300 group-hover:text-sky-500 transition-colors" />
+                                    <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-sky-500 transition-colors" />
                                 </div>
                             </div>
                         </motion.div>

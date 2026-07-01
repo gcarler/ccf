@@ -101,7 +101,7 @@ export default function NewAssessmentPage() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => router.back()}
-                            className="px-3 py-1.5 text-slate-500 text-[10px] font-semibold uppercase tracking-wide hover:text-slate-700 transition-all"
+                            className="px-3 py-1.5 text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide hover:text-[hsl(var(--text-primary))] transition-all"
                         >
                             Cancelar
                         </button>
@@ -118,35 +118,35 @@ export default function NewAssessmentPage() {
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
  <div className="w-full space-y-3">
                     <DSCard>
-                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Configuracion General</h3>
+                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Configuracion General</h3>
                         <div className="space-y-3">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Titulo de la Evaluacion</label>
+                                <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Titulo de la Evaluacion</label>
                                 <input
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="Ej: Examen Final de Teologia Basica"
-                                    className="w-full bg-transparent border-b-2 border-slate-100 dark:border-white/5 py-1.5 text-lg font-bold outline-none focus:border-blue-500 transition-all"
+                                    className="w-full bg-transparent border-b-2 border-[hsl(var(--border))] dark:border-white/5 py-1.5 text-lg font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nota Minima de Aprobacion (%)</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nota Minima de Aprobacion (%)</label>
                                     <input
                                         type="number"
                                         value={passingScore}
                                         onChange={(e) => setPassingScore(Number(e.target.value))}
-                                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">ID del Curso *</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">ID del Curso *</label>
                                     <input
                                         type="number"
                                         value={courseId}
                                         onChange={(e) => setCourseId(e.target.value)}
                                         placeholder="Ej: 1"
-                                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
                                     />
                                 </div>
                             </div>
@@ -155,10 +155,10 @@ export default function NewAssessmentPage() {
 
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Preguntas ({questions.length})</h3>
+                            <h3 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Preguntas ({questions.length})</h3>
                             <button
                                 onClick={addQuestion}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all"
+                                className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all"
                             >
                                 <Plus size={14} /> Agregar Pregunta
                             </button>
@@ -172,7 +172,7 @@ export default function NewAssessmentPage() {
                                             <span className="font-semibold text-xs">
                                                 {index + 1}
                                             </span>
-                                            <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg border border-slate-200 dark:border-white/10">
+                                            <div className="flex bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
                                                 {(['multiple_choice', 'true_false', 'text'] as const).map((t) => (
                                                     <button
                                                         key={t}
@@ -192,7 +192,7 @@ export default function NewAssessmentPage() {
                                                             "px-3 py-1.5 rounded-lg text-[9px] font-semibold uppercase tracking-wide transition-all",
                                                             q.type === t
                                                                 ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-sm"
-                                                                : "text-slate-400 hover:text-slate-600"
+                                                                : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                                                         )}
                                                     >
                                                         {t.replace('_', ' ')}
@@ -201,8 +201,8 @@ export default function NewAssessmentPage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10">
-                                                <span className="font-semibold text-slate-400 uppercase tracking-wide">Puntos</span>
+                                            <div className="flex items-center gap-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
+                                                <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Puntos</span>
                                                 <input
                                                     type="number"
                                                     value={q.points}
@@ -212,7 +212,7 @@ export default function NewAssessmentPage() {
                                             </div>
                                             <button
                                                 onClick={() => removeQuestion(q.id)}
-                                                className="text-slate-300 hover:text-rose-500 transition-colors"
+                                                className="text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors"
                                             >
                                                 <Trash2 size={18} />
                                             </button>
@@ -221,19 +221,19 @@ export default function NewAssessmentPage() {
 
                                     <div className="space-y-4">
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Pregunta</label>
+                                            <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pregunta</label>
                                             <textarea
                                                 value={q.text}
                                                 onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
                                                 placeholder="Escribe la pregunta aqui..."
-                                                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 px-3 text-sm font-bold outline-none focus:border-blue-500 transition-all resize-none"
+                                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm font-bold outline-none focus:border-blue-500 transition-all resize-none"
                                                 rows={2}
                                             />
                                         </div>
 
                                         {q.type !== 'text' && (
                                             <div className="grid grid-cols-1 gap-3">
-                                                <label className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Opciones (Marca la correcta)</label>
+                                                <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Opciones (Marca la correcta)</label>
                                                 {q.options.map((opt, optIndex) => (
                                                     <div key={optIndex} className="flex items-center gap-3 group">
                                                         <button
@@ -242,7 +242,7 @@ export default function NewAssessmentPage() {
                                                                 'size-8 rounded-lg flex items-center justify-center border-2 transition-all shrink-0',
                                                                 q.correct_option === optIndex
                                                                     ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                                                                    : 'border-slate-200 dark:border-white/10 text-transparent bg-[hsl(var(--bg-primary))] dark:bg-white/5'
+                                                                    : 'border-[hsl(var(--border))] dark:border-white/10 text-transparent bg-[hsl(var(--bg-primary))] dark:bg-white/5'
                                                             )}
                                                         >
                                                             <CheckCircle2 size={16} />
@@ -257,7 +257,7 @@ export default function NewAssessmentPage() {
                                                             }}
                                                             placeholder={`Opcion ${optIndex + 1}`}
                                                             className={clsx(
-                                                                "flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:border-blue-500 transition-all font-medium",
+                                                                "flex-1 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:border-blue-500 transition-all font-medium",
                                                                 q.type === 'true_false' && "cursor-default"
                                                             )}
                                                         />
@@ -268,7 +268,7 @@ export default function NewAssessmentPage() {
                                                                     const newCorrect = q.correct_option === optIndex ? 0 : (q.correct_option! > optIndex ? q.correct_option! - 1 : q.correct_option);
                                                                     updateQuestion(q.id, { options: newOpts, correct_option: newCorrect });
                                                                 }}
-                                                                className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                                                                className="text-[hsl(var(--text-secondary))] hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
                                                             >
                                                                 <Trash2 size={14} />
                                                             </button>
@@ -302,10 +302,10 @@ export default function NewAssessmentPage() {
                         ))}
 
                         {questions.length === 0 && (
-                            <div className="p-4 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg">
-                                <ListChecks size={48} className="mx-auto text-slate-200 mb-4" />
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Tu evaluacion esta vacia</p>
-                                <p className="text-[11px] text-slate-300 mt-2">Comienza agregando tu primera pregunta</p>
+                            <div className="p-4 text-center border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
+                                <ListChecks size={48} className="mx-auto text-[hsl(var(--text-secondary))] mb-4" />
+                                <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tu evaluacion esta vacia</p>
+                                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-2">Comienza agregando tu primera pregunta</p>
                             </div>
                         )}
                     </div>

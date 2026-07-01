@@ -20,9 +20,9 @@ interface AuditLogEntry {
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
-  info: "bg-blue-100 text-blue-700",
+  info: "bg-blue-100 text-[hsl(var(--primary))]",
   warning: "bg-amber-100 text-amber-700",
-  critical: "bg-red-100 text-red-700",
+  critical: "bg-red-100 text-[hsl(var(--destructive))]",
 };
 
 export default function AuditPage() {
@@ -68,16 +68,16 @@ export default function AuditPage() {
           <Shield size={24} className="text-[hsl(var(--primary))]" />
           <div>
             <h1 className="text-xl font-bold">Audit Trail</h1>
-            <p className="text-sm text-slate-500">Registro inmutable de todas las acciones en el CMS</p>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">Registro inmutable de todas las acciones en el CMS</p>
           </div>
         </div>
-        <button onClick={exportCsv} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border hover:bg-slate-50">
+        <button onClick={exportCsv} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border hover:bg-[hsl(var(--surface-1))]">
           <Download size={14} /> Exportar CSV
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-3 p-4 bg-slate-50 rounded-xl">
-        <Filter size={16} className="text-slate-400 mt-1" />
+      <div className="flex flex-wrap gap-3 p-4 bg-[hsl(var(--surface-1))] rounded-xl">
+        <Filter size={16} className="text-[hsl(var(--text-secondary))] mt-1" />
         <input placeholder="Actor email..." value={filters.actor_email} onChange={e => setFilters(f => ({ ...f, actor_email: e.target.value }))} className="px-3 py-1.5 text-sm border rounded-lg w-48" />
         <select value={filters.entity_type} onChange={e => setFilters(f => ({ ...f, entity_type: e.target.value }))} className="px-3 py-1.5 text-sm border rounded-lg">
           <option value="">Todas las entidades</option>
@@ -101,41 +101,41 @@ export default function AuditPage() {
 
       <div className="overflow-x-auto border rounded-xl">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b">
+          <thead className="bg-[hsl(var(--surface-1))] border-b">
             <tr>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Fecha</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Actor</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Accion</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Entidad</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Slug</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">IP</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Sev</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Fecha</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Actor</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Accion</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Entidad</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Slug</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">IP</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Sev</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">Cargando...</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-[hsl(var(--text-secondary))]">Cargando...</td></tr>
             ) : logs.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">Sin registros</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-[hsl(var(--text-secondary))]">Sin registros</td></tr>
             ) : logs.map(log => (
-              <tr key={log.id} className="hover:bg-slate-50/50">
-                <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-500">{new Date(log.created_at).toLocaleString("es")}</td>
+              <tr key={log.id} className="hover:bg-[hsl(var(--surface-1))]/50">
+                <td className="px-4 py-3 whitespace-nowrap text-xs text-[hsl(var(--text-secondary))]">{new Date(log.created_at).toLocaleString("es")}</td>
                 <td className="px-4 py-3">
                   <div className="text-sm font-medium">{log.actor_email || "system"}</div>
-                  <div className="text-xs text-slate-400">{log.actor_role || ""}</div>
+                  <div className="text-xs text-[hsl(var(--text-secondary))]">{log.actor_role || ""}</div>
                 </td>
-                <td className="px-4 py-3"><code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{log.action}</code></td>
-                <td className="px-4 py-3 text-xs text-slate-500">{log.entity_type}</td>
+                <td className="px-4 py-3"><code className="text-xs bg-[hsl(var(--surface-2))] px-1.5 py-0.5 rounded">{log.action}</code></td>
+                <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))]">{log.entity_type}</td>
                 <td className="px-4 py-3 text-xs">{log.entity_slug || log.entity_id || "-"}</td>
-                <td className="px-4 py-3 text-xs text-slate-400 font-mono">{log.ip_address || "-"}</td>
-                <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${SEVERITY_COLORS[log.severity] || "bg-slate-100"}`}>{log.severity}</span></td>
+                <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))] font-mono">{log.ip_address || "-"}</td>
+                <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${SEVERITY_COLORS[log.severity] || "bg-[hsl(var(--surface-2))]"}`}>{log.severity}</span></td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="flex justify-between items-center text-sm text-slate-500">
+      <div className="flex justify-between items-center text-sm text-[hsl(var(--text-secondary))]">
         <span>Mostrando {logs.length} registros</span>
         <div className="flex gap-2">
           <button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="px-3 py-1 border rounded-lg disabled:opacity-40">Anterior</button>

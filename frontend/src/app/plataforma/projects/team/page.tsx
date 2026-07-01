@@ -66,17 +66,17 @@ export default function TeamPage() {
                                 </div>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Recursos Humanos</span>
                             </div>
-                            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
+                            <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
                                 Equipo del Proyecto
                             </h1>
-                            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                            <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
                                 Disponibilidad y saturación del equipo ministerial en tiempo real.
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
                             {!loading && team.length > 0 && (
-                                <div className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-md border border-slate-200 dark:border-white/[0.06] shadow-sm text-center">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Cap. Prom.</p>
+                                <div className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-md border border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm text-center">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cap. Prom.</p>
                                     <p className="text-sm font-semibold text-[hsl(var(--primary))]">
                                         {Math.round(team.reduce((a, m) => a + m.capacity_percent, 0) / team.length)}%
                                     </p>
@@ -108,7 +108,7 @@ export default function TeamPage() {
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: idx * 0.05 }}
                                         onClick={() => handleSelect(persona)}
-                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-lg border border-slate-200/70 dark:border-white/[0.06] p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all cursor-pointer overflow-hidden active:scale-[0.99]"
+                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/[0.06] p-3 shadow-sm hover:shadow-xl hover:shadow-black/10/60 dark:hover:shadow-black/30 transition-all cursor-pointer overflow-hidden active:scale-[0.99]"
                                     >
                                         {/* Status bar */}
                                         <div className={clsx(
@@ -119,14 +119,14 @@ export default function TeamPage() {
 
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="size-8 rounded-md bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all shadow-sm font-bold text-xs">
+                                                <div className="size-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all shadow-sm font-bold text-xs">
                                                     {persona.name.substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-[13px] font-medium text-slate-900 dark:text-white leading-none">{persona.name}</p>
+                                                    <p className="text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-white leading-none">{persona.name}</p>
                                                     <span className={clsx(
                                                         "text-[9px] font-semibold uppercase tracking-wide mt-0.5 block",
-                                                        isOverloaded ? "text-rose-500" : "text-slate-400"
+                                                        isOverloaded ? "text-rose-500" : "text-[hsl(var(--text-secondary))]"
                                                     )}>{persona.load_status}</span>
                                                 </div>
                                             </div>
@@ -134,13 +134,13 @@ export default function TeamPage() {
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2 mb-3">
-                                            <div className="p-2 bg-slate-50 dark:bg-black/20 rounded-md">
-                                                <p className="text-[9px] font-bold uppercase text-slate-400 mb-0.5">Activas</p>
-                                                <p className="text-lg font-bold text-slate-900 dark:text-white">{persona.open}</p>
+                                            <div className="p-2 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md">
+                                                <p className="text-[9px] font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Activas</p>
+                                                <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{persona.open}</p>
                                             </div>
-                                            <div className="p-2 bg-slate-50 dark:bg-black/20 rounded-md">
-                                                <p className="text-[9px] font-bold uppercase text-slate-400 mb-0.5">Criticas</p>
-                                                <p className={clsx("text-lg font-bold", persona.critical > 0 ? "text-rose-500" : "text-slate-900 dark:text-white")}>
+                                            <div className="p-2 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md">
+                                                <p className="text-[9px] font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Criticas</p>
+                                                <p className={clsx("text-lg font-bold", persona.critical > 0 ? "text-rose-500" : "text-[hsl(var(--text-primary))] dark:text-white")}>
                                                     {persona.critical}
                                                 </p>
                                             </div>
@@ -148,10 +148,10 @@ export default function TeamPage() {
 
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide">
-                                                <span className="text-slate-400">Saturación</span>
+                                                <span className="text-[hsl(var(--text-secondary))]">Saturación</span>
                                                 <span className={isOverloaded ? "text-rose-500" : "text-[hsl(var(--primary))]"}>{persona.capacity_percent}%</span>
                                             </div>
-                                            <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                                                 <motion.div
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${persona.capacity_percent}%` }}
@@ -181,7 +181,7 @@ export default function TeamPage() {
                                 {selectedPersona.name.substring(0, 2).toUpperCase()}
                             </div>
                             <div>
-                                <h3 className="text-sm font-medium text-slate-900 dark:text-white">{selectedPersona.name}</h3>
+                                <h3 className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">{selectedPersona.name}</h3>
                                 <span className={clsx(
                                     "text-[9px] font-semibold uppercase tracking-wide",
                                     selectedPersona.load_status === 'sobrecargado' ? "text-rose-500" : "text-emerald-500"
@@ -196,8 +196,8 @@ export default function TeamPage() {
                                 { label: 'Saturacion', value: `${selectedPersona.capacity_percent}%`, color: selectedPersona.capacity_percent > 80 ? 'text-rose-500' : 'text-[hsl(var(--primary))]' },
                                 { label: 'Estado', value: selectedPersona.load_status === 'disponible' ? 'Disponible' : 'Ocupado', color: 'text-emerald-500' },
                             ].map(item => (
-                                <div key={item.label} className="bg-slate-50 dark:bg-white/5 rounded-md p-2 border border-slate-100 dark:border-white/5">
-                                    <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">{item.label}</p>
+                                <div key={item.label} className="bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md p-2 border border-[hsl(var(--border))] dark:border-white/5">
+                                    <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.label}</p>
                                     <p className={clsx("text-lg font-bold mt-0.5", item.color)}>{item.value}</p>
                                 </div>
                             ))}
@@ -205,7 +205,7 @@ export default function TeamPage() {
 
                         <button
                             onClick={() => closeLayer('RIGHT')}
-                            className="w-full py-2 border border-slate-200 dark:border-white/10 rounded-md text-[11px] font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                            className="w-full py-2 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
                         >
                             Cerrar
                         </button>

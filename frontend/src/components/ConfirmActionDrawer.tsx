@@ -27,7 +27,7 @@ export default function ConfirmActionDrawer({ action, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
           >
             Cancelar
           </button>

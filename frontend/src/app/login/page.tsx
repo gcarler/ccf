@@ -154,7 +154,7 @@ export default function LoginPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 data-theme="day"
-                className="flex-1 bg-white flex flex-col justify-center px-5 sm:px-[clamp(40px,8%,90px)] py-12 sm:py-[clamp(40px,8%,90px)] min-h-screen"
+                className="flex-1 bg-[hsl(var(--bg-primary))] flex flex-col justify-center px-5 sm:px-[clamp(40px,8%,90px)] py-12 sm:py-[clamp(40px,8%,90px)] min-h-screen"
             >
                 <div className="w-full max-w-[420px] mx-auto">
 

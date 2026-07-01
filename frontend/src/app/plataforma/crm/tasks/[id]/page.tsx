@@ -51,7 +51,7 @@ export default function CrmTaskDetailPage() {
         loadTask();
     }, [id, token]);
 
-    if (loading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-slate-400">Cargando tarea pastoral...</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cargando tarea pastoral...</div>;
 
     return (
         <CrmShell
@@ -69,7 +69,7 @@ export default function CrmTaskDetailPage() {
                                 <DSBadge tone="blue" label={task.category.toUpperCase()} />
                                 <DSBadge tone={task.status === 'completed' ? 'emerald' : 'amber'} label={task.status.toUpperCase()} />
                             </div>
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
                                 {task.title}
                             </h1>
                         </div>
@@ -78,27 +78,27 @@ export default function CrmTaskDetailPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <div className="lg:col-span-2 space-y-3">
                             <DSCard>
-                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-4">Detalle de la Actividad</h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Detalle de la Actividad</h3>
+                                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">
                                     {task.description}
                                 </p>
                             </DSCard>
 
                             <DSCard>
-                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-4">Bitácora de Seguimiento</h3>
+                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Bitácora de Seguimiento</h3>
                                 <div className="space-y-4">
                                     <div className="flex gap-4">
-                                        <div className="size-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                                        <div className="size-8 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                                             <History size={16} />
                                         </div>
                                         <div className="flex-1 space-y-1">
-                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Tarea creada</p>
-                                            <p className="text-[10px] text-slate-400 uppercase font-bold">12 ABR 2026 · 10:30 AM</p>
+                                            <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Tarea creada</p>
+                                            <p className="text-[10px] text-[hsl(var(--text-secondary))] uppercase font-bold">12 ABR 2026 · 10:30 AM</p>
                                         </div>
                                     </div>
-                                    <div className="h-8 border-l-2 border-slate-100 dark:border-white/5 ml-4" />
-                                    <div className="p-4 rounded-lg bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10 text-center">
-                                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Esperando actualizaciones...</p>
+                                    <div className="h-8 border-l-2 border-[hsl(var(--border))] dark:border-white/5 ml-4" />
+                                    <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-dashed border-[hsl(var(--border))] dark:border-white/10 text-center">
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Esperando actualizaciones...</p>
                                     </div>
                                 </div>
                             </DSCard>
@@ -108,8 +108,8 @@ export default function CrmTaskDetailPage() {
                             <DSCard>
                                 <div className="space-y-3">
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Asignado a</p>
-                                        <div className="flex items-center gap-2 p-2 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asignado a</p>
+                                        <div className="flex items-center gap-2 p-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5">
                                             <div className="size-8 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs">
                                                 {task.assigned_to?.charAt(0)}
                                             </div>
@@ -118,7 +118,7 @@ export default function CrmTaskDetailPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Prioridad</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Prioridad</p>
                                         <div className={clsx(
                                             'flex items-center gap-2 px-3 py-2 rounded-md text-xs font-bold',
                                             task.priority === 'high' ? 'bg-rose-500/10 text-rose-600' : 'bg-amber-500/10 text-amber-600'
@@ -128,8 +128,8 @@ export default function CrmTaskDetailPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Vencimiento</p>
-                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400">
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vencimiento</p>
+                                        <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                             <Calendar size={14} /> {new Date(task.due_date).toLocaleDateString()}
                                         </div>
                                     </div>

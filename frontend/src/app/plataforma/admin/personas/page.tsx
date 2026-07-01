@@ -58,13 +58,13 @@ export default function AdminPersonasPage() {
             <main className="flex-1 overflow-y-auto p-3 lg:p-4">
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
                     <header className="space-y-1">
-                        <h1 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Personas</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Personas</h1>
+                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                             Base de datos central de la congregación.
                         </p>
                     </header>
 
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none overflow-hidden">
                         {loading ? (
                             <div className="p-4 space-y-3">
                                 {[1, 2, 3, 4, 5].map((i) => (
@@ -72,14 +72,14 @@ export default function AdminPersonasPage() {
                                 ))}
                             </div>
                         ) : filtered.length === 0 ? (
-                            <div className="p-6 text-sm text-slate-500">
+                            <div className="p-6 text-sm text-[hsl(var(--text-secondary))]">
                                 No hay personas para mostrar.
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
-                                        <tr className="bg-slate-50/60 dark:bg-black/20 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                        <tr className="bg-[hsl(var(--surface-1))]/60 dark:bg-black/20 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             <th className="px-4 py-3">Nombre</th>
                                             <th className="px-4 py-3">Correo</th>
                                             <th className="px-4 py-3">Teléfono</th>
@@ -87,9 +87,9 @@ export default function AdminPersonasPage() {
                                             <th className="px-4 py-3 text-right">Acciones</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                    <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                         {filtered.map((persona) => (
-                                            <tr key={persona.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                            <tr key={persona.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className="size-9 rounded-md bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] flex items-center justify-center font-bold text-xs">
@@ -97,27 +97,27 @@ export default function AdminPersonasPage() {
                                                             {(persona.last_name || "").slice(0, 1)}
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                                                                 {persona.first_name} {persona.last_name}
                                                             </p>
-                                                            <p className="text-[10px] text-slate-400">ID: {String(persona.id)}</p>
+                                                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">ID: {String(persona.id)}</p>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                                                <td className="px-4 py-3 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                     <div className="flex items-center gap-2">
-                                                        <Mail size={13} className="text-slate-400" />
+                                                        <Mail size={13} className="text-[hsl(var(--text-secondary))]" />
                                                         {persona.email || "Sin correo"}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                                                <td className="px-4 py-3 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                     <div className="flex items-center gap-2">
-                                                        <Phone size={13} className="text-slate-400" />
+                                                        <Phone size={13} className="text-[hsl(var(--text-secondary))]" />
                                                         {persona.phone || "Sin teléfono"}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                                    <span className="inline-flex items-center rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                         {persona.church_role || "Sin rol"}
                                                     </span>
                                                 </td>

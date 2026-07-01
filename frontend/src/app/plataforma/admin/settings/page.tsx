@@ -52,11 +52,11 @@ export default function MinistrySettings() {
     ];
 
     return (
-        <div className="flex flex-col h-full bg-slate-950/20 font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-muted))]/20 font-display">
             {/* Header Area */}
-            <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
+            <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
                 <div className="px-4 pt-10 pb-4 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="p-3 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
+                    <button onClick={() => router.back()} className="p-3 rounded-lg bg-white/5 border border-white/10 text-[hsl(var(--text-secondary))] hover:text-white transition-all">
                         <ArrowLeft size={20} />
                     </button>
                     <h1 className="text-xl font-bold text-white tracking-tight uppercase tracking-tight">Configuración</h1>
@@ -74,13 +74,13 @@ export default function MinistrySettings() {
                         <div className="size-10 rounded-full border-2 border-primary/20 p-1.5 bg-primary/5 shadow-2xl shadow-primary/10">
                             <div className="size-full rounded-full bg-cover bg-center border-2 border-white/5" style={{ backgroundImage: "url('https://picsum.photos/seed/1544427928-c49cddee14bb/800/600')" }}></div>
                         </div>
-                        <button className="absolute bottom-1 right-1 size-10 rounded-full bg-primary text-white border-2 border-slate-950 flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl">
+                        <button className="absolute bottom-1 right-1 size-10 rounded-full bg-primary text-white border-2 border-[hsl(var(--border))] flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl">
                             <Edit3 size={16} />
                         </button>
                     </div>
                     <div className="mt-3 text-center space-y-2">
                         <h2 className="text-xl font-bold text-white tracking-tight uppercase">{SITE_NAME}</h2>
-                        <div className="flex items-center justify-center gap-2 text-slate-500 font-bold text-[10px] uppercase tracking-wide">
+                        <div className="flex items-center justify-center gap-2 text-[hsl(var(--text-secondary))] font-bold text-[10px] uppercase tracking-wide">
                             <MapPin size={12} className="text-primary" />
                             Sede Central • Mocoa, Putumayo
                         </div>
@@ -93,13 +93,13 @@ export default function MinistrySettings() {
                 {/* Settings Groups */}
                 {settingsGroups.map((group, idx) => (
                     <section key={idx} className="space-y-3">
-                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 ml-1">{group.title}</h3>
+                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-1">{group.title}</h3>
                         <div className="space-y-4">
                             {group.items.map((item, iidx) => (
                                 <div
                                     key={iidx}
                                     onClick={() => router.push(item.path)}
-                                    className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-3 flex items-center justify-between group cursor-pointer hover:border-white/10 hover:bg-white/5 transition-all active:scale-[0.98]"
+                                    className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-3 flex items-center justify-between group cursor-pointer hover:border-white/10 hover:bg-white/5 transition-all active:scale-[0.98]"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="size-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-lg border border-white/5">
@@ -107,10 +107,10 @@ export default function MinistrySettings() {
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">{item.label}</p>
-                                            <p className="font-semibold text-slate-500 uppercase tracking-wide">{item.sub}</p>
+                                            <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.sub}</p>
                                         </div>
                                     </div>
-                                    <ChevronRight className="text-slate-600 group-hover:text-primary transition-colors" size={20} />
+                                    <ChevronRight className="text-[hsl(var(--text-secondary))] group-hover:text-primary transition-colors" size={20} />
                                 </div>
                             ))}
                         </div>
@@ -126,7 +126,7 @@ export default function MinistrySettings() {
                         <LogOut size={20} />
                         Cerrar Sesión Admin
                     </button>
-                    <p className="text-center font-semibold text-slate-700 uppercase tracking-wide mt-3">Versión 2.1.0 • Antigravity Engine</p>
+                    <p className="text-center font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide mt-3">Versión 2.1.0 • Antigravity Engine</p>
                 </section>
             </main>
         </div>

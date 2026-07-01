@@ -46,7 +46,7 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 const STAGE_BADGES: Record<string, string> = {
-    new: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-white/5 dark:text-slate-300 dark:border-white/10',
+    new: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border-[hsl(var(--border))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))] dark:border-white/10',
     call: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20',
     visit: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/20',
     discipleship: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/20',
@@ -235,7 +235,7 @@ export default function LeadDetail() {
             ) : undefined}
         >
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-                <section className="rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+                <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="flex min-w-0 items-start gap-4">
                             <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--primary))] text-sm font-bold text-white">
@@ -243,14 +243,14 @@ export default function LeadDetail() {
                             </div>
                             <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <h1 className="truncate text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                    <h1 className="truncate text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
                                         {lead?.nombre_completo || 'Contacto sin nombre'}
                                     </h1>
                                     <span className={clsx('rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide', STAGE_BADGES[stage])}>
                                         {STAGE_LABELS[stage] ?? stage}
                                     </span>
                                 </div>
-                                <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                     <span className="inline-flex items-center gap-1.5"><Phone size={13} />{lead?.telefono || lead?.phone || 'Sin teléfono'}</span>
                                     <span className="inline-flex items-center gap-1.5"><Clock size={13} />Registrado {lead?.created_at ? new Date(lead.created_at).toLocaleDateString('es-CO') : 'sin fecha'}</span>
                                     <span className="inline-flex items-center gap-1.5"><Link2 size={13} />{lead?.source || 'Origen general'}</span>
@@ -261,7 +261,7 @@ export default function LeadDetail() {
                         <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={() => router.push('/plataforma/crm/pipeline')}
-                                className="inline-flex h-8 items-center gap-2 rounded-md border border-slate-200 px-3 text-[11px] font-bold uppercase tracking-wide text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+                                className="inline-flex h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
                             >
                                 <Link2 size={14} />
                                 Pipeline
@@ -271,20 +271,20 @@ export default function LeadDetail() {
                                     <button
                                         onClick={() => setIsStageOpen(value => !value)}
                                         disabled={isSavingStage}
-                                        className="inline-flex h-8 items-center gap-2 rounded-md border border-slate-200 px-3 text-[11px] font-bold uppercase tracking-wide text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+                                        className="inline-flex h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] disabled:opacity-60 dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
                                     >
                                         {isSavingStage ? <Loader2 size={14} className="animate-spin" /> : <ChevronDown size={14} />}
                                         Cambiar etapa
                                     </button>
                                     {isStageOpen && (
-                                        <div className="absolute right-0 top-9 z-50 w-48 overflow-hidden rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] shadow-xl dark:border-white/10 dark:bg-[#1e1f21]">
+                                        <div className="absolute right-0 top-9 z-50 w-48 overflow-hidden rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl dark:border-white/10 dark:bg-[#1e1f21]">
                                             {STAGES.map(item => (
                                                 <button
                                                     key={item}
                                                     onClick={() => handleStageChange(item)}
                                                     className={clsx(
-                                                        'flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-slate-50 dark:hover:bg-white/5',
-                                                        stage === item ? 'text-[hsl(var(--primary))]' : 'text-slate-500 dark:text-slate-300'
+                                                        'flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5',
+                                                        stage === item ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
                                                     )}
                                                 >
                                                     {STAGE_LABELS[item]}
@@ -305,13 +305,13 @@ export default function LeadDetail() {
                         { label: 'Llamadas', value: callLogs.filter(log => log.outcome !== 'Nota').length, icon: Phone },
                         { label: 'Motivos de oración', value: callLogs.filter(log => log.prayer_requests).length, icon: Heart },
                     ].map(stat => (
-                        <div key={stat.label} className="rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                        <div key={stat.label} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{stat.label}</p>
-                                    <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</p>
+                                    <p className="mt-1 text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{stat.value}</p>
                                 </div>
-                                <div className="flex size-9 items-center justify-center rounded-md bg-slate-100 text-[hsl(var(--primary))] dark:bg-white/5">
+                                <div className="flex size-9 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] dark:bg-white/5">
                                     <stat.icon size={17} />
                                 </div>
                             </div>
@@ -319,8 +319,8 @@ export default function LeadDetail() {
                     ))}
                 </section>
 
-                <section className="rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/[0.03]">
-                    <div className="flex border-b border-slate-200 px-3 dark:border-white/10">
+                <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/[0.03]">
+                    <div className="flex border-b border-[hsl(var(--border))] px-3 dark:border-white/10">
                         {[
                             { id: 'history', label: 'Historial de contacto' },
                             { id: 'notes', label: 'Notas e interacción' },
@@ -332,7 +332,7 @@ export default function LeadDetail() {
                                     'relative px-3 py-3 text-[11px] font-bold uppercase tracking-wide transition-colors',
                                     activeTab === tab.id
                                         ? 'text-[hsl(var(--primary))]'
-                                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                        : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]'
                                 )}
                             >
                                 {tab.label}
@@ -342,15 +342,15 @@ export default function LeadDetail() {
                     </div>
 
                     {activeTab === 'notes' && (
-                        <div className="border-b border-slate-200 p-4 dark:border-white/10">
+                        <div className="border-b border-[hsl(var(--border))] p-4 dark:border-white/10">
                             <form onSubmit={handleSaveNote} className="space-y-3">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Nueva nota</label>
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nueva nota</label>
                                 <textarea
                                     value={noteText}
                                     onChange={event => setNoteText(event.target.value)}
                                     rows={3}
                                     placeholder="Registra observaciones, acuerdos o próximos pasos..."
-                                    className="w-full resize-none rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-slate-100"
+                                    className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none transition-all placeholder:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-[hsl(var(--text-secondary))]"
                                 />
                                 <div className="flex justify-end">
                                     <button
@@ -370,8 +370,8 @@ export default function LeadDetail() {
                         {(activeTab === 'history' ? timeline : noteRows).length > 0 ? (
                             <div className="space-y-3">
                                 {(activeTab === 'history' ? timeline : noteRows).map(item => (
-                                    <div key={item.id} className="flex gap-3 rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-black/10">
-                                        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-300">
+                                    <div key={item.id} className="flex gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-black/10">
+                                        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
                                             {item.type === 'call' && <Phone size={15} />}
                                             {item.type === 'note' && <MessageSquare size={15} />}
                                             {item.type === 'counseling' && <Heart size={15} />}
@@ -379,13 +379,13 @@ export default function LeadDetail() {
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-start justify-between gap-2">
-                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{item.title}</h3>
-                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                                <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{item.title}</h3>
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                     <Calendar size={11} />
                                                     {formatDate(item.time)}
                                                 </span>
                                             </div>
-                                            <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-slate-500 dark:text-slate-400">{item.message}</p>
+                                            <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.message}</p>
                                             {item.prayer && (
                                                 <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
                                                     <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide">
@@ -401,8 +401,8 @@ export default function LeadDetail() {
                             </div>
                         ) : (
                             <div className="py-10 text-center">
-                                <History size={34} className="mx-auto text-slate-300 dark:text-slate-600" />
-                                <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Sin registros todavía</p>
+                                <History size={34} className="mx-auto text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
+                                <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin registros todavía</p>
                             </div>
                         )}
                     </div>
@@ -416,7 +416,7 @@ export default function LeadDetail() {
                 subtitle="Llamadas, seguimientos y motivos de oración"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsCallDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500">
+                        <button type="button" onClick={() => setIsCallDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))]">
                             Cancelar
                         </button>
                         <button
@@ -433,11 +433,11 @@ export default function LeadDetail() {
             >
                 <form id="call-form" onSubmit={handleRegisterCall} className="space-y-3">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Tipo / resultado</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo / resultado</label>
                         <select
                             value={callForm.outcome}
                             onChange={event => setCallForm({ ...callForm, outcome: event.target.value })}
-                            className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
                         >
                             {['Exitoso', 'Sin respuesta', 'Buzón de voz', 'Número equivocado', 'Reagendar', 'Nota'].map(option => (
                                 <option key={option} value={option}>{option}</option>
@@ -445,23 +445,23 @@ export default function LeadDetail() {
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Notas</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Notas</label>
                         <textarea
                             value={callForm.notes}
                             onChange={event => setCallForm({ ...callForm, notes: event.target.value })}
                             placeholder="Observaciones, acuerdos, próximos pasos..."
                             rows={4}
-                            className="w-full resize-none rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Motivo de oración</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Motivo de oración</label>
                         <textarea
                             value={callForm.prayer_requests}
                             onChange={event => setCallForm({ ...callForm, prayer_requests: event.target.value })}
                             placeholder="Opcional"
                             rows={2}
-                            className="w-full resize-none rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
                         />
                     </div>
                 </form>

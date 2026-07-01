@@ -14,7 +14,7 @@ export function DSCard({ tone = 'light', padding = 'md', className, children, ..
         tone === 'dark'
             ? 'bg-[#0f1116] border border-white/5'
             : tone === 'light'
-            ? 'bg-[hsl(var(--bg-primary))] border border-slate-100'
+            ? 'bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))]'
             : 'bg-white/10 backdrop-blur-xl border border-white/10';
 
     const paddingClass = padding === 'md' ? 'p-3' : 'p-2';

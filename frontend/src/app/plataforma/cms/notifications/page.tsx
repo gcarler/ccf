@@ -50,12 +50,12 @@ export default function NotificationsPage() {
   };
 
   const typeColors: Record<string, string> = {
-    mention: "bg-blue-100 text-blue-700",
+    mention: "bg-blue-100 text-[hsl(var(--primary))]",
     approval_requested: "bg-amber-100 text-amber-700",
-    approval_granted: "bg-green-100 text-green-700",
-    approval_rejected: "bg-red-100 text-red-700",
-    page_published: "bg-blue-100 text-blue-700",
-    page_archived: "bg-slate-100 text-slate-600",
+    approval_granted: "bg-green-100 text-[hsl(var(--secondary))]",
+    approval_rejected: "bg-red-100 text-[hsl(var(--destructive))]",
+    page_published: "bg-blue-100 text-[hsl(var(--primary))]",
+    page_archived: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]",
     comment_added: "bg-cyan-100 text-cyan-700",
     workflow_changed: "bg-blue-100 text-blue-800",
   };
@@ -67,45 +67,45 @@ export default function NotificationsPage() {
           <Bell size={24} className="text-[hsl(var(--primary))]" />
           <div>
             <h1 className="text-xl font-bold">Notificaciones</h1>
-            <p className="text-sm text-slate-500">{totalUnread} sin leer</p>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">{totalUnread} sin leer</p>
           </div>
         </div>
         {totalUnread > 0 && (
-          <button onClick={markAllRead} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border hover:bg-slate-50">
+          <button onClick={markAllRead} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border hover:bg-[hsl(var(--surface-1))]">
             <CheckCheck size={14} /> Marcar todo como leido
           </button>
         )}
       </div>
 
       <div className="flex gap-2">
-        <button onClick={() => setFilter("all")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "all" ? "bg-[hsl(var(--primary))] text-white" : "border hover:bg-slate-50"}`}>Todas</button>
-        <button onClick={() => setFilter("unread")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "unread" ? "bg-[hsl(var(--primary))] text-white" : "border hover:bg-slate-50"}`}>Sin leer ({totalUnread})</button>
+        <button onClick={() => setFilter("all")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "all" ? "bg-[hsl(var(--primary))] text-white" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Todas</button>
+        <button onClick={() => setFilter("unread")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "unread" ? "bg-[hsl(var(--primary))] text-white" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Sin leer ({totalUnread})</button>
       </div>
 
       <div className="space-y-2">
         {loading ? (
-          <div className="py-12 text-center text-slate-400">Cargando...</div>
+          <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Cargando...</div>
         ) : notifs.length === 0 ? (
-          <div className="py-12 text-center text-slate-400">Sin notificaciones</div>
+          <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Sin notificaciones</div>
         ) : notifs.map(n => (
-          <div key={n.id} className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${!n.is_read ? "bg-blue-50/50 border-blue-200" : "bg-white"}`}>
+          <div key={n.id} className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${!n.is_read ? "bg-blue-50/50 border-blue-200" : "bg-[hsl(var(--bg-primary))]"}`}>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeColors[n.type] || "bg-slate-100"}`}>{n.type}</span>
-                {!n.is_read && <span className="w-2 h-2 rounded-full bg-blue-500" />}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeColors[n.type] || "bg-[hsl(var(--surface-2))]"}`}>{n.type}</span>
+                {!n.is_read && <span className="w-2 h-2 rounded-full bg-[hsl(var(--primary))]" />}
               </div>
               <p className="text-sm font-medium">{n.title}</p>
-              {n.body && <p className="text-xs text-slate-500 mt-1">{n.body}</p>}
-              <p className="text-[10px] text-slate-400 mt-2">{new Date(n.created_at).toLocaleString("es")}</p>
+              {n.body && <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{n.body}</p>}
+              <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-2">{new Date(n.created_at).toLocaleString("es")}</p>
             </div>
             <div className="flex gap-1 shrink-0">
               {!n.is_read && (
-                <button onClick={() => markRead(n.id)} className="p-1.5 rounded-lg hover:bg-slate-100" title="Marcar leido">
-                  <Check size={14} className="text-slate-400" />
+                <button onClick={() => markRead(n.id)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))]" title="Marcar leido">
+                  <Check size={14} className="text-[hsl(var(--text-secondary))]" />
                 </button>
               )}
               {n.action_url && (
-                <a href={n.action_url} className="p-1.5 rounded-lg hover:bg-slate-100 text-xs text-[hsl(var(--primary))] font-medium">Ver</a>
+                <a href={n.action_url} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--primary))] font-medium">Ver</a>
               )}
             </div>
           </div>

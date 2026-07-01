@@ -23,9 +23,9 @@ export default function ProjectActivityFeed({ activities }: Props) {
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden font-display">
-            <header className="p-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
+            <header className="p-3 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--surface-1))]/50 dark:bg-white/5">
                 <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Actividad Reciente</h3>
+                    <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Actividad Reciente</h3>
                     <p className="text-[9px] font-medium text-[hsl(var(--primary))] uppercase mt-0.5">Pulso del Equipo</p>
                 </div>
                 <div className="size-7 rounded-md bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[hsl(var(--primary))]">
@@ -35,7 +35,7 @@ export default function ProjectActivityFeed({ activities }: Props) {
 
             <div className="flex-1 overflow-y-auto scrollbar-hide p-3 space-y-4 relative">
                 {/* Línea de conexión temporal */}
-                <div className="absolute left-[2.25rem] top-8 bottom-8 w-[1px] bg-slate-100 dark:bg-white/5" />
+                <div className="absolute left-[2.25rem] top-8 bottom-8 w-[1px] bg-[hsl(var(--surface-2))] dark:bg-white/5" />
 
                 {sorted.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-center space-y-3 opacity-40">
@@ -60,14 +60,14 @@ export default function ProjectActivityFeed({ activities }: Props) {
 
                             <div className="flex-1 min-w-0 space-y-0.5">
                                 <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[11px] font-bold text-slate-900 dark:text-white truncate">
+                                    <span className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">
                                         {log.task_title || log.project_title || 'Sistema'}
                                     </span>
-                                    <span className="text-[9px] font-medium text-slate-400 whitespace-nowrap">
+                                    <span className="text-[9px] font-medium text-[hsl(var(--text-secondary))] whitespace-nowrap">
                                         {formatRelative(log.created_at)}
                                     </span>
                                 </div>
-                                <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400 leading-snug">
+                                <p className="text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-snug">
                                     {log.description}
                                 </p>
                             </div>
@@ -85,7 +85,7 @@ function getIcon(type: string) {
         case 'task_created': return <Plus size={14} className="text-[hsl(var(--primary))]" />;
         case 'status_changed': return <RefreshCcw size={14} className="text-amber-600" />;
         case 'comment_added': return <MessageSquare size={14} className="text-[hsl(var(--primary))]" />;
-        default: return <ArrowRight size={14} className="text-slate-600" />;
+        default: return <ArrowRight size={14} className="text-[hsl(var(--text-secondary))]" />;
     }
 }
 
@@ -95,7 +95,7 @@ function getIconBg(type: string) {
         case 'task_created': return "bg-blue-100 dark:bg-blue-900/20";
         case 'status_changed': return "bg-amber-100 dark:bg-amber-900/20";
         case 'comment_added': return "bg-blue-100 dark:bg-blue-900/20";
-        default: return "bg-slate-100 dark:bg-white/5";
+        default: return "bg-[hsl(var(--surface-2))] dark:bg-white/5";
     }
 }
 

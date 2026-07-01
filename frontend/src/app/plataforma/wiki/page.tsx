@@ -79,23 +79,23 @@ export default function WikiHomePage() {
         <WorkspaceLayout sidebarTitle="Wiki" sidebarSections={sidebarSections}>
             <div className="flex flex-col h-full bg-[#F8F9FB] dark:bg-[#1E1F21]">
             {/* TOOLBAR */}
-            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21]">
+            <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21]">
                 <div className="flex items-center gap-2 flex-1">
                     <BookOpen size={16} className="text-[hsl(var(--primary))]" />
-                    <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         BASE DE CONOCIMIENTO
                     </h2>
                 </div>
                 
                 <div className="flex items-center gap-2">
                     <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                         <input 
                             type="text" 
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
                             placeholder="Buscar en la wiki..."
-                            className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-lg text-[12px] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-64 transition-all"
+                            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-lg text-[12px] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-64 transition-all"
                         />
                     </div>
                     <button 
@@ -141,14 +141,14 @@ export default function WikiHomePage() {
  <div className="w-full space-y-3">
                     {/* Featured Section */}
                     <section>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
                             DOCUMENTOS RECIENTES
                         </p>
                         
                         {loading ? (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="h-48 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg animate-pulse border border-slate-200/70 dark:border-white/5" />
+                                    <div key={i} className="h-48 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg animate-pulse border border-[hsl(var(--border))]/70 dark:border-white/5" />
                                 ))}
                             </div>
                         ) : (
@@ -161,33 +161,33 @@ export default function WikiHomePage() {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.05 }}
-                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
+                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
                                     >
                                         {/* Acento de color top */}
                                         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-600 to-sky-600" />
                                         
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-start justify-between">
-                                                <div className="size-10 rounded-md bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-[hsl(var(--primary))] transition-colors">
+                                                <div className="size-10 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">
                                                     <FileText size={20} />
                                                 </div>
-                                                <button className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400">
+                                                <button className="p-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))]">
                                                     <Bookmark size={14} />
                                                 </button>
                                             </div>
                                             
                                             <div>
-                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
+                                                <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
                                                     {doc.title}
                                                 </h3>
-                                                <p className="text-[12px] text-slate-500 mt-2 line-clamp-3 leading-relaxed">
+                                                <p className="text-[12px] text-[hsl(var(--text-secondary))] mt-2 line-clamp-3 leading-relaxed">
                                                     Última actualización por Equipo Pastoral. Visualización disponible para todos los roles.
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="mt-3 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                                        <div className="mt-3 pt-4 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                                 <Clock size={12} />
                                                 <span>{new Date(doc.updated_at).toLocaleDateString()}</span>
                                             </div>
@@ -207,12 +207,12 @@ export default function WikiHomePage() {
                     {/* Empty State */}
                     {!loading && docs.length === 0 && (
                         <div className="py-1.5 flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                            <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 flex items-center justify-center text-slate-300 shadow-xl">
+                            <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-xl">
                                 <BookOpen size={40} />
                             </div>
                             <div className="max-w-sm">
-                                <p className="font-bold text-lg text-slate-900 dark:text-white">Tu Base de Conocimiento está vacía</p>
-                                <p className="text-sm text-slate-500">Crea guías pastorales, manuales de procesos o documentación técnica para tu equipo.</p>
+                                <p className="font-bold text-lg text-[hsl(var(--text-primary))] dark:text-white">Tu Base de Conocimiento está vacía</p>
+                                <p className="text-sm text-[hsl(var(--text-secondary))]">Crea guías pastorales, manuales de procesos o documentación técnica para tu equipo.</p>
                             </div>
                         </div>
                     )}

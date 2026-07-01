@@ -9,7 +9,7 @@ const COLOR_STYLES: Record<MetricTone, string> = {
     emerald: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800',
     amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300 border-amber-100 dark:border-amber-800',
     pink: 'bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-300 border-pink-100 dark:border-pink-900/40',
-    slate: 'bg-slate-50 dark:bg-slate-900/20 text-slate-600 dark:text-slate-300 border-slate-100 dark:border-slate-800'
+    slate: 'bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/20 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-[hsl(var(--border))]'
 };
 
 export interface MetricCardProps {
@@ -50,7 +50,7 @@ export function MetricCard({
                 )}
             </div>
             {helper && (
-                <p className="text-[10px] text-slate-500 dark:text-[hsl(var(--text-secondary))] leading-tight">{helper}</p>
+                <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-tight">{helper}</p>
             )}
         </article>
     );

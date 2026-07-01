@@ -108,21 +108,21 @@ export default function StudentSchedule() {
                 watchers={['Equipo Horarios', 'Optimus Brain']}
                 primaryAction={{ label: icsGenerating ? 'Generando...' : 'Exportar .ics', icon: Download, onClick: exportCalendar }}
             />
-            <div className="rounded-md border border-slate-200 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl overflow-hidden">
-            <div className="flex gap-4 pb-4 overflow-x-auto hide-scrollbar p-4 border-b border-slate-100 dark:border-white/5">
+            <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl overflow-hidden">
+            <div className="flex gap-4 pb-4 overflow-x-auto hide-scrollbar p-4 border-b border-[hsl(var(--border))] dark:border-white/5">
                 {DAYS.map((day, index) => (
                     <button
                         key={day}
                             onClick={() => setActiveDay(index)}
                             className={`flex flex-col items-center gap-3 cursor-pointer group shrink-0 transition-all ${
-                                activeDay === index ? 'text-white' : 'text-slate-500 opacity-60'
+                                activeDay === index ? 'text-white' : 'text-[hsl(var(--text-secondary))] opacity-60'
                             }`}
                         >
                             <div
                                 className={`flex h-8 w-14 items-center justify-center rounded-lg border text-sm font-bold uppercase tracking-wide ${
                                     activeDay === index
                                         ? 'bg-primary border-primary/50 shadow-xl shadow-primary/30'
-                                        : 'bg-slate-900 border-white/10 hover:border-primary/30'
+                                        : 'bg-[hsl(var(--bg-muted))] border-white/10 hover:border-primary/30'
                                 }`}
                             >
                                 {day.substring(0, 3)}
@@ -138,11 +138,11 @@ export default function StudentSchedule() {
                     )}
 
                     {(loading || lessonsLoading) && (
-                        <p className="text-center text-slate-400 text-sm py-1.5">Actualizando calendario...</p>
+                        <p className="text-center text-[hsl(var(--text-secondary))] text-sm py-1.5">Actualizando calendario...</p>
                     )}
 
                     {!loading && sessions.length === 0 && (
-                        <p className="text-center text-slate-400 text-sm py-1.5">
+                        <p className="text-center text-[hsl(var(--text-secondary))] text-sm py-1.5">
                             Aún no hay sesiones programadas. Revisa tus cursos para obtener horarios oficiales.
                         </p>
                     )}
@@ -150,7 +150,7 @@ export default function StudentSchedule() {
                     {filteredSessions.length > 0 && (
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-primary text-xs font-semibold uppercase tracking-wide">{DAYS[activeDay]}</h3>
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide border border-white/10 px-2 py-1 rounded">
+                            <span className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide border border-white/10 px-2 py-1 rounded">
                                 {filteredSessions.length} sesiones
                             </span>
                         </div>
@@ -167,25 +167,25 @@ export default function StudentSchedule() {
                                         }`}
                                     ></div>
                                 </div>
-                                <div className="bg-slate-900/50 backdrop-blur-xl p-4 rounded-md shadow-xl border border-white/5 hover:border-primary/30 transition-all">
+                                <div className="bg-[hsl(var(--bg-muted))]/50 backdrop-blur-xl p-4 rounded-md shadow-xl border border-white/5 hover:border-primary/30 transition-all">
                                     <div className="flex justify-between items-start mb-4">
-                                        <span className="text-slate-300 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 bg-slate-800 rounded-md border border-white/5">
+                                        <span className="text-[hsl(var(--text-secondary))] text-xs font-semibold uppercase tracking-wide px-3 py-1.5 bg-[hsl(var(--surface-2))] rounded-md border border-white/5">
                                             {session.time} - {nextSlot(session.time)}
                                         </span>
-                                        <button className="text-slate-500 hover:text-white p-1">
+                                        <button className="text-[hsl(var(--text-secondary))] hover:text-white p-1">
                                             <MoreHorizontal size={20} />
                                         </button>
                                     </div>
                                     <h4 className="text-white text-base font-bold mb-3 tracking-tight">{session.title}</h4>
-                                    <p className="text-slate-400 text-sm mb-4">{session.course}</p>
+                                    <p className="text-[hsl(var(--text-secondary))] text-sm mb-4">{session.course}</p>
                                     <div className="flex flex-col gap-2">
-                                        <div className="flex items-center gap-3 text-slate-400 text-sm">
+                                        <div className="flex items-center gap-3 text-[hsl(var(--text-secondary))] text-sm">
                                             <div className="p-1.5 rounded-lg bg-white/5">
                                                 <Users size={14} className="text-primary-300" />
                                             </div>
                                             <span className="font-medium">{session.instructor}</span>
                                         </div>
-                                        <div className="flex items-center gap-3 text-slate-400 text-sm">
+                                        <div className="flex items-center gap-3 text-[hsl(var(--text-secondary))] text-sm">
                                             <div className="p-1.5 rounded-lg bg-white/5">
                                                 <MapPin size={14} className="text-rose-400" />
                                             </div>

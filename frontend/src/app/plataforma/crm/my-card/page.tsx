@@ -48,7 +48,7 @@ export default function MyCardPage() {
         return (
             <div className="min-h-screen bg-[hsl(var(--bg-primary))] flex flex-col items-center justify-center space-y-4">
                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} />
-                <p className="text-slate-500 font-bold uppercase tracking-wide text-[10px]">Generando Credencial...</p>
+                <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px]">Generando Credencial...</p>
             </div>
         );
     }
@@ -60,7 +60,7 @@ export default function MyCardPage() {
                     <ShieldCheck size={48} />
                 </div>
                 <h1 className="text-lg font-bold text-white">Perfil no Encontrado</h1>
-                <p className="text-slate-400 max-w-sm">No hemos podido encontrar tu perfil de persona vinculado a este usuario. Contacta con administración.</p>
+                <p className="text-[hsl(var(--text-secondary))] max-w-sm">No hemos podido encontrar tu perfil de persona vinculado a este usuario. Contacta con administración.</p>
                 <button onClick={() => router.back()} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold uppercase tracking-wide text-[10px] transition-all">
                     Volver
                 </button>
@@ -109,11 +109,11 @@ export default function MyCardPage() {
             default:
                 return {
                     name: 'CONSOLIDADO CCF',
-                    primary: 'from-slate-700 to-slate-900',
-                    border: 'border-slate-500/50',
-                    badge: 'bg-slate-600',
-                    glow: 'shadow-slate-500/20',
-                    accent: 'text-slate-400'
+                    primary: 'from-[hsl(var(--surface-2))] to-[hsl(var(--bg-muted))]',
+                    border: 'border-[hsl(var(--border))]/50',
+                    badge: 'bg-[hsl(var(--surface-2))]',
+                    glow: 'shadow-black/20',
+                    accent: 'text-[hsl(var(--text-secondary))]'
                 };
         }
     };
@@ -160,7 +160,7 @@ export default function MyCardPage() {
                 <div className="flex flex-col items-center text-center space-y-4 mb-3 mt-2 relative z-10">
                     <div className="size-10 rounded-lg bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white relative group-hover:scale-105 transition-transform duration-500">
                         <User size={48} className="text-white/50" />
-                        <div className="absolute -bottom-1 -right-1 size-6 bg-emerald-500 rounded-lg flex items-center justify-center border-4 border-slate-900 translate-x-1 translate-y-1">
+                        <div className="absolute -bottom-1 -right-1 size-6 bg-emerald-500 rounded-lg flex items-center justify-center border-4 border-[hsl(var(--border))] translate-x-1 translate-y-1">
                             <ShieldCheck size={12} className="text-white" />
                         </div>
                     </div>
@@ -212,20 +212,20 @@ export default function MyCardPage() {
 
             <div className="grid grid-cols-2 gap-4 w-full max-w-sm relative z-10">
                 <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-md transition-all active:scale-95 group">
-                    <Share2 size={18} className="text-slate-400 group-hover:text-primary transition-colors" />
+                    <Share2 size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-primary transition-colors" />
                     <span className="text-[10px] font-bold uppercase tracking-wide">Compartir</span>
                 </button>
                 <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-md transition-all active:scale-95 group">
-                    <Download size={18} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
+                    <Download size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-emerald-500 transition-colors" />
                     <span className="text-[10px] font-bold uppercase tracking-wide">Descargar</span>
                 </button>
-                <button className="col-span-2 flex items-center justify-center gap-3 bg-[hsl(var(--surface-1))] text-slate-900 p-3 rounded-md font-bold uppercase tracking-wide text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
+                <button className="col-span-2 flex items-center justify-center gap-3 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] p-3 rounded-md font-bold uppercase tracking-wide text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
                     <Sparkles size={20} className="text-amber-500" /> Añadir a Google Wallet
                 </button>
             </div>
 
             <div className="w-full max-w-[340px] text-center px-3 relative z-10">
-                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wide leading-relaxed">
+                <p className="text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide leading-relaxed">
                     Esta credencial es personal e intransferible. El uso indebido será reportado a la administración del ministerio.
                 </p>
             </div>

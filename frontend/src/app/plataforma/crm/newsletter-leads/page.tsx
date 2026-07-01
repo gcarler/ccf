@@ -173,7 +173,7 @@ export default function NewsletterLeadsPage() {
                             "flex items-center gap-2 px-3 py-2 rounded-md text-[11px] font-bold uppercase tracking-wide transition-all",
                             showFilters
                                 ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
-                                : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10"
+                                : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10"
                         )}
                     >
                         <Filter size={14} /> Filtros
@@ -199,14 +199,14 @@ export default function NewsletterLeadsPage() {
                             { label: 'Nuevos', value: summary.newCount, icon: Tag, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
                             { label: 'Landings', value: summary.landingPages, icon: Globe, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                         ].map((stat, i) => (
-                            <div key={i} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3">
+                            <div key={i} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3">
                                 <div className="flex items-center gap-2 mb-1">
                                     <div className={`size-6 rounded-md ${stat.bg} flex items-center justify-center ${stat.color}`}>
                                         <stat.icon size={14} />
                                     </div>
-                                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{stat.label}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</span>
                                 </div>
-                                <p className="text-xl font-bold text-slate-800 dark:text-white">{stat.value}</p>
+                                <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{stat.value}</p>
                             </div>
                         ))}
                     </div>
@@ -214,15 +214,15 @@ export default function NewsletterLeadsPage() {
 
                 {/* Filters */}
                 {showFilters && (
-                    <div className="px-4 py-2 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                    <div className="px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                         <div className="flex gap-3 items-end">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Desde</label>
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Desde</label>
                                 <input
                                     type="date"
                                     value={dateFrom}
                                     onChange={e => { setPage(1); setDateFrom(e.target.value); }}
-                                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
+                                    className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -230,13 +230,13 @@ export default function NewsletterLeadsPage() {
                 )}
 
                 {/* Search */}
-                <div className="px-4 py-2 border-b border-slate-200 dark:border-white/5">
+                <div className="px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={15} />
                         <input
                             type="text"
                             placeholder="Buscar por nombre, email o notas..."
-                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all"
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
@@ -249,47 +249,47 @@ export default function NewsletterLeadsPage() {
                         [...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-md" />)
                     ) : filteredLeads.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
-                            <div className="size-12 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300">
+                            <div className="size-12 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                                 <Mail size={40} />
                             </div>
-                            <h4 className="text-slate-800 dark:text-white font-bold text-sm">No hay leads de newsletter</h4>
-                            <p className="text-slate-400 text-sm max-w-[250px]">Los suscriptores del newsletter aparecerán aquí cuando se registren desde el sitio web.</p>
+                            <h4 className="text-[hsl(var(--text-primary))] dark:text-white font-bold text-sm">No hay leads de newsletter</h4>
+                            <p className="text-[hsl(var(--text-secondary))] text-sm max-w-[250px]">Los suscriptores del newsletter aparecerán aquí cuando se registren desde el sitio web.</p>
                         </div>
                     ) : viewType === 'list' ? (
                         filteredLeads.map(lead => (
                             <div
                                 key={lead.case_id}
                                 onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
-                                className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-md"
+                                className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-md"
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-9 rounded-lg bg-blue-50 dark:bg-[hsl(var(--primary))]/10 border border-blue-200 dark:border-[hsl(var(--primary))]/20 flex items-center justify-center text-[hsl(var(--primary))] dark:text-blue-400 font-bold text-sm">
+                                        <div className="size-9 rounded-lg bg-blue-50 dark:bg-[hsl(var(--primary))]/10 border border-blue-200 dark:border-[hsl(var(--primary))]/20 flex items-center justify-center text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-sm">
                                             {lead.nombre_completo?.charAt(0) || (lead.first_name?.charAt(0) ?? '?')}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || (lead.last_name?.charAt(0) ?? '')}
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-slate-800 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">
+                                            <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">
                                                 {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                                             </h3>
-                                            <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                            <p className="text-xs text-[hsl(var(--text-secondary))] flex items-center gap-1.5 mt-0.5">
                                                 <Mail size={11} /> {lead.email || 'Sin email'}
-                                                {lead.phone && <><span className="text-slate-300">·</span> {lead.phone}</>}
+                                                {lead.phone && <><span className="text-[hsl(var(--text-secondary))]">·</span> {lead.phone}</>}
                                             </p>
                                         </div>
                                     </div>
-                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border ${STAGE_COLORS[lead.stage] || 'bg-slate-500/10 text-slate-500'}`}>
+                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border ${STAGE_COLORS[lead.stage] || 'bg-[hsl(var(--surface-2))]/10 text-[hsl(var(--text-secondary))]'}`}>
                                         {STAGE_LABELS[lead.stage] || lead.stage}
                                     </span>
                                 </div>
                                 {lead.notes && (
-                                    <p className="text-xs text-slate-500 mt-2 pl-12 line-clamp-2">{lead.notes.replace(/\n/g, ' · ')}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))] mt-2 pl-12 line-clamp-2">{lead.notes.replace(/\n/g, ' · ')}</p>
                                 )}
                                 <div className="flex items-center gap-3 mt-2 pl-12">
-                                    <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                    <span className="text-[10px] text-[hsl(var(--text-secondary))] flex items-center gap-1">
                                         <Calendar size={10} />
                                         {lead.created_at ? new Date(lead.created_at).toLocaleDateString('es-CO') : '—'}
                                     </span>
-                                    <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                    <span className="text-[10px] text-[hsl(var(--text-secondary))] flex items-center gap-1">
                                         <Globe size={10} />
                                         {lead.source || '—'}
                                     </span>
@@ -297,17 +297,17 @@ export default function NewsletterLeadsPage() {
                             </div>
                         ))
                     ) : viewType === 'table' ? (
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+                        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
                             <table className="w-full text-left">
-                                <thead className="bg-slate-50 dark:bg-white/5">
+                                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                                     <tr>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Nombre</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Email</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Teléfono</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Fuente</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Etapa</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Notas</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Fecha</th>
+                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre</th>
+                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Email</th>
+                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Teléfono</th>
+                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</th>
+                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Etapa</th>
+                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Notas</th>
+                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -315,15 +315,15 @@ export default function NewsletterLeadsPage() {
                                         <tr
                                             key={lead.case_id}
                                             onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
-                                            className="cursor-pointer border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]"
+                                            className="cursor-pointer border-t border-[hsl(var(--border))] dark:border-white/5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02]"
                                         >
-                                            <td className="px-4 py-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+                                            <td className="px-4 py-2 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                 {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                                             </td>
-                                            <td className="px-4 py-2 text-xs text-slate-500">{lead.email || '—'}</td>
-                                            <td className="px-4 py-2 text-xs text-slate-500">{lead.phone || '—'}</td>
+                                            <td className="px-4 py-2 text-xs text-[hsl(var(--text-secondary))]">{lead.email || '—'}</td>
+                                            <td className="px-4 py-2 text-xs text-[hsl(var(--text-secondary))]">{lead.phone || '—'}</td>
                                             <td className="px-4 py-2 text-xs">
-                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-white/5 text-slate-500 uppercase tracking-wide">
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                                     {lead.source?.replace('newsletter-', '') || '—'}
                                                 </span>
                                             </td>
@@ -332,10 +332,10 @@ export default function NewsletterLeadsPage() {
                                                     {STAGE_LABELS[lead.stage] || lead.stage}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-2 text-xs text-slate-400 max-w-[200px] truncate">
+                                            <td className="px-4 py-2 text-xs text-[hsl(var(--text-secondary))] max-w-[200px] truncate">
                                                 {lead.notes?.replace(/\n/g, ' · ') || '—'}
                                             </td>
-                                            <td className="px-4 py-2 text-xs text-slate-400">
+                                            <td className="px-4 py-2 text-xs text-[hsl(var(--text-secondary))]">
                                                 {lead.created_at ? new Date(lead.created_at).toLocaleDateString('es-CO') : '—'}
                                             </td>
                                         </tr>
@@ -353,22 +353,22 @@ export default function NewsletterLeadsPage() {
                                     grouped[date].push(lead);
                                 }
                                 return Object.entries(grouped).sort((a, b) => b[0].localeCompare(a[0])).map(([dateKey, items]) => (
-                                    <div key={dateKey} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
-                                        <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                                    <div key={dateKey} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
+                                        <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             {dateKey === 'unknown' ? 'Sin fecha' : new Date(dateKey + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}
-                                            <span className="ml-2 text-slate-400">({items.length})</span>
+                                            <span className="ml-2 text-[hsl(var(--text-secondary))]">({items.length})</span>
                                         </p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             {items.map(lead => (
                                                 <button
                                                     key={lead.case_id}
                                                     onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
-                                                    className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all"
+                                                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all"
                                                 >
-                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                                    <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                         {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                                                     </p>
-                                                    <p className="text-[10px] text-slate-400">{lead.email || 'Sin email'}</p>
+                                                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">{lead.email || 'Sin email'}</p>
                                                 </button>
                                             ))}
                                         </div>
@@ -377,15 +377,15 @@ export default function NewsletterLeadsPage() {
                             })()}
                         </div>
                     ) : viewType === 'wiki' ? (
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 <BookOpen size={12} /> Wiki de leads de newsletter
                             </div>
                             <textarea
                                 value={wikiNotes}
                                 onChange={e => setWikiNotes(e.target.value)}
                                 placeholder="Documenta el proceso de seguimiento de leads del newsletter, criterios de clasificación, etc..."
-                                className="w-full min-h-[360px] rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
+                                className="w-full min-h-[360px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20"
                             />
                         </div>
                     ) : (
@@ -395,22 +395,22 @@ export default function NewsletterLeadsPage() {
 
                 {/* Pagination */}
                 {data && data.total_pages > 1 && (
-                    <div className="px-4 py-3 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
-                        <span className="text-[11px] text-slate-400 font-medium">
+                    <div className="px-4 py-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
+                        <span className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">
                             {data.total} registros · Página {data.page} de {data.total_pages}
                         </span>
                         <div className="flex gap-1">
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page <= 1}
-                                className="size-8 rounded-md border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                                className="size-8 rounded-md border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] disabled:opacity-30 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all"
                             >
                                 <ChevronLeft size={14} />
                             </button>
                             <button
                                 onClick={() => setPage(p => Math.min(data.total_pages, p + 1))}
                                 disabled={page >= data.total_pages}
-                                className="size-8 rounded-md border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                                className="size-8 rounded-md border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] disabled:opacity-30 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all"
                             >
                                 <ChevronRight size={14} />
                             </button>

@@ -75,7 +75,7 @@ export default function AdminDashboardPage() {
                   <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
                   <Shield className="w-8 h-8 animate-pulse text-[hsl(var(--primary))] relative z-10" />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Verificando Sistemas...</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Verificando Sistemas...</p>
           </div>
       );
   }
@@ -96,7 +96,7 @@ export default function AdminDashboardPage() {
             breadcrumbs={[{ label: 'Ecosistema', icon: Globe }, { label: 'Gestión Central', icon: Shield }]}
             viewType={viewType} setViewType={setViewType} availableViews={['grid']}
             rightActions={
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-md hover:scale-105 active:scale-95 transition-all">
+                <button className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-md hover:scale-105 active:scale-95 transition-all">
                     Reporte Global <ArrowUpRight size={10} strokeWidth={3} />
                 </button>
             }
@@ -151,13 +151,13 @@ export default function AdminDashboardPage() {
                     {/* 2. Operations Center (Left) */}
                     <div className="lg:col-span-8 space-y-3">
                         <motion.div variants={itemVariants} className="flex items-center justify-between px-2">
-                            <h2 className="text-[11px] font-bold text-slate-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                            <h2 className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-2">
                                 <div className="size-1.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_6px_rgba(244,63,94,0.5)]" />
                                 Comandos de Control Interno
                             </h2>
                             <div className="flex items-center gap-3">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{agentTasks.length} Activos</span>
-                                <button className="p-1.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg transition-all text-slate-400 bg-slate-50 dark:bg-black/20"><Filter size={10} /></button>
+                                <span className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{agentTasks.length} Activos</span>
+                                <button className="p-1.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg transition-all text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] dark:bg-black/20"><Filter size={10} /></button>
                             </div>
                         </motion.div>
 
@@ -172,7 +172,7 @@ export default function AdminDashboardPage() {
                                     index={100}
                                 />
                             )}
-                            <button className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-md flex items-center justify-center gap-2 text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all font-bold uppercase text-[10px] tracking-wide mt-2 group">
+                            <button className="w-full py-3 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-md flex items-center justify-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all font-bold uppercase text-[10px] tracking-wide mt-2 group">
                                 <Plus size={10} className="group-hover:scale-125 transition-transform" /> Iniciar Nueva Operación
                             </button>
                         </motion.div>
@@ -182,13 +182,13 @@ export default function AdminDashboardPage() {
                     <aside className="lg:col-span-4 space-y-3">
 
                         {/* Optimus Neural Widget */}
-                        <motion.div variants={itemVariants} className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
+                        <motion.div variants={itemVariants} className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 shadow-sm relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
                                 <Bot size={10} className="text-sky-600" />
                             </div>
                             <div className="space-y-3 relative z-10">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-bold tracking-tight text-slate-800 dark:text-white flex items-center gap-1.5">
+                                    <h3 className="text-sm font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white flex items-center gap-1.5">
                                         <Sparkles size={10} className="text-sky-500" /> MESH AI Neural
                                     </h3>
                                     <div className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[8px] font-bold uppercase tracking-wide rounded flex items-center gap-1">
@@ -199,18 +199,18 @@ export default function AdminDashboardPage() {
                                 <div className="space-y-2">
                                     {agentInsights.length > 0 ? (
                                         agentInsights.slice(0, 3).map((insight: any) => (
-                                            <div key={insight.id} className="p-3 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 space-y-1 group/insight cursor-pointer hover:border-sky-500/30 hover:shadow-sm transition-all">
+                                            <div key={insight.id} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 space-y-1 group/insight cursor-pointer hover:border-sky-500/30 hover:shadow-sm transition-all">
                                                 <div className="flex items-center justify-between">
-                                                    <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-none group-hover/insight:text-sky-600 transition-colors truncate">{insight.title}</p>
+                                                    <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-none group-hover/insight:text-sky-600 transition-colors truncate">{insight.title}</p>
                                                     <span className="text-[7px] font-bold px-1.5 py-0.5 bg-sky-50 dark:bg-sky-500/10 text-sky-600 rounded uppercase tracking-wide shrink-0">{insight.insight_type.split('_')[0]}</span>
                                                 </div>
-                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight italic font-medium line-clamp-2">&ldquo;{insight.payload}&rdquo;</p>
+                                                <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-tight italic font-medium line-clamp-2">&ldquo;{insight.payload}&rdquo;</p>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 space-y-1">
-                                            <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-none">Análisis de Sistema</p>
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight italic font-medium">&ldquo;Todos los sistemas operan dentro de los parámetros normales. No se requiere intervención inmediata.&rdquo;</p>
+                                        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 space-y-1">
+                                            <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-none">Análisis de Sistema</p>
+                                            <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-tight italic font-medium">&ldquo;Todos los sistemas operan dentro de los parámetros normales. No se requiere intervención inmediata.&rdquo;</p>
                                         </div>
                                     )}
                                 </div>
@@ -222,16 +222,16 @@ export default function AdminDashboardPage() {
                         </motion.div>
 
                         {/* Recent Activity Log */}
-                        <motion.div variants={itemVariants} className="space-y-3 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] p-4 rounded-lg border border-slate-100 dark:border-white/5 shadow-sm">
-                            <h3 className="text-[9px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1.5 mb-3">
+                        <motion.div variants={itemVariants} className="space-y-3 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] p-4 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
+                            <h3 className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1.5 mb-3">
                                 <History size={10} /> Actividad del Staff
                             </h3>
-                            <div className="space-y-3 relative before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-white/5">
+                            <div className="space-y-3 relative before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[hsl(var(--surface-2))] dark:before:bg-white/5">
                                 <LogItem icon={Zap} title="Migración DB completada" user="Alex L." time="10m" color="text-[hsl(var(--primary))]" bg="bg-blue-50 dark:bg-blue-500/10" />
                                 <LogItem icon={CheckCircle2} title="Aprobación Curso Teología" user="Pedro M." time="1h" color="text-emerald-500" bg="bg-emerald-50 dark:bg-emerald-500/10" />
                                 <LogItem icon={AlertTriangle} title="Fallo en Pasarela Resuelto" user="System" time="3h" color="text-rose-500" bg="bg-rose-50 dark:bg-rose-500/10" />
                             </div>
-                            <button className="w-full mt-2 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wider hover:text-slate-600 transition-colors">Ver bitácora completa</button>
+                            <button className="w-full mt-2 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider hover:text-[hsl(var(--text-secondary))] transition-colors">Ver bitácora completa</button>
                         </motion.div>
                     </aside>
                 </div>
@@ -243,25 +243,25 @@ export default function AdminDashboardPage() {
             title={selectedTask?.title || 'Detalles Operativos'} subtitle="Administración Central"
             actions={
                 <>
-                    <button className="px-3 py-2 text-[10px] font-bold text-slate-500 hover:text-slate-700 transition-colors" onClick={() => setIsDrawerOpen(false)}>Descartar</button>
+                    <button className="px-3 py-2 text-[10px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors" onClick={() => setIsDrawerOpen(false)}>Descartar</button>
                     <button className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-md active:scale-95 transition-all">Ejecutar Acción</button>
                 </>
             }
         >
             <div className="space-y-3 animate-fade-in p-2">
                 <section className="grid grid-cols-2 gap-3">
-                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 shadow-sm">
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1">Estado</p>
-                        <p className="text-[13px] font-bold text-slate-800 dark:text-white uppercase">{selectedTask?.status}</p>
+                    <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
+                        <p className="text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Estado</p>
+                        <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase">{selectedTask?.status}</p>
                     </div>
-                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 shadow-sm">
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1">Prioridad</p>
+                    <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
+                        <p className="text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Prioridad</p>
                         <p className="text-[13px] font-bold text-rose-500 uppercase">{selectedTask?.priority}</p>
                     </div>
                 </section>
                 <section className="space-y-3">
-                    <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1.5"><FileText size={10} className="text-[hsl(var(--primary))]"/> Descripción Técnica</h4>
-                    <div className="p-4 bg-slate-50 dark:bg-[#15171c] rounded-md text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium shadow-inner">
+                    <h4 className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1.5"><FileText size={10} className="text-[hsl(var(--primary))]"/> Descripción Técnica</h4>
+                    <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium shadow-inner">
                         {selectedTask?.description || selectedTask?.payload || 'Cargando detalles de la operación...'}
                     </div>
                 </section>
@@ -273,19 +273,19 @@ export default function AdminDashboardPage() {
 
 function KpiCard({ title, value, trend, icon: Icon, color }: any) {
     return (
-        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-slate-100 dark:from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full pointer-events-none" />
+        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[hsl(var(--surface-2))] dark:from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full pointer-events-none" />
             <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className={clsx("size-10 rounded-md flex items-center justify-center bg-slate-50 dark:bg-black/20 shadow-inner group-hover:scale-105 transition-transform", color)}>
+                <div className={clsx("size-10 rounded-md flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-black/20 shadow-inner group-hover:scale-105 transition-transform", color)}>
                     <Icon size={10} strokeWidth={2.5} />
                 </div>
-                <button className="text-slate-300 hover:text-slate-500 transition-colors p-1 rounded-lg"><MoreHorizontal size={10} /></button>
+                <button className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors p-1 rounded-lg"><MoreHorizontal size={10} /></button>
             </div>
             <div className="relative z-10 flex flex-col gap-1">
-                <p className="text-lg font-bold text-slate-800 dark:text-white tracking-tighter leading-none">{value}</p>
+                <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">{value}</p>
                 <div className="flex items-center justify-between">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide truncate mr-2">{title}</p>
-                    <span className="text-[8px] font-bold px-1.5 py-0.5 bg-slate-50 dark:bg-white/5 text-slate-500 rounded flex items-center gap-0.5 shrink-0">
+                    <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide truncate mr-2">{title}</p>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded flex items-center gap-0.5 shrink-0">
                         <ArrowUpRight size={10} strokeWidth={3} /> {trend}
                     </span>
                 </div>
@@ -300,20 +300,20 @@ function AdminTaskRow({ task, onOpen, index }: any) {
             initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.03, type: 'spring', stiffness: 300, damping: 24 }}
             onClick={() => onOpen(task)}
             className={clsx(
-                "p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/40 hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
+                "p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-blue-500/40 hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
                 task.is_special && "border-l-2 border-l-amber-400"
             )}
         >
             <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className={clsx(
                     "size-8 rounded-lg flex items-center justify-center shrink-0 shadow-inner transition-transform duration-300 group-hover:scale-105",
-                    task.priority === 'high' ? "bg-rose-50 dark:bg-rose-500/10 text-rose-500" : "bg-slate-50 dark:bg-black/20 text-slate-400"
+                    task.priority === 'high' ? "bg-rose-50 dark:bg-rose-500/10 text-rose-500" : "bg-[hsl(var(--surface-1))] dark:bg-black/20 text-[hsl(var(--text-secondary))]"
                 )}>
                     {task.priority === 'high' ? <Shield size={10} strokeWidth={2.5} /> : <CheckSquare size={10} strokeWidth={2.5} />}
                 </div>
                 <div className="min-w-0 pr-2">
-                    <h4 className="text-[12px] font-bold text-slate-800 dark:text-white tracking-tight truncate group-hover:text-[hsl(var(--primary))] transition-colors leading-tight">{task.title}</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate font-medium mt-0.5 leading-tight">{task.description || 'Haz clic para intervenir'}</p>
+                    <h4 className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight truncate group-hover:text-[hsl(var(--primary))] transition-colors leading-tight">{task.title}</h4>
+                    <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate font-medium mt-0.5 leading-tight">{task.description || 'Haz clic para intervenir'}</p>
                 </div>
             </div>
             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 rounded-lg">
@@ -331,12 +331,12 @@ function LogItem({ icon: Icon, title, user, time, color, bg }: any) {
             <div className={clsx("size-8 rounded-lg flex items-center justify-center shadow-inner shrink-0 transition-transform duration-300 group-hover:scale-105", bg, color)}>
                 <Icon size={10} strokeWidth={2.5} />
             </div>
-            <div className="flex-1 min-w-0 border-b border-slate-50 dark:border-white/5 pb-3 group-last:border-0 group-last:pb-0">
+            <div className="flex-1 min-w-0 border-b border-[hsl(var(--border))] dark:border-white/5 pb-3 group-last:border-0 group-last:pb-0">
                 <div className="flex justify-between items-center gap-2">
-                    <h5 className="text-[11px] font-bold text-slate-800 dark:text-white truncate tracking-tight leading-tight">{title}</h5>
-                    <span className="text-[8px] font-bold text-slate-400 whitespace-nowrap bg-slate-50 dark:bg-black/20 px-1.5 py-0.5 rounded uppercase tracking-wide">{time}</span>
+                    <h5 className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate tracking-tight leading-tight">{title}</h5>
+                    <span className="text-[8px] font-bold text-[hsl(var(--text-secondary))] whitespace-nowrap bg-[hsl(var(--surface-1))] dark:bg-black/20 px-1.5 py-0.5 rounded uppercase tracking-wide">{time}</span>
                 </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-tight mt-0.5"><span className="text-slate-700 dark:text-slate-200 font-bold">{user}</span></p>
+                <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-tight mt-0.5"><span className="text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] font-bold">{user}</span></p>
             </div>
         </div>
     );

@@ -16,7 +16,7 @@ type Story = StoryObj;
 
 export const Preview: Story = {
   render: () => (
-    <div className="min-h-screen bg-slate-100 p-3 md:p-4">
+    <div className="min-h-screen bg-[hsl(var(--surface-2))] p-3 md:p-4">
       <div className="mx-auto max-w-6xl space-y-3">
         <DSCard tone="light" className="p-4 md:p-3">
           <div className="flex items-center justify-between gap-4">

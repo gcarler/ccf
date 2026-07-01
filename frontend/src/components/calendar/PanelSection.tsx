@@ -18,13 +18,13 @@ export default function PanelSection({ title, children, collapsible }: PanelSect
         onClick={() => collapsible && setOpen(v => !v)}
         className={clsx('flex items-center justify-between', collapsible && 'cursor-pointer')}
       >
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
           {title}
         </span>
         {collapsible && (
           <ChevronDown
             size={11}
-            className={clsx('text-slate-300 transition-transform', !open && '-rotate-90')}
+            className={clsx('text-[hsl(var(--text-secondary))] transition-transform', !open && '-rotate-90')}
           />
         )}
       </div>

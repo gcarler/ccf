@@ -56,38 +56,38 @@ export default function StudentGrades() {
                 </div>
             </section>
 
-            <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl p-4 space-y-3">
+            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl p-4 space-y-3">
                 {loading ? (
-                    <div className="px-4 py-1.5 text-center text-slate-400 text-sm font-semibold uppercase tracking-wide">
+                    <div className="px-4 py-1.5 text-center text-[hsl(var(--text-secondary))] text-sm font-semibold uppercase tracking-wide">
                         Cargando materias...
                     </div>
                 ) : enrollments.length === 0 ? (
-                    <div className="px-4 py-1.5 text-center text-slate-400 space-y-3">
-                        <BookOpen className="w-12 h-8 mx-auto text-slate-300" />
-                        <p className="text-sm font-bold text-slate-800 dark:text-white">Aun no tienes calificaciones</p>
+                    <div className="px-4 py-1.5 text-center text-[hsl(var(--text-secondary))] space-y-3">
+                        <BookOpen className="w-12 h-8 mx-auto text-[hsl(var(--text-secondary))]" />
+                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Aun no tienes calificaciones</p>
                         <p className="text-sm">Inscribete a un curso para ver tus notas y progreso aqui.</p>
                     </div>
                 ) : (
                     <div className="px-2 flex flex-col gap-4">
-                        <h3 className="text-slate-900 dark:text-white text-base font-bold mb-2">Materias inscritas</h3>
+                        <h3 className="text-[hsl(var(--text-primary))] dark:text-white text-base font-bold mb-2">Materias inscritas</h3>
                         {enrollments.map((enrollment) => (
-                            <article key={enrollment.id} className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 border border-slate-100 dark:border-white/10 flex flex-col gap-4 shadow-xl transition-all">
+                            <article key={enrollment.id} className="bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg p-3 border border-[hsl(var(--border))] dark:border-white/10 flex flex-col gap-4 shadow-xl transition-all">
                                 <div className="flex items-center gap-4">
                                     <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                                         <BookOpen size={24} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-xs text-slate-400 uppercase tracking-wide font-bold mb-1">
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] uppercase tracking-wide font-bold mb-1">
                                             {enrollment.course.modality === 'formal' ? 'Programa formal' : 'Ruta no formal'}
                                         </p>
-                                        <h4 className="text-slate-900 dark:text-white text-sm font-bold leading-tight">{enrollment.course.title}</h4>
+                                        <h4 className="text-[hsl(var(--text-primary))] dark:text-white text-sm font-bold leading-tight">{enrollment.course.title}</h4>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-primary text-lg font-bold">
                                             {typeof enrollment.final_grade === 'number' ? enrollment.final_grade.toFixed(1) : '--'}
-                                            <span className="text-xs text-slate-400 font-bold">/10</span>
+                                            <span className="text-xs text-[hsl(var(--text-secondary))] font-bold">/10</span>
                                         </p>
-                                        <p className="text-[9px] text-slate-500 uppercase font-bold tracking-wide mt-1">Calificacion</p>
+                                        <p className="text-[9px] text-[hsl(var(--text-secondary))] uppercase font-bold tracking-wide mt-1">Calificacion</p>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-3 items-center text-sm">
@@ -95,8 +95,8 @@ export default function StudentGrades() {
                                     <StatusPill label="Asistencia" value={`${Math.round(enrollment.attendance_percent)}%`} highlight={enrollment.attendance_percent >= 75} />
                                     <StatusPill label="Estado" value={enrollment.approved ? 'Aprobado' : 'En curso'} highlight={enrollment.approved} />
                                 </div>
-                                <div className="h-px bg-slate-200 dark:bg-white/10"></div>
-                                <div className="flex items-center justify-between text-xs uppercase tracking-wide font-bold text-slate-500">
+                                <div className="h-px bg-[hsl(var(--surface-3))] dark:bg-white/10"></div>
+                                <div className="flex items-center justify-between text-xs uppercase tracking-wide font-bold text-[hsl(var(--text-secondary))]">
                                     <span>ID inscripcion #{enrollment.id}</span>
                                     <button className="text-primary flex items-center gap-1 hover:translate-x-1 transition-transform">
                                         Ver detalle <ChevronRight size={14} />
@@ -126,10 +126,10 @@ function StatusPill({ label, value, highlight }: { label: string; value: string;
             className={`px-3 py-1.5 rounded-lg border text-[10px] font-semibold uppercase tracking-wide ${
                 highlight
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                    : 'bg-white/5 text-slate-400 border-white/10'
+                    : 'bg-white/5 text-[hsl(var(--text-secondary))] border-white/10'
             }`}
         >
-            <span className="text-slate-500 mr-1">{label}</span>
+            <span className="text-[hsl(var(--text-secondary))] mr-1">{label}</span>
             {value}
         </div>
     );

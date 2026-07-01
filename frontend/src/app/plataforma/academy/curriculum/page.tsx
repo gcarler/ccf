@@ -50,8 +50,8 @@ export default function StudentCurriculum() {
                 primaryAction={{ label: 'Editar plan', icon: LinkIcon, onClick: () => router.push('/plataforma/academy/coordination') }}
                 secondaryAction={{ label: 'Ver cronograma', icon: Calendar, onClick: () => router.push('/plataforma/academy/schedule') }}
             />
-            <div className="rounded-md border border-slate-200 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl overflow-hidden">
-                <div className="flex overflow-x-auto hide-scrollbar gap-3 p-4 border-b border-slate-100 dark:border-white/5">
+            <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl overflow-hidden">
+                <div className="flex overflow-x-auto hide-scrollbar gap-3 p-4 border-b border-[hsl(var(--border))] dark:border-white/5">
                     {filters.map((filter) => (
                         <CommunityToolbarChip
                             key={filter}
@@ -63,8 +63,8 @@ export default function StudentCurriculum() {
                     ))}
                 </div>
                 <div className="px-4 py-2 flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">{activeFilter}</h2>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full">
+                    <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{activeFilter}</h2>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-3 py-1 rounded-full">
                         {filtered.length} cursos
                     </span>
                 </div>
@@ -73,12 +73,12 @@ export default function StudentCurriculum() {
                     <SummaryCard label="No formal" value={summary.informal} tone="blue" />
                     <SummaryCard label="Avg progreso" value={`${summary.avgProgress}%`} tone="emerald" />
                 </div>
-                {loading && <p className="px-4 pb-6 text-sm text-slate-500">Sincronizando tus cursos...</p>}
+                {loading && <p className="px-4 pb-6 text-sm text-[hsl(var(--text-secondary))]">Sincronizando tus cursos...</p>}
                 {error && <p className="px-4 pb-6 text-sm text-rose-400">{error}</p>}
                 {!loading && filtered.length === 0 && (
-                    <div className="px-4 py-1.5 text-center text-slate-400 space-y-3">
-                        <BookOpen className="w-12 h-8 mx-auto text-slate-300" />
-                        <p className="text-sm font-bold text-slate-800 dark:text-white">No encontramos cursos en esta categoría</p>
+                    <div className="px-4 py-1.5 text-center text-[hsl(var(--text-secondary))] space-y-3">
+                        <BookOpen className="w-12 h-8 mx-auto text-[hsl(var(--text-secondary))]" />
+                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">No encontramos cursos en esta categoría</p>
                         <p className="text-sm">Inscríbete a una nueva cohorte para ampliar tu plan de estudios.</p>
                     </div>
                 )}
@@ -87,9 +87,9 @@ export default function StudentCurriculum() {
                             <article 
                                 key={enrollment.id} 
                                 onClick={() => router.push(`/academy/course/${enrollment.course.id}`)}
-                                className="bg-slate-50 dark:bg-white/5 rounded-md p-3 border border-slate-100 dark:border-white/10 flex items-center gap-4 group cursor-pointer hover:shadow-lg transition-all"
+                                className="bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/10 flex items-center gap-4 group cursor-pointer hover:shadow-lg transition-all"
                             >
-                                <div className="text-slate-400 group-hover:text-primary transition-colors p-2">
+                                <div className="text-[hsl(var(--text-secondary))] group-hover:text-primary transition-colors p-2">
                                     <BookOpen size={20} />
                                 </div>
                                 <div className="flex-1">
@@ -104,14 +104,14 @@ export default function StudentCurriculum() {
                                         {enrollment.approved ? <CheckCircle size={12} /> : <LinkIcon size={12} />}
                                         {enrollment.approved ? 'Completado' : 'En curso'}
                                     </div>
-                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1 group-hover:text-primary transition-colors">
+                                    <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight mb-1 group-hover:text-primary transition-colors">
                                         {enrollment.course.title}
                                     </h3>
-                                    <p className="text-xs text-slate-500 font-medium">{enrollment.course.modality === 'formal' ? 'Programa formal' : 'Taller no formal'}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">{enrollment.course.modality === 'formal' ? 'Programa formal' : 'Taller no formal'}</p>
                                 </div>
-                                <div className="w-20 h-20 rounded-lg border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/20">
-                                    <p className="text-slate-900 dark:text-white text-sm font-semibold">{Math.round(enrollment.progress_percent)}%</p>
-                                    <p className="text-[9px] text-slate-500 uppercase tracking-wide">Progreso</p>
+                                <div className="w-20 h-20 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 flex flex-col items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/20">
+                                    <p className="text-[hsl(var(--text-primary))] dark:text-white text-sm font-semibold">{Math.round(enrollment.progress_percent)}%</p>
+                                    <p className="text-[9px] text-[hsl(var(--text-secondary))] uppercase tracking-wide">Progreso</p>
                                 </div>
                             </article>
                         ))}
@@ -134,7 +134,7 @@ function SummaryCard({ label, value, tone }: { label: string; value: string | nu
         emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10',
     };
     return (
-        <div className={`rounded-lg border border-slate-100 dark:border-white/5 px-4 py-1.5 flex items-center justify-between ${colors[tone]}`}>
+        <div className={`rounded-lg border border-[hsl(var(--border))] dark:border-white/5 px-4 py-1.5 flex items-center justify-between ${colors[tone]}`}>
             <span className="text-[10px] font-semibold uppercase tracking-wide">{label}</span>
             <span className="text-sm font-semibold">{value}</span>
         </div>

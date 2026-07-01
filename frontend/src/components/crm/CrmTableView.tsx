@@ -24,8 +24,8 @@ function AvatarNameRenderer({ data }: any) {
                 {initials}
             </div>
             <div>
-                <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">{data?.nombre_completo}</div>
-                <div className="text-[10px] text-slate-400">#{data?.id}</div>
+                <div className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{data?.nombre_completo}</div>
+                <div className="text-[10px] text-[hsl(var(--text-secondary))]">#{data?.id}</div>
             </div>
         </div>
     );
@@ -73,7 +73,7 @@ export default function CrmTableView({ personas, search, onRowClick, isList = fa
     }, [isList]);
 
     return (
-        <div className="h-full min-w-0 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
+        <div className="h-full min-w-0 rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 shadow-sm">
             <AgGridReact
                 ref={gridRef}
                 theme={isDark ? darkTheme : lightTheme}

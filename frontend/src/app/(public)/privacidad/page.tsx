@@ -74,25 +74,25 @@ export default function PrivacidadPage() {
         <main className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#07080c] pt-[88px]">
 
             {/* ── Hero ── */}
-            <section className="relative overflow-hidden border-b border-slate-200/60 dark:border-white/[0.05]">
+            <section className="relative overflow-hidden border-b border-[hsl(var(--border))]/60 dark:border-white/[0.05]">
                 <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[hsl(var(--primary))/0.06] to-transparent blur-3xl" />
                 </div>
                 <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 py-14 md:py-20 relative z-10">
-                    <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 mb-6">
+                    <div className="flex items-center gap-2 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-6">
                         <Link href="/" className="hover:text-[hsl(var(--primary))] transition-colors">Inicio</Link>
                         <ChevronRight size={12} />
-                        <span className="text-slate-600 dark:text-slate-300">Política de Privacidad</span>
+                        <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Política de Privacidad</span>
                     </div>
                     <div className="flex items-start gap-5">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(var(--primary))/0.15] to-[hsl(var(--primary))/0.05] flex items-center justify-center shrink-0 border border-[hsl(var(--primary))/0.15] shadow-sm">
                             <Shield size={24} className="text-[hsl(var(--primary))]" />
                         </div>
                         <div>
-                            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-3">
+                            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-[hsl(var(--text-primary))] dark:text-white tracking-tight mb-3">
                                 Política de Privacidad
                             </h1>
-                            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
+                            <div className="flex flex-wrap items-center gap-4 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                 <span className="inline-flex items-center gap-1.5">
                                     <Calendar size={12} />
                                     Última actualización: {lastUpdate}
@@ -107,13 +107,13 @@ export default function PrivacidadPage() {
 
                     {/* Resumen ejecutivo */}
                     <div className="mt-8 p-5 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))/0.06] to-transparent border border-[hsl(var(--primary))/0.12]">
-                        <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-sm md:text-base text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">
                             {summary || (
                                 <>
-                                    Esta política describe cómo <strong className="text-slate-800 dark:text-white">PLES SAS</strong> y la{" "}
-                                    <strong className="text-slate-800 dark:text-white">{SITE_NAME}</strong> recopilan,
+                                    Esta política describe cómo <strong className="text-[hsl(var(--text-primary))] dark:text-white">PLES SAS</strong> y la{" "}
+                                    <strong className="text-[hsl(var(--text-primary))] dark:text-white">{SITE_NAME}</strong> recopilan,
                                     usan, almacenan y protegen tus datos personales cuando utilizas la plataforma{" "}
-                                    <strong className="text-slate-800 dark:text-white">{SITE_URL}</strong>. Tu privacidad es un
+                                    <strong className="text-[hsl(var(--text-primary))] dark:text-white">{SITE_URL}</strong>. Tu privacidad es un
                                     derecho fundamental y nos comprometemos a respetarlo en cada interacción.
                                 </>
                             )}
@@ -128,8 +128,8 @@ export default function PrivacidadPage() {
 
                     {/* Índice lateral */}
                     <aside className="w-full lg:w-72 shrink-0 lg:sticky lg:top-[108px]">
-                        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-[#0f1117] p-5 shadow-sm">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
+                        <div className="rounded-2xl border border-[hsl(var(--border))]/60 dark:border-white/[0.06] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] p-5 shadow-sm">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4">
                                 Contenido
                             </p>
                             <nav className="space-y-1">
@@ -140,7 +140,7 @@ export default function PrivacidadPage() {
                                         className={`w-full text-left text-xs px-3 py-2 rounded-lg transition-all duration-200 ${
                                             activeSection === s.id
                                                 ? "bg-[hsl(var(--primary))/0.1] text-[hsl(var(--primary))] font-semibold"
-                                                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                                                : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04]"
                                         }`}
                                     >
                                         {s.title}
@@ -246,9 +246,9 @@ export default function PrivacidadPage() {
                                     { right: "Revocatoria", desc: "Revocar el consentimiento otorgado para el tratamiento de tus datos." },
                                     { right: "Queja ante la SIC", desc: "Presentar queja ante la Superintendencia de Industria y Comercio si consideras que se han vulnerado tus derechos." },
                                 ].map((item) => (
-                                    <div key={item.right} className="p-4 rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02]">
+                                    <div key={item.right} className="p-4 rounded-xl border border-[hsl(var(--border))]/60 dark:border-white/[0.06] bg-[hsl(var(--surface-1))] dark:bg-white/[0.02]">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--primary))] mb-1">{item.right}</p>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{item.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -433,11 +433,11 @@ export default function PrivacidadPage() {
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
     return (
         <section id={id} className="mb-12 scroll-mt-[108px]">
-            <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-1">
+            <h2 className="text-xl md:text-2xl font-black text-[hsl(var(--text-primary))] dark:text-white tracking-tight mb-1">
                 {title}
             </h2>
             <div className="h-0.5 w-10 rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] mb-5" />
-            <div className="space-y-4 text-slate-600 dark:text-slate-300 text-sm md:text-base leading-relaxed [&_strong]:text-slate-800 [&_strong]:dark:text-white [&_a]:text-[hsl(var(--primary))] [&_a:hover]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-2">
+            <div className="space-y-4 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm md:text-base leading-relaxed [&_strong]:text-[hsl(var(--text-primary))] [&_strong]:dark:text-white [&_a]:text-[hsl(var(--primary))] [&_a:hover]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-2">
                 {children}
             </div>
         </section>
@@ -447,7 +447,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 function Subsection({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <div className="my-3">
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">{title}</p>
+            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mb-1">{title}</p>
             {children}
         </div>
     );
@@ -455,7 +455,7 @@ function Subsection({ title, children }: { title: string; children: React.ReactN
 
 function InfoCard({ children }: { children: React.ReactNode }) {
     return (
-        <div className="my-3 rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02] divide-y divide-slate-100 dark:divide-white/[0.04] overflow-hidden text-sm">
+        <div className="my-3 rounded-xl border border-[hsl(var(--border))]/60 dark:border-white/[0.06] bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] divide-y divide-[hsl(var(--border))] dark:divide-white/[0.04] overflow-hidden text-sm">
             {children}
         </div>
     );
@@ -464,14 +464,14 @@ function InfoCard({ children }: { children: React.ReactNode }) {
 function InfoRow({ label, value, link }: { label: string; value: string; link?: string }) {
     return (
         <div className="flex flex-wrap gap-2 px-4 py-2.5">
-            <span className="font-semibold text-slate-500 dark:text-slate-400 w-32 shrink-0">{label}</span>
+            <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] w-32 shrink-0">{label}</span>
             {link ? (
                 <a href={link} target={link.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"
                     className="text-[hsl(var(--primary))] hover:underline">
                     {value}
                 </a>
             ) : (
-                <span className="text-slate-700 dark:text-slate-200">{value}</span>
+                <span className="text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{value}</span>
             )}
         </div>
     );
@@ -479,19 +479,19 @@ function InfoRow({ label, value, link }: { label: string; value: string; link?: 
 
 function ContactCard({ title, email, detail, web }: { title: string; email: string; detail: string; web?: string }) {
     return (
-        <div className="p-5 rounded-2xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-[#0f1117] shadow-sm space-y-3">
-            <p className="font-bold text-slate-800 dark:text-white text-sm">{title}</p>
+        <div className="p-5 rounded-2xl border border-[hsl(var(--border))]/60 dark:border-white/[0.06] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] shadow-sm space-y-3">
+            <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-sm">{title}</p>
             <a href={`mailto:${email}`}
                 className="inline-flex items-center gap-2 text-sm text-[hsl(var(--primary))] hover:underline">
                 <Mail size={13} /> {email}
             </a>
             {web && (
                 <a href={web} target="_blank" rel="noopener noreferrer"
-                    className="block text-xs text-slate-400 hover:text-[hsl(var(--primary))] transition-colors">
+                    className="block text-xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors">
                     {web}
                 </a>
             )}
-            <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">{detail}</p>
+            <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{detail}</p>
         </div>
     );
 }

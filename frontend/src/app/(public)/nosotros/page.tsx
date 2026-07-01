@@ -341,7 +341,7 @@ export default function NosotrosPage() {
                                 <div className="flex flex-wrap items-center justify-center gap-3">
                                     <Link
                                         href="/sedes"
-                                        className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-white text-site-primary text-xs font-black uppercase tracking-wider hover:scale-105 transition-all shadow-xl"
+                                        className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-[hsl(var(--bg-primary))] text-site-primary text-xs font-black uppercase tracking-wider hover:scale-105 transition-all shadow-xl"
                                     >
                                         {ctaViewSedes} <ArrowRight size={14} />
                                     </Link>

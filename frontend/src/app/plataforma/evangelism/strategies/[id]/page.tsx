@@ -1173,7 +1173,7 @@ export default function StrategyDetailPage() {
  onClick={() => setTableSubTab('groups')}
  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
  tableSubTab === 'groups'
- ? 'bg-blue-600 text-white'
+ ? 'bg-[hsl(var(--primary))] text-white'
  : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
  }`}
  >
@@ -1183,7 +1183,7 @@ export default function StrategyDetailPage() {
  onClick={() => { setTableSubTab('sessions'); if (sessions.length === 0) fetchSessions(); }}
  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
  tableSubTab === 'sessions'
- ? 'bg-blue-600 text-white'
+ ? 'bg-[hsl(var(--primary))] text-white'
  : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
  }`}
  >
@@ -1275,13 +1275,13 @@ export default function StrategyDetailPage() {
  <div className="flex items-center gap-1">
  <button
  onClick={(e) => { e.stopPropagation(); openPersonaDrawer(item); }}
- className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors"
  >
  <Users size={10} /> Personas
  </button>
  <button
  onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/evangelism/faro/${item.id}`); }}
- className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors"
  >
  <Calendar size={10} /> Detalle
  </button>
@@ -1374,7 +1374,7 @@ export default function StrategyDetailPage() {
  <div className="flex items-center gap-1">
  <button
  onClick={(e) => { e.stopPropagation(); openAttendanceDrawer(item); }}
- className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors whitespace-nowrap"
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
  >
  <Users size={10} /> Asistencia
  </button>
@@ -1420,7 +1420,7 @@ export default function StrategyDetailPage() {
  <div className="space-y-1">
  {(activeTab === 'groups' || activeTab === 'overview') && groups.map(g => (
  <div key={`g-${g.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 transition-all">
- <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Users size={14} className="text-[hsl(var(--primary))] dark:text-blue-400" /></div>
+ <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Users size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
  <div className="flex-1 min-w-0">
  <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{g.name}</p>
  <p className="text-xs text-[hsl(var(--text-secondary))]">{g.personas_count} personas{g.zone ? ` · ${g.zone}` : ''}</p>
@@ -1447,8 +1447,8 @@ export default function StrategyDetailPage() {
  {(activeTab === 'groups' || activeTab === 'overview') && groups.map(g => (
  <div key={`g-${g.id}`} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
  <div className="flex items-center gap-2 mb-2">
- <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><Users size={12} className="text-[hsl(var(--primary))] dark:text-blue-400" /></div>
- <span className="text-xs font-bold text-[hsl(var(--primary))] dark:text-blue-400">GRUPO</span>
+ <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><Users size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
+ <span className="text-xs font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">GRUPO</span>
  </div>
  <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">{g.name}</h3>
  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{g.zone || 'Sin zona'}</p>
@@ -1628,7 +1628,7 @@ export default function StrategyDetailPage() {
  onClick={e => e.stopPropagation()}
  className="absolute top-7 right-0 w-52 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl py-1"
  >
- <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400 px-3 py-1.5">Compartir enlace del grupo</p>
+ <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-3 py-1.5">Compartir enlace del grupo</p>
  <button onClick={() => shareGroupLink(g.id, g.name, 'copy')}
  className="w-full text-left px-3 py-2 text-xs font-medium text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] flex items-center gap-2">
  <Copy size={12} className="shrink-0" /> Copiar enlace
@@ -1714,15 +1714,15 @@ export default function StrategyDetailPage() {
  <div className="flex flex-col gap-2">
  {/* Buscador */}
  <div className="relative">
- <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+ <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] pointer-events-none" />
  <input
  value={sessionSearch}
  onChange={e => setSessionSearch(e.target.value)}
  placeholder="Buscar por tema, grupo o mes (ej. 2025-03)…"
- className="w-full pl-8 pr-8 h-8 text-xs rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+ className="w-full pl-8 pr-8 h-8 text-xs rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-1 focus:ring-blue-400"
  />
  {sessionSearch && (
- <button onClick={() => setSessionSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+ <button onClick={() => setSessionSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]">
  <X size={12} />
  </button>
  )}
@@ -1930,9 +1930,9 @@ export default function StrategyDetailPage() {
           const habColor = s.estado_habilitacion === 'HABILITADO'
            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
            : s.estado_habilitacion === 'CANCELADA'
-           ? 'bg-red-50 text-red-500 dark:bg-red-900/20'
+           ? 'bg-red-50 text-[hsl(var(--destructive))] dark:bg-red-900/20'
            : s.estado_habilitacion === 'CERRADO'
-           ? 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400'
+           ? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]'
            : 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400';
           return (
            <div key={s.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[hsl(var(--bg-muted))] transition-colors">
@@ -1991,7 +1991,7 @@ export default function StrategyDetailPage() {
  { label: 'Grupos', value: metrics.summary.total_groups },
  { label: 'Sesiones', value: metrics.summary.total_sessions },
  { label: 'Primera vez', value: metrics.summary.total_first_timers, cls: 'text-emerald-600' },
- { label: 'Inasistencias', value: metrics.summary.total_absences, cls: 'text-red-500' },
+ { label: 'Inasistencias', value: metrics.summary.total_absences, cls: 'text-[hsl(var(--destructive))]' },
  ].map(stat => (
  <div key={stat.label} className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
  <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{stat.label}</p>
@@ -2243,7 +2243,7 @@ export default function StrategyDetailPage() {
  )}
  </div>
  {roleDropdown === field && (
- <div className="absolute z-50 mt-1 w-full bg-white dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-48 overflow-y-auto">
+ <div className="absolute z-50 mt-1 w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-48 overflow-y-auto">
  <button
  type="button"
  onMouseDown={() => { setGroupRoleAssignments(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}
@@ -2330,7 +2330,7 @@ export default function StrategyDetailPage() {
  className="shrink-0 h-4 flex items-center justify-center cursor-row-resize group select-none border-y border-[hsl(var(--border-primary))] hover:border-blue-300 dark:hover:border-blue-500/40 transition-colors"
  title="Arrastra para ajustar el espacio"
  >
- <div className="w-12 h-1 rounded-full bg-[hsl(var(--bg-muted))] group-hover:bg-blue-400 dark:group-hover:bg-blue-500 transition-colors" />
+ <div className="w-12 h-1 rounded-full bg-[hsl(var(--bg-muted))] group-hover:bg-[hsl(var(--primary))] dark:group-hover:bg-[hsl(var(--primary))] transition-colors" />
  </div>
 
  {/* Panel inferior: agregar personas */}
@@ -2338,7 +2338,7 @@ export default function StrategyDetailPage() {
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block shrink-0">Agregar personas</label>
  <div className="relative mb-2 shrink-0">
  {personaSearchLoading
- ? <Loader2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 animate-spin" />
+ ? <Loader2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--primary))] animate-spin" />
  : <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />}
  <input value={personaSearch}
  onChange={e => setPersonaSearch(e.target.value)}
@@ -2513,7 +2513,7 @@ export default function StrategyDetailPage() {
  <Search size={13} />Buscar existente
  </button>
  <button onClick={() => setShowNewVisitorForm(true)}
- className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[hsl(var(--border-primary))] dark:border-white/20 text-xs text-[hsl(var(--text-secondary))] hover:border-green-400 hover:text-green-600 dark:hover:border-green-700 dark:hover:text-green-400 transition-colors">
+ className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[hsl(var(--border-primary))] dark:border-white/20 text-xs text-[hsl(var(--text-secondary))] hover:border-green-400 hover:text-[hsl(var(--secondary))] dark:hover:border-green-700 dark:hover:text-[hsl(var(--secondary))] transition-colors">
  <UserPlus size={13} />Crear persona nueva
  </button>
  </div>
@@ -2622,7 +2622,7 @@ export default function StrategyDetailPage() {
  </div>
  </div>
  <button onClick={handleCreateNewVisitor} disabled={savingNewVisitor}
- className="w-full py-2 rounded-lg text-[12px] font-semibold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+ className="w-full py-2 rounded-lg text-[12px] font-semibold text-white bg-[hsl(var(--secondary))] hover:bg-[hsl(var(--secondary))] disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
  {savingNewVisitor ? <><Loader2 size={13} className="animate-spin" />Guardando...</> : <><UserPlus size={13} />Registrar visitante</>}
  </button>
  </div>

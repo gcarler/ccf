@@ -98,7 +98,7 @@ export default function PlanificadorPage() {
       <div className="flex flex-col items-center justify-center h-full gap-4 p-4 flex-1">
         <div className="size-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-xs shadow-lg">CCF</div>
         <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} />
-        <p className="text-[11px] text-slate-400 font-medium">Cargando calendario...</p>
+        <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">Cargando calendario...</p>
       </div>
     }>
       <PlanificadorInner />
@@ -294,7 +294,7 @@ function PlanificadorInner() {
           CCF
         </div>
         <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} />
-        <p className="text-[11px] text-slate-400 font-medium">Cargando {viewMeta.label}...</p>
+        <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">Cargando {viewMeta.label}...</p>
       </div>
     );
   }
@@ -303,9 +303,9 @@ function PlanificadorInner() {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-4 flex-1">
         <div className="size-12 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
-          <AlertTriangle size={24} className="text-red-500" />
+          <AlertTriangle size={24} className="text-[hsl(var(--destructive))]" />
         </div>
-        <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200">{error}</p>
+        <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{error}</p>
         <button
           onClick={fetchAll}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20 hover:brightness-110 transition-all active:scale-95"
@@ -323,7 +323,7 @@ function PlanificadorInner() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Header */}
-        <header className="shrink-0 flex items-center justify-between px-3 py-2.5 border-b border-slate-100 dark:border-white/5 gap-2">
+        <header className="shrink-0 flex items-center justify-between px-3 py-2.5 border-b border-[hsl(var(--border))] dark:border-white/5 gap-2">
           {/* View badge + navigation */}
           <div className="flex items-center gap-1.5">
             {/* View indicator */}
@@ -335,15 +335,15 @@ function PlanificadorInner() {
               {viewMeta.label}
             </div>
 
-            <div className="w-px h-4 bg-slate-200 dark:bg-white/10" />
+            <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10" />
 
-            <button onClick={prev} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors">
+            <button onClick={prev} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] transition-colors">
               <ChevronLeft size={16} />
             </button>
-            <button onClick={next} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors">
+            <button onClick={next} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] transition-colors">
               <ChevronRight size={16} />
             </button>
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white ml-1 min-w-[130px]">
+            <h2 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white ml-1 min-w-[130px]">
               {timeMode === 'semana'
                 ? `${format(weekDays[0], 'd')} – ${format(weekDays[6], 'd MMM', { locale: es })}`
                 : timeMode === 'mes'
@@ -363,7 +363,7 @@ function PlanificadorInner() {
             <div className="relative">
               <button
                 onClick={() => setShowViewDropdown(v => !v)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-all capitalize"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all capitalize"
               >
                 {timeMode === 'semana' ? 'Semana' : timeMode === 'mes' ? 'Mes' : 'Día'}
                 <ChevronDown size={11} />
@@ -375,7 +375,7 @@ function PlanificadorInner() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -4, scale: 0.96 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute right-0 top-full mt-1.5 w-28 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md shadow-xl overflow-hidden z-50"
+                    className="absolute right-0 top-full mt-1.5 w-28 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-xl overflow-hidden z-50"
                   >
                     {(['semana', 'mes', 'dia'] as ViewMode[]).map(v => (
                       <button
@@ -385,7 +385,7 @@ function PlanificadorInner() {
                           'w-full text-left px-3 py-1.5 text-[11px] font-bold transition-colors capitalize',
                           timeMode === v
                             ? 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5',
+                            : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5',
                         )}
                       >
                         {v === 'semana' ? 'Semana' : v === 'mes' ? 'Mes' : 'Día'}
@@ -413,13 +413,13 @@ function PlanificadorInner() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -4, scale: 0.96 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute right-0 top-full mt-1.5 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md shadow-xl overflow-hidden z-50"
+                    className="absolute right-0 top-full mt-1.5 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-xl overflow-hidden z-50"
                   >
                     {VIEW_CREATE_OPTIONS[calendarView].map((opt, i) => (
                       <button
                         key={i}
                         onClick={() => openCreation(opt.kind, opt.preset)}
-                        className="w-full text-left px-3 py-2 text-[12px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                        className="w-full text-left px-3 py-2 text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                       >
                         {opt.label}
                       </button>
@@ -435,18 +435,18 @@ function PlanificadorInner() {
         {timeMode === 'semana' && (
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Day headers */}
-            <div className="flex shrink-0 border-b border-slate-100 dark:border-white/5">
+            <div className="flex shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5">
               <div className="w-16 shrink-0" />
               {weekDays.map((day, i) => (
-                <div key={i} className="flex-1 min-w-0 flex flex-col items-center py-2 border-l border-slate-100 dark:border-white/5 first:border-l-0">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                <div key={i} className="flex-1 min-w-0 flex flex-col items-center py-2 border-l border-[hsl(var(--border))] dark:border-white/5 first:border-l-0">
+                  <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                     {format(day, 'EEE', { locale: es })}
                   </span>
                   <span className={clsx(
                     'size-8 flex items-center justify-center rounded-full text-sm font-bold mt-0.5',
                     isToday(day)
                       ? 'text-white shadow-lg'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5',
+                      : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
                   )}
                     style={isToday(day) ? { backgroundColor: viewMeta.color } : {}}
                   >
@@ -457,14 +457,14 @@ function PlanificadorInner() {
             </div>
 
             {/* All-day row */}
-            <div className="flex shrink-0 border-b border-slate-100 dark:border-white/5 min-h-[28px]">
+            <div className="flex shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 min-h-[28px]">
               <div className="w-16 shrink-0 flex items-center justify-end pr-2">
-                <span className="text-[9px] text-slate-300 dark:text-slate-600 font-bold">Todo el día</span>
+                <span className="text-[9px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold">Todo el día</span>
               </div>
               {weekDays.map((day, i) => {
                 const dayAllDay = getAllDayForDay(day);
                 return (
-                  <div key={i} className="flex-1 border-l border-slate-100 dark:border-white/5 px-1 py-0.5 first:border-l-0">
+                  <div key={i} className="flex-1 border-l border-[hsl(var(--border))] dark:border-white/5 px-1 py-0.5 first:border-l-0">
                     {dayAllDay.map(e => (
                       <div
                         key={e.id}
@@ -492,14 +492,14 @@ function PlanificadorInner() {
                   {HOURS.map(h => (
                     <div key={h} className="absolute left-0 right-0 flex items-start justify-end pr-3"
                       style={{ top: h * HOUR_HEIGHT - 7 }}>
-                      {h > 0 && <span className="text-[9px] text-slate-300 font-bold">{formatHour(h)}</span>}
+                      {h > 0 && <span className="text-[9px] text-[hsl(var(--text-secondary))] font-bold">{formatHour(h)}</span>}
                     </div>
                   ))}
                 </div>
                 {weekDays.map((day, i) => (
-                  <div key={i} className="flex-1 border-l border-slate-100 dark:border-white/5 relative cursor-pointer first:border-l-0">
+                  <div key={i} className="flex-1 border-l border-[hsl(var(--border))] dark:border-white/5 relative cursor-pointer first:border-l-0">
                     {HOURS.map(h => (
-                      <div key={h} className="absolute left-0 right-0 border-t border-slate-100 dark:border-white/[0.04]"
+                      <div key={h} className="absolute left-0 right-0 border-t border-[hsl(var(--border))] dark:border-white/[0.04]"
                         style={{ top: h * HOUR_HEIGHT }} />
                     ))}
                     {isToday(day) && (
@@ -563,7 +563,7 @@ function PlanificadorInner() {
                   {HOURS.map(h => (
                     <div key={h} className="absolute left-0 right-0 flex items-start justify-end pr-3"
                       style={{ top: h * HOUR_HEIGHT - 7 }}>
-                      {h > 0 && <span className="text-[9px] text-slate-300 font-bold">{formatHour(h)}</span>}
+                      {h > 0 && <span className="text-[9px] text-[hsl(var(--text-secondary))] font-bold">{formatHour(h)}</span>}
                     </div>
                   ))}
                 </div>
@@ -575,7 +575,7 @@ function PlanificadorInner() {
                 >
                   <div className="flex-1 relative cursor-pointer">
                     {HOURS.map(h => (
-                      <div key={h} className="absolute left-0 right-0 border-t border-slate-100 dark:border-white/[0.04]"
+                      <div key={h} className="absolute left-0 right-0 border-t border-[hsl(var(--border))] dark:border-white/[0.04]"
                         style={{ top: h * HOUR_HEIGHT }} />
                     ))}
                     {isToday(currentDate) && (
@@ -601,8 +601,8 @@ function PlanificadorInner() {
                             </span>
                           </div>
                           <p className="text-[11px] font-bold" style={{ color: e.color }}>{e.title}</p>
-                          <p className="text-[10px] text-slate-400">{format(e.start, 'h:mm a')}</p>
-                          {e.location && <p className="text-[9px] text-slate-400 mt-0.5">{e.location}</p>}
+                          <p className="text-[10px] text-[hsl(var(--text-secondary))]">{format(e.start, 'h:mm a')}</p>
+                          {e.location && <p className="text-[9px] text-[hsl(var(--text-secondary))] mt-0.5">{e.location}</p>}
                         </div>
                       );
                     })}
@@ -614,12 +614,12 @@ function PlanificadorInner() {
         )}
 
         {/* Bottom search bar */}
-        <div className="shrink-0 border-t border-slate-100 dark:border-white/5 px-4 py-2">
-          <div className="max-w-lg mx-auto flex items-center gap-2 px-4 py-2 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-            <Search size={14} className="text-slate-300 shrink-0" />
+        <div className="shrink-0 border-t border-[hsl(var(--border))] dark:border-white/5 px-4 py-2">
+          <div className="max-w-lg mx-auto flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
+            <Search size={14} className="text-[hsl(var(--text-secondary))] shrink-0" />
             <input
               placeholder="Busca eventos, personas, actividades..."
-              className="flex-1 text-[12px] bg-transparent outline-none text-slate-600 dark:text-slate-300 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+              className="flex-1 text-[12px] bg-transparent outline-none text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))]"
             />
             <div className="size-5 rounded-full flex items-center justify-center shrink-0 text-white" style={{ backgroundColor: viewMeta.color }}>
               <span className="text-[10px] font-bold">✦</span>
@@ -629,16 +629,16 @@ function PlanificadorInner() {
       </div>
 
       {/* ── RIGHT SIDE PANEL ──────────────────────────────────────────────── */}
-      <aside className="w-[220px] shrink-0 border-l border-slate-100 dark:border-white/5 flex flex-col overflow-hidden">
+      <aside className="w-[220px] shrink-0 border-l border-[hsl(var(--border))] dark:border-white/5 flex flex-col overflow-hidden">
         {/* Panel header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/5 shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/5 shrink-0">
           <div className="flex items-center gap-2">
             <ViewIcon size={14} style={{ color: viewMeta.color }} />
-            <h2 className="text-[13px] font-bold text-slate-800 dark:text-white">{viewMeta.label}</h2>
+            <h2 className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white">{viewMeta.label}</h2>
           </div>
           <button
             onClick={fetchAll}
-            className="p-1 rounded-md text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+            className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors"
             title="Actualizar"
           >
             <RefreshCw size={12} />
@@ -649,21 +649,21 @@ function PlanificadorInner() {
 
           {/* Resumen de hoy */}
           <PanelSection title="Hoy">
-            <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3 space-y-2">
+            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Eventos visibles</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">{todayVisibleEvents.length}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Eventos visibles</p>
+                  <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{todayVisibleEvents.length}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fecha</p>
-                  <p className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{format(new Date(), 'dd MMM', { locale: es })}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha</p>
+                  <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{format(new Date(), 'dd MMM', { locale: es })}</p>
                 </div>
               </div>
 
               {/* Empty state for today */}
               {todayVisibleEvents.length === 0 && (
-                <p className="text-[10px] text-slate-400 text-center py-1">Sin actividades hoy</p>
+                <p className="text-[10px] text-[hsl(var(--text-secondary))] text-center py-1">Sin actividades hoy</p>
               )}
             </div>
           </PanelSection>
@@ -684,7 +684,7 @@ function PlanificadorInner() {
                 >
                   <span className="flex items-center gap-2">
                     <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: EVENT_TYPE_META[type].color }} />
-                    <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    <span className="text-[11px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                       {EVENT_TYPE_META[type].label}
                     </span>
                   </span>
@@ -699,9 +699,9 @@ function PlanificadorInner() {
           {/* Próximos eventos */}
           <PanelSection title="Próximos">
             {upcomingVisibleEvents.length === 0 ? (
-              <div className="bg-slate-50 dark:bg-white/[0.03] rounded-md p-4 text-center border border-dashed border-slate-200 dark:border-white/5">
-                <Flag size={16} className="text-slate-300 mx-auto mb-2" />
-                <p className="text-[10px] text-slate-400 leading-snug">
+              <div className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] rounded-md p-4 text-center border border-dashed border-[hsl(var(--border))] dark:border-white/5">
+                <Flag size={16} className="text-[hsl(var(--text-secondary))] mx-auto mb-2" />
+                <p className="text-[10px] text-[hsl(var(--text-secondary))] leading-snug">
                   Sin próximos eventos en {viewMeta.label}.
                 </p>
               </div>
@@ -710,12 +710,12 @@ function PlanificadorInner() {
                 {upcomingVisibleEvents.map(e => (
                   <div key={e.id}
                     onClick={() => handleEventClick(e)}
-                    className="flex items-start gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
+                    className="flex items-start gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors group"
                   >
                     <span className="size-2 rounded-full shrink-0 mt-1" style={{ backgroundColor: e.color }} />
                     <div className="min-w-0">
-                      <p className="truncate text-[11px] font-bold text-slate-700 dark:text-slate-200 group-hover:text-[hsl(var(--primary))]">{e.title}</p>
-                      <p className="text-[9px] text-slate-400 font-medium">
+                      <p className="truncate text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]">{e.title}</p>
+                      <p className="text-[9px] text-[hsl(var(--text-secondary))] font-medium">
                         {format(e.start, 'MMM d')}
                         {!e.allDay && ` · ${format(e.start, 'h:mm a')}`}
                       </p>
@@ -736,7 +736,7 @@ function PlanificadorInner() {
                 <button
                   key={i}
                   onClick={() => openCreation(opt.kind, opt.preset)}
-                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 border border-slate-100 dark:border-white/5 transition-all text-left"
+                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 transition-all text-left"
                 >
                   <Plus size={12} className="shrink-0" style={{ color: viewMeta.color }} />
                   {opt.label}
@@ -760,7 +760,7 @@ function PlanificadorInner() {
                       'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all text-left',
                       isActive
                         ? 'text-white'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5',
+                        : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5',
                     )}
                     style={isActive ? { backgroundColor: meta.color } : {}}
                   >

@@ -9,7 +9,7 @@ interface SkeletonProps {
 export default function Skeleton({ className }: SkeletonProps) {
     return (
         <div className={clsx(
-            "relative overflow-hidden bg-slate-200 dark:bg-white/5 rounded-md",
+            "relative overflow-hidden bg-[hsl(var(--surface-3))] dark:bg-white/5 rounded-md",
             className
         )}>
             {/* Shimmer Effect Overlay */}

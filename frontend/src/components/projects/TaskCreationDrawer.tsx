@@ -25,7 +25,7 @@ const PRIORITIES = [
     { value: 'urgent', label: 'Urgente', color: 'bg-rose-500', iconColor: 'text-rose-500' },
     { value: 'high', label: 'Alta', color: 'bg-amber-500', iconColor: 'text-amber-500' },
     { value: 'medium', label: 'Normal', color: 'bg-[hsl(var(--primary))]', iconColor: 'text-[hsl(var(--primary))]' },
-    { value: 'low', label: 'Baja', color: 'bg-slate-500', iconColor: 'text-slate-500' }
+    { value: 'low', label: 'Baja', color: 'bg-[hsl(var(--surface-2))]', iconColor: 'text-[hsl(var(--text-secondary))]' }
 ];
 
 export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onClose, onSubmit }: Props) {
@@ -60,7 +60,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
             subtitle="Definición de Acción"
             actions={
                 <>
-                    <button type="button" onClick={onClose} className="px-3 py-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-700 transition-colors">
+                    <button type="button" onClick={onClose} className="px-3 py-1.5 text-[11px] font-medium text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                         Cancelar
                     </button>
                     <button
@@ -77,31 +77,31 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
         >
             <form onSubmit={handleSubmit(onFormSubmit)} className="mt-3 space-y-4">
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <Type size={12} /> Título de la tarea
                     </label>
                     <input
                         autoFocus
                         {...register('title', { required: true })}
                         placeholder="Ej: Revisión de Mezcla de Audio"
-                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 dark:text-white"
+                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-[hsl(var(--text-primary))] dark:text-white"
                     />
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <AlignLeft size={12} /> Descripción (Opcional)
                     </label>
                     <textarea
                         {...register('description')}
                         placeholder="Detalles adicionales, links, etc..."
                         rows={5}
-                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-slate-700 dark:text-slate-300"
+                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                     />
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <Flag size={12} /> Nivel de Prioridad
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -114,7 +114,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                                     "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-[11px] font-bold uppercase tracking-wide transition-all",
                                     priority === p.value
                                         ? `${p.color} border-transparent text-white shadow-md`
-                                        : `bg-transparent border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5`
+                                        : `bg-transparent border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5`
                                 )}
                             >
                                 {priority !== p.value && <div className={clsx("size-1.5 rounded-full", p.color)} />}
@@ -125,7 +125,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <User size={12} /> Asignar a
                     </label>
                     <PersonaSelect

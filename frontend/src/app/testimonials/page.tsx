@@ -41,7 +41,7 @@ export default function TestimonialsPage() {
     });
 
     return (
-        <main className="min-h-screen bg-slate-950">
+        <main className="min-h-screen bg-[hsl(var(--bg-muted))]">
             <Navbar />
             <div className="pt-28" />
 
@@ -55,25 +55,25 @@ export default function TestimonialsPage() {
                     <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
                         Vidas que han sido<br /><span className="text-rose-400">Transformadas</span>
                     </h1>
-                    <p className="text-slate-400 text-lg mb-3 max-w-xl mx-auto">
+                    <p className="text-[hsl(var(--text-secondary))] text-lg mb-3 max-w-xl mx-auto">
                         Miles de personas han experimentado el poder de Dios en su vida. Estas son algunas de sus historias.
                     </p>
                     <div className="max-w-lg mx-auto relative">
-                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar testimonio..."
-                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm outline-none focus:ring-2 focus:ring-rose-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-[hsl(var(--text-secondary))] text-sm outline-none focus:ring-2 focus:ring-rose-500/30 backdrop-blur" />
                     </div>
                 </div>
             </section>
 
             {loading ? (
                 <div className="max-w-6xl mx-auto px-3 pb-4 text-center">
-                    <p className="text-slate-400">Cargando testimonios...</p>
+                    <p className="text-[hsl(var(--text-secondary))]">Cargando testimonios...</p>
                 </div>
             ) : testimonials.length === 0 ? (
                 <div className="max-w-6xl mx-auto px-3 pb-4 text-center">
-                    <p className="text-slate-400 text-lg">Aún no hay testimonios publicados.</p>
+                    <p className="text-[hsl(var(--text-secondary))] text-lg">Aún no hay testimonios publicados.</p>
                 </div>
             ) : (
                 <>
@@ -81,7 +81,7 @@ export default function TestimonialsPage() {
                     <div className="max-w-6xl mx-auto px-3 flex items-center gap-2 flex-wrap mb-3">
                         {categories.map(c => (
                             <button key={c} onClick={() => setCat(c)}
-                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-rose-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}>
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-rose-600 text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
                                 {c}
                             </button>
                         ))}
@@ -95,7 +95,7 @@ export default function TestimonialsPage() {
                                     className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-rose-500/20 rounded-lg p-3 cursor-pointer group transition-all hover:shadow-xl hover:shadow-rose-500/5"
                                     onClick={() => setSelected(t)}>
                                     <div className="text-xl text-rose-500/30 font-bold leading-none mb-3">&quot;</div>
-                                    <p className="text-[13px] text-slate-300 leading-relaxed line-clamp-4 mb-5 group-hover:text-white transition-colors">
+                                    <p className="text-[13px] text-[hsl(var(--text-secondary))] leading-relaxed line-clamp-4 mb-5 group-hover:text-white transition-colors">
                                         {t.content}
                                     </p>
                                     <div className="flex items-center gap-3">
@@ -126,13 +126,13 @@ export default function TestimonialsPage() {
                 {selected && (
                     <div className="space-y-3 mt-4">
                         <div className="text-xl text-rose-500/30 font-bold leading-none">&quot;</div>
-                        <p className="text-slate-700 dark:text-slate-200 text-sm leading-relaxed">{selected.content}</p>
+                        <p className="text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] text-sm leading-relaxed">{selected.content}</p>
                         <div className="flex items-center gap-4">
                             <div className="size-7 rounded-lg bg-gradient-to-br from-rose-500/20 to-pink-500/20 flex items-center justify-center text-rose-400">
                                 <User size={24} />
                             </div>
                             <div>
-                                <p className="font-bold text-slate-800 dark:text-white text-base">{selected.author?.username || 'Anónimo'}</p>
+                                <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-base">{selected.author?.username || 'Anónimo'}</p>
                                 <span className="text-[9px] px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wide mt-1 inline-block">{selected.emotion || 'General'}</span>
                             </div>
                         </div>

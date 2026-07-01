@@ -43,10 +43,10 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
               <AlertTriangle size={28} className="text-rose-500" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
+              <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white mb-1">
                 Algo sali&oacute; mal
               </h3>
-              <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium">
+              <p className="text-[13px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">
                 {this.props.moduleName
                   ? `El m&oacute;dulo "${this.props.moduleName}" encontr&oacute; un error inesperado.`
                   : 'Un error inesperado ocurri&oacute; en esta secci&oacute;n.'}
@@ -57,7 +57,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
                 this.setState({ hasError: false, error: null });
                 window.location.reload();
               }}
-              className="inline-flex items-center gap-2 px-3 py-2.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-md text-[11px] font-bold hover:opacity-90 active:scale-95 transition-all"
+              className="inline-flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-[11px] font-bold hover:opacity-90 active:scale-95 transition-all"
             >
               <RefreshCw size={14} />
               Reintentar

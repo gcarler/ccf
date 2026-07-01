@@ -37,8 +37,8 @@ export default function AdminSettingsContactPage() {
     };
 
     return (
-        <div className="min-h-full bg-slate-950/20 font-display">
-            <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
+        <div className="min-h-full bg-[hsl(var(--bg-muted))]/20 font-display">
+            <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
                 <div className="px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Contact size={18} className="text-primary" />
@@ -71,9 +71,9 @@ export default function AdminSettingsContactPage() {
             <div className="max-w-2xl mx-auto px-4 py-1.5 space-y-3">
                 {/* Contact Points */}
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                    className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-3">
+                    className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Medios de Contacto</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Medios de Contacto</p>
                         {editing && (
                             <button className="flex items-center gap-1 text-primary text-[10px] font-semibold uppercase tracking-wide hover:opacity-70 transition-opacity">
                                 <Plus size={12} /> Agregar
@@ -89,7 +89,7 @@ export default function AdminSettingsContactPage() {
                                         <Icon size={16} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-slate-500 uppercase tracking-wide">{c.label}</p>
+                                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{c.label}</p>
                                         {editing ? (
                                             <input
                                                 value={c.value}
@@ -97,7 +97,7 @@ export default function AdminSettingsContactPage() {
                                                 className="bg-transparent border-b border-white/20 text-sm text-white w-full outline-none focus:border-primary transition-colors py-0.5"
                                             />
                                         ) : (
-                                            <p className="text-sm text-slate-200 font-medium truncate">{c.value}</p>
+                                            <p className="text-sm text-[hsl(var(--text-secondary))] font-medium truncate">{c.value}</p>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
@@ -122,15 +122,15 @@ export default function AdminSettingsContactPage() {
 
                 {/* Office Hours */}
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                    className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-3">
+                    className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-3">
                     <div className="flex items-center gap-2 mb-3">
                         <Clock size={14} className="text-primary" />
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Horarios de Atención</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Horarios de Atención</p>
                     </div>
                     <div className="space-y-3">
                         {schedule.map((s, i) => (
                             <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                                <p className="text-sm font-bold text-slate-300">{s.day}</p>
+                                <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">{s.day}</p>
                                 {editing ? (
                                     <input
                                         value={s.hours}
@@ -138,7 +138,7 @@ export default function AdminSettingsContactPage() {
                                         className="bg-transparent border-b border-white/20 text-sm text-white text-right outline-none focus:border-primary transition-colors w-64"
                                     />
                                 ) : (
-                                    <p className="text-[11px] text-slate-400 font-medium">{s.hours}</p>
+                                    <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">{s.hours}</p>
                                 )}
                             </div>
                         ))}

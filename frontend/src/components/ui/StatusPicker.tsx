@@ -67,7 +67,7 @@ export default function StatusPicker({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.95 }}
                         transition={{ duration: 0.1 }}
-                        className="absolute left-0 top-full mt-1 w-40 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-[100] overflow-hidden"
+                        className="absolute left-0 top-full mt-1 w-40 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] rounded-lg shadow-xl border border-[hsl(var(--border))] dark:border-white/10 z-[100] overflow-hidden"
                     >
                         <div className="p-1">
                             {options.map((option) => (
@@ -81,8 +81,8 @@ export default function StatusPicker({
                                     className={clsx(
                                         "w-full flex items-center justify-between px-3 py-2 rounded-md text-[11px] font-bold transition-colors",
                                         currentValue === option.value 
-                                            ? "bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white" 
-                                            : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
+                                            ? "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white" 
+                                            : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                     )}
                                 >
                                     <div className="flex items-center gap-2">

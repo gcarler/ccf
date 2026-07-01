@@ -136,18 +136,18 @@ export default function StudentProgressPage() {
                     />
                 )}
                 {viewType === 'table' && (
-                    <div className="overflow-x-auto rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+                    <div className="overflow-x-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full min-w-[480px] text-left">
-                            <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 <tr><th className="px-4 py-2">Curso</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2">Progreso</th><th className="px-4 py-2">Nota</th></tr>
                             </thead>
                             <tbody>
                                 {progress.map((course) => (
-                                    <tr key={course.id} className="border-t border-slate-100 dark:border-white/5">
-                                        <td className="px-4 py-2 font-bold text-slate-900 dark:text-white">{course.title}</td>
-                                        <td className="px-4 py-2 text-slate-500">{course.status}</td>
-                                        <td className="px-4 py-2 text-slate-500">{course.progress_percent}%</td>
-                                        <td className="px-4 py-2 text-slate-500">{course.average_grade.toFixed(1)}</td>
+                                    <tr key={course.id} className="border-t border-[hsl(var(--border))] dark:border-white/5">
+                                        <td className="px-4 py-2 font-bold text-[hsl(var(--text-primary))] dark:text-white">{course.title}</td>
+                                        <td className="px-4 py-2 text-[hsl(var(--text-secondary))]">{course.status}</td>
+                                        <td className="px-4 py-2 text-[hsl(var(--text-secondary))]">{course.progress_percent}%</td>
+                                        <td className="px-4 py-2 text-[hsl(var(--text-secondary))]">{course.average_grade.toFixed(1)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -157,11 +157,11 @@ export default function StudentProgressPage() {
                 {viewType === 'list' && (
                     <div className="space-y-2">
                         {progress.map((course) => (
-                            <article key={course.id} className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/5">
+                            <article key={course.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{course.title}</h3>
-                                        <p className="mt-2 text-sm text-slate-500">{course.lessons_completed}/{course.total_lessons} lecciones</p>
+                                        <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{course.title}</h3>
+                                        <p className="mt-2 text-sm text-[hsl(var(--text-secondary))]">{course.lessons_completed}/{course.total_lessons} lecciones</p>
                                     </div>
                                     <span className="text-sm font-semibold text-[hsl(var(--primary))]">{course.progress_percent}%</span>
                                 </div>
@@ -207,24 +207,24 @@ export default function StudentProgressPage() {
                     <motion.section variants={itemVariants} className="space-y-3">
                         <div className="flex items-end justify-between px-4">
                             <div>
-                                <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">Detalle por Curso</h2>
-                                <p className="text-slate-500 font-medium">Desglose de notas y asistencia de tus inscripciones.</p>
+                                <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Detalle por Curso</h2>
+                                <p className="text-[hsl(var(--text-secondary))] font-medium">Desglose de notas y asistencia de tus inscripciones.</p>
                             </div>
                             <div className="flex gap-2">
-                                <button className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg shadow-sm"><Search size={18} className="text-slate-400" /></button>
+                                <button className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm"><Search size={18} className="text-[hsl(var(--text-secondary))]" /></button>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4">
                             {loading ? (
                                 Array(3).fill(0).map((_, i) => (
-                                    <div key={i} className="h-40 bg-slate-100 dark:bg-white/5 rounded-md animate-pulse" />
+                                    <div key={i} className="h-40 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-md animate-pulse" />
                                 ))
                             ) : progress.length > 0 ? (
                                 progress.map(course => (
                                     <div 
                                         key={course.id} 
-                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
+                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
                                     >
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-center gap-3">
@@ -234,13 +234,13 @@ export default function StudentProgressPage() {
                                                 )}>
                                                     {course.status === 'completed' ? 'Completado' : 'En Curso'}
                                                 </span>
-                                                <span className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
+                                                <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1.5">
                                                     <BookOpen size={12} /> {course.lessons_completed} / {course.total_lessons} Lecciones
                                                 </span>
                                             </div>
-                                            <h3 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors leading-none tracking-tight">{course.title}</h3>
+                                            <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors leading-none tracking-tight">{course.title}</h3>
                                             <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-2 text-slate-500">
+                                                <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                     <Clock size={14} strokeWidth={2.5} />
                                                     <span className="text-xs font-bold">Activo: {new Date(course.last_activity).toLocaleDateString()}</span>
                                                 </div>
@@ -256,10 +256,10 @@ export default function StudentProgressPage() {
                                         <div className="w-full lg:w-[400px] flex flex-col md:flex-row items-center gap-3">
                                             <div className="flex-1 w-full space-y-4">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Progreso General</span>
-                                                    <span className="text-sm font-semibold text-slate-800 dark:text-white">{course.progress_percent}%</span>
+                                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso General</span>
+                                                    <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{course.progress_percent}%</span>
                                                 </div>
-                                                <div className="h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden p-0.5">
+                                                <div className="h-3 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden p-0.5">
                                                     <motion.div 
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${course.progress_percent}%` }}
@@ -271,16 +271,16 @@ export default function StudentProgressPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-4 md:border-l border-slate-100 dark:border-white/5 md:pl-8 shrink-0">
+                                            <div className="flex items-center gap-4 md:border-l border-[hsl(var(--border))] dark:border-white/5 md:pl-8 shrink-0">
                                                 <div className="text-center">
-                                                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Nota</p>
+                                                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nota</p>
                                                     <p className={clsx("text-xl font-bold tracking-tighter", course.average_grade >= 70 ? "text-emerald-500" : "text-rose-500")}>
                                                         {course.average_grade.toFixed(1)}
                                                     </p>
                                                 </div>
                                                 <button 
                                                     onClick={() => router.push(`/academy/course/${course.id}`)}
-                                                    className="size-7 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-slate-900/10"
+                                                    className="size-7 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-black/10"
                                                 >
                                                     <ArrowRight size={24} strokeWidth={3} />
                                                 </button>
@@ -289,13 +289,13 @@ export default function StudentProgressPage() {
                                     </div>
                                 ))
                             ) : (
-                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg p-4 text-center space-y-3 border border-slate-100 dark:border-white/5 shadow-inner">
-                                    <div className="size-10 bg-slate-100 dark:bg-white/5 rounded-md flex items-center justify-center mx-auto text-slate-300">
+                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg p-4 text-center space-y-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-inner">
+                                    <div className="size-10 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-md flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))]">
                                         <BookOpen size={48} />
                                     </div>
                                     <div className="max-w-md mx-auto space-y-4">
-                                        <h3 className="text-lg font-bold text-slate-800 dark:text-white">Aún no tienes progreso registrado</h3>
-                                        <p className="text-slate-500 font-medium">Inscríbete en un curso de nuestro catálogo para comenzar tu formación espiritual hoy mismo.</p>
+                                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Aún no tienes progreso registrado</h3>
+                                        <p className="text-[hsl(var(--text-secondary))] font-medium">Inscríbete en un curso de nuestro catálogo para comenzar tu formación espiritual hoy mismo.</p>
                                         <button onClick={() => router.push('/plataforma/academy')} className="mt-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
                                     </div>
                                 </div>

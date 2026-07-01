@@ -54,7 +54,7 @@ function formatRelative(date: Date): string {
 
 // ─── Status / Priority configs ─────────────────────────────────────────────────
 const STATUS_OPTIONS = [
-    { value:'todo',        label:'Pendiente',   dot:'bg-slate-400',   bg:'bg-slate-100 dark:bg-white/5',            text:'text-slate-600 dark:text-slate-300',      border:'border-slate-200 dark:border-white/10' },
+    { value:'todo',        label:'Pendiente',   dot:'bg-[hsl(var(--surface-2))]',   bg:'bg-[hsl(var(--surface-2))] dark:bg-white/5',            text:'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',      border:'border-[hsl(var(--border))] dark:border-white/10' },
     { value:'in_progress', label:'En Progreso', dot:'bg-[hsl(var(--primary))]',    bg:'bg-blue-100 dark:bg-blue-500/20',         text:'text-[hsl(var(--primary))] dark:text-blue-300',        border:'border-blue-200 dark:border-blue-500/30' },
     { value:'blocked',     label:'Bloqueado',   dot:'bg-rose-500',    bg:'bg-rose-100 dark:bg-rose-500/20',         text:'text-rose-700 dark:text-rose-300',        border:'border-rose-200 dark:border-rose-500/30' },
     { value:'completed',   label:'Completado',  dot:'bg-emerald-500', bg:'bg-emerald-100 dark:bg-emerald-500/20',   text:'text-emerald-700 dark:text-emerald-300',  border:'border-emerald-200 dark:border-emerald-500/30' },
@@ -62,7 +62,7 @@ const STATUS_OPTIONS = [
 function getStatus(val: string) { return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0]; }
 
 const PRIORITY_OPTIONS = [
-    { value:'low',    label:'Baja',    color:'text-slate-400',  fill:'#94a3b8' },
+    { value:'low',    label:'Baja',    color:'text-[hsl(var(--text-secondary))]',  fill:'#94a3b8' },
     { value:'normal', label:'Media',   color:'text-[hsl(var(--primary))]',   fill:'#3b82f6' },
     { value:'high',   label:'Alta',    color:'text-orange-500', fill:'#f97316' },
     { value:'urgent', label:'Urgente', color:'text-rose-500',   fill:'#ef4444' },
@@ -88,13 +88,13 @@ function InlineStatusCell({ value, onChange }: { value: string; onChange: (v: st
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] min-w-[180px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
-                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 pt-1 pb-2">Estado</p>
+                <Popover.Content className="z-[500] min-w-[180px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Estado</p>
                     {STATUS_OPTIONS.map(s => (
                         <button key={s.value} onClick={() => { onChange(s.value); setOpen(false); }}
-                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                             <div className={clsx('size-2 rounded-full shrink-0', s.dot)} />
-                            <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 flex-1 text-left">{s.label}</span>
+                            <span className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1 text-left">{s.label}</span>
                             {s.value === value && <Check size={12} className="text-[hsl(var(--primary))]" />}
                         </button>
                     ))}
@@ -111,15 +111,15 @@ function InlinePriorityCell({ value, onChange }: { value: string; onChange: (v: 
     return (
         <Popover.Root open={open} onOpenChange={setOpen}>
             <Popover.Trigger asChild>
-                <button onClick={e => e.stopPropagation()} className={clsx('flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold transition-all', 'hover:bg-slate-100 dark:hover:bg-white/5', open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10')}>
-                    <FlagIcon fill={pr.fill} size={13} /><span className={pr.color}>{pr.label}</span><ChevronDown size={10} className="text-slate-400" />
+                <button onClick={e => e.stopPropagation()} className={clsx('flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold transition-all', 'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5', open && 'bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10')}>
+                    <FlagIcon fill={pr.fill} size={13} /><span className={pr.color}>{pr.label}</span><ChevronDown size={10} className="text-[hsl(var(--text-secondary))]" />
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] min-w-[160px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
-                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 pt-1 pb-2">Prioridad</p>
+                <Popover.Content className="z-[500] min-w-[160px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Prioridad</p>
                     {PRIORITY_OPTIONS.map(p => (
-                        <button key={p.value} onClick={() => { onChange(p.value); setOpen(false); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <button key={p.value} onClick={() => { onChange(p.value); setOpen(false); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                             <FlagIcon fill={p.fill} size={12} /><span className={clsx('text-[12px] font-semibold flex-1 text-left', p.color)}>{p.label}</span>
                             {p.value === value && <Check size={12} className="text-[hsl(var(--primary))]" />}
                         </button>
@@ -150,19 +150,19 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
     return (
         <Popover.Root open={open} onOpenChange={(v) => { setOpen(v); if(!v) return; if(parsed && !isNaN(parsed.getTime())) { setViewYear(parsed.getFullYear()); setViewMonth(parsed.getMonth()); } }}>
             <Popover.Trigger asChild>
-                <button onClick={e => e.stopPropagation()} className={clsx('group flex items-center gap-1.5 px-2 py-1 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all', 'hover:bg-slate-100 dark:hover:bg-white/5', open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10', isOverdue ? 'text-rose-500 dark:text-rose-400' : isToday2 ? 'text-amber-500 dark:text-amber-400' : label ? 'text-slate-700 dark:text-slate-300' : 'text-slate-300 dark:text-white/20')}>
+                <button onClick={e => e.stopPropagation()} className={clsx('group flex items-center gap-1.5 px-2 py-1 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all', 'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5', open && 'bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10', isOverdue ? 'text-rose-500 dark:text-rose-400' : isToday2 ? 'text-amber-500 dark:text-amber-400' : label ? 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]' : 'text-[hsl(var(--text-secondary))] dark:text-white/20')}>
                     {isOverdue ? <AlertCircle size={13} className="shrink-0" /> : <Calendar size={13} className="shrink-0" />}
-                    {label ?? <span className="group-hover:text-slate-400 transition-colors">—</span>}
+                    {label ?? <span className="group-hover:text-[hsl(var(--text-secondary))] transition-colors">—</span>}
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 p-3 select-none" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                <Popover.Content className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-3 select-none" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     <div className="flex items-center justify-between mb-3">
-                        <button onClick={() => { let m=viewMonth-1,y=viewYear; if(m<0){m=11;y--;} setViewMonth(m);setViewYear(y); }} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400"><ChevronLeft size={14}/></button>
-                        <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200">{MONTHS_ES[viewMonth]} {viewYear}</span>
-                        <button onClick={() => { let m=viewMonth+1,y=viewYear; if(m>11){m=0;y++;} setViewMonth(m);setViewYear(y); }} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400"><ChevronDown size={14}/></button>
+                        <button onClick={() => { let m=viewMonth-1,y=viewYear; if(m<0){m=11;y--;} setViewMonth(m);setViewYear(y); }} className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))]"><ChevronLeft size={14}/></button>
+                        <span className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{MONTHS_ES[viewMonth]} {viewYear}</span>
+                        <button onClick={() => { let m=viewMonth+1,y=viewYear; if(m>11){m=0;y++;} setViewMonth(m);setViewYear(y); }} className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))]"><ChevronDown size={14}/></button>
                     </div>
-                    <div className="grid grid-cols-7 mb-1">{DAYS_ES.map(d => <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-center py-0.5">{d}</div>)}</div>
+                    <div className="grid grid-cols-7 mb-1">{DAYS_ES.map(d => <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center py-0.5">{d}</div>)}</div>
                     <div className="grid grid-cols-7 gap-y-0.5">
                         {cells.map((day, i) => {
                             if (!day) return <div key={`e-${i}`} />;
@@ -170,10 +170,10 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
                             const isSel = parsed && !isNaN(parsed.getTime()) && cd.toDateString()===parsed.toDateString();
                             const isTd  = cd.toDateString()===today.toDateString();
                             const isPast = cd < today && !isTd;
-                            return <button key={day} onClick={() => selectDay(day)} className={clsx('size-8 rounded-lg text-[12px] font-medium transition-all mx-auto flex items-center justify-center', isSel ? 'bg-[hsl(var(--primary))] text-white font-bold shadow-sm' : isTd ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] font-bold ring-1 ring-blue-200' : isPast ? 'text-slate-300 dark:text-white/20 hover:bg-slate-50' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')}>{day}</button>;
+                            return <button key={day} onClick={() => selectDay(day)} className={clsx('size-8 rounded-lg text-[12px] font-medium transition-all mx-auto flex items-center justify-center', isSel ? 'bg-[hsl(var(--primary))] text-white font-bold shadow-sm' : isTd ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] font-bold ring-1 ring-blue-200' : isPast ? 'text-[hsl(var(--text-secondary))] dark:text-white/20 hover:bg-[hsl(var(--surface-1))]' : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>{day}</button>;
                         })}
                     </div>
-                    <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-white/5">
+                    <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
                         <button onClick={() => selectDay(today.getDate())} className="flex-1 text-[11px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors">Hoy</button>
                         {value && <button onClick={() => { onChange(null); setOpen(false); }} className="flex-1 text-[11px] font-bold text-rose-500 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">Quitar</button>}
                     </div>
@@ -209,29 +209,29 @@ function InlineUserCell({ value, token, onChange }: { value?: string | null; tok
     return (
         <Popover.Root open={open} onOpenChange={setOpen}>
             <Popover.Trigger asChild>
-                <button onClick={e => e.stopPropagation()} className={clsx('flex items-center gap-2 px-2 py-1 rounded-lg transition-all', 'hover:bg-slate-100 dark:hover:bg-white/5', open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10')}>
-                    <div className={clsx('size-6 rounded-full flex items-center justify-center font-semibold shrink-0', value ? 'bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-blue-300' : 'bg-slate-100 dark:bg-white/5 text-slate-400')}>
+                <button onClick={e => e.stopPropagation()} className={clsx('flex items-center gap-2 px-2 py-1 rounded-lg transition-all', 'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5', open && 'bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10')}>
+                    <div className={clsx('size-6 rounded-full flex items-center justify-center font-semibold shrink-0', value ? 'bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-blue-300' : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]')}>
                         {value && displayName ? displayName.charAt(0).toUpperCase() : <User size={11} />}
                     </div>
-                    <span className="text-[12px] font-medium text-slate-600 dark:text-slate-400 truncate max-w-[80px]">{displayName ?? (value ? `#${value}` : '—')}</span>
+                    <span className="text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[80px]">{displayName ?? (value ? `#${value}` : '—')}</span>
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] w-[240px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 overflow-hidden" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
-                    <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-white/5">
-                        <Search size={13} className="text-slate-400 shrink-0" />
-                        <input autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar usuario..." className="flex-1 text-[12px] text-slate-700 dark:text-slate-200 bg-transparent outline-none placeholder:text-slate-400" />
-                        {query && <button onClick={() => setQuery('')}><X size={12} className="text-slate-400" /></button>}
+                <Popover.Content className="z-[500] w-[240px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 overflow-hidden" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                    <div className="flex items-center gap-2 px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
+                        <Search size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />
+                        <input autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar usuario..." className="flex-1 text-[12px] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]" />
+                        {query && <button onClick={() => setQuery('')}><X size={12} className="text-[hsl(var(--text-secondary))]" /></button>}
                     </div>
                     <div className="max-h-[200px] overflow-y-auto py-1">
                         {loading ? <div className="flex items-center justify-center py-1.5"><Loader2 size={16} className="text-[hsl(var(--primary))] animate-spin" /></div>
-                        : filtered.length === 0 ? <p className="text-[11px] text-slate-400 text-center py-1.5">Sin resultados</p>
+                        : filtered.length === 0 ? <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-1.5">Sin resultados</p>
                         : <>
                             {value && <button onClick={() => { onChange(null, null); setDisplayName(null); setOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 transition-colors"><X size={12} /><span className="text-[11px] font-bold">Quitar asignación</span></button>}
                             {filtered.map(u => (
-                                <button key={u.id} onClick={() => { onChange(u.id, u.username); setDisplayName(u.username); setOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                <button key={u.id} onClick={() => { onChange(u.id, u.username); setDisplayName(u.username); setOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                                     <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center font-semibold text-[hsl(var(--primary))] shrink-0">{u.username.charAt(0).toUpperCase()}</div>
-                                    <div className="flex-1 text-left"><p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{u.username}</p>{u.email && <p className="text-[10px] text-slate-400 truncate">{u.email}</p>}</div>
+                                    <div className="flex-1 text-left"><p className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{u.username}</p>{u.email && <p className="text-[10px] text-[hsl(var(--text-secondary))] truncate">{u.email}</p>}</div>
                                     {u.id === value && <Check size={12} className="text-[hsl(var(--primary))]" />}
                                 </button>
                             ))}
@@ -256,14 +256,14 @@ function TitleRenderer(params: ICellRendererParams) {
         <button onClick={(e) => { e.stopPropagation(); onOpenTask?.(task); }}
             className="flex items-center gap-2 h-full w-full text-left group">
             <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                task.status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-white/20')}>
+                task.status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
                 {task.status === 'completed' && <span className="text-[7px] font-bold">✓</span>}
             </div>
-            <span className={clsx('text-[13px] font-semibold truncate group-hover:text-[hsl(var(--primary))] transition-colors', task.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200')}>
+            <span className={clsx('text-[13px] font-semibold truncate group-hover:text-[hsl(var(--primary))] transition-colors', task.status === 'completed' ? 'line-through text-[hsl(var(--text-secondary))]' : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]')}>
                 {task.title}
             </span>
             {(task.comments_count ?? 0) > 0 && (
-                <span className="ml-auto flex items-center gap-0.5 text-slate-400 shrink-0">
+                <span className="ml-auto flex items-center gap-0.5 text-[hsl(var(--text-secondary))] shrink-0">
                     <MessageSquare size={11} /><span className="text-[10px]">{task.comments_count}</span>
                 </span>
             )}
@@ -431,10 +431,10 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
             : (getStatus(row.__groupKey)?.label ?? row.__groupKey);
         const dot = groupBy === 'status' ? getStatus(row.__groupKey)?.dot : undefined;
         return (
-            <div className="flex items-center gap-2.5 px-4 h-full bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
+            <div className="flex items-center gap-2.5 px-4 h-full bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border-b border-[hsl(var(--border))] dark:border-white/5">
                 {dot && <span className={clsx('size-2 rounded-full flex-shrink-0', dot)} />}
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{label}</span>
-                <span className="text-[10px] font-semibold text-slate-400 bg-slate-200 dark:bg-white/10 rounded-full px-2 py-0.5">{row.__groupCount}</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
+                <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full px-2 py-0.5">{row.__groupCount}</span>
                 <button onClick={() => setQuickAddGroup(row.__groupKey)}
                     className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/0.8)] transition-colors">
                     <Plus size={11} /> Agregar
@@ -463,46 +463,46 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
         <div className="flex min-w-0 flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] font-sans overflow-hidden">
 
             {/* ── TOOLBAR ── */}
-            <div className="shrink-0 flex min-w-0 items-center gap-1.5 px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/60 dark:bg-black/10 flex-wrap">
+            <div className="shrink-0 flex min-w-0 items-center gap-1.5 px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/[0.06] bg-[hsl(var(--surface-1))]/60 dark:bg-black/10 flex-wrap">
 
                 {/* Column visibility */}
                 <Popover.Root open={cfgOpen} onOpenChange={setCfgOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', cfgOpen ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', cfgOpen ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
                             <Settings2 size={12} /> Columnas
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
-                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Columnas visibles</p>
+                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-2">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5">Columnas visibles</p>
                             {ALL_COLUMNS.map(col => (
                                 <button key={col.id} onClick={() => setVisibleCols(prev => { const n = new Set(prev); if (n.has(col.id)) { if (col.id !== 'title') n.delete(col.id); } else n.add(col.id); return n; })}
-                                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                    {visibleCols.has(col.id) ? <Eye size={13} className="text-[hsl(var(--primary))] shrink-0" /> : <EyeOff size={13} className="text-slate-300 shrink-0" />}
-                                    <span className={clsx('text-[12px] font-medium flex-1 text-left', visibleCols.has(col.id) ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400')}>{col.label}</span>
-                                    {col.id === 'title' && <span className="text-[9px] text-slate-300">fijo</span>}
+                                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
+                                    {visibleCols.has(col.id) ? <Eye size={13} className="text-[hsl(var(--primary))] shrink-0" /> : <EyeOff size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />}
+                                    <span className={clsx('text-[12px] font-medium flex-1 text-left', visibleCols.has(col.id) ? 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]' : 'text-[hsl(var(--text-secondary))]')}>{col.label}</span>
+                                    {col.id === 'title' && <span className="text-[9px] text-[hsl(var(--text-secondary))]">fijo</span>}
                                 </button>
                             ))}
                         </Popover.Content>
                     </Popover.Portal>
                 </Popover.Root>
 
-                <div className="w-px h-4 bg-slate-200 dark:bg-white/10" />
+                <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10" />
 
                 {/* Group by */}
                 <Popover.Root open={groupOpen} onOpenChange={setGroupOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', groupBy !== 'status' ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', groupBy !== 'status' ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
                             <Layers size={12} /> Agrupar{groupBy !== 'none' ? `: ${groupBy === 'status' ? 'Estado' : 'Prioridad'}` : ''}
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
-                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5">
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 pt-1 pb-2">Agrupar por</p>
+                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Agrupar por</p>
                             {([['status','Estado'],['priority','Prioridad'],['none','Sin agrupación']] as const).map(([k, lbl]) => (
                                 <button key={k} onClick={() => { setGroupBy(k); setGroupOpen(false); }}
-                                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                    <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 flex-1 text-left">{lbl}</span>
+                                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
+                                    <span className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1 text-left">{lbl}</span>
                                     {groupBy === k && <Check size={12} className="text-[hsl(var(--primary))]" />}
                                 </button>
                             ))}
@@ -513,13 +513,13 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {/* Filter */}
                 <Popover.Root open={filterOpen} onOpenChange={setFilterOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', activeFilters.length > 0 ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', activeFilters.length > 0 ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
                             <Filter size={12} /> Filtrar{activeFilters.length > 0 ? ` (${activeFilters.length})` : ''}
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
-                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Por Estado</p>
+                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-2">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5">Por Estado</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                                 {STATUS_OPTIONS.map(s => {
                                     const active = activeFilters.some(f => f.field === 'status' && f.value === s.value);
@@ -529,17 +529,17 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                     </button>;
                                 })}
                             </div>
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5 border-t border-slate-100 dark:border-white/5">Por Prioridad</p>
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/5">Por Prioridad</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                                 {PRIORITY_OPTIONS.map(p => {
                                     const active = activeFilters.some(f => f.field === 'priority' && f.value === p.value);
                                     return <button key={p.value} onClick={() => setActiveFilters(prev => active ? prev.filter(f => !(f.field==='priority' && f.value===p.value)) : [...prev, { field: 'priority', value: p.value, label: p.label }])}
-                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10', active ? 'ring-2 ring-blue-500/30 opacity-100' : 'opacity-60 hover:opacity-100', p.color)}>
+                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10', active ? 'ring-2 ring-blue-500/30 opacity-100' : 'opacity-60 hover:opacity-100', p.color)}>
                                         <FlagIcon fill={p.fill} size={11} />{p.label}
                                     </button>;
                                 })}
                             </div>
-                            {activeFilters.length > 0 && <button onClick={() => setActiveFilters([])} className="w-full text-[11px] font-bold text-rose-500 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors border-t border-slate-100 dark:border-white/5 mt-1">Limpiar filtros</button>}
+                            {activeFilters.length > 0 && <button onClick={() => setActiveFilters([])} className="w-full text-[11px] font-bold text-rose-500 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors border-t border-[hsl(var(--border))] dark:border-white/5 mt-1">Limpiar filtros</button>}
                         </Popover.Content>
                     </Popover.Portal>
                 </Popover.Root>
@@ -560,8 +560,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
             <AnimatePresence>
                 {quickAddGroup && (
                     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                        className="shrink-0 flex min-w-0 items-center gap-3 px-4 py-2.5 bg-blue-50/50 dark:bg-blue-500/5 border-b border-slate-100 dark:border-white/5">
-                        <Circle size={15} className="text-slate-300 shrink-0" />
+                        className="shrink-0 flex min-w-0 items-center gap-3 px-4 py-2.5 bg-blue-50/50 dark:bg-blue-500/5 border-b border-[hsl(var(--border))] dark:border-white/5">
+                        <Circle size={15} className="text-[hsl(var(--text-secondary))] shrink-0" />
                         <input
                             autoFocus
                             value={quickAddTitle}
@@ -571,10 +571,10 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                 if (e.key === 'Escape') { setQuickAddGroup(null); setQuickAddTitle(''); }
                             }}
                             placeholder="Nombre de la tarea... (Enter para crear)"
-                            className="flex-1 text-[13px] font-medium text-slate-800 dark:text-slate-200 bg-transparent outline-none placeholder:text-slate-400"
+                            className="flex-1 text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]"
                         />
                         <button onClick={() => quickAddTitle.trim() && handleQuickAdd(quickAddGroup, quickAddTitle.trim())} className="px-3 py-1 bg-[hsl(var(--primary))] text-white text-[11px] font-bold rounded-lg hover:bg-[hsl(var(--primary))] transition-colors shrink-0">Crear</button>
-                        <button onClick={() => { setQuickAddGroup(null); setQuickAddTitle(''); }} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X size={13} /></button>
+                        <button onClick={() => { setQuickAddGroup(null); setQuickAddTitle(''); }} className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"><X size={13} /></button>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -582,8 +582,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
             {/* Grid */}
             <div className="flex-1 min-w-0 min-h-0">
                 {tasks.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
-                        <Circle size={28} className="text-slate-200 dark:text-white/10" />
+                    <div className="flex flex-col items-center justify-center h-full gap-3 text-[hsl(var(--text-secondary))]">
+                        <Circle size={28} className="text-[hsl(var(--text-secondary))] dark:text-white/10" />
                         <p className="text-sm font-medium">Sin tareas en este proyecto</p>
                         <button onClick={() => onAddTask('todo')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors">
                             <Plus size={13} /> Crear primera tarea

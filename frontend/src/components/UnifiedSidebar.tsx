@@ -78,16 +78,16 @@ export default function UnifiedSidebar({
                             "flex items-center gap-3 py-2 rounded-md transition-all cursor-pointer group relative",
                             isMini ? "justify-center px-0 w-10 mx-auto" : "px-3 w-full",
                             isActive 
-                                ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold" 
-                                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                                ? "bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white font-bold" 
+                                : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                         )}
                     >
                         {/* Nested indicator line */}
                         {depth > 0 && !isMini && (
-                            <div className="absolute left-[15px] top-[-8px] bottom-1/2 w-[1px] bg-slate-200 dark:bg-white/10" />
+                            <div className="absolute left-[15px] top-[-8px] bottom-1/2 w-[1px] bg-[hsl(var(--surface-3))] dark:bg-white/10" />
                         )}
                         {depth > 0 && !isMini && (
-                            <div className="absolute left-[15px] top-1/2 w-3 h-[1px] bg-slate-200 dark:bg-white/10" />
+                            <div className="absolute left-[15px] top-1/2 w-3 h-[1px] bg-[hsl(var(--surface-3))] dark:bg-white/10" />
                         )}
 
                         {item.icon && (
@@ -95,7 +95,7 @@ export default function UnifiedSidebar({
                                 size={20} 
                                 strokeWidth={isActive ? 2.5 : 2} 
                                 className={clsx(
-                                    isActive ? "text-slate-900 dark:text-white" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300",
+                                    isActive ? "text-[hsl(var(--text-primary))] dark:text-white" : "text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-[hsl(var(--text-secondary))]",
                                     depth > 0 && !isMini && "ml-4"
                                 )} 
                             />
@@ -110,8 +110,8 @@ export default function UnifiedSidebar({
                             "flex items-center gap-3 py-2 rounded-md transition-all cursor-pointer group relative",
                             isMini ? "justify-center px-0 w-10 mx-auto" : "px-3 w-full",
                             isActive 
-                                ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold" 
-                                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                                ? "bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white font-bold" 
+                                : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                         )}
                     >
                         {item.icon && (
@@ -119,7 +119,7 @@ export default function UnifiedSidebar({
                                 size={20} 
                                 strokeWidth={isActive ? 2.5 : 2} 
                                 className={clsx(
-                                    isActive ? "text-slate-900 dark:text-white" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300",
+                                    isActive ? "text-[hsl(var(--text-primary))] dark:text-white" : "text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-[hsl(var(--text-secondary))]",
                                     depth > 0 && !isMini && "ml-4"
                                 )} 
                             />
@@ -130,7 +130,7 @@ export default function UnifiedSidebar({
                         {!isMini && hasChildren && (
                             <ChevronDown 
                                 size={14} 
-                                className={clsx("text-slate-400 transition-transform duration-200", !isExpanded && "-rotate-90")} 
+                                className={clsx("text-[hsl(var(--text-secondary))] transition-transform duration-200", !isExpanded && "-rotate-90")} 
                             />
                         )}
                     </div>
@@ -142,14 +142,14 @@ export default function UnifiedSidebar({
     return (
         <aside
             className={clsx(
-                "h-[100dvh] bg-white/80 dark:bg-[#18191b]/80 backdrop-blur-xl border-r border-slate-200 dark:border-white/5 flex flex-col z-50 shrink-0 transition-all duration-300 relative font-sans",
+                "h-[100dvh] bg-white/80 dark:bg-[#18191b]/80 backdrop-blur-xl border-r border-[hsl(var(--border))] dark:border-white/5 flex flex-col z-50 shrink-0 transition-all duration-300 relative font-sans",
                 isMini ? "w-[72px]" : "w-[260px]"
             )}
         >            {/* Toggle Button `< >` positioned absolutely on the right edge */}
             <div className="absolute right-0 translate-x-1/2 top-3 z-[60]">
                 <button 
                     onClick={toggleSidebar}
-                    className="w-6 h-6 rounded-full bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-slate-200 dark:border-white/10 shadow-sm flex items-center justify-center text-slate-500 hover:text-[hsl(var(--primary))] transition-all active:scale-95"
+                    className="w-6 h-6 rounded-full bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-[hsl(var(--border))] dark:border-white/10 shadow-sm flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all active:scale-95"
                 >
                     {isMini ? <ChevronRight size={12} strokeWidth={3} /> : <div className="flex -space-x-1"><ChevronLeft size={12} strokeWidth={3}/><ChevronRight size={12} strokeWidth={3}/></div>}
                 </button>
@@ -158,18 +158,18 @@ export default function UnifiedSidebar({
             {/* Sidebar Header (Logo) */}
             <div className="h-12 flex items-center px-3 shrink-0">
                 <div className="flex items-center gap-3 w-full">
-                    <div className="w-8 h-8 rounded-md bg-slate-900 dark:bg-[hsl(var(--bg-primary))] flex items-center justify-center shrink-0 overflow-hidden">
+                    <div className="w-8 h-8 rounded-md bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] flex items-center justify-center shrink-0 overflow-hidden">
                         {logoUrl ? (
                             <OptimizedImage src={logoUrl} alt={logoDisplayName} fill className="w-full h-full object-contain p-1" />
                         ) : (
-                            <div className="w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 relative">
-                                <div className="absolute top-[-2px] right-[-2px] w-1.5 h-1.5 bg-[hsl(var(--bg-primary))] dark:bg-slate-900" />
+                            <div className="w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[hsl(var(--border))] relative">
+                                <div className="absolute top-[-2px] right-[-2px] w-1.5 h-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))]" />
                             </div>
                         )}
                     </div>
                     {!isMini && (
                         <div className="flex-1 overflow-hidden">
-                            <span className="font-semibold text-slate-900 dark:text-white tracking-tight">{logoDisplayName}</span>
+                            <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{logoDisplayName}</span>
                         </div>
                     )}
                 </div>
@@ -180,14 +180,14 @@ export default function UnifiedSidebar({
                 
                 {/* 1. Global Module Navigation (MAIN) */}
                 <div className="flex flex-col gap-1">
-                    {!isMini && <span className="px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Main</span>}
+                    {!isMini && <span className="px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Main</span>}
                     {GLOBAL_MAIN.map(item => renderItem(item))}
                 </div>
 
                 {/* 2. Contextual Sections (e.g. from Projects layout) */}
                 {sections && sections.length > 0 && (
                     <div className="flex flex-col gap-1">
-                        {!isMini && <span className="px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Contextual Tools</span>}
+                        {!isMini && <span className="px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Contextual Tools</span>}
                         
                         <div className="flex flex-col gap-0.5">
                             {renderItem(
@@ -205,10 +205,10 @@ export default function UnifiedSidebar({
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: 'auto', opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
-                                        className="overflow-hidden relative pl-4 ml-6 border-l border-slate-200 dark:border-white/10 mt-1 space-y-0.5"
+                                        className="overflow-hidden relative pl-4 ml-6 border-l border-[hsl(var(--border))] dark:border-white/10 mt-1 space-y-0.5"
                                     >
                                         {sections.flatMap((section: any) => section.items || []).map((item: any) => (
-                                            <Link key={item.id} href={item.href || '/'} className="flex items-center px-2 py-1.5 text-[12px] text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-md transition-colors w-full group">
+                                            <Link key={item.id} href={item.href || '/'} className="flex items-center px-2 py-1.5 text-[12px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white rounded-md transition-colors w-full group">
                                                 <span className="truncate">{item.label}</span>
                                             </Link>
                                         ))}
@@ -221,7 +221,7 @@ export default function UnifiedSidebar({
 
                 {/* 3. Global Settings */}
                 <div className="flex flex-col gap-1 mt-auto shrink-0 pb-4">
-                    {!isMini && <span className="px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Settings</span>}
+                    {!isMini && <span className="px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Settings</span>}
                     {GLOBAL_SETTINGS.map(item => renderItem(item))}
                 </div>
 

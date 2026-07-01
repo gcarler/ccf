@@ -30,7 +30,7 @@ export default function SermonsPage() {
     );
 
     return (
-        <main className="min-h-screen bg-slate-950">
+        <main className="min-h-screen bg-[hsl(var(--bg-muted))]">
             <Navbar />
             <div className="pt-28" />
 
@@ -44,21 +44,21 @@ export default function SermonsPage() {
                     <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
                         La Palabra que<br /><span className="text-[hsl(var(--primary))]">Transforma Vidas</span>
                     </h1>
-                    <p className="text-slate-400 text-lg mb-3 max-w-xl mx-auto">
+                    <p className="text-[hsl(var(--text-secondary))] text-lg mb-3 max-w-xl mx-auto">
                         Accede a todas nuestras prédicas, series y mensajes pastorales. Disponibles cuando los necesitas.
                     </p>
                     <div className="max-w-lg mx-auto relative">
-                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar prédica..."
-                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-[hsl(var(--text-secondary))] text-sm outline-none focus:ring-2 focus:ring-blue-500/30 backdrop-blur" />
                     </div>
                 </div>
             </section>
 
             {/* Series */}
             <section className="max-w-6xl mx-auto px-3 py-1.5">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-3">Series Destacadas</p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Series Destacadas</p>
                 <div className="grid grid-cols-3 gap-3 mb-3">
                     {SERIES.map((s, i) => (
                         <motion.div key={s.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
@@ -77,10 +77,10 @@ export default function SermonsPage() {
 
                 {/* Category Filter */}
                 <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-2">
-                    <Filter size={12} className="text-slate-600 shrink-0" />
+                    <Filter size={12} className="text-[hsl(var(--text-secondary))] shrink-0" />
                     {CATEGORIES.map(c => (
                         <button key={c} onClick={() => setCat(c)}
-                            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${cat === c ? 'bg-[hsl(var(--primary))] text-white' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}>
+                            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${cat === c ? 'bg-[hsl(var(--primary))] text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
                             {c}
                         </button>
                     ))}
@@ -97,16 +97,16 @@ export default function SermonsPage() {
                             <div className="flex-1 min-w-0">
                                 <p className="text-[13px] font-bold text-white truncate group-hover:text-[hsl(var(--primary))] transition-colors">{s.title}</p>
                                 <div className="flex items-center gap-3 mt-1">
-                                    <span className="text-[11px] text-slate-400">{s.speaker}</span>
-                                    <span className="text-slate-600">·</span>
-                                    <span className="flex items-center gap-1 text-[10px] text-slate-500"><Calendar size={9} /> {s.date}</span>
-                                    <span className="flex items-center gap-1 text-[10px] text-slate-500"><Clock size={9} /> {s.duration}</span>
+                                    <span className="text-[11px] text-[hsl(var(--text-secondary))]">{s.speaker}</span>
+                                    <span className="text-[hsl(var(--text-secondary))]">·</span>
+                                    <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]"><Calendar size={9} /> {s.date}</span>
+                                    <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]"><Clock size={9} /> {s.duration}</span>
                                 </div>
                                 {s.series && <span className="text-[9px] text-blue-500/70 font-bold mt-0.5 block">Serie: {s.series}</span>}
                             </div>
                             <div className="shrink-0 text-right">
-                                <p className="text-[10px] text-slate-500">{s.views.toLocaleString()} vistas</p>
-                                <span className="px-2 py-0.5 mt-1 rounded-full bg-white/5 text-[9px] text-slate-500 font-bold block">{s.category}</span>
+                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{s.views.toLocaleString()} vistas</p>
+                                <span className="px-2 py-0.5 mt-1 rounded-full bg-white/5 text-[9px] text-[hsl(var(--text-secondary))] font-bold block">{s.category}</span>
                             </div>
                         </motion.div>
                     ))}

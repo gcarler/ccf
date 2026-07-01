@@ -52,10 +52,10 @@ export default function Footer() {
                             <Church size={16} className="text-[hsl(var(--primary))]" />
                             <span className="text-xs font-semibold uppercase tracking-wide">{SITE_NAME}</span>
                         </div>
-                        <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
+                        <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed max-w-xs">
                             Plataforma de inteligencia ministerial para la formación teológica, gestión pastoral y colaboración de equipos.
                         </p>
-                        <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                        <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
                             <Heart size={10} className="text-[hsl(var(--primary))]" />
                             Hecho con fe
                         </div>
@@ -64,7 +64,7 @@ export default function Footer() {
                     {/* Links */}
                     {footerLinks.map((group) => (
                         <div key={group.title}>
-                            <h4 className="text-[9px] font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                            <h4 className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">
                                 {group.title}
                             </h4>
                             <ul className="space-y-1.5">
@@ -72,7 +72,7 @@ export default function Footer() {
                                     <li key={link.label}>
                                         <Link
                                             href={link.href}
-                                            className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"
+                                            className="text-xs text-[hsl(var(--text-secondary))] hover:text-white transition-colors flex items-center gap-1.5"
                                         >
                                             {link.icon && <link.icon size={10} className="shrink-0" />}
                                             {link.label}
@@ -87,7 +87,7 @@ export default function Footer() {
 
             {/* Bottom bar */}
             <div className="w-full border-t border-white/5 px-4 lg:px-4 py-3">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-500">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-[hsl(var(--text-secondary))]">
                     <span>&copy; {new Date().getFullYear()} {SITE_NAME}. Todos los derechos reservados.</span>
                     <div className="flex items-center gap-3">
                         <Link href="/" className="hover:text-white transition-colors">Sitio público</Link>

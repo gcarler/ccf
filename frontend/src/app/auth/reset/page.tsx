@@ -18,10 +18,10 @@ function ResetPasswordContent() {
 
     if (!token) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-3">
-                <div className="p-4 rounded-lg bg-slate-900 border border-white/10 text-center space-y-4">
+            <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] px-3">
+                <div className="p-4 rounded-lg bg-[hsl(var(--bg-muted))] border border-white/10 text-center space-y-4">
                     <h1 className="text-lg font-bold">Token inválido</h1>
-                    <p className="text-slate-400 text-sm">El enlace no es válido o ya fue utilizado.</p>
+                    <p className="text-[hsl(var(--text-secondary))] text-sm">El enlace no es válido o ya fue utilizado.</p>
                     <Link href="/auth/forgot" className="text-primary font-semibold text-sm hover:underline">
                         Solicitar uno nuevo
                     </Link>
@@ -56,39 +56,39 @@ function ResetPasswordContent() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-3">
-            <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl p-4 space-y-3">
+        <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] px-3">
+            <div className="w-full max-w-md bg-[hsl(var(--bg-muted))]/60 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl p-4 space-y-3">
                 <div>
                     <h1 className="text-xl font-bold tracking-tight">Restablecer contraseña</h1>
-                    <p className="text-slate-400 text-sm mt-2">Crea una nueva contraseña segura para tu cuenta.</p>
+                    <p className="text-[hsl(var(--text-secondary))] text-sm mt-2">Crea una nueva contraseña segura para tu cuenta.</p>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Nueva contraseña</label>
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nueva contraseña</label>
                         <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={18} />
                             <input
                                 type="password"
                                 required
                                 minLength={6}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-slate-900 border border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-primary"
+                                className="w-full bg-[hsl(var(--bg-muted))] border border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-primary"
                                 placeholder="••••••••"
                             />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Confirmar contraseña</label>
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Confirmar contraseña</label>
                         <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={18} />
                             <input
                                 type="password"
                                 required
                                 minLength={6}
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full bg-slate-900 border border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-primary"
+                                className="w-full bg-[hsl(var(--bg-muted))] border border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-primary"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -110,7 +110,7 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[hsl(var(--bg-muted))]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
             <ResetPasswordContent />
         </Suspense>
     );

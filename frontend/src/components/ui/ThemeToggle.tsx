@@ -20,14 +20,14 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
         return (
             <button
                 onClick={toggleTheme}
-                className={`w-full flex items-center justify-between px-3 py-2 mx-2 rounded-md transition-all group cursor-pointer mb-0.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white ${className}`}
+                className={`w-full flex items-center justify-between px-3 py-2 mx-2 rounded-md transition-all group cursor-pointer mb-0.5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-white ${className}`}
                 title={isNight ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
             >
                 <div className="flex items-center gap-3">
                     {isNight ? (
-                        <Moon size={18} className="text-slate-400 group-hover:text-[hsl(var(--primary))]" />
+                        <Moon size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                     ) : (
-                        <Sun size={18} className="text-slate-400 group-hover:text-[hsl(var(--primary))]" />
+                        <Sun size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                     )}
                     <span className="text-[13px] font-bold leading-none">
                         {isNight ? "Modo Oscuro" : "Modo Claro"}
@@ -36,7 +36,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                 {/* Pill toggle */}
                 <div
                     className={`relative w-9 h-5 rounded-full transition-colors duration-300 ${
-                        isNight ? "bg-[hsl(var(--primary))]" : "bg-slate-200"
+                        isNight ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--surface-3))]"
                     }`}
                 >
                     <span
@@ -55,8 +55,8 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
             <div
                 className={`flex items-center rounded-md p-1 gap-0.5 ${
                     isNight
-                        ? "bg-slate-800 border border-white/5"
-                        : "bg-slate-100 border border-slate-200"
+                        ? "bg-[hsl(var(--surface-2))] border border-white/5"
+                        : "bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]"
                 } ${className}`}
             >
                 <button
@@ -64,7 +64,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                     className={`size-6 rounded-lg flex items-center justify-center transition-all ${
                         !isNight
                             ? "bg-[hsl(var(--bg-primary))] text-amber-500 shadow-sm"
-                            : "text-slate-500 hover:text-slate-300"
+                            : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                     }`}
                     title="Cambiar a modo claro"
                     aria-label="Modo claro"
@@ -76,7 +76,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                     className={`size-6 rounded-lg flex items-center justify-center transition-all ${
                         isNight
                             ? "bg-white/10 text-[hsl(var(--primary))]"
-                            : "text-slate-400 hover:text-slate-600"
+                            : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                     }`}
                     title="Cambiar a modo oscuro"
                     aria-label="Modo oscuro"
@@ -94,8 +94,8 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                 onClick={toggleTheme}
                 className={`size-10 rounded-lg flex items-center justify-center transition-all group ${
                     isNight
-                        ? "text-slate-400 hover:bg-white/5 hover:text-amber-300"
-                        : "text-slate-600 hover:bg-black/5 hover:text-[hsl(var(--primary))]"
+                        ? "text-[hsl(var(--text-secondary))] hover:bg-white/5 hover:text-amber-300"
+                        : "text-[hsl(var(--text-secondary))] hover:bg-black/5 hover:text-[hsl(var(--primary))]"
                 } ${className}`}
             >
                 {isNight ? <Sun size={19} /> : <Moon size={19} />}

@@ -14,8 +14,8 @@ import clsx from "clsx";
 
 const DONATION_TYPES = ["Diezmo", "Ofrenda", "Especial", "Misiones", "Construcción"];
 
-const INPUT = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all";
-const LABEL = "block text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1.5";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all";
+const LABEL = "block text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 function StatCard({ label, value, tone }: { label: string; value: string; tone: string }) {
     const colors: Record<string, string> = {
@@ -25,8 +25,8 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
         sky: "text-sky-600 bg-sky-50 dark:bg-sky-500/10",
     };
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
-            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-2">{label}</p>
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
+            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{label}</p>
             <p className={clsx("text-lg font-bold tracking-tight", colors[tone]?.split(" ")[0])}>{value}</p>
         </div>
     );
@@ -184,25 +184,25 @@ export default function DonationsManagementPage() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between gap-4">
                         <div className="relative flex-1 max-w-sm">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
                             <input value={query} onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Buscar por donante o tipo..."
-                                className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md py-2.5 pl-11 pr-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all" />
+                                className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 pl-11 pr-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all" />
                         </div>
                         <div className="flex items-center gap-2">
-                            <button className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 transition-all">
+                            <button className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
                                 <Filter size={13} /> Filtrar
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 transition-all">
+                            <button className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
                                 <Download size={13} /> Exportar
                             </button>
                         </div>
                     </div>
 
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm overflow-x-auto">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm overflow-x-auto">
                         <table className="w-full min-w-[520px] text-left">
                             <thead>
-                                <tr className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 border-b border-slate-100 dark:border-white/5">
+                                <tr className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] border-b border-[hsl(var(--border))] dark:border-white/5">
                                     <th className="px-3 py-1.5">Donante</th>
                                     <th className="px-3 py-1.5">Monto</th>
                                     <th className="px-3 py-1.5">Tipo</th>
@@ -211,22 +211,22 @@ export default function DonationsManagementPage() {
                                     <th className="px-3 py-1.5 text-right">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50 dark:divide-white/5">
+                            <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                 {filtered.length === 0 && (
-                                    <tr><td colSpan={6} className="px-3 py-1.5 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-300">Sin donaciones registradas</td></tr>
+                                    <tr><td colSpan={6} className="px-3 py-1.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin donaciones registradas</td></tr>
                                 )}
                                 {filtered.map((d) => (
                                     <tr key={d.id}
-                                        className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors group"
+                                        className="hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/[0.02] transition-colors group"
                                         onMouseEnter={() => setHoverId(d.id)}
                                         onMouseLeave={() => setHoverId(null)}>
                                         <td className="px-3 py-1.5">
-                                            <p className="text-sm font-bold text-slate-900 dark:text-white">{d.donor || "Anónimo"}</p>
+                                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{d.donor || "Anónimo"}</p>
                                             <p className="font-semibold">#{d.id}</p>
                                         </td>
-                                        <td className="px-3 py-1.5 font-bold text-slate-900 dark:text-white">${d.amount?.toLocaleString()}</td>
-                                        <td className="px-3 py-1.5 text-xs text-slate-500">{d.type}</td>
-                                        <td className="px-3 py-1.5 text-xs text-slate-400">{d.date ? new Date(d.date).toLocaleDateString("es-ES") : "—"}</td>
+                                        <td className="px-3 py-1.5 font-bold text-[hsl(var(--text-primary))] dark:text-white">${d.amount?.toLocaleString()}</td>
+                                        <td className="px-3 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{d.type}</td>
+                                        <td className="px-3 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{d.date ? new Date(d.date).toLocaleDateString("es-ES") : "—"}</td>
                                         <td className="px-3 py-1.5">{statusBadge(d.status)}</td>
                                         <td className="px-3 py-1.5">
                                             <div className="flex items-center justify-end gap-1">
@@ -235,7 +235,7 @@ export default function DonationsManagementPage() {
                                                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                                                             className="flex items-center gap-1">
                                                             <button onClick={() => openEdit(d)}
-                                                                className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-[hsl(var(--primary))] hover:text-white transition-all">
+                                                                className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--primary))] hover:text-white transition-all">
                                                                 <PencilLine size={14} />
                                                             </button>
                                                             {deleteId === d.id ? (
@@ -245,13 +245,13 @@ export default function DonationsManagementPage() {
                                                                         Confirmar
                                                                     </button>
                                                                     <button onClick={() => setDeleteId(null)}
-                                                                        className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-all">
+                                                                        className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] transition-all">
                                                                         <X size={14} />
                                                                     </button>
                                                                 </div>
                                                             ) : (
                                                                 <button onClick={() => setDeleteId(d.id)}
-                                                                    className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-rose-600 hover:text-white transition-all">
+                                                                    className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-rose-600 hover:text-white transition-all">
                                                                     <Trash2 size={14} />
                                                                 </button>
                                                             )}
@@ -280,17 +280,17 @@ export default function DonationsManagementPage() {
                             exit={{ x: "100%", opacity: 0 }}
                             transition={{ type: "spring", damping: 26, stiffness: 260 }}
                             className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
-                            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5 flex-shrink-0">
+                            <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
                                 <div>
-                                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         {drawerMode === "create" ? "Nueva Donación" : "Editar Donación"}
                                     </p>
-                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
                                         {drawerMode === "create" ? "Registrar Ofrenda" : `Donación #${selected?.id}`}
                                     </h2>
                                 </div>
                                 <button onClick={() => setDrawerMode(null)}
-                                    className="size-10 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                    className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -324,9 +324,9 @@ export default function DonationsManagementPage() {
                                 </div>
                             </div>
 
-                            <div className="p-3 border-t border-slate-100 dark:border-white/5 flex gap-3 flex-shrink-0">
+                            <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex gap-3 flex-shrink-0">
                                 <button onClick={() => setDrawerMode(null)}
-                                    className="flex-1 py-3 rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                                    className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}

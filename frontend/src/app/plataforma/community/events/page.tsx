@@ -88,7 +88,7 @@ export default function EventsCalendar() {
                         {[1, 2].map(i => <Skeleton key={i} className="h-48 w-full rounded-md" />)}
                     </div>
                 ) : filteredEvents.length === 0 ? (
-                    <div className="text-center py-1.5 text-slate-400">
+                    <div className="text-center py-1.5 text-[hsl(var(--text-secondary))]">
                         <CalendarDays className="mx-auto h-8 w-12 mb-4 opacity-20" />
                         <p className="font-bold text-sm">No hay eventos en esta categoría</p>
                     </div>

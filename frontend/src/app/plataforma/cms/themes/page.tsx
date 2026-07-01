@@ -104,9 +104,9 @@ export default function CmsThemesPage() {
 
   return (
     <div className="space-y-3 p-3">
-      <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3">
+      <div className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS V2</p>
           <h1 className="mt-2 text-lg font-semibold">Editor de temas multisitio</h1>
         </div>
         <div className="flex items-center gap-2 rounded-md bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wider">
@@ -115,17 +115,17 @@ export default function CmsThemesPage() {
       </div>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Sitio</label>
-          <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
+        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
+          <label className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Sitio</label>
+          <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm">
             {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
             {sites.map((site) => (
               <option key={site.site_key} value={site.site_key}>{site.name} ({site.site_key})</option>
             ))}
           </select>
 
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Nombre del tema</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canEdit} />
+          <label className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Nombre del tema</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canEdit} />
           <button
             onClick={() => {
               setEditingThemeId(null);
@@ -134,27 +134,27 @@ export default function CmsThemesPage() {
               setMessage("Creación de nuevo tema.");
             }}
             disabled={!canEdit}
-            className="w-full rounded-md border border-slate-200 dark:border-white/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider"
+            className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider"
           >
             Nuevo tema
           </button>
 
           {Object.entries(tokens).map(([key, value]) => (
             <div key={key} className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{key}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{key}</p>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={value}
                   onChange={(e) => setTokens((prev) => ({ ...prev, [key]: e.target.value }))}
                   disabled={!canEdit}
-                  className="h-9 w-10 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent p-0.5"
+                  className="h-9 w-10 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent p-0.5"
                 />
                 <input
                   value={value}
                   onChange={(e) => setTokens((prev) => ({ ...prev, [key]: e.target.value }))}
                   disabled={!canEdit}
-                  className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm"
                 />
               </div>
             </div>
@@ -163,12 +163,12 @@ export default function CmsThemesPage() {
           <button onClick={saveTheme} disabled={saving || !canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white disabled:opacity-60">
             <Save size={13} /> {saving ? "Guardando" : editingThemeId ? "Actualizar y activar" : "Guardar y activar"}
           </button>
-          {message && <p className="text-xs text-slate-500">{message}</p>}
+          {message && <p className="text-xs text-[hsl(var(--text-secondary))]">{message}</p>}
         </div>
 
-        <div className="lg:col-span-2 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
+        <div className="lg:col-span-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
           <div
-            className="rounded-lg border border-slate-200 dark:border-white/10 p-3"
+            className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3"
             style={{
               background: tokens["--site-background"],
               color: tokens["--site-on-background"],
@@ -185,15 +185,15 @@ export default function CmsThemesPage() {
             </button>
           </div>
 
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">Temas existentes</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Temas existentes</h2>
           <div className="space-y-2">
             {themes.map((theme) => {
               const isArchived = theme.status === "archived";
               return (
-                <div key={theme.id} className={`flex items-center justify-between rounded-md border p-3 ${isArchived ? "border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200 dark:border-white/10"}`}>
+                <div key={theme.id} className={`flex items-center justify-between rounded-md border p-3 ${isArchived ? "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))] dark:border-white/10"}`}>
                   <div>
                     <p className="text-sm font-bold">{theme.name}</p>
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                    <p className="text-[10px] uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                       {isArchived ? "Archivado" : theme.is_active ? "Activo" : "Disponible"}
                     </p>
                   </div>
@@ -207,12 +207,12 @@ export default function CmsThemesPage() {
                         setMessage("Editando tema seleccionado.");
                       }}
                       disabled={!canEdit || isArchived}
-                      className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide"
+                      className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide"
                     >
                       Editar
                     </button>
                     {!theme.is_active && !isArchived && (
-                      <button onClick={() => activate(theme.id)} disabled={!canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">
+                      <button onClick={() => activate(theme.id)} disabled={!canPublish} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">
                         Activar
                       </button>
                     )}
@@ -240,7 +240,7 @@ export default function CmsThemesPage() {
                 </div>
               );
             })}
-            {themes.length === 0 && <p className="text-sm text-slate-500">Sin temas para este sitio.</p>}
+            {themes.length === 0 && <p className="text-sm text-[hsl(var(--text-secondary))]">Sin temas para este sitio.</p>}
           </div>
         </div>
       </section>

@@ -18,8 +18,8 @@ export type SectionType = (typeof SECTION_TYPES)[number];
 export const SECTION_TYPE_COLORS: Record<string, string> = {
   hero:              "bg-[hsl(var(--primary))]",
   video_hero:        "bg-[hsl(var(--primary))]",
-  rich_text:         "bg-slate-500",
-  rich_text_columns: "bg-slate-600",
+  rich_text:         "bg-[hsl(var(--surface-2))]",
+  rich_text_columns: "bg-[hsl(var(--surface-2))]",
   cards:             "bg-[hsl(var(--primary))]",
   cta_banner:        "bg-emerald-600",
   gallery:           "bg-pink-500",
@@ -38,7 +38,7 @@ export const SECTION_TYPE_COLORS: Record<string, string> = {
   button:            "bg-[hsl(var(--primary))]",
   toc:               "bg-zinc-500",
   divider:           "bg-gray-400",
-  collapsible:       "bg-blue-500",
+  collapsible:       "bg-[hsl(var(--primary))]",
   social_links:      "bg-sky-500",
   spacer:            "bg-stone-400",
   calendar:          "bg-[hsl(var(--primary))]",
@@ -46,12 +46,12 @@ export const SECTION_TYPE_COLORS: Record<string, string> = {
   document_upload:   "bg-amber-600",
   content_blocks:    "bg-pink-400",
   accordion:              "bg-teal-500",
-  civic_hero_search:      "bg-blue-700",
+  civic_hero_search:      "bg-[hsl(var(--primary))]",
   civic_convocatoria_cards: "bg-emerald-700",
   civic_quick_links:      "bg-sky-600",
   civic_file_downloads:   "bg-rose-600",
   civic_data_table:       "bg-teal-700",
-  civic_alert_banner:     "bg-red-600",
+  civic_alert_banner:     "bg-[hsl(var(--destructive))]",
 };
 
 export const SECTION_TYPE_LABEL: Record<string, string> = {

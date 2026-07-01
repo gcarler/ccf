@@ -144,13 +144,13 @@ export default function InboxMessagesPage() {
     <div className="flex flex-1 overflow-hidden h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21]">
         <aside
         className={clsx(
-            'flex w-full flex-col border-r border-slate-100 dark:border-white/5 transition-all md:w-80 shrink-0 bg-slate-50/50 dark:bg-black/10',
+            'flex w-full flex-col border-r border-[hsl(var(--border))] dark:border-white/5 transition-all md:w-80 shrink-0 bg-[hsl(var(--surface-1))]/50 dark:bg-black/10',
             activeChat && 'hidden md:flex'
         )}
         >
-        <div className="p-3 border-b border-slate-100 dark:border-white/5">
+        <div className="p-3 border-b border-[hsl(var(--border))] dark:border-white/5">
             <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold tracking-tight text-slate-800 dark:text-white uppercase">
+                <h2 className="text-sm font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white uppercase">
                 {isCreatingNew ? 'Nuevo Chat' : 'Conversaciones'}
                 </h2>
                 <button
@@ -161,7 +161,7 @@ export default function InboxMessagesPage() {
                 className={clsx(
                     "flex size-7 items-center justify-center rounded-lg transition-all shadow-sm",
                     isCreatingNew 
-                        ? "bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-white/10 dark:text-slate-300" 
+                        ? "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]" 
                         : "bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))] hover:shadow-blue-500/30"
                 )}
                 title={isCreatingNew ? 'Cancelar' : 'Nueva conversación'}
@@ -174,11 +174,11 @@ export default function InboxMessagesPage() {
                 value={search}
                 onChange={event => setSearch(event.target.value)}
                 placeholder={isCreatingNew ? "Buscar persona..." : "Buscar chat..."}
-                className="w-full rounded-lg bg-[hsl(var(--bg-primary))] border border-slate-200 pl-8 pr-3 py-1.5 text-[11px] font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-white/5 dark:border-white/10 transition-all shadow-sm"
+                className="w-full rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] pl-8 pr-3 py-1.5 text-[11px] font-semibold text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-white/5 dark:border-white/10 transition-all shadow-sm"
             />
             <Search
                 size={12}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]"
             />
             </div>
         </div>
@@ -193,27 +193,27 @@ export default function InboxMessagesPage() {
                     exit={{ opacity: 0, x: -5 }}
                     className="space-y-1"
                     >
-                        <p className="px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-slate-400">Contactos ({visiblePersonas.length})</p>
+                        <p className="px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contactos ({visiblePersonas.length})</p>
                         {visiblePersonas.map(persona => (
                         <button
                             key={persona.id}
                             onClick={() => handleStartNewChat(persona)}
                             className="flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors group"
                         >
-                            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-[10px] font-semibold uppercase text-slate-600 dark:bg-white/10 dark:text-white group-hover:bg-blue-200 group-hover:text-[hsl(var(--primary))] transition-colors">
+                            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--surface-3))] text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-white group-hover:bg-blue-200 group-hover:text-[hsl(var(--primary))] transition-colors">
                             {persona.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? persona.first_name?.charAt(0) ?? ''}{persona.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? persona.last_name?.charAt(0) ?? ''}
                             </div>
                             <div className="min-w-0 flex-1">
-                            <h4 className="truncate font-semibold text-slate-800 dark:text-slate-100">
+                            <h4 className="truncate font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                 {persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}
                             </h4>
                             </div>
-                            <UserPlus size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors" />
+                            <UserPlus size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                         </button>
                         ))}
                         {visiblePersonas.length === 0 && (
                             <div className="p-4 text-center">
-                                <p className="text-xs font-bold text-slate-500">Ningún persona encontrado</p>
+                                <p className="text-xs font-bold text-[hsl(var(--text-secondary))]">Ningún persona encontrado</p>
                             </div>
                         )}
                     </motion.div>
@@ -225,7 +225,7 @@ export default function InboxMessagesPage() {
                     exit={{ opacity: 0, x: 5 }}
                     className="space-y-1"
                     >
-                        <p className="px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-slate-400">Recientes</p>
+                        <p className="px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recientes</p>
                         {visibleChats.map(chat => (
                         <button
                             key={chat.id}
@@ -234,14 +234,14 @@ export default function InboxMessagesPage() {
                             'flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors group',
                             activeChat?.id === chat.id
                                 ? 'bg-blue-50 dark:bg-blue-600/10'
-                                : 'hover:bg-slate-100 dark:hover:bg-white/5'
+                                : 'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5'
                             )}
                         >
                             <div className={clsx(
                             "flex size-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold uppercase transition-colors shadow-sm",
                             activeChat?.id === chat.id
                                 ? "bg-[hsl(var(--primary))] text-white shadow-blue-500/20"
-                                : "bg-slate-800 text-white dark:bg-white/10 group-hover:bg-slate-700"
+                                : "bg-[hsl(var(--surface-2))] text-white dark:bg-white/10 group-hover:bg-[hsl(var(--surface-2))]"
                             )}>
                             {chat.name.charAt(0)}
                             </div>
@@ -249,17 +249,17 @@ export default function InboxMessagesPage() {
                             <div className="mb-0.5 flex items-baseline justify-between">
                                 <h4 className={clsx(
                                     "truncate font-semibold",
-                                    activeChat?.id === chat.id ? "text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" : "text-slate-800 dark:text-slate-100"
+                                    activeChat?.id === chat.id ? "text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" : "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                                 )}>
                                 {chat.name}
                                 </h4>
-                                <span className="text-[8px] font-bold uppercase text-slate-400 shrink-0 ml-2">
+                                <span className="text-[8px] font-bold uppercase text-[hsl(var(--text-secondary))] shrink-0 ml-2">
                                 {chat.time.split(',')[0]}
                                 </span>
                             </div>
                             <p className={clsx(
                                 "truncate text-[10px] font-medium",
-                                activeChat?.id === chat.id ? "text-blue-600/80 dark:text-blue-300" : "text-slate-500"
+                                activeChat?.id === chat.id ? "text-blue-600/80 dark:text-blue-300" : "text-[hsl(var(--text-secondary))]"
                             )}>
                                 {chat.lastMessage}
                             </p>
@@ -268,11 +268,11 @@ export default function InboxMessagesPage() {
                         ))}
                         {visibleChats.length === 0 && (
                             <div className="p-4 text-center space-y-2 mt-4">
-                                <div className="mx-auto size-8 bg-slate-200 dark:bg-white/5 rounded-md flex items-center justify-center">
-                                    <MessageSquare size={14} className="text-slate-400" />
+                                <div className="mx-auto size-8 bg-[hsl(var(--surface-3))] dark:bg-white/5 rounded-md flex items-center justify-center">
+                                    <MessageSquare size={14} className="text-[hsl(var(--text-secondary))]" />
                                 </div>
                                 <div>
-                                <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Bandeja vacía</p>
+                                <p className="text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Bandeja vacía</p>
                                 </div>
                             </div>
                         )}
@@ -290,10 +290,10 @@ export default function InboxMessagesPage() {
         >
         {activeChat ? (
             <>
-            <header className="flex items-center gap-3 border-b border-slate-100 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/5 dark:bg-[#1E1F21] sticky top-0 z-10 shrink-0">
+            <header className="flex items-center gap-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/5 dark:bg-[#1E1F21] sticky top-0 z-10 shrink-0">
                 <button
                 onClick={() => setActiveChat(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors md:hidden bg-slate-100 dark:bg-white/5 rounded-lg"
+                className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors md:hidden bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg"
                 >
                 <ChevronLeft size={16} />
                 </button>
@@ -301,7 +301,7 @@ export default function InboxMessagesPage() {
                 {activeChat.name.charAt(0)}
                 </div>
                 <div>
-                <h3 className="text-xs font-semibold text-slate-800 dark:text-white leading-tight">
+                <h3 className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-tight">
                     {activeChat.name}
                 </h3>
                 <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] leading-tight">
@@ -312,10 +312,10 @@ export default function InboxMessagesPage() {
             
             <div
                 ref={scrollRef}
-                className="flex-1 space-y-4 overflow-y-auto p-4 bg-slate-50/30 dark:bg-black/5 scrollbar-thin"
+                className="flex-1 space-y-4 overflow-y-auto p-4 bg-[hsl(var(--surface-1))]/30 dark:bg-black/5 scrollbar-thin"
             >
                 {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-2 opacity-60">
+                    <div className="flex flex-col items-center justify-center h-full text-[hsl(var(--text-secondary))] space-y-2 opacity-60">
                         <MessageSquare size={24} />
                         <p className="text-xs font-bold">Inicia la conversación</p>
                     </div>
@@ -331,7 +331,7 @@ export default function InboxMessagesPage() {
                         {message.content}
                         </div>
                         <div className="mt-1 flex items-center gap-1 px-1">
-                        <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
+                        <span className="text-[8px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                             {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </span>
                         <CheckCheck size={10} className="text-[hsl(var(--primary))]" />
@@ -341,8 +341,8 @@ export default function InboxMessagesPage() {
                 )}
             </div>
             
-            <footer className="border-t border-slate-100 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/5 dark:bg-[#1E1F21] shrink-0">
-                <div className="mx-auto flex w-full items-center gap-2 rounded-md bg-slate-50 border border-slate-200/80 p-1 pl-3 pr-1 dark:border-white/10 dark:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-300 transition-all shadow-sm">
+            <footer className="border-t border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/5 dark:bg-[#1E1F21] shrink-0">
+                <div className="mx-auto flex w-full items-center gap-2 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]/80 p-1 pl-3 pr-1 dark:border-white/10 dark:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-300 transition-all shadow-sm">
                 <input
                     value={inputText}
                     onChange={event => setInputText(event.target.value)}
@@ -368,10 +368,10 @@ export default function InboxMessagesPage() {
                 <MessageSquare size={24} strokeWidth={2} />
             </div>
             <div className="space-y-1">
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                     Mis Mensajes
                 </h3>
-                <p className="mx-auto max-w-xs text-[10px] font-medium text-slate-500 leading-relaxed">
+                <p className="mx-auto max-w-xs text-[10px] font-medium text-[hsl(var(--text-secondary))] leading-relaxed">
                     Selecciona un chat o inicia uno nuevo.
                 </p>
             </div>

@@ -151,7 +151,7 @@ export default function AdminInventoryPage() {
                 viewType={viewType} setViewType={setViewType} availableViews={INVENTORY_VIEWS} onSearch={setSearchTerm}
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-[1.25rem] text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 transition-all"><QrCode size={14} /> Escanear QR</button>
+                        <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] rounded-[1.25rem] text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all"><QrCode size={14} /> Escanear QR</button>
                         <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-[1.25rem] text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all"><Plus size={14} /> Nuevo Activo</button>
                     </div>
                 }
@@ -182,7 +182,7 @@ export default function AdminInventoryPage() {
                     </AnimatePresence>
 
                     {/* Industrial Asset List */}
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm">
                         {loading ? (
                             <div className="p-4 space-y-4">
                                 {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
@@ -191,14 +191,14 @@ export default function AdminInventoryPage() {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                                            <th className="px-4 py-2 font-semibold text-slate-400 uppercase tracking-wide">Identificación Activo</th>
-                                            <th className="px-4 py-2 font-semibold text-slate-400 uppercase tracking-wide">Especificaciones</th>
-                                            <th className="px-4 py-2 font-semibold text-slate-400 uppercase tracking-wide">Estado Operativo</th>
-                                            <th className="px-4 py-2 font-semibold text-slate-400 uppercase tracking-wide text-right">Detalles</th>
+                                        <tr className="border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5">
+                                            <th className="px-4 py-2 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Identificación Activo</th>
+                                            <th className="px-4 py-2 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Especificaciones</th>
+                                            <th className="px-4 py-2 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estado Operativo</th>
+                                            <th className="px-4 py-2 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-right">Detalles</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                    <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                         {filteredAssets.map((asset, i) => (
                                             <motion.tr 
                                                 key={i}
@@ -206,26 +206,26 @@ export default function AdminInventoryPage() {
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: i * 0.03 }}
                                                 onClick={() => handleOpenAsset(asset)}
-                                                className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer"
+                                                className="group hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all cursor-pointer"
                                             >
                                                 <td className="px-4 py-2">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-500 shadow-inner">
+                                                        <div className="size-7 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-500 shadow-inner">
                                                             <Box size={24} />
                                                         </div>
                                                         <div>
-                                                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-none mb-1">{asset.name}</div>
+                                                            <div className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight leading-none mb-1">{asset.name}</div>
                                                             <div className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide">ID: {asset.serial_number || 'INTERNO-00'+asset.id}</div>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-2">
                                                     <div className="flex flex-col gap-1">
-                                                        <div className="text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                                                            <Tag size={12} className="text-slate-400" />
+                                                        <div className="text-sm font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                                                            <Tag size={12} className="text-[hsl(var(--text-secondary))]" />
                                                             {asset.brand || 'Genérico'}
                                                         </div>
-                                                        <div className="font-semibold text-slate-400 uppercase tracking-wide">Categoría: {asset.category || 'Mobiliario'}</div>
+                                                        <div className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoría: {asset.category || 'Mobiliario'}</div>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-2">
@@ -243,7 +243,7 @@ export default function AdminInventoryPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-2 text-right">
-                                                    <button className="p-2.5 bg-slate-50 dark:bg-white/5 text-slate-400 rounded-md group-hover:bg-blue-50 group-hover:text-[hsl(var(--primary))] transition-all transform group-hover:translate-x-1 shadow-sm">
+                                                    <button className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-md group-hover:bg-blue-50 group-hover:text-[hsl(var(--primary))] transition-all transform group-hover:translate-x-1 shadow-sm">
                                                         <ChevronRight size={18} />
                                                     </button>
                                                 </td>
@@ -253,40 +253,40 @@ export default function AdminInventoryPage() {
                                 </table>
                             </div>
                         ) : viewType === 'list' ? (
-                            <div className="divide-y divide-slate-100 dark:divide-white/5">
+                            <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                 {filteredAssets.map((asset) => (
-                                    <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="flex w-full items-center justify-between gap-4 px-4 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/5">
+                                    <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="flex w-full items-center justify-between gap-4 px-4 py-2 text-left hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5">
                                         <div>
-                                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{asset.name}</p>
-                                            <p className="text-xs font-semibold text-slate-400">{asset.category || 'Sin categoria'} - {asset.brand || 'Generico'}</p>
+                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{asset.name}</p>
+                                            <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">{asset.category || 'Sin categoria'} - {asset.brand || 'Generico'}</p>
                                         </div>
-                                        <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-white/10">{asset.current_status || 'Disponible'}</span>
+                                        <span className="rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/10">{asset.current_status || 'Disponible'}</span>
                                     </button>
                                 ))}
                             </div>
                         ) : viewType === 'grid' ? (
                             <div className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2 xl:grid-cols-3">
                                 {filteredAssets.map((asset) => (
-                                    <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/[0.03]">
+                                    <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/[0.03]">
                                         <Box className="mb-4 text-[hsl(var(--primary))]" size={24} />
-                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{asset.name}</p>
-                                        <p className="mt-1 text-xs font-semibold text-slate-400">{asset.serial_number || `INTERNO-${asset.id}`}</p>
+                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{asset.name}</p>
+                                        <p className="mt-1 text-xs font-semibold text-[hsl(var(--text-secondary))]">{asset.serial_number || `INTERNO-${asset.id}`}</p>
                                     </button>
                                 ))}
                             </div>
                         ) : viewType === 'board' || viewType === 'kanban' ? (
                             <div className="flex gap-4 overflow-x-auto p-3">
                                 {groupedAssets.map((column) => (
-                                    <section key={column.status} className="w-80 shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                    <section key={column.status} className="w-80 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                                         <div className="mb-3 flex items-center justify-between px-1">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{column.status}</p>
-                                            <span className="font-semibold text-slate-400">{column.items.length}</span>
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.status}</p>
+                                            <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.items.length}</span>
                                         </div>
                                         <div className="space-y-2">
                                             {column.items.map((asset) => (
-                                                <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 text-left dark:border-white/10 dark:bg-white/5">
-                                                    <p className="text-xs font-semibold text-slate-900 dark:text-white">{asset.name}</p>
-                                                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{asset.category || 'Activo'}</p>
+                                                <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 text-left dark:border-white/10 dark:bg-white/5">
+                                                    <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{asset.name}</p>
+                                                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{asset.category || 'Activo'}</p>
                                                 </button>
                                             ))}
                                         </div>
@@ -309,18 +309,18 @@ export default function AdminInventoryPage() {
                 isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
                 title={selectedAsset?.name || 'Ficha Técnica'}
                 subtitle={`ACTIVO REF-${selectedAsset?.id || '000'}`}
-                actions={<><button className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-blue-50 rounded-md transition-all">Editar</button><button className="px-3 py-2 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl">Programar Revisión</button></>}
+                actions={<><button className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-blue-50 rounded-md transition-all">Editar</button><button className="px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl">Programar Revisión</button></>}
             >
                 <div className="space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
                     {/* Status Shimmer Card */}
-                    <div className="p-4 rounded-lg bg-slate-900 text-white shadow-2xl relative overflow-hidden group border border-white/5 shimmer-asset">
+                    <div className="p-4 rounded-lg bg-[hsl(var(--bg-muted))] text-white shadow-2xl relative overflow-hidden group border border-white/5 shimmer-asset">
                         <div className="absolute top-0 right-0 p-3 opacity-10 rotate-12 group-hover:scale-110 transition-transform"><ShieldCheck size={100} /></div>
                         <div className="relative z-10 space-y-4">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-xl border border-white/10 rounded-full text-[9px] font-semibold uppercase tracking-wide">
                                 <ShieldCheck size={12} className="text-emerald-400" /> Verificación Certificada
                             </div>
                             <div>
-                                <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">Estado de Salud del Activo</p>
+                                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Estado de Salud del Activo</p>
                                 <h3 className="text-xl font-bold tracking-tight">{selectedAsset?.current_status === 'Disponible' ? 'ÓPTIMO' : 'EN REVISIÓN'}</h3>
                             </div>
                             <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
@@ -335,7 +335,7 @@ export default function AdminInventoryPage() {
 
                     {/* Technical Specs Stacked Glass */}
                     <div className="space-y-3">
-                        <h4 className="font-semibold text-slate-400 uppercase tracking-wide px-2 flex items-center gap-3">
+                        <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-2 flex items-center gap-3">
                             <Cog size={16} className="text-[hsl(var(--primary))]" /> Especificaciones de Fábrica
                         </h4>
                         <div className="grid grid-cols-2 gap-4">
@@ -347,21 +347,21 @@ export default function AdminInventoryPage() {
                     </div>
 
                     {/* Maintenance Log */}
-                    <div className="space-y-3 pt-6 border-t border-slate-100 dark:border-white/5">
+                    <div className="space-y-3 pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
                         <div className="flex items-center justify-between px-2">
-                            <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
+                            <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                                 <History size={16} className="text-[hsl(var(--primary))]" /> Registro de Mantenimiento
                             </h4>
                             <button className="text-[10px] font-semibold uppercase text-[hsl(var(--primary))] hover:underline">Ver todo</button>
                         </div>
                         <div className="space-y-4">
                             {[1, 2].map(i => (
-                                <div key={i} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 flex items-center justify-between group/log hover:bg-[hsl(var(--bg-primary))] hover:shadow-sm transition-all">
+                                <div key={i} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-between group/log hover:bg-[hsl(var(--bg-primary))] hover:shadow-sm transition-all">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-slate-400 border border-slate-100 dark:border-white/10 shadow-sm"><Wrench size={18} /></div>
+                                        <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 shadow-sm"><Wrench size={18} /></div>
                                         <div>
-                                            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-tight">Revisión Preventiva {i}</p>
-                                            <p className="text-[10px] font-bold text-slate-400">12 de Feb, 2026</p>
+                                            <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">Revisión Preventiva {i}</p>
+                                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">12 de Feb, 2026</p>
                                         </div>
                                     </div>
                                     <CheckCircle2 size={16} className="text-emerald-500 opacity-0 group-hover/log:opacity-100 transition-opacity" />
@@ -375,21 +375,21 @@ export default function AdminInventoryPage() {
     );
 }
 
-function InventoryStat({ title, value, icon: Icon, color = "text-slate-800", auraColor }: any) {
+function InventoryStat({ title, value, icon: Icon, color = "text-[hsl(var(--text-primary))]", auraColor }: any) {
     return (
         <div 
-            className="aura-industrial p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="aura-industrial p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-700"><Icon size={56} /></div>
             <div className="space-y-4 relative z-10">
-                <p className="font-semibold text-slate-400 uppercase tracking-wide">{title}</p>
+                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{title}</p>
                 <h3 className={clsx("text-lg font-bold tracking-tighter leading-none dark:text-white", color)}>{value}</h3>
                 <div className="flex items-center gap-2">
-                    <div className="h-1 w-12 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-1 w-12 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-full overflow-hidden">
                         <div className="h-full bg-current opacity-30 w-3/4"></div>
                     </div>
-                    <span className="font-semibold text-slate-400 uppercase tracking-wide">Sincronizado</span>
+                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizado</span>
                 </div>
             </div>
         </div>
@@ -398,9 +398,9 @@ function InventoryStat({ title, value, icon: Icon, color = "text-slate-800", aur
 
 function SpecItem({ label, value, icon: Icon }: any) {
     return (
-        <div className="p-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg transition-all hover:bg-[hsl(var(--bg-primary))] hover:shadow-sm group/spec">
-            <div className="flex items-center gap-2 mb-2"><Icon size={14} className="text-slate-400 group-hover/spec:text-[hsl(var(--primary))] transition-colors" /><span className="font-semibold text-slate-400 uppercase tracking-wide">{label}</span></div>
-            <p className="font-semibold text-slate-800 dark:text-white uppercase tracking-tight">{value}</p>
+        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg transition-all hover:bg-[hsl(var(--bg-primary))] hover:shadow-sm group/spec">
+            <div className="flex items-center gap-2 mb-2"><Icon size={14} className="text-[hsl(var(--text-secondary))] group-hover/spec:text-[hsl(var(--primary))] transition-colors" /><span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{label}</span></div>
+            <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{value}</p>
         </div>
     );
 }

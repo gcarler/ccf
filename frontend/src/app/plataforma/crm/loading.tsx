@@ -1,6 +1,6 @@
 import React from 'react';
 
-const shimmer = 'bg-gradient-to-r from-transparent via-slate-200 dark:via-white/10 to-transparent animate-[shimmer_2s_infinite]';
+const shimmer = 'bg-gradient-to-r from-transparent via-[hsl(var(--surface-2))] dark:via-white/10 to-transparent animate-[shimmer_2s_infinite]';
 
 export default function CrmLoading() {
     return (

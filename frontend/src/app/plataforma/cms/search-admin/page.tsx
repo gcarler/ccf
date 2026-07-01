@@ -48,13 +48,13 @@ export default function SearchAdminPage() {
         <Search size={24} className="text-[hsl(var(--primary))]" />
         <div>
           <h1 className="text-xl font-bold">Busqueda y Promociones</h1>
-          <p className="text-sm text-slate-500">Gestionar resultados de busqueda y rankings</p>
+          <p className="text-sm text-[hsl(var(--text-secondary))]">Gestionar resultados de busqueda y rankings</p>
         </div>
       </div>
 
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
           <input placeholder="Buscar contenido..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} className="w-full pl-10 pr-4 py-2.5 text-sm border rounded-xl" />
         </div>
         <button onClick={search} className="px-5 py-2.5 text-sm font-medium rounded-xl bg-[hsl(var(--primary))] text-white">Buscar</button>
@@ -62,14 +62,14 @@ export default function SearchAdminPage() {
 
       {results.length > 0 && (
         <div className="border rounded-xl overflow-hidden">
-          <div className="px-4 py-3 bg-slate-50 border-b text-xs font-medium text-slate-500">{results.length} resultados para &quot;{query}&quot;</div>
+          <div className="px-4 py-3 bg-[hsl(var(--surface-1))] border-b text-xs font-medium text-[hsl(var(--text-secondary))]">{results.length} resultados para &quot;{query}&quot;</div>
           <div className="divide-y">
             {results.map((r, i) => (
-              <div key={i} className="px-4 py-3 flex items-center gap-3 hover:bg-slate-50/50">
-                <span className="text-xs font-bold text-slate-400 w-6">{i + 1}</span>
+              <div key={i} className="px-4 py-3 flex items-center gap-3 hover:bg-[hsl(var(--surface-1))]/50">
+                <span className="text-xs font-bold text-[hsl(var(--text-secondary))] w-6">{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{r.title || r.entity_slug}</p>
-                  <p className="text-xs text-slate-400">{r.entity_type} · {r.entity_slug}</p>
+                  <p className="text-xs text-[hsl(var(--text-secondary))]">{r.entity_type} · {r.entity_slug}</p>
                 </div>
                 {r.boost_score > 0 && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">+{r.boost_score}</span>}
               </div>
@@ -86,7 +86,7 @@ export default function SearchAdminPage() {
       </div>
 
       {showPromoForm && (
-        <div className="p-4 border rounded-xl bg-slate-50 space-y-3">
+        <div className="p-4 border rounded-xl bg-[hsl(var(--surface-1))] space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <input placeholder="Keyword (ej: vacaciones)" value={promoForm.query_text} onChange={e => setPromoForm(f => ({ ...f, query_text: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg" />
             <input placeholder="Entity ID" value={promoForm.entity_id} onChange={e => setPromoForm(f => ({ ...f, entity_id: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg" />
@@ -102,11 +102,11 @@ export default function SearchAdminPage() {
 
       <div className="space-y-2">
         {promoted.map(p => (
-          <div key={p.id} className="flex items-center gap-3 p-3 border rounded-xl bg-white">
+          <div key={p.id} className="flex items-center gap-3 p-3 border rounded-xl bg-[hsl(var(--bg-primary))]">
             <TrendingUp size={14} className="text-amber-500" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">{p.title || p.entity_slug}</p>
-              <p className="text-xs text-slate-400">&quot;{p.query_text}&quot; → {p.entity_type}/{p.entity_id}</p>
+              <p className="text-xs text-[hsl(var(--text-secondary))]">&quot;{p.query_text}&quot; → {p.entity_type}/{p.entity_id}</p>
             </div>
             <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">+{p.boost_score}</span>
           </div>

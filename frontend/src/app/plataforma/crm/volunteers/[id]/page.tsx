@@ -110,14 +110,14 @@ export default function VolunteerDetailPage() {
 
     if (loading) {
         return (
-            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-slate-400">
+            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 Consultando registro de servidores...
             </div>
         );
     }
 
     if (!volunteer) {
-        return <div className="p-4 text-center font-bold uppercase tracking-wide text-slate-400">No se pudo cargar el servidor.</div>;
+        return <div className="p-4 text-center font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No se pudo cargar el servidor.</div>;
     }
 
     const initials = volunteer.name?.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
@@ -135,12 +135,12 @@ export default function VolunteerDetailPage() {
  className="w-full space-y-3">
 
                     {/* Hero */}
-                    <header className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm flex items-center gap-3">
+                    <header className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-sm flex items-center gap-3">
                         <div className="size-10 rounded-lg bg-gradient-to-br from-blue-500 to-sky-600 text-white flex items-center justify-center font-bold text-lg shadow-xl flex-shrink-0">
                             {initials}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">{volunteer.name}</h1>
+                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{volunteer.name}</h1>
                             <div className="flex items-center gap-2 mt-2">
                                 <Badge label={volunteer.role?.toUpperCase() || "SIN ROL"} tone="blue" />
                                 <Badge label={(volunteer.status || "inactive").toUpperCase()} tone="emerald" />
@@ -228,13 +228,13 @@ export default function VolunteerDetailPage() {
                             exit={{ x: "100%", opacity: 0 }}
                             transition={{ type: "spring", damping: 26, stiffness: 260 }}
                             className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] shadow-2xl rounded-l-lg overflow-hidden flex flex-col">
-                            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5">
+                            <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))] dark:border-white/5">
                                 <div>
-                                    <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Editar Servidor</p>
-                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">{volunteer.name}</h2>
+                                    <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar Servidor</p>
+                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">{volunteer.name}</h2>
                                 </div>
                                 <button onClick={() => setEditOpen(false)}
-                                    className="size-10 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                    className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -246,9 +246,9 @@ export default function VolunteerDetailPage() {
                                         className={INPUT} />
                                 </div>
                             </div>
-                            <div className="p-3 border-t border-slate-100 dark:border-white/5 flex gap-3">
+                            <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex gap-3">
                                 <button onClick={() => setEditOpen(false)}
-                                    className="flex-1 py-3 rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-50 transition-all">
+                                    className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}

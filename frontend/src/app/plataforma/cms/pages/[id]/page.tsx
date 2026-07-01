@@ -21,7 +21,7 @@ interface PageData {
 
 const STATUS_STYLES: Record<string, { label: string; color: string }> = {
   published:  { label: "Publicado",   color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200" },
-  draft:      { label: "Borrador",    color: "text-slate-500 bg-slate-100 dark:bg-white/5 border-slate-200" },
+  draft:      { label: "Borrador",    color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 border-[hsl(var(--border))]" },
   in_review:  { label: "En Revisión", color: "text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200" },
   archived:   { label: "Archivado",   color: "text-rose-500 bg-rose-50 dark:bg-rose-900/10 border-rose-200" },
 };
@@ -80,12 +80,12 @@ export default function CmsPageDetailPage() {
   if (loading) {
     return (
       <div className="flex flex-col h-full items-center justify-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[#0d0e11]">
-        <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center animate-pulse">
-          <Layout size={28} strokeWidth={1} className="text-slate-400" />
+        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center animate-pulse">
+          <Layout size={28} strokeWidth={1} className="text-[hsl(var(--text-secondary))]" />
         </div>
         <div className="space-y-2 text-center">
-          <div className="h-5 w-48 bg-slate-100 dark:bg-white/5 rounded-md animate-pulse mx-auto" />
-          <div className="h-3 w-32 bg-slate-100 dark:bg-white/5 rounded-md animate-pulse mx-auto" />
+          <div className="h-5 w-48 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-md animate-pulse mx-auto" />
+          <div className="h-3 w-32 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-md animate-pulse mx-auto" />
         </div>
       </div>
     );
@@ -114,10 +114,10 @@ export default function CmsPageDetailPage() {
               {status.label}
             </span>
           </div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
             {page?.title}
           </h1>
-          <div className="flex items-center justify-center gap-4 text-[11px] font-bold text-slate-400">
+          <div className="flex items-center justify-center gap-4 text-[11px] font-bold text-[hsl(var(--text-secondary))]">
             <span className="flex items-center gap-1.5">
               <Globe size={11} /> {page?.site_key || SITE_KEY}
             </span>
@@ -139,12 +139,12 @@ export default function CmsPageDetailPage() {
         </div>
 
         {/* Redirect card */}
-        <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 space-y-5">
+        <div className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 space-y-5">
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+            <p className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
               Redirigiendo al Builder
             </p>
-            <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">
+            <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm font-medium">
               Serás redirigido automáticamente al constructor visual donde podrás editar el contenido de esta página.
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function CmsPageDetailPage() {
           <div className="flex items-center justify-center">
             <div className="relative size-8">
               <svg className="size-8 -rotate-90" viewBox="0 0 56 56">
-                <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" className="text-slate-200 dark:text-white/10" />
+                <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" className="text-[hsl(var(--text-secondary))] dark:text-white/10" />
                 <circle
                   cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4"
                   strokeDasharray={`${2 * Math.PI * 24}`}
@@ -162,7 +162,7 @@ export default function CmsPageDetailPage() {
                   strokeLinecap="round"
                 />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-slate-800 dark:text-white">
+              <span className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                 {countdown}
               </span>
             </div>
@@ -180,7 +180,7 @@ export default function CmsPageDetailPage() {
 
           <button
             onClick={() => router.push("/cms/pages")}
-            className="w-full py-2.5 text-slate-400 hover:text-slate-600 text-[10px] font-semibold uppercase tracking-wide transition-colors"
+            className="w-full py-2.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide transition-colors"
           >
             ← Volver a páginas
           </button>

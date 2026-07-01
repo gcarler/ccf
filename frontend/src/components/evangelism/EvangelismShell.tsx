@@ -120,7 +120,7 @@ export default function EvangelismShell({
     if (loading) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
-                <p className="text-sm font-bold text-slate-500">Cargando acceso...</p>
+                <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">Cargando acceso...</p>
             </div>
         );
     }

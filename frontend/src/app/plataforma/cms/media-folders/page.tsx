@@ -40,7 +40,7 @@ export default function MediaFoldersPage() {
     const children = buildTree(folder.id);
     return (
       <div>
-        <div className="flex items-center gap-2 py-1.5 px-2 hover:bg-slate-50 rounded-lg" style={{ paddingLeft: `${depth * 20 + 8}px` }}>
+        <div className="flex items-center gap-2 py-1.5 px-2 hover:bg-[hsl(var(--surface-1))] rounded-lg" style={{ paddingLeft: `${depth * 20 + 8}px` }}>
           {children.length > 0 ? (
             <button onClick={() => setExpanded(!expanded)} className="p-0.5">
               {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -48,7 +48,7 @@ export default function MediaFoldersPage() {
           ) : <div className="w-3" />}
           <FolderTree size={14} className="text-amber-500" />
           <span className="text-sm">{folder.name}</span>
-          <span className="text-[10px] text-slate-400 font-mono">{folder.path}</span>
+          <span className="text-[10px] text-[hsl(var(--text-secondary))] font-mono">{folder.path}</span>
         </div>
         {expanded && children.map(child => <FolderNode key={child.id} folder={child} depth={depth + 1} />)}
       </div>
@@ -62,7 +62,7 @@ export default function MediaFoldersPage() {
           <FolderTree size={24} className="text-[hsl(var(--primary))]" />
           <div>
             <h1 className="text-xl font-bold">Carpetas de Media</h1>
-            <p className="text-sm text-slate-500">{folders.length} carpetas</p>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">{folders.length} carpetas</p>
           </div>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white">
@@ -71,7 +71,7 @@ export default function MediaFoldersPage() {
       </div>
 
       {showForm && (
-        <div className="p-4 border rounded-xl bg-slate-50 space-y-3">
+        <div className="p-4 border rounded-xl bg-[hsl(var(--surface-1))] space-y-3">
           <div className="grid grid-cols-3 gap-3">
             <input placeholder="Nombre" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg" />
             <input placeholder="slug" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg" />
@@ -87,9 +87,9 @@ export default function MediaFoldersPage() {
         </div>
       )}
 
-      <div className="border rounded-xl p-4 bg-white">
-        {loading ? <div className="py-8 text-center text-slate-400">Cargando...</div> : folders.length === 0 ? (
-          <div className="py-8 text-center text-slate-400">Sin carpetas</div>
+      <div className="border rounded-xl p-4 bg-[hsl(var(--bg-primary))]">
+        {loading ? <div className="py-8 text-center text-[hsl(var(--text-secondary))]">Cargando...</div> : folders.length === 0 ? (
+          <div className="py-8 text-center text-[hsl(var(--text-secondary))]">Sin carpetas</div>
         ) : buildTree(null).map(folder => <FolderNode key={folder.id} folder={folder} />)}
       </div>
     </div>

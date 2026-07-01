@@ -79,17 +79,17 @@ export default function CrmViewPlaceholder({
   }
 
   return (
-    <div className="rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 text-center shadow-sm">
-      <div className="mx-auto mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/20 dark:text-blue-400">
+    <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 text-center shadow-sm">
+      <div className="mx-auto mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/20 dark:text-[hsl(var(--primary))]">
         <Construction size={32} />
       </div>
-      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 uppercase italic tracking-tighter">
+      <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase italic tracking-tighter">
         Vista {VIEW_LABEL[viewType]} pendiente de datos
       </h3>
-      <p className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+      <p className="mt-3 text-sm font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-sm mx-auto leading-relaxed">
         {moduleName}: esta perspectiva aun no tiene una implementacion de datos reales conectada. Usa las vistas operativas disponibles.
       </p>
-      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-slate-100 dark:bg-white/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
         <Sparkles size={12} className="text-[hsl(var(--primary))]" /> Sin datos simulados
       </div>
     </div>
@@ -106,14 +106,14 @@ function EmptyOperationalView({
   description: string;
 }) {
   return (
-    <div className="rounded-md border border-dashed border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 text-center shadow-sm">
-      <div className="mx-auto mb-3 flex size-8 items-center justify-center rounded-lg bg-slate-50 text-slate-500 dark:bg-white/5 dark:text-slate-300">
+    <div className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 text-center shadow-sm">
+      <div className="mx-auto mb-3 flex size-8 items-center justify-center rounded-lg bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
         <Icon size={32} />
       </div>
-      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 uppercase italic tracking-tighter">
+      <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase italic tracking-tighter">
         {title}
       </h3>
-      <p className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+      <p className="mt-3 text-sm font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-sm mx-auto leading-relaxed">
         {description}
       </p>
     </div>

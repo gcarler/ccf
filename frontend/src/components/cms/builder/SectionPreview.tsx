@@ -27,7 +27,7 @@ class SectionRenderErrorBoundary extends React.Component<
   render() {
     if (this.state.error) {
       return (
-        <div className="rounded-lg border border-dashed border-red-300 bg-red-50/40 p-4 text-center text-xs font-semibold text-red-500">
+        <div className="rounded-lg border border-dashed border-red-300 bg-red-50/40 p-4 text-center text-xs font-semibold text-[hsl(var(--destructive))]">
           No se pudo renderizar esta sección.
         </div>
       );
@@ -48,7 +48,7 @@ export function SectionRenderPreview({
   return (
     <div
       style={CANVAS_PREVIEW_TOKENS}
-      className={`rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 bg-white${mobile ? " max-w-[420px] mx-auto" : ""}`}
+      className={`rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))]${mobile ? " max-w-[420px] mx-auto" : ""}`}
     >
       <SectionRenderErrorBoundary>
         <PublicSectionRenderer section={section} />
@@ -64,7 +64,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   const body = safeString(section.props_json?.body);
   const imageUrl = safeString(section.props_json?.image_url);
   const ctaLabel = safeString(section.props_json?.cta_label);
-  const typeColor = SECTION_TYPE_COLORS[section.type] ?? "bg-slate-500";
+  const typeColor = SECTION_TYPE_COLORS[section.type] ?? "bg-[hsl(var(--surface-2))]";
   const typeLabel = SECTION_TYPE_LABEL[section.type] ?? section.type;
 
   const TypeBadge = () => (
@@ -77,19 +77,19 @@ export function SectionPreview({ section }: { section: CmsSection }) {
 
   if (section.type === "hero" || section.type === "video_hero") {
     return (
-      <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/20 p-4 space-y-2">
         <TypeBadge />
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white leading-tight">
+        <h3 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-tight">
           {title || "Título hero"}
         </h3>
-        <p className="text-sm text-slate-500 line-clamp-2">{body || "Subtítulo o descripción principal"}</p>
+        <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-2">{body || "Subtítulo o descripción principal"}</p>
         {ctaLabel && (
           <span className="inline-block mt-1 px-3 py-1 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase">
             {ctaLabel}
           </span>
         )}
         {section.type === "video_hero" && (
-          <p className="text-[9px] text-slate-400 font-bold uppercase">🎬 Video de fondo configurado</p>
+          <p className="text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase">🎬 Video de fondo configurado</p>
         )}
       </div>
     );
@@ -101,9 +101,9 @@ export function SectionPreview({ section }: { section: CmsSection }) {
         )
       : [];
     return (
-      <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/20 p-4 space-y-2">
         <TypeBadge />
-        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Bloque de tarjetas"}
         </p>
         {items.length > 0 && (
@@ -111,13 +111,13 @@ export function SectionPreview({ section }: { section: CmsSection }) {
             {items.slice(0, 3).map((item, idx) => (
               <span
                 key={idx}
-                className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded-lg text-[9px] font-bold text-slate-600 dark:text-slate-300"
+                className="px-2 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-lg text-[9px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
               >
                 {safeString(item.title) || `Item ${idx + 1}`}
               </span>
             ))}
             {items.length > 3 && (
-              <span className="text-[9px] text-slate-400">
+              <span className="text-[9px] text-[hsl(var(--text-secondary))]">
                 +{items.length - 3} más
               </span>
             )}
@@ -128,7 +128,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   }
   if (section.type === "gallery") {
     return (
-      <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/20 p-4 space-y-2">
         <TypeBadge />
         {imageUrl ? (
           <OptimizedImage
@@ -139,7 +139,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
             className="w-full h-24 object-cover rounded-md"
           />
         ) : (
-          <div className="w-full h-8 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">
+          <div className="w-full h-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase">
             Sin imagen configurada
           </div>
         )}
@@ -150,10 +150,10 @@ export function SectionPreview({ section }: { section: CmsSection }) {
     return (
       <div className="rounded-lg border border-dashed border-emerald-300 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-900/10 p-4 space-y-2">
         <TypeBadge />
-        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Llamado a la Acción"}
         </p>
-        <p className="text-xs text-slate-500 line-clamp-1">{body || "Subtítulo"}</p>
+        <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-1">{body || "Subtítulo"}</p>
         {ctaLabel && (
           <span className="inline-block px-3 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-semibold uppercase">
             {ctaLabel}
@@ -166,14 +166,14 @@ export function SectionPreview({ section }: { section: CmsSection }) {
     return (
       <div className="rounded-lg border border-dashed border-rose-300 dark:border-rose-500/30 p-4 space-y-2">
         <TypeBadge />
-        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Sección de Testimonios"}
         </p>
         <div className="flex gap-2">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="flex-1 h-8 rounded-md bg-slate-100 dark:bg-white/5 animate-pulse"
+              className="flex-1 h-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse"
             />
           ))}
         </div>
@@ -195,7 +195,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
                 <p className="text-base font-semibold text-teal-600">
                   {safeString(s.value) || "—"}
                 </p>
-                <p className="text-[9px] text-slate-400 font-bold uppercase">
+                <p className="text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase">
                   {safeString(s.label) || "Métrica"}
                 </p>
               </div>
@@ -208,14 +208,14 @@ export function SectionPreview({ section }: { section: CmsSection }) {
     return (
       <div className="rounded-lg border border-dashed border-orange-300 dark:border-orange-500/30 p-4 space-y-2">
         <TypeBadge />
-        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Nuestro Equipo"}
         </p>
         <div className="flex gap-2">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="size-8 rounded-full bg-orange-100 dark:bg-orange-900/20 border-2 border-white dark:border-slate-800"
+              className="size-8 rounded-full bg-orange-100 dark:bg-orange-900/20 border-2 border-white dark:border-[hsl(var(--border))]"
             />
           ))}
         </div>
@@ -227,7 +227,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
     return (
       <div className="rounded-lg border border-dashed border-red-300 dark:border-red-500/30 p-4 space-y-2">
         <TypeBadge />
-        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Cuenta Regresiva"}
         </p>
         <div className="flex gap-3">
@@ -236,14 +236,14 @@ export function SectionPreview({ section }: { section: CmsSection }) {
               <div className="size-10 rounded-md bg-[hsl(var(--destructive))] flex items-center justify-center text-white font-semibold text-sm">
                 00
               </div>
-              <p className="text-[8px] text-slate-400 mt-0.5 font-bold uppercase">
+              <p className="text-[8px] text-[hsl(var(--text-secondary))] mt-0.5 font-bold uppercase">
                 {u}
               </p>
             </div>
           ))}
         </div>
         {target && (
-          <p className="text-[9px] text-slate-400">Hasta: {target}</p>
+          <p className="text-[9px] text-[hsl(var(--text-secondary))]">Hasta: {target}</p>
         )}
       </div>
     );
@@ -257,13 +257,13 @@ export function SectionPreview({ section }: { section: CmsSection }) {
     return (
       <div className="rounded-lg border border-dashed border-amber-300 dark:border-amber-500/30 p-4 space-y-2">
         <TypeBadge />
-        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Preguntas Frecuentes"}
         </p>
         {faqs.slice(0, 2).map((f, i) => (
           <div key={i} className="flex items-start gap-2 text-xs">
             <span className="text-amber-500 font-semibold mt-0.5">Q</span>
-            <span className="text-slate-600 dark:text-slate-300 line-clamp-1">
+            <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1">
               {safeString(f.q) || "Pregunta"}
             </span>
           </div>
@@ -277,11 +277,11 @@ export function SectionPreview({ section }: { section: CmsSection }) {
       <div className="rounded-lg border border-dashed border-cyan-300 dark:border-cyan-500/30 p-4 space-y-2">
         <TypeBadge />
         {embedUrl ? (
-          <p className="text-[10px] text-slate-500 font-mono truncate">
+          <p className="text-[10px] text-[hsl(var(--text-secondary))] font-mono truncate">
             {embedUrl}
           </p>
         ) : (
-          <div className="w-full h-8 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">
+          <div className="w-full h-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase">
             Sin URL configurada
           </div>
         )}
@@ -290,18 +290,18 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   }
   // rich_text, rich_text_columns, and default fallback
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+    <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/20 p-4 space-y-2">
       <TypeBadge />
-      <h4 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+      <h4 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
         {title || "Título"}
       </h4>
-      <p className="text-sm text-slate-500 line-clamp-3">
+      <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-3">
         {body || "Contenido de sección"}
       </p>
       {section.type === "rich_text_columns" && (
         <div className="flex gap-2 mt-1">
-          <div className="flex-1 h-2 rounded bg-slate-200 dark:bg-white/10" />
-          <div className="flex-1 h-2 rounded bg-slate-200 dark:bg-white/10" />
+          <div className="flex-1 h-2 rounded bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+          <div className="flex-1 h-2 rounded bg-[hsl(var(--surface-3))] dark:bg-white/10" />
         </div>
       )}
     </div>

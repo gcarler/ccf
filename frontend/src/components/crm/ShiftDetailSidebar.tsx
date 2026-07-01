@@ -35,7 +35,7 @@ const colorMap: Record<string, string> = {
     'Generación G': 'bg-sky-600',
     'Hospitalidad': 'bg-amber-500',
     'Oración': 'bg-[hsl(var(--primary))]',
-    'Seguridad': 'bg-slate-800',
+    'Seguridad': 'bg-[hsl(var(--surface-2))]',
     'Media': 'bg-rose-600'
 };
 
@@ -89,28 +89,28 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 <section className="space-y-4">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
+                    <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                         <Calendar size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /> Información Temporal
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="p-3 bg-slate-50 dark:bg-white/[0.03] rounded-md border border-slate-100 dark:border-white/[0.05] shadow-sm">
-                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1.5 leading-none">Fecha de Turno</p>
-                            <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight">
+                        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] shadow-sm">
+                            <p className="text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1.5 leading-none">Fecha de Turno</p>
+                            <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">
                                 {new Date(shift.shift_start).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                             </p>
                         </div>
-                        <div className="p-3 bg-slate-50 dark:bg-white/[0.03] rounded-md border border-slate-100 dark:border-white/[0.05] shadow-sm">
-                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1.5 leading-none">Horario</p>
-                            <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight">{shift.time}</p>
+                        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] shadow-sm">
+                            <p className="text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1.5 leading-none">Horario</p>
+                            <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">{shift.time}</p>
                         </div>
                     </div>
                 </section>
 
                 <section className="space-y-4">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
+                    <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                         <MapPin size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /> Ubicación
                     </h3>
-                    <div className="p-4 bg-slate-900 dark:bg-white/[0.03] rounded-md relative overflow-hidden group">
+                    <div className="p-4 bg-[hsl(var(--bg-muted))] dark:bg-white/[0.03] rounded-md relative overflow-hidden group">
                         <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent group-hover:scale-110 transition-transform duration-1000" />
                         <div className="relative z-10 flex items-center justify-between">
                             <div className="space-y-0.5">
@@ -125,19 +125,19 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
                 </section>
 
                 <section className="space-y-4">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-3">
+                    <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                         <Users size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /> Equipo Confirmado
                     </h3>
                     <div className="space-y-2.5">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-md hover:bg-slate-50 dark:hover:bg-white/[0.05] hover:border-blue-500/20 transition-all group">
+                            <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-md hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.05] hover:border-blue-500/20 transition-all group">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-8 rounded-lg bg-gradient-to-tr from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-[11px] font-bold text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
+                                    <div className="size-8 rounded-lg bg-gradient-to-tr from-[hsl(var(--surface-2))] to-[hsl(var(--surface-2))] dark:from-white/5 dark:to-white/10 flex items-center justify-center text-[11px] font-bold text-[hsl(var(--text-secondary))] shadow-sm group-hover:scale-110 transition-transform">
                                         V{i}
                                     </div>
                                     <div>
-                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-tight">Voluntario CCF {i}</p>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Rol: {shift.role_name}</p>
+                                        <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">Voluntario CCF {i}</p>
+                                        <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Rol: {shift.role_name}</p>
                                     </div>
                                 </div>
                                 <div className="size-8 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-500">
@@ -149,7 +149,7 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
                 </section>
 
                 <div className="pt-4">
-                    <button className="w-full py-2 bg-slate-900 dark:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-2xl shadow-blue-500/25 flex items-center justify-center gap-3 group transition-all active:scale-95">
+                    <button className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-2xl shadow-blue-500/25 flex items-center justify-center gap-3 group transition-all active:scale-95">
                         Registrar Asistencia <ChevronRight size={18} className="group-hover:translate-x-1.5 transition-all" />
                     </button>
                 </div>

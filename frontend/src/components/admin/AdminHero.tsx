@@ -46,7 +46,7 @@ export default function AdminHero({
     commandBar
 }: AdminHeroProps) {
     return (
-        <section className="relative overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-[#1e1f21] dark:via-[#18191c] dark:to-[#0f1012] p-4 space-y-3">
+        <section className="relative overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-gradient-to-br from-white via-[hsl(var(--surface-1))] to-[hsl(var(--surface-2))] dark:from-[#1e1f21] dark:via-[#18191c] dark:to-[#0f1012] p-4 space-y-3">
             <div className="absolute inset-y-0 right-8 w-72 bg-gradient-to-br from-blue-500/20 via-sky-500/10 to-transparent blur-3xl pointer-events-none" />
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 relative z-10">
                 <div className="space-y-3 max-w-3xl">
@@ -79,7 +79,7 @@ export default function AdminHero({
                         <button
                             type="button"
                             onClick={primaryAction.onClick}
-                            className="px-3 h-8 rounded-lg bg-[hsl(var(--text-primary))] text-white text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20"
+                            className="px-3 h-8 rounded-lg bg-[hsl(var(--text-primary))] text-white text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-black/20"
                         >
                             {primaryAction.label}
                             {primaryAction.icon ? <primaryAction.icon size={16} /> : <ArrowUpRight size={16} />}
@@ -100,23 +100,23 @@ export default function AdminHero({
             {commandBar && (
                 <div className="rounded-lg border border-[hsl(var(--border))] bg-white/80 dark:bg-white/5 px-3 py-1.5 space-y-3 shadow-[0_20px_70px_rgba(15,23,42,0.15)] relative z-10">
                     <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-md bg-slate-900 text-white flex items-center justify-center">
+                        <div className="size-9 rounded-md bg-[hsl(var(--bg-muted))] text-white flex items-center justify-center">
                             <Bot size={16} />
                         </div>
                         <div className="flex-1">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{commandBar.title}</p>
-                            <p className="text-sm text-slate-900 dark:text-white font-semibold">{commandBar.description}</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{commandBar.title}</p>
+                            <p className="text-sm text-[hsl(var(--text-primary))] dark:text-white font-semibold">{commandBar.description}</p>
                         </div>
-                        <button className="px-4 h-9 rounded-full bg-slate-900 text-white text-[10px] font-semibold uppercase tracking-wide">
+                        <button className="px-4 h-9 rounded-full bg-[hsl(var(--bg-muted))] text-white text-[10px] font-semibold uppercase tracking-wide">
                             {commandBar.ctaLabel}
                         </button>
                     </div>
                     {commandBar.shortcuts && commandBar.shortcuts.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px] text-slate-500">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px] text-[hsl(var(--text-secondary))]">
                             {commandBar.shortcuts.map((shortcut) => (
-                                <div key={shortcut.label} className="rounded-md border border-dashed border-slate-200 px-4 py-3 bg-white/70 dark:bg-white/5">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">{shortcut.label}</p>
-                                    <p className="text-sm text-slate-700 dark:text-white font-semibold">{shortcut.command}</p>
+                                <div key={shortcut.label} className="rounded-md border border-dashed border-[hsl(var(--border))] px-4 py-3 bg-white/70 dark:bg-white/5">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">{shortcut.label}</p>
+                                    <p className="text-sm text-[hsl(var(--text-primary))] dark:text-white font-semibold">{shortcut.command}</p>
                                 </div>
                             ))}
                         </div>

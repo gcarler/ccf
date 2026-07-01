@@ -40,11 +40,11 @@ function VerifyEmailContent() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-3">
-            <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl p-4 text-center space-y-3">
+        <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] px-3">
+            <div className="w-full max-w-md bg-[hsl(var(--bg-muted))]/60 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl p-4 text-center space-y-3">
                 <div className="flex justify-center">{icon()}</div>
                 <h1 className="text-lg font-bold">Verificación de correo</h1>
-                <p className="text-slate-300 text-sm leading-relaxed">{message}</p>
+                <p className="text-[hsl(var(--text-secondary))] text-sm leading-relaxed">{message}</p>
                 <div className="space-y-2">
                     <Link href="/login" className="block w-full py-1.5 rounded-md font-semibold uppercase tracking-wide text-sm bg-primary text-white hover:bg-primary/90 transition">
                         Ir al inicio de sesión
@@ -60,7 +60,7 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[hsl(var(--bg-muted))]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
             <VerifyEmailContent />
         </Suspense>
     );

@@ -28,7 +28,7 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string; dot: strin
   urgent: { label: "Urgente", color: "text-rose-600 bg-rose-50 dark:bg-rose-900/20", dot: "bg-rose-500" },
   high: { label: "Alta", color: "text-orange-600 bg-orange-50 dark:bg-orange-900/20", dot: "bg-orange-500" },
   medium: { label: "Media", color: "text-amber-600 bg-amber-50 dark:bg-amber-900/20", dot: "bg-amber-500" },
-  low: { label: "Baja", color: "text-slate-500 bg-slate-50 dark:bg-slate-800", dot: "bg-slate-400" },
+  low: { label: "Baja", color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]", dot: "bg-[hsl(var(--surface-2))]" },
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -173,7 +173,7 @@ export default function UserTasksPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: Math.min(index * 0.025, 0.2) }}
         onClick={() => setSelectedTask(task as TaskDetail)}
-        className="group w-full text-left rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-lg dark:border-white/10 dark:bg-[#252528]"
+        className="group w-full text-left rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-lg dark:border-white/10 dark:bg-[#252528]"
       >
         <div className="flex items-start gap-3">
           <button
@@ -182,17 +182,17 @@ export default function UserTasksPage() {
               completeTask(task);
             }}
             disabled={savingTaskId === task.id}
-            className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-slate-200 transition-all hover:border-emerald-400 hover:bg-emerald-50 disabled:opacity-60 dark:border-white/10"
+            className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-[hsl(var(--border))] transition-all hover:border-emerald-400 hover:bg-emerald-50 disabled:opacity-60 dark:border-white/10"
           >
-            {savingTaskId === task.id ? <CheckCircle2 size={13} className="text-emerald-500" /> : <Circle size={12} className="text-slate-300" />}
+            {savingTaskId === task.id ? <CheckCircle2 size={13} className="text-emerald-500" /> : <Circle size={12} className="text-[hsl(var(--text-secondary))]" />}
           </button>
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-[13px] font-bold leading-snug text-slate-800 transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">
+            <p className="line-clamp-2 text-[13px] font-bold leading-snug text-[hsl(var(--text-primary))] transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">
               {task.title}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className={clsx("rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide", config.color)}>{config.label}</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-white/5">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5">
                 <FolderOpen size={10} /> {task.project_title || "Sin proyecto"}
               </span>
               {task.due_date && (
@@ -217,7 +217,7 @@ export default function UserTasksPage() {
       setViewType={setViewType}
       availableViews={TASK_VIEWS}
     >
-      <div className="flex h-full flex-col overflow-hidden rounded-lg bg-slate-50 dark:bg-[#1E1F21]">
+      <div className="flex h-full flex-col overflow-hidden rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21]">
         <TaskEditDrawer
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
@@ -225,7 +225,7 @@ export default function UserTasksPage() {
           onTaskDeleted={handleTaskDeleted}
         />
 
-        <header className="shrink-0 border-b border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-3 dark:border-white/10 dark:bg-[#18191c]">
+        <header className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-3 dark:border-white/10 dark:bg-[#18191c]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
               {[
@@ -233,20 +233,20 @@ export default function UserTasksPage() {
                 { label: "Urgentes", value: metrics.urgent },
                 { label: "Hoy", value: metrics.dueToday },
               ].map(metric => (
-                <div key={metric.label} className="rounded-md border border-slate-200 px-3 py-2 dark:border-white/10">
-                  <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{metric.label}</p>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">{metric.value}</p>
+                <div key={metric.label} className="rounded-md border border-[hsl(var(--border))] px-3 py-2 dark:border-white/10">
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
+                  <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{metric.value}</p>
                 </div>
               ))}
             </div>
             <div className="flex flex-1 flex-col gap-2 sm:flex-row lg:max-w-2xl">
               <div className="relative flex-1">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                 <input
                   value={query}
                   onChange={event => setQuery(event.target.value)}
                   placeholder="Buscar tareas..."
-                  className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5"
+                  className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
@@ -258,7 +258,7 @@ export default function UserTasksPage() {
                       "rounded-md px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
                       filterPriority === priority
                         ? "bg-[hsl(var(--primary))] text-white"
-                        : "border border-slate-200 bg-[hsl(var(--bg-primary))] text-slate-500 hover:border-blue-300 dark:border-white/10 dark:bg-white/5"
+                        : "border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] hover:border-blue-300 dark:border-white/10 dark:bg-white/5"
                     )}
                   >
                     {priority === "all" ? "Todo" : PRIORITY_CONFIG[priority]?.label}
@@ -273,7 +273,7 @@ export default function UserTasksPage() {
           {loading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="h-20 animate-pulse rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5" />
+                <div key={index} className="h-20 animate-pulse rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
@@ -282,8 +282,8 @@ export default function UserTasksPage() {
                 <CheckCircle2 size={28} />
               </div>
               <div>
-                <p className="text-lg font-bold text-slate-800 dark:text-white">{query || filterPriority !== "all" ? "Sin resultados" : "Sin tareas pendientes"}</p>
-                <p className="mt-1 max-w-sm text-sm text-slate-500">
+                <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{query || filterPriority !== "all" ? "Sin resultados" : "Sin tareas pendientes"}</p>
+                <p className="mt-1 max-w-sm text-sm text-[hsl(var(--text-secondary))]">
                   {query || filterPriority !== "all" ? "Ajusta los filtros para ver otras tareas." : "No tienes tareas activas asignadas en este momento."}
                 </p>
               </div>
@@ -301,7 +301,7 @@ export default function UserTasksPage() {
                   type: "text",
                   width: "420px",
                   render: (_value, task) => (
-                    <button onClick={() => setSelectedTask(task as TaskDetail)} className="text-left text-[13px] font-semibold text-slate-800 hover:text-[hsl(var(--primary))] dark:text-slate-200">
+                    <button onClick={() => setSelectedTask(task as TaskDetail)} className="text-left text-[13px] font-semibold text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))]">
                       {task.title}
                     </button>
                   ),
@@ -321,14 +321,14 @@ export default function UserTasksPage() {
           ) : viewType === "kanban" ? (
             <div className="flex h-full min-h-[620px] gap-4 overflow-x-auto pb-2">
               {grouped.map(group => (
-                <section key={group.status} className="flex w-72 shrink-0 flex-col rounded-lg border border-slate-200 bg-slate-100/60 dark:border-white/10 dark:bg-white/[0.03]">
-                  <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/10">
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">{group.label}</span>
-                    <span className="rounded-full bg-[hsl(var(--bg-primary))] px-2 py-0.5 text-[10px] font-bold text-slate-400 dark:bg-white/5">{group.items.length}</span>
+                <section key={group.status} className="flex w-72 shrink-0 flex-col rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/60 dark:border-white/10 dark:bg-white/[0.03]">
+                  <div className="flex items-center justify-between border-b border-[hsl(var(--border))] px-4 py-3 dark:border-white/10">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{group.label}</span>
+                    <span className="rounded-full bg-[hsl(var(--bg-primary))] px-2 py-0.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] dark:bg-white/5">{group.items.length}</span>
                   </div>
                   <div className="flex-1 space-y-3 overflow-y-auto p-3">
                     {group.items.length === 0 ? (
-                      <div className="flex h-20 items-center justify-center rounded-md border-2 border-dashed border-slate-200 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:border-white/10">
+                      <div className="flex h-20 items-center justify-center rounded-md border-2 border-dashed border-[hsl(var(--border))] text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
                         Vacio
                       </div>
                     ) : (

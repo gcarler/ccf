@@ -177,8 +177,8 @@ export default function SupportPage() {
                                 width: '400px',
                                 render: (val, ticket) => (
                                     <div className="flex flex-col pr-4">
-                                        <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200 truncate">{ticket.subject}</span>
-                                        <span className="text-[10px] text-slate-400 font-medium truncate">{ticket.description}</span>
+                                        <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{ticket.subject}</span>
+                                        <span className="text-[10px] text-[hsl(var(--text-secondary))] font-medium truncate">{ticket.description}</span>
                                     </div>
                                 )
                             },
@@ -188,8 +188,8 @@ export default function SupportPage() {
                                 type: 'text', 
                                 width: '150px',
                                 render: (val: any) => (
-                                    <span className="text-[11px] font-bold text-slate-500 flex items-center gap-2">
-                                        <Book size={12} className="text-slate-300" />
+                                    <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                                        <Book size={12} className="text-[hsl(var(--text-secondary))]" />
                                         {val}
                                     </span>
                                 )
@@ -204,34 +204,34 @@ export default function SupportPage() {
                 ) : viewType === 'list' ? (
                     <div className="mx-auto max-w-5xl space-y-3 p-3">
                         {filteredTickets.map((ticket) => (
-                            <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/5">
+                            <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="min-w-0">
-                                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{ticket.subject}</p>
-                                        <p className="truncate text-xs font-medium text-slate-400">{ticket.description}</p>
+                                        <p className="truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{ticket.subject}</p>
+                                        <p className="truncate text-xs font-medium text-[hsl(var(--text-secondary))]">{ticket.description}</p>
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-white/10">{ticket.status || 'abierto'}</span>
+                                    <span className="shrink-0 rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/10">{ticket.status || 'abierto'}</span>
                                 </div>
                             </button>
                         ))}
-                        {filteredTickets.length === 0 && <div className="py-1.5 text-center text-sm font-semibold text-slate-400">Sin tickets para mostrar.</div>}
+                        {filteredTickets.length === 0 && <div className="py-1.5 text-center text-sm font-semibold text-[hsl(var(--text-secondary))]">Sin tickets para mostrar.</div>}
                     </div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
                     <div className="flex gap-4 overflow-x-auto p-3">
                         {groupedTickets.map((column) => (
-                            <section key={column.status} className="w-80 shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                            <section key={column.status} className="w-80 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                                 <div className="mb-3 flex items-center justify-between px-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{column.status}</p>
-                                    <span className="font-semibold text-slate-400">{column.tickets.length}</span>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.status}</p>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.tickets.length}</span>
                                 </div>
                                 <div className="space-y-2">
                                     {column.tickets.map((ticket) => (
-                                        <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 text-left shadow-sm dark:border-white/10 dark:bg-white/5">
-                                            <p className="line-clamp-2 text-xs font-semibold text-slate-900 dark:text-white">{ticket.subject}</p>
-                                            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{ticket.category || 'General'}</p>
+                                        <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 text-left shadow-sm dark:border-white/10 dark:bg-white/5">
+                                            <p className="line-clamp-2 text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{ticket.subject}</p>
+                                            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{ticket.category || 'General'}</p>
                                         </button>
                                     ))}
-                                    {column.tickets.length === 0 && <div className="rounded-md border border-dashed border-slate-200 py-8 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:border-white/10">Vacio</div>}
+                                    {column.tickets.length === 0 && <div className="rounded-md border border-dashed border-[hsl(var(--border))] py-8 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">Vacio</div>}
                                 </div>
                             </section>
                         ))}
@@ -272,29 +272,29 @@ export default function SupportPage() {
                         </section>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg shadow-sm space-y-4">
+                            <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm space-y-4">
                                 <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-[hsl(var(--primary))]"><Mail size={24} /></div>
                                 <h3 className="text-xl font-bold">Correo Electrónico</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm">Escríbenos directamente a soporte@ccf.org para consultas institucionales.</p>
+                                <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm">Escríbenos directamente a soporte@ccf.org para consultas institucionales.</p>
                             </div>
-                            <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg shadow-sm space-y-4">
+                            <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm space-y-4">
                                 <div className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600"><MessageSquare size={24} /></div>
                                 <h3 className="text-xl font-bold">WhatsApp</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm">Respuesta rápida para emergencias pastorales y dudas técnicas.</p>
+                                <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm">Respuesta rápida para emergencias pastorales y dudas técnicas.</p>
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <h3 className="font-semibold text-slate-400 uppercase tracking-wide ml-2">Tus Solicitudes Recientes</h3>
+                            <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide ml-2">Tus Solicitudes Recientes</h3>
                             {tickets.length === 0 ? (
-                                <div className="p-4 text-center border-2 border-dashed border-slate-100 dark:border-white/5 rounded-lg text-slate-400 text-sm font-medium italic">No has abierto tickets recientemente.</div>
+                                <div className="p-4 text-center border-2 border-dashed border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-[hsl(var(--text-secondary))] text-sm font-medium italic">No has abierto tickets recientemente.</div>
                             ) : tickets.map(ticket => (
-                                <div key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg hover:border-blue-500/30 transition-all cursor-pointer flex items-center justify-between group">
+                                <div key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg hover:border-blue-500/30 transition-all cursor-pointer flex items-center justify-between group">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-10 rounded-md bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400"><FileText size={20} /></div>
+                                        <div className="size-10 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]"><FileText size={20} /></div>
                                         <div>
-                                            <h4 className="font-bold text-slate-700 dark:text-white">{ticket.subject}</h4>
-                                            <p className="text-xs text-slate-400">{new Date(ticket.created_at).toLocaleDateString()}</p>
+                                            <h4 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{ticket.subject}</h4>
+                                            <p className="text-xs text-[hsl(var(--text-secondary))]">{new Date(ticket.created_at).toLocaleDateString()}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
@@ -302,7 +302,7 @@ export default function SupportPage() {
                                             "px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-tight",
                                             ticket.status === 'abierto' ? "bg-blue-50 text-[hsl(var(--primary))]" : "bg-emerald-50 text-emerald-600"
                                         )}>{ticket.status}</div>
-                                        <ChevronRight size={16} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors" />
+                                        <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                                     </div>
                                 </div>
                             ))}
@@ -318,7 +318,7 @@ export default function SupportPage() {
                 subtitle={`${selectedTicket?.category || 'Soporte'} • #${selectedTicket?.id}`}
                 actions={
                     <>
-                        <button className="px-4 py-2 text-[11px] font-bold text-slate-500" onClick={() => setIsDrawerOpen(false)}>Cerrar</button>
+                        <button className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))]" onClick={() => setIsDrawerOpen(false)}>Cerrar</button>
                         <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Enviar Mensaje</button>
                     </>
                 }
@@ -333,22 +333,22 @@ export default function SupportPage() {
 
                     <section className="space-y-4">
                         <div className="flex items-center gap-2">
-                            <FileText size={14} className="text-slate-400" />
-                            <h4 className="font-semibold text-slate-400 uppercase tracking-wide">Descripción del Problema</h4>
+                            <FileText size={14} className="text-[hsl(var(--text-secondary))]" />
+                            <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción del Problema</h4>
                         </div>
-                        <div className="p-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[13px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
                             {selectedTicket?.description}
                         </div>
                     </section>
 
-                    <section className="space-y-4 pt-6 border-t border-slate-100 dark:border-white/5">
-                        <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2">
+                    <section className="space-y-4 pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
+                        <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
                             <History size={14} className="text-[hsl(var(--primary))]" /> Historial de Resolución
                         </h4>
                         <div className="space-y-3">
-                            <div className="flex gap-4 p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-slate-200 dark:border-white/5">
+                            <div className="flex gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border border-[hsl(var(--border))] dark:border-white/5">
                                 <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-[hsl(var(--primary))] shrink-0"><Send size={14} /></div>
-                                <div><p className="text-[12px] font-bold text-slate-700 dark:text-slate-200">Ticket Recibido</p><p className="text-[10px] text-slate-400">Asignado automáticamente al departamento correspondiente.</p></div>
+                                <div><p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Ticket Recibido</p><p className="text-[10px] text-[hsl(var(--text-secondary))]">Asignado automáticamente al departamento correspondiente.</p></div>
                             </div>
                         </div>
                     </section>
@@ -363,7 +363,7 @@ export default function SupportPage() {
                 subtitle="Reportar un incidente o solicitar ayuda"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsCreateDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
+                        <button type="button" onClick={() => setIsCreateDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
                         <button
@@ -380,22 +380,22 @@ export default function SupportPage() {
             >
                 <form id="create-ticket-form" onSubmit={handleCreateTicket} className="space-y-5">
                     <div className="space-y-2">
-                        <label className="font-semibold text-slate-400 uppercase tracking-wide">Asunto *</label>
+                        <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Asunto *</label>
                         <input
                             type="text"
                             required
                             value={newTicket.subject}
                             onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
                             placeholder="Ej: No puedo ver mi certificado"
-                            className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white font-medium"
+                            className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white font-medium"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="font-semibold text-slate-400 uppercase tracking-wide">Categoría</label>
+                        <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoría</label>
                         <select
                             value={newTicket.category}
                             onChange={(e) => setNewTicket({ ...newTicket, category: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white font-medium appearance-none"
+                            className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white font-medium appearance-none"
                         >
                             <option>General</option>
                             <option>Técnico</option>
@@ -404,13 +404,13 @@ export default function SupportPage() {
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="font-semibold text-slate-400 uppercase tracking-wide">Descripción *</label>
+                        <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción *</label>
                         <textarea
                             required
                             value={newTicket.description}
                             onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
                             placeholder="Describe tu problema con detalle..."
-                            className="w-full h-36 px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-none dark:text-white font-medium"
+                            className="w-full h-36 px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-none dark:text-white font-medium"
                         />
                     </div>
                 </form>
@@ -421,12 +421,12 @@ export default function SupportPage() {
 
 function DrawerStat({ label, value, icon: Icon }: any) {
     return (
-        <div className="p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-md">
+        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md">
             <div className="flex items-center gap-2 mb-1">
-                <Icon size={12} className="text-slate-400" />
-                <span className="font-semibold text-slate-400 uppercase tracking-wide">{label}</span>
+                <Icon size={12} className="text-[hsl(var(--text-secondary))]" />
+                <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{label}</span>
             </div>
-            <p className="text-[12px] font-bold text-slate-700 dark:text-slate-200 capitalize">{value || 'N/A'}</p>
+            <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] capitalize">{value || 'N/A'}</p>
         </div>
     );
 }

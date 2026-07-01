@@ -26,9 +26,9 @@ export default function AdminSettingsProfilePage() {
     };
 
     return (
-        <div className="min-h-full bg-slate-950/20 font-display">
+        <div className="min-h-full bg-[hsl(var(--bg-muted))]/20 font-display">
             {/* Header */}
-            <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
+            <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
                 <div className="px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Church size={18} className="text-primary" />
@@ -73,13 +73,13 @@ export default function AdminSettingsProfilePage() {
                             <Church size={48} className="text-primary" />
                         </div>
                         {editing && (
-                            <button className="absolute -bottom-2 -right-2 size-9 rounded-md bg-primary text-white flex items-center justify-center shadow-xl border-2 border-slate-950 hover:scale-110 transition-all">
+                            <button className="absolute -bottom-2 -right-2 size-9 rounded-md bg-primary text-white flex items-center justify-center shadow-xl border-2 border-[hsl(var(--border))] hover:scale-110 transition-all">
                                 <Camera size={16} />
                             </button>
                         )}
                     </div>
                     {editing && (
-                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">
+                        <p className="text-[10px] text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                             Toca el ícono para cambiar el logo
                         </p>
                     )}
@@ -131,9 +131,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-3 space-y-4"
+            className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-3 space-y-4"
         >
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-5">{title}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">{title}</p>
             {children}
         </motion.div>
     );
@@ -145,24 +145,24 @@ function Field({ label, value, editing, onChange, multiline }: {
 }) {
     return (
         <div className="space-y-1.5">
-            <label className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">{label}</label>
+            <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</label>
             {editing ? (
                 multiline ? (
                     <textarea
                         rows={3}
                         value={value}
                         onChange={e => onChange(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-sm text-white placeholder:text-slate-600 focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all resize-none outline-none"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-sm text-white placeholder:text-[hsl(var(--text-secondary))] focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all resize-none outline-none"
                     />
                 ) : (
                     <input
                         value={value}
                         onChange={e => onChange(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-sm text-white placeholder:text-slate-600 focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all outline-none"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-sm text-white placeholder:text-[hsl(var(--text-secondary))] focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all outline-none"
                     />
                 )
             ) : (
-                <p className="text-sm text-slate-300 font-medium leading-relaxed px-1">{value}</p>
+                <p className="text-sm text-[hsl(var(--text-secondary))] font-medium leading-relaxed px-1">{value}</p>
             )}
         </div>
     );

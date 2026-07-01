@@ -105,15 +105,15 @@ export default function AdminDashboard() {
                     </section>
 
                     {/* Interactive Chart Section */}
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 group">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 group">
                         <div className="flex justify-between items-center">
                             <div>
                                 <h3 className="text-xl font-bold tracking-tight mb-1">Tendencia de Crecimiento</h3>
-                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Participación Semanal</p>
+                                <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Participación Semanal</p>
                             </div>
-                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-md border border-slate-200 dark:border-white/10">
+                            <div className="flex items-center gap-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1 rounded-md border border-[hsl(var(--border))] dark:border-white/10">
                                 {['7D', '30D', '90D'].map(p => (
-                                    <button key={p} className={clsx("px-4 py-1.5 rounded-lg font-semibold transition-all", p === '7D' ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-sm" : "text-slate-500")}>{p}</button>
+                                    <button key={p} className={clsx("px-4 py-1.5 rounded-lg font-semibold transition-all", p === '7D' ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-sm" : "text-[hsl(var(--text-secondary))]")}>{p}</button>
                                 ))}
                             </div>
                         </div>
@@ -124,14 +124,14 @@ export default function AdminDashboard() {
                                         initial={{ height: 0 }} animate={{ height: `${h}%` }}
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative",
-                                            i === 6 ? "bg-[hsl(var(--primary))] shadow-[0_0_20px_rgba(37,99,235,0.4)]" : "bg-slate-200 dark:bg-white/10 opacity-60 group-hover/bar:opacity-100"
+                                            i === 6 ? "bg-[hsl(var(--primary))] shadow-[0_0_20px_rgba(37,99,235,0.4)]" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 opacity-60 group-hover/bar:opacity-100"
                                         )}
                                     >
-                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity bg-slate-900 text-white px-2 py-1 rounded font-semibold">
+                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity bg-[hsl(var(--bg-muted))] text-white px-2 py-1 rounded font-semibold">
                                             {h}%
                                         </div>
                                     </motion.div>
-                                    <span className="font-semibold text-slate-400 uppercase tracking-wide">{['L','M','M','J','V','S','D'][i]}</span>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{['L','M','M','J','V','S','D'][i]}</span>
                                 </div>
                             ))}
                         </div>
@@ -149,17 +149,17 @@ export default function AdminDashboard() {
                                 { title: 'Donación Recibida', desc: 'Ofrenda especial pro-construcción confirmada', time: 'Hace 12 min', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' },
                                 { title: 'Examen Completado', desc: 'Elena Rodriguez aprobó "Historia de la Iglesia"', time: 'Hace 45 min', icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50' },
                             ].map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg hover:border-blue-500/20 transition-all group cursor-pointer shadow-sm hover:shadow-md">
+                                <div key={idx} className="flex items-center gap-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg hover:border-blue-500/20 transition-all group cursor-pointer shadow-sm hover:shadow-md">
                                     <div className={clsx("size-7 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform", item.bg, "dark:bg-white/10", item.color)}>
                                         <item.icon size={28} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="text-sm font-semibold text-slate-900 dark:text-white truncate">{item.title}</h4>
-                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mt-1 truncate">{item.desc}</p>
+                                        <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{item.title}</h4>
+                                        <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1 truncate">{item.desc}</p>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{item.time}</p>
-                                        <ChevronRight size={18} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors inline-block" />
+                                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">{item.time}</p>
+                                        <ChevronRight size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors inline-block" />
                                     </div>
                                 </div>
                             ))}
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Rendimiento Académico</h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Desglose por Modalidad</p>
+                                <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Desglose por Modalidad</p>
                             </div>
                         </div>
 
@@ -194,18 +194,18 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Top Courses List */}
-                        <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4">
-                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3 px-2">Cursos más Populares</h4>
+                        <div className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4">
+                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 px-2">Cursos más Populares</h4>
                              <div className="space-y-4">
                                 {academy?.top_courses.map((course, i) => (
-                                    <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 group hover:border-blue-500/20 transition-all">
+                                    <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 group hover:border-blue-500/20 transition-all">
                                         <div className="flex items-center gap-4">
-                                            <span className="font-semibold text-slate-300">0{i+1}</span>
+                                            <span className="font-semibold text-[hsl(var(--text-secondary))]">0{i+1}</span>
                                             <span className="text-sm font-semibold group-hover:text-[hsl(var(--primary))] transition-colors">{course.title}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-semibold">{course.count}</span>
-                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Estudiantes</span>
+                                            <span className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estudiantes</span>
                                         </div>
                                     </div>
                                 ))}
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
 
                 {/* Sidebar Contextual BI */}
                 <aside className="lg:col-span-4 space-y-3">
-                    <div className="bg-slate-900 rounded-lg p-4 text-white shadow-2xl space-y-3 relative overflow-hidden group">
+                    <div className="bg-[hsl(var(--bg-muted))] rounded-lg p-4 text-white shadow-2xl space-y-3 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-blue-600/20 rounded-full blur-[80px] group-hover:bg-blue-600/30 transition-all duration-1000" />
                         
                         <div className="relative z-10">
@@ -232,12 +232,12 @@ export default function AdminDashboard() {
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                                     <span className="text-lg font-bold tracking-tighter">75%</span>
-                                    <span className="font-semibold text-slate-500 uppercase tracking-wide">Crecimiento</span>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Crecimiento</span>
                                 </div>
                             </div>
                             <div className="space-y-4">
                                 <ProgressItem label="Inscripciones" value="75%" color="bg-[hsl(var(--primary))]" />
-                                <ProgressItem label="Graduaciones" value="25%" color="bg-slate-700" />
+                                <ProgressItem label="Graduaciones" value="25%" color="bg-[hsl(var(--surface-2))]" />
                             </div>
                         </div>
 
@@ -247,21 +247,21 @@ export default function AdminDashboard() {
                                     <Sparkles size={18} className="text-[hsl(var(--primary))]" />
                                     <h5 className="text-[10px] font-semibold uppercase tracking-wide">IA Insights</h5>
                                 </div>
-                                <p className="text-[11px] font-bold text-slate-400 leading-relaxed uppercase tracking-wider">
+                                <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] leading-relaxed uppercase tracking-wider">
                                     &quot;La participación ha subido un 15% en los cursos no formales. Se recomienda potenciar la ruta formal para el próximo trimestre.&quot;
                                 </p>
                             </div>
                         </div>
 
-                        <button className="relative z-10 w-full py-2 bg-[hsl(var(--bg-primary))] text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:scale-[1.02] transition-all active:scale-95">
+                        <button className="relative z-10 w-full py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:scale-[1.02] transition-all active:scale-95">
                             Generar Auditoría
                         </button>
                     </div>
 
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Próximos Eventos</h4>
-                            <Calendar size={18} className="text-slate-300" />
+                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Próximos Eventos</h4>
+                            <Calendar size={18} className="text-[hsl(var(--text-secondary))]" />
                         </div>
                         <div className="space-y-3">
                             {[
@@ -269,13 +269,13 @@ export default function AdminDashboard() {
                                 { day: '22', month: 'MAR', title: 'Asamblea de Líderes', time: '06:30 PM' },
                             ].map((event, i) => (
                                 <div key={i} className="flex gap-3 items-center group cursor-pointer">
-                                    <div className="flex flex-col items-center justify-center size-7 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
+                                    <div className="flex flex-col items-center justify-center size-7 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
                                         <span className="text-lg font-bold leading-none">{event.day}</span>
                                         <span className="text-[8px] font-semibold uppercase">{event.month}</span>
                                     </div>
                                     <div>
-                                        <h5 className="font-semibold text-slate-800 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">{event.title}</h5>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{event.time}</p>
+                                        <h5 className="font-semibold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">{event.title}</h5>
+                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">{event.time}</p>
                                     </div>
                                 </div>
                             ))}
@@ -288,7 +288,7 @@ export default function AdminDashboard() {
 }
 
 function ModalityCard({ title, stats, icon: Icon, color }: any) {
-    if (!stats) return <div className="h-48 bg-slate-50 dark:bg-white/5 rounded-lg animate-pulse" />;
+    if (!stats) return <div className="h-48 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />;
     
     const colorMap: any = {
         blue: { text: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50', bar: 'bg-[hsl(var(--primary))]', border: 'border-blue-100' },
@@ -297,37 +297,37 @@ function ModalityCard({ title, stats, icon: Icon, color }: any) {
     const c = colorMap[color];
 
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-sm group hover:shadow-xl transition-all">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 space-y-3 shadow-sm group hover:shadow-xl transition-all">
             <div className="flex justify-between items-start">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", c.bg, "dark:bg-white/10", c.text)}>
                     <Icon size={24} />
                 </div>
                 <div className="text-right">
-                    <span className="font-semibold text-slate-400 uppercase tracking-wide">Éxito</span>
+                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Éxito</span>
                     <h5 className={clsx("text-xl font-bold tracking-tight", c.text)}>{stats.rate}%</h5>
                 </div>
             </div>
             
             <div>
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">{title}</h4>
+                <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wider">{title}</h4>
                 <div className="flex items-center gap-2 mt-1">
                     <div className="size-1.5 rounded-full bg-emerald-500" />
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{stats.completed} de {stats.total} finalizados</p>
+                    <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{stats.completed} de {stats.total} finalizados</p>
                 </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 dark:border-white/5 grid grid-cols-2 gap-4">
+            <div className="pt-4 border-t border-[hsl(var(--border))] dark:border-white/5 grid grid-cols-2 gap-4">
                 <div>
-                    <span className="font-semibold text-slate-400 uppercase tracking-wide block mb-1">Promedio</span>
+                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide block mb-1">Promedio</span>
                     <p className="text-lg font-bold tracking-tighter">{stats.avg_grade}</p>
                 </div>
                 <div className="text-right">
-                    <span className="font-semibold text-slate-400 uppercase tracking-wide block mb-1">Inscritos</span>
+                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide block mb-1">Inscritos</span>
                     <p className="text-lg font-bold tracking-tighter">{stats.total}</p>
                 </div>
             </div>
             
-            <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+            <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                 <motion.div 
                     initial={{ width: 0 }} 
                     animate={{ width: `${stats.rate}%` }} 
@@ -345,8 +345,8 @@ function StatCard({ label, value, icon: Icon, trend, color }: any) {
         emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
     };
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
-            <div className="absolute top-0 right-0 -mr-6 -mt-3 size-10 bg-slate-50 dark:bg-white/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-700" />
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+            <div className="absolute top-0 right-0 -mr-6 -mt-3 size-10 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-700" />
             <div className="relative z-10 space-y-3">
                 <div className="flex justify-between items-center">
                     <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
@@ -359,8 +359,8 @@ function StatCard({ label, value, icon: Icon, trend, color }: any) {
                     </div>
                 </div>
                 <div>
-                    <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-                    <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
+                    <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">{label}</p>
+                    <h4 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">{value}</h4>
                 </div>
             </div>
         </div>
@@ -370,7 +370,7 @@ function StatCard({ label, value, icon: Icon, trend, color }: any) {
 function ProgressItem({ label, value, color }: any) {
     return (
         <div className="space-y-2">
-            <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+            <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 <span>{label}</span>
                 <span className="text-white">{value}</span>
             </div>

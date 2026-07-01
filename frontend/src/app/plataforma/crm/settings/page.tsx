@@ -186,8 +186,8 @@ export default function CrmSettingsPage() {
                             <Shield size={10} /> Privilegios Root
                         </div>
                     </div>
-                    <h1 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Control Maestro</h1>
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Administra los parámetros base, integraciones y seguridad del ecosistema.</p>
+                    <h1 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Control Maestro</h1>
+                    <p className="text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Administra los parámetros base, integraciones y seguridad del ecosistema.</p>
                 </div>
 
                 {/* 2. Settings Grid Layout */}
@@ -206,18 +206,18 @@ export default function CrmSettingsPage() {
                     <motion.div variants={itemVariants} initial="hidden" animate="show" className="lg:col-span-3">
                         <AnimatePresence mode="wait">
                             {activeSection === 'general' && (
-                                <motion.div key="general" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
-                                    <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
-                                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Parámetros de Identidad</h3>
-                                        <p className="text-[12px] text-slate-500 font-medium">Define cómo se identifica tu ministerio en reportes y correos.</p>
+                                <motion.div key="general" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 md:p-4 shadow-sm">
+                                    <div className="space-y-1 border-b border-[hsl(var(--border))] dark:border-white/5 pb-4">
+                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Parámetros de Identidad</h3>
+                                        <p className="text-[12px] text-[hsl(var(--text-secondary))] font-medium">Define cómo se identifica tu ministerio en reportes y correos.</p>
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-4">
                                         <SettingInput disabled={!canEditCrm} label="Nombre de la Iglesia" value={config.churchName} onChange={(val: string) => setConfig({...config, churchName: val})} />
                                         <SettingInput disabled={!canEditCrm} label="Email de Respuesta Público" value={config.contactEmail} onChange={(val: string) => setConfig({...config, contactEmail: val})} />
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide pl-1">Zona Horaria Base</label>
-                                            <select disabled={!canEditCrm} className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer disabled:opacity-50" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
+                                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-1">Zona Horaria Base</label>
+                                            <select disabled={!canEditCrm} className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] dark:bg-black/20 dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer disabled:opacity-50" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
                                                 <option value="America/Bogota">Bogotá (GMT-5)</option>
                                                 <option value="America/New_York">New York (GMT-4)</option>
                                                 <option value="Europe/Madrid">Madrid (GMT+2)</option>
@@ -228,10 +228,10 @@ export default function CrmSettingsPage() {
                             )}
 
                             {activeSection === 'integrations' && (
-                                <motion.div key="integrations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
-                                    <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
-                                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Pasarelas de Conexión</h3>
-                                        <p className="text-[12px] text-slate-500 font-medium">Habilita canales oficiales para mensajería y automatizaciones.</p>
+                                <motion.div key="integrations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 md:p-4 shadow-sm">
+                                    <div className="space-y-1 border-b border-[hsl(var(--border))] dark:border-white/5 pb-4">
+                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Pasarelas de Conexión</h3>
+                                        <p className="text-[12px] text-[hsl(var(--text-secondary))] font-medium">Habilita canales oficiales para mensajería y automatizaciones.</p>
                                     </div>
 
                                     <div className="space-y-4">
@@ -248,12 +248,12 @@ export default function CrmSettingsPage() {
                                             active={config.enableSMS} onToggle={(v: boolean) => setConfig({...config, enableSMS: v})}
                                         />
                                         {config.enableSMS && (
-                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="pl-4 ml-4 border-l-2 border-slate-100 dark:border-white/10 py-2 space-y-4">
+                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="pl-4 ml-4 border-l-2 border-[hsl(var(--border))] dark:border-white/10 py-2 space-y-4">
                                                 <SettingInput disabled={!canEditCrm} label="Twilio Account SID" value={config.twilioApiKey} onChange={(v: string) => setConfig({...config, twilioApiKey: v})} placeholder="ACxxxxxxxxxxxxxxxx" />
                                                 <SettingInput disabled={!canEditCrm} label="Auth Token" value="••••••••••••••••" onChange={() => {}} type="password" />
                                             </motion.div>
                                         )}
-                                        <div className="pt-4 mt-2 border-t border-slate-100 dark:border-white/5">
+                                        <div className="pt-4 mt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
                                             <SettingInput disabled={!canEditCrm} label="Servidor SMTP Principal" value={config.smtpServer} onChange={(v: string) => setConfig({...config, smtpServer: v})} placeholder="smtp.mail.faro.org" />
                                         </div>
                                     </div>
@@ -262,18 +262,18 @@ export default function CrmSettingsPage() {
 
                             {activeSection === 'security' && (
                                 <motion.div key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3">
-                                    <div className="bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm space-y-3">
-                                        <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
-                                            <h3 className="text-sm font-bold text-slate-800 dark:text-white">Políticas de Seguridad</h3>
-                                            <p className="text-[12px] text-slate-500 font-medium">Controla la infraestructura y salvaguardia de datos.</p>
+                                    <div className="bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 md:p-4 shadow-sm space-y-3">
+                                        <div className="space-y-1 border-b border-[hsl(var(--border))] dark:border-white/5 pb-4">
+                                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Políticas de Seguridad</h3>
+                                            <p className="text-[12px] text-[hsl(var(--text-secondary))] font-medium">Controla la infraestructura y salvaguardia de datos.</p>
                                         </div>
 
-                                        <div className="flex items-center justify-between p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                                        <div className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/5">
                                             <div className="flex items-start gap-4">
                                                 <Database size={18} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] mt-0.5" />
                                                 <div>
-                                                    <h4 className="text-xs font-bold text-slate-800 dark:text-white">Respaldo Automático Base de Datos</h4>
-                                                    <p className="text-[12px] text-slate-500 mt-0.5">MESH encripta y guarda un backup cada 24h.</p>
+                                                    <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white">Respaldo Automático Base de Datos</h4>
+                                                    <p className="text-[12px] text-[hsl(var(--text-secondary))] mt-0.5">MESH encripta y guarda un backup cada 24h.</p>
                                                 </div>
                                             </div>
                                             <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-md text-[10px] font-bold uppercase tracking-wide">Activo</span>
@@ -296,33 +296,33 @@ export default function CrmSettingsPage() {
                             )}
 
                             {activeSection === 'notifications' && (
-                                <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
-                                    <div className="flex flex-col items-center justify-center p-4 text-center text-slate-500">
-                                        <Bell size={32} className="mb-4 opacity-50 text-slate-400" />
-                                        <h4 className="text-xs font-bold mb-1 text-slate-700 dark:text-slate-300">Sin notificaciones configuradas</h4>
+                                <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 md:p-4 shadow-sm">
+                                    <div className="flex flex-col items-center justify-center p-4 text-center text-[hsl(var(--text-secondary))]">
+                                        <Bell size={32} className="mb-4 opacity-50 text-[hsl(var(--text-secondary))]" />
+                                        <h4 className="text-xs font-bold mb-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Sin notificaciones configuradas</h4>
                                         <p className="text-[12px]">Las preferencias de alerta de sistema aparecerán aquí.</p>
                                     </div>
                                 </motion.div>
                             )}
 
                             {activeSection === 'consolidation' && (
-                                <motion.div key="consolidation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
-                                    <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
-                                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Cargos de Consolidación</h3>
-                                        <p className="text-[12px] text-slate-500 font-medium">Define los roles nativos que operan el seguimiento de personas.</p>
+                                <motion.div key="consolidation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 md:p-4 shadow-sm">
+                                    <div className="space-y-1 border-b border-[hsl(var(--border))] dark:border-white/5 pb-4">
+                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Cargos de Consolidación</h3>
+                                        <p className="text-[12px] text-[hsl(var(--text-secondary))] font-medium">Define los roles nativos que operan el seguimiento de personas.</p>
                                     </div>
 
                                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                                        <div className="space-y-4 p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                                        <div className="space-y-4 p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/5">
                                             <div className="flex items-center justify-between">
-                                                <h4 className="text-xs font-bold text-slate-800 dark:text-white">
+                                                <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white">
                                                     {editingPositionId ? 'Editar cargo' : 'Nuevo cargo'}
                                                 </h4>
                                                 {editingPositionId && (
                                                     <button
                                                         type="button"
                                                         onClick={resetPositionForm}
-                                                        className="text-[11px] font-bold uppercase tracking-wide text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                                                        className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]"
                                                     >
                                                         Cancelar
                                                     </button>
@@ -331,22 +331,22 @@ export default function CrmSettingsPage() {
                                             <SettingInput disabled={!canEditCrm} label="Nombre" value={positionForm.name} onChange={(v: string) => setPositionForm({ ...positionForm, name: v })} placeholder="Pastor de consolidación" />
                                             <SettingInput disabled={!canEditCrm} label="Categoría" value={positionForm.category} onChange={(v: string) => setPositionForm({ ...positionForm, category: v })} placeholder="consolidation" />
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide pl-1">Descripción</label>
+                                                <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-1">Descripción</label>
                                                 <textarea
                                                     disabled={!canEditCrm}
                                                     value={positionForm.description}
                                                     onChange={(e) => setPositionForm({ ...positionForm, description: e.target.value })}
                                                     rows={4}
-                                                    className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                                                    className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] dark:bg-black/20 dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-[hsl(var(--text-secondary))]"
                                                 />
                                             </div>
-                                            <label className="flex items-center gap-3 text-xs font-medium text-slate-700 dark:text-slate-200">
+                                            <label className="flex items-center gap-3 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                 <input
                                                     disabled={!canEditCrm}
                                                     type="checkbox"
                                                     checked={positionForm.is_active}
                                                     onChange={(e) => setPositionForm({ ...positionForm, is_active: e.target.checked })}
-                                                    className="size-4 rounded border-slate-300 text-[hsl(var(--primary))] focus:ring-blue-500"
+                                                    className="size-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-blue-500"
                                                 />
                                                 Activo
                                             </label>
@@ -363,10 +363,10 @@ export default function CrmSettingsPage() {
                                             )}
                                         </div>
 
-                                        <div className="space-y-4 p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                                        <div className="space-y-4 p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/5">
                                             <div className="flex items-center justify-between">
-                                                <h4 className="text-xs font-bold text-slate-800 dark:text-white">Catálogo actual</h4>
-                                                <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                                <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white">Catálogo actual</h4>
+                                                <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                     {isLoadingPositions ? 'Cargando...' : `${positions.length} cargos`}
                                                 </span>
                                             </div>
@@ -374,34 +374,34 @@ export default function CrmSettingsPage() {
                                             {isLoadingPositions ? (
                                                 <div className="space-y-3">
                                                     {[...Array(3)].map((_, i) => (
-                                                        <div key={i} className="h-8 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-slate-100 dark:border-white/10 animate-pulse" />
+                                                        <div key={i} className="h-8 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 animate-pulse" />
                                                     ))}
                                                 </div>
                                             ) : positions.length === 0 ? (
-                                                <div className="rounded-md border border-dashed border-slate-200 dark:border-white/10 p-4 text-center text-slate-500">
+                                                <div className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">
                                                     No hay cargos registrados aún.
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
                                                     {positions.map((position) => (
-                                                        <div key={position.id} className="flex items-start justify-between gap-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#111317] border border-slate-100 dark:border-white/10 p-4">
+                                                        <div key={position.id} className="flex items-start justify-between gap-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#111317] border border-[hsl(var(--border))] dark:border-white/10 p-4">
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-2">
-                                                                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{position.name}</p>
-                                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${position.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'}`}>
+                                                                    <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{position.name}</p>
+                                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${position.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]'}`}>
                                                                         {position.is_active ? 'Activo' : 'Inactivo'}
                                                                     </span>
                                                                 </div>
-                                                                <p className="text-[12px] text-slate-500 mt-1">{position.category || 'Sin categoría'}</p>
+                                                                <p className="text-[12px] text-[hsl(var(--text-secondary))] mt-1">{position.category || 'Sin categoría'}</p>
                                                                 {position.description && (
-                                                                    <p className="text-[12px] text-slate-400 mt-1 line-clamp-2">{position.description}</p>
+                                                                    <p className="text-[12px] text-[hsl(var(--text-secondary))] mt-1 line-clamp-2">{position.description}</p>
                                                                 )}
                                                             </div>
                                                             {canEditCrm && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => startEditPosition(position)}
-                                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                                                 >
                                                                     <Pencil size={12} />
                                                                     Editar

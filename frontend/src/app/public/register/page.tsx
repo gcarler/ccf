@@ -49,8 +49,8 @@ function RegisterForm() {
                     <Check size={48} strokeWidth={3} />
                 </div>
                 <div>
-                    <h2 className="text-xl font-bold text-slate-900 tracking-tight mb-2">¡Registro Exitoso!</h2>
-                    <p className="text-slate-500 font-medium">
+                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight mb-2">¡Registro Exitoso!</h2>
+                    <p className="text-[hsl(var(--text-secondary))] font-medium">
                         Te hemos registrado correctamente para este evento. ¡Bienvenido a casa!
                     </p>
                 </div>
@@ -69,54 +69,54 @@ function RegisterForm() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                    <label className="font-semibold text-slate-400 uppercase tracking-wide pl-2">Nombres *</label>
+                    <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-2">Nombres *</label>
                     <input
                         required
                         type="text"
                         value={form.first_name}
                         onChange={e => setForm({ ...form, first_name: e.target.value })}
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
+                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-[hsl(var(--text-primary))] transition-all placeholder:text-[hsl(var(--text-secondary))] placeholder:font-medium"
                         placeholder="Tus nombres"
                     />
                 </div>
                 <div className="space-y-2">
-                    <label className="font-semibold text-slate-400 uppercase tracking-wide pl-2">Apellidos *</label>
+                    <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-2">Apellidos *</label>
                     <input
                         required
                         type="text"
                         value={form.last_name}
                         onChange={e => setForm({ ...form, last_name: e.target.value })}
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
+                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-[hsl(var(--text-primary))] transition-all placeholder:text-[hsl(var(--text-secondary))] placeholder:font-medium"
                         placeholder="Tus apellidos"
                     />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <label className="font-semibold text-slate-400 uppercase tracking-wide pl-2">Correo Electrónico</label>
+                <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-2">Correo Electrónico</label>
                 <input
                     type="email"
                     value={form.email}
                     onChange={e => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
+                    className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-[hsl(var(--text-primary))] transition-all placeholder:text-[hsl(var(--text-secondary))] placeholder:font-medium"
                     placeholder="ejemplo@correo.com"
                 />
             </div>
 
             <div className="space-y-2">
-                <label className="font-semibold text-slate-400 uppercase tracking-wide pl-2">Teléfono móvil</label>
+                <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-2">Teléfono móvil</label>
                 <input
                     type="tel"
                     value={form.phone}
                     onChange={e => setForm({ ...form, phone: e.target.value })}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
+                    className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-[hsl(var(--text-primary))] transition-all placeholder:text-[hsl(var(--text-secondary))] placeholder:font-medium"
                     placeholder="+57 300 000 0000"
                 />
             </div>
 
             <div className="pt-2">
                 <label className="flex items-start gap-4 cursor-pointer group">
-                    <div className={`mt-1 shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${form.accept_contact ? 'bg-[hsl(var(--primary))] border-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className={`mt-1 shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${form.accept_contact ? 'bg-[hsl(var(--primary))] border-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-[hsl(var(--surface-1))] border-[hsl(var(--border))]'}`}>
                         {form.accept_contact && <Check size={14} strokeWidth={4} />}
                     </div>
                     <input
@@ -125,7 +125,7 @@ function RegisterForm() {
                         onChange={e => setForm({ ...form, accept_contact: e.target.checked })}
                         className="hidden"
                     />
-                    <span className="text-sm font-medium text-slate-500 leading-relaxed group-hover:text-slate-700 transition-colors">
+                    <span className="text-sm font-medium text-[hsl(var(--text-secondary))] leading-relaxed group-hover:text-[hsl(var(--text-primary))] transition-colors">
                         Acepto ser contactado para recibir información, material pastoral y noticias de la comunidad.
                     </span>
                 </label>
@@ -140,7 +140,7 @@ function RegisterForm() {
             <button
                 type="submit"
                 disabled={status === 'loading' || !eventId}
-                className="w-full py-2 bg-slate-900 hover:bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-semibold uppercase tracking-wide shadow-xl shadow-slate-900/20 hover:shadow-blue-600/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:bg-slate-900"
+                className="w-full py-2 bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-semibold uppercase tracking-wide shadow-xl shadow-black/20 hover:shadow-blue-600/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:bg-[hsl(var(--bg-muted))]"
             >
                 {status === 'loading' ? 'Registrando...' : 'Confirmar Registro'}
                 {status !== 'loading' && <ArrowRight size={18} />}
@@ -151,25 +151,25 @@ function RegisterForm() {
 
 export default function PublicRegistrationPage() {
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-[hsl(var(--surface-1))] flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
             {/* Background Decorations */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-200/50 blur-[120px] rounded-full mix-blend-multiply pointer-events-none" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/50 blur-[120px] rounded-full mix-blend-multiply pointer-events-none" />
 
-            <div className="w-full max-w-xl bg-[hsl(var(--bg-primary))] rounded-lg shadow-2xl border border-slate-100 p-4 sm:p-4 relative z-10">
+            <div className="w-full max-w-xl bg-[hsl(var(--bg-primary))] rounded-lg shadow-2xl border border-[hsl(var(--border))] p-4 sm:p-4 relative z-10">
                 <div className="flex flex-col items-center justify-center text-center space-y-4 mb-3">
                     <div className="w-16 h-8 bg-gradient-to-tr from-blue-600 to-blue-600 text-white rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30 rotate-3">
                         <Heart size={28} className="drop-shadow-md" />
                     </div>
                     <div>
-                        <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Registro de Asistencia</h1>
-                        <p className="text-sm font-medium text-slate-500 mt-2 flex items-center justify-center gap-2">
+                        <h1 className="text-lg sm:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">Registro de Asistencia</h1>
+                        <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-2 flex items-center justify-center gap-2">
                             <Calendar size={14} /> CCF Eventos
                         </p>
                     </div>
                 </div>
 
-                <Suspense fallback={<div className="h-48 flex items-center justify-center animate-pulse text-slate-300 font-bold">Cargando...</div>}>
+                <Suspense fallback={<div className="h-48 flex items-center justify-center animate-pulse text-[hsl(var(--text-secondary))] font-bold">Cargando...</div>}>
                     <RegisterForm />
                 </Suspense>
             </div>

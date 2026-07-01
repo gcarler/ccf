@@ -54,18 +54,18 @@ export function AcademyDetailShell({
     }, [onBack, router]);
 
     return (
-        <div className="min-h-screen bg-slate-950 font-display text-slate-100 selection:bg-primary/30 relative overflow-hidden">
+        <div className="min-h-screen bg-[hsl(var(--bg-muted))] font-display text-[hsl(var(--text-secondary))] selection:bg-primary/30 relative overflow-hidden">
             <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className={`absolute top-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] ${colors.primary} via-slate-950 to-slate-950 opacity-60 blur-3xl`} />
-                <div className={`absolute bottom-0 left-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] ${colors.secondary} via-slate-950 to-slate-950 opacity-60 blur-[140px]`} />
+                <div className={`absolute top-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] ${colors.primary} via-[hsl(var(--bg-muted))] to-[hsl(var(--bg-muted))] opacity-60 blur-3xl`} />
+                <div className={`absolute bottom-0 left-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] ${colors.secondary} via-[hsl(var(--bg-muted))] to-[hsl(var(--bg-muted))] opacity-60 blur-[140px]`} />
             </div>
 
             <div className="relative z-10 max-w-4xl mx-auto flex flex-col min-h-screen">
-                <header className="sticky top-0 bg-slate-950/85 backdrop-blur-2xl border-b border-white/5 px-3 pt-6 pb-4 flex flex-col gap-4">
+                <header className="sticky top-0 bg-[hsl(var(--bg-muted))]/85 backdrop-blur-2xl border-b border-white/5 px-3 pt-6 pb-4 flex flex-col gap-4">
                     <div className="flex items-center justify-between gap-4">
                         <button
                             onClick={handleBack}
-                            className="size-10 rounded-full border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/30 transition-colors"
+                            className="size-10 rounded-full border border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-white hover:border-white/30 transition-colors"
                             aria-label="Regresar"
                         >
                             <ArrowLeft size={18} />

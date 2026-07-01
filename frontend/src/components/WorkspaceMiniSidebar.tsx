@@ -81,7 +81,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                         "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer",
                         isActive
                             ? "bg-blue-600/10 dark:bg-white/10 text-[hsl(var(--primary))] dark:text-white shadow-inner"
-                            : "text-slate-400 dark:text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-300"
+                            : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-black/5 dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]"
                     )}>
                         <Icon size={19} className={clsx(isActive && "text-[hsl(var(--primary))]")} />
                         {badge && (
@@ -96,14 +96,14 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     };
 
     return (
-        <aside className="w-16 h-full bg-[hsl(var(--bg-primary))] dark:bg-black border-r border-slate-100 dark:border-white/5 rounded-lg flex flex-col items-center py-2 gap-1 shadow-2xl relative overflow-hidden">
+        <aside className="w-16 h-full bg-[hsl(var(--bg-primary))] dark:bg-black border-r border-[hsl(var(--border))] dark:border-white/5 rounded-lg flex flex-col items-center py-2 gap-1 shadow-2xl relative overflow-hidden">
             {/* Global Add Button */}
             <button
                 onClick={() => openModal('task')}
                 className="size-10 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-blue-500/40 group relative mb-4"
             >
                 <Plus size={20} />
-                <div className="absolute left-14 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-[100]">
+                <div className="absolute left-14 px-2 py-1 bg-[hsl(var(--surface-2))] text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-[100]">
                     Creación Rápida
                 </div>
             </button>
@@ -112,13 +112,13 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             {primaryItems.map(item => <NavItem key={item.id} {...item} />)}
 
             {/* Separator */}
-            <div className="w-6 h-px bg-slate-100 dark:bg-white/10 my-2" />
+            <div className="w-6 h-px bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
 
             {/* Module items */}
             {visibleModuleItems.map(item => <NavItem key={item.id} {...item} />)}
 
             {/* Separator */}
-            <div className="w-6 h-px bg-slate-100 dark:bg-white/10 my-2" />
+            <div className="w-6 h-px bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
 
             {/* Inbox with badge */}
             <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} />
@@ -127,7 +127,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             <div className="mt-auto flex flex-col items-center gap-1 pb-1">
                 <Tooltip content="Ajustes" side="right">
                     <Link href="/plataforma/settings">
-                        <div className="size-10 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-300 transition-all duration-200 cursor-pointer">
+                        <div className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-black/5 dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-all duration-200 cursor-pointer">
                             <Settings size={19} />
                         </div>
                     </Link>
@@ -136,7 +136,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                 <Tooltip content="Ocultar barra" side="right">
                     <button
                         onClick={onHide}
-                        className="size-10 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all duration-200 group"
+                        className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all duration-200 group"
                         aria-label="Ocultar sidebar principal"
                     >
                         <ChevronLeft size={19} />

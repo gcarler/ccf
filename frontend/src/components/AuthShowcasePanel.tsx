@@ -89,27 +89,27 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
 
             <div className="relative space-y-3">
                 <div>
-                    <p className="text-slate-300 text-[11px] font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <p className="text-[hsl(var(--text-secondary))] text-[11px] font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Sparkles className="w-4 h-4" /> {copy.eyebrow}
                     </p>
                     <h2 className="text-xl font-bold leading-tight tracking-tight text-white mb-2">{copy.title}</h2>
-                    <p className="text-slate-200 text-sm max-w-md">{copy.description}</p>
+                    <p className="text-[hsl(var(--text-secondary))] text-sm max-w-md">{copy.description}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     {copy.stats.map((stat) => (
                         <div key={stat.label} className="rounded-lg bg-white/5 border border-white/10 p-4">
-                            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">{stat.label}</p>
+                            <p className="text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">{stat.label}</p>
                             <p className="text-lg font-bold text-white">{stat.value}</p>
                             <p className="text-[11px] text-emerald-300 font-semibold mt-1">{stat.trend}</p>
                         </div>
                     ))}
                 </div>
 
-                <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 space-y-4">
+                <div className="rounded-lg border border-white/10 bg-[hsl(var(--bg-muted))]/40 p-3 space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs uppercase tracking-wide text-slate-500">Ruta guiada</p>
+                            <p className="text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ruta guiada</p>
                             <p className="text-white font-semibold">{copy.milestones[activeMilestone].title}</p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -125,10 +125,10 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
                             ))}
                         </div>
                     </div>
-                    <p className="text-slate-200 text-sm leading-relaxed">
+                    <p className="text-[hsl(var(--text-secondary))] text-sm leading-relaxed">
                         {copy.milestones[activeMilestone].description}
                     </p>
-                    <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-slate-400">
+                    <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         <Activity className="w-4 h-4" /> Avance en vivo
                     </div>
                 </div>
@@ -136,31 +136,31 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
                 <div className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-3">
                     <div className="flex items-center gap-3">
                         <ShieldCheck className="w-5 h-5 text-emerald-300" />
-                        <p className="text-xs uppercase tracking-wide text-slate-400">Testimonio real</p>
+                        <p className="text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio real</p>
                     </div>
                     <p className="text-lg font-semibold leading-snug text-white">&ldquo;{testimonial.quote}&rdquo;</p>
-                    <p className="text-sm text-slate-300">
+                    <p className="text-sm text-[hsl(var(--text-secondary))]">
                         {testimonial.name} · {testimonial.role}
                     </p>
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-200">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         <Users className="w-4 h-4" /> Mentores 24/7
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-200">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         <GraduationCap className="w-4 h-4" /> Academias premium
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-200">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         <MapPinned className="w-4 h-4" /> Campus global
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-slate-900/30 p-3">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-400">
+                <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-[hsl(var(--bg-muted))]/30 p-3">
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         <PlayCircle className="w-4 h-4" /> Demo guiada
                     </div>
-                    <p className="text-sm text-slate-200 leading-relaxed">
+                    <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed">
                         Mira cómo luce una semana típica dentro de {SITE_NAME} con recursos interactivos, recordatorios inteligentes y tableros compartidos.
                     </p>
                     <Link

@@ -112,8 +112,8 @@ export default function CmsMediaDetailPage() {
         }
     };
 
-    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-slate-400">Recuperando Recurso Multimedia...</div>;
-    if (!item) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-slate-400">Recurso multimedia no encontrado.</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recuperando Recurso Multimedia...</div>;
+    if (!item) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recurso multimedia no encontrado.</div>;
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
@@ -138,7 +138,7 @@ export default function CmsMediaDetailPage() {
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
  <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-3">
-                        <div className="aspect-video rounded-lg bg-slate-900 overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl relative group">
+                        <div className="aspect-video rounded-lg bg-[hsl(var(--bg-muted))] overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 shadow-2xl relative group">
                             {item.mime_type?.startsWith('image/') ? (
                                 <OptimizedImage
                                     src={item.url}
@@ -156,7 +156,7 @@ export default function CmsMediaDetailPage() {
                                     <audio controls src={item.url} className="w-full" />
                                 </div>
                             ) : (
-                                <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     Sin vista previa
                                 </div>
                             )}
@@ -168,10 +168,10 @@ export default function CmsMediaDetailPage() {
                         </div>
 
                         <div className="flex gap-4">
-                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all">
                                 <Download size={14} /> Descargar Original
                             </button>
-                            <button onClick={copyUrl} className="flex-1 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+                            <button onClick={copyUrl} className="flex-1 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all">
                                 <Link2 size={14} /> Copiar URL
                             </button>
                         </div>
@@ -180,59 +180,59 @@ export default function CmsMediaDetailPage() {
                     <div className="space-y-3">
                         <section className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">TÃ­tulo del Recurso</label>
+                                <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">TÃ­tulo del Recurso</label>
                                 <input 
                                     value={item.alt_text || ''}
                                     onChange={(e) => setItem({ ...item, alt_text: e.target.value })}
-                                    className="w-full bg-transparent border-b border-slate-200 dark:border-white/10 py-2 text-xl font-semibold outline-none focus:border-blue-500 transition-all"
+                                    className="w-full bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 py-2 text-xl font-semibold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Seccion CMS</label>
+                                <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Seccion CMS</label>
                                 <input
                                     value={item.section || 'general'}
                                     onChange={(e) => setItem({ ...item, section: e.target.value })}
-                                    className="w-full bg-transparent border-b border-slate-200 dark:border-white/10 py-2 text-sm font-bold outline-none focus:border-blue-500 transition-all"
+                                    className="w-full bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 py-2 text-sm font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
                         </section>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">InformaciÃ³n TÃ©cnica</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">InformaciÃ³n TÃ©cnica</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nombre de Archivo</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre de Archivo</p>
                                     <p className="text-xs font-bold truncate">{item.filename}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Tipo de MIME</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo de MIME</p>
                                     <p className="text-xs font-bold">{item.mime_type || 'sin tipo'}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">TamaÃ±o</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">TamaÃ±o</p>
                                     <p className="text-xs font-bold">{formatBytes(item.file_size)}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Subido</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Subido</p>
                                     <p className="text-xs font-bold">{new Date(item.created_at).toLocaleDateString()}</p>
                                 </div>
                             </div>
                         </DSCard>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Etiquetas y OrganizaciÃ³n</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Etiquetas y OrganizaciÃ³n</h3>
                             <div className="space-y-4">
                                 <input
                                     value={tagsText}
                                     onChange={(e) => setTagsText(e.target.value)}
                                     placeholder="hero, faro, campana"
-                                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-4 py-3 text-sm font-bold outline-none focus:border-blue-500"
+                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-4 py-3 text-sm font-bold outline-none focus:border-blue-500"
                                 />
                                 <div className="flex flex-wrap gap-2">
                                     {tagsText.split(',').map((tag: string) => tag.trim()).filter(Boolean).map((tag: string) => (
                                         <DSBadge key={tag} tone="blue" label={`#${tag}`} />
                                     ))}
-                                    <button className="size-6 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 hover:border-blue-500 hover:text-[hsl(var(--primary))] transition-all">
+                                    <button className="size-6 rounded-lg border border-dashed border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:border-blue-500 hover:text-[hsl(var(--primary))] transition-all">
                                         <Plus size={12} />
                                     </button>
                                 </div>

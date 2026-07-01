@@ -66,16 +66,16 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
             <div className="flex items-center justify-between px-1 pb-1">
                 <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0" style={{ backgroundColor: color }} />
-                    <span className="font-semibold tracking-wide text-slate-500 dark:text-slate-400 uppercase">
+                    <span className="font-semibold tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase">
                         {name}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-bold bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded-md">
+                    <span className="text-[10px] text-[hsl(var(--text-secondary))] font-bold bg-[hsl(var(--surface-3))] dark:bg-white/10 px-1.5 py-0.5 rounded-md">
                         {tasks.length}
                     </span>
                 </div>
                 <button
                     onClick={handleStartAdd}
-                    className="size-6 rounded-md flex items-center justify-center text-slate-400 hover:text-white hover:bg-[hsl(var(--primary))] transition-all"
+                    className="size-6 rounded-md flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-white hover:bg-[hsl(var(--primary))] transition-all"
                     title="Nuevo"
                 >
                     <Plus size={13} />
@@ -85,7 +85,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
             {/* Progress bar */}
             {tasks.length > 0 && (
                 <div className="px-1">
-                    <div className="h-1 w-full rounded-full bg-slate-100 dark:bg-white/5 overflow-hidden">
+                    <div className="h-1 w-full rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 overflow-hidden">
                         <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{ width: `${progress}%`, backgroundColor: color }}
@@ -99,7 +99,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                 ref={setNodeRef}
                 className={clsx(
                     'flex flex-col gap-2.5 min-h-12 p-2 rounded-md transition-all duration-150',
-                    isOver ? 'bg-blue-50/80 dark:bg-blue-500/10 ring-2 ring-blue-400/30' : 'bg-slate-50/40 dark:bg-white/[0.02]'
+                    isOver ? 'bg-blue-50/80 dark:bg-blue-500/10 ring-2 ring-blue-400/30' : 'bg-[hsl(var(--surface-1))]/40 dark:bg-white/[0.02]'
                 )}
             >
                 <SortableContext id={id} items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
@@ -112,9 +112,9 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                 {tasks.length === 0 && !isAdding && (
                     <div className={clsx(
                         'flex-1 flex items-center justify-center py-2 rounded-lg border-2 border-dashed transition-all',
-                        isOver ? 'border-blue-400 bg-blue-50/50' : 'border-slate-200 dark:border-white/10'
+                        isOver ? 'border-blue-400 bg-blue-50/50' : 'border-[hsl(var(--border))] dark:border-white/10'
                     )}>
-                        <p className="text-[11px] text-slate-400 font-medium">Suelta aquí</p>
+                        <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">Suelta aquí</p>
                     </div>
                 )}
 
@@ -138,7 +138,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                                     if (e.key === 'Escape') handleCancel();
                                 }}
                                 placeholder="Nombre de la tarea..."
-                                className="w-full text-[13px] font-medium bg-transparent outline-none text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
+                                className="w-full text-[13px] font-medium bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
                             />
                             <div className="flex items-center gap-2">
                                 <button
@@ -150,7 +150,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                                 </button>
                                 <button
                                     onClick={handleCancel}
-                                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
+                                    className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-all"
                                 >
                                     <X size={13} />
                                 </button>
@@ -164,7 +164,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
             {!isAdding && (
                 <button
                     onClick={handleStartAdd}
-                    className="w-full flex items-center gap-2 py-2 px-3 text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 transition-all text-[12px] font-bold"
+                    className="w-full flex items-center gap-2 py-2 px-3 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 transition-all text-[12px] font-bold"
                 >
                     <Plus size={13} /> Nuevo
                 </button>

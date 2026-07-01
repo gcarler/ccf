@@ -41,7 +41,7 @@ export default function SpiritualTimelinePanel() {
         return (
             <div className="flex flex-col items-center justify-center h-40 gap-3">
                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} />
-                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Cargando cronograma...</p>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cargando cronograma...</p>
             </div>
         );
     }
@@ -50,23 +50,23 @@ export default function SpiritualTimelinePanel() {
         <div className="space-y-3 p-3">
             <div className="relative">
                 {/* Vertical line with glow */}
-                <div className="absolute left-[21px] top-3 bottom-6 w-[2px] bg-slate-200 dark:bg-white/[0.04]">
+                <div className="absolute left-[21px] top-3 bottom-6 w-[2px] bg-[hsl(var(--surface-3))] dark:bg-white/[0.04]">
                     <div className="absolute inset-0 bg-[hsl(var(--primary))] blur-[2px] opacity-20" />
                 </div>
 
                 <div className="space-y-3">
                     {milestones.length === 0 ? (
-                        <div className="text-center py-1.5 bg-slate-50 dark:bg-white/[0.02] rounded-lg border border-dashed border-slate-200 dark:border-white/10">
-                            <Heart className="mx-auto text-slate-200 dark:text-white/10 mb-4 animate-pulse" size={48} />
-                            <p className="font-semibold text-slate-400 uppercase tracking-wide">Caminando hacia la meta...</p>
+                        <div className="text-center py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10">
+                            <Heart className="mx-auto text-[hsl(var(--text-secondary))] dark:text-white/10 mb-4 animate-pulse" size={48} />
+                            <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Caminando hacia la meta...</p>
                         </div>
                     ) : milestones.map((m) => {
                         const def = MILESTONE_DEFS[m.type] ?? {
                             label: m.type,
                             icon: CheckCircle2,
-                            color: 'text-slate-400',
-                            bg: 'bg-slate-50 dark:bg-white/5',
-                            border: 'border-slate-200 dark:border-white/10',
+                            color: 'text-[hsl(var(--text-secondary))]',
+                            bg: 'bg-[hsl(var(--surface-1))] dark:bg-white/5',
+                            border: 'border-[hsl(var(--border))] dark:border-white/10',
                         };
                         const Icon = def.icon;
                         return (
@@ -84,14 +84,14 @@ export default function SpiritualTimelinePanel() {
                                     <Icon size={18} className={clsx('transition-all', def.color)} />
                                 </div>
 
-                                <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05] rounded-lg p-3 shadow-sm group-hover:shadow-xl group-hover:shadow-blue-500/[0.03] transition-all group-hover:border-blue-500/20">
+                                <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-lg p-3 shadow-sm group-hover:shadow-xl group-hover:shadow-blue-500/[0.03] transition-all group-hover:border-blue-500/20">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-slate-900 dark:text-white leading-tight uppercase tracking-tight">{def.label}</p>
-                                            {m.notes && <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1 leading-relaxed italic">&quot;{m.notes}&quot;</p>}
+                                            <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-tight uppercase tracking-tight">{def.label}</p>
+                                            {m.notes && <p className="text-[11px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1 leading-relaxed italic">&quot;{m.notes}&quot;</p>}
                                         </div>
                                         <div className="shrink-0 flex flex-col items-end gap-1">
-                                            <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 opacity-60">
+                                            <span className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] opacity-60">
                                                 {new Date(m.event_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                                             </span>
                                             <Zap size={10} className="text-[hsl(var(--primary))] opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -105,8 +105,8 @@ export default function SpiritualTimelinePanel() {
             </div>
 
             {/* Upcoming preview */}
-            <div className="pt-8 border-t border-slate-100 dark:border-white/[0.04]">
-                <h2 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-5 ml-2">Próximos Desafíos</h2>
+            <div className="pt-8 border-t border-[hsl(var(--border))] dark:border-white/[0.04]">
+                <h2 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5 ml-2">Próximos Desafíos</h2>
                 <div className="grid grid-cols-1 gap-3">
                     {Object.entries(MILESTONE_DEFS)
                         .filter(([key]) => !milestones.some(m => m.type === key))
@@ -116,13 +116,13 @@ export default function SpiritualTimelinePanel() {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 0.5 }}
                                 whileHover={{ opacity: 1, scale: 1.02 }}
-                                className="flex items-center gap-4 px-3 py-1.5 bg-slate-50 dark:bg-white/[0.02] rounded-lg border border-slate-100 dark:border-white/[0.04] grayscale hover:grayscale-0 transition-all cursor-default"
+                                className="flex items-center gap-4 px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] rounded-lg border border-[hsl(var(--border))] dark:border-white/[0.04] grayscale hover:grayscale-0 transition-all cursor-default"
                             >
                                 <div className={clsx("size-8 rounded-md flex items-center justify-center border", def.bg, def.border)}>
                                     <def.icon size={14} className={def.color} />
                                 </div>
-                                <p className="font-semibold text-slate-600 dark:text-slate-400 flex-1 uppercase tracking-tight">{def.label}</p>
-                                <Lock size={12} className="text-slate-300 dark:text-white/10" />
+                                <p className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] flex-1 uppercase tracking-tight">{def.label}</p>
+                                <Lock size={12} className="text-[hsl(var(--text-secondary))] dark:text-white/10" />
                             </motion.div>
                         ))}
                 </div>

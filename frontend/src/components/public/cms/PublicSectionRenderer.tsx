@@ -941,7 +941,7 @@ function NewsletterSection({ section }: { section: CmsSection }) {
         </form>
       )}
       {submitError && (
-        <p className="mt-3 text-sm font-semibold text-red-600">{submitError}</p>
+        <p className="mt-3 text-sm font-semibold text-[hsl(var(--destructive))]">{submitError}</p>
       )}
     </section>
   );
@@ -1477,15 +1477,15 @@ function CivicFileDownloadsSection({ section }: { section: CmsSection }) {
   }>;
 
   const fmtBadge: Record<string, React.ReactNode> = {
-    pdf:  <span className="text-[10px] font-black text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded select-none">PDF</span>,
-    xls:  <span className="text-[10px] font-black text-green-700 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded select-none">XLS</span>,
-    xlsx: <span className="text-[10px] font-black text-green-700 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded select-none">XLS</span>,
-    doc:  <span className="text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded select-none">DOC</span>,
-    docx: <span className="text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded select-none">DOC</span>,
+    pdf:  <span className="text-[10px] font-black text-[hsl(var(--destructive))] bg-red-50 border border-red-200 px-1.5 py-0.5 rounded select-none">PDF</span>,
+    xls:  <span className="text-[10px] font-black text-[hsl(var(--secondary))] bg-green-50 border border-green-200 px-1.5 py-0.5 rounded select-none">XLS</span>,
+    xlsx: <span className="text-[10px] font-black text-[hsl(var(--secondary))] bg-green-50 border border-green-200 px-1.5 py-0.5 rounded select-none">XLS</span>,
+    doc:  <span className="text-[10px] font-black text-[hsl(var(--primary))] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded select-none">DOC</span>,
+    docx: <span className="text-[10px] font-black text-[hsl(var(--primary))] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded select-none">DOC</span>,
     csv:  <span className="text-[10px] font-black text-teal-700 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded select-none">CSV</span>,
     ppt:  <span className="text-[10px] font-black text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded select-none">PPT</span>,
     pptx: <span className="text-[10px] font-black text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded select-none">PPT</span>,
-    zip:  <span className="text-[10px] font-black text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded select-none">ZIP</span>,
+    zip:  <span className="text-[10px] font-black text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] px-1.5 py-0.5 rounded select-none">ZIP</span>,
   };
 
   return (
@@ -1500,7 +1500,7 @@ function CivicFileDownloadsSection({ section }: { section: CmsSection }) {
         )}
         {items.map((item, i) => {
           const fmt = (item.format || "").toLowerCase();
-          const badge = fmtBadge[fmt] ?? <span className="text-[10px] font-black text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded select-none">FILE</span>;
+          const badge = fmtBadge[fmt] ?? <span className="text-[10px] font-black text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] px-1.5 py-0.5 rounded select-none">FILE</span>;
           return (
             <div key={i} className="flex items-center gap-4 px-5 py-4" style={{ background: i % 2 === 0 ? "var(--site-surface)" : "var(--site-surface-container)" }}>
               <div className="shrink-0">{badge}</div>
@@ -1772,11 +1772,11 @@ function CivicHeroSearchSection({ section }: { section: CmsSection }) {
           onChange={e => setQuery(e.target.value)}
           placeholder={placeholder}
           aria-label="Buscar trámites"
-          className="flex-1 px-5 py-4 text-base outline-none bg-white text-slate-900 placeholder-slate-400"
+          className="flex-1 px-5 py-4 text-base outline-none bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
         />
         <button
           type="submit"
-          className="px-6 py-4 font-black text-sm uppercase tracking-wide text-white bg-slate-900 hover:bg-slate-800 transition-colors flex items-center gap-2 whitespace-nowrap"
+          className="px-6 py-4 font-black text-sm uppercase tracking-wide text-white bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--surface-2))] transition-colors flex items-center gap-2 whitespace-nowrap"
         >
           <Search size={16} /> Buscar
         </button>

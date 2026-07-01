@@ -75,7 +75,7 @@ export default function AcademyForumPage() {
     };
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-slate-50/50 font-display dark:bg-[#1e1f21]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--surface-1))]/50 font-display dark:bg-[#1e1f21]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Academia", icon: BookOpen },
@@ -96,8 +96,8 @@ export default function AcademyForumPage() {
             <main className="flex-1 overflow-y-auto p-4 scrollbar-thin lg:p-4">
                 <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 lg:grid-cols-12">
                     <aside className="space-y-3 lg:col-span-3">
-                        <section className="space-y-3 rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
-                            <h3 className="px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Categorias</h3>
+                        <section className="space-y-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
+                            <h3 className="px-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Categorias</h3>
                             <div className="space-y-1">
                                 {categories.map((category) => (
                                     <button
@@ -107,7 +107,7 @@ export default function AcademyForumPage() {
                                             "flex w-full items-center justify-between rounded-lg p-4 text-[12px] font-bold transition-all",
                                             activeCategory === category
                                                 ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-600/10"
-                                                : "text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                         )}
                                     >
                                         {category}
@@ -133,24 +133,24 @@ export default function AcademyForumPage() {
 
                     <div className="space-y-3 pb-4 lg:col-span-9">
                         <div className="flex flex-col justify-between gap-4 px-4 md:flex-row md:items-center">
-                            <h2 className="text-lg font-semibold uppercase tracking-tight text-slate-900 dark:text-white">Debates Populares</h2>
+                            <h2 className="text-lg font-semibold uppercase tracking-tight text-[hsl(var(--text-primary))] dark:text-white">Debates Populares</h2>
                             <div className="relative w-full md:w-80">
                                 <input
                                     value={search}
                                     onChange={(event) => setSearch(event.target.value)}
                                     placeholder="Buscar temas..."
-                                    className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-1.5 text-sm font-bold outline-none transition-all focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
+                                    className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-1.5 text-sm font-bold outline-none transition-all focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
                                 />
-                                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                             </div>
                         </div>
 
                         <div className={clsx("gap-4", viewMode === "grid" ? "grid md:grid-cols-2" : "space-y-4")}>
                             {!loading && visibleThreads.length === 0 && (
-                                <div className="rounded-md border border-slate-200 bg-white/50 py-1.5 text-center dark:border-white/10 dark:bg-white/5">
-                                    <MessageSquare className="mx-auto h-8 w-16 text-slate-300 dark:text-slate-600" />
-                                    <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">Aun no hay debates</h3>
-                                    <p className="text-slate-500">Inicia una conversacion en esta categoria.</p>
+                                <div className="rounded-md border border-[hsl(var(--border))] bg-white/50 py-1.5 text-center dark:border-white/10 dark:bg-white/5">
+                                    <MessageSquare className="mx-auto h-8 w-16 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
+                                    <h3 className="mt-4 text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Aun no hay debates</h3>
+                                    <p className="text-[hsl(var(--text-secondary))]">Inicia una conversacion en esta categoria.</p>
                                 </div>
                             )}
                             {visibleThreads.map((thread) => (
@@ -158,31 +158,31 @@ export default function AcademyForumPage() {
                                     key={thread.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="group cursor-pointer rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-sm transition-all hover:border-blue-500/20 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
+                                    className="group cursor-pointer rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm transition-all hover:border-blue-500/20 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
                                 >
                                     <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
-                                        <div className="flex shrink-0 flex-col items-center gap-1 rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-white/5 dark:bg-white/5">
-                                            <ThumbsUp size={18} className="text-slate-400 transition-colors group-hover:text-[hsl(var(--primary))]" />
-                                            <span className="font-semibold text-slate-700 dark:text-slate-200">{thread.upvotes}</span>
+                                        <div className="flex shrink-0 flex-col items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/5 dark:bg-white/5">
+                                            <ThumbsUp size={18} className="text-[hsl(var(--text-secondary))] transition-colors group-hover:text-[hsl(var(--primary))]" />
+                                            <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{thread.upvotes}</span>
                                         </div>
                                         <div className="flex-1 space-y-3">
                                             <div className="flex items-center gap-3">
                                                 <span className="rounded-full bg-blue-50 px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-900/20 dark:text-[hsl(var(--primary))]">{thread.category}</span>
                                                 {thread.is_resolved && <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-emerald-600 dark:bg-emerald-900/20"><CheckCircle2 size={12} /> Resuelto</span>}
                                             </div>
-                                            <h4 className="text-base font-bold tracking-tight text-slate-900 transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">{thread.title}</h4>
-                                            <div className="flex items-center gap-4 text-slate-400">
+                                            <h4 className="text-base font-bold tracking-tight text-[hsl(var(--text-primary))] transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">{thread.title}</h4>
+                                            <div className="flex items-center gap-4 text-[hsl(var(--text-secondary))]">
                                                 <div className="flex items-center gap-1.5"><User size={14} /><span className="text-[11px] font-bold">{thread.author}</span></div>
-                                                <div className="size-1 rounded-full bg-slate-300" />
+                                                <div className="size-1 rounded-full bg-[hsl(var(--surface-2))]" />
                                                 <div className="flex items-center gap-1.5"><Clock size={14} /><span className="text-[11px] font-bold">{thread.last_activity}</span></div>
                                             </div>
                                         </div>
-                                        <div className="flex shrink-0 items-center gap-4 md:border-l md:border-slate-100 md:pl-8 dark:md:border-white/5">
+                                        <div className="flex shrink-0 items-center gap-4 md:border-l md:border-[hsl(var(--border))] md:pl-8 dark:md:border-white/5">
                                             <div className="text-center">
-                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{thread.replies}</p>
-                                                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Respuestas</p>
+                                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{thread.replies}</p>
+                                                <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Respuestas</p>
                                             </div>
-                                            <ChevronRight size={24} className="text-slate-200 transition-all group-hover:translate-x-1 group-hover:text-[hsl(var(--primary))]" />
+                                            <ChevronRight size={24} className="text-[hsl(var(--text-secondary))] transition-all group-hover:translate-x-1 group-hover:text-[hsl(var(--primary))]" />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -200,21 +200,21 @@ export default function AcademyForumPage() {
             >
                 <form onSubmit={handleCreateThread} className="space-y-2">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Titulo</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Titulo</label>
                         <input
                             required
                             value={newThread.title}
                             onChange={(event) => setNewThread((prev) => ({ ...prev, title: event.target.value }))}
                             placeholder="Tema del debate"
-                            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Categoria</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Categoria</label>
                         <select
                             value={newThread.category}
                             onChange={(event) => setNewThread((prev) => ({ ...prev, category: event.target.value }))}
-                            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         >
                             {categories.filter((category) => category !== "Todos").map((category) => <option key={category} value={category}>{category}</option>)}
                         </select>

@@ -183,9 +183,9 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
   return (
     <section className="animate-in fade-in duration-500">
       {viewingLessonsCourse && (
-        <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col md:flex-row animate-in slide-in-from-bottom-full duration-300">
+        <div className="fixed inset-0 z-[100] bg-[hsl(var(--bg-muted))] flex flex-col md:flex-row animate-in slide-in-from-bottom-full duration-300">
           {/* Mobile Header */}
-          <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-slate-900">
+          <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-[hsl(var(--bg-muted))]">
             <h3 className="font-bold text-white truncate pr-4">{viewingLessonsCourse.course.title}</h3>
             <button onClick={() => setViewingLessonsCourse(null)} className="p-2 bg-white/5 rounded-full text-white">
               <CloseIcon size={20} />
@@ -194,7 +194,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
 
           <div className="flex flex-col md:flex-row w-full h-full">
             {/* Sidebar Lessons List */}
-            <div className="w-full md:w-80 bg-slate-900 border-r border-white/5 flex flex-col h-1/3 md:h-full">
+            <div className="w-full md:w-80 bg-[hsl(var(--bg-muted))] border-r border-white/5 flex flex-col h-1/3 md:h-full">
               <div className="p-3 border-b border-white/5 hidden md:block">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="p-1.5 bg-primary/20 text-primary rounded-lg"><BookOpen size={16} /></span>
@@ -204,33 +204,33 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-2 hide-scrollbar">
                 {loadingLessons ? (
-                  Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-8 w-full bg-slate-800 animate-pulse rounded-lg" />)
+                  Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-8 w-full bg-[hsl(var(--surface-2))] animate-pulse rounded-lg" />)
                 ) : lessons.length > 0 ? (
                   lessons.map((lesson) => (
                     <button
                       key={lesson.id}
                       onClick={() => setSelectedLesson(lesson)}
-                      className={`w-full text-left p-3.5 rounded-lg transition-all flex items-center gap-4 group ${selectedLesson?.id === lesson.id ? 'bg-primary/20 border border-primary/30 shadow-lg shadow-primary/10' : 'hover:bg-slate-800/60 border border-transparent'}`}
+                      className={`w-full text-left p-3.5 rounded-lg transition-all flex items-center gap-4 group ${selectedLesson?.id === lesson.id ? 'bg-primary/20 border border-primary/30 shadow-lg shadow-primary/10' : 'hover:bg-[hsl(var(--surface-2))]/60 border border-transparent'}`}
                     >
-                      <div className={`p-2 rounded-md transition-colors ${selectedLesson?.id === lesson.id ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-slate-800 text-slate-400 group-hover:text-primary group-hover:bg-primary/10'}`}>
+                      <div className={`p-2 rounded-md transition-colors ${selectedLesson?.id === lesson.id ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] group-hover:text-primary group-hover:bg-primary/10'}`}>
                         <Play size={14} className={selectedLesson?.id === lesson.id ? 'fill-current' : 'group-hover:fill-current'} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className={`text-xs font-bold truncate ${selectedLesson?.id === lesson.id ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>{lesson.title}</p>
-                        <p className={`text-[10px] ${selectedLesson?.id === lesson.id ? 'text-primary-200' : 'text-slate-500'}`}>{lesson.duration_minutes} min</p>
+                        <p className={`text-xs font-bold truncate ${selectedLesson?.id === lesson.id ? 'text-white' : 'text-[hsl(var(--text-secondary))] group-hover:text-white'}`}>{lesson.title}</p>
+                        <p className={`text-[10px] ${selectedLesson?.id === lesson.id ? 'text-primary-200' : 'text-[hsl(var(--text-secondary))]'}`}>{lesson.duration_minutes} min</p>
                       </div>
                     </button>
                   ))
                 ) : (
-                  <p className="text-center py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wide">No hay lecciones.</p>
+                  <p className="text-center py-1.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">No hay lecciones.</p>
                 )}
               </div>
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 bg-slate-950 relative flex flex-col h-2/3 md:h-full">
+            <div className="flex-1 bg-[hsl(var(--bg-muted))] relative flex flex-col h-2/3 md:h-full">
               <div className="absolute top-3 right-6 hidden md:block z-10">
-                <button onClick={() => setViewingLessonsCourse(null)} className="p-3 bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 rounded-full transition-all shadow-sm">
+                <button onClick={() => setViewingLessonsCourse(null)} className="p-3 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:text-white hover:bg-[hsl(var(--surface-2))] rounded-full transition-all shadow-sm">
                   <CloseIcon size={20} />
                 </button>
               </div>
@@ -248,7 +248,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                     </div>
 
                     <div className="prose prose-invert prose-lg max-w-none">
-                      <div dangerouslySetInnerHTML={{ __html: selectedLesson.content.replace(/\n/g, '<br/>') }} className="text-slate-300 font-normal leading-relaxed text-lg" />
+                      <div dangerouslySetInnerHTML={{ __html: selectedLesson.content.replace(/\n/g, '<br/>') }} className="text-[hsl(var(--text-secondary))] font-normal leading-relaxed text-lg" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-12 border-t border-white/10">
@@ -257,17 +257,17 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                         <div className="space-y-2">
                             {selectedLesson.resources && selectedLesson.resources.length > 0 ? (
                               selectedLesson.resources.map((res: any) => (
-                                <a key={res.id} href={res.file_url?.startsWith('http') ? res.file_url : apiUrl(res.file_url || '')} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-slate-900 border border-white/5 rounded-lg hover:border-primary/50 transition-all group">
+                                <a key={res.id} href={res.file_url?.startsWith('http') ? res.file_url : apiUrl(res.file_url || '')} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-[hsl(var(--bg-muted))] border border-white/5 rounded-lg hover:border-primary/50 transition-all group">
                                 <div className="flex items-center gap-3">
                                   <div className="p-2 bg-primary/10 rounded-lg text-primary"><File size={16} /></div>
-                                  <span className="text-xs font-medium text-slate-300 group-hover:text-white">{res.title}</span>
+                                  <span className="text-xs font-medium text-[hsl(var(--text-secondary))] group-hover:text-white">{res.title}</span>
                                 </div>
-                                <ChevronRight size={14} className="text-slate-600 group-hover:text-primary" />
+                                <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-primary" />
                               </a>
                             ))
                           ) : (
-                            <div className="p-4 bg-slate-900/50 rounded-lg border border-dashed border-white/5 text-center">
-                              <p className="text-[10px] text-slate-500 italic font-medium uppercase tracking-wide">No hay material.</p>
+                            <div className="p-4 bg-[hsl(var(--bg-muted))]/50 rounded-lg border border-dashed border-white/5 text-center">
+                              <p className="text-[10px] text-[hsl(var(--text-secondary))] italic font-medium uppercase tracking-wide">No hay material.</p>
                             </div>
                           )}
                         </div>
@@ -275,10 +275,10 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
 
                       <div className="space-y-4">
                         <h4 className="text-sm font-bold text-white flex items-center gap-2"><Upload size={18} className="text-emerald-500" /> Entregar Tarea</h4>
-                        <div className="p-3 bg-slate-900 border border-white/5 rounded-lg flex flex-col items-center justify-center text-center gap-4">
+                        <div className="p-3 bg-[hsl(var(--bg-muted))] border border-white/5 rounded-lg flex flex-col items-center justify-center text-center gap-4">
                           <div className="p-4 bg-emerald-500/10 rounded-full text-emerald-500"><FileText size={24} /></div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-relaxed">Sube tu trabajo en PDF o Word para ser calificado.</p>
-                          <label className="w-full py-3 bg-[hsl(var(--bg-primary))] text-slate-900 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-100 transition-all cursor-pointer text-center">
+                          <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-relaxed">Sube tu trabajo en PDF o Word para ser calificado.</p>
+                          <label className="w-full py-3 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all cursor-pointer text-center">
                             <input
                               type="file"
                               className="hidden"
@@ -307,9 +307,9 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-4 text-center relative">
-                  <div className="relative p-3 bg-slate-800/50 rounded-full text-slate-400 mb-3"><BookOpen size={48} /></div>
+                  <div className="relative p-3 bg-[hsl(var(--surface-2))]/50 rounded-full text-[hsl(var(--text-secondary))] mb-3"><BookOpen size={48} /></div>
                   <h3 className="text-xl font-bold text-white mb-2">Comienza a Aprender</h3>
-                  <p className="text-sm text-slate-400 max-w-xs">Selecciona una lección para ver su contenido.</p>
+                  <p className="text-sm text-[hsl(var(--text-secondary))] max-w-xs">Selecciona una lección para ver su contenido.</p>
                 </div>
               )}
             </div>
@@ -334,34 +334,34 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                 <div className="flex gap-4 items-center relative">
                   <div className="relative flex size-7 shrink-0 items-center justify-center">
                     <svg className="absolute inset-0 size-7 -rotate-90" viewBox="0 0 100 100">
-                      <circle className="text-slate-100 dark:text-white/5 stroke-current" cx="50" cy="50" fill="transparent" r="42" strokeWidth="10"></circle>
+                      <circle className="text-[hsl(var(--text-secondary))] dark:text-white/5 stroke-current" cx="50" cy="50" fill="transparent" r="42" strokeWidth="10"></circle>
                       <circle className="text-[hsl(var(--primary))] stroke-current transition-all duration-1000 ease-out" cx="50" cy="50" fill="transparent" r="42" strokeLinecap="round" strokeWidth="10" style={{ strokeDasharray: progressCircumference, strokeDashoffset: progressOffset }}></circle>
                     </svg>
-                    <div className="z-10 text-[hsl(var(--primary))] dark:text-blue-400">
+                    <div className="z-10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
                       {item.course.modality === 'formal' ? <School size={16} /> : <BookOpen size={16} />}
                     </div>
                   </div>
 
                   <div className="flex flex-1 flex-col justify-center min-w-0">
                     <div className="flex justify-between items-start">
-                      <h3 className="font-bold text-sm truncate pr-2 text-slate-800 dark:text-white tracking-tight">{item.course.title}</h3>
+                      <h3 className="font-bold text-sm truncate pr-2 text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{item.course.title}</h3>
                       <div className="flex items-center gap-1.5 shrink-0">
-                         <span className="font-semibold text-[hsl(var(--primary))] dark:text-blue-400 px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 uppercase tracking-wide">{Math.round(item.progress_percent)}%</span>
-                         <ChevronRight size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors" />
+                         <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 uppercase tracking-wide">{Math.round(item.progress_percent)}%</span>
+                         <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                       </div>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
-                        <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-wide flex items-center gap-1">
+                        <p className="text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide flex items-center gap-1">
                             <Clock size={10} />
                             {item.course.modality.replace('_', ' ')}
                         </p>
-                        <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-white/10" />
-                        <p className="text-slate-400 text-[10px] font-medium truncate">En progreso</p>
+                        <div className="w-1 h-1 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                        <p className="text-[hsl(var(--text-secondary))] text-[10px] font-medium truncate">En progreso</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-2 empty:hidden pt-2 border-t border-slate-50 dark:border-white/5">
+                <div className="flex gap-2 empty:hidden pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
                   {item.approved && certificatesByEnrollment[item.id] ? (
                     <button 
                         onClick={(e) => { e.stopPropagation(); setSelectedCertificate({ cert: certificatesByEnrollment[item.id], enrollment: item }); }} 

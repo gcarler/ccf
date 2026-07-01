@@ -90,10 +90,10 @@ export default function CandidatesDashboard() {
             header: 'Estudiante',
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-md bg-slate-900 dark:bg-white/10 flex items-center justify-center text-white text-[10px] font-semibold uppercase border border-white/10">{row.original.username.charAt(0)}</div>
+                    <div className="size-8 rounded-md bg-[hsl(var(--bg-muted))] dark:bg-white/10 flex items-center justify-center text-white text-[10px] font-semibold uppercase border border-white/10">{row.original.username.charAt(0)}</div>
                     <div className="flex flex-col">
-                        <span className="font-semibold text-slate-800 dark:text-slate-100 uppercase leading-none">{row.original.username}</span>
-                        <span className="text-[10px] text-slate-400 font-bold tracking-wide mt-1">{row.original.email}</span>
+                        <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase leading-none">{row.original.username}</span>
+                        <span className="text-[10px] text-[hsl(var(--text-secondary))] font-bold tracking-wide mt-1">{row.original.email}</span>
                     </div>
                 </div>
             )
@@ -103,10 +103,10 @@ export default function CandidatesDashboard() {
             header: 'Avance Formativo',
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="flex-1 h-1.5 w-32 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 w-32 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                         <motion.div initial={{ width: 0 }} animate={{ width: `${row.original.progress}%` }} className={clsx("h-full", row.original.progress >= 100 ? "bg-emerald-500" : "bg-[hsl(var(--primary))]")} />
                     </div>
-                    <span className="font-semibold text-slate-500">{Math.round(row.original.progress)}%</span>
+                    <span className="font-semibold text-[hsl(var(--text-secondary))]">{Math.round(row.original.progress)}%</span>
                 </div>
             )
         },
@@ -130,7 +130,7 @@ export default function CandidatesDashboard() {
         {
             id: 'actions',
             header: '',
-            cell: () => <button className="p-2 text-slate-300 hover:text-[hsl(var(--primary))] transition-all hover:bg-blue-50 dark:hover:bg-white/5 rounded-md"><ChevronRight size={18} /></button>
+            cell: () => <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all hover:bg-blue-50 dark:hover:bg-white/5 rounded-md"><ChevronRight size={18} /></button>
         }
     ], []);
 
@@ -162,25 +162,25 @@ export default function CandidatesDashboard() {
                 </section>
 
                 {/* Main Table Area Cinematic */}
-                <section className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-xl space-y-3">
+                <section className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 shadow-xl space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-4">
                         <div>
                             <h3 className="text-xl font-bold tracking-tighter uppercase leading-none dark:text-white">Nómina de Candidatos</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-2">Basado en el rendimiento de los últimos 30 días</p>
+                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-2">Basado en el rendimiento de los últimos 30 días</p>
                         </div>
                         <div className="relative w-full md:w-96 group">
-                            <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[hsl(var(--primary))] transition-colors" />
+                            <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
                             <input 
                                 value={search} onChange={e => setSearch(e.target.value)}
                                 placeholder="Filtrar por nombre de participante..." 
-                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all shadow-sm" 
+                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all shadow-sm" 
                             />
                         </div>
                     </div>
 
                     <AnimatePresence mode="wait">
                         {loading ? (
-                            <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-slate-400 font-semibold uppercase tracking-wide animate-pulse">
+                            <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide animate-pulse">
                                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} /> Procesando Big Data...
                             </div>
                         ) : (
@@ -203,7 +203,7 @@ function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
     };
     return (
         <div
-            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg shadow-sm flex items-center gap-3 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm flex items-center gap-3 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >
             <style jsx>{`
@@ -217,8 +217,8 @@ function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
                 <Icon size={32} strokeWidth={1.5} />
             </div>
             <div>
-                <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1 leading-none">{label}</p>
-                <h4 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
+                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 leading-none">{label}</p>
+                <h4 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">{value}</h4>
             </div>
         </div>
     );

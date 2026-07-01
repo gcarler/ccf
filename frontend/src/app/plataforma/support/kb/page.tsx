@@ -11,7 +11,7 @@ const CATEGORIES = [
     { id: 'academy', label: 'Academia CCF', icon: BookOpen, color: 'text-sky-500 bg-sky-50 dark:bg-sky-500/10', count: 9 },
     { id: 'projects', label: 'Proyectos', icon: Layout, color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10', count: 7 },
     { id: 'finances', label: 'Finanzas', icon: TrendingUp, color: 'text-rose-500 bg-rose-50 dark:bg-rose-500/10', count: 5 },
-    { id: 'admin', label: 'Configuración', icon: FileText, color: 'text-slate-500 bg-slate-100 dark:bg-white/5', count: 14 },
+    { id: 'admin', label: 'Configuración', icon: FileText, color: 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5', count: 14 },
 ];
 
 const POPULAR_ARTICLES = [
@@ -27,7 +27,7 @@ export default function SupportKBPage() {
     const [selectedCat, setSelectedCat] = useState<string | null>(null);
 
     return (
-        <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
+        <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
             {/* Hero Search */}
             <div className="bg-gradient-to-br from-blue-600 to-sky-700 p-4 text-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 50% 0%, white 0%, transparent 60%)" }} />
@@ -36,12 +36,12 @@ export default function SupportKBPage() {
                     <h1 className="text-lg font-bold text-white mb-2">Base de Conocimientos</h1>
                     <p className="text-blue-200 text-sm mb-3">Encuentra respuestas a todas tus preguntas sobre la plataforma CCF</p>
                     <div className="max-w-lg mx-auto relative">
-                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                         <input
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar artículos, guías, tutoriales..."
-                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-[hsl(var(--bg-primary))] shadow-2xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-400/40 font-medium"
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-[hsl(var(--bg-primary))] shadow-2xl text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-400/40 font-medium"
                         />
                     </div>
                 </div>
@@ -51,7 +51,7 @@ export default function SupportKBPage() {
  <div className="w-full space-y-3">
                     {/* Categories */}
                     <section>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-5">Explorar por Categoría</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">Explorar por Categoría</p>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             {CATEGORIES.map((cat, i) => (
                                 <motion.button
@@ -64,15 +64,15 @@ export default function SupportKBPage() {
                                         "flex items-center gap-4 p-3 rounded-lg border transition-all text-left shadow-sm group",
                                         selectedCat === cat.id
                                             ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
-                                            : "border-slate-200/60 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] hover:shadow-md"
+                                            : "border-[hsl(var(--border))]/60 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] hover:shadow-md"
                                     )}
                                 >
                                     <div className={clsx("size-6 rounded-md flex items-center justify-center shrink-0", cat.color)}>
                                         <cat.icon size={20} />
                                     </div>
                                     <div>
-                                        <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200">{cat.label}</p>
-                                        <p className="text-[10px] text-slate-400">{cat.count} artículos</p>
+                                        <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{cat.label}</p>
+                                        <p className="text-[10px] text-[hsl(var(--text-secondary))]">{cat.count} artículos</p>
                                     </div>
                                 </motion.button>
                             ))}
@@ -83,32 +83,32 @@ export default function SupportKBPage() {
                     <section>
                         <div className="flex items-center gap-2 mb-5">
                             <Star size={14} className="text-amber-500" />
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Artículos más Populares</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Artículos más Populares</p>
                         </div>
-                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
+                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 shadow-sm divide-y divide-[hsl(var(--border))] dark:divide-white/5 overflow-hidden">
                             {POPULAR_ARTICLES.map((article, i) => (
                                 <motion.div
                                     key={article.id}
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: 0.2 + i * 0.04 }}
-                                    className="flex items-center gap-4 px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer group"
+                                    className="flex items-center gap-4 px-3 py-1.5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all cursor-pointer group"
                                 >
-                                    <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center font-semibold text-slate-400">
+                                    <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center font-semibold text-[hsl(var(--text-secondary))]">
                                         {i + 1}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 truncate group-hover:text-[hsl(var(--primary))] transition-colors">
+                                        <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                                             {article.title}
                                         </p>
                                         <div className="flex items-center gap-3 mt-0.5">
-                                            <span className="text-[10px] text-slate-400">{article.category}</span>
-                                            <span className="text-[10px] text-slate-300">·</span>
-                                            <span className="text-[10px] text-slate-400">{article.views} vistas</span>
+                                            <span className="text-[10px] text-[hsl(var(--text-secondary))]">{article.category}</span>
+                                            <span className="text-[10px] text-[hsl(var(--text-secondary))]">·</span>
+                                            <span className="text-[10px] text-[hsl(var(--text-secondary))]">{article.views} vistas</span>
                                             <span className="text-[10px] text-emerald-500 font-bold">{article.helpful}% útil</span>
                                         </div>
                                     </div>
-                                    <ChevronRight size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors shrink-0" />
+                                    <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors shrink-0" />
                                 </motion.div>
                             ))}
                         </div>

@@ -25,16 +25,16 @@ export default function ThemePage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Configuración" sidebarSections={sidebarSections}>
-            <div className="min-h-full bg-slate-50 dark:bg-[#0f1117]">
-            <header className="sticky top-0 z-20 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl dark:border-white/5 dark:bg-[#0f1117]/80">
+            <div className="min-h-full bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
+            <header className="sticky top-0 z-20 border-b border-[hsl(var(--border))]/60 bg-white/80 backdrop-blur-xl dark:border-white/5 dark:bg-[#0f1117]/80">
                 <div className="mx-auto flex max-w-4xl items-center justify-between px-3 py-1.5">
                     <div className="flex items-center gap-3">
-                        <Palette size={18} className="text-slate-400" />
-                        <h1 className="text-[13px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">Tema visual</h1>
+                        <Palette size={18} className="text-[hsl(var(--text-secondary))]" />
+                        <h1 className="text-[13px] font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Tema visual</h1>
                     </div>
                     <Link
                         href="/plataforma/settings"
-                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300"
+                        className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
                     >
                         <Settings2 size={12} /> Volver a ajustes
                     </Link>
@@ -42,11 +42,11 @@ export default function ThemePage() {
             </header>
 
             <main className="mx-auto max-w-4xl space-y-3 px-3 py-1.5">
-                <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/5 dark:bg-[#1a1d27]">
+                <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/5 dark:bg-[#1a1d27]">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Modo actual</p>
-                            <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Modo actual</p>
+                            <p className="mt-1 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                 {theme === "night" ? "Modo noche" : "Modo dia"}
                             </p>
                         </div>
@@ -56,7 +56,7 @@ export default function ThemePage() {
                     </div>
                 </section>
 
-                <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/5 dark:bg-[#1a1d27]">
+                <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/5 dark:bg-[#1a1d27]">
                     <PaletteSelector />
                 </section>
             </main>

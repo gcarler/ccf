@@ -64,33 +64,33 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] rounded-lg border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm">
             
             {/* ─── Control Header ─── */}
-            <div className="p-4 border-b border-slate-100 dark:border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                     <div className="size-8 rounded-lg bg-blue-50 dark:bg-[hsl(var(--primary))]/10 flex items-center justify-center text-[hsl(var(--primary))] border border-blue-100/50 dark:border-[hsl(var(--primary))]/20">
                         <CalendarIcon size={28} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold tracking-tighter text-slate-900 dark:text-white uppercase italic leading-none">{title}</h2>
+                        <h2 className="text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase italic leading-none">{title}</h2>
                         <div className="flex items-center gap-2 mt-2">
-                            <span className="font-semibold text-slate-400 uppercase tracking-wide">{currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}</span>
+                            <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}</span>
                             <Sparkles size={12} className="text-amber-500" />
                         </div>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-slate-100 dark:bg-white/5 p-1.5 rounded-lg gap-1">
-                        <button onClick={prevMonth} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/10 rounded-md text-slate-600 dark:text-slate-300 hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={18} /></button>
-                        <button onClick={() => setCurrentDate(new Date())} className="px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:text-[hsl(var(--primary))] transition-colors">Hoy</button>
-                        <button onClick={nextMonth} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/10 rounded-md text-slate-600 dark:text-slate-300 hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={18} /></button>
+                    <div className="flex bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1.5 rounded-lg gap-1">
+                        <button onClick={prevMonth} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={18} /></button>
+                        <button onClick={() => setCurrentDate(new Date())} className="px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors">Hoy</button>
+                        <button onClick={nextMonth} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={18} /></button>
                     </div>
                     {onCreate && (
                         <button
                             onClick={onCreate}
-                            className="p-4 bg-slate-900 dark:bg-white/10 text-white rounded-lg shadow-xl shadow-slate-900/20 hover:scale-105 transition-all"
+                            className="p-4 bg-[hsl(var(--bg-muted))] dark:bg-white/10 text-white rounded-lg shadow-xl shadow-black/20 hover:scale-105 transition-all"
                         >
                             <Plus size={20} />
                         </button>
@@ -103,12 +103,12 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                 {/* Labels */}
                 <div className="grid grid-cols-7 gap-1 mb-4">
                     {DAY_LABELS.map(label => (
-                        <div key={label} className="py-3 text-center font-semibold text-slate-400 uppercase tracking-wide">{label}</div>
+                        <div key={label} className="py-3 text-center font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{label}</div>
                     ))}
                 </div>
 
                 {/* Days Grid */}
-                <div className="flex-1 grid grid-cols-7 gap-1 bg-slate-100 dark:bg-white/5 rounded-lg p-1 overflow-hidden border border-slate-200 dark:border-white/5">
+                <div className="flex-1 grid grid-cols-7 gap-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg p-1 overflow-hidden border border-[hsl(var(--border))] dark:border-white/5">
                     {days.map((day, idx) => {
                         if (!day) return <div key={`empty-${idx}`} className="bg-white/40 dark:bg-black/20" />;
                         
@@ -124,13 +124,13 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                                 onClick={() => onDateClick?.(day)}
                                 className={clsx(
                                     "min-h-[140px] p-4 flex flex-col gap-3 transition-all cursor-pointer group relative overflow-hidden",
-                                    isToday ? "bg-blue-50/50 dark:bg-[hsl(var(--primary))]/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] hover:bg-slate-50 dark:hover:bg-white/[0.03]"
+                                    isToday ? "bg-blue-50/50 dark:bg-[hsl(var(--primary))]/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]"
                                 )}
                             >
                                 <div className="flex items-center justify-between relative z-10">
                                     <span className={clsx(
                                         "text-xl font-bold italic tracking-tighter leading-none",
-                                        isToday ? "text-[hsl(var(--primary))]" : "text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"
+                                        isToday ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white"
                                     )}>
                                         {day.getDate()}
                                     </span>
@@ -151,7 +151,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                                         </button>
                                     ))}
                                     {dayEvents.length > 3 && (
-                                        <p className="font-semibold text-slate-400 uppercase tracking-wide pl-2">+{dayEvents.length - 3} más</p>
+                                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-2">+{dayEvents.length - 3} más</p>
                                     )}
                                 </div>
 
@@ -166,26 +166,26 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
             </div>
 
             {/* ─── Summary Footer ─── */}
-            <div className="px-4 py-1.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+            <div className="px-4 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
                 <div className="flex gap-3">
                     <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
-                        <span className="font-semibold text-slate-400 uppercase tracking-wide">Servicios Centrales</span>
+                        <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Servicios Centrales</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full bg-emerald-600" />
-                        <span className="font-semibold text-slate-400 uppercase tracking-wide">Eventos de Red</span>
+                        <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Eventos de Red</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full bg-amber-600" />
-                        <span className="font-semibold text-slate-400 uppercase tracking-wide">Consejería Especial</span>
+                        <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Consejería Especial</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-4 text-slate-400 text-[10px] font-semibold uppercase tracking-wide">
+                <div className="flex items-center gap-4 text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide">
                     <span>Vistas:</span>
                     <button className="text-[hsl(var(--primary))]">Mes</button>
-                    <button className="hover:text-slate-600">Semana</button>
-                    <button className="hover:text-slate-600">Día</button>
+                    <button className="hover:text-[hsl(var(--text-secondary))]">Semana</button>
+                    <button className="hover:text-[hsl(var(--text-secondary))]">Día</button>
                 </div>
             </div>
         </div>

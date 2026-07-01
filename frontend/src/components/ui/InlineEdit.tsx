@@ -57,7 +57,7 @@ export default function InlineEdit({
                     onBlur={handleSave}
                     onKeyDown={handleKeyDown}
                     className={clsx(
-                        "w-full bg-[hsl(var(--bg-primary))] dark:bg-slate-800 border border-blue-500 rounded px-2 py-0.5 text-sm outline-none shadow-[0_0_0_2px_rgba(59,130,246,0.1)]",
+                        "w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-blue-500 rounded px-2 py-0.5 text-sm outline-none shadow-[0_0_0_2px_rgba(59,130,246,0.1)]",
                         inputClassName
                     )}
                 />
@@ -72,7 +72,7 @@ export default function InlineEdit({
                 setIsEditing(true);
             }}
             className={clsx(
-                "group/inline cursor-text rounded hover:bg-slate-100 dark:hover:bg-white/5 px-1 -ml-1 transition-colors min-h-[1.5em] flex items-center",
+                "group/inline cursor-text rounded hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 px-1 -ml-1 transition-colors min-h-[1.5em] flex items-center",
                 className
             )}
         >
