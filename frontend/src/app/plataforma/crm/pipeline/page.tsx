@@ -77,7 +77,7 @@ export default function ConsolidationPipelinePage() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any>('/crm/consolidation/cases', { token, cache: 'no-store' });
+            const data = await apiFetch<any>('/crm/casos', { token, cache: 'no-store' });
             const items = Array.isArray(data) ? data : Array.isArray(data?.cases) ? data.cases : [];
             setLeads(items);
         } catch (err) {
@@ -94,7 +94,7 @@ export default function ConsolidationPipelinePage() {
         e.preventDefault();
         setIsSavingLead(true);
         try {
-            await apiFetch('/crm/consolidation/cases', {
+            await apiFetch('/crm/casos', {
                 method: 'POST', token,
                 body: { ...newLeadForm, spiritual_status: 'Prospecto' }
             });
@@ -114,7 +114,7 @@ export default function ConsolidationPipelinePage() {
         // Optimistic update
         setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
         try {
-            await apiFetch(`/crm/consolidation/cases/${leadId}`, {
+            await apiFetch(`/crm/casos/${leadId}`, {
                 method: 'PATCH', token, body: { stage: newStage }
             });
             addToast(`Movido a ${STAGE_LABEL[newStage] ?? newStage}`, 'success');

@@ -196,7 +196,7 @@ export default function StudentProfilePage() {
                                      <div className="flex justify-between items-end">
                                          <div className="text-left">
                                              <p className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide mb-1">Nivel Actual</p>
-                                             <h4 className="text-base font-bold dark:text-white">{profile?.active_courses.length ? 'Discípulo Maduro' : 'Nuevo estudiante'}</h4>
+                                              <h4 className="text-base font-bold dark:text-white">{profile?.active_courses.length ? 'Discípulo Maduro' : 'Nuevo participante'}</h4>
                                          </div>
                                          <span className="font-semibold text-slate-400 uppercase">Progreso total: {profile?.total_progress ?? 0}%</span>
                                      </div>

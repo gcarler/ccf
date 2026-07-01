@@ -33,7 +33,7 @@ export default function LeadDetailPage() {
         const loadLead = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/consolidation/cases/${id}`, { token });
+                const data = await apiFetch<any>(`/crm/casos/${id}`, { token });
                 if (!data) {
                     toast.error('Expediente no encontrado');
                     return;

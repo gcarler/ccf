@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.services.messaging_outcomes import CommunicationOutcome, DELIVERED_OUTCOMES
 
 ABSENTEES_PREVIEW_LIMIT = 50
 ABSENCE_REASON_LABELS = {
@@ -320,7 +321,7 @@ def get_expected_personas_for_event(
         if event_sede_id:
             q = q.filter(models.Persona.sede_id == event_sede_id)
         return q.order_by(models.Persona.nombre_completo.asc()).all()
-    # Fallback: todos los miembros de la sede del evento (Axioma 3)
+    # Fallback: todas las personas de la sede del evento (Axioma 3)
     q = db.query(models.Persona)
     if event_sede_id:
         q = q.filter(models.Persona.sede_id == event_sede_id)

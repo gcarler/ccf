@@ -78,7 +78,7 @@ export default function SubmissionsPage() {
                     <h1 className="flex items-center gap-3 text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                         <FileText className="text-primary" size={32} /> Calificar Trabajos
                     </h1>
-                    <p className="text-slate-500 font-medium mt-1">Revisa y califica las evidencias enviadas por los estudiantes.</p>
+                    <p className="text-slate-500 font-medium mt-1">Revisa y califica las evidencias enviadas por los participantes.</p>
                 </div>
             </header>
 

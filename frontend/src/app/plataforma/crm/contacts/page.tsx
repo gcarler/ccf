@@ -72,7 +72,7 @@ export default function ContactsPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any>('/crm/consolidation/cases', { token, cache: 'no-store' });
+            const data = await apiFetch<any>('/crm/casos', { token, cache: 'no-store' });
             const items = Array.isArray(data) ? data : Array.isArray(data?.cases) ? data.cases : [];
             setLeads(items);
         } catch {

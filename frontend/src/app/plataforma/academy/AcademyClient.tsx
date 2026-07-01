@@ -107,7 +107,7 @@ export default function AcademyClient() {
                                 <Sparkles size={14} className="animate-pulse" /> Optimus Intelligence
                             </div>
                             <p className="text-sm font-bold leading-relaxed opacity-95 italic relative z-10">
-                                &quot;Detectamos un aumento del 15% en el compromiso tras el nuevo módulo de Teología. 5 estudiantes están listos para certificación.&quot;
+                                &quot;Detectamos un aumento del 15% en el compromiso tras el nuevo módulo de Teología. 5 participantes están listos para certificación.&quot;
                             </p>
                         </div>
                     </div>

@@ -13,6 +13,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.services.messaging_outcomes import CommunicationOutcome, DELIVERED_OUTCOMES
 
 
 def _channel_label(channel: str) -> str:

@@ -317,7 +317,7 @@ def rankings_leaders(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    """Tablero de líderes con nombre, grupo, % asistencia, miembros, visitantes este mes."""
+    """Tablero de líderes con nombre, grupo, % asistencia, personas, visitantes este mes."""
     sede_id = require_user_sede_id(db, current_user)
     this_start, this_end = _this_month_range()
 

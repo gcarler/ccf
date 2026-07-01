@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import or_
+from sqlalchemy import String, cast, or_
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -30,7 +30,7 @@ from backend.crud.crm import (
     get_user_sede_id,
     resolve_persona_id_for_user,
 )
-from backend.models_crm_pipeline import EstadoCasoEnum, TipoInteraccionEnum
+from backend.models_crm_pipeline import CanalOrigenEnum, EstadoCasoEnum, TipoInteraccionEnum
 from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
 from backend.services.messaging import MessagingGateway, get_messaging_gateway
 from backend.services.messaging import StubMessagingGateway  # noqa: F401 — disponible para override manual en tests
@@ -149,12 +149,12 @@ def _serialize_core_interaction_as_call(row: models.InteraccionCRM) -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# REDIRECTS: Old consolidation endpoints → new CRM Core
+# REDIRECTS: Old CRM endpoints → new CRM Core
 # ═══════════════════════════════════════════════════════════════════
 
 
-@router.get("/consolidation/cases/{case_id}", response_model=dict)
-def get_consolidation_case(
+@router.get("/casos/{case_id}", response_model=dict)
+def get_caso_crm(
     case_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
@@ -164,8 +164,8 @@ def get_consolidation_case(
     return _serialize_case(case)
 
 
-@router.post("/consolidation/cases", response_model=dict)
-def create_consolidation_case(
+@router.post("/casos", response_model=dict)
+def create_caso_crm(
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
@@ -206,10 +206,10 @@ def create_consolidation_case(
             db,
             persona,
             uuid.UUID(str(persona.sede_id or user_sede)),
-            titulo_prefix="Consolidacion",
+            titulo_prefix="Caso CRM",
         )
         if not case:
-            raise HTTPException(status_code=500, detail="No se pudo crear el caso de consolidacion")
+            raise HTTPException(status_code=500, detail="No se pudo crear el caso CRM")
         _update_case_field(case, "stage", payload.get("stage", "new"))
         _update_case_field(case, "source", payload.get("source", "Visitante"))
         _update_case_field(case, "notes", payload.get("notes"))
@@ -240,8 +240,8 @@ def create_consolidation_case(
     return _serialize_case(case)
 
 
-@router.patch("/consolidation/cases/{case_id}", response_model=dict)
-def update_consolidation_case(
+@router.patch("/casos/{case_id}", response_model=dict)
+def update_caso_crm(
     case_id: str,
     payload: schemas.CaseUpdate,
     db: Session = Depends(get_db),
@@ -258,8 +258,8 @@ def update_consolidation_case(
     return _serialize_case(case)
 
 
-@router.post("/consolidation/cases/{case_id}/interactions", response_model=dict)
-def create_consolidation_interaction(
+@router.post("/casos/{case_id}/interactions", response_model=dict)
+def create_caso_interaction(
     case_id: str,
     payload: schemas.CaseInteractionCreate,
     db: Session = Depends(get_db),
@@ -292,8 +292,8 @@ def create_consolidation_interaction(
     }
 
 
-@router.post("/consolidation/cases/{case_id}/tasks", response_model=dict)
-def create_consolidation_task(
+@router.post("/casos/{case_id}/tasks", response_model=dict)
+def create_caso_task(
     case_id: str,
     payload: schemas.CaseTaskCreate,
     db: Session = Depends(get_db),
@@ -328,8 +328,8 @@ def create_consolidation_task(
 # --- LIST / DELETE Cases, nested resources ---
 
 
-@router.get("/consolidation/cases", response_model=dict)
-def list_consolidation_cases(
+@router.get("/casos", response_model=dict)
+def list_crm_casos(
     source: Optional[str] = None,
     stage: Optional[str] = None,
     status: Optional[str] = None,
@@ -339,7 +339,7 @@ def list_consolidation_cases(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Lista casos de consolidación con paginación y filtros."""
+    """Lista casos CRM con paginación y filtros."""
     user_sede = get_user_sede_id(db, current_user.id)
     q = db.query(models.CasoCRM).filter(models.CasoCRM.deleted_at.is_(None))
     if user_sede:
@@ -366,13 +366,13 @@ def list_consolidation_cases(
     }
 
 
-@router.delete("/consolidation/cases/{case_id}", status_code=204)
-def delete_consolidation_case(
+@router.delete("/casos/{case_id}", status_code=204)
+def delete_caso_crm(
     case_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Archiva un caso de consolidación (soft delete)."""
+    """Archiva un caso CRM (soft delete)."""
     user_sede = get_user_sede_id(db, current_user.id)
     case = _get_case_or_404(db, case_id, user_sede)
     case.deleted_at = utc_now()
@@ -380,8 +380,8 @@ def delete_consolidation_case(
     return None
 
 
-@router.get("/consolidation/cases/{case_id}/tasks", response_model=List[dict])
-def list_consolidation_tasks(
+@router.get("/casos/{case_id}/tasks", response_model=List[dict])
+def list_caso_tasks(
     case_id: str,
     status_filter: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -416,8 +416,8 @@ def list_consolidation_tasks(
     ]
 
 
-@router.patch("/consolidation/cases/{case_id}/tasks/{task_id}", response_model=dict)
-def update_consolidation_task(
+@router.patch("/casos/{case_id}/tasks/{task_id}", response_model=dict)
+def update_caso_task(
     case_id: str,
     task_id: str,
     payload: schemas.CaseTaskUpdate,
@@ -467,8 +467,8 @@ def update_consolidation_task(
     }
 
 
-@router.get("/consolidation/cases/{case_id}/interactions", response_model=List[dict])
-def list_consolidation_interactions(
+@router.get("/casos/{case_id}/interactions", response_model=List[dict])
+def list_caso_interactions(
     case_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
@@ -653,7 +653,7 @@ def get_messaging_history_item(
 
 @router.get("/tasks", response_model=List[dict])
 def list_crm_tasks(
-    assignee_user_id: Optional[uuid.UUID] = None,
+    assignee_persona_id: Optional[uuid.UUID] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -662,10 +662,7 @@ def list_crm_tasks(
         models.Persona, models.TareaCRM.persona_id == models.Persona.id
     )
     q = _scope_by_user_sede_via_persona(db, current_user, q)
-    if assignee_user_id:
-        assignee_persona_id = resolve_persona_id_for_user(db, assignee_user_id)
-        if not assignee_persona_id:
-            return []
+    if assignee_persona_id:
         _get_scoped_persona(db, current_user, assignee_persona_id)
         q = q.filter(models.TareaCRM.assignee_id == assignee_persona_id)
     tasks = q.order_by(models.TareaCRM.created_at.desc()).all()
@@ -695,9 +692,8 @@ def create_crm_task(
         silenciosamente caller error).
       - validate `persona_id` (target persona) — debe estar en scope
         (404 cross-sede).
-      - resolve `assignee_id` con `_resolve_assignee_for_task` (acepta
-        UUID de persona o Integer user_id, valida scope, raise 404
-        cross-sede).
+      - valida `assignee_id` como UUID canónico de persona y aplica scope;
+        un identificador de usuario de autenticación nunca es aceptado.
 
     Audit log (Axioma 1) emitido por `crud.create_crm_task` (defense in
     depth): el caller API no genera audit trail directamente; el CRUD es
@@ -718,22 +714,19 @@ def create_crm_task(
         # In-place mutation: Pydantic v2 BaseModel es mutable por default.
         payload.persona_id = scoped_persona.id
 
-    # ── Axioma 3 — resolve assignee_id (UUID or user_id) with scope ─────
+    # ── Axioma 3 — validate canonical persona UUID with scope ───────────
     # Por defecto el editor se asigna la tarea (mantiene visibilidad dentro
     # de su propia sede vía _scope_by_user_sede_via_persona).
     if payload.assignee_id:
         resolved_assignee_persona_id = _resolve_assignee_for_task(
             db, current_user, payload.assignee_id
         )
-        payload.assignee_id = str(resolved_assignee_persona_id)
+        payload.assignee_id = resolved_assignee_persona_id
     else:
-        # Compat: current_user puede ser Integer user_id o UUID de persona.
         resolved_assignee_persona_id = resolve_persona_id_for_user(
             db, current_user.id
         )
-        payload.assignee_id = (
-            str(resolved_assignee_persona_id) if resolved_assignee_persona_id else None
-        )
+        payload.assignee_id = resolved_assignee_persona_id
 
     # ── Side-effect: status ↔ completed_at ─────────────────────────────
     # Si la tarea nace en `completed`, estampar fecha_completada AHORA
@@ -816,7 +809,7 @@ def update_crm_task(
         `priority` son `Optional[CrmTaskStatus]`/`Optional[CrmTaskPriority]`
         (case-sensitive, 422 si fuera del catálogo); `due_date`/
         `completed_at` se auto-parsean ISO → datetime; `assignee_id`
-        conserva el contrato dual. NO hay whitelist inline — la
+        acepta únicamente UUID de persona. NO hay whitelist inline — la
         validación para `status`/`priority` vive en el schema
         (canonical Pydantic Enum pattern).
       - **Unknown-field guard**: campos ajenos al schema se descartan
@@ -857,7 +850,7 @@ def update_crm_task(
         )
         # Siempre emitimos el campo (incluso si es None) para que el CRUD
         # detecte el cambio contra el valor previo (auditoría honesta).
-        changes_in["assignee_id"] = str(new_assignee) if new_assignee else None
+        changes_in["assignee_id"] = new_assignee
 
     if "persona_id" in changes_in:
         v = changes_in["persona_id"]
@@ -886,17 +879,15 @@ def update_crm_task(
     nuevo_estado = changes_in.get("status", task.estado)
     if "status" in changes_in and nuevo_estado != task.estado:
         if nuevo_estado == "completed" and task.fecha_completada is None:
-            changes_in["fecha_completada"] = utc_now()
+            changes_in["completed_at"] = utc_now()
         elif nuevo_estado != "completed" and task.fecha_completada is not None:
             # Reabrir: limpiar fecha_completada para que el audit detecte el cambio.
-            changes_in["fecha_completada"] = None
+            changes_in["completed_at"] = None
 
     # ── Delegar al CRUD (atomic write + audit log + scope re-check) ────
-    # `crud.update_crm_task` usa duck typing (`payload.model_dump(...)` si
-    # tiene attr, sino `dict(payload)`) — pasamos `changes_in` (dict plano),
-    # que por construcción ya tiene sólo los campos del PATCH + side-effect.
+    normalized_payload = schemas.CrmTaskUpdate.model_validate(changes_in)
     updated_task = crud.update_crm_task(
-        db, task_id, changes_in, actor_user_id=str(current_user.id)
+        db, task_id, normalized_payload, actor_user_id=str(current_user.id)
     )
     if updated_task is None:
         # Race: la task fue borrada entre el GET scope-check y el UPDATE CRUD.
@@ -1148,44 +1139,12 @@ def list_counseling_tickets(
 
 
 def _resolve_pastor_identity(
-    db: Session, current_user: models.User, raw_pastor_id: Optional[str]
+    db: Session, current_user: models.User, pastor_id: Optional[uuid.UUID]
 ):
-    """Resolve `pastor_id` (UUID de persona o Integer user_id) a un UUID de
-    persona y valida scope (Axioma 3). Preserva el contrato histórico de
-    aceptar user_id sin reintroducir el silent-bypass.
-
-    Raises 404 (no 403, para evitar existence-leaks) si:
-      - El input no es UUID ni Integer parseable.
-      - El Integer no corresponde a un User existente.
-      - El User no tiene persona vinculada.
-      - La persona resuelta es cross-sede o INACTIVA.
-    """
-    if not raw_pastor_id:
+    """Valida el UUID canónico de persona del pastor dentro del scope."""
+    if pastor_id is None:
         return None
-    raw_str = str(raw_pastor_id).strip()
-    if not raw_str:
-        return None
-    # 1. Intentar como UUID de persona (camino más común)
-    try:
-        persona_uuid = uuid.UUID(raw_str)
-    except (TypeError, ValueError):
-        persona_uuid = None
-    if persona_uuid:
-        # _get_scoped_persona raise 404 si cross-sede o INACTIVO
-        return _get_scoped_persona(db, current_user, persona_uuid).id
-    # 2. Intentar como Integer user_id
-    try:
-        user_id_int = int(raw_str)
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=404, detail="Pastor no encontrado")
-    user = db.query(models.User).filter(models.User.id == user_id_int).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Pastor no encontrado")
-    persona_id = resolve_persona_id_for_user(db, user.id)
-    if not persona_id:
-        raise HTTPException(status_code=404, detail="Pastor no encontrado")
-    # Validar scope sobre la persona resuelta
-    return _get_scoped_persona(db, current_user, persona_id).id
+    return _get_scoped_persona(db, current_user, pastor_id).id
 
 
 @router.post("/counseling/", response_model=dict, status_code=201)
@@ -1199,10 +1158,8 @@ def create_counseling_ticket(
     el scope se aplica validando la FK a Persona vía _get_scoped_persona
     (404 cross-sede, no 403, para evitar existence-leaks).
 
-    `pastor_id` (opcional) se resuelve a un UUID de persona aceptando tanto
-    UUID como Integer user_id (contrato histórico preservado), y se valida
-    scope antes de delegar al CRUD. Sin validación, un editor de sede_a
-    podría usar un user_id de sede_b como pastor.
+    `pastor_id` es exclusivamente el UUID canónico de una persona y se valida
+    dentro del scope antes de delegar al CRUD.
     """
     _get_scoped_persona(db, current_user, payload.persona_id)
     if payload.pastor_id:
@@ -1211,7 +1168,7 @@ def create_counseling_ticket(
             # Reemplazar en el payload para que el CRUD no intente resolver de
             # nuevo (es idempotente pero evita trabajo redundante y deja el
             # valor canónico UUID en la fila persistida).
-            payload.pastor_id = str(resolved_pastor_id)
+            payload.pastor_id = resolved_pastor_id
     ticket = crud.create_counseling_ticket(db, payload)
     return {
         "id": ticket.id,
@@ -1268,8 +1225,7 @@ def update_counseling_ticket(
     propio; el scope se aplica via _get_scoped_counseling_ticket (404 cross-sede,
     no 403, para evitar existence-leaks).
 
-    `pastor_id` (opcional) se resuelve con _resolve_pastor_identity que acepta
-    UUID o Integer user_id y valida scope (mismo patrón que create_counseling_ticket).
+    `pastor_id` (opcional) es un UUID canónico de persona y valida scope.
     """
     ticket = _get_scoped_counseling_ticket(db, current_user, ticket_id)
 
@@ -1451,7 +1407,7 @@ def delete_crm_role(
     db.commit()
     return {
         "success": True,
-        "message": "Rol eliminado y miembros reasignados correctamente",
+        "message": "Rol eliminado y personas reasignadas correctamente",
     }
 
 
@@ -1517,7 +1473,7 @@ def create_public_prayer_request(
 ):
     """Pedido de oracion desde pagina web publica (sin auth).
     Crea PrayerRequest + Persona + ConsolidationCase para que el equipo de
-    consolidacion pueda contactar para orar. Source='prayer-web'."""
+    pastoral pueda contactar para orar. Source='prayer-web'."""
     # Extract name parts
     name_parts = payload.requester_name.strip().split(" ", 1)
     first_name = name_parts[0] if name_parts else payload.requester_name
@@ -1540,6 +1496,7 @@ def create_public_prayer_request(
 
     # Create PrayerRequest linked to the persona
     prayer = models.PrayerRequest(
+        sede_id=result.persona.sede_id,
         requester_name=payload.requester_name,
         request_text=payload.request_text,
         category=payload.category,
@@ -1926,20 +1883,23 @@ def get_newsletter_leads(
         db.query(models.CasoCRM)
         .join(models.Persona, models.CasoCRM.persona_id == models.Persona.id)
         .filter(
-            models.CasoCRM.origen_canal.like("%newsletter%"),
-            models.CasoCRM.estado != "CERRADO",
+            models.CasoCRM.origen_canal == CanalOrigenEnum.WEB_FORM,
+            models.CasoCRM.origen_detalle_id.ilike("%newsletter%"),
+            models.CasoCRM.estado.notin_(
+                (EstadoCasoEnum.RESUELTO_EXITO, EstadoCasoEnum.CERRADO_PERDIDO)
+            ),
         )
     )
     query = _scope_by_user_sede_via_persona(db, current_user, query)
 
     if source:
-        query = query.filter(models.CasoCRM.origen_canal == source)
+        query = query.filter(models.CasoCRM.origen_detalle_id == source)
     if stage:
         query = query.filter(models.CasoCRM.estado == stage)
     if landing_page:
-        query = query.filter(models.CasoCRM.payload_web.like(f"%Landing: {landing_page}%"))
+        query = query.filter(cast(models.CasoCRM.payload_web, String).ilike(f"%{landing_page}%"))
     if campaign:
-        query = query.filter(models.CasoCRM.payload_web.like(f"%Campaign: {campaign}%"))
+        query = query.filter(cast(models.CasoCRM.payload_web, String).ilike(f"%{campaign}%"))
     if date_from:
         query = query.filter(models.CasoCRM.fecha_creacion >= date_from)
     if date_to:
@@ -1958,7 +1918,7 @@ def get_newsletter_leads(
                 "nombre_completo": persona.nombre_completo if persona else "",
                 "email": persona.email if persona else None,
                 "telefono": persona.telefono if persona else None,
-                "source": str(case.origen_canal.value) if case.origen_canal else None,
+                "source": case.origen_detalle_id,
                 "stage": str(case.estado.value) if case.estado else None,
                 "notes": case.titulo_caso,
                 "created_at": case.fecha_creacion.isoformat() if case.fecha_creacion else None,
@@ -1991,14 +1951,17 @@ def export_newsletter_leads_csv(
         db.query(models.CasoCRM)
         .join(models.Persona, models.CasoCRM.persona_id == models.Persona.id)
         .filter(
-            models.CasoCRM.origen_canal.like("%newsletter%"),
-            models.CasoCRM.estado != "CERRADO",
+            models.CasoCRM.origen_canal == CanalOrigenEnum.WEB_FORM,
+            models.CasoCRM.origen_detalle_id.ilike("%newsletter%"),
+            models.CasoCRM.estado.notin_(
+                (EstadoCasoEnum.RESUELTO_EXITO, EstadoCasoEnum.CERRADO_PERDIDO)
+            ),
         )
     )
     query = _scope_by_user_sede_via_persona(db, current_user, query)
 
     if source:
-        query = query.filter(models.CasoCRM.origen_canal == source)
+        query = query.filter(models.CasoCRM.origen_detalle_id == source)
     if date_from:
         query = query.filter(models.CasoCRM.fecha_creacion >= date_from)
     if date_to:
@@ -2015,7 +1978,7 @@ def export_newsletter_leads_csv(
                 "last_name": persona.last_name if persona else "",
                 "email": persona.email if persona else "",
                 "phone": persona.phone if persona else "",
-                "source": str(case.origen_canal.value) if case.origen_canal else "",
+                "source": case.origen_detalle_id or "",
                 "stage": str(case.estado.value) if case.estado else "",
                 "notes": case.titulo_caso or "",
                 "created_at": str(case.fecha_creacion) if case.fecha_creacion else "",
@@ -2029,13 +1992,13 @@ def export_newsletter_leads_csv(
 # PASTORAL CALL LOGS (Registro de llamadas de consolidación)
 # ──────────────────────────────────────────────
 
-@router.get("/consolidation/cases/{case_id}/calls", response_model=List[dict])
-def list_consolidation_calls(
+@router.get("/casos/{case_id}/calls", response_model=List[dict])
+def list_caso_calls(
     case_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """List all call logs for a consolidation case."""
+    """List all call logs for a CRM case."""
     user_sede = get_user_sede_id(db, current_user.id)
     _get_case_or_404(db, case_id, user_sede)
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
@@ -2048,14 +2011,14 @@ def list_consolidation_calls(
     return [_serialize_core_interaction_as_call(log) for log in logs]
 
 
-@router.post("/consolidation/cases/{case_id}/calls", response_model=dict, status_code=201)
-def create_consolidation_call(
+@router.post("/casos/{case_id}/calls", response_model=dict, status_code=201)
+def create_caso_call(
     case_id: str,
     payload: schemas.CaseCallCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Register a call log for a consolidation case."""
+    """Register a call log for a CRM case."""
     user_sede = get_user_sede_id(db, current_user.id)
     case = _get_case_or_404(db, case_id, user_sede)
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id

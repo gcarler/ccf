@@ -370,7 +370,7 @@ export default function CourseCatalog({
             <textarea
               value={wikiNotes}
               onChange={(e) => setWikiNotes(e.target.value)}
-              placeholder="Documenta rutas de cursos, prerequisitos, recomendaciones y lineamientos para estudiantes..."
+              placeholder="Documenta rutas de cursos, prerequisitos, recomendaciones y lineamientos para participantes..."
               className="w-full min-h-[320px] rounded-lg border border-white/10 bg-black/20 p-4 text-sm font-medium text-slate-200 outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>

@@ -167,7 +167,7 @@ def add_faro_attendance(
                 try:
                     persona_id = uuid.UUID(persona_id)
                 except ValueError:
-                    raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {persona_id}")
+                    raise HTTPException(status_code=400, detail=f"ID de persona inválido: {persona_id}")
             attended = bool(item.get("attended", True))
             absence_reason = item.get("absence_reason")
             absence_reason_detail = item.get("absence_reason_detail")
@@ -175,7 +175,7 @@ def add_faro_attendance(
             if not attended and not absence_reason:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Razón de ausencia requerida para el miembro {persona_id}.",
+                    detail=f"Razón de ausencia requerida para la persona {persona_id}.",
                 )
 
             row = (
@@ -203,14 +203,14 @@ def add_faro_attendance(
             processed += 1
     else:
         if not persona_ids:
-            raise HTTPException(status_code=400, detail="Se requiere lista de miembros o asistentes")
+            raise HTTPException(status_code=400, detail="Se requiere lista de personas o asistentes")
         processed = 0
         for persona_id in persona_ids:
             if isinstance(persona_id, str):
                 try:
                     persona_id = uuid.UUID(persona_id)
                 except ValueError:
-                    raise HTTPException(status_code=400, detail=f"ID de miembro inválido: {persona_id}")
+                    raise HTTPException(status_code=400, detail=f"ID de persona inválido: {persona_id}")
             exists = (
                 db.query(Asistencia)
                 .filter(

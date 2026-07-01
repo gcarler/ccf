@@ -113,7 +113,7 @@ export default function AcademyTeachersPage() {
                                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{teacher.specialty || "Formacion ministerial"}</p>
                                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                                     <span className="font-semibold text-slate-500 dark:bg-black/20">{teacher.course_count ?? 0} cursos</span>
-                                    <span className="font-semibold text-slate-500 dark:bg-black/20">{teacher.active_students ?? 0} alumnos</span>
+                                    <span className="font-semibold text-slate-500 dark:bg-black/20">{teacher.active_students ?? 0} participantes</span>
                                 </div>
                             </article>
                         ))}
