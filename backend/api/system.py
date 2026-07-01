@@ -166,7 +166,7 @@ def get_global_calendar(
                 if case.persona else "Caso CRM"
             )
             events.append({
-                "id": f"consolidation-case-{case.id}",
+                "id": f"crm-caso-{case.id}",
                 "title": f"Seguimiento: {persona_name}",
                 "start": case.sla_vencimiento_contacto.isoformat(),
                 "end": None,
@@ -189,11 +189,11 @@ def get_global_calendar(
         )
         for task in crm_tareas:
             events.append({
-                "id": f"consolidation-task-{task.id}",
+                "id": f"crm-tarea-{task.id}",
                 "title": task.titulo,
                 "start": task.fecha_vencimiento.isoformat(),
                 "end": None,
-                "type": "consolidation_task",
+                "type": "crm_tarea",
                 "allDay": False,
                 "href": f"/plataforma/crm/pipeline/{task.caso_id}",
             })

@@ -94,13 +94,13 @@ def get_persona_ministries(
     return result
 
 
-@router.get("/personas/{persona_id}/consolidation", response_model=dict)
-def get_persona_consolidation_profile(
+@router.get("/personas/{persona_id}/crm-perfil", response_model=dict)
+def get_persona_crm_profile(
     persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Devuelve el perfil de consolidación de una persona: roles, casos y seguimiento.
+    """Devuelve el perfil CRM de una persona: roles, casos y seguimiento.
     Axioma 3: scope por sede via helper.
     """
     persona = _get_scoped_persona(db, current_user, persona_id)
