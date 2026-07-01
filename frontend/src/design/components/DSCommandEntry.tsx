@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import clsx from "clsx";
-import { LucideIcon, CornerDownLeft } from "lucide-react";
+import React from 'react';
+import clsx from 'clsx';
+import { LucideIcon, CornerDownLeft } from 'lucide-react';
 
 interface DSCommandEntryProps {
   label: string;
