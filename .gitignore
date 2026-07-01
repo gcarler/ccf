@@ -81,3 +81,4 @@ openapi_debug.json
 backend/.env.staging
 frontend/.env.staging
 .env.staging
+frontend/tsconfig.tsbuildinfo
