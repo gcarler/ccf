@@ -496,7 +496,26 @@ frontend/src/
 │   └── AuthContext.tsx
 ├── design/
 │   ├── tokens.ts             ← Design tokens (colores, tipografía, sombras)
+│   ├── README.md             ← Documentación completa del UI Kit
+│   ├── CONTRIBUTING.md       ← Guías de contribución
+│   ├── ACCESSIBILITY.md      ← Guías de accesibilidad
 │   └── components/           ← Componentes del design system
+│       ├── DSButton.tsx      ← Botones (primary, secondary, ghost)
+│       ├── DSBadge.tsx       ← Badges (slate, blue, emerald, amber)
+│       ├── DSCard.tsx        ← Cards (light, dark, glass)
+│       ├── DSMetric.tsx      ← Métricas/KPIs
+│       ├── DSChart.tsx       ← Gráficos (line, area, bar)
+│       ├── DSInput.tsx       ← Inputs con label, error, icon
+│       ├── DSSelect.tsx      ← Selects nativos estilizados
+│       ├── DSModal.tsx       ← Modales con backdrop
+│       ├── DSTable.tsx       ← Tablas con sorting (TanStack)
+│       ├── DSTabs.tsx        ← Navegación por tabs
+│       ├── DSTooltip.tsx     ← Tooltips con Radix
+│       ├── DSToast.tsx       ← Notificaciones toast
+│       ├── DSSkeleton.tsx    ← Skeletons de carga
+│       ├── DSSectionHeader.tsx ← Headers de sección
+│       ├── DSToolbarChip.tsx ← Chips de toolbar/filtros
+│       └── DSCommandEntry.tsx ← Entradas de command palette
 └── lib/
     └── http.ts               ← apiFetch helper
 ```
